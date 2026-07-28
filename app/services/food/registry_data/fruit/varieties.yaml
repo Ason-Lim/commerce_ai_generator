@@ -1,0 +1,65 @@
+registry_id: fruit.varieties
+version: "1.0.0"
+
+metadata:
+  title: 과일 품종 Registry
+  domain: fruit
+  schema_version: "1"
+
+data:
+  APPLE_FUJI:
+    category: apple
+    canonical_name: 부사
+    aliases:
+      - 부사
+      - 후지
+      - Fuji
+      - Fuji apple
+    sweetness_score: 90
+    crispness_score: 94
+    storage_score: 92
+    premium: false
+    harvest_months:
+      - 10
+      - 11
+    main_distribution_months:
+      - 11
+      - 12
+      - 1
+      - 2
+    description: 아삭한 식감과 높은 당도, 저장성이 특징인 대표 사과 품종
+
+  APPLE_HONGRO:
+    category: apple
+    canonical_name: 홍로
+    aliases:
+      - 홍로
+      - Hongro
+    sweetness_score: 86
+    crispness_score: 88
+    storage_score: 68
+    premium: false
+    harvest_months:
+      - 8
+      - 9
+    main_distribution_months:
+      - 8
+      - 9
+      - 10
+    description: 추석 전후 유통되며 산뜻한 단맛이 특징인 사과 품종
+
+  PEAR_SINGO:
+    category: pear
+    canonical_name: 신고
+    aliases:
+      - 신고
+      - 신고배
+      - Singo
+    sweetness_score: 87
+    crispness_score: 91
+    storage_score: 88
+    premium: false
+    harvest_months:
+      - 9
+      - 10
+    description: 과즙이 풍부하고 저장성이 좋은 대표 배 품종

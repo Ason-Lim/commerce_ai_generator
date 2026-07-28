@@ -1,0 +1,48 @@
+registry_id: fruit.certifications
+version: "1.0.0"
+
+metadata:
+  title: 과일 인증 Registry
+  domain: fruit
+  schema_version: "1"
+
+data:
+  GAP:
+    canonical_name: GAP
+    aliases:
+      - GAP
+      - GAP 인증
+      - 농산물우수관리
+      - 농산물 우수관리
+    score: 92
+    trust_boost: 8
+    description: 농산물의 생산·수확 후 관리 과정에 대한 우수관리 인증
+
+  ORGANIC:
+    canonical_name: 유기농
+    aliases:
+      - 유기농
+      - 유기농산물
+      - organic
+    score: 96
+    trust_boost: 10
+    description: 유기적인 생산 기준을 충족한 농산물 인증 표시
+
+  PESTICIDE_FREE:
+    canonical_name: 무농약
+    aliases:
+      - 무농약
+      - 무농약농산물
+    score: 90
+    trust_boost: 7
+    description: 합성농약 사용을 제한한 농산물 인증 표시
+
+  LOW_CARBON:
+    canonical_name: 저탄소
+    aliases:
+      - 저탄소
+      - 저탄소 농산물
+      - 저탄소농축산물
+    score: 88
+    trust_boost: 6
+    description: 생산 과정의 온실가스 배출 저감을 인정받은 표시

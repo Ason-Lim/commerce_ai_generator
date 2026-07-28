@@ -1,0 +1,51 @@
+registry_id: fruit.grades
+version: "1.0.0"
+
+metadata:
+  title: 과일 표시 등급 Registry
+  domain: fruit
+  schema_version: "1"
+
+data:
+  PREMIUM:
+    canonical_name: 특
+    aliases:
+      - 특
+      - 특품
+      - 프리미엄
+      - 최고급
+    score: 95
+    premium: true
+    description: 상품 판매자가 상위 품질로 표시한 등급
+
+  HIGH:
+    canonical_name: 상
+    aliases:
+      - 상
+      - 상품
+      - 고급
+    score: 85
+    premium: false
+    description: 판매자가 우수 품질로 표시한 등급
+
+  STANDARD:
+    canonical_name: 보통
+    aliases:
+      - 보통
+      - 중
+      - 일반
+    score: 70
+    premium: false
+    description: 일반적인 품질 수준으로 표시된 등급
+
+  HOME:
+    canonical_name: 가정용
+    aliases:
+      - 가정용
+      - 흠과
+      - 못난이
+      - 실속형
+    score: 62
+    premium: false
+    appearance_limited: true
+    description: 외관상 흠이 있을 수 있으나 실속 소비에 적합한 표시

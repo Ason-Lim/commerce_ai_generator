@@ -1,0 +1,71 @@
+registry_id: lamb.ages
+version: "1.0.0"
+
+metadata:
+  category_id: lamb
+  parent_category_id: meat
+  description: 양고기 연령 분류 Registry
+  language: ko
+  status: active
+
+data:
+  lamb:
+    canonical_name: 램
+    aliases:
+      - lamb
+      - 어린양
+      - 어린 양
+      - 램고기
+      - 램 고기
+    age_category: lamb
+    score: 90
+    premium: true
+    min_age_months: 0
+    max_age_months: 12
+    permanent_incisor_min: 0
+    permanent_incisor_max: 0
+    flavor_intensity: mild
+    tenderness_level: high
+    policy_region: global
+    source_version: "1.0"
+    description: 일반적으로 생후 1년 미만의 어린 양고기
+
+  hogget:
+    canonical_name: 호깃
+    aliases:
+      - hogget
+      - 호겟
+      - 어린 성체 양
+    age_category: hogget
+    score: 78
+    premium: false
+    min_age_months: 12
+    max_age_months: 24
+    permanent_incisor_min: 1
+    permanent_incisor_max: 2
+    flavor_intensity: medium
+    tenderness_level: medium
+    policy_region: global
+    source_version: "1.0"
+    description: 램보다 성장했지만 머튼보다는 어린 양고기
+
+  mutton:
+    canonical_name: 머튼
+    aliases:
+      - mutton
+      - 성체양
+      - 성체 양
+      - 성숙양
+      - 성숙 양
+    age_category: mutton
+    score: 65
+    premium: false
+    min_age_months: 24
+    max_age_months: null
+    permanent_incisor_min: 3
+    permanent_incisor_max: 8
+    flavor_intensity: strong
+    tenderness_level: low
+    policy_region: global
+    source_version: "1.0"
+    description: 충분히 성장한 성체 양의 고기

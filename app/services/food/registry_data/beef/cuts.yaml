@@ -1,0 +1,143 @@
+registry_id: beef.cuts
+version: "1.0.0"
+
+metadata:
+  title: 쇠고기 부위 Registry
+  domain: beef
+  schema_version: "1"
+
+data:
+  TENDERLOIN:
+    canonical_name: 안심
+    aliases:
+      - 안심
+      - 필레
+      - 텐더로인
+      - tenderloin
+    score: 98
+    premium: true
+    tenderness: 100
+    fat_level: low
+    cooking_methods:
+      - steak
+      - grilling
+    description: 지방이 적고 가장 부드러운 식감이 특징인 프리미엄 부위
+
+  SIRLOIN:
+    canonical_name: 등심
+    aliases:
+      - 등심
+      - 서로인
+      - sirloin
+      - 립아이
+      - ribeye
+    score: 95
+    premium: true
+    tenderness: 88
+    fat_level: high
+    cooking_methods:
+      - steak
+      - grilling
+    description: 마블링과 육향의 균형이 좋아 구이와 스테이크에 적합한 부위
+
+  STRIPLOIN:
+    canonical_name: 채끝
+    aliases:
+      - 채끝
+      - 채끝살
+      - 스트립로인
+      - striploin
+      - New York strip
+    score: 94
+    premium: true
+    tenderness: 90
+    fat_level: medium
+    cooking_methods:
+      - steak
+      - grilling
+    description: 육향과 부드러움의 균형이 뛰어난 스테이크용 부위
+
+  SHORT_RIB:
+    canonical_name: 갈비
+    aliases:
+      - 갈비
+      - 갈비살
+      - short rib
+    score: 89
+    premium: true
+    tenderness: 78
+    fat_level: high
+    cooking_methods:
+      - grilling
+      - braising
+    description: 풍부한 지방과 진한 육향을 가진 구이·찜용 부위
+
+  CHUCK_FLAP:
+    canonical_name: 살치살
+    aliases:
+      - 살치살
+      - chuck flap
+    score: 96
+    premium: true
+    tenderness: 92
+    fat_level: very_high
+    cooking_methods:
+      - grilling
+    description: 풍부한 마블링과 부드러운 식감이 특징인 희소 부위
+
+  FLAT_IRON:
+    canonical_name: 부채살
+    aliases:
+      - 부채살
+      - flat iron
+      - flat iron steak
+    score: 86
+    premium: false
+    tenderness: 84
+    fat_level: medium
+    cooking_methods:
+      - grilling
+      - steak
+    description: 육향이 진하고 가격 대비 만족도가 높은 구이용 부위
+
+  HANGER:
+    canonical_name: 토시살
+    aliases:
+      - 토시살
+      - hanger steak
+    score: 91
+    premium: true
+    tenderness: 86
+    fat_level: medium
+    cooking_methods:
+      - grilling
+    description: 진한 육향이 특징인 희소 구이용 부위
+
+  SKIRT:
+    canonical_name: 안창살
+    aliases:
+      - 안창살
+      - skirt steak
+    score: 92
+    premium: true
+    tenderness: 82
+    fat_level: medium_high
+    cooking_methods:
+      - grilling
+    description: 풍부한 육즙과 진한 풍미를 가진 대표적인 특수부위
+
+  BRISKET:
+    canonical_name: 양지
+    aliases:
+      - 양지
+      - 양지머리
+      - brisket
+    score: 78
+    premium: false
+    tenderness: 60
+    fat_level: medium
+    cooking_methods:
+      - soup
+      - braising
+      - barbecue
+    description: 장시간 조리에 적합하며 깊은 육수를 내는 부위

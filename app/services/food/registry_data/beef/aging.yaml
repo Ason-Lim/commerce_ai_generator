@@ -1,0 +1,65 @@
+registry_id: beef.aging
+version: "1.0.0"
+
+metadata:
+  title: 쇠고기 숙성 방식 Registry
+  domain: beef
+  schema_version: "1"
+
+data:
+  DRY_AGED:
+    canonical_name: 건식숙성
+    aliases:
+      - 건식숙성
+      - 드라이에이징
+      - 드라이 에이징
+      - dry aged
+      - dry aging
+    score: 100
+    premium: true
+    flavor_intensity: very_high
+    tenderness_effect: high
+    moisture_loss: high
+    description: 수분을 줄이며 육향과 감칠맛을 집중시키는 프리미엄 숙성 방식
+
+  WET_AGED:
+    canonical_name: 습식숙성
+    aliases:
+      - 습식숙성
+      - 웻에이징
+      - 웻 에이징
+      - wet aged
+      - wet aging
+    score: 88
+    premium: false
+    flavor_intensity: medium
+    tenderness_effect: high
+    moisture_loss: low
+    description: 진공 포장 상태에서 육질을 부드럽게 만드는 숙성 방식
+
+  AGED:
+    canonical_name: 숙성육
+    aliases:
+      - 숙성육
+      - 숙성 소고기
+      - 숙성 한우
+      - 숙성
+    score: 82
+    premium: false
+    flavor_intensity: medium
+    tenderness_effect: medium
+    moisture_loss: unknown
+    description: 구체적인 방식은 표시되지 않았으나 숙성 처리된 쇠고기
+
+  FRESH:
+    canonical_name: 비숙성
+    aliases:
+      - 비숙성
+      - 생고기
+      - 신선육
+    score: 70
+    premium: false
+    flavor_intensity: natural
+    tenderness_effect: none
+    moisture_loss: none
+    description: 별도의 숙성 표시가 없는 일반 신선육

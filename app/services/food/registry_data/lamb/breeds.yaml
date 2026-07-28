@@ -1,0 +1,103 @@
+registry_id: lamb.breeds
+version: "1.0.0"
+
+metadata:
+  category_id: lamb
+  parent_category_id: meat
+  description: 양고기 품종 Registry
+  language: ko
+  status: active
+
+data:
+  dorper:
+    canonical_name: 도퍼
+    aliases:
+      - Dorper
+      - dorper
+      - 도르퍼
+      - 도퍼램
+      - 도퍼 램
+    english_name: Dorper
+    origin_country: South Africa
+    breed_type: meat
+    score: 88
+    premium: true
+    flavor_score: 84
+    tenderness_score: 88
+    marbling_score: 78
+    rarity_score: 72
+    description: 육질과 성장성이 우수한 남아프리카 원산 육용종
+
+  suffolk:
+    canonical_name: 서퍽
+    aliases:
+      - Suffolk
+      - suffolk
+      - 서포크
+      - 서퍽램
+      - 서퍽 램
+    english_name: Suffolk
+    origin_country: United Kingdom
+    breed_type: meat
+    score: 85
+    premium: true
+    flavor_score: 82
+    tenderness_score: 84
+    marbling_score: 75
+    rarity_score: 65
+    description: 성장성과 육량이 우수한 영국 원산 육용종
+
+  texel:
+    canonical_name: 텍셀
+    aliases:
+      - Texel
+      - texel
+      - 텍셀램
+      - 텍셀 램
+    english_name: Texel
+    origin_country: Netherlands
+    breed_type: meat
+    score: 86
+    premium: true
+    flavor_score: 83
+    tenderness_score: 86
+    marbling_score: 72
+    rarity_score: 70
+    description: 살코기 비율과 육질로 알려진 네덜란드 원산 품종
+
+  merino:
+    canonical_name: 메리노
+    aliases:
+      - Merino
+      - merino
+      - 메리노램
+      - 메리노 램
+    english_name: Merino
+    origin_country: Spain
+    breed_type: dual_purpose
+    score: 76
+    premium: false
+    flavor_score: 78
+    tenderness_score: 74
+    marbling_score: 68
+    rarity_score: 55
+    description: 모용으로 유명하며 육용으로도 유통되는 품종
+
+  awassi:
+    canonical_name: 아와시
+    aliases:
+      - Awassi
+      - awassi
+      - 아와씨
+      - 아와시램
+      - 아와시 램
+    english_name: Awassi
+    origin_country: Middle East
+    breed_type: dual_purpose
+    score: 79
+    premium: false
+    flavor_score: 82
+    tenderness_score: 76
+    marbling_score: 74
+    rarity_score: 76
+    description: 중동 지역에서 널리 사육되는 지방미 양 품종

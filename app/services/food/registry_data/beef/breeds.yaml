@@ -1,0 +1,61 @@
+registry_id: beef.breeds
+version: "1.0.0"
+
+metadata:
+  title: 쇠고기 품종 Registry
+  domain: beef
+  schema_version: "1"
+
+data:
+  HANWOO:
+    canonical_name: 한우
+    aliases:
+      - 한우
+      - Korean Beef
+    origin_country: KR
+    score: 96
+    premium: true
+    marbling_tendency: high
+    flavor_tendency: rich
+    description: 풍부한 육향과 마블링으로 평가받는 국내 고유 소 품종
+
+  WAGYU:
+    canonical_name: 와규
+    aliases:
+      - 와규
+      - Wagyu
+      - 일본 와규
+      - 호주 와규
+    origin_country: JP
+    score: 98
+    premium: true
+    marbling_tendency: very_high
+    flavor_tendency: rich
+    description: 매우 높은 마블링과 부드러운 식감으로 알려진 품종군
+
+  ANGUS:
+    canonical_name: 앵거스
+    aliases:
+      - 앵거스
+      - Angus
+      - 블랙앵거스
+      - Black Angus
+    origin_country: GB
+    score: 90
+    premium: true
+    marbling_tendency: medium_high
+    flavor_tendency: rich
+    description: 육향과 마블링의 균형이 좋은 대표적인 육우 품종
+
+  HOLSTEIN:
+    canonical_name: 홀스타인
+    aliases:
+      - 홀스타인
+      - Holstein
+      - 육우
+    origin_country: NL
+    score: 74
+    premium: false
+    marbling_tendency: medium_low
+    flavor_tendency: clean
+    description: 살코기 비중이 높고 비교적 담백한 풍미를 가진 품종

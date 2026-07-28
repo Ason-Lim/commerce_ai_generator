@@ -1,0 +1,157 @@
+registry_id: lamb.cuts
+version: "1.0.0"
+
+metadata:
+  category_id: lamb
+  parent_category_id: meat
+  description: 양고기 부위 Registry
+  language: ko
+  status: active
+
+data:
+  rack:
+    canonical_name: 램랙
+    aliases:
+      - lamb rack
+      - rack
+      - 랙
+      - 양갈비
+      - 양 갈비
+      - 프렌치랙
+      - 프렌치 랙
+    english_name: Lamb Rack
+    cut_group: rack
+    score: 95
+    premium: true
+    tenderness_score: 92
+    flavor_score: 88
+    fat_score: 78
+    yield_score: 70
+    cooking_methods:
+      - roasting
+      - grilling
+      - pan_searing
+    description: 갈비뼈를 포함한 대표적인 프리미엄 양고기 부위
+
+  loin:
+    canonical_name: 등심
+    aliases:
+      - lamb loin
+      - loin
+      - 양등심
+      - 양 등심
+      - 램로인
+      - 램 로인
+      - 로인
+    english_name: Lamb Loin
+    cut_group: loin
+    score: 92
+    premium: true
+    tenderness_score: 94
+    flavor_score: 84
+    fat_score: 72
+    yield_score: 68
+    cooking_methods:
+      - grilling
+      - pan_searing
+      - roasting
+    description: 부드러운 육질을 가진 고급 등심 부위
+
+  leg:
+    canonical_name: 뒷다리
+    aliases:
+      - lamb leg
+      - leg
+      - 양다리
+      - 양 다리
+      - 뒷다리살
+      - 뒷다리 살
+      - 램레그
+      - 램 레그
+    english_name: Lamb Leg
+    cut_group: leg
+    score: 84
+    premium: false
+    tenderness_score: 78
+    flavor_score: 86
+    fat_score: 62
+    yield_score: 90
+    cooking_methods:
+      - roasting
+      - grilling
+      - braising
+    description: 구이와 로스트에 널리 사용되는 수율 높은 부위
+
+  shoulder:
+    canonical_name: 어깨
+    aliases:
+      - lamb shoulder
+      - shoulder
+      - 양어깨
+      - 양 어깨
+      - 어깨살
+      - 어깨 살
+      - 숄더
+      - 램숄더
+      - 램 숄더
+    english_name: Lamb Shoulder
+    cut_group: shoulder
+    score: 78
+    premium: false
+    tenderness_score: 68
+    flavor_score: 90
+    fat_score: 80
+    yield_score: 82
+    cooking_methods:
+      - braising
+      - slow_cooking
+      - roasting
+    description: 풍미가 진하며 장시간 조리에 적합한 부위
+
+  shank:
+    canonical_name: 사태
+    aliases:
+      - lamb shank
+      - shank
+      - 양사태
+      - 양 사태
+      - 정강이
+      - 정강이살
+      - 램생크
+      - 램 생크
+    english_name: Lamb Shank
+    cut_group: shank
+    score: 76
+    premium: false
+    tenderness_score: 58
+    flavor_score: 92
+    fat_score: 65
+    yield_score: 60
+    cooking_methods:
+      - braising
+      - slow_cooking
+      - stewing
+    description: 콜라겐과 풍미가 풍부하여 장시간 조리에 적합한 부위
+
+  breast:
+    canonical_name: 가슴살
+    aliases:
+      - lamb breast
+      - breast
+      - 양가슴살
+      - 양 가슴살
+      - 양배
+      - 양 배
+    english_name: Lamb Breast
+    cut_group: breast
+    score: 68
+    premium: false
+    tenderness_score: 62
+    flavor_score: 86
+    fat_score: 90
+    yield_score: 72
+    cooking_methods:
+      - braising
+      - slow_cooking
+      - roasting
+    description: 지방과 풍미가 풍부한 가슴 및 복부 부위

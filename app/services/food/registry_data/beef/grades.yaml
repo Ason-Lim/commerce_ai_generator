@@ -1,0 +1,229 @@
+registry_id: beef.grades
+version: "1.0.0"
+
+metadata:
+  title: 쇠고기 국가별 등급 Registry
+  domain: beef
+  schema_version: "1"
+  description: 대한민국, 미국, 호주, 일본 쇠고기 품질·마블링 등급 데이터
+
+data:
+  KR_1PP:
+    country_code: KR
+    country_name: 대한민국
+    system: KAPE
+    canonical_grade: "1++"
+    aliases:
+      - "1++"
+      - "투플러스"
+      - "투뿔"
+      - "한우 1++"
+    score: 100
+    premium: true
+    rank: 1
+    description: 대한민국 쇠고기 육질등급 중 최상위 등급
+
+  KR_1P:
+    country_code: KR
+    country_name: 대한민국
+    system: KAPE
+    canonical_grade: "1+"
+    aliases:
+      - "1+"
+      - "원플러스"
+      - "원뿔"
+      - "한우 1+"
+    score: 92
+    premium: true
+    rank: 2
+    description: 높은 수준의 마블링과 품질을 갖춘 상위 등급
+
+  KR_1:
+    country_code: KR
+    country_name: 대한민국
+    system: KAPE
+    canonical_grade: "1"
+    aliases:
+      - "1등급"
+      - "한우 1등급"
+    score: 84
+    premium: false
+    rank: 3
+    description: 구이와 다양한 요리에 적합한 우수 등급
+
+  KR_2:
+    country_code: KR
+    country_name: 대한민국
+    system: KAPE
+    canonical_grade: "2"
+    aliases:
+      - "2등급"
+      - "한우 2등급"
+    score: 70
+    premium: false
+    rank: 4
+    description: 비교적 담백한 육질의 일반 등급
+
+  KR_3:
+    country_code: KR
+    country_name: 대한민국
+    system: KAPE
+    canonical_grade: "3"
+    aliases:
+      - "3등급"
+      - "한우 3등급"
+    score: 55
+    premium: false
+    rank: 5
+    description: 지방이 적고 살코기 비중이 높은 등급
+
+  US_PRIME:
+    country_code: US
+    country_name: 미국
+    system: USDA
+    canonical_grade: Prime
+    aliases:
+      - Prime
+      - USDA Prime
+      - 프라임
+      - 미국 프라임
+    score: 100
+    premium: true
+    rank: 1
+    description: 풍부한 마블링을 갖춘 USDA 최상위 품질등급
+
+  US_CHOICE:
+    country_code: US
+    country_name: 미국
+    system: USDA
+    canonical_grade: Choice
+    aliases:
+      - Choice
+      - USDA Choice
+      - 초이스
+      - 미국 초이스
+    score: 88
+    premium: false
+    rank: 2
+    description: 적절한 마블링과 범용성이 높은 USDA 상위 등급
+
+  US_SELECT:
+    country_code: US
+    country_name: 미국
+    system: USDA
+    canonical_grade: Select
+    aliases:
+      - Select
+      - USDA Select
+      - 셀렉트
+      - 미국 셀렉트
+    score: 74
+    premium: false
+    rank: 3
+    description: 지방 함량이 낮고 담백한 USDA 등급
+
+  AU_MSA:
+    country_code: AU
+    country_name: 호주
+    system: MSA
+    canonical_grade: MSA
+    aliases:
+      - MSA
+      - MSA 인증
+      - 호주 MSA
+    score: 94
+    premium: true
+    rank: 1
+    description: 섭취 품질을 예측·관리하는 호주 MSA 인증 체계
+
+  AU_MB9P:
+    country_code: AU
+    country_name: 호주
+    system: AUS-MEAT
+    canonical_grade: "MB9+"
+    aliases:
+      - "MB9+"
+      - "MB 9+"
+      - "마블링 9+"
+    score: 100
+    premium: true
+    rank: 1
+    marbling_min: 9
+    description: 매우 높은 수준의 마블링 등급
+
+  AU_MB7:
+    country_code: AU
+    country_name: 호주
+    system: AUS-MEAT
+    canonical_grade: "MB7"
+    aliases:
+      - "MB7"
+      - "MB 7"
+      - "마블링 7"
+    score: 94
+    premium: true
+    rank: 2
+    marbling_min: 7
+    description: 풍부한 마블링을 갖춘 프리미엄 등급
+
+  AU_MB5:
+    country_code: AU
+    country_name: 호주
+    system: AUS-MEAT
+    canonical_grade: "MB5"
+    aliases:
+      - "MB5"
+      - "MB 5"
+      - "마블링 5"
+    score: 88
+    premium: true
+    rank: 3
+    marbling_min: 5
+    description: 구이용으로 선호되는 높은 마블링 등급
+
+  AU_MB3:
+    country_code: AU
+    country_name: 호주
+    system: AUS-MEAT
+    canonical_grade: "MB3"
+    aliases:
+      - "MB3"
+      - "MB 3"
+      - "마블링 3"
+    score: 80
+    premium: false
+    rank: 4
+    marbling_min: 3
+    description: 적당한 마블링을 갖춘 대중적인 등급
+
+  JP_A5:
+    country_code: JP
+    country_name: 일본
+    system: JMGA
+    canonical_grade: A5
+    aliases:
+      - A5
+      - 일본 A5
+      - 와규 A5
+    score: 100
+    premium: true
+    rank: 1
+    yield_grade: A
+    quality_grade: 5
+    description: 일본 쇠고기 등급 체계의 최고 수준 등급
+
+  JP_A4:
+    country_code: JP
+    country_name: 일본
+    system: JMGA
+    canonical_grade: A4
+    aliases:
+      - A4
+      - 일본 A4
+      - 와규 A4
+    score: 94
+    premium: true
+    rank: 2
+    yield_grade: A
+    quality_grade: 4
+    description: 높은 마블링과 품질을 갖춘 일본산 상위 등급
