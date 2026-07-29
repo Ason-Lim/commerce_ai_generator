@@ -13,6 +13,12 @@ from app.services.food.knowledge.meat.beef.provider import (
 from app.services.food.knowledge.meat.lamb.provider import (
     LambKnowledgeProvider,
 )
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
 
 class FoodKnowledgeRegistry:
     """
@@ -147,6 +153,12 @@ FOOD_KNOWLEDGE_REGISTRY.register(
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     LambKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    ChickenKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    DuckKnowledgeProvider()
 )
 
 

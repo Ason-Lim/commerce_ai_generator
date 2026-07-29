@@ -1,0 +1,63 @@
+registry_id: duck.types
+version: "1.0.0"
+metadata:
+  category_id: duck
+  parent_category_id: meat
+  description: 오리고기 상품 유형 Registry
+  language: ko
+  status: active
+data:
+  domestic_duck:
+    canonical_name: 육용오리
+    aliases: [식용오리, 식용 오리, 육용 오리, domestic duck, meat duck]
+    type_category: domestic_duck
+    score: 80
+    premium: false
+    flavor_intensity: rich
+    tenderness_level: medium
+    typical_uses: [roasting, grilling, braising]
+    description: 일반적인 육용 목적으로 사육되어 유통되는 오리고기 유형
+
+  duckling:
+    canonical_name: 어린오리
+    aliases: [어린 오리, 오리새끼, 오리 새끼, duckling, young duck]
+    type_category: duckling
+    score: 84
+    premium: true
+    flavor_intensity: medium
+    tenderness_level: high
+    typical_uses: [roasting, grilling, pan_searing]
+    description: 비교적 어린 개체에서 생산된 것으로 명시된 오리고기 유형
+
+  native_duck:
+    canonical_name: 토종오리
+    aliases: [토종 오리, native duck, korean native duck]
+    type_category: native_duck
+    score: 88
+    premium: true
+    flavor_intensity: rich
+    tenderness_level: medium
+    typical_uses: [roasting, braising, soup]
+    description: 토종오리로 명시되어 유통되는 오리고기 유형
+
+  smoked_duck:
+    canonical_name: 훈제오리
+    aliases: [훈제 오리, 오리훈제, 오리 훈제, smoked duck, smoked duck meat]
+    type_category: smoked_duck
+    score: 82
+    premium: false
+    flavor_intensity: strong
+    tenderness_level: medium
+    typical_uses: [grilling, pan_searing, salad]
+    description: 훈연 또는 훈제 가공된 오리고기 상품 유형
+
+  roast_duck:
+    canonical_name: 구이용오리
+    aliases: [구이용 오리, 로스트덕, 로스트 덕, roast duck, roasting duck]
+    type_category: roast_duck
+    score: 83
+    premium: false
+    flavor_intensity: rich
+    tenderness_level: medium
+    typical_uses: [roasting, grilling]
+    description: 통구이 또는 오븐구이 용도로 표시된 오리고기 상품 유형

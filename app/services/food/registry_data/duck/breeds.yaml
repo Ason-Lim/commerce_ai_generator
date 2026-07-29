@@ -1,0 +1,78 @@
+registry_id: duck.breeds
+version: "1.0.0"
+metadata:
+  category_id: duck
+  parent_category_id: meat
+  description: 오리 품종 및 상업 계통 Registry
+  language: ko
+  status: active
+data:
+  pekin:
+    canonical_name: 페킨
+    aliases: [Pekin, pekin, Pekin duck, pekin duck, 페킨오리, 페킨 오리, 북경오리, 북경 오리]
+    english_name: Pekin
+    origin_country: China
+    breed_type: meat_duck
+    score: 84
+    premium: false
+    flavor_score: 82
+    tenderness_score: 84
+    growth_score: 94
+    rarity_score: 30
+    description: 육용오리 생산에 널리 이용되는 대표적인 대형 오리 품종
+
+  cherry_valley:
+    canonical_name: 체리밸리
+    aliases: [Cherry Valley, cherry valley, Cherry Valley duck, cherry valley duck, 체리 밸리, 체리밸리오리, 체리밸리 오리]
+    english_name: Cherry Valley
+    origin_country: United Kingdom
+    breed_type: commercial_meat_duck
+    score: 85
+    premium: false
+    flavor_score: 82
+    tenderness_score: 85
+    growth_score: 95
+    rarity_score: 35
+    description: 상업용 육용오리 생산에 활용되는 대표적인 계통
+
+  muscovy:
+    canonical_name: 머스코비
+    aliases: [Muscovy, muscovy, Muscovy duck, muscovy duck, 머스코비오리, 머스코비 오리, 사향오리, 사향 오리]
+    english_name: Muscovy
+    origin_country: South America
+    breed_type: meat_duck
+    score: 88
+    premium: true
+    flavor_score: 88
+    tenderness_score: 82
+    growth_score: 82
+    rarity_score: 65
+    description: 비교적 살코기 비율이 높고 풍미가 뚜렷한 오리 품종
+
+  mule_duck:
+    canonical_name: 뮬라드
+    aliases: [Mulard, mulard, Mule duck, mule duck, 뮬라드오리, 뮬라드 오리, 뮬덕, 뮬 덕]
+    english_name: Mulard
+    origin_country: France
+    breed_type: hybrid_duck
+    score: 90
+    premium: true
+    flavor_score: 90
+    tenderness_score: 84
+    growth_score: 86
+    rarity_score: 72
+    description: 머스코비 계열과 집오리 계열을 교배한 상업용 잡종 오리
+
+  mallard:
+    canonical_name: 청둥오리
+    aliases: [청둥 오리, Mallard, mallard, Mallard duck, mallard duck]
+    english_name: Mallard
+    origin_country: Eurasia
+    breed_type: wild_ancestor
+    score: 86
+    premium: true
+    flavor_score: 90
+    tenderness_score: 72
+    growth_score: 55
+    rarity_score: 80
+    description: 여러 집오리 품종의 야생 조상으로 알려진 오리 종류

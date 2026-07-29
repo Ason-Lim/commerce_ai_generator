@@ -17,6 +17,8 @@ def test_default_food_providers_are_registered() -> None:
         "fruit",
         "beef",
         "lamb",
+        "chicken",
+        "duck",
     ]
 
 

@@ -1,0 +1,162 @@
+registry_id: duck.cuts
+version: "1.0.0"
+metadata:
+  category_id: duck
+  parent_category_id: meat
+  description: 오리고기 부위 Registry
+  language: ko
+  status: active
+data:
+  whole_duck:
+    canonical_name: 통오리
+    aliases: [오리한마리, 오리 한마리, 통 오리, whole duck, whole bird]
+    english_name: Whole Duck
+    cut_group: whole
+    score: 84
+    premium: false
+    tenderness_score: 78
+    flavor_score: 90
+    fat_score: 88
+    yield_score: 90
+    cooking_methods: [roasting, boiling, braising]
+    description: 오리 한 마리 전체를 사용하는 상품
+
+  breast:
+    canonical_name: 오리가슴살
+    aliases: [오리 가슴살, 오리가슴, 오리 가슴, duck breast, breast fillet]
+    english_name: Duck Breast
+    cut_group: breast
+    score: 90
+    premium: true
+    tenderness_score: 86
+    flavor_score: 92
+    fat_score: 78
+    yield_score: 82
+    cooking_methods: [pan_searing, grilling, roasting]
+    description: 풍미가 진하고 껍질과 지방층을 함께 활용하는 대표적인 오리 부위
+
+  tenderloin:
+    canonical_name: 오리안심
+    aliases: [오리 안심, duck tenderloin, duck tender]
+    english_name: Duck Tenderloin
+    cut_group: breast
+    score: 88
+    premium: true
+    tenderness_score: 94
+    flavor_score: 84
+    fat_score: 42
+    yield_score: 48
+    cooking_methods: [pan_searing, grilling, stir_frying]
+    description: 가슴 안쪽에 위치한 비교적 작고 부드러운 부위
+
+  thigh:
+    canonical_name: 오리다리살
+    aliases: [오리 다리살, 오리넓적다리살, 오리 넓적다리살, duck thigh, duck thigh meat]
+    english_name: Duck Thigh
+    cut_group: leg
+    score: 88
+    premium: false
+    tenderness_score: 84
+    flavor_score: 94
+    fat_score: 82
+    yield_score: 80
+    cooking_methods: [grilling, braising, roasting, confit]
+    description: 풍미가 깊고 지방감이 풍부한 오리 넓적다리 부위
+
+  leg:
+    canonical_name: 오리다리
+    aliases: [오리 다리, 오리장각, 오리 장각, duck leg, whole duck leg]
+    english_name: Duck Leg
+    cut_group: leg
+    score: 89
+    premium: false
+    tenderness_score: 82
+    flavor_score: 95
+    fat_score: 84
+    yield_score: 84
+    cooking_methods: [roasting, braising, confit]
+    description: 넓적다리와 아래 다리를 포함하는 오리 다리 전체 부위
+
+  wing:
+    canonical_name: 오리날개
+    aliases: [오리 날개, duck wing, duck wings, whole duck wing]
+    english_name: Duck Wing
+    cut_group: wing
+    score: 80
+    premium: false
+    tenderness_score: 72
+    flavor_score: 91
+    fat_score: 80
+    yield_score: 52
+    cooking_methods: [roasting, braising, frying]
+    description: 뼈와 껍질 비율이 높고 진한 풍미를 내는 오리 날개 부위
+
+  neck:
+    canonical_name: 오리목
+    aliases: [오리 목, 오리목살, 오리 목살, duck neck]
+    english_name: Duck Neck
+    cut_group: neck
+    score: 73
+    premium: false
+    tenderness_score: 58
+    flavor_score: 90
+    fat_score: 68
+    yield_score: 38
+    cooking_methods: [braising, slow_cooking, stock]
+    description: 육수 또는 장시간 조리에 활용되는 오리 목 부위
+
+  gizzard:
+    canonical_name: 오리근위
+    aliases: [오리 근위, 오리똥집, 오리 똥집, duck gizzard, gizzard]
+    english_name: Duck Gizzard
+    cut_group: offal
+    score: 76
+    premium: false
+    tenderness_score: 50
+    flavor_score: 86
+    fat_score: 36
+    yield_score: 35
+    cooking_methods: [grilling, frying, stir_frying]
+    description: 쫄깃한 식감이 특징인 오리 근위 부위
+
+  heart:
+    canonical_name: 오리염통
+    aliases: [오리 염통, 오리심장, 오리 심장, duck heart]
+    english_name: Duck Heart
+    cut_group: offal
+    score: 77
+    premium: false
+    tenderness_score: 64
+    flavor_score: 90
+    fat_score: 48
+    yield_score: 28
+    cooking_methods: [grilling, skewering, stir_frying]
+    description: 진한 풍미와 탄력 있는 식감을 지닌 오리 심장 부위
+
+  liver:
+    canonical_name: 오리간
+    aliases: [오리 간, duck liver, foie gras, 푸아그라]
+    english_name: Duck Liver
+    cut_group: offal
+    score: 91
+    premium: true
+    tenderness_score: 90
+    flavor_score: 96
+    fat_score: 92
+    yield_score: 32
+    cooking_methods: [pan_searing, pâté, terrine]
+    description: 풍미와 지방감이 강하며 고급 식재료로 활용되는 오리 간 부위
+
+  skin:
+    canonical_name: 오리껍질
+    aliases: [오리 껍질, duck skin]
+    english_name: Duck Skin
+    cut_group: skin
+    score: 75
+    premium: false
+    tenderness_score: 55
+    flavor_score: 94
+    fat_score: 99
+    yield_score: 42
+    cooking_methods: [roasting, grilling, frying]
+    description: 지방이 풍부하며 바삭하게 조리할 수 있는 오리 껍질
