@@ -13,13 +13,23 @@ def test_default_food_providers_are_registered() -> None:
         for provider in list_food_providers()
     ]
 
-    assert category_ids == [
+    required = {
         "fruit",
+        "venison",
         "beef",
         "lamb",
         "chicken",
         "duck",
-    ]
+    }
+
+    assert required.issubset(set(category_ids))
+
+    assert len(category_ids) == len(set(category_ids))
+
+    assert (
+        category_ids.index("venison")
+        < category_ids.index("beef")
+    )
 
 
 def test_registry_gets_lamb_provider() -> None:

@@ -1,0 +1,95 @@
+registry_id: venison.types
+version: 1.0.0
+metadata:
+  category_id: venison
+  parent_category_id: meat
+  description: Venison type registry
+  language: ko
+  status: active
+data:
+  young_deer:
+    canonical_name: 어린사슴
+    aliases:
+    - 어린 사슴
+    - 영 디어
+    - young deer
+    - fawn venison
+    type_category: young_deer
+    score: 92
+    premium: true
+    flavor_intensity: mild
+    tenderness_level: high
+    typical_uses:
+    - 스테이크
+    - 구이
+    - 로스트
+    description: 비교적 부드러운 육질과 순한 풍미를 기대할 수 있는 어린 사슴고기입니다.
+  farmed_venison:
+    canonical_name: 사육사슴
+    aliases:
+    - 사육 사슴
+    - 농장 사슴
+    - 양식 사슴
+    - farmed venison
+    - farm raised venison
+    type_category: farmed_venison
+    score: 86
+    premium: false
+    flavor_intensity: medium
+    tenderness_level: medium
+    typical_uses:
+    - 스테이크
+    - 구이
+    - 불고기
+    description: 관리된 사육 환경에서 생산된 사슴고기 유형입니다.
+  wild_venison:
+    canonical_name: 야생사슴
+    aliases:
+    - 야생 사슴
+    - 와일드 베니슨
+    - wild venison
+    - wild deer
+    type_category: wild_venison
+    score: 90
+    premium: true
+    flavor_intensity: strong
+    tenderness_level: medium
+    typical_uses:
+    - 스튜
+    - 로스트
+    - 저온조리
+    description: 풍미가 비교적 진한 야생 사슴고기 유형입니다.
+  fresh_venison:
+    canonical_name: 생사슴고기
+    aliases:
+    - 생 사슴고기
+    - 생사슴
+    - 신선 사슴고기
+    - fresh venison
+    type_category: fresh_venison
+    score: 84
+    premium: false
+    flavor_intensity: medium
+    tenderness_level: medium
+    typical_uses:
+    - 구이
+    - 전골
+    - 불고기
+    description: 훈연이나 건조 가공을 하지 않은 사슴 정육 유형입니다.
+  smoked_venison:
+    canonical_name: 훈제사슴
+    aliases:
+    - 훈제 사슴
+    - 훈제사슴고기
+    - 스모크 베니슨
+    - smoked venison
+    type_category: smoked_venison
+    score: 80
+    premium: false
+    flavor_intensity: strong
+    tenderness_level: medium
+    typical_uses:
+    - 슬라이스
+    - 샐러드
+    - 안주
+    description: 훈연 가공으로 풍미를 강화한 사슴고기 유형입니다.

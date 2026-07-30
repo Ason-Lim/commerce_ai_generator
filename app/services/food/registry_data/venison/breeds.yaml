@@ -1,0 +1,100 @@
+registry_id: venison.breeds
+version: 1.0.0
+metadata:
+  category_id: venison
+  parent_category_id: meat
+  description: Venison species and breed registry
+  language: ko
+  status: active
+data:
+  red_deer:
+    canonical_name: 레드디어
+    aliases:
+    - 레드 디어
+    - 붉은사슴
+    - 붉은 사슴
+    - red deer
+    - cervus elaphus
+    score: 90
+    premium: true
+    english_name: Red Deer
+    origin_country: 유럽·뉴질랜드
+    breed_type: large_deer
+    flavor_score: 88
+    tenderness_score: 86
+    growth_score: 84
+    rarity_score: 65
+    description: 상업용 사슴고기 생산에서 널리 알려진 대형 사슴 종입니다.
+  sika_deer:
+    canonical_name: 꽃사슴
+    aliases:
+    - 시카디어
+    - 시카 디어
+    - 점박이사슴
+    - 점박이 사슴
+    - sika deer
+    - cervus nippon
+    score: 88
+    premium: true
+    english_name: Sika Deer
+    origin_country: 동아시아
+    breed_type: medium_deer
+    flavor_score: 86
+    tenderness_score: 88
+    growth_score: 78
+    rarity_score: 72
+    description: 동아시아에 분포하며 꽃사슴으로도 알려진 사슴 종입니다.
+  fallow_deer:
+    canonical_name: 다마사슴
+    aliases:
+    - 다마 사슴
+    - 팔로디어
+    - 팔로 디어
+    - fallow deer
+    - dama dama
+    score: 87
+    premium: true
+    english_name: Fallow Deer
+    origin_country: 유럽
+    breed_type: medium_deer
+    flavor_score: 84
+    tenderness_score: 87
+    growth_score: 80
+    rarity_score: 75
+    description: 비교적 섬세한 풍미로 평가되는 중형 사슴 종입니다.
+  elk:
+    canonical_name: 엘크
+    aliases:
+    - 와피티
+    - 와피티사슴
+    - 와피티 사슴
+    - elk
+    - wapiti
+    score: 89
+    premium: true
+    english_name: Elk
+    origin_country: 북미
+    breed_type: large_deer
+    flavor_score: 87
+    tenderness_score: 84
+    growth_score: 88
+    rarity_score: 70
+    description: 북미 지역에서 대표적인 대형 사슴고기 원료로 활용됩니다.
+  roe_deer:
+    canonical_name: 노루
+    aliases:
+    - 노루고기
+    - 노루 고기
+    - 로디어
+    - 로 디어
+    - roe deer
+    score: 85
+    premium: true
+    english_name: Roe Deer
+    origin_country: 유럽·아시아
+    breed_type: small_deer
+    flavor_score: 90
+    tenderness_score: 82
+    growth_score: 65
+    rarity_score: 88
+    description: 크기가 작고 풍미가 진한 편으로 알려진 사슴과 동물입니다.

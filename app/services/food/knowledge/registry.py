@@ -19,6 +19,9 @@ from app.services.food.knowledge.meat.chicken.provider import (
 from app.services.food.knowledge.meat.duck.provider import (
     DuckKnowledgeProvider,
 )
+from app.services.food.knowledge.meat.venison.provider import (
+    VenisonKnowledgeProvider,
+)
 
 class FoodKnowledgeRegistry:
     """
@@ -148,6 +151,10 @@ FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
 FOOD_KNOWLEDGE_REGISTRY.register(
     FruitKnowledgeProvider()
 )
+FOOD_KNOWLEDGE_REGISTRY.register(
+    VenisonKnowledgeProvider()
+)
+
 FOOD_KNOWLEDGE_REGISTRY.register(
     BeefKnowledgeProvider()
 )
