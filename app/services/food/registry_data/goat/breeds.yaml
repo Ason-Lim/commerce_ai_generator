@@ -1,0 +1,103 @@
+registry_id: goat.breeds
+version: 1.0.0
+metadata:
+  category_id: goat
+  parent_category_id: meat
+  description: Goat breed registry
+  language: ko
+  status: active
+data:
+  boer:
+    canonical_name: 보어
+    aliases:
+      - 보어염소
+      - 보어 염소
+      - boer
+      - boer goat
+    score: 94
+    premium: true
+    english_name: Boer
+    origin_country: 남아프리카공화국
+    breed_type: meat
+    flavor_score: 90
+    tenderness_score: 88
+    growth_score: 96
+    rarity_score: 60
+    description: 육용 생산성과 성장성이 높은 대표적인 육용 염소 품종입니다.
+
+  kiko:
+    canonical_name: 키코
+    aliases:
+      - 키코염소
+      - 키코 염소
+      - kiko
+      - kiko goat
+    score: 89
+    premium: true
+    english_name: Kiko
+    origin_country: 뉴질랜드
+    breed_type: meat
+    flavor_score: 87
+    tenderness_score: 85
+    growth_score: 91
+    rarity_score: 70
+    description: 강건성과 성장성이 우수한 뉴질랜드 유래 육용 염소 품종입니다.
+
+  black_bengal:
+    canonical_name: 블랙벵갈
+    aliases:
+      - 블랙 벵갈
+      - 벵갈염소
+      - 벵갈 염소
+      - black bengal
+      - black bengal goat
+    score: 90
+    premium: true
+    english_name: Black Bengal
+    origin_country: 방글라데시
+    breed_type: meat
+    flavor_score: 92
+    tenderness_score: 88
+    growth_score: 76
+    rarity_score: 85
+    description: 육질과 가죽 품질로 알려진 소형 육용 염소 품종입니다.
+
+  saanen:
+    canonical_name: 자넨
+    aliases:
+      - 자넨염소
+      - 자넨 염소
+      - 사넨
+      - 사넨염소
+      - saanen
+      - saanen goat
+    score: 82
+    premium: false
+    english_name: Saanen
+    origin_country: 스위스
+    breed_type: dairy
+    flavor_score: 80
+    tenderness_score: 82
+    growth_score: 84
+    rarity_score: 55
+    description: 대표적인 유용종으로 알려져 있으나 정육으로도 유통될 수 있는 품종입니다.
+
+  korean_black_goat:
+    canonical_name: 한국흑염소
+    aliases:
+      - 한국 흑염소
+      - 토종흑염소
+      - 토종 흑염소
+      - 재래흑염소
+      - 재래 흑염소
+      - korean black goat
+    score: 93
+    premium: true
+    english_name: Korean Black Goat
+    origin_country: 대한민국
+    breed_type: native
+    flavor_score: 93
+    tenderness_score: 84
+    growth_score: 78
+    rarity_score: 82
+    description: 국내 보양식과 전통 요리에 널리 활용되는 토종 계통의 흑염소입니다.

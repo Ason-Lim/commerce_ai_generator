@@ -1,0 +1,242 @@
+registry_id: goat.cuts
+version: 1.0.0
+metadata:
+  category_id: goat
+  parent_category_id: meat
+  description: Goat cut registry
+  language: ko
+  status: active
+data:
+  tenderloin:
+    canonical_name: 염소안심
+    aliases:
+      - 염소 안심
+      - 고트 안심
+      - goat tenderloin
+      - goat fillet
+    score: 96
+    premium: true
+    english_name: Tenderloin
+    cut_group: loin
+    tenderness_score: 96
+    flavor_score: 86
+    fat_score: 30
+    yield_score: 50
+    cooking_methods:
+      - 스테이크
+      - 팬시어링
+      - 저온조리
+    description: 염소고기에서 가장 부드러운 프리미엄 부위 중 하나입니다.
+
+  loin:
+    canonical_name: 염소등심
+    aliases:
+      - 염소 등심
+      - 고트 로인
+      - goat loin
+      - goat backstrap
+    score: 94
+    premium: true
+    english_name: Loin
+    cut_group: loin
+    tenderness_score: 92
+    flavor_score: 89
+    fat_score: 35
+    yield_score: 68
+    cooking_methods:
+      - 스테이크
+      - 구이
+      - 로스트
+    description: 부드러움과 풍미의 균형이 좋은 대표적인 염소고기 부위입니다.
+
+  rack:
+    canonical_name: 염소갈비
+    aliases:
+      - 염소 갈비
+      - 고트랙
+      - 고트 랙
+      - goat rack
+      - rack of goat
+    score: 93
+    premium: true
+    english_name: Rack
+    cut_group: rib
+    tenderness_score: 90
+    flavor_score: 92
+    fat_score: 45
+    yield_score: 58
+    cooking_methods:
+      - 로스트
+      - 오븐구이
+      - 그릴
+    description: 뼈를 포함한 프리미엄 갈비 부위로 구이와 로스트에 적합합니다.
+
+  leg:
+    canonical_name: 염소다리
+    aliases:
+      - 염소 다리
+      - 염소다리살
+      - 염소 다리살
+      - goat leg
+      - leg of goat
+    score: 89
+    premium: false
+    english_name: Leg
+    cut_group: leg
+    tenderness_score: 80
+    flavor_score: 91
+    fat_score: 32
+    yield_score: 92
+    cooking_methods:
+      - 로스트
+      - 수육
+      - 불고기
+    description: 수율이 높고 구이, 수육 및 불고기에 활용하기 좋은 다리 부위입니다.
+
+  shoulder:
+    canonical_name: 염소앞다리
+    aliases:
+      - 염소 앞다리
+      - 염소어깨
+      - 염소 어깨
+      - goat shoulder
+    score: 85
+    premium: false
+    english_name: Shoulder
+    cut_group: shoulder
+    tenderness_score: 72
+    flavor_score: 93
+    fat_score: 40
+    yield_score: 86
+    cooking_methods:
+      - 스튜
+      - 찜
+      - 저온조리
+    description: 결합조직이 있어 탕, 찜 및 장시간 조리에 적합한 부위입니다.
+
+  rib:
+    canonical_name: 염소갈비살
+    aliases:
+      - 염소 갈비살
+      - 고트 립
+      - goat rib
+      - goat ribs
+    score: 88
+    premium: false
+    english_name: Rib
+    cut_group: rib
+    tenderness_score: 82
+    flavor_score: 94
+    fat_score: 48
+    yield_score: 70
+    cooking_methods:
+      - 구이
+      - 찜
+      - 바비큐
+    description: 뼈 주변의 풍미가 진하며 구이와 찜에 적합한 갈비 부위입니다.
+
+  neck:
+    canonical_name: 염소목살
+    aliases:
+      - 염소 목살
+      - 염소목
+      - 염소 목
+      - goat neck
+    score: 82
+    premium: false
+    english_name: Neck
+    cut_group: neck
+    tenderness_score: 66
+    flavor_score: 94
+    fat_score: 35
+    yield_score: 70
+    cooking_methods:
+      - 탕
+      - 스튜
+      - 전골
+    description: 풍미가 강하고 콜라겐이 있어 장시간 조리에 적합한 목 부위입니다.
+
+  shank:
+    canonical_name: 염소사태
+    aliases:
+      - 염소 사태
+      - 고트 생크
+      - goat shank
+    score: 83
+    premium: false
+    english_name: Shank
+    cut_group: leg
+    tenderness_score: 64
+    flavor_score: 95
+    fat_score: 28
+    yield_score: 66
+    cooking_methods:
+      - 브레이징
+      - 탕
+      - 찜
+    description: 콜라겐이 많아 탕과 찜 같은 습열 조리에 적합한 부위입니다.
+
+  breast:
+    canonical_name: 염소가슴살
+    aliases:
+      - 염소 가슴살
+      - 고트 브레스트
+      - goat breast
+    score: 81
+    premium: false
+    english_name: Breast
+    cut_group: breast
+    tenderness_score: 70
+    flavor_score: 89
+    fat_score: 42
+    yield_score: 74
+    cooking_methods:
+      - 구이
+      - 스튜
+      - 저온조리
+    description: 구이와 장시간 조리에 모두 활용할 수 있는 염소 가슴 부위입니다.
+
+  trim:
+    canonical_name: 염소정육
+    aliases:
+      - 염소 정육
+      - 염소고기
+      - 염소 고기
+      - 산양고기
+      - 산양 고기
+      - goat meat
+      - chevon
+    score: 80
+    premium: false
+    english_name: Goat Trim
+    cut_group: trim
+    tenderness_score: 74
+    flavor_score: 88
+    fat_score: 32
+    yield_score: 90
+    cooking_methods:
+      - 불고기
+      - 탕
+      - 전골
+    description: 여러 조리에 활용할 수 있는 일반 염소 정육입니다.
+
+  whole:
+    canonical_name: 통염소
+    aliases:
+      - 통 염소
+      - 염소 한 마리
+      - whole goat
+      - whole goat carcass
+    score: 76
+    premium: false
+    english_name: Whole Goat
+    cut_group: whole
+    tenderness_score: 70
+    flavor_score: 88
+    fat_score: 34
+    yield_score: 96
+    cooking_methods:
+      - 정육
+      - 분할
+      - 통구이
+    description: 부위별 분할 전의 전체 도체 또는 통염소 상품입니다.

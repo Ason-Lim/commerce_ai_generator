@@ -1,0 +1,104 @@
+registry_id: goat.types
+version: 1.0.0
+metadata:
+  category_id: goat
+  parent_category_id: meat
+  description: Goat meat type registry
+  language: ko
+  status: active
+data:
+  kid:
+    canonical_name: 어린염소
+    aliases:
+      - 어린 염소
+      - 키드
+      - 키드고기
+      - kid goat
+      - kid meat
+      - cabrito
+    type_category: kid
+    score: 94
+    premium: true
+    flavor_intensity: mild
+    tenderness_level: high
+    typical_uses:
+      - 구이
+      - 스테이크
+      - 로스트
+    description: 어린 염소에서 생산되어 비교적 부드럽고 풍미가 순한 염소고기입니다.
+
+  young_goat:
+    canonical_name: 영고트
+    aliases:
+      - 영 고트
+      - 젊은염소
+      - 젊은 염소
+      - young goat
+      - young goat meat
+    type_category: young_goat
+    score: 90
+    premium: true
+    flavor_intensity: mild
+    tenderness_level: high
+    typical_uses:
+      - 구이
+      - 바비큐
+      - 로스트
+    description: 성체 이전의 염소에서 생산되어 육질과 풍미의 균형이 좋은 유형입니다.
+
+  adult_goat:
+    canonical_name: 성체염소
+    aliases:
+      - 성체 염소
+      - 어른염소
+      - adult goat
+      - mature goat
+      - chevon
+    type_category: adult_goat
+    score: 84
+    premium: false
+    flavor_intensity: strong
+    tenderness_level: medium
+    typical_uses:
+      - 탕
+      - 스튜
+      - 찜
+    description: 풍미가 비교적 진하며 장시간 조리에 적합한 성체 염소고기입니다.
+
+  black_goat:
+    canonical_name: 흑염소
+    aliases:
+      - 흑 염소
+      - 검은염소
+      - 검은 염소
+      - black goat
+      - black goat meat
+    type_category: black_goat
+    score: 91
+    premium: true
+    flavor_intensity: strong
+    tenderness_level: medium
+    typical_uses:
+      - 탕
+      - 전골
+      - 수육
+    description: 국내 시장에서 건강식 및 보양식 원료로 널리 알려진 흑염소고기 유형입니다.
+
+  fresh_goat:
+    canonical_name: 생염소고기
+    aliases:
+      - 생 염소고기
+      - 신선 염소고기
+      - 염소 생고기
+      - fresh goat
+      - fresh goat meat
+    type_category: fresh_goat
+    score: 86
+    premium: false
+    flavor_intensity: medium
+    tenderness_level: medium
+    typical_uses:
+      - 구이
+      - 전골
+      - 불고기
+    description: 훈연이나 건조 가공을 하지 않은 신선 염소 정육 유형입니다.
