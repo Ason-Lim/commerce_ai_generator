@@ -1,0 +1,89 @@
+registry_id: cheese.milk_sources
+version: 1.0.0
+metadata:
+  category_id: cheese
+  description: Cheese milk source registry
+  language: ko
+  status: active
+data:
+  cow:
+    canonical_name: 우유
+    aliases:
+      - 소우유
+      - 소 우유
+      - 젖소우유
+      - 젖소 우유
+      - cow milk
+      - cows milk
+      - cow's milk
+      - bovine milk
+    source_category: cow
+    score: 84
+    premium: false
+    richness_score: 82
+    availability_score: 98
+    description: 가장 널리 사용되는 치즈 원유입니다.
+
+  goat:
+    canonical_name: 산양유
+    aliases:
+      - 염소유
+      - 염소 우유
+      - 산양 우유
+      - goat milk
+      - goat's milk
+      - goats milk
+      - chevre
+      - chèvre
+    source_category: goat
+    score: 91
+    premium: true
+    richness_score: 87
+    availability_score: 68
+    description: 산뜻한 산미와 고유한 향을 나타낼 수 있는 염소 원유입니다.
+
+  sheep:
+    canonical_name: 양유
+    aliases:
+      - 양 우유
+      - sheep milk
+      - sheep's milk
+      - sheeps milk
+      - ewe milk
+      - ewe's milk
+    source_category: sheep
+    score: 94
+    premium: true
+    richness_score: 95
+    availability_score: 58
+    description: 지방과 고형분이 풍부하여 농축된 풍미를 형성하기 좋은 양 원유입니다.
+
+  buffalo:
+    canonical_name: 물소유
+    aliases:
+      - 물소 우유
+      - 버팔로 밀크
+      - buffalo milk
+      - buffalo's milk
+      - water buffalo milk
+    source_category: buffalo
+    score: 95
+    premium: true
+    richness_score: 96
+    availability_score: 52
+    description: 높은 유지방과 풍부한 질감을 가진 물소 원유입니다.
+
+  mixed:
+    canonical_name: 혼합유
+    aliases:
+      - 혼합 원유
+      - 혼합원유
+      - mixed milk
+      - blended milk
+      - mixed-milk
+    source_category: mixed
+    score: 86
+    premium: false
+    richness_score: 88
+    availability_score: 70
+    description: 두 종류 이상의 원유를 혼합하여 제조하는 치즈 원유 유형입니다.

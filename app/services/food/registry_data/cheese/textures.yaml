@@ -1,0 +1,119 @@
+registry_id: cheese.textures
+version: 1.0.0
+metadata:
+  category_id: cheese
+  description: Cheese texture registry
+  language: ko
+  status: active
+data:
+  fresh:
+    canonical_name: 신선
+    aliases:
+      - 프레시
+      - 생치즈
+      - 생 치즈
+      - fresh
+      - fresh cheese
+      - unripened
+    texture_category: fresh
+    score: 82
+    premium: false
+    firmness_score: 20
+    moisture_score: 92
+    description: 숙성을 거의 하지 않아 수분이 많고 부드러운 질감입니다.
+
+  soft:
+    canonical_name: 연성
+    aliases:
+      - 소프트
+      - 부드러운
+      - 부드러운 치즈
+      - soft
+      - soft cheese
+      - creamy
+    texture_category: soft
+    score: 89
+    premium: true
+    firmness_score: 30
+    moisture_score: 82
+    description: 눌렀을 때 쉽게 변형되고 크리미한 특성을 보이는 질감입니다.
+
+  semi_soft:
+    canonical_name: 반연성
+    aliases:
+      - 세미소프트
+      - 세미 소프트
+      - semi soft
+      - semi-soft
+      - semi soft cheese
+    texture_category: semi_soft
+    score: 86
+    premium: false
+    firmness_score: 48
+    moisture_score: 68
+    description: 연성과 반경질 사이의 유연하고 촉촉한 질감입니다.
+
+  semi_hard:
+    canonical_name: 반경질
+    aliases:
+      - 세미하드
+      - 세미 하드
+      - 세미 하드 치즈
+      - 세미하드 치즈
+      - semi hard
+      - semi-hard
+      - semi hard cheese
+      - semi-hard cheese
+    texture_category: semi_hard
+    score: 88
+    premium: true
+    firmness_score: 68
+    moisture_score: 48
+    description: 형태 유지력이 좋으면서도 절단하기 쉬운 중간 수준의 단단한 질감입니다.
+
+  hard:
+    canonical_name: 경질
+    aliases:
+      - 하드치즈
+      - 하드 치즈
+      - 단단한 치즈
+      - hard
+      - hard cheese
+      - firm cheese
+    texture_category: hard
+    score: 92
+    premium: true
+    firmness_score: 90
+    moisture_score: 25
+    description: 수분이 적고 단단하며 장기 숙성에 적합한 질감입니다.
+
+  crumbly:
+    canonical_name: 부서지는 질감
+    aliases:
+      - 크럼블리
+      - 잘 부서지는
+      - 부서지는 치즈
+      - crumbly
+      - crumbly cheese
+    texture_category: crumbly
+    score: 87
+    premium: false
+    firmness_score: 72
+    moisture_score: 35
+    description: 절단하거나 눌렀을 때 작은 조각으로 쉽게 부서지는 질감입니다.
+
+  spreadable:
+    canonical_name: 스프레드형
+    aliases:
+      - 스프레더블
+      - 발라먹는
+      - 발라 먹는
+      - spreadable
+      - cheese spread
+      - spread cheese
+    texture_category: spreadable
+    score: 78
+    premium: false
+    firmness_score: 10
+    moisture_score: 88
+    description: 빵이나 크래커에 쉽게 발라 먹을 수 있는 매우 부드러운 질감입니다.

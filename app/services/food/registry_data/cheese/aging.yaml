@@ -1,0 +1,95 @@
+registry_id: cheese.aging
+version: 1.0.0
+metadata:
+  category_id: cheese
+  description: Cheese aging registry
+  language: ko
+  status: active
+data:
+  fresh:
+    canonical_name: 비숙성
+    aliases:
+      - 무숙성
+      - 숙성하지 않은
+      - 프레시
+      - fresh
+      - unripened
+      - no aging
+    aging_category: fresh
+    score: 78
+    premium: false
+    minimum_months: 0
+    maximum_months: 0
+    flavor_intensity: mild
+    description: 숙성 과정을 거의 거치지 않고 신선한 상태로 소비하는 유형입니다.
+
+  short_aged:
+    canonical_name: 단기숙성
+    aliases:
+      - 단기 숙성
+      - 짧은 숙성
+      - short aged
+      - short-aged
+      - young cheese
+      - mild aged
+    aging_category: short_aged
+    score: 84
+    premium: false
+    minimum_months: 1
+    maximum_months: 3
+    flavor_intensity: mild
+    description: 약 1개월에서 3개월 정도의 비교적 짧은 숙성 유형입니다.
+
+  medium_aged:
+    canonical_name: 중기숙성
+    aliases:
+      - 중기 숙성
+      - 중간 숙성
+      - medium aged
+      - medium-aged
+      - matured
+      - mature cheese
+    aging_category: medium_aged
+    score: 89
+    premium: true
+    minimum_months: 4
+    maximum_months: 11
+    flavor_intensity: medium
+    description: 약 4개월에서 11개월 동안 풍미와 조직을 발달시킨 숙성 유형입니다.
+
+  long_aged:
+    canonical_name: 장기숙성
+    aliases:
+      - 장기 숙성
+      - 오래 숙성
+      - long aged
+      - long-aged
+      - aged 12 months
+      - 12개월 숙성
+      - 1년 숙성
+    aging_category: long_aged
+    score: 94
+    premium: true
+    minimum_months: 12
+    maximum_months: 23
+    flavor_intensity: strong
+    description: 12개월 이상 숙성하여 풍미가 깊고 조직이 단단해지는 유형입니다.
+
+  extra_aged:
+    canonical_name: 초장기숙성
+    aliases:
+      - 초장기 숙성
+      - 엑스트라 에이지드
+      - extra aged
+      - extra-aged
+      - aged 24 months
+      - 24개월 숙성
+      - 2년 숙성
+      - reserve
+    aging_category: extra_aged
+    score: 97
+    premium: true
+    minimum_months: 24
+    maximum_months: null
+    flavor_intensity: intense
+    description: 24개월 이상 장기간 숙성하여 매우 농축된 풍미를 형성하는 유형입니다.

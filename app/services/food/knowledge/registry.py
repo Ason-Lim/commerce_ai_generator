@@ -7,6 +7,9 @@ from app.services.food.knowledge.base import FoodKnowledgeProvider
 from app.services.food.knowledge.fruit.provider import (
     FruitKnowledgeProvider,
 )
+from app.services.food.knowledge.cheese.provider import (
+    CheeseKnowledgeProvider,
+)
 from app.services.food.knowledge.meat.beef.provider import (
     BeefKnowledgeProvider,
 )
@@ -153,6 +156,9 @@ FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
 
 FOOD_KNOWLEDGE_REGISTRY.register(
     FruitKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    CheeseKnowledgeProvider()
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     VenisonKnowledgeProvider()

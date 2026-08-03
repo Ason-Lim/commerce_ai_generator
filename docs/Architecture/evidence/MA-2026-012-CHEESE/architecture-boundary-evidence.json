@@ -1,0 +1,417 @@
+{
+  "verifier_id": "architecture.boundary",
+  "verifier_name": "Architecture Boundary Verifier",
+  "target": "app/services/food/knowledge/cheese",
+  "status": "PASS",
+  "summary": "Architecture boundary verification passed.",
+  "checks": [
+    {
+      "check_id": "boundary.parser.parser.py.syntax",
+      "title": "Parser Layer syntax",
+      "status": "PASS",
+      "summary": "parser.py parsed successfully.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.parser.parser.py.imports",
+      "title": "Parser Layer imports",
+      "status": "PASS",
+      "summary": "No forbidden layer imports were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.parser.parser.py.calls",
+      "title": "Parser Layer calls",
+      "status": "PASS",
+      "summary": "No forbidden layer calls were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.parser.parser.py.external_dependencies",
+      "title": "Parser Layer external dependencies",
+      "status": "PASS",
+      "summary": "No forbidden external dependencies were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.parser.parser_models.py.syntax",
+      "title": "Parser Layer syntax",
+      "status": "PASS",
+      "summary": "parser_models.py parsed successfully.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.parser.parser_models.py.imports",
+      "title": "Parser Layer imports",
+      "status": "PASS",
+      "summary": "No forbidden layer imports were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.parser.parser_models.py.calls",
+      "title": "Parser Layer calls",
+      "status": "PASS",
+      "summary": "No forbidden layer calls were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.parser.parser_models.py.external_dependencies",
+      "title": "Parser Layer external dependencies",
+      "status": "PASS",
+      "summary": "No forbidden external dependencies were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.attributes.attributes.py.syntax",
+      "title": "Attribute Layer syntax",
+      "status": "PASS",
+      "summary": "attributes.py parsed successfully.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.attributes.attributes.py.imports",
+      "title": "Attribute Layer imports",
+      "status": "PASS",
+      "summary": "No forbidden layer imports were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.attributes.attributes.py.calls",
+      "title": "Attribute Layer calls",
+      "status": "PASS",
+      "summary": "No forbidden layer calls were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.attributes.attributes.py.external_dependencies",
+      "title": "Attribute Layer external dependencies",
+      "status": "PASS",
+      "summary": "No forbidden external dependencies were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.scoring.scoring.py.syntax",
+      "title": "Scoring Layer syntax",
+      "status": "PASS",
+      "summary": "scoring.py parsed successfully.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.scoring.scoring.py.imports",
+      "title": "Scoring Layer imports",
+      "status": "PASS",
+      "summary": "No forbidden layer imports were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.scoring.scoring.py.calls",
+      "title": "Scoring Layer calls",
+      "status": "PASS",
+      "summary": "No forbidden layer calls were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.scoring.scoring.py.external_dependencies",
+      "title": "Scoring Layer external dependencies",
+      "status": "PASS",
+      "summary": "No forbidden external dependencies were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.rules.rules.py.syntax",
+      "title": "Rule Layer syntax",
+      "status": "PASS",
+      "summary": "rules.py parsed successfully.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.rules.rules.py.imports",
+      "title": "Rule Layer imports",
+      "status": "PASS",
+      "summary": "No forbidden layer imports were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.rules.rules.py.calls",
+      "title": "Rule Layer calls",
+      "status": "PASS",
+      "summary": "No forbidden layer calls were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.rules.rules.py.external_dependencies",
+      "title": "Rule Layer external dependencies",
+      "status": "PASS",
+      "summary": "No forbidden external dependencies were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.provider.provider.py.syntax",
+      "title": "Provider Layer syntax",
+      "status": "PASS",
+      "summary": "provider.py parsed successfully.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.provider.provider.py.imports",
+      "title": "Provider Layer imports",
+      "status": "PASS",
+      "summary": "No forbidden layer imports were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.provider.provider.py.calls",
+      "title": "Provider Layer calls",
+      "status": "PASS",
+      "summary": "No forbidden layer calls were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.provider.provider.py.external_dependencies",
+      "title": "Provider Layer external dependencies",
+      "status": "PASS",
+      "summary": "No forbidden external dependencies were found.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.domain.required_files",
+      "title": "Required domain files",
+      "status": "PASS",
+      "summary": "All required domain files are present.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.provider.inheritance",
+      "title": "Provider inheritance",
+      "status": "PASS",
+      "summary": "Provider inherits from FoodKnowledgeProvider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "boundary.provider.flow",
+      "title": "Provider orchestration flow",
+      "status": "PASS",
+      "summary": "Required Provider call sequence was found.",
+      "details": [
+        "Required: parse_product -> build_cheese_attributes -> calculate_cheese_scores -> apply_cheese_rules -> calculate_cheese_final_score -> FoodKnowledgeResult",
+        "Observed: isinstance -> TypeError -> dict -> extract_cheese_product_name -> parse_product -> build_cheese_attributes -> calculate_cheese_scores -> apply_cheese_rules -> calculate_cheese_final_score -> FoodKnowledgeResult"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "boundary-source-parser-parser.py",
+      "kind": "boundary",
+      "title": "Parser Layer: parser.py",
+      "location": "app/services/food/knowledge/cheese/parser.py",
+      "summary": "AST source scan result.",
+      "metadata": {
+        "imports": 16,
+        "calls": 101,
+        "classes": 1,
+        "functions": [
+          "__init__",
+          "parse",
+          "parse_product",
+          "_parse_text",
+          "_build_result",
+          "_build_product_text",
+          "_match_structured_first",
+          "_canonical_name",
+          "_match_confidence",
+          "_detected_keywords",
+          "_build_warnings",
+          "_all_text_fields",
+          "_matched_source_fields",
+          "_stringify_value",
+          "_deduplicate_texts"
+        ],
+        "syntax_error": null
+      }
+    },
+    {
+      "evidence_id": "boundary-source-parser-parser_models.py",
+      "kind": "boundary",
+      "title": "Parser Layer: parser_models.py",
+      "location": "app/services/food/knowledge/cheese/parser_models.py",
+      "summary": "AST source scan result.",
+      "metadata": {
+        "imports": 10,
+        "calls": 30,
+        "classes": 1,
+        "functions": [
+          "__post_init__",
+          "has_cheese_type",
+          "has_milk_source",
+          "has_origin",
+          "has_texture",
+          "has_aging",
+          "matched_field_count",
+          "is_complete",
+          "is_usable",
+          "has_match",
+          "to_dict",
+          "_deduplicate_strings"
+        ],
+        "syntax_error": null
+      }
+    },
+    {
+      "evidence_id": "boundary-source-attributes-attributes.py",
+      "kind": "boundary",
+      "title": "Attribute Layer: attributes.py",
+      "location": "app/services/food/knowledge/cheese/attributes.py",
+      "summary": "AST source scan result.",
+      "metadata": {
+        "imports": 4,
+        "calls": 93,
+        "classes": 0,
+        "functions": [
+          "extract_cheese_product_name",
+          "extract_cheese_country_text",
+          "extract_cheese_country_code",
+          "extract_cheese_weight",
+          "extract_cheese_storage_type",
+          "extract_cheese_packaging_type",
+          "extract_cheese_pasteurization",
+          "extract_cheese_certifications",
+          "extract_cheese_fat_content",
+          "extract_cheese_rind_type",
+          "build_cheese_attributes",
+          "_deduplicate_strings"
+        ],
+        "syntax_error": null
+      }
+    },
+    {
+      "evidence_id": "boundary-source-scoring-scoring.py",
+      "kind": "boundary",
+      "title": "Scoring Layer: scoring.py",
+      "location": "app/services/food/knowledge/cheese/scoring.py",
+      "summary": "AST source scan result.",
+      "metadata": {
+        "imports": 4,
+        "calls": 61,
+        "classes": 0,
+        "functions": [
+          "safe_float",
+          "clamp_score",
+          "calculate_available_average",
+          "calculate_available_weighted_score",
+          "extract_registry_scores",
+          "calculate_cheese_knowledge_score",
+          "calculate_cheese_scores",
+          "calculate_cheese_final_score"
+        ],
+        "syntax_error": null
+      }
+    },
+    {
+      "evidence_id": "boundary-source-rules-rules.py",
+      "kind": "boundary",
+      "title": "Rule Layer: rules.py",
+      "location": "app/services/food/knowledge/cheese/rules.py",
+      "summary": "AST source scan result.",
+      "metadata": {
+        "imports": 5,
+        "calls": 73,
+        "classes": 0,
+        "functions": [
+          "deduplicate_strings",
+          "apply_cheese_rules",
+          "_premium_fields",
+          "_safe_score",
+          "_optional_text"
+        ],
+        "syntax_error": null
+      }
+    },
+    {
+      "evidence_id": "boundary-source-provider-provider.py",
+      "kind": "boundary",
+      "title": "Provider Layer: provider.py",
+      "location": "app/services/food/knowledge/cheese/provider.py",
+      "summary": "AST source scan result.",
+      "metadata": {
+        "imports": 12,
+        "calls": 22,
+        "classes": 1,
+        "functions": [
+          "__init__",
+          "supports",
+          "analyze"
+        ],
+        "syntax_error": null
+      }
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "metadata": {
+    "verifier_version": "1.0.0",
+    "domain_id": "10_Cheese",
+    "architecture_id": "MA-2026-012",
+    "scanned_files": [
+      "attributes.py",
+      "parser.py",
+      "parser_models.py",
+      "provider.py",
+      "rules.py",
+      "scoring.py"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+tests/services/food/knowledge/cheese/test_cheese_attributes.py
+tests/services/food/knowledge/cheese/test_cheese_parser_models.py
+tests/services/food/knowledge/cheese/test_cheese_parser.py
+tests/services/food/knowledge/cheese/test_cheese_provider.py
+tests/services/food/knowledge/cheese/test_cheese_registries.py
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py
+tests/services/food/knowledge/cheese/test_cheese_rules.py
+tests/services/food/knowledge/cheese/test_cheese_scoring.py

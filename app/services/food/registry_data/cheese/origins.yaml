@@ -1,0 +1,108 @@
+registry_id: cheese.origins
+version: 1.0.0
+metadata:
+  category_id: cheese
+  description: Cheese origin registry
+  language: ko
+  status: active
+data:
+  italy:
+    canonical_name: 이탈리아
+    aliases:
+      - 이태리
+      - 이탈리아산
+      - italy
+      - italian
+      - made in italy
+    country_code: IT
+    score: 95
+    premium: true
+    tradition_score: 98
+    description: 다양한 경질·연질·파스타 필라타 치즈 전통을 가진 대표적인 치즈 생산국입니다.
+
+  france:
+    canonical_name: 프랑스
+    aliases:
+      - 프랑스산
+      - france
+      - french
+      - made in france
+    country_code: FR
+    score: 96
+    premium: true
+    tradition_score: 99
+    description: 연성 숙성 치즈와 블루치즈를 포함한 다양한 전통 치즈 생산국입니다.
+
+  netherlands:
+    canonical_name: 네덜란드
+    aliases:
+      - 네덜란드산
+      - holland
+      - dutch
+      - netherlands
+      - made in holland
+    country_code: NL
+    score: 92
+    premium: true
+    tradition_score: 94
+    description: 고다와 에담 등 반경질 치즈로 잘 알려진 생산국입니다.
+
+  united_kingdom:
+    canonical_name: 영국
+    aliases:
+      - 영국산
+      - 잉글랜드
+      - uk
+      - united kingdom
+      - british
+      - england
+      - english
+    country_code: GB
+    score: 91
+    premium: true
+    tradition_score: 94
+    description: 체다와 스틸턴 등 전통 치즈를 보유한 생산국입니다.
+
+  switzerland:
+    canonical_name: 스위스
+    aliases:
+      - 스위스산
+      - swiss
+      - switzerland
+      - made in switzerland
+    country_code: CH
+    score: 94
+    premium: true
+    tradition_score: 97
+    description: 알파인 계열의 경질 및 반경질 치즈 전통을 가진 생산국입니다.
+
+  united_states:
+    canonical_name: 미국
+    aliases:
+      - 미국산
+      - usa
+      - united states
+      - american
+      - u.s.
+      - us cheese
+    country_code: US
+    score: 82
+    premium: false
+    tradition_score: 78
+    description: 전통 스타일부터 현대적인 가공 치즈까지 폭넓게 생산하는 국가입니다.
+
+  korea:
+    canonical_name: 대한민국
+    aliases:
+      - 한국
+      - 국내산
+      - 국산
+      - 한국산
+      - korea
+      - korean
+      - south korea
+    country_code: KR
+    score: 82
+    premium: false
+    tradition_score: 72
+    description: 국내 원유와 지역 농가를 기반으로 다양한 치즈를 생산하는 국가입니다.

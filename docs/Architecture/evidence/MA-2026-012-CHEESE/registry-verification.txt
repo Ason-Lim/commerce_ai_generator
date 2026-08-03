@@ -1,0 +1,15 @@
+DISCOVERED REGISTRIES:
+- cheese.aging
+- cheese.milk_sources
+- cheese.origins
+- cheese.textures
+- cheese.types
+
+REGISTRY ENTRY COUNTS:
+- cheese.types: 8 entries
+- cheese.milk_sources: 5 entries
+- cheese.origins: 7 entries
+- cheese.textures: 7 entries
+- cheese.aging: 5 entries
+
+REGISTRY VERIFICATION: PASS

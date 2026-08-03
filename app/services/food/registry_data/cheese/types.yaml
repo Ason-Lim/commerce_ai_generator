@@ -1,0 +1,157 @@
+registry_id: cheese.types
+version: 1.0.0
+metadata:
+  category_id: cheese
+  description: Cheese type registry
+  language: ko
+  status: active
+data:
+  mozzarella:
+    canonical_name: 모차렐라
+    aliases:
+      - 모짜렐라
+      - mozzarella
+      - fresh mozzarella
+      - 피오르 디 라테
+      - fior di latte
+    type_category: pasta_filata
+    score: 88
+    premium: false
+    flavor_score: 72
+    versatility_score: 95
+    typical_uses:
+      - 피자
+      - 샐러드
+      - 파스타
+    description: 가열하여 늘인 커드를 사용하는 대표적인 파스타 필라타 치즈입니다.
+
+  cheddar:
+    canonical_name: 체다
+    aliases:
+      - 체다치즈
+      - 체다 치즈
+      - cheddar
+      - cheddar cheese
+    type_category: hard
+    score: 86
+    premium: false
+    flavor_score: 85
+    versatility_score: 94
+    typical_uses:
+      - 샌드위치
+      - 버거
+      - 소스
+    description: 숙성 정도에 따라 순한 맛부터 강한 맛까지 나타나는 대표적인 경질 치즈입니다.
+
+  brie:
+    canonical_name: 브리
+    aliases:
+      - 브리치즈
+      - 브리 치즈
+      - brie
+      - brie cheese
+    type_category: soft_ripened
+    score: 92
+    premium: true
+    flavor_score: 88
+    versatility_score: 82
+    typical_uses:
+      - 치즈 플래터
+      - 와인 페어링
+      - 베이킹
+    description: 흰 곰팡이 외피와 부드러운 내부 조직을 가진 연성 숙성 치즈입니다.
+
+  camembert:
+    canonical_name: 카망베르
+    aliases:
+      - 까망베르
+      - 카망베르치즈
+      - 카망베르 치즈
+      - camembert
+      - camembert cheese
+    type_category: soft_ripened
+    score: 92
+    premium: true
+    flavor_score: 90
+    versatility_score: 80
+    typical_uses:
+      - 치즈 플래터
+      - 와인 페어링
+      - 오븐구이
+    description: 흰 곰팡이 외피와 크리미한 질감을 가진 프랑스 계열 연성 숙성 치즈입니다.
+
+  gouda:
+    canonical_name: 고다
+    aliases:
+      - 하우다
+      - 고다치즈
+      - 고다 치즈
+      - gouda
+      - gouda cheese
+    type_category: semi_hard
+    score: 89
+    premium: true
+    flavor_score: 87
+    versatility_score: 90
+    typical_uses:
+      - 샌드위치
+      - 치즈 플래터
+      - 그라탱
+    description: 숙성 기간에 따라 부드러운 맛부터 깊고 농축된 맛까지 나타나는 반경질 치즈입니다.
+
+  parmesan:
+    canonical_name: 파르미자노 레지아노
+    aliases:
+      - 파르미자노
+      - 파마산
+      - 파마산치즈
+      - 파마산 치즈
+      - parmigiano reggiano
+      - parmigiano
+      - parmesan
+      - parmesan cheese
+    type_category: hard
+    score: 96
+    premium: true
+    flavor_score: 96
+    versatility_score: 93
+    typical_uses:
+      - 파스타
+      - 리소토
+      - 샐러드
+    description: 장기간 숙성하여 단단한 질감과 깊은 감칠맛을 형성하는 이탈리아 계열 경질 치즈입니다.
+
+  blue_cheese:
+    canonical_name: 블루치즈
+    aliases:
+      - 블루 치즈
+      - 푸른곰팡이치즈
+      - 푸른 곰팡이 치즈
+      - blue cheese
+      - bleu cheese
+    type_category: blue
+    score: 91
+    premium: true
+    flavor_score: 96
+    versatility_score: 75
+    typical_uses:
+      - 치즈 플래터
+      - 샐러드
+      - 소스
+    description: 푸른곰팡이를 이용해 특유의 강한 풍미를 형성한 치즈 유형입니다.
+
+  cream_cheese:
+    canonical_name: 크림치즈
+    aliases:
+      - 크림 치즈
+      - cream cheese
+    type_category: fresh
+    score: 80
+    premium: false
+    flavor_score: 70
+    versatility_score: 94
+    typical_uses:
+      - 베이글
+      - 베이킹
+      - 디저트
+    description: 숙성을 거의 하지 않고 부드럽게 발라 먹는 신선 치즈 유형입니다.
