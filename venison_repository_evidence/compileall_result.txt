@@ -1,0 +1,10 @@
+# Compile Verification
+
+
+Exit Code: 0
+로그아웃
+
+Saving session...
+...saving history...truncating history files...
+...completed.
+Deleting expired sessions...none found.

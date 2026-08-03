@@ -1,0 +1,17 @@
+--- Generator Dependency ---
+
+--- Cross-Domain Imports ---
+
+--- Pipeline Calls ---
+app/services/food/knowledge/meat/goat/provider.py:10:    build_goat_attributes,
+app/services/food/knowledge/meat/goat/provider.py:17:    apply_goat_rules,
+app/services/food/knowledge/meat/goat/provider.py:20:    calculate_goat_final_score,
+app/services/food/knowledge/meat/goat/provider.py:21:    calculate_goat_scores,
+app/services/food/knowledge/meat/goat/provider.py:25:    FoodKnowledgeResult,
+app/services/food/knowledge/meat/goat/provider.py:167:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/meat/goat/provider.py:187:            self.parser.parse_product(
+app/services/food/knowledge/meat/goat/provider.py:192:        attributes = build_goat_attributes(
+app/services/food/knowledge/meat/goat/provider.py:197:        scores = calculate_goat_scores(
+app/services/food/knowledge/meat/goat/provider.py:204:            apply_goat_rules(
+app/services/food/knowledge/meat/goat/provider.py:212:            calculate_goat_final_score(
+app/services/food/knowledge/meat/goat/provider.py:217:        return FoodKnowledgeResult(

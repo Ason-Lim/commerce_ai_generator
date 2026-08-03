@@ -1,0 +1,8 @@
+8142833236fbf7a310873243db836395bbd6b03a7c50660cb11a203c30891b19  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/__init__.py
+55ad000aa2a8687cbf16d14a0a6712e84335fd89b5babe099dc5c53c4c0edcfc  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/type_registry.py
+8f715427f0c3f9325fafe47970fde6f6d193c70e1c691acd459cfc3c3e65cb99  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/breed_registry.py
+482897cda8cbd0db97208cc92001ca24c14865d7f3a8de295298274600294ef0  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/cut_registry.py
+3adb299056b15855d9d225a3061c9caa4ff4127e6781ce4126a327b3aba0fef9  /Users/mom/commerce_ai_generator/app/services/food/registry_data/venison/types.yaml
+cb0db883152fa1e44af26805122cf849755363c8a25aa307739037237e1bbaad  /Users/mom/commerce_ai_generator/app/services/food/registry_data/venison/breeds.yaml
+7abedbea3ce321c7591361f124d3c5fe2d2fa0ab80813e2b7a84767750c8f8c7  /Users/mom/commerce_ai_generator/app/services/food/registry_data/venison/cuts.yaml
+3c554a9c68c832574b4627d71ea33e4e6bcb9123ef01b357b616db152520e7e2  /Users/mom/commerce_ai_generator/tests/services/food/knowledge/meat/venison/test_venison_registries.py

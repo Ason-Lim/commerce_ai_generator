@@ -1,0 +1,26 @@
+# Venison Phase 5.1 Evidence
+
+## Problem
+- Generic product_name alias selected trim
+- Explicit cut field expected tenderloin
+
+## Resolution
+- Structured type field priority
+- Structured breed field priority
+- Structured cut field priority
+- Combined text retained as fallback
+
+## Architecture Scope
+- Modified: venison/parser.py
+- Modified: test_venison_parser.py
+- Common Registry: unchanged
+- Registry YAML: unchanged
+- Other domains: unchanged
+
+## Representative Result
+- type: young_deer / 어린사슴
+- breed: red_deer / 레드디어
+- cut: tenderloin / 사슴안심
+
+## Backup
+- /Users/mom/commerce_ai_generator/venison_repository_evidence/parser.py.phase5_pre_fix.bak

@@ -1,0 +1,3 @@
+{"decision_id": "D-001", "decision": "Use a three-layer archive model: Raw Record, Interpreted Research Record, Official Institutional Record.", "status": "proposed_for_adoption", "source_fidelity": "direct_context"}
+{"decision_id": "D-002", "decision": "Name the archive Institution Engineering Research Archive (IERA).", "status": "proposed_for_adoption", "source_fidelity": "direct_context"}
+{"decision_id": "D-003", "decision": "Do not silently reconstruct unavailable verbatim conversation text.", "status": "adopted_for_snapshot", "source_fidelity": "direct_context"}

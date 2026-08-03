@@ -1,0 +1,23 @@
+registry_id: chicken.cuts
+version: "1.0.0"
+metadata:
+  category_id: chicken
+  parent_category_id: meat
+  description: 닭고기 부위 Registry
+  language: ko
+  status: active
+data:
+  whole_chicken: {canonical_name: 통닭, aliases: [닭한마리, 닭 한마리, whole chicken, whole bird], english_name: Whole Chicken, cut_group: whole, score: 82, premium: false, tenderness_score: 78, flavor_score: 82, fat_score: 72, yield_score: 90, cooking_methods: [roasting, boiling, frying, soup], description: 닭 한 마리 전체를 사용하는 상품}
+  breast: {canonical_name: 닭가슴살, aliases: [닭 가슴살, chicken breast, breast fillet], english_name: Chicken Breast, cut_group: breast, score: 82, premium: false, tenderness_score: 78, flavor_score: 70, fat_score: 25, yield_score: 88, cooking_methods: [grilling, pan_searing, boiling, roasting], description: 지방이 적고 담백한 닭 가슴 부위}
+  tenderloin: {canonical_name: 닭안심, aliases: [닭 안심, 치킨 텐더로인, chicken tenderloin, chicken tender], english_name: Chicken Tenderloin, cut_group: breast, score: 86, premium: false, tenderness_score: 92, flavor_score: 72, fat_score: 22, yield_score: 55, cooking_methods: [frying, grilling, pan_searing], description: 가슴살 안쪽의 부드러운 소형 부위}
+  thigh: {canonical_name: 닭다리살, aliases: [닭 다리살, 넓적다리살, 넓적 다리살, chicken thigh, thigh meat], english_name: Chicken Thigh, cut_group: leg, score: 88, premium: false, tenderness_score: 88, flavor_score: 90, fat_score: 78, yield_score: 82, cooking_methods: [grilling, frying, braising, roasting], description: 풍미와 지방감이 비교적 풍부한 넓적다리 부위}
+  drumstick: {canonical_name: 북채, aliases: [닭북채, 닭 북채, chicken drumstick, drumstick], english_name: Chicken Drumstick, cut_group: leg, score: 84, premium: false, tenderness_score: 82, flavor_score: 88, fat_score: 70, yield_score: 78, cooking_methods: [frying, roasting, braising], description: 닭 다리의 아래쪽 부위}
+  whole_leg: {canonical_name: 장각, aliases: [닭장각, 닭 장각, whole leg, chicken whole leg, leg quarter], english_name: Chicken Whole Leg, cut_group: leg, score: 85, premium: false, tenderness_score: 84, flavor_score: 89, fat_score: 74, yield_score: 88, cooking_methods: [roasting, frying, braising], description: 넓적다리와 북채가 연결된 전체 다리 부위}
+  wing: {canonical_name: 닭날개, aliases: [닭 날개, chicken wing, whole wing], english_name: Chicken Wing, cut_group: wing, score: 84, premium: false, tenderness_score: 80, flavor_score: 90, fat_score: 82, yield_score: 58, cooking_methods: [frying, grilling, roasting], description: 봉과 윙중간 등을 포함하는 닭 날개 전체 부위}
+  drumette: {canonical_name: 닭봉, aliases: [닭 봉, 윙봉, 윙 봉, chicken drumette, drumette], english_name: Chicken Drumette, cut_group: wing, score: 86, premium: false, tenderness_score: 84, flavor_score: 90, fat_score: 80, yield_score: 62, cooking_methods: [frying, grilling, roasting], description: 닭 날개의 몸통 쪽에 가까운 봉 형태 부위}
+  wingette: {canonical_name: 윙중간, aliases: [윙 중간, 닭윙중간, 닭 윙중간, wingette, wing flat, chicken flat], english_name: Chicken Wingette, cut_group: wing, score: 85, premium: false, tenderness_score: 80, flavor_score: 90, fat_score: 84, yield_score: 52, cooking_methods: [frying, grilling, roasting], description: 닭 날개의 가운데 평평한 부위}
+  feet: {canonical_name: 닭발, aliases: [닭 발, chicken feet, chicken foot], english_name: Chicken Feet, cut_group: offal, score: 72, premium: false, tenderness_score: 40, flavor_score: 84, fat_score: 48, yield_score: 42, cooking_methods: [braising, grilling, slow_cooking], description: 콜라겐이 풍부하고 양념 조리에 주로 사용되는 부위}
+  gizzard: {canonical_name: 닭근위, aliases: [닭 근위, 닭똥집, 닭 똥집, chicken gizzard, gizzard], english_name: Chicken Gizzard, cut_group: offal, score: 74, premium: false, tenderness_score: 52, flavor_score: 82, fat_score: 35, yield_score: 40, cooking_methods: [grilling, frying, stir_frying], description: 쫄깃한 식감이 특징인 닭의 근위 부위}
+  heart: {canonical_name: 닭염통, aliases: [닭 염통, 닭심장, 닭 심장, chicken heart], english_name: Chicken Heart, cut_group: offal, score: 75, premium: false, tenderness_score: 62, flavor_score: 86, fat_score: 45, yield_score: 32, cooking_methods: [grilling, skewering, stir_frying], description: 풍미가 진하고 꼬치나 구이에 사용되는 심장 부위}
+  liver: {canonical_name: 닭간, aliases: [닭 간, chicken liver], english_name: Chicken Liver, cut_group: offal, score: 72, premium: false, tenderness_score: 72, flavor_score: 88, fat_score: 55, yield_score: 38, cooking_methods: [pan_searing, stir_frying, braising], description: 풍미가 강하고 부드러운 식감의 간 부위}
+  skin: {canonical_name: 닭껍질, aliases: [닭 껍질, chicken skin], english_name: Chicken Skin, cut_group: skin, score: 68, premium: false, tenderness_score: 58, flavor_score: 88, fat_score: 98, yield_score: 45, cooking_methods: [grilling, frying, roasting], description: 지방감과 바삭한 식감으로 활용되는 닭 껍질}

@@ -1,0 +1,10 @@
+provider order: ['fruit', 'venison', 'goat', 'beef', 'lamb', 'chicken', 'duck']
+국내산 어린염소 보어 염소안심 500g -> GoatKnowledgeProvider
+국내산 흑염소 정육 1kg -> GoatKnowledgeProvider
+Boer goat tenderloin -> GoatKnowledgeProvider
+한우 안심 500g -> BeefKnowledgeProvider
+양고기 프렌치랙 -> LambKnowledgeProvider
+닭가슴살 1kg -> ChickenKnowledgeProvider
+훈제오리 슬라이스 -> DuckKnowledgeProvider
+사슴 안심 -> VenisonKnowledgeProvider
+안심 500g -> BeefKnowledgeProvider

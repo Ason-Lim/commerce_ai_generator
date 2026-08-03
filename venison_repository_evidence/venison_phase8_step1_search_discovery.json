@@ -1,0 +1,1158 @@
+{
+  "candidate_files": [
+    {
+      "path": "app/services/analytics_logger.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/brix_analyzer.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/collector_v4_runner.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/collectors/naver_smartstore_json_collector.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/common/url_utils.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/common/weight_utils.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/coupang_api.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/db_product_collector.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/deduplication_engine_v83.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/category_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/base.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/common/__init__.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_model.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/common/normalizer.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/common/parser_utils.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/fruit/parser.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/fruit/provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/breed_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/cut_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/grade_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/parser.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/breed_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/cut_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/parser.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/type_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/breed_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/cut_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/parser.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/type_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/age_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/breed_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/cut_registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/parser.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/__init__.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": false
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/attributes.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": false
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/breed_registry.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/cut_registry.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/parser.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/parser_models.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": false
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/scoring.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": false
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/type_registry.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food/knowledge/models.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/food_intelligence/engines/fruit_engine.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/generator_service.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/impression_logger.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/intent_analyzer.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/kurly_nmart_collector.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/kurly_nmart_collector_v3.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/kurly_review_playwright_collector.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market/__init__.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market/kurly_search_link.py",
+      "path_relevant": true,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market/platform_matcher.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market/registry.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market/search_url_builder.py",
+      "path_relevant": true,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market/ssg_search_link.py",
+      "path_relevant": true,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market_aggregator.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market_collector_v5.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market_collector_v51.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/market_identity_cluster_v53.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/naver_datalab_service.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/naver_shopping_api_collector.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/preference_service.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/price_detail_enricher.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/product_attribute_engine_v8.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/product_family_variant_v6.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/product_identity_cluster_v4.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/product_identity_engine.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/product_identity_engine_v3.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/product_variety_engine_v7.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/recommendation/identity_engine.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/recommendation/market_engine.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/recommendation/recommendation_score_v8.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/recommendation/score_engine.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/recommendation_compare_engine_v62.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/recommendation_pipeline.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/recommendation_story_engine_v61.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/search_context.py",
+      "path_relevant": true,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "app/services/session_context_service.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/chicken/test_chicken_parser.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/chicken/test_chicken_provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/duck/test_duck_parser.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/duck/test_duck_provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/lamb/test_lamb_provider.py",
+      "path_relevant": false,
+      "contains_venison": false,
+      "contains_search_terms": true
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/venison/test_venison_attributes.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": false
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/venison/test_venison_parser.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": true
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/venison/test_venison_registries.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": false
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/venison/test_venison_scoring.py",
+      "path_relevant": false,
+      "contains_venison": true,
+      "contains_search_terms": false
+    }
+  ],
+  "search_symbols": [
+    {
+      "path": "app/services/analytics_logger.py",
+      "line": 17,
+      "type": "FunctionDef",
+      "name": "log_search"
+    },
+    {
+      "path": "app/services/common/url_utils.py",
+      "line": 39,
+      "type": "FunctionDef",
+      "name": "is_search_url"
+    },
+    {
+      "path": "app/services/coupang_api.py",
+      "line": 64,
+      "type": "FunctionDef",
+      "name": "search_coupang_products"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 36,
+      "type": "ClassDef",
+      "name": "AliasCandidate"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 66,
+      "type": "ClassDef",
+      "name": "AliasMatch"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 285,
+      "type": "ClassDef",
+      "name": "BaseAliasRegistry"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 353,
+      "type": "FunctionDef",
+      "name": "aliases_from_raw"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 411,
+      "type": "FunctionDef",
+      "name": "alias_metadata_from_raw"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 558,
+      "type": "FunctionDef",
+      "name": "aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 575,
+      "type": "FunctionDef",
+      "name": "alias_candidates"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 586,
+      "type": "FunctionDef",
+      "name": "_build_alias_index"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/breed_registry.py",
+      "line": 309,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/cut_registry.py",
+      "line": 434,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/grade_registry.py",
+      "line": 257,
+      "type": "FunctionDef",
+      "name": "alias_metadata_from_raw"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/grade_registry.py",
+      "line": 595,
+      "type": "FunctionDef",
+      "name": "aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/grade_registry.py",
+      "line": 649,
+      "type": "FunctionDef",
+      "name": "_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/breed_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/cut_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/type_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/breed_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/cut_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/type_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/age_registry.py",
+      "line": 421,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/breed_registry.py",
+      "line": 401,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/cut_registry.py",
+      "line": 443,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/breed_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/cut_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/type_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/intent_analyzer.py",
+      "line": 101,
+      "type": "FunctionDef",
+      "name": "analyze_user_query"
+    },
+    {
+      "path": "app/services/intent_analyzer.py",
+      "line": 132,
+      "type": "FunctionDef",
+      "name": "build_related_keywords"
+    },
+    {
+      "path": "app/services/market/kurly_search_link.py",
+      "line": 10,
+      "type": "FunctionDef",
+      "name": "build_kurly_search_url"
+    },
+    {
+      "path": "app/services/market/search_url_builder.py",
+      "line": 11,
+      "type": "FunctionDef",
+      "name": "normalize_search_keyword"
+    },
+    {
+      "path": "app/services/market/search_url_builder.py",
+      "line": 43,
+      "type": "FunctionDef",
+      "name": "build_platform_search_url"
+    },
+    {
+      "path": "app/services/market/ssg_search_link.py",
+      "line": 9,
+      "type": "FunctionDef",
+      "name": "build_ssg_search_url"
+    },
+    {
+      "path": "app/services/naver_datalab_service.py",
+      "line": 58,
+      "type": "FunctionDef",
+      "name": "call_naver_datalab_search_trend"
+    },
+    {
+      "path": "app/services/naver_datalab_service.py",
+      "line": 139,
+      "type": "FunctionDef",
+      "name": "summarize_search_trend"
+    },
+    {
+      "path": "app/services/naver_datalab_service.py",
+      "line": 195,
+      "type": "FunctionDef",
+      "name": "get_search_trend_summary"
+    },
+    {
+      "path": "app/services/product_identity_engine.py",
+      "line": 140,
+      "type": "FunctionDef",
+      "name": "is_search_url"
+    },
+    {
+      "path": "app/services/product_identity_engine_v3.py",
+      "line": 181,
+      "type": "FunctionDef",
+      "name": "is_search_url"
+    },
+    {
+      "path": "app/services/recommendation/identity_engine.py",
+      "line": 166,
+      "type": "FunctionDef",
+      "name": "is_kurly_search_identity_weak"
+    },
+    {
+      "path": "app/services/recommendation_pipeline.py",
+      "line": 22,
+      "type": "FunctionDef",
+      "name": "clean_query"
+    },
+    {
+      "path": "app/services/search_context.py",
+      "line": 13,
+      "type": "ClassDef",
+      "name": "SearchContext"
+    },
+    {
+      "path": "app/services/search_context.py",
+      "line": 88,
+      "type": "FunctionDef",
+      "name": "build_search_context"
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/chicken/test_chicken_parser.py",
+      "line": 83,
+      "type": "FunctionDef",
+      "name": "test_parser_preserves_detected_aliases"
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/duck/test_duck_parser.py",
+      "line": 96,
+      "type": "FunctionDef",
+      "name": "test_parser_preserves_detected_aliases"
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/venison/test_venison_parser.py",
+      "line": 137,
+      "type": "FunctionDef",
+      "name": "test_parser_preserves_detected_aliases"
+    }
+  ],
+  "search_imports": [
+    {
+      "path": "app/services/market/__init__.py",
+      "line": 37,
+      "module": "app.services.market.kurly_search_link",
+      "symbols": [
+        "build_kurly_search_url"
+      ]
+    },
+    {
+      "path": "app/services/market/__init__.py",
+      "line": 40,
+      "module": "app.services.market.search_url_builder",
+      "symbols": [
+        "build_platform_search_url",
+        "normalize_platform_name",
+        "normalize_search_keyword"
+      ]
+    },
+    {
+      "path": "app/services/market/__init__.py",
+      "line": 45,
+      "module": "app.services.market.ssg_search_link",
+      "symbols": [
+        "build_ssg_search_url"
+      ]
+    },
+    {
+      "path": "app/services/market/registry.py",
+      "line": 7,
+      "module": "app.services.market.kurly_search_link",
+      "symbols": [
+        "build_kurly_search_url"
+      ]
+    },
+    {
+      "path": "app/services/market/registry.py",
+      "line": 10,
+      "module": "app.services.market.ssg_search_link",
+      "symbols": [
+        "build_ssg_search_url"
+      ]
+    }
+  ],
+  "venison_specific_symbols": [
+    {
+      "path": "app/services/food/knowledge/meat/venison/breed_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/cut_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/type_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/venison/test_venison_parser.py",
+      "line": 137,
+      "type": "FunctionDef",
+      "name": "test_parser_preserves_detected_aliases"
+    }
+  ],
+  "common_search_symbols": [
+    {
+      "path": "app/services/analytics_logger.py",
+      "line": 17,
+      "type": "FunctionDef",
+      "name": "log_search"
+    },
+    {
+      "path": "app/services/common/url_utils.py",
+      "line": 39,
+      "type": "FunctionDef",
+      "name": "is_search_url"
+    },
+    {
+      "path": "app/services/coupang_api.py",
+      "line": 64,
+      "type": "FunctionDef",
+      "name": "search_coupang_products"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 36,
+      "type": "ClassDef",
+      "name": "AliasCandidate"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 66,
+      "type": "ClassDef",
+      "name": "AliasMatch"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 285,
+      "type": "ClassDef",
+      "name": "BaseAliasRegistry"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 353,
+      "type": "FunctionDef",
+      "name": "aliases_from_raw"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 411,
+      "type": "FunctionDef",
+      "name": "alias_metadata_from_raw"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 558,
+      "type": "FunctionDef",
+      "name": "aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 575,
+      "type": "FunctionDef",
+      "name": "alias_candidates"
+    },
+    {
+      "path": "app/services/food/knowledge/common/base_registry.py",
+      "line": 586,
+      "type": "FunctionDef",
+      "name": "_build_alias_index"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/breed_registry.py",
+      "line": 309,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/cut_registry.py",
+      "line": 434,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/grade_registry.py",
+      "line": 257,
+      "type": "FunctionDef",
+      "name": "alias_metadata_from_raw"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/grade_registry.py",
+      "line": 595,
+      "type": "FunctionDef",
+      "name": "aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/beef/grade_registry.py",
+      "line": 649,
+      "type": "FunctionDef",
+      "name": "_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/breed_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/cut_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/chicken/type_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/breed_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/cut_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/duck/type_registry.py",
+      "line": 14,
+      "type": "FunctionDef",
+      "name": "_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/age_registry.py",
+      "line": 421,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/breed_registry.py",
+      "line": 401,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/food/knowledge/meat/lamb/cut_registry.py",
+      "line": 443,
+      "type": "FunctionDef",
+      "name": "_build_entry_aliases"
+    },
+    {
+      "path": "app/services/intent_analyzer.py",
+      "line": 101,
+      "type": "FunctionDef",
+      "name": "analyze_user_query"
+    },
+    {
+      "path": "app/services/intent_analyzer.py",
+      "line": 132,
+      "type": "FunctionDef",
+      "name": "build_related_keywords"
+    },
+    {
+      "path": "app/services/market/kurly_search_link.py",
+      "line": 10,
+      "type": "FunctionDef",
+      "name": "build_kurly_search_url"
+    },
+    {
+      "path": "app/services/market/search_url_builder.py",
+      "line": 11,
+      "type": "FunctionDef",
+      "name": "normalize_search_keyword"
+    },
+    {
+      "path": "app/services/market/search_url_builder.py",
+      "line": 43,
+      "type": "FunctionDef",
+      "name": "build_platform_search_url"
+    },
+    {
+      "path": "app/services/market/ssg_search_link.py",
+      "line": 9,
+      "type": "FunctionDef",
+      "name": "build_ssg_search_url"
+    },
+    {
+      "path": "app/services/naver_datalab_service.py",
+      "line": 58,
+      "type": "FunctionDef",
+      "name": "call_naver_datalab_search_trend"
+    },
+    {
+      "path": "app/services/naver_datalab_service.py",
+      "line": 139,
+      "type": "FunctionDef",
+      "name": "summarize_search_trend"
+    },
+    {
+      "path": "app/services/naver_datalab_service.py",
+      "line": 195,
+      "type": "FunctionDef",
+      "name": "get_search_trend_summary"
+    },
+    {
+      "path": "app/services/product_identity_engine.py",
+      "line": 140,
+      "type": "FunctionDef",
+      "name": "is_search_url"
+    },
+    {
+      "path": "app/services/product_identity_engine_v3.py",
+      "line": 181,
+      "type": "FunctionDef",
+      "name": "is_search_url"
+    },
+    {
+      "path": "app/services/recommendation/identity_engine.py",
+      "line": 166,
+      "type": "FunctionDef",
+      "name": "is_kurly_search_identity_weak"
+    },
+    {
+      "path": "app/services/recommendation_pipeline.py",
+      "line": 22,
+      "type": "FunctionDef",
+      "name": "clean_query"
+    },
+    {
+      "path": "app/services/search_context.py",
+      "line": 13,
+      "type": "ClassDef",
+      "name": "SearchContext"
+    },
+    {
+      "path": "app/services/search_context.py",
+      "line": 88,
+      "type": "FunctionDef",
+      "name": "build_search_context"
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/chicken/test_chicken_parser.py",
+      "line": 83,
+      "type": "FunctionDef",
+      "name": "test_parser_preserves_detected_aliases"
+    },
+    {
+      "path": "tests/services/food/knowledge/meat/duck/test_duck_parser.py",
+      "line": 96,
+      "type": "FunctionDef",
+      "name": "test_parser_preserves_detected_aliases"
+    }
+  ]
+}

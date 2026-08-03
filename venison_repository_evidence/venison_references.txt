@@ -1,0 +1,9 @@
+# Venison References
+
+docs/commerce_ai_generator_architecture_handbook_v1.1.md:120:    │   └── venison/
+docs/commerce_ai_generator_architecture_handbook_v1.1.md:439:meat.venison
+docs/commerce_ai_generator_architecture_handbook_v1.1.md:479:venison
+docs/commerce_ai_generator_architecture_handbook_v1.1.md:673:└── venison/
+docs/commerce_ai_generator_architecture_handbook_v1.1.md:825:### 7.1.5 사슴고기(Venison) 도메인
+docs/commerce_ai_generator_architecture_handbook_v1.1.md:1499:8. Lamb / Duck / Goat / Venison 순차 확장
+docs/commerce_ai_generator_architecture_handbook_v1.1.md:1532:- meat.lamb, meat.duck, meat.goat, meat.venison 카테고리 추가

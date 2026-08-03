@@ -1,0 +1,113 @@
+# Registry Path Resolution
+
+app/services/food/knowledge/registry_loader.py:11:    import yaml
+app/services/food/knowledge/registry_loader.py:13:    yaml = None
+app/services/food/knowledge/registry_loader.py:17:    ".yaml",
+app/services/food/knowledge/registry_loader.py:18:    ".yml",
+app/services/food/knowledge/registry_loader.py:51:        registry_id:
+app/services/food/knowledge/registry_loader.py:67:    registry_id: str
+app/services/food/knowledge/registry_loader.py:75:            "registry_id": self.registry_id,
+app/services/food/knowledge/registry_loader.py:106:            Path(base_directory)
+app/services/food/knowledge/registry_loader.py:129:            Path(__file__)
+app/services/food/knowledge/registry_loader.py:133:            / "registry_data"
+app/services/food/knowledge/registry_loader.py:138:        registry_id: str,
+app/services/food/knowledge/registry_loader.py:153:            registry_id
+app/services/food/knowledge/registry_loader.py:161:                        f"{registry_id}"
+app/services/food/knowledge/registry_loader.py:169:            registry_id=registry_id,
+app/services/food/knowledge/registry_loader.py:178:        registry_id: str | None = None,
+app/services/food/knowledge/registry_loader.py:182:        path = Path(source_path).resolve()
+app/services/food/knowledge/registry_loader.py:221:            resolved_registry_id = (
+app/services/food/knowledge/registry_loader.py:222:                registry_id
+app/services/food/knowledge/registry_loader.py:223:                or normalized["registry_id"]
+app/services/food/knowledge/registry_loader.py:224:                or self.path_to_registry_id(path)
+app/services/food/knowledge/registry_loader.py:234:                    registry_id=(
+app/services/food/knowledge/registry_loader.py:235:                        resolved_registry_id
+app/services/food/knowledge/registry_loader.py:240:                registry_id=(
+app/services/food/knowledge/registry_loader.py:241:                    resolved_registry_id
+app/services/food/knowledge/registry_loader.py:259:        registry_id: str,
+app/services/food/knowledge/registry_loader.py:266:            registry_id,
+app/services/food/knowledge/registry_loader.py:279:        registry_id: str,
+app/services/food/knowledge/registry_loader.py:286:            registry_id,
+app/services/food/knowledge/registry_loader.py:299:        registry_id: str,
+app/services/food/knowledge/registry_loader.py:301:        data = self.load_data(registry_id)
+app/services/food/knowledge/registry_loader.py:310:        registry_id: str,
+app/services/food/knowledge/registry_loader.py:313:        data = self.load_data(registry_id)
+app/services/food/knowledge/registry_loader.py:322:        registry_id: str,
+app/services/food/knowledge/registry_loader.py:327:        registry_data/beef/grades.yaml
+app/services/food/knowledge/registry_loader.py:328:        registry_data/beef/grades.yml
+app/services/food/knowledge/registry_loader.py:329:        registry_data/beef/grades.json
+app/services/food/knowledge/registry_loader.py:332:        relative_path = Path(
+app/services/food/knowledge/registry_loader.py:333:            *registry_id.split(".")
+app/services/food/knowledge/registry_loader.py:337:            ".yaml",
+app/services/food/knowledge/registry_loader.py:338:            ".yml",
+app/services/food/knowledge/registry_loader.py:351:    def path_to_registry_id(
+app/services/food/knowledge/registry_loader.py:355:        path = Path(source_path).resolve()
+app/services/food/knowledge/registry_loader.py:362:            relative_path = Path(path.name)
+app/services/food/knowledge/registry_loader.py:382:        registry_ids: set[str] = set()
+app/services/food/knowledge/registry_loader.py:385:            "*.yaml",
+app/services/food/knowledge/registry_loader.py:386:            "*.yml",
+app/services/food/knowledge/registry_loader.py:394:                registry_ids.add(
+app/services/food/knowledge/registry_loader.py:395:                    self.path_to_registry_id(path)
+app/services/food/knowledge/registry_loader.py:398:        return sorted(registry_ids)
+app/services/food/knowledge/registry_loader.py:404:        registry_id: str,
+app/services/food/knowledge/registry_loader.py:409:                    f"{registry_id}: Registry data "
+app/services/food/knowledge/registry_loader.py:418:                        f"{registry_id}: Registry "
+app/services/food/knowledge/registry_loader.py:426:                        f"{registry_id}: Empty "
+app/services/food/knowledge/registry_loader.py:437:                        f"{registry_id}.{entry_key}: "
+app/services/food/knowledge/registry_loader.py:444:        registry_id: str | None = None,
+app/services/food/knowledge/registry_loader.py:447:            if registry_id is None:
+app/services/food/knowledge/registry_loader.py:452:            path = self.resolve_path(registry_id)
+app/services/food/knowledge/registry_loader.py:469:                "registry_ids": sorted(
+app/services/food/knowledge/registry_loader.py:470:                    document.registry_id
+app/services/food/knowledge/registry_loader.py:497:            if suffix in {".yaml", ".yml"}:
+app/services/food/knowledge/registry_loader.py:498:                if yaml is None:
+app/services/food/knowledge/registry_loader.py:508:                        yaml.safe_load(file)
+app/services/food/knowledge/registry_loader.py:511:                except yaml.YAMLError as exc:
+app/services/food/knowledge/registry_loader.py:539:        # registry_id: beef.grades
+app/services/food/knowledge/registry_loader.py:570:                "registry_id": (
+app/services/food/knowledge/registry_loader.py:572:                        "registry_id"
+app/services/food/knowledge/registry_loader.py:591:            "registry_id": None,
+app/services/food/knowledge/registry_loader.py:620:            registry_id=document.registry_id,
+app/services/food/knowledge/registry_loader.py:650:    registry_id: str,
+app/services/food/knowledge/registry_loader.py:657:        registry_id,
+app/services/food/knowledge/registry_loader.py:664:def load_knowledge_registry_data(
+app/services/food/knowledge/registry_loader.py:665:    registry_id: str,
+app/services/food/knowledge/registry_loader.py:672:        registry_id,
+app/services/food/knowledge/registry_loader.py:680:    registry_id: str,
+app/services/food/knowledge/registry_loader.py:686:        registry_id,
+app/services/food/knowledge/registry_loader.py:707:    "load_knowledge_registry_data",
+app/services/food/knowledge/meat/lamb/age_registry.py:202:        app/services/food/registry_data/lamb/ages.yaml
+app/services/food/knowledge/meat/lamb/age_registry.py:205:    registry_id = LAMB_AGE_REGISTRY_ID
+app/services/food/knowledge/meat/lamb/cut_registry.py:202:        app/services/food/registry_data/lamb/cuts.yaml
+app/services/food/knowledge/meat/lamb/cut_registry.py:205:    registry_id = LAMB_CUT_REGISTRY_ID
+app/services/food/knowledge/meat/lamb/breed_registry.py:186:        app/services/food/registry_data/lamb/breeds.yaml
+app/services/food/knowledge/meat/lamb/breed_registry.py:189:    registry_id = LAMB_BREED_REGISTRY_ID
+app/services/food/knowledge/meat/beef/grade_registry.py:154:    registry_id = BEEF_GRADE_REGISTRY_ID
+app/services/food/knowledge/meat/beef/grade_registry.py:301:                f"{self.registry_id}: no grade "
+app/services/food/knowledge/meat/beef/cut_registry.py:173:        app/services/food/registry_data/beef/cuts.yaml
+app/services/food/knowledge/meat/beef/cut_registry.py:176:    registry_id = BEEF_CUT_REGISTRY_ID
+app/services/food/knowledge/meat/beef/breed_registry.py:117:    registry_id = BEEF_BREED_REGISTRY_ID
+app/services/food/knowledge/meat/beef/breed_registry.py:258:                f"{self.registry_id}: no breed "
+app/services/food/knowledge/meat/duck/cut_registry.py:76:    registry_id = DUCK_CUT_REGISTRY_ID
+app/services/food/knowledge/meat/duck/type_registry.py:67:    registry_id = DUCK_TYPE_REGISTRY_ID
+app/services/food/knowledge/meat/duck/breed_registry.py:75:    registry_id = DUCK_BREED_REGISTRY_ID
+app/services/food/knowledge/meat/chicken/cut_registry.py:76:    registry_id = CHICKEN_CUT_REGISTRY_ID
+app/services/food/knowledge/meat/chicken/type_registry.py:67:    registry_id = CHICKEN_TYPE_REGISTRY_ID
+app/services/food/knowledge/meat/chicken/breed_registry.py:75:    registry_id = CHICKEN_BREED_REGISTRY_ID
+app/services/food/knowledge/__init__.py:32:    load_knowledge_registry_data,
+app/services/food/knowledge/common/base_registry.py:125:    - registry_id
+app/services/food/knowledge/common/base_registry.py:129:    registry_id: str = ""
+app/services/food/knowledge/common/base_registry.py:135:        if not self.registry_id:
+app/services/food/knowledge/common/base_registry.py:137:                f"{type(self).__name__}.registry_id "
+app/services/food/knowledge/common/base_registry.py:161:            self.registry_id,
+app/services/food/knowledge/common/base_registry.py:170:                        f"{self.registry_id}: unknown "
+app/services/food/knowledge/common/base_registry.py:179:                f"{self.registry_id}.{registry_key}: "
+app/services/food/knowledge/common/base_registry.py:205:            self.registry_id,
+app/services/food/knowledge/common/base_registry.py:211:            self.registry_id
+app/services/food/knowledge/common/base_registry.py:218:            self.registry_id
+app/services/food/knowledge/common/base_registry.py:235:                        f"{self.registry_id}."
+app/services/food/knowledge/common/base_registry.py:255:                self.registry_id
+app/services/food/knowledge/common/base_registry.py:267:            self.registry_id,
+app/services/food/knowledge/common/base_registry.py:274:            self.registry_id
+app/services/food/knowledge/common/base_registry.py:438:                f"{self.registry_id}: no match "
+app/services/food/knowledge/common/base_registry.py:602:                        f"{self.registry_id}."

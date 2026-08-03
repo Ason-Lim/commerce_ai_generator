@@ -1,0 +1,36 @@
+# Venison Phase 6 Attributes Evidence
+
+## Architecture Responsibility
+- Structured field extraction
+- Parser result transformation
+- Registry metadata projection
+- No scoring
+- No rule application
+
+## Core Attributes
+- product_name
+- country
+- country_code
+- weight
+- storage_type
+- certifications
+- bone_status
+- skin_status
+- venison_type
+- breed
+- cut
+
+## Representative Registry Values
+- type: young_deer / score 92
+- breed: red_deer / score 90
+- cut: tenderloin / score 96
+
+## Files
+- app/services/food/knowledge/meat/venison/attributes.py
+- app/services/food/knowledge/meat/venison/__init__.py
+- tests/services/food/knowledge/meat/venison/test_venison_attributes.py
+
+## Scope
+?? app/services/food/knowledge/meat/venison/
+?? app/services/food/registry_data/venison/
+?? tests/services/food/knowledge/meat/venison/

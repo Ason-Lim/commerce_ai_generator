@@ -1,0 +1,82 @@
+[
+  {
+    "from": "Purpose",
+    "relation": "gives_meaning_to",
+    "to": "Identity"
+  },
+  {
+    "from": "Identity",
+    "relation": "directs",
+    "to": "Mission"
+  },
+  {
+    "from": "Mission",
+    "relation": "operationalized_by",
+    "to": "Principle"
+  },
+  {
+    "from": "Evidence",
+    "relation": "supports_or_challenges",
+    "to": "Reason"
+  },
+  {
+    "from": "Assumption",
+    "relation": "is_depended_on_by",
+    "to": "Reason"
+  },
+  {
+    "from": "Constraint",
+    "relation": "limits",
+    "to": "Judgement"
+  },
+  {
+    "from": "Reason",
+    "relation": "supports",
+    "to": "Judgement"
+  },
+  {
+    "from": "Judgement",
+    "relation": "produces",
+    "to": "Decision Episode"
+  },
+  {
+    "from": "AI Contribution",
+    "relation": "influences",
+    "to": "Decision Episode"
+  },
+  {
+    "from": "Decision Episode",
+    "relation": "produces",
+    "to": "Decision"
+  },
+  {
+    "from": "Decision",
+    "relation": "causes",
+    "to": "Outcome"
+  },
+  {
+    "from": "Outcome",
+    "relation": "triggers",
+    "to": "Reflection"
+  },
+  {
+    "from": "Reflection",
+    "relation": "produces",
+    "to": "Learning"
+  },
+  {
+    "from": "Learning",
+    "relation": "changes",
+    "to": "Institutional Capability"
+  },
+  {
+    "from": "Institutional Capability",
+    "relation": "shapes",
+    "to": "Culture"
+  },
+  {
+    "from": "Culture",
+    "relation": "contributes_to",
+    "to": "Institutional Wisdom"
+  }
+]

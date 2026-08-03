@@ -1,0 +1,23 @@
+# Common Contract Files
+
+app/services/food/__init__.py
+app/services/food/knowledge/__init__.py
+app/services/food/knowledge/base.py
+app/services/food/knowledge/fruit/__init__.py
+app/services/food/knowledge/fruit/provider.py
+app/services/food/knowledge/meat/__init__.py
+app/services/food/knowledge/meat/beef/__init__.py
+app/services/food/knowledge/meat/beef/attributes.py
+app/services/food/knowledge/meat/beef/provider.py
+app/services/food/knowledge/meat/chicken/__init__.py
+app/services/food/knowledge/meat/chicken/attributes.py
+app/services/food/knowledge/meat/chicken/provider.py
+app/services/food/knowledge/meat/duck/__init__.py
+app/services/food/knowledge/meat/duck/attributes.py
+app/services/food/knowledge/meat/duck/provider.py
+app/services/food/knowledge/meat/lamb/__init__.py
+app/services/food/knowledge/meat/lamb/attributes.py
+app/services/food/knowledge/meat/lamb/provider.py
+app/services/food/knowledge/models.py
+app/services/food/knowledge/registry.py
+app/services/food/resolver.py

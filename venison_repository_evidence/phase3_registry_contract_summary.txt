@@ -1,0 +1,9 @@
+# Venison Phase 3 Registry Contract Summary
+
+Duck registry data files: 3
+Registry infrastructure files: 16
+
+Archive:
+-rw-r--r--  1 mom  staff    19K  7월 29 23:12 /Users/mom/commerce_ai_generator/venison_repository_evidence/venison_phase3_registry_contract.tar.gz
+
+Venison paths currently present:

@@ -1,0 +1,14 @@
+# Food Knowledge Regression
+
+........................................................................ [ 41%]
+........................................................................ [ 83%]
+............................                                             [100%]
+172 passed in 0.80s
+
+Exit Code: 0
+로그아웃
+
+Saving session...
+...copying shared history...
+...saving history...truncating history files...
+...completed.

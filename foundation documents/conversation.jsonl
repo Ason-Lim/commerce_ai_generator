@@ -1,0 +1,3 @@
+{"turn_id": "T-DIRECT-001", "speaker": "user", "timestamp": null, "content": "매우 훌륭합니다. 갑자기 질문이 있습니다. 공식 문서가 완료된 다음에 우리가 논의 내용을 raw 데이터로 받을 수 있나요? 논의 과정을 기록하고 다시 읽어 보는 것도 중요할 것 같습니다.", "source_fidelity": "direct_context", "phase": "archive_design"}
+{"turn_id": "T-DIRECT-002", "speaker": "assistant", "timestamp": null, "content_summary": "Proposed IERA archive structure with raw transcript, JSONL, discovery registry, traceability, rejected ideas, timeline, and manifest.", "source_fidelity": "direct_context", "phase": "archive_design"}
+{"turn_id": "T-DIRECT-003", "speaker": "user", "timestamp": null, "content": "좋습니다. 일단 보존하고 논의를 계속 진행하시지요. 위의 제시해주신 구조로 저장할 수 있도록 코드와 데이터를 제공해 주세요.", "source_fidelity": "direct_context", "phase": "archive_implementation"}

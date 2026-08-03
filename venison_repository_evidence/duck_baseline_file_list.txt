@@ -1,0 +1,11 @@
+app/services/food/knowledge/meat/duck/__init__.py
+app/services/food/knowledge/meat/duck/__init__.py.phase4_before
+app/services/food/knowledge/meat/duck/attributes.py
+app/services/food/knowledge/meat/duck/breed_registry.py
+app/services/food/knowledge/meat/duck/cut_registry.py
+app/services/food/knowledge/meat/duck/parser_models.py
+app/services/food/knowledge/meat/duck/parser.py
+app/services/food/knowledge/meat/duck/provider.py
+app/services/food/knowledge/meat/duck/rules.py
+app/services/food/knowledge/meat/duck/scoring.py
+app/services/food/knowledge/meat/duck/type_registry.py

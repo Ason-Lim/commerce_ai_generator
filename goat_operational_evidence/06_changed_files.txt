@@ -1,0 +1,4 @@
+ M app/services/food/knowledge/registry.py
+?? app/services/food/knowledge/meat/goat/
+?? app/services/food/registry_data/goat/
+?? tests/services/food/knowledge/meat/goat/

@@ -1,0 +1,139 @@
+ M .gitignore
+ M README.md
+ M app/main.py
+ M app/services/analytics_logger.py
+ M app/services/context_logger.py
+ M app/services/db_product_collector.py
+ M app/services/food/knowledge/registry.py
+ M app/services/generator_service.py
+ M app/services/naver_shopping_api_collector.py
+ M app/ui/admin_dashboard.py
+ M app/ui/streamlit_app.py
+ D commerce_ai_generator_mvp_architecture.docx
+ D docs/governance/03_governance_registry_v1.0_rc1.md
+ M docs/governance/approvals/approval_log.md
+ M docs/governance/releases/release_history.md
+ M requirements.txt
+?? 05_governance_operations_standard.md
+?? CONTEXT_INTELLIGENCE.md
+?? "MANIFEST (1).sha256"
+?? MANIFEST.sha256
+?? "README (1).md"
+?? __init__.py
+?? app/design/
+?? app/services/ai_ranking_engine_v7.py
+?? app/services/ai_ranking_engine_v8.py
+?? app/services/badge_engine.py
+?? app/services/collector_v4_runner.py
+?? app/services/collectors/
+?? app/services/common/
+?? app/services/coupang_api.py
+?? app/services/deduplication_engine_v81.py
+?? app/services/deduplication_engine_v82.py
+?? app/services/deduplication_engine_v83.py
+?? app/services/explainability_service.py
+?? app/services/food/knowledge/meat/chicken/
+?? app/services/food/knowledge/meat/duck/__init__.py.phase4_before
+?? app/services/food/knowledge/meat/goat/
+?? app/services/food/registry_data/chicken/
+?? app/services/food/registry_data/goat/
+?? app/services/food_intelligence/
+?? app/services/food_knowledge/
+?? app/services/impression_logger.py
+?? app/services/kurly_nmart_collector.py
+?? app/services/kurly_nmart_collector_v3.py
+?? app/services/kurly_review_playwright_collector.py
+?? app/services/market/
+?? app/services/market_aggregator.py
+?? app/services/market_collector_v5.py
+?? app/services/market_collector_v51.py
+?? app/services/market_identity_cluster_v53.py
+?? app/services/market_representative_price_v54.py
+?? app/services/market_signal_propagation_v52.py
+?? app/services/naver_datalab_service.py
+?? app/services/new_shopping_api_collector.py
+?? app/services/platform_normalizer_v84.py
+?? app/services/platform_score_engine.py
+?? app/services/preference_service.py
+?? app/services/price_detail_enricher.py
+?? app/services/price_intelligence_engine.py
+?? app/services/product_attribute_engine_v8
+?? app/services/product_attribute_engine_v8.py
+?? app/services/product_cluster_representative_v5.py
+?? app/services/product_family_variant_v6.py
+?? app/services/product_identity_cluster_v4.py
+?? app/services/product_identity_engine.py
+?? app/services/product_identity_engine_v3.py
+?? app/services/product_quality_engine_v10.py
+?? app/services/product_quality_engine_v10_runner.py
+?? app/services/product_quality_engine_v9.py
+?? app/services/product_variety_engine_v7.py
+?? app/services/recommendation/
+?? app/services/recommendation_compare_engine_v62.py
+?? app/services/recommendation_engine.py
+?? app/services/recommendation_intelligence_v55.py
+?? app/services/recommendation_pipeline.py
+?? app/services/recommendation_reasoner.py
+?? app/services/recommendation_story_engine_v61.py
+?? app/services/search_context.py
+?? app/services/session_context_service.py
+?? app/tools/
+?? app/ui/components/
+?? app/ui/hero_renderer_v3.py
+?? app/ui/html_utils.py
+?? app/ui/product_card_renderer.py
+?? approval_log(2).md
+?? approval_log(3).md
+?? audit_trail.md
+?? backups/
+?? commerce_ai_generator_governance_bundle.zip
+?? commerce_ai_generator_governance_bundle/
+?? commit_governance_docs.sh
+?? context_intelligence_design(1).py
+?? "context_intelligence_md_python_package 2/"
+?? context_intelligence_md_python_package.zip
+?? context_intelligence_md_python_package/
+?? docs/AI/
+?? docs/Analytics/
+?? docs/Architecture/
+?? "docs/Commerce AI Generator \354\266\224\354\262\234 UX-\354\227\224\354\247\204 V2 \354\204\244\352\263\204\353\254\270\354\204\234.docx"
+?? "docs/Commerce AI Generator \354\266\224\354\262\234 UX-\354\227\224\354\247\204 V2 \354\204\244\352\263\204\353\254\270\354\204\234.pdf"
+?? docs/UX/
+?? docs/__init__.py
+?? docs/admin_dashboard.md
+?? docs/commerce_ai_generator_architecture_handbook_v1.0.md
+?? docs/commerce_ai_generator_architecture_handbook_v1.1.md
+?? docs/design.md
+?? docs/governance/governance_change_log.md
+?? docs/governance/governance_release_notes.md
+?? docs/institution_engineering/
+?? docs/logging.md
+?? docs/recommendation_engine.md
+?? docs/streamlit_issues.md
+?? duck_registry_baseline_review.txt
+?? "foundation documents/"
+?? goat_operational_evidence/
+?? goat_phase2_baseline_review.txt
+?? goat_rules_provider_contract_review.txt
+?? governance_change_log(1).md
+?? governance_change_log.md
+?? governance_dashboard.md
+?? governance_release_notes(1).md
+?? governance_release_notes.md
+?? hero_renderer_v3_score_simple.py
+?? lamb_registry_loader_audit.txt
+?? master_architecture_inventory.txt
+?? milestone_registry.md
+?? pytest.ini
+?? release_history(2).md
+?? release_history(3).md
+?? scripts/create_ai_docs.py
+?? scripts/create_ai_docs_revisepy
+?? scripts/sync_context_intelligence_docs.py
+?? scripts/update_docs_v2.py
+?? sql/
+?? streamlit_app_card_grouped_fixed.py
+?? tests/services/food/knowledge/meat/chicken/
+?? tests/services/food/knowledge/meat/goat/
+?? venison_repository_evidence/
+?? "\360\237\223\201 Commerce AI Generator Development"

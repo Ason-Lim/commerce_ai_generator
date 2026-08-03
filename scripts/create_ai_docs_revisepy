@@ -1,0 +1,43 @@
+python - <<'PY'
+from pathlib import Path
+import re
+
+files = [
+    Path("docs/AI/CONVERSATIONAL_SHOPPING_AGENT.md"),
+    Path("docs/Analytics/CUSTOMER_INTERACTION_LOG.md"),
+]
+
+for path in files:
+    text = path.read_text(encoding="utf-8")
+
+    text = re.sub(
+        r"(?m)^(\d+)\.\s+(.+)$",
+        r"## \1. \2",
+        text,
+    )
+
+    path.write_text(
+        text,
+        encoding="utf-8",
+    )
+
+    print(f"updated: {path}")
+
+for file in \
+  docs/AI/CONVERSATIONAL_SHOPPING_AGENT.md \
+  docs/Analytics/CUSTOMER_INTERACTION_LOG.md
+do
+  echo
+  echo "===== $file ====="
+  sed -n '1,30p' "$file"
+done
+
+for file in \
+  docs/AI/CONVERSATIONAL_SHOPPING_AGENT.md \
+  docs/Analytics/CUSTOMER_INTERACTION_LOG.md
+do
+  echo
+  echo "===== $file ====="
+  sed -n '1,30p' "$file"
+done
+PY

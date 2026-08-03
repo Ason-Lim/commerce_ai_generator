@@ -1,0 +1,48 @@
+registry_id: chicken.breeds
+version: "1.0.0"
+metadata:
+  category_id: chicken
+  parent_category_id: meat
+  description: 닭 품종 및 상업 계통 Registry
+  language: ko
+  status: active
+data:
+  ross_308:
+    canonical_name: 로스 308
+    aliases: [Ross 308, ross 308, Ross308, ross308, 로스308]
+    english_name: Ross 308
+    origin_country: United Kingdom
+    breed_type: commercial_broiler
+    score: 82
+    premium: false
+    flavor_score: 76
+    tenderness_score: 82
+    growth_score: 94
+    rarity_score: 35
+    description: 상업용 육계 생산에 널리 활용되는 육계 계통
+  cobb_500:
+    canonical_name: 코브 500
+    aliases: [Cobb 500, cobb 500, Cobb500, cobb500, 코브500]
+    english_name: Cobb 500
+    origin_country: United States
+    breed_type: commercial_broiler
+    score: 82
+    premium: false
+    flavor_score: 76
+    tenderness_score: 82
+    growth_score: 94
+    rarity_score: 35
+    description: 성장성과 사료 효율을 중심으로 유통되는 상업용 육계 계통
+  arbor_acres:
+    canonical_name: 아버 에이커스
+    aliases: [Arbor Acres, arbor acres, ArborAcres, arboracres, 아버에이커스]
+    english_name: Arbor Acres
+    origin_country: United States
+    breed_type: commercial_broiler
+    score: 80
+    premium: false
+    flavor_score: 75
+    tenderness_score: 81
+    growth_score: 92
+    rarity_score: 38
+    description: 상업용 육계 생산에 활용되는 대표적인 육계 계통

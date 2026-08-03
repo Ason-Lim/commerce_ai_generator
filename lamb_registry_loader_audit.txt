@@ -1,0 +1,1245 @@
+===== REGISTRY LOADER FULL SOURCE =====
+from __future__ import annotations
+
+import copy
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from threading import RLock
+from typing import Any, Mapping
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
+
+
+SUPPORTED_EXTENSIONS = {
+    ".yaml",
+    ".yml",
+    ".json",
+}
+
+
+class KnowledgeRegistryError(RuntimeError):
+    """Knowledge Registry 처리 중 발생한 기본 예외."""
+
+
+class KnowledgeRegistryFileNotFoundError(
+    KnowledgeRegistryError
+):
+    """Registry 데이터 파일을 찾지 못한 경우."""
+
+
+class KnowledgeRegistryFormatError(
+    KnowledgeRegistryError
+):
+    """Registry 파일 형식 또는 최상위 구조가 잘못된 경우."""
+
+
+class KnowledgeRegistryValidationError(
+    KnowledgeRegistryError
+):
+    """Registry 데이터 검증에 실패한 경우."""
+
+
+@dataclass(frozen=True)
+class KnowledgeRegistryDocument:
+    """
+    하나의 Registry 데이터 문서를 표현한다.
+
+    attributes:
+        registry_id:
+            예: beef.grades, fruit.varieties
+
+        source_path:
+            실제 데이터 파일 경로
+
+        data:
+            Registry 본문
+
+        version:
+            Registry 데이터 버전
+
+        metadata:
+            설명, 작성자, 스키마 버전 등의 부가 정보
+    """
+
+    registry_id: str
+    source_path: Path
+    data: dict[str, Any]
+    version: str | None = None
+    metadata: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "registry_id": self.registry_id,
+            "source_path": str(self.source_path),
+            "version": self.version,
+            "metadata": copy.deepcopy(
+                self.metadata or {}
+            ),
+            "data": copy.deepcopy(self.data),
+        }
+
+
+class KnowledgeRegistryLoader:
+    """
+    YAML/JSON 기반 Food Knowledge Registry Loader.
+
+    특징:
+    - YAML 및 JSON 지원
+    - 메모리 캐시
+    - 파일 수정 시 자동 재로딩
+    - 최상위 구조 검증
+    - Registry ID 기반 접근
+    - 반환값 방어적 복사
+    """
+
+    def __init__(
+        self,
+        base_directory: str | Path | None = None,
+        *,
+        use_cache: bool = True,
+        auto_reload: bool = True,
+    ) -> None:
+        self.base_directory = (
+            Path(base_directory)
+            if base_directory is not None
+            else self.default_base_directory()
+        ).resolve()
+
+        self.use_cache = use_cache
+        self.auto_reload = auto_reload
+
+        self._cache: dict[
+            Path,
+            KnowledgeRegistryDocument,
+        ] = {}
+
+        self._modified_times: dict[
+            Path,
+            int,
+        ] = {}
+
+        self._lock = RLock()
+
+    @staticmethod
+    def default_base_directory() -> Path:
+        return (
+            Path(__file__)
+            .resolve()
+            .parent
+            .parent
+            / "registry_data"
+        )
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+
+        예:
+            beef.grades
+            fruit.varieties
+        """
+
+        source_path = self.resolve_path(
+            registry_id
+        )
+
+        if source_path is None:
+            if required:
+                raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+
+            return None
+
+        return self.load_path(
+            source_path,
+            registry_id=registry_id,
+            validate=validate,
+            force_reload=force_reload,
+        )
+
+    def load_path(
+        self,
+        source_path: str | Path,
+        *,
+        registry_id: str | None = None,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument:
+        path = Path(source_path).resolve()
+
+        if not path.exists():
+            raise KnowledgeRegistryFileNotFoundError(
+                f"Registry file not found: {path}"
+            )
+
+        if not path.is_file():
+            raise KnowledgeRegistryFormatError(
+                f"Registry path is not a file: {path}"
+            )
+
+        if path.suffix.lower() not in (
+            SUPPORTED_EXTENSIONS
+        ):
+            raise KnowledgeRegistryFormatError(
+                "Unsupported Registry extension: "
+                f"{path.suffix}"
+            )
+
+        with self._lock:
+            if (
+                self.use_cache
+                and not force_reload
+                and self._can_use_cached(path)
+            ):
+                return self._copy_document(
+                    self._cache[path]
+                )
+
+            raw_payload = self._read_file(path)
+
+            normalized = (
+                self._normalize_document_payload(
+                    raw_payload,
+                    source_path=path,
+                )
+            )
+
+            resolved_registry_id = (
+                registry_id
+                or normalized["registry_id"]
+                or self.path_to_registry_id(path)
+            )
+
+            data = normalized["data"]
+            version = normalized["version"]
+            metadata = normalized["metadata"]
+
+            if validate:
+                self.validate_data(
+                    data,
+                    registry_id=(
+                        resolved_registry_id
+                    ),
+                )
+
+            document = KnowledgeRegistryDocument(
+                registry_id=(
+                    resolved_registry_id
+                ),
+                source_path=path,
+                data=data,
+                version=version,
+                metadata=metadata,
+            )
+
+            if self.use_cache:
+                self._cache[path] = document
+                self._modified_times[path] = (
+                    path.stat().st_mtime_ns
+                )
+
+            return self._copy_document(document)
+
+    def load_data(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> dict[str, Any] | None:
+        document = self.load(
+            registry_id,
+            required=required,
+            validate=validate,
+            force_reload=force_reload,
+        )
+
+        if document is None:
+            return None
+
+        return copy.deepcopy(document.data)
+
+    def get_entry(
+        self,
+        registry_id: str,
+        entry_key: str,
+        *,
+        default: Any = None,
+        required_registry: bool = True,
+    ) -> Any:
+        data = self.load_data(
+            registry_id,
+            required=required_registry,
+        )
+
+        if data is None:
+            return copy.deepcopy(default)
+
+        return copy.deepcopy(
+            data.get(entry_key, default)
+        )
+
+    def list_entries(
+        self,
+        registry_id: str,
+    ) -> list[str]:
+        data = self.load_data(registry_id)
+
+        if not data:
+            return []
+
+        return list(data.keys())
+
+    def contains(
+        self,
+        registry_id: str,
+        entry_key: str,
+    ) -> bool:
+        data = self.load_data(registry_id)
+
+        return bool(
+            data
+            and entry_key in data
+        )
+
+    def resolve_path(
+        self,
+        registry_id: str,
+    ) -> Path | None:
+        """
+        beef.grades를 아래 경로 후보로 변환한다.
+
+        registry_data/beef/grades.yaml
+        registry_data/beef/grades.yml
+        registry_data/beef/grades.json
+        """
+
+        relative_path = Path(
+            *registry_id.split(".")
+        )
+
+        for extension in (
+            ".yaml",
+            ".yml",
+            ".json",
+        ):
+            candidate = (
+                self.base_directory
+                / relative_path
+            ).with_suffix(extension)
+
+            if candidate.is_file():
+                return candidate.resolve()
+
+        return None
+
+    def path_to_registry_id(
+        self,
+        source_path: str | Path,
+    ) -> str:
+        path = Path(source_path).resolve()
+
+        try:
+            relative_path = path.relative_to(
+                self.base_directory
+            )
+        except ValueError:
+            relative_path = Path(path.name)
+
+        without_suffix = relative_path.with_suffix(
+            ""
+        )
+
+        return ".".join(
+            without_suffix.parts
+        )
+
+    def discover(
+        self,
+    ) -> list[str]:
+        """
+        base_directory 내부의 모든 Registry ID를 반환한다.
+        """
+
+        if not self.base_directory.exists():
+            return []
+
+        registry_ids: set[str] = set()
+
+        for extension in (
+            "*.yaml",
+            "*.yml",
+            "*.json",
+        ):
+            for path in (
+                self.base_directory.rglob(
+                    extension
+                )
+            ):
+                registry_ids.add(
+                    self.path_to_registry_id(path)
+                )
+
+        return sorted(registry_ids)
+
+    def validate_data(
+        self,
+        data: Any,
+        *,
+        registry_id: str,
+    ) -> None:
+        if not isinstance(data, Mapping):
+            raise (
+                KnowledgeRegistryValidationError(
+                    f"{registry_id}: Registry data "
+                    "must be a mapping."
+                )
+            )
+
+        for entry_key, entry_value in data.items():
+            if not isinstance(entry_key, str):
+                raise (
+                    KnowledgeRegistryValidationError(
+                        f"{registry_id}: Registry "
+                        "entry keys must be strings."
+                    )
+                )
+
+            if not entry_key.strip():
+                raise (
+                    KnowledgeRegistryValidationError(
+                        f"{registry_id}: Empty "
+                        "entry key is not allowed."
+                    )
+                )
+
+            if not isinstance(
+                entry_value,
+                Mapping,
+            ):
+                raise (
+                    KnowledgeRegistryValidationError(
+                        f"{registry_id}.{entry_key}: "
+                        "entry value must be a mapping."
+                    )
+                )
+
+    def clear_cache(
+        self,
+        registry_id: str | None = None,
+    ) -> None:
+        with self._lock:
+            if registry_id is None:
+                self._cache.clear()
+                self._modified_times.clear()
+                return
+
+            path = self.resolve_path(registry_id)
+
+            if path is None:
+                return
+
+            self._cache.pop(path, None)
+            self._modified_times.pop(
+                path,
+                None,
+            )
+
+    def cache_info(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "enabled": self.use_cache,
+                "auto_reload": self.auto_reload,
+                "size": len(self._cache),
+                "registry_ids": sorted(
+                    document.registry_id
+                    for document
+                    in self._cache.values()
+                ),
+            }
+
+    def _read_file(
+        self,
+        source_path: Path,
+    ) -> Any:
+        suffix = source_path.suffix.lower()
+
+        with source_path.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+            if suffix == ".json":
+                try:
+                    return json.load(file)
+                except json.JSONDecodeError as exc:
+                    raise (
+                        KnowledgeRegistryFormatError(
+                            "Invalid JSON Registry: "
+                            f"{source_path}: {exc}"
+                        )
+                    ) from exc
+
+            if suffix in {".yaml", ".yml"}:
+                if yaml is None:
+                    raise (
+                        KnowledgeRegistryFormatError(
+                            "PyYAML is required to "
+                            "load YAML Registry files."
+                        )
+                    )
+
+                try:
+                    return (
+                        yaml.safe_load(file)
+                        or {}
+                    )
+                except yaml.YAMLError as exc:
+                    raise (
+                        KnowledgeRegistryFormatError(
+                            "Invalid YAML Registry: "
+                            f"{source_path}: {exc}"
+                        )
+                    ) from exc
+
+        raise KnowledgeRegistryFormatError(
+            f"Unsupported file: {source_path}"
+        )
+
+    def _normalize_document_payload(
+        self,
+        payload: Any,
+        *,
+        source_path: Path,
+    ) -> dict[str, Any]:
+        if not isinstance(payload, Mapping):
+            raise KnowledgeRegistryFormatError(
+                "Registry document root must be "
+                f"a mapping: {source_path}"
+            )
+
+        payload_dict = dict(payload)
+
+        # Metadata wrapper 형식:
+        #
+        # registry_id: beef.grades
+        # version: "1.0"
+        # metadata: {...}
+        # data: {...}
+        if "data" in payload_dict:
+            data = payload_dict.get("data")
+
+            if not isinstance(data, Mapping):
+                raise (
+                    KnowledgeRegistryFormatError(
+                        "Registry 'data' must be a "
+                        f"mapping: {source_path}"
+                    )
+                )
+
+            metadata = payload_dict.get(
+                "metadata"
+            ) or {}
+
+            if not isinstance(
+                metadata,
+                Mapping,
+            ):
+                raise (
+                    KnowledgeRegistryFormatError(
+                        "Registry 'metadata' must be "
+                        f"a mapping: {source_path}"
+                    )
+                )
+
+            return {
+                "registry_id": (
+                    payload_dict.get(
+                        "registry_id"
+                    )
+                ),
+                "version": (
+                    _optional_string(
+                        payload_dict.get(
+                            "version"
+                        )
+                    )
+                ),
+                "metadata": dict(metadata),
+                "data": dict(data),
+            }
+
+        # 단순 Registry 형식도 지원:
+        #
+        # 한우: {...}
+        # 와규: {...}
+        return {
+            "registry_id": None,
+            "version": None,
+            "metadata": {},
+            "data": payload_dict,
+        }
+
+    def _can_use_cached(
+        self,
+        path: Path,
+    ) -> bool:
+        if path not in self._cache:
+            return False
+
+        if not self.auto_reload:
+            return True
+
+        cached_mtime = self._modified_times.get(
+            path
+        )
+
+        current_mtime = path.stat().st_mtime_ns
+
+        return cached_mtime == current_mtime
+
+    @staticmethod
+    def _copy_document(
+        document: KnowledgeRegistryDocument,
+    ) -> KnowledgeRegistryDocument:
+        return KnowledgeRegistryDocument(
+            registry_id=document.registry_id,
+            source_path=document.source_path,
+            data=copy.deepcopy(document.data),
+            version=document.version,
+            metadata=copy.deepcopy(
+                document.metadata or {}
+            ),
+        )
+
+
+def _optional_string(
+    value: Any,
+) -> str | None:
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+
+    return normalized or None
+
+
+_default_loader = KnowledgeRegistryLoader()
+
+
+def get_knowledge_registry_loader(
+) -> KnowledgeRegistryLoader:
+    return _default_loader
+
+
+def load_knowledge_registry(
+    registry_id: str,
+    *,
+    required: bool = True,
+    validate: bool = True,
+    force_reload: bool = False,
+) -> KnowledgeRegistryDocument | None:
+    return _default_loader.load(
+        registry_id,
+        required=required,
+        validate=validate,
+        force_reload=force_reload,
+    )
+
+
+def load_knowledge_registry_data(
+    registry_id: str,
+    *,
+    required: bool = True,
+    validate: bool = True,
+    force_reload: bool = False,
+) -> dict[str, Any] | None:
+    return _default_loader.load_data(
+        registry_id,
+        required=required,
+        validate=validate,
+        force_reload=force_reload,
+    )
+
+
+def get_knowledge_registry_entry(
+    registry_id: str,
+    entry_key: str,
+    *,
+    default: Any = None,
+) -> Any:
+    return _default_loader.get_entry(
+        registry_id,
+        entry_key,
+        default=default,
+    )
+
+
+def list_knowledge_registries(
+) -> list[str]:
+    return _default_loader.discover()
+
+
+__all__ = [
+    "SUPPORTED_EXTENSIONS",
+    "KnowledgeRegistryError",
+    "KnowledgeRegistryFileNotFoundError",
+    "KnowledgeRegistryFormatError",
+    "KnowledgeRegistryValidationError",
+    "KnowledgeRegistryDocument",
+    "KnowledgeRegistryLoader",
+    "get_knowledge_registry_loader",
+    "load_knowledge_registry",
+    "load_knowledge_registry_data",
+    "get_knowledge_registry_entry",
+    "list_knowledge_registries",
+]
+
+===== BASE REGISTRY FULL SOURCE =====
+from __future__ import annotations
+
+import copy
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from threading import RLock
+from typing import Any, Generic, Iterable, Mapping, TypeVar
+
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+EntryT = TypeVar("EntryT")
+
+
+class DomainRegistryError(RuntimeError):
+    """도메인 전용 Knowledge Registry 기본 예외."""
+
+
+class DomainRegistryEntryNotFoundError(
+    DomainRegistryError
+):
+    """요청한 Registry 엔트리를 찾지 못한 경우."""
+
+
+class DomainRegistryConfigurationError(
+    DomainRegistryError
+):
+    """Registry 설정 또는 데이터 구조가 잘못된 경우."""
+
+
+@dataclass(frozen=True)
+class AliasCandidate:
+    """
+    Registry 엔트리의 검색 가능한 별칭 정보.
+    """
+
+    registry_key: str
+    alias: str
+    normalized_alias: str
+    canonical_name: str
+    priority: int = 0
+    metadata: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "registry_key": self.registry_key,
+            "alias": self.alias,
+            "normalized_alias": (
+                self.normalized_alias
+            ),
+            "canonical_name": (
+                self.canonical_name
+            ),
+            "priority": self.priority,
+            "metadata": copy.deepcopy(
+                self.metadata or {}
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class AliasMatch(Generic[EntryT]):
+    """
+    자유 텍스트에서 발견한 Registry 엔트리 매칭 결과.
+    """
+
+    entry: EntryT
+    registry_key: str
+    canonical_name: str
+    matched_alias: str
+    normalized_alias: str
+    match_start: int
+    match_end: int
+    confidence: float
+    exact_match: bool
+    metadata: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        entry = self.entry
+
+        if hasattr(entry, "to_dict"):
+            entry_payload = entry.to_dict()
+        elif isinstance(entry, Mapping):
+            entry_payload = copy.deepcopy(
+                dict(entry)
+            )
+        else:
+            entry_payload = {
+                "value": copy.deepcopy(entry)
+            }
+
+        return {
+            "entry": entry_payload,
+            "registry_key": self.registry_key,
+            "canonical_name": (
+                self.canonical_name
+            ),
+            "matched_alias": self.matched_alias,
+            "normalized_alias": (
+                self.normalized_alias
+            ),
+            "match_start": self.match_start,
+            "match_end": self.match_end,
+            "confidence": self.confidence,
+            "exact_match": self.exact_match,
+            "metadata": copy.deepcopy(
+                self.metadata or {}
+            ),
+        }
+
+
+class BaseKnowledgeRegistry(
+    Generic[EntryT],
+    ABC,
+):
+    """
+    KnowledgeRegistryLoader 위에 구축되는 도메인 Registry 기반 클래스.
+
+    하위 클래스는 다음을 정의한다.
+
+    - registry_id
+    - build_entry()
+    """
+
+    registry_id: str = ""
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        if not self.registry_id:
+            raise DomainRegistryConfigurationError(
+                f"{type(self).__name__}.registry_id "
+                "must not be empty."
+            )
+
+        self.loader = (
+            loader
+            or get_knowledge_registry_loader()
+        )
+
+    @abstractmethod
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> EntryT:
+        """원시 Registry 데이터를 도메인 엔트리로 변환한다."""
+
+    def get(
+        self,
+        registry_key: str,
+        *,
+        required: bool = False,
+    ) -> EntryT | None:
+        raw_entry = self.loader.get_entry(
+            self.registry_id,
+            registry_key,
+            default=None,
+        )
+
+        if raw_entry is None:
+            if required:
+                raise (
+                    DomainRegistryEntryNotFoundError(
+                        f"{self.registry_id}: unknown "
+                        f"registry key {registry_key!r}"
+                    )
+                )
+
+            return None
+
+        if not isinstance(raw_entry, Mapping):
+            raise DomainRegistryConfigurationError(
+                f"{self.registry_id}.{registry_key}: "
+                "entry must be a mapping."
+            )
+
+        return self.build_entry(
+            registry_key,
+            raw_entry,
+        )
+
+    def require(
+        self,
+        registry_key: str,
+    ) -> EntryT:
+        entry = self.get(
+            registry_key,
+            required=True,
+        )
+
+        assert entry is not None
+        return entry
+
+    def contains(
+        self,
+        registry_key: str,
+    ) -> bool:
+        return self.loader.contains(
+            self.registry_id,
+            registry_key,
+        )
+
+    def keys(self) -> list[str]:
+        return self.loader.list_entries(
+            self.registry_id
+        )
+
+    def list(
+        self,
+    ) -> list[EntryT]:
+        raw_data = self.loader.load_data(
+            self.registry_id
+        )
+
+        if not raw_data:
+            return []
+
+        result: list[EntryT] = []
+
+        for registry_key, raw_entry in (
+            raw_data.items()
+        ):
+            if not isinstance(
+                raw_entry,
+                Mapping,
+            ):
+                raise (
+                    DomainRegistryConfigurationError(
+                        f"{self.registry_id}."
+                        f"{registry_key}: entry must "
+                        "be a mapping."
+                    )
+                )
+
+            result.append(
+                self.build_entry(
+                    registry_key,
+                    raw_entry,
+                )
+            )
+
+        return result
+
+    def raw_data(
+        self,
+    ) -> dict[str, Any]:
+        return (
+            self.loader.load_data(
+                self.registry_id
+            )
+            or {}
+        )
+
+    def raw_entry(
+        self,
+        registry_key: str,
+        *,
+        default: Any = None,
+    ) -> Any:
+        return self.loader.get_entry(
+            self.registry_id,
+            registry_key,
+            default=default,
+        )
+
+    def reload(self) -> None:
+        self.loader.clear_cache(
+            self.registry_id
+        )
+
+        self._clear_local_cache()
+
+    def _clear_local_cache(self) -> None:
+        """
+        하위 클래스의 로컬 인덱스 캐시를 비우는 훅.
+        """
+
+
+class BaseAliasRegistry(
+    BaseKnowledgeRegistry[EntryT],
+    ABC,
+):
+    """
+    별칭 검색을 지원하는 도메인 Registry 기반 클래스.
+
+    YAML 엔트리에서 기본적으로 다음 필드를 읽는다.
+
+    canonical_name: 표준 이름
+    aliases: 별칭 목록
+    """
+
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(loader=loader)
+
+        self._alias_index: (
+            tuple[AliasCandidate, ...] | None
+        ) = None
+
+        self._index_lock = RLock()
+
+    def normalize_text(
+        self,
+        value: Any,
+    ) -> str:
+        """
+        기본 별칭 비교 정규화.
+
+        - 소문자 변환
+        - 공백과 구두점 제거
+        - 숫자, 영문, 한글, + 유지
+
+        하위 Registry에서 필요하면 재정의할 수 있다.
+        """
+
+        if value is None:
+            return ""
+
+        text = str(value).strip().lower()
+        text = text.replace("＋", "+")
+
+        return re.sub(
+            r"[^0-9a-z가-힣+]+",
+            "",
+            text,
+        )
+
+    def canonical_name_from_raw(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> str:
+        value = raw_entry.get(
+            self.canonical_name_field,
+            registry_key,
+        )
+
+        normalized = str(value).strip()
+
+        return normalized or registry_key
+
+    def aliases_from_raw(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> list[str]:
+        """
+        표준명과 aliases를 합쳐 중복 없는 별칭 목록을 만든다.
+        """
+
+        canonical_name = (
+            self.canonical_name_from_raw(
+                registry_key,
+                raw_entry,
+            )
+        )
+
+        raw_aliases = raw_entry.get(
+            self.aliases_field,
+            [],
+        )
+
+        values: list[Any] = [
+            canonical_name,
+        ]
+
+        if isinstance(
+            raw_aliases,
+            (list, tuple, set),
+        ):
+            values.extend(raw_aliases)
+
+        elif raw_aliases:
+            values.append(raw_aliases)
+
+        result: list[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            alias = str(value).strip()
+
+            if not alias:
+                continue
+
+            normalized_alias = (
+                self.normalize_text(alias)
+            )
+
+            if (
+                not normalized_alias
+                or normalized_alias in seen
+            ):
+                continue
+
+            seen.add(normalized_alias)
+            result.append(alias)
+
+        return result
+
+    def alias_metadata_from_raw(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """
+        별칭 후보에 저장할 부가 정보.
+
+        국가, 카테고리 등 검색 우선순위 판단에 필요한 값은
+        하위 클래스에서 재정의할 수 있다.
+        """
+
+        return {}
+
+    def lookup(
+        self,
+        query: str,
+        *,
+        required: bool = False,
+    ) -> EntryT | None:
+        match = self.match(query)
+
+        if match is not None:
+            return match.entry
+
+        if required:
+            raise DomainRegistryEntryNotFoundError(
+                f"{self.registry_id}: no match "
+                f"for {query!r}"
+            )
+
+        return None
+
+    def match(
+        self,
+        text: str,
+    ) -> AliasMatch[EntryT] | None:
+        normalized_text = self.normalize_text(
+            text
+        )
+
+        if not normalized_text:
+            return None
+
+        matches: list[
+            tuple[
+                tuple[int, int, int, int],
+                AliasCandidate,
+                int,
+            ]
+        ] = []
+
+        for candidate in self.alias_candidates():
+            position = normalized_text.find(
+                candidate.normalized_alias
+            )
+
+            if position < 0:
+                continue
+
+            exact_match = (
+                normalized_text
+                == candidate.normalized_alias
+            )
+
+            ranking = (
+                int(exact_match),
+                len(
+                    candidate.normalized_alias
+                ),
+                candidate.priority,
+                -position,
+            )
+
+            matches.append(
+                (
+                    ranking,
+                    candidate,
+                    position,
+                )
+            )
+
+        if not matches:
+            return None
+
+        matches.sort(
+            key=lambda item: item[0],
+            reverse=True,
+        )
+
+        _, candidate, position = matches[0]
+
+        return self._build_match(
+            normalized_text=normalized_text,
+            candidate=candidate,
+            position=position,
+        )
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[AliasMatch[EntryT]]:
+        normalized_text = self.normalize_text(
+            text
+        )
+
+        if not normalized_text:
+            return []
+
+        best_by_key: dict[
+
+===== MEAT COMMON FULL SOURCE =====
+"""육류 공통 Parser 및 정규화 기능.
+
+냉장·냉동, 원산지, 부위, 숙성, 중량,
+무항생제 및 동물복지 인증 등의 공통 처리를 담당합니다.
+"""
+
+===== PROJECT LAMB TEST SEARCH =====
+
+===== COMPILE =====
+compileall_exit=0

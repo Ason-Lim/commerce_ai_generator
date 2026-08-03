@@ -1,0 +1,2 @@
+ app/services/food/knowledge/registry.py | 6 ++++++
+ 1 file changed, 6 insertions(+)

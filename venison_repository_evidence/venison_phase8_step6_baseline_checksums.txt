@@ -1,0 +1,3 @@
+b1a2bc045af90f179866e56a3ea331c92e07cbd95da94caa5dcdd06629149776  /Users/mom/commerce_ai_generator/app/services/food/knowledge/registry.py
+cae227e2a98a5b824d1cff142b52d7ca37c9aedc157cee7822448f47ef987391  /Users/mom/commerce_ai_generator/app/services/food/knowledge/__init__.py
+ee2d12d08211e58f7f5c9107bd00f9ee340d46384f2706cce767b77d0a8a1e3f  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/provider.py

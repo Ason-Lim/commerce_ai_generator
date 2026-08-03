@@ -1,0 +1,27 @@
+{
+  "file": "/Users/mom/commerce_ai_generator/tests/services/food/knowledge/meat/venison/test_venison_scoring.py",
+  "critical_findings": [],
+  "informational_findings": [
+    {
+      "category": "allowed_venison_cut_text",
+      "line": 209,
+      "value": "사슴가슴살"
+    },
+    {
+      "category": "allowed_venison_cut_text",
+      "line": 231,
+      "value": "사슴가슴살"
+    },
+    {
+      "category": "allowed_venison_cut_text",
+      "line": 239,
+      "value": "사슴가슴살"
+    },
+    {
+      "category": "allowed_venison_cut_text",
+      "line": 254,
+      "value": "사슴가슴살"
+    }
+  ],
+  "decision": "no_modification_required"
+}

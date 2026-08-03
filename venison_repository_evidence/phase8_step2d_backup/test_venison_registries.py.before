@@ -1,0 +1,324 @@
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.venison import (
+    VENISON_BREED_REGISTRY_ID,
+    VENISON_CUT_REGISTRY_ID,
+    VENISON_TYPE_REGISTRY_ID,
+    VenisonBreed,
+    VenisonBreedMatch,
+    VenisonBreedRegistry,
+    VenisonCut,
+    VenisonCutMatch,
+    VenisonCutRegistry,
+    VenisonType,
+    VenisonTypeMatch,
+    VenisonTypeRegistry,
+)
+
+
+@pytest.fixture
+def type_registry() -> VenisonTypeRegistry:
+    return VenisonTypeRegistry()
+
+
+@pytest.fixture
+def breed_registry() -> VenisonBreedRegistry:
+    return VenisonBreedRegistry()
+
+
+@pytest.fixture
+def cut_registry() -> VenisonCutRegistry:
+    return VenisonCutRegistry()
+
+
+def test_venison_registry_ids() -> None:
+    assert (
+        VENISON_TYPE_REGISTRY_ID
+        == "venison.types"
+    )
+    assert (
+        VENISON_BREED_REGISTRY_ID
+        == "venison.breeds"
+    )
+    assert (
+        VENISON_CUT_REGISTRY_ID
+        == "venison.cuts"
+    )
+
+
+def test_venison_registry_entry_counts(
+    type_registry: VenisonTypeRegistry,
+    breed_registry: VenisonBreedRegistry,
+    cut_registry: VenisonCutRegistry,
+) -> None:
+    types = type_registry.list()
+    breeds = breed_registry.list()
+    cuts = cut_registry.list()
+
+    assert len(types) == 5
+    assert len(breeds) == 5
+    assert len(cuts) == 10
+
+    assert all(
+        isinstance(entry, VenisonType)
+        for entry in types
+    )
+    assert all(
+        isinstance(entry, VenisonBreed)
+        for entry in breeds
+    )
+    assert all(
+        isinstance(entry, VenisonCut)
+        for entry in cuts
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        (
+            "뉴질랜드산 어린사슴 안심",
+            "young_deer",
+        ),
+        (
+            "농장 사슴 등심",
+            "farmed_venison",
+        ),
+        (
+            "야생 사슴 뒷다리",
+            "wild_venison",
+        ),
+        (
+            "신선 사슴고기 정육",
+            "fresh_venison",
+        ),
+        (
+            "훈제 사슴 슬라이스",
+            "smoked_venison",
+        ),
+    ],
+)
+def test_venison_type_matching(
+    type_registry: VenisonTypeRegistry,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = type_registry.match(text)
+
+    assert isinstance(
+        match,
+        VenisonTypeMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("뉴질랜드 레드디어", "red_deer"),
+        ("국내산 꽃사슴", "sika_deer"),
+        ("유럽산 다마사슴", "fallow_deer"),
+        ("캐나다산 엘크", "elk"),
+        ("유럽산 노루고기", "roe_deer"),
+    ],
+)
+def test_venison_breed_matching(
+    breed_registry: VenisonBreedRegistry,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = breed_registry.match(text)
+
+    assert isinstance(
+        match,
+        VenisonBreedMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("사슴안심 스테이크", "tenderloin"),
+        ("사슴 등심 구이", "loin"),
+        ("베니슨 랙 로스트", "rack"),
+        ("사슴 뒷다리 정육", "leg"),
+        ("사슴 앞다리 스튜", "shoulder"),
+        ("사슴 사태 찜용", "shank"),
+        ("사슴 목살 1kg", "neck"),
+        ("사슴 갈비살 구이", "rib"),
+        ("사슴고기 정육", "trim"),
+        ("통 사슴 한 마리", "whole"),
+    ],
+)
+def test_venison_cut_matching(
+    cut_registry: VenisonCutRegistry,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = cut_registry.match(text)
+
+    assert isinstance(
+        match,
+        VenisonCutMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+def test_venison_registry_lookup(
+    type_registry: VenisonTypeRegistry,
+    breed_registry: VenisonBreedRegistry,
+    cut_registry: VenisonCutRegistry,
+) -> None:
+    venison_type = type_registry.lookup(
+        "young deer"
+    )
+    breed = breed_registry.lookup(
+        "red deer"
+    )
+    cut = cut_registry.lookup(
+        "venison tenderloin"
+    )
+
+    assert venison_type is not None
+    assert breed is not None
+    assert cut is not None
+
+    assert (
+        venison_type.registry_key
+        == "young_deer"
+    )
+    assert breed.registry_key == "red_deer"
+    assert cut.registry_key == "tenderloin"
+
+
+def test_venison_registry_unknown_returns_none(
+    type_registry: VenisonTypeRegistry,
+    breed_registry: VenisonBreedRegistry,
+    cut_registry: VenisonCutRegistry,
+) -> None:
+    text = "상품 정보가 없는 일반 문자열"
+
+    assert type_registry.match(text) is None
+    assert breed_registry.match(text) is None
+    assert cut_registry.match(text) is None
+
+
+def test_venison_premium_filters(
+    type_registry: VenisonTypeRegistry,
+    breed_registry: VenisonBreedRegistry,
+    cut_registry: VenisonCutRegistry,
+) -> None:
+    assert {
+        entry.registry_key
+        for entry in type_registry.list(
+            premium_only=True
+        )
+    } == {
+        "young_deer",
+        "wild_venison",
+    }
+
+    assert {
+        entry.registry_key
+        for entry in breed_registry.list(
+            premium_only=True
+        )
+    } == {
+        "red_deer",
+        "sika_deer",
+        "fallow_deer",
+        "elk",
+        "roe_deer",
+    }
+
+    assert {
+        entry.registry_key
+        for entry in cut_registry.list(
+            premium_only=True
+        )
+    } == {
+        "tenderloin",
+        "loin",
+        "rack",
+    }
+
+
+def test_venison_registry_filters(
+    type_registry: VenisonTypeRegistry,
+    breed_registry: VenisonBreedRegistry,
+    cut_registry: VenisonCutRegistry,
+) -> None:
+    types = type_registry.list(
+        type_category="young_deer"
+    )
+    breeds = breed_registry.list(
+        breed_type="large_deer"
+    )
+    cuts = cut_registry.list(
+        cut_group="loin"
+    )
+
+    assert [
+        entry.registry_key
+        for entry in types
+    ] == ["young_deer"]
+
+    assert {
+        entry.registry_key
+        for entry in breeds
+    } == {
+        "red_deer",
+        "elk",
+    }
+
+    assert {
+        entry.registry_key
+        for entry in cuts
+    } == {
+        "tenderloin",
+        "loin",
+    }
+
+
+def test_registry_lists_sorted_by_score(
+    type_registry: VenisonTypeRegistry,
+    breed_registry: VenisonBreedRegistry,
+    cut_registry: VenisonCutRegistry,
+) -> None:
+    for entries in (
+        type_registry.list(),
+        breed_registry.list(),
+        cut_registry.list(),
+    ):
+        scores = [
+            entry.score
+            for entry in entries
+        ]
+
+        assert scores == sorted(
+            scores,
+            reverse=True,
+        )
+
+
+def test_registry_metadata_is_exposed(
+    type_registry: VenisonTypeRegistry,
+) -> None:
+    entry = type_registry.lookup(
+        "어린사슴"
+    )
+
+    assert entry is not None
+    assert isinstance(entry.metadata, dict)

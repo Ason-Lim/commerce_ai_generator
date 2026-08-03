@@ -1,0 +1,15 @@
+{
+  "snapshot_id": "SNAPSHOT-XXXX",
+  "scope": {
+    "discovery_range": ["AD-XXX", "AD-YYY"],
+    "conversation_range": ["TURN-XXX", "TURN-YYY"]
+  },
+  "source_export": {
+    "filename": null,
+    "sha256": null,
+    "exported_at": null
+  },
+  "created_at": null,
+  "created_by": null,
+  "notes": []
+}

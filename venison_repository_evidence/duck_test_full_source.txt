@@ -1,0 +1,1741 @@
+# Duck Test Full Source
+
+
+================================================================
+FILE: tests/services/food/knowledge/meat/duck/test_duck_attributes.py
+================================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+    extract_duck_bone_status,
+    extract_duck_certifications,
+    extract_duck_country_code,
+    extract_duck_country_text,
+    extract_duck_product_name,
+    extract_duck_skin_status,
+    extract_duck_storage_type,
+    extract_duck_weight,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+
+
+def test_extract_duck_product_fields() -> None:
+    product = {
+        "title": "국내산 훈제오리 오리가슴살",
+        "origin_country": "대한민국",
+        "origin_country_code": "kr",
+        "net_weight": "500g",
+        "storage": "냉장",
+        "labels": ["무항생제", "HACCP"],
+        "bone_status": "boneless",
+        "skin_status": "skin_on",
+    }
+
+    assert (
+        extract_duck_product_name(product)
+        == "국내산 훈제오리 오리가슴살"
+    )
+    assert (
+        extract_duck_country_text(product)
+        == "대한민국"
+    )
+    assert (
+        extract_duck_country_code(product)
+        == "KR"
+    )
+    assert extract_duck_weight(product) == "500g"
+    assert (
+        extract_duck_storage_type(product)
+        == "냉장"
+    )
+    assert extract_duck_certifications(
+        product
+    ) == ["무항생제", "HACCP"]
+    assert (
+        extract_duck_bone_status(product)
+        == "boneless"
+    )
+    assert (
+        extract_duck_skin_status(product)
+        == "skin_on"
+    )
+
+
+def test_build_complete_duck_attributes() -> None:
+    product = {
+        "product_name": (
+            "국내산 훈제오리 체리밸리 "
+            "오리가슴살 500g"
+        ),
+        "country": "대한민국",
+        "country_code": "kr",
+        "weight": "500g",
+        "storage_type": "냉장",
+        "certifications": [
+            "무항생제",
+            "HACCP",
+        ],
+        "bone_status": "boneless",
+        "skin_status": "skin_on",
+    }
+
+    parse_result = DuckParser().parse_product(
+        product
+    )
+
+    attributes = build_duck_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["product_name"] == (
+        "국내산 훈제오리 체리밸리 "
+        "오리가슴살 500g"
+    )
+    assert attributes["country"] == "대한민국"
+    assert attributes["country_code"] == "KR"
+    assert attributes["weight"] == "500g"
+    assert attributes["storage_type"] == "냉장"
+    assert attributes["certifications"] == [
+        "무항생제",
+        "HACCP",
+    ]
+    assert attributes["bone_status"] == "boneless"
+    assert attributes["skin_status"] == "skin_on"
+
+    assert attributes["duck_type"] == "훈제오리"
+    assert attributes["breed"] == "체리밸리"
+    assert attributes["cut"] == "오리가슴살"
+    assert attributes["is_complete"] is True
+    assert attributes["is_usable"] is True
+    assert attributes["confidence"] > 0.0
+
+    assert parse_result.duck_type_match is not None
+    assert parse_result.breed_match is not None
+    assert parse_result.cut_match is not None
+
+    duck_type = (
+        parse_result.duck_type_match.duck_type
+    )
+    breed = parse_result.breed_match.breed
+    cut = parse_result.cut_match.cut
+
+    assert (
+        attributes["duck_type_registry_key"]
+        == duck_type.registry_key
+    )
+    assert (
+        attributes["breed_registry_key"]
+        == breed.registry_key
+    )
+    assert (
+        attributes["cut_registry_key"]
+        == cut.registry_key
+    )
+
+    assert (
+        attributes["duck_type_score"]
+        == duck_type.score
+    )
+    assert (
+        attributes["breed_growth_score"]
+        == breed.growth_score
+    )
+    assert (
+        attributes["cut_score"]
+        == cut.score
+    )
+
+    assert attributes[
+        "duck_type_typical_uses"
+    ] == list(duck_type.typical_uses)
+
+    assert attributes[
+        "cut_cooking_methods"
+    ] == list(cut.cooking_methods)
+
+
+def test_build_cut_only_attributes() -> None:
+    product = {
+        "product_name": "국내산 오리가슴살 1kg",
+    }
+
+    parse_result = DuckParser().parse_product(
+        product
+    )
+
+    attributes = build_duck_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["duck_type"] is None
+    assert attributes["breed"] is None
+    assert attributes["cut"] == "오리가슴살"
+    assert attributes["is_complete"] is False
+    assert attributes["is_usable"] is True
+
+    assert parse_result.cut_match is not None
+
+    assert (
+        attributes["cut_registry_key"]
+        == parse_result.cut_match.cut.registry_key
+    )
+    assert (
+        "breed_registry_key"
+        not in attributes
+    )
+    assert (
+        "duck_type_registry_key"
+        not in attributes
+    )
+
+
+def test_attributes_do_not_infer_structured_values() -> None:
+    product = {
+        "product_name": (
+            "국내산 냉동 무항생제 "
+            "순살 오리가슴살 500g"
+        ),
+    }
+
+    parse_result = DuckParser().parse_product(
+        product
+    )
+
+    attributes = build_duck_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["country"] is None
+    assert attributes["country_code"] is None
+    assert attributes["weight"] is None
+    assert attributes["storage_type"] is None
+    assert attributes["certifications"] == []
+    assert attributes["bone_status"] is None
+    assert attributes["skin_status"] is None
+
+
+def test_certifications_are_deduplicated() -> None:
+    assert extract_duck_certifications(
+        {
+            "certifications": [
+                "HACCP",
+                " haccp ",
+                "무항생제",
+                "",
+            ]
+        }
+    ) == ["HACCP", "무항생제"]
+
+
+def test_certification_string_is_preserved() -> None:
+    assert extract_duck_certifications(
+        {
+            "certification": "HACCP",
+        }
+    ) == ["HACCP"]
+
+
+def test_weight_preserves_zero_value() -> None:
+    assert extract_duck_weight(
+        {"weight": 0}
+    ) == 0
+
+
+def test_build_attributes_copies_mutable_lists() -> None:
+    product = {
+        "product_name": (
+            "훈제오리 체리밸리 오리가슴살"
+        )
+    }
+
+    parse_result = DuckParser().parse_product(
+        product
+    )
+
+    attributes = build_duck_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert (
+        attributes["detected_keywords"]
+        is not parse_result.detected_keywords
+    )
+    assert (
+        attributes["warnings"]
+        is not parse_result.warnings
+    )
+
+    original_keywords = list(
+        parse_result.detected_keywords
+    )
+    original_warnings = list(
+        parse_result.warnings
+    )
+
+    attributes["detected_keywords"].append(
+        "mutated"
+    )
+    attributes["warnings"].append(
+        "mutated"
+    )
+
+    assert (
+        parse_result.detected_keywords
+        == original_keywords
+    )
+    assert (
+        parse_result.warnings
+        == original_warnings
+    )
+
+
+def test_build_attributes_rejects_non_mapping() -> None:
+    parse_result = DuckParser().parse(
+        "오리가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        build_duck_attributes(
+            product="오리가슴살",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_build_attributes_rejects_wrong_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "DuckParseResult"
+        ),
+    ):
+        build_duck_attributes(
+            product={
+                "product_name": "오리가슴살"
+            },
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+================================================================
+FILE: tests/services/food/knowledge/meat/duck/test_duck_parser.py
+================================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+
+
+def test_parse_complete_duck_product() -> None:
+    result = DuckParser().parse(
+        "훈제오리 체리밸리 오리가슴살 500g"
+    )
+
+    assert isinstance(result, DuckParseResult)
+    assert result.duck_type == "훈제오리"
+    assert result.breed == "체리밸리"
+    assert result.cut == "오리가슴살"
+    assert result.is_complete is True
+    assert result.is_usable is True
+    assert result.metadata["category_id"] == "duck"
+    assert result.metadata["matched_field_count"] == 3
+    assert result.confidence > 0.0
+
+
+def test_parse_product_uses_structured_fields() -> None:
+    result = DuckParser().parse_product(
+        {
+            "product_name": "국내산 오리고기",
+            "duck_type": "어린 오리",
+            "duck_breed": "페킨오리",
+            "cut": "오리 안심",
+            "option_name": "냉장 500g",
+        }
+    )
+
+    assert result.duck_type is not None
+    assert result.breed is not None
+    assert result.cut is not None
+
+    assert result.duck_type_match is not None
+    assert result.breed_match is not None
+    assert result.cut_match is not None
+
+    assert (
+        result.duck_type_match.entry.registry_key
+        == "duckling"
+    )
+    assert (
+        result.breed_match.entry.registry_key
+        == "pekin"
+    )
+    assert (
+        result.cut_match.entry.registry_key
+        == "tenderloin"
+    )
+
+    assert result.metadata["source_type"] == "mapping"
+
+    source_fields = result.metadata["source_fields"]
+
+    assert "product_name" in source_fields
+    assert "duck_type" in source_fields
+    assert "duck_breed" in source_fields
+    assert "cut" in source_fields
+
+
+def test_parse_cut_only_is_usable_but_incomplete() -> None:
+    result = DuckParser().parse(
+        "국내산 오리가슴살 1kg"
+    )
+
+    assert result.duck_type is None
+    assert result.breed is None
+    assert result.cut == "오리가슴살"
+    assert result.is_complete is False
+    assert result.is_usable is True
+    assert result.metadata["matched_field_count"] == 1
+
+
+def test_parse_breed_only_is_not_usable() -> None:
+    result = DuckParser().parse(
+        "Cherry Valley duck"
+    )
+
+    assert result.breed == "체리밸리"
+    assert result.duck_type is None
+    assert result.cut is None
+    assert result.is_complete is False
+    assert result.is_usable is False
+
+
+def test_parser_preserves_detected_aliases() -> None:
+    result = DuckParser().parse(
+        "훈제 오리 오리 똥집"
+    )
+
+    assert "훈제오리" in result.detected_keywords
+    assert "오리똥집" in result.detected_keywords
+
+
+def test_parser_matches_native_duck_and_leg() -> None:
+    result = DuckParser().parse(
+        "토종 오리 오리 장각"
+    )
+
+    assert result.duck_type_match is not None
+    assert result.cut_match is not None
+
+    assert (
+        result.duck_type_match.entry.registry_key
+        == "native_duck"
+    )
+    assert (
+        result.cut_match.entry.registry_key
+        == "leg"
+    )
+
+
+def test_parser_matches_muscovy_and_skin() -> None:
+    result = DuckParser().parse(
+        "머스코비 오리 껍질 구이용"
+    )
+
+    assert result.breed_match is not None
+    assert result.cut_match is not None
+
+    assert (
+        result.breed_match.entry.registry_key
+        == "muscovy"
+    )
+    assert (
+        result.cut_match.entry.registry_key
+        == "skin"
+    )
+
+
+def test_parser_does_not_match_other_meat_cut() -> None:
+    result = DuckParser().parse(
+        "한우 등심 스테이크"
+    )
+
+    assert result.duck_type is None
+    assert result.breed is None
+    assert result.cut is None
+    assert result.is_usable is False
+
+
+def test_parse_unknown_text_returns_unusable_result() -> None:
+    result = DuckParser().parse(
+        "상품 정보가 없는 테스트 문자열"
+    )
+
+    assert result.duck_type is None
+    assert result.breed is None
+    assert result.cut is None
+    assert result.is_complete is False
+    assert result.is_usable is False
+    assert result.metadata["matched_field_count"] == 0
+
+
+def test_parse_product_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        DuckParser().parse_product(  # type: ignore[arg-type]
+            "오리가슴살"
+        )
+
+
+def test_parse_product_rejects_empty_mapping() -> None:
+    with pytest.raises(
+        ValueError,
+        match="usable text field",
+    ):
+        DuckParser().parse_product({})
+
+
+def test_parse_result_exposes_match_confidences() -> None:
+    result = DuckParser().parse(
+        "훈제오리 체리밸리 오리가슴살"
+    )
+
+    assert result.duck_type_confidence > 0.0
+    assert result.breed_confidence > 0.0
+    assert result.cut_confidence > 0.0
+    assert result.confidence > 0.0
+
+
+def test_parse_product_deduplicates_repeated_text() -> None:
+    result = DuckParser().parse_product(
+        {
+            "product_name": "훈제오리",
+            "title": "훈제오리",
+            "duck_type": "훈제오리",
+        }
+    )
+
+    assert result.original_text == "훈제오리"
+    assert result.duck_type == "훈제오리"
+
+
+def test_parser_dependency_injection() -> None:
+    from app.services.food.knowledge.meat.duck import (
+        DuckBreedRegistry,
+        DuckCutRegistry,
+        DuckTypeRegistry,
+    )
+
+    type_registry = DuckTypeRegistry()
+    breed_registry = DuckBreedRegistry()
+    cut_registry = DuckCutRegistry()
+
+    parser = DuckParser(
+        type_registry=type_registry,
+        breed_registry=breed_registry,
+        cut_registry=cut_registry,
+    )
+
+    assert parser.type_registry is type_registry
+    assert parser.breed_registry is breed_registry
+    assert parser.cut_registry is cut_registry
+
+================================================================
+FILE: tests/services/food/knowledge/meat/duck/test_duck_provider.py
+================================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+@pytest.fixture
+def provider() -> DuckKnowledgeProvider:
+    return DuckKnowledgeProvider()
+
+
+@pytest.fixture
+def complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "국내산 훈제오리 체리밸리 "
+            "오리가슴살 500g"
+        ),
+        "country": "대한민국",
+        "country_code": "KR",
+        "storage_type": "냉장",
+        "certifications": [
+            "무항생제",
+            "HACCP",
+        ],
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_provider_identity(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    assert provider.category_id == "duck"
+    assert provider.category_name == "오리고기"
+    assert isinstance(
+        provider.parser,
+        DuckParser,
+    )
+
+
+def test_provider_supports_category_id(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    assert provider.supports(
+        category_id="duck"
+    )
+    assert provider.supports(
+        category_id="DUCK"
+    )
+    assert provider.supports(
+        category_id="오리고기"
+    )
+    assert not provider.supports(
+        category_id="chicken"
+    )
+
+
+def test_provider_supports_product_name(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    assert provider.supports(
+        product_name="국내산 오리가슴살 1kg"
+    )
+    assert provider.supports(
+        product_name="훈제오리 슬라이스"
+    )
+    assert provider.supports(
+        product_name="Duck Breast 500g"
+    )
+    assert not provider.supports(
+        product_name="한우 등심 500g"
+    )
+
+
+def test_provider_accepts_parser_injection() -> None:
+    parser = DuckParser()
+    provider = DuckKnowledgeProvider(
+        parser=parser
+    )
+
+    assert provider.parser is parser
+
+
+def test_provider_complete_analysis(
+    provider: DuckKnowledgeProvider,
+    complete_product: dict[str, object],
+) -> None:
+    context = FoodKnowledgeContext(
+        query="프리미엄 오리가슴살",
+        priority="quality",
+    )
+
+    result = provider.analyze(
+        complete_product,
+        context=context,
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "duck"
+    assert result.category_name == "오리고기"
+    assert result.product_name == (
+        "국내산 훈제오리 체리밸리 "
+        "오리가슴살 500g"
+    )
+
+    assert (
+        result.attributes["duck_type"]
+        == "훈제오리"
+    )
+    assert result.attributes["breed"] == (
+        "체리밸리"
+    )
+    assert result.attributes["cut"] == (
+        "오리가슴살"
+    )
+
+    assert result.scores["knowledge"] == 86.6
+    assert result.final_score == 83.3
+    assert result.confidence > 0.0
+    assert result.warnings == []
+    assert result.reasons
+
+    assert (
+        result.metadata["provider_id"]
+        == "duck"
+    )
+    assert (
+        result.metadata[
+            "parent_category_id"
+        ]
+        == "meat"
+    )
+    assert (
+        result.metadata["priority"]
+        == "quality"
+    )
+    assert (
+        result.metadata["is_complete"]
+        is True
+    )
+    assert (
+        result.metadata["is_usable"]
+        is True
+    )
+    assert result.raw_product == (
+        complete_product
+    )
+    assert (
+        result.raw_product
+        is not complete_product
+    )
+
+
+def test_provider_cut_only_analysis(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    product = {
+        "product_name": "국내산 오리가슴살 1kg",
+        "country": "대한민국",
+    }
+
+    result = provider.analyze(product)
+
+    assert result.attributes[
+        "duck_type"
+    ] is None
+    assert result.attributes["breed"] is None
+    assert result.attributes["cut"] == (
+        "오리가슴살"
+    )
+
+    assert result.scores["knowledge"] == 90.0
+    assert result.final_score == 45.0
+    assert result.confidence > 0.0
+    assert result.warnings
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 1
+    )
+    assert (
+        result.metadata["is_complete"]
+        is False
+    )
+    assert (
+        result.metadata["is_usable"]
+        is True
+    )
+
+
+def test_provider_unrecognized_analysis(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    result = provider.analyze(
+        {
+            "product_name": "일반 식품 상품",
+            "country": "대한민국",
+        }
+    )
+
+    assert result.attributes[
+        "duck_type"
+    ] is None
+    assert result.attributes["breed"] is None
+    assert result.attributes["cut"] is None
+
+    assert result.scores["knowledge"] == 0.0
+    assert result.final_score == 0.0
+    assert result.confidence == 0.0
+    assert result.warnings
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 0
+    )
+    assert (
+        result.metadata["is_complete"]
+        is False
+    )
+    assert (
+        result.metadata["is_usable"]
+        is False
+    )
+
+
+def test_provider_preserves_structured_fields(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    result = provider.analyze(
+        {
+            "product_name": "국내산 오리고기",
+            "duck_type": "훈제오리",
+            "duck_breed": "Cherry Valley",
+            "cut": "오리가슴살",
+            "country": "대한민국",
+            "weight": "500g",
+            "storage_type": "냉장",
+            "bone_status": "boneless",
+            "skin_status": "skinless",
+        }
+    )
+
+    assert result.attributes[
+        "duck_type"
+    ] == "훈제오리"
+    assert result.attributes["breed"] == (
+        "체리밸리"
+    )
+    assert result.attributes["cut"] == (
+        "오리가슴살"
+    )
+    assert result.attributes["weight"] == "500g"
+    assert (
+        result.attributes["storage_type"]
+        == "냉장"
+    )
+    assert (
+        result.attributes["bone_status"]
+        == "boneless"
+    )
+    assert (
+        result.attributes["skin_status"]
+        == "skinless"
+    )
+
+
+def test_provider_does_not_mutate_product(
+    provider: DuckKnowledgeProvider,
+    complete_product: dict[str, object],
+) -> None:
+    original = {
+        key: (
+            list(value)
+            if isinstance(value, list)
+            else value
+        )
+        for key, value in complete_product.items()
+    }
+
+    provider.analyze(complete_product)
+
+    assert complete_product == original
+
+
+def test_provider_rejects_invalid_input(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        provider.analyze(
+            "오리고기"  # type: ignore[arg-type]
+        )
+
+================================================================
+FILE: tests/services/food/knowledge/meat/duck/test_duck_registries.py
+================================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck import (
+    DUCK_BREED_REGISTRY_ID,
+    DUCK_CUT_REGISTRY_ID,
+    DUCK_TYPE_REGISTRY_ID,
+    DuckBreed,
+    DuckBreedMatch,
+    DuckBreedRegistry,
+    DuckCut,
+    DuckCutMatch,
+    DuckCutRegistry,
+    DuckType,
+    DuckTypeMatch,
+    DuckTypeRegistry,
+)
+
+
+@pytest.fixture
+def type_registry() -> DuckTypeRegistry:
+    return DuckTypeRegistry()
+
+
+@pytest.fixture
+def breed_registry() -> DuckBreedRegistry:
+    return DuckBreedRegistry()
+
+
+@pytest.fixture
+def cut_registry() -> DuckCutRegistry:
+    return DuckCutRegistry()
+
+
+def test_duck_registry_ids() -> None:
+    assert DUCK_TYPE_REGISTRY_ID == "duck.types"
+    assert DUCK_BREED_REGISTRY_ID == "duck.breeds"
+    assert DUCK_CUT_REGISTRY_ID == "duck.cuts"
+
+
+def test_duck_registry_entry_counts(
+    type_registry: DuckTypeRegistry,
+    breed_registry: DuckBreedRegistry,
+    cut_registry: DuckCutRegistry,
+) -> None:
+    types = type_registry.list()
+    breeds = breed_registry.list()
+    cuts = cut_registry.list()
+
+    assert len(types) == 5
+    assert len(breeds) == 5
+    assert len(cuts) == 11
+
+    assert all(isinstance(entry, DuckType) for entry in types)
+    assert all(isinstance(entry, DuckBreed) for entry in breeds)
+    assert all(isinstance(entry, DuckCut) for entry in cuts)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("국내산 훈제오리 슬라이스", "smoked_duck"),
+        ("토종 오리 백숙용", "native_duck"),
+        ("어린 오리 로스트용", "duckling"),
+        ("로스트 덕 한 마리", "roast_duck"),
+        ("식용 오리 정육", "domestic_duck"),
+    ],
+)
+def test_duck_type_matching(
+    type_registry: DuckTypeRegistry,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = type_registry.match(text)
+
+    assert isinstance(match, DuckTypeMatch)
+    assert match.entry.registry_key == expected_key
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("프리미엄 체리밸리 오리", "cherry_valley"),
+        ("페킨오리 냉동육", "pekin"),
+        ("머스코비 오리 구이용", "muscovy"),
+        ("뮬라드 오리 가슴살", "mule_duck"),
+        ("청둥 오리 정육", "mallard"),
+    ],
+)
+def test_duck_breed_matching(
+    breed_registry: DuckBreedRegistry,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = breed_registry.match(text)
+
+    assert isinstance(match, DuckBreedMatch)
+    assert match.entry.registry_key == expected_key
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("냉동 오리가슴살 500g", "breast"),
+        ("오리 안심 구이용", "tenderloin"),
+        ("오리 다리살 정육", "thigh"),
+        ("오리 장각 두 개", "leg"),
+        ("오리 날개 냉동", "wing"),
+        ("오리 목살 1kg", "neck"),
+        ("오리 똥집 볶음용", "gizzard"),
+        ("오리 염통 꼬치용", "heart"),
+        ("오리 간 냉장", "liver"),
+        ("오리 껍질 구이용", "skin"),
+        ("통 오리 한 마리", "whole_duck"),
+    ],
+)
+def test_duck_cut_matching(
+    cut_registry: DuckCutRegistry,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = cut_registry.match(text)
+
+    assert isinstance(match, DuckCutMatch)
+    assert match.entry.registry_key == expected_key
+
+
+def test_duck_registry_lookup(
+    type_registry: DuckTypeRegistry,
+    breed_registry: DuckBreedRegistry,
+    cut_registry: DuckCutRegistry,
+) -> None:
+    duck_type = type_registry.lookup("훈제 오리")
+    breed = breed_registry.lookup("Cherry Valley duck")
+    cut = cut_registry.lookup("duck breast")
+
+    assert duck_type is not None
+    assert breed is not None
+    assert cut is not None
+
+    assert duck_type.registry_key == "smoked_duck"
+    assert breed.registry_key == "cherry_valley"
+    assert cut.registry_key == "breast"
+
+
+def test_duck_registry_unknown_text_returns_none(
+    type_registry: DuckTypeRegistry,
+    breed_registry: DuckBreedRegistry,
+    cut_registry: DuckCutRegistry,
+) -> None:
+    text = "상품 정보가 전혀 없는 테스트 문자열"
+
+    assert type_registry.match(text) is None
+    assert breed_registry.match(text) is None
+    assert cut_registry.match(text) is None
+
+
+def test_duck_premium_filters(
+    type_registry: DuckTypeRegistry,
+    breed_registry: DuckBreedRegistry,
+    cut_registry: DuckCutRegistry,
+) -> None:
+    premium_types = type_registry.list(premium_only=True)
+    premium_breeds = breed_registry.list(premium_only=True)
+    premium_cuts = cut_registry.list(premium_only=True)
+
+    assert {
+        entry.registry_key
+        for entry in premium_types
+    } == {
+        "duckling",
+        "native_duck",
+    }
+
+    assert {
+        entry.registry_key
+        for entry in premium_breeds
+    } == {
+        "muscovy",
+        "mule_duck",
+        "mallard",
+    }
+
+    assert {
+        entry.registry_key
+        for entry in premium_cuts
+    } == {
+        "breast",
+        "tenderloin",
+        "liver",
+    }
+
+
+def test_duck_type_category_filter(
+    type_registry: DuckTypeRegistry,
+) -> None:
+    entries = type_registry.list(
+        type_category="smoked_duck"
+    )
+
+    assert len(entries) == 1
+    assert entries[0].registry_key == "smoked_duck"
+
+
+def test_duck_breed_type_filter(
+    breed_registry: DuckBreedRegistry,
+) -> None:
+    entries = breed_registry.list(
+        breed_type="meat_duck"
+    )
+
+    assert {
+        entry.registry_key
+        for entry in entries
+    } == {
+        "pekin",
+        "muscovy",
+    }
+
+
+def test_duck_cut_group_filter(
+    cut_registry: DuckCutRegistry,
+) -> None:
+    entries = cut_registry.list(
+        cut_group="leg"
+    )
+
+    assert {
+        entry.registry_key
+        for entry in entries
+    } == {
+        "thigh",
+        "leg",
+    }
+
+
+def test_duck_registry_lists_are_sorted_by_score(
+    type_registry: DuckTypeRegistry,
+    breed_registry: DuckBreedRegistry,
+    cut_registry: DuckCutRegistry,
+) -> None:
+    for entries in (
+        type_registry.list(),
+        breed_registry.list(),
+        cut_registry.list(),
+    ):
+        scores = [entry.score for entry in entries]
+        assert scores == sorted(scores, reverse=True)
+
+
+def test_duck_registry_entries_expose_metadata(
+    type_registry: DuckTypeRegistry,
+) -> None:
+    entry = type_registry.lookup("훈제오리")
+
+    assert entry is not None
+    assert isinstance(entry.metadata, dict)
+
+================================================================
+FILE: tests/services/food/knowledge/meat/duck/test_duck_rules.py
+================================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.rules import (
+    apply_duck_rules,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_duck_scores,
+)
+
+
+def _analyze_rules(
+    product: dict[str, object],
+) -> tuple[list[str], list[str]]:
+    parse_result = DuckParser().parse_product(
+        product
+    )
+    attributes = build_duck_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+    scores = calculate_duck_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    return apply_duck_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+
+def test_complete_product_generates_reasons() -> None:
+    reasons, warnings = _analyze_rules(
+        {
+            "product_name": (
+                "국내산 훈제오리 체리밸리 "
+                "오리가슴살 500g"
+            ),
+            "country": "대한민국",
+            "storage_type": "냉장",
+            "certifications": [
+                "무항생제",
+                "HACCP",
+            ],
+            "bone_status": "boneless",
+            "skin_status": "skinless",
+        }
+    )
+
+    assert "오리 유형은 훈제오리입니다." in reasons
+    assert (
+        "품종 또는 상업 계통은 "
+        "체리밸리입니다."
+        in reasons
+    )
+    assert "원산지는 대한민국입니다." in reasons
+    assert "오리가슴살 부위 상품입니다." in reasons
+    assert (
+        "보관 상태는 냉장입니다."
+        in reasons
+    )
+    assert (
+        "표시된 인증 정보는 "
+        "무항생제, HACCP입니다."
+        in reasons
+    )
+    assert (
+        "뼈 상태 표시는 boneless입니다."
+        in reasons
+    )
+    assert (
+        "껍질 상태 표시는 skinless입니다."
+        in reasons
+    )
+    assert warnings == []
+
+
+def test_complete_product_includes_registry_guidance() -> None:
+    reasons, _ = _analyze_rules(
+        {
+            "product_name": (
+                "국내산 훈제오리 체리밸리 "
+                "오리가슴살"
+            ),
+            "country": "대한민국",
+        }
+    )
+
+    assert any(
+        reason.startswith(
+            "Registry 기준 권장 조리 방식은 "
+        )
+        for reason in reasons
+    )
+
+    assert (
+        "품종 Registry 기준 평가가 "
+        "높은 품종 또는 계통입니다."
+        in reasons
+    )
+    assert (
+        "상품성이 높은 부위로 "
+        "분류됩니다."
+        in reasons
+    )
+    assert (
+        "품종과 부위 기준 부드러운 식감을 "
+        "기대할 수 있습니다."
+        in reasons
+    )
+    assert (
+        "품종과 부위 기준 풍미 평가가 "
+        "높은 상품입니다."
+        in reasons
+    )
+    assert (
+        "Registry에서 프리미엄 속성이 "
+        "확인되었습니다."
+        in reasons
+    )
+
+
+def test_missing_origin_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "오리가슴살",
+        }
+    )
+
+    assert (
+        "원산지 정보가 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_incomplete_parse_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "오리가슴살",
+            "country": "대한민국",
+        }
+    )
+
+    assert (
+        "오리 유형, 품종, 부위 정보가 "
+        "모두 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_zero_knowledge_generates_warning() -> None:
+    parse_result = DuckParser().parse(
+        "일반 식품 상품"
+    )
+
+    attributes = {
+        "country": "대한민국",
+        "duck_type": None,
+        "breed": None,
+        "cut": None,
+    }
+    scores = {
+        "knowledge": 0.0,
+    }
+
+    _, warnings = apply_duck_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "오리고기 Registry 기반 평가 점수를 "
+        "계산할 수 없습니다."
+        in warnings
+    )
+
+
+def test_parser_warnings_are_preserved() -> None:
+    parse_result = DuckParser().parse_product(
+        {
+            "product_name": "오리가슴살",
+        }
+    )
+
+    reasons, warnings = apply_duck_rules(
+        attributes={
+            "country": None,
+            "duck_type": None,
+            "breed": None,
+            "cut": "오리가슴살",
+        },
+        scores={
+            "knowledge": 90.0,
+            "cut": 90.0,
+        },
+        parse_result=parse_result,
+    )
+
+    assert reasons == [
+        "오리가슴살 부위 상품입니다.",
+        "상품성이 높은 부위로 분류됩니다.",
+    ]
+
+    for warning in parse_result.warnings:
+        assert warning in warnings
+
+
+def test_rules_do_not_mutate_inputs() -> None:
+    parse_result = DuckParser().parse_product(
+        {
+            "product_name": "오리가슴살",
+        }
+    )
+
+    attributes = {
+        "country": None,
+        "duck_type": None,
+        "breed": None,
+        "cut": "오리가슴살",
+        "certifications": [],
+    }
+    scores = {
+        "knowledge": 90.0,
+        "cut": 90.0,
+    }
+
+    original_attributes = dict(attributes)
+    original_scores = dict(scores)
+
+    apply_duck_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert attributes == original_attributes
+    assert scores == original_scores
+
+
+def test_deduplicate_strings_preserves_order() -> None:
+    assert deduplicate_strings(
+        [
+            "첫 번째",
+            "",
+            "두 번째",
+            "첫 번째",
+            " 두 번째 ",
+            "세 번째",
+        ]
+    ) == [
+        "첫 번째",
+        "두 번째",
+        "세 번째",
+    ]
+
+
+def test_rules_reject_invalid_attributes() -> None:
+    parse_result = DuckParser().parse(
+        "오리가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="attributes must be a Mapping",
+    ):
+        apply_duck_rules(
+            attributes=[],  # type: ignore[arg-type]
+            scores={},
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_scores() -> None:
+    parse_result = DuckParser().parse(
+        "오리가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        apply_duck_rules(
+            attributes={},
+            scores=[],  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "DuckParseResult"
+        ),
+    ):
+        apply_duck_rules(
+            attributes={},
+            scores={},
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+================================================================
+FILE: tests/services/food/knowledge/meat/duck/test_duck_scoring.py
+================================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_available_average,
+    calculate_duck_final_score,
+    calculate_duck_knowledge_score,
+    calculate_duck_scores,
+    clamp_score,
+    extract_registry_scores,
+    safe_float,
+)
+
+
+@pytest.fixture
+def complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "국내산 훈제오리 체리밸리 "
+            "오리가슴살 500g"
+        ),
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_safe_float_and_clamp_score() -> None:
+    assert safe_float("12.5") == 12.5
+    assert safe_float("invalid") == 0.0
+    assert safe_float(
+        None,
+        default=7.0,
+    ) == 7.0
+
+    assert clamp_score(-10) == 0.0
+    assert clamp_score(120) == 100.0
+    assert clamp_score("82.5") == 82.5
+
+
+def test_calculate_available_average() -> None:
+    assert (
+        calculate_available_average(
+            80,
+            90,
+            0,
+            None,
+        )
+        == 85.0
+    )
+    assert (
+        calculate_available_average(
+            0,
+            None,
+            "invalid",
+        )
+        == 0.0
+    )
+
+
+def test_extract_registry_scores_complete_product(
+    complete_product: dict[str, object],
+) -> None:
+    parse_result = DuckParser().parse_product(
+        complete_product
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert scores == {
+        "duck_type": 82.0,
+        "breed": 85.0,
+        "cut": 90.0,
+        "tenderness": 85.5,
+        "flavor": 87.0,
+        "growth": 95.0,
+        "rarity": 35.0,
+        "fat": 78.0,
+        "yield": 82.0,
+    }
+
+
+def test_calculate_duck_knowledge_score_complete() -> None:
+    assert (
+        calculate_duck_knowledge_score(
+            duck_type_score=82,
+            breed_score=85,
+            cut_score=90,
+        )
+        == 86.6
+    )
+
+
+def test_knowledge_score_renormalizes_missing_fields() -> None:
+    assert (
+        calculate_duck_knowledge_score(
+            duck_type_score=0,
+            breed_score=0,
+            cut_score=82,
+        )
+        == 82.0
+    )
+
+    assert (
+        calculate_duck_knowledge_score(
+            duck_type_score=82,
+            breed_score=0,
+            cut_score=90,
+        )
+        == 87.0
+    )
+
+
+def test_calculate_duck_scores_complete_product(
+    complete_product: dict[str, object],
+) -> None:
+    parse_result = DuckParser().parse_product(
+        complete_product
+    )
+
+    scores = calculate_duck_scores(
+        product=complete_product,
+        parse_result=parse_result,
+    )
+
+    assert scores == {
+        "quality": 80.0,
+        "price": 70.0,
+        "trust": 90.0,
+        "duck_type": 82.0,
+        "breed": 85.0,
+        "cut": 90.0,
+        "tenderness": 85.5,
+        "flavor": 87.0,
+        "growth": 95.0,
+        "rarity": 35.0,
+        "fat": 78.0,
+        "yield": 82.0,
+        "knowledge": 86.6,
+    }
+
+
+def test_calculate_duck_scores_cut_only() -> None:
+    product = {
+        "product_name": "국내산 오리가슴살 1kg",
+    }
+
+    parse_result = DuckParser().parse_product(
+        product
+    )
+
+    scores = calculate_duck_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert scores["duck_type"] == 0.0
+    assert scores["breed"] == 0.0
+    assert scores["cut"] == 90.0
+    assert scores["knowledge"] == 90.0
+    assert scores["tenderness"] == 86.0
+    assert scores["flavor"] == 92.0
+    assert scores["growth"] == 0.0
+    assert scores["rarity"] == 0.0
+    assert scores["fat"] == 78.0
+    assert scores["yield"] == 82.0
+
+
+def test_calculate_duck_final_score(
+    complete_product: dict[str, object],
+) -> None:
+    parse_result = DuckParser().parse_product(
+        complete_product
+    )
+
+    scores = calculate_duck_scores(
+        product=complete_product,
+        parse_result=parse_result,
+    )
+
+    assert (
+        calculate_duck_final_score(scores)
+        == 83.3
+    )
+
+
+def test_final_score_supports_custom_weights() -> None:
+    assert (
+        calculate_duck_final_score(
+            {
+                "quality": 80,
+                "knowledge": 90,
+            },
+            weights={
+                "quality": 0.5,
+                "knowledge": 0.5,
+            },
+        )
+        == 85.0
+    )
+
+
+def test_scoring_clamps_external_scores() -> None:
+    product = {
+        "product_name": "오리가슴살",
+        "quality_score": 120,
+        "price_score": -5,
+        "trust_score": "invalid",
+    }
+
+    parse_result = DuckParser().parse_product(
+        product
+    )
+
+    scores = calculate_duck_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert scores["quality"] == 100.0
+    assert scores["price"] == 0.0
+    assert scores["trust"] == 0.0
+
+
+def test_scoring_rejects_invalid_product() -> None:
+    parse_result = DuckParser().parse(
+        "오리가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        calculate_duck_scores(
+            product="오리가슴살",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_scoring_rejects_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "DuckParseResult"
+        ),
+    ):
+        calculate_duck_scores(
+            product={
+                "product_name": "오리가슴살"
+            },
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_extract_scores_rejects_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "DuckParseResult"
+        ),
+    ):
+        extract_registry_scores(
+            object()  # type: ignore[arg-type]
+        )
+
+
+def test_final_score_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        calculate_duck_final_score(
+            []  # type: ignore[arg-type]
+        )

@@ -1,8 +1,26 @@
-.venv/
+.streamlit/secrets.toml
+data/
+
+# Python
 __pycache__/
 *.pyc
+
+# Virtual Environment
+.venv/
+
+# Environment Variables
 .env
-.streamlit/secrets.toml
+
+# macOS
 .DS_Store
-data/
+
+# Streamlit Cache
+.streamlit/
+
+# Logs
 *.log
+
+# Backup
+*.bak
+*.before_fix.bak
+*.phase43.bak

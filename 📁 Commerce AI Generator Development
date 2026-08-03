@@ -1,0 +1,28 @@
+📁 Commerce AI Generator Development
+
+├── 📌 00_Master Architecture
+│
+├── 📌 01_Beef
+├── 📌 02_Pork
+├── 📌 03_Lamb
+├── 📌 04_Chicken
+├── 📌 05_Duck
+├── 📌 06_Goat
+├── 📌 07_Venison
+│
+├── 📌 10_Cheese
+├── 📌 11_Coffee
+├── 📌 12_Wine
+├── 📌 13_Tea
+├── 📌 14_Olive Oil
+├── 📌 15_Herb & Spice
+│
+├── 📌 20_Seafood
+├── 📌 21_Fruit
+├── 📌 22_Vegetable
+│
+├── 📌 30_Marketplace Core
+├── 📌 31_Market Intelligence
+├── 📌 32_Recommendation Engine
+│
+└── 📌 99_Integration

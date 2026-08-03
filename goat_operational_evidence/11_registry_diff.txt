@@ -1,0 +1,24 @@
+diff --git a/app/services/food/knowledge/registry.py b/app/services/food/knowledge/registry.py
+index a33bf9b..2c29c3b 100644
+--- a/app/services/food/knowledge/registry.py
++++ b/app/services/food/knowledge/registry.py
+@@ -22,6 +22,9 @@ from app.services.food.knowledge.meat.duck.provider import (
+ from app.services.food.knowledge.meat.venison.provider import (
+     VenisonKnowledgeProvider,
+ )
++from app.services.food.knowledge.meat.goat.provider import (
++    GoatKnowledgeProvider,
++)
+ 
+ class FoodKnowledgeRegistry:
+     """
+@@ -154,6 +157,9 @@ FOOD_KNOWLEDGE_REGISTRY.register(
+ FOOD_KNOWLEDGE_REGISTRY.register(
+     VenisonKnowledgeProvider()
+ )
++FOOD_KNOWLEDGE_REGISTRY.register(
++    GoatKnowledgeProvider()
++)
+ 
+ FOOD_KNOWLEDGE_REGISTRY.register(
+     BeefKnowledgeProvider()

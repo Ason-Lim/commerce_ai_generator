@@ -1,0 +1,58 @@
+# Venison Phase 8 Step 2B
+
+## Objective
+
+Identify the authoritative Registry data source and exact
+insertion contract for the Venison Breast cut.
+
+## Investigation Scope
+
+- cut_registry.py implementation
+- VenisonCutRegistry constructor
+- BaseAliasRegistry data flow
+- Registry file discovery
+- Runtime Registry storage
+- Runtime lookup methods
+- Tenderloin source location
+- Breast concept existence
+- Regression baseline
+- Source immutability
+
+## Modification
+
+- Application source modified: NO
+- Registry data modified: NO
+- Test source modified: NO
+
+## Step 2C Entry Criteria
+
+Step 2C may begin only when the following are confirmed:
+
+1. Authoritative Registry data file or data structure
+2. Existing Tenderloin entry representation
+3. Required field schema
+4. Registry loading path
+5. Test insertion points
+6. Current regression baseline
+
+## Planned Step 2C Contract
+
+Canonical entry:
+
+- registry_key: breast
+- canonical_name: 사슴가슴살
+- english_name: Breast
+- cut_group: breast
+
+Required aliases:
+
+- 사슴가슴살
+- 사슴 가슴살
+- 가슴살
+- venison breast
+- deer breast
+
+Non-default aliases excluded pending evidence:
+
+- 사슴 가슴
+- 사슴 흉부

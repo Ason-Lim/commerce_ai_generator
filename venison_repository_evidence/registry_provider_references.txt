@@ -1,0 +1,1491 @@
+# Registry and Provider References
+
+app/services/food/knowledge/registry_loader.py:52:            예: beef.grades, fruit.varieties
+app/services/food/knowledge/registry_loader.py:148:            beef.grades
+app/services/food/knowledge/registry_loader.py:325:        beef.grades를 아래 경로 후보로 변환한다.
+app/services/food/knowledge/registry_loader.py:327:        registry_data/beef/grades.yaml
+app/services/food/knowledge/registry_loader.py:328:        registry_data/beef/grades.yml
+app/services/food/knowledge/registry_loader.py:329:        registry_data/beef/grades.json
+app/services/food/knowledge/registry_loader.py:539:        # registry_id: beef.grades
+app/services/food/knowledge/meat/lamb/age_registry.py:26:LAMB_AGE_REGISTRY_ID = "lamb.ages"
+app/services/food/knowledge/meat/lamb/age_registry.py:41:        예: lamb, hogget, mutton
+app/services/food/knowledge/meat/lamb/age_registry.py:202:        app/services/food/registry_data/lamb/ages.yaml
+app/services/food/knowledge/meat/lamb/age_registry.py:386:            key=lambda entry: (
+app/services/food/knowledge/meat/lamb/age_registry.py:464:def get_lamb_age_registry() -> LambAgeRegistry:
+app/services/food/knowledge/meat/lamb/age_registry.py:468:def get_lamb_age(
+app/services/food/knowledge/meat/lamb/age_registry.py:471:    return get_lamb_age_registry().get(
+app/services/food/knowledge/meat/lamb/age_registry.py:476:def lookup_lamb_age(
+app/services/food/knowledge/meat/lamb/age_registry.py:479:    return get_lamb_age_registry().lookup(
+app/services/food/knowledge/meat/lamb/age_registry.py:484:def match_lamb_age(
+app/services/food/knowledge/meat/lamb/age_registry.py:487:    return get_lamb_age_registry().match(
+app/services/food/knowledge/meat/lamb/age_registry.py:492:def list_lamb_ages() -> list[LambAge]:
+app/services/food/knowledge/meat/lamb/age_registry.py:493:    return get_lamb_age_registry().list()
+app/services/food/knowledge/meat/lamb/age_registry.py:501:    "get_lamb_age_registry",
+app/services/food/knowledge/meat/lamb/age_registry.py:502:    "get_lamb_age",
+app/services/food/knowledge/meat/lamb/age_registry.py:503:    "lookup_lamb_age",
+app/services/food/knowledge/meat/lamb/age_registry.py:504:    "match_lamb_age",
+app/services/food/knowledge/meat/lamb/age_registry.py:505:    "list_lamb_ages",
+app/services/food/knowledge/meat/lamb/provider.py:9:from app.services.food.knowledge.meat.lamb.attributes import (
+app/services/food/knowledge/meat/lamb/provider.py:10:    build_lamb_attributes,
+app/services/food/knowledge/meat/lamb/provider.py:11:    extract_lamb_product_name,
+app/services/food/knowledge/meat/lamb/provider.py:13:from app.services.food.knowledge.meat.lamb.parser import (
+app/services/food/knowledge/meat/lamb/provider.py:16:from app.services.food.knowledge.meat.lamb.rules import (
+app/services/food/knowledge/meat/lamb/provider.py:17:    apply_lamb_rules,
+app/services/food/knowledge/meat/lamb/provider.py:19:from app.services.food.knowledge.meat.lamb.scoring import (
+app/services/food/knowledge/meat/lamb/provider.py:20:    calculate_lamb_final_score,
+app/services/food/knowledge/meat/lamb/provider.py:21:    calculate_lamb_scores,
+app/services/food/knowledge/meat/lamb/provider.py:50:    category_id = "lamb"
+app/services/food/knowledge/meat/lamb/provider.py:64:        "lamb",
+app/services/food/knowledge/meat/lamb/provider.py:170:            extract_lamb_product_name(
+app/services/food/knowledge/meat/lamb/provider.py:181:        attributes = build_lamb_attributes(
+app/services/food/knowledge/meat/lamb/provider.py:186:        scores = calculate_lamb_scores(
+app/services/food/knowledge/meat/lamb/provider.py:192:        reasons, warnings = apply_lamb_rules(
+app/services/food/knowledge/meat/lamb/provider.py:199:            calculate_lamb_final_score(
+app/services/food/knowledge/meat/lamb/attributes.py:6:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/attributes.py:11:def extract_lamb_product_name(
+app/services/food/knowledge/meat/lamb/attributes.py:27:def extract_lamb_country_text(
+app/services/food/knowledge/meat/lamb/attributes.py:52:def extract_lamb_country_code(
+app/services/food/knowledge/meat/lamb/attributes.py:73:def extract_lamb_weight(
+app/services/food/knowledge/meat/lamb/attributes.py:87:def extract_lamb_storage_type(
+app/services/food/knowledge/meat/lamb/attributes.py:112:def extract_lamb_certifications(
+app/services/food/knowledge/meat/lamb/attributes.py:158:def build_lamb_attributes(
+app/services/food/knowledge/meat/lamb/attributes.py:187:        "product_name": extract_lamb_product_name(
+app/services/food/knowledge/meat/lamb/attributes.py:190:        "country": extract_lamb_country_text(
+app/services/food/knowledge/meat/lamb/attributes.py:193:        "country_code": extract_lamb_country_code(
+app/services/food/knowledge/meat/lamb/attributes.py:196:        "weight": extract_lamb_weight(
+app/services/food/knowledge/meat/lamb/attributes.py:199:        "storage_type": extract_lamb_storage_type(
+app/services/food/knowledge/meat/lamb/attributes.py:203:            extract_lamb_certifications(
+app/services/food/knowledge/meat/lamb/attributes.py:346:    "build_lamb_attributes",
+app/services/food/knowledge/meat/lamb/attributes.py:347:    "extract_lamb_product_name",
+app/services/food/knowledge/meat/lamb/attributes.py:348:    "extract_lamb_country_text",
+app/services/food/knowledge/meat/lamb/attributes.py:349:    "extract_lamb_country_code",
+app/services/food/knowledge/meat/lamb/attributes.py:350:    "extract_lamb_weight",
+app/services/food/knowledge/meat/lamb/attributes.py:351:    "extract_lamb_storage_type",
+app/services/food/knowledge/meat/lamb/attributes.py:352:    "extract_lamb_certifications",
+app/services/food/knowledge/meat/lamb/scoring.py:6:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/scoring.py:177:def calculate_lamb_knowledge_score(
+app/services/food/knowledge/meat/lamb/scoring.py:241:def calculate_lamb_scores(
+app/services/food/knowledge/meat/lamb/scoring.py:276:        calculate_lamb_knowledge_score(
+app/services/food/knowledge/meat/lamb/scoring.py:315:def calculate_lamb_final_score(
+app/services/food/knowledge/meat/lamb/scoring.py:368:    "calculate_lamb_knowledge_score",
+app/services/food/knowledge/meat/lamb/scoring.py:369:    "calculate_lamb_scores",
+app/services/food/knowledge/meat/lamb/scoring.py:370:    "calculate_lamb_final_score",
+app/services/food/knowledge/meat/lamb/cut_registry.py:25:LAMB_CUT_REGISTRY_ID = "lamb.cuts"
+app/services/food/knowledge/meat/lamb/cut_registry.py:202:        app/services/food/registry_data/lamb/cuts.yaml
+app/services/food/knowledge/meat/lamb/cut_registry.py:396:            key=lambda cut: (
+app/services/food/knowledge/meat/lamb/cut_registry.py:504:def get_lamb_cut_registry(
+app/services/food/knowledge/meat/lamb/cut_registry.py:509:def get_lamb_cut(
+app/services/food/knowledge/meat/lamb/cut_registry.py:512:    return get_lamb_cut_registry().get(
+app/services/food/knowledge/meat/lamb/cut_registry.py:517:def lookup_lamb_cut(
+app/services/food/knowledge/meat/lamb/cut_registry.py:520:    return get_lamb_cut_registry().lookup(
+app/services/food/knowledge/meat/lamb/cut_registry.py:525:def match_lamb_cut(
+app/services/food/knowledge/meat/lamb/cut_registry.py:528:    return get_lamb_cut_registry().match(
+app/services/food/knowledge/meat/lamb/cut_registry.py:533:def list_lamb_cuts(
+app/services/food/knowledge/meat/lamb/cut_registry.py:538:    return get_lamb_cut_registry().list(
+app/services/food/knowledge/meat/lamb/cut_registry.py:549:    "get_lamb_cut_registry",
+app/services/food/knowledge/meat/lamb/cut_registry.py:550:    "get_lamb_cut",
+app/services/food/knowledge/meat/lamb/cut_registry.py:551:    "lookup_lamb_cut",
+app/services/food/knowledge/meat/lamb/cut_registry.py:552:    "match_lamb_cut",
+app/services/food/knowledge/meat/lamb/cut_registry.py:553:    "list_lamb_cuts",
+app/services/food/knowledge/meat/lamb/__init__.py:1:from app.services.food.knowledge.meat.lamb.age_registry import (
+app/services/food/knowledge/meat/lamb/__init__.py:6:from app.services.food.knowledge.meat.lamb.attributes import (
+app/services/food/knowledge/meat/lamb/__init__.py:7:    build_lamb_attributes,
+app/services/food/knowledge/meat/lamb/__init__.py:8:    extract_lamb_certifications,
+app/services/food/knowledge/meat/lamb/__init__.py:9:    extract_lamb_country_code,
+app/services/food/knowledge/meat/lamb/__init__.py:10:    extract_lamb_country_text,
+app/services/food/knowledge/meat/lamb/__init__.py:11:    extract_lamb_product_name,
+app/services/food/knowledge/meat/lamb/__init__.py:12:    extract_lamb_storage_type,
+app/services/food/knowledge/meat/lamb/__init__.py:13:    extract_lamb_weight,
+app/services/food/knowledge/meat/lamb/__init__.py:15:from app.services.food.knowledge.meat.lamb.breed_registry import (
+app/services/food/knowledge/meat/lamb/__init__.py:20:from app.services.food.knowledge.meat.lamb.cut_registry import (
+app/services/food/knowledge/meat/lamb/__init__.py:25:from app.services.food.knowledge.meat.lamb.parser import (
+app/services/food/knowledge/meat/lamb/__init__.py:28:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/__init__.py:31:from app.services.food.knowledge.meat.lamb.provider import (
+app/services/food/knowledge/meat/lamb/__init__.py:34:from app.services.food.knowledge.meat.lamb.rules import (
+app/services/food/knowledge/meat/lamb/__init__.py:35:    apply_lamb_rules,
+app/services/food/knowledge/meat/lamb/__init__.py:38:from app.services.food.knowledge.meat.lamb.scoring import (
+app/services/food/knowledge/meat/lamb/__init__.py:42:    calculate_lamb_final_score,
+app/services/food/knowledge/meat/lamb/__init__.py:43:    calculate_lamb_knowledge_score,
+app/services/food/knowledge/meat/lamb/__init__.py:44:    calculate_lamb_scores,
+app/services/food/knowledge/meat/lamb/__init__.py:64:    "build_lamb_attributes",
+app/services/food/knowledge/meat/lamb/__init__.py:65:    "extract_lamb_product_name",
+app/services/food/knowledge/meat/lamb/__init__.py:66:    "extract_lamb_country_text",
+app/services/food/knowledge/meat/lamb/__init__.py:67:    "extract_lamb_country_code",
+app/services/food/knowledge/meat/lamb/__init__.py:68:    "extract_lamb_weight",
+app/services/food/knowledge/meat/lamb/__init__.py:69:    "extract_lamb_storage_type",
+app/services/food/knowledge/meat/lamb/__init__.py:70:    "extract_lamb_certifications",
+app/services/food/knowledge/meat/lamb/__init__.py:77:    "calculate_lamb_knowledge_score",
+app/services/food/knowledge/meat/lamb/__init__.py:78:    "calculate_lamb_scores",
+app/services/food/knowledge/meat/lamb/__init__.py:79:    "calculate_lamb_final_score",
+app/services/food/knowledge/meat/lamb/__init__.py:80:    "apply_lamb_rules",
+app/services/food/knowledge/meat/lamb/rules.py:6:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/rules.py:11:def apply_lamb_rules(
+app/services/food/knowledge/meat/lamb/rules.py:324:    "apply_lamb_rules",
+app/services/food/knowledge/meat/lamb/breed_registry.py:25:LAMB_BREED_REGISTRY_ID = "lamb.breeds"
+app/services/food/knowledge/meat/lamb/breed_registry.py:186:        app/services/food/registry_data/lamb/breeds.yaml
+app/services/food/knowledge/meat/lamb/breed_registry.py:362:            key=lambda breed: (
+app/services/food/knowledge/meat/lamb/breed_registry.py:462:def get_lamb_breed_registry(
+app/services/food/knowledge/meat/lamb/breed_registry.py:467:def get_lamb_breed(
+app/services/food/knowledge/meat/lamb/breed_registry.py:470:    return get_lamb_breed_registry().get(
+app/services/food/knowledge/meat/lamb/breed_registry.py:475:def lookup_lamb_breed(
+app/services/food/knowledge/meat/lamb/breed_registry.py:478:    return get_lamb_breed_registry().lookup(
+app/services/food/knowledge/meat/lamb/breed_registry.py:483:def match_lamb_breed(
+app/services/food/knowledge/meat/lamb/breed_registry.py:486:    return get_lamb_breed_registry().match(
+app/services/food/knowledge/meat/lamb/breed_registry.py:491:def list_lamb_breeds(
+app/services/food/knowledge/meat/lamb/breed_registry.py:495:    return get_lamb_breed_registry().list(
+app/services/food/knowledge/meat/lamb/breed_registry.py:505:    "get_lamb_breed_registry",
+app/services/food/knowledge/meat/lamb/breed_registry.py:506:    "get_lamb_breed",
+app/services/food/knowledge/meat/lamb/breed_registry.py:507:    "lookup_lamb_breed",
+app/services/food/knowledge/meat/lamb/breed_registry.py:508:    "match_lamb_breed",
+app/services/food/knowledge/meat/lamb/breed_registry.py:509:    "list_lamb_breeds",
+app/services/food/knowledge/meat/lamb/parser.py:9:from app.services.food.knowledge.meat.lamb.age_registry import (
+app/services/food/knowledge/meat/lamb/parser.py:13:from app.services.food.knowledge.meat.lamb.breed_registry import (
+app/services/food/knowledge/meat/lamb/parser.py:17:from app.services.food.knowledge.meat.lamb.cut_registry import (
+app/services/food/knowledge/meat/lamb/parser.py:21:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/parser.py:59:        "lamb_age",
+app/services/food/knowledge/meat/lamb/parser.py:65:        "lamb_breed",
+app/services/food/knowledge/meat/lamb/parser.py:73:        "lamb_cut",
+app/services/food/knowledge/meat/lamb/parser.py:272:                "category_id": "lamb",
+app/services/food/knowledge/meat/beef/grade_registry.py:22:BEEF_GRADE_REGISTRY_ID = "beef.grades"
+app/services/food/knowledge/meat/beef/grade_registry.py:390:            key=lambda item: item[0],
+app/services/food/knowledge/meat/beef/grade_registry.py:565:            key=lambda grade: (
+app/services/food/knowledge/meat/beef/grade_registry.py:626:            key=lambda value: (
+app/services/food/knowledge/meat/beef/grade_registry.py:823:_default_beef_grade_registry = (
+app/services/food/knowledge/meat/beef/grade_registry.py:828:def get_beef_grade_registry(
+app/services/food/knowledge/meat/beef/grade_registry.py:830:    return _default_beef_grade_registry
+app/services/food/knowledge/meat/beef/grade_registry.py:833:def get_beef_grade(
+app/services/food/knowledge/meat/beef/grade_registry.py:838:    return get_beef_grade_registry().get(
+app/services/food/knowledge/meat/beef/grade_registry.py:844:def lookup_beef_grade(
+app/services/food/knowledge/meat/beef/grade_registry.py:850:    return get_beef_grade_registry().lookup(
+app/services/food/knowledge/meat/beef/grade_registry.py:857:def match_beef_grade(
+app/services/food/knowledge/meat/beef/grade_registry.py:862:    return get_beef_grade_registry().match(
+app/services/food/knowledge/meat/beef/grade_registry.py:868:def list_beef_grades(
+app/services/food/knowledge/meat/beef/grade_registry.py:873:    return get_beef_grade_registry().list(
+app/services/food/knowledge/meat/beef/grade_registry.py:888:    "get_beef_grade_registry",
+app/services/food/knowledge/meat/beef/grade_registry.py:889:    "get_beef_grade",
+app/services/food/knowledge/meat/beef/grade_registry.py:890:    "lookup_beef_grade",
+app/services/food/knowledge/meat/beef/grade_registry.py:891:    "match_beef_grade",
+app/services/food/knowledge/meat/beef/grade_registry.py:892:    "list_beef_grades",
+app/services/food/knowledge/meat/beef/provider.py:8:from app.services.food.knowledge.meat.beef.attributes import (
+app/services/food/knowledge/meat/beef/provider.py:9:    build_beef_attributes,
+app/services/food/knowledge/meat/beef/provider.py:10:    extract_beef_product_name,
+app/services/food/knowledge/meat/beef/provider.py:12:from app.services.food.knowledge.meat.beef.parser import (
+app/services/food/knowledge/meat/beef/provider.py:15:from app.services.food.knowledge.meat.beef.rules import (
+app/services/food/knowledge/meat/beef/provider.py:16:    apply_beef_rules,
+app/services/food/knowledge/meat/beef/provider.py:18:from app.services.food.knowledge.meat.beef.scoring import (
+app/services/food/knowledge/meat/beef/provider.py:19:    calculate_beef_final_score,
+app/services/food/knowledge/meat/beef/provider.py:20:    calculate_beef_scores,
+app/services/food/knowledge/meat/beef/provider.py:46:    category_id = "beef"
+app/services/food/knowledge/meat/beef/provider.py:55:        "beef",
+app/services/food/knowledge/meat/beef/provider.py:148:        product_name = extract_beef_product_name(
+app/services/food/knowledge/meat/beef/provider.py:158:        attributes = build_beef_attributes(
+app/services/food/knowledge/meat/beef/provider.py:163:        scores = calculate_beef_scores(
+app/services/food/knowledge/meat/beef/provider.py:169:        reasons, warnings = apply_beef_rules(
+app/services/food/knowledge/meat/beef/provider.py:186:                calculate_beef_final_score(
+app/services/food/knowledge/meat/beef/attributes.py:6:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/attributes.py:19:def extract_beef_product_name(
+app/services/food/knowledge/meat/beef/attributes.py:35:def extract_beef_country_text(
+app/services/food/knowledge/meat/beef/attributes.py:78:def extract_beef_weight(
+app/services/food/knowledge/meat/beef/attributes.py:92:def extract_beef_marbling(
+app/services/food/knowledge/meat/beef/attributes.py:105:def build_beef_attributes(
+app/services/food/knowledge/meat/beef/attributes.py:119:        "product_name": extract_beef_product_name(
+app/services/food/knowledge/meat/beef/attributes.py:122:        "country": extract_beef_country_text(
+app/services/food/knowledge/meat/beef/attributes.py:130:        "weight": extract_beef_weight(
+app/services/food/knowledge/meat/beef/attributes.py:133:        "marbling": extract_beef_marbling(
+app/services/food/knowledge/meat/beef/attributes.py:224:    "build_beef_attributes",
+app/services/food/knowledge/meat/beef/attributes.py:225:    "extract_beef_country_text",
+app/services/food/knowledge/meat/beef/attributes.py:226:    "extract_beef_marbling",
+app/services/food/knowledge/meat/beef/attributes.py:227:    "extract_beef_product_name",
+app/services/food/knowledge/meat/beef/attributes.py:228:    "extract_beef_weight",
+app/services/food/knowledge/meat/beef/scoring.py:5:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/scoring.py:126:def calculate_beef_knowledge_score(
+app/services/food/knowledge/meat/beef/scoring.py:190:def calculate_beef_scores(
+app/services/food/knowledge/meat/beef/scoring.py:209:        calculate_beef_knowledge_score(
+app/services/food/knowledge/meat/beef/scoring.py:263:def calculate_beef_final_score(
+app/services/food/knowledge/meat/beef/scoring.py:304:    "calculate_beef_knowledge_score",
+app/services/food/knowledge/meat/beef/scoring.py:305:    "calculate_beef_scores",
+app/services/food/knowledge/meat/beef/scoring.py:306:    "calculate_beef_final_score",
+app/services/food/knowledge/meat/beef/cut_registry.py:25:BEEF_CUT_REGISTRY_ID = "beef.cuts"
+app/services/food/knowledge/meat/beef/cut_registry.py:173:        app/services/food/registry_data/beef/cuts.yaml
+app/services/food/knowledge/meat/beef/cut_registry.py:331:            key=lambda cut: (
+app/services/food/knowledge/meat/beef/cut_registry.py:368:            key=lambda cut: (
+app/services/food/knowledge/meat/beef/cut_registry.py:396:            key=lambda cut: cut.score,
+app/services/food/knowledge/meat/beef/cut_registry.py:474:def get_beef_cut_registry() -> BeefCutRegistry:
+app/services/food/knowledge/meat/beef/cut_registry.py:478:def get_beef_cut(
+app/services/food/knowledge/meat/beef/cut_registry.py:481:    return get_beef_cut_registry().get(
+app/services/food/knowledge/meat/beef/cut_registry.py:486:def lookup_beef_cut(
+app/services/food/knowledge/meat/beef/cut_registry.py:489:    return get_beef_cut_registry().lookup(
+app/services/food/knowledge/meat/beef/cut_registry.py:494:def match_beef_cut(
+app/services/food/knowledge/meat/beef/cut_registry.py:497:    return get_beef_cut_registry().match(
+app/services/food/knowledge/meat/beef/cut_registry.py:502:def list_beef_cuts() -> list[BeefCut]:
+app/services/food/knowledge/meat/beef/cut_registry.py:503:    return get_beef_cut_registry().list()
+app/services/food/knowledge/meat/beef/cut_registry.py:506:def premium_beef_cuts() -> list[BeefCut]:
+app/services/food/knowledge/meat/beef/cut_registry.py:508:        get_beef_cut_registry()
+app/services/food/knowledge/meat/beef/cut_registry.py:513:def beef_cuts_for_cooking(
+app/services/food/knowledge/meat/beef/cut_registry.py:517:        get_beef_cut_registry()
+app/services/food/knowledge/meat/beef/cut_registry.py:529:    "beef_cuts_for_cooking",
+app/services/food/knowledge/meat/beef/cut_registry.py:530:    "get_beef_cut",
+app/services/food/knowledge/meat/beef/cut_registry.py:531:    "get_beef_cut_registry",
+app/services/food/knowledge/meat/beef/cut_registry.py:532:    "list_beef_cuts",
+app/services/food/knowledge/meat/beef/cut_registry.py:533:    "lookup_beef_cut",
+app/services/food/knowledge/meat/beef/cut_registry.py:534:    "match_beef_cut",
+app/services/food/knowledge/meat/beef/cut_registry.py:535:    "premium_beef_cuts",
+app/services/food/knowledge/meat/beef/__init__.py:1:from app.services.food.knowledge.meat.beef.provider import (
+app/services/food/knowledge/meat/beef/__init__.py:5:from app.services.food.knowledge.meat.beef.grade_registry import (
+app/services/food/knowledge/meat/beef/__init__.py:11:    get_beef_grade,
+app/services/food/knowledge/meat/beef/__init__.py:12:    get_beef_grade_registry,
+app/services/food/knowledge/meat/beef/__init__.py:13:    list_beef_grades,
+app/services/food/knowledge/meat/beef/__init__.py:14:    lookup_beef_grade,
+app/services/food/knowledge/meat/beef/__init__.py:15:    match_beef_grade,
+app/services/food/knowledge/meat/beef/__init__.py:21:from app.services.food.knowledge.meat.beef.breed_registry import (
+app/services/food/knowledge/meat/beef/__init__.py:26:    get_beef_breed,
+app/services/food/knowledge/meat/beef/__init__.py:27:    get_beef_breed_registry,
+app/services/food/knowledge/meat/beef/__init__.py:28:    list_beef_breeds,
+app/services/food/knowledge/meat/beef/__init__.py:29:    lookup_beef_breed,
+app/services/food/knowledge/meat/beef/__init__.py:30:    match_beef_breed,
+app/services/food/knowledge/meat/beef/__init__.py:34:from app.services.food.knowledge.meat.beef.cut_registry import (
+app/services/food/knowledge/meat/beef/__init__.py:39:    beef_cuts_for_cooking,
+app/services/food/knowledge/meat/beef/__init__.py:40:    get_beef_cut,
+app/services/food/knowledge/meat/beef/__init__.py:41:    get_beef_cut_registry,
+app/services/food/knowledge/meat/beef/__init__.py:42:    list_beef_cuts,
+app/services/food/knowledge/meat/beef/__init__.py:43:    lookup_beef_cut,
+app/services/food/knowledge/meat/beef/__init__.py:44:    match_beef_cut,
+app/services/food/knowledge/meat/beef/__init__.py:45:    premium_beef_cuts,
+app/services/food/knowledge/meat/beef/__init__.py:55:    "get_beef_grade",
+app/services/food/knowledge/meat/beef/__init__.py:56:    "get_beef_grade_registry",
+app/services/food/knowledge/meat/beef/__init__.py:57:    "list_beef_grades",
+app/services/food/knowledge/meat/beef/__init__.py:58:    "lookup_beef_grade",
+app/services/food/knowledge/meat/beef/__init__.py:59:    "match_beef_grade",
+app/services/food/knowledge/meat/beef/__init__.py:66:    "get_beef_breed",
+app/services/food/knowledge/meat/beef/__init__.py:67:    "get_beef_breed_registry",
+app/services/food/knowledge/meat/beef/__init__.py:68:    "list_beef_breeds",
+app/services/food/knowledge/meat/beef/__init__.py:69:    "lookup_beef_breed",
+app/services/food/knowledge/meat/beef/__init__.py:70:    "match_beef_breed",
+app/services/food/knowledge/meat/beef/__init__.py:75:    "beef_cuts_for_cooking",
+app/services/food/knowledge/meat/beef/__init__.py:76:    "get_beef_cut",
+app/services/food/knowledge/meat/beef/__init__.py:77:    "get_beef_cut_registry",
+app/services/food/knowledge/meat/beef/__init__.py:78:    "list_beef_cuts",
+app/services/food/knowledge/meat/beef/__init__.py:79:    "lookup_beef_cut",
+app/services/food/knowledge/meat/beef/__init__.py:80:    "match_beef_cut",
+app/services/food/knowledge/meat/beef/__init__.py:81:    "premium_beef_cuts",
+app/services/food/knowledge/meat/beef/rules.py:6:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/rules.py:11:def apply_beef_rules(
+app/services/food/knowledge/meat/beef/rules.py:205:    "apply_beef_rules",
+app/services/food/knowledge/meat/beef/breed_registry.py:23:BEEF_BREED_REGISTRY_ID = "beef.breeds"
+app/services/food/knowledge/meat/beef/breed_registry.py:280:            key=lambda breed: (
+app/services/food/knowledge/meat/beef/breed_registry.py:365:_default_beef_breed_registry = (
+app/services/food/knowledge/meat/beef/breed_registry.py:370:def get_beef_breed_registry(
+app/services/food/knowledge/meat/beef/breed_registry.py:372:    return _default_beef_breed_registry
+app/services/food/knowledge/meat/beef/breed_registry.py:375:def get_beef_breed(
+app/services/food/knowledge/meat/beef/breed_registry.py:380:    return get_beef_breed_registry().get(
+app/services/food/knowledge/meat/beef/breed_registry.py:386:def lookup_beef_breed(
+app/services/food/knowledge/meat/beef/breed_registry.py:391:    return get_beef_breed_registry().lookup(
+app/services/food/knowledge/meat/beef/breed_registry.py:397:def match_beef_breed(
+app/services/food/knowledge/meat/beef/breed_registry.py:400:    return get_beef_breed_registry().match(
+app/services/food/knowledge/meat/beef/breed_registry.py:405:def list_beef_breeds(
+app/services/food/knowledge/meat/beef/breed_registry.py:409:    return get_beef_breed_registry().list(
+app/services/food/knowledge/meat/beef/breed_registry.py:419:    "get_beef_breed_registry",
+app/services/food/knowledge/meat/beef/breed_registry.py:420:    "get_beef_breed",
+app/services/food/knowledge/meat/beef/breed_registry.py:421:    "lookup_beef_breed",
+app/services/food/knowledge/meat/beef/breed_registry.py:422:    "match_beef_breed",
+app/services/food/knowledge/meat/beef/breed_registry.py:423:    "list_beef_breeds",
+app/services/food/knowledge/meat/beef/parser.py:9:from app.services.food.knowledge.meat.beef.breed_registry import (
+app/services/food/knowledge/meat/beef/parser.py:13:from app.services.food.knowledge.meat.beef.cut_registry import (
+app/services/food/knowledge/meat/beef/parser.py:17:from app.services.food.knowledge.meat.beef.grade_registry import (
+app/services/food/knowledge/meat/beef/parser.py:21:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/parser.py:67:        "beef_breed",
+app/services/food/knowledge/meat/beef/parser.py:74:        "beef_grade",
+app/services/food/knowledge/meat/beef/parser.py:82:        "beef_cut",
+app/services/food/knowledge/meat/beef/parser.py:113:            "korean beef",
+app/services/food/knowledge/meat/beef/parser.py:122:            "american beef",
+app/services/food/knowledge/meat/beef/parser.py:127:            "australian beef",
+app/services/food/knowledge/meat/beef/parser.py:135:            "japanese beef",
+app/services/food/knowledge/meat/beef/parser.py:154:        "beef",
+app/services/food/knowledge/meat/beef/parser.py:309:            "domain": "beef",
+app/services/food/knowledge/meat/beef/parser.py:486:                "parseable beef text"
+app/services/food/knowledge/meat/beef/parser.py:801:def get_default_beef_parser() -> BeefParser:
+app/services/food/knowledge/meat/beef/parser.py:815:def parse_beef_text(
+app/services/food/knowledge/meat/beef/parser.py:821:    return get_default_beef_parser().parse(
+app/services/food/knowledge/meat/beef/parser.py:826:def parse_beef_product(
+app/services/food/knowledge/meat/beef/parser.py:835:    parser = get_default_beef_parser()
+app/services/food/knowledge/meat/beef/parser.py:852:    "get_default_beef_parser",
+app/services/food/knowledge/meat/beef/parser.py:853:    "parse_beef_text",
+app/services/food/knowledge/meat/beef/parser.py:854:    "parse_beef_product",
+app/services/food/knowledge/meat/duck/parser_models.py:22:    duck_type: str | None = None
+app/services/food/knowledge/meat/duck/parser_models.py:26:    duck_type_confidence: float = 0.0
+app/services/food/knowledge/meat/duck/parser_models.py:30:    duck_type_match: RegistryMatch | None = None
+app/services/food/knowledge/meat/duck/parser_models.py:42:    def has_duck_type(self) -> bool:
+app/services/food/knowledge/meat/duck/parser_models.py:43:        return self.duck_type is not None
+app/services/food/knowledge/meat/duck/parser_models.py:56:            self.has_duck_type
+app/services/food/knowledge/meat/duck/parser_models.py:70:            self.has_duck_type
+app/services/food/knowledge/meat/duck/provider.py:9:from app.services.food.knowledge.meat.duck.attributes import (
+app/services/food/knowledge/meat/duck/provider.py:10:    build_duck_attributes,
+app/services/food/knowledge/meat/duck/provider.py:11:    extract_duck_product_name,
+app/services/food/knowledge/meat/duck/provider.py:13:from app.services.food.knowledge.meat.duck.parser import (
+app/services/food/knowledge/meat/duck/provider.py:16:from app.services.food.knowledge.meat.duck.rules import (
+app/services/food/knowledge/meat/duck/provider.py:17:    apply_duck_rules,
+app/services/food/knowledge/meat/duck/provider.py:19:from app.services.food.knowledge.meat.duck.scoring import (
+app/services/food/knowledge/meat/duck/provider.py:20:    calculate_duck_final_score,
+app/services/food/knowledge/meat/duck/provider.py:21:    calculate_duck_scores,
+app/services/food/knowledge/meat/duck/provider.py:50:    category_id = "duck"
+app/services/food/knowledge/meat/duck/provider.py:57:        "duck",
+app/services/food/knowledge/meat/duck/provider.py:165:            extract_duck_product_name(
+app/services/food/knowledge/meat/duck/provider.py:176:        attributes = build_duck_attributes(
+app/services/food/knowledge/meat/duck/provider.py:181:        scores = calculate_duck_scores(
+app/services/food/knowledge/meat/duck/provider.py:188:            apply_duck_rules(
+app/services/food/knowledge/meat/duck/provider.py:196:            calculate_duck_final_score(
+app/services/food/knowledge/meat/duck/attributes.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/attributes.py:11:def extract_duck_product_name(
+app/services/food/knowledge/meat/duck/attributes.py:27:def extract_duck_country_text(
+app/services/food/knowledge/meat/duck/attributes.py:50:def extract_duck_country_code(
+app/services/food/knowledge/meat/duck/attributes.py:71:def extract_duck_weight(
+app/services/food/knowledge/meat/duck/attributes.py:94:def extract_duck_storage_type(
+app/services/food/knowledge/meat/duck/attributes.py:117:def extract_duck_certifications(
+app/services/food/knowledge/meat/duck/attributes.py:155:def extract_duck_bone_status(
+app/services/food/knowledge/meat/duck/attributes.py:178:def extract_duck_skin_status(
+app/services/food/knowledge/meat/duck/attributes.py:217:def build_duck_attributes(
+app/services/food/knowledge/meat/duck/attributes.py:244:            extract_duck_product_name(
+app/services/food/knowledge/meat/duck/attributes.py:249:            extract_duck_country_text(
+app/services/food/knowledge/meat/duck/attributes.py:254:            extract_duck_country_code(
+app/services/food/knowledge/meat/duck/attributes.py:258:        "weight": extract_duck_weight(
+app/services/food/knowledge/meat/duck/attributes.py:262:            extract_duck_storage_type(
+app/services/food/knowledge/meat/duck/attributes.py:267:            extract_duck_certifications(
+app/services/food/knowledge/meat/duck/attributes.py:272:            extract_duck_bone_status(
+app/services/food/knowledge/meat/duck/attributes.py:277:            extract_duck_skin_status(
+app/services/food/knowledge/meat/duck/attributes.py:281:        "duck_type": (
+app/services/food/knowledge/meat/duck/attributes.py:282:            parse_result.duck_type
+app/services/food/knowledge/meat/duck/attributes.py:287:        "duck_type_confidence": (
+app/services/food/knowledge/meat/duck/attributes.py:288:            parse_result.duck_type_confidence
+app/services/food/knowledge/meat/duck/attributes.py:309:        parse_result.duck_type_match
+app/services/food/knowledge/meat/duck/attributes.py:312:        duck_type = (
+app/services/food/knowledge/meat/duck/attributes.py:314:            .duck_type_match
+app/services/food/knowledge/meat/duck/attributes.py:315:            .duck_type
+app/services/food/knowledge/meat/duck/attributes.py:320:                "duck_type_registry_key": (
+app/services/food/knowledge/meat/duck/attributes.py:321:                    duck_type.registry_key
+app/services/food/knowledge/meat/duck/attributes.py:323:                "duck_type_category": (
+app/services/food/knowledge/meat/duck/attributes.py:324:                    duck_type.type_category
+app/services/food/knowledge/meat/duck/attributes.py:326:                "duck_type_score": (
+app/services/food/knowledge/meat/duck/attributes.py:327:                    duck_type.score
+app/services/food/knowledge/meat/duck/attributes.py:329:                "duck_type_premium": (
+app/services/food/knowledge/meat/duck/attributes.py:330:                    duck_type.premium
+app/services/food/knowledge/meat/duck/attributes.py:332:                "duck_type_flavor_intensity": (
+app/services/food/knowledge/meat/duck/attributes.py:333:                    duck_type.flavor_intensity
+app/services/food/knowledge/meat/duck/attributes.py:335:                "duck_type_tenderness_level": (
+app/services/food/knowledge/meat/duck/attributes.py:336:                    duck_type.tenderness_level
+app/services/food/knowledge/meat/duck/attributes.py:338:                "duck_type_typical_uses": list(
+app/services/food/knowledge/meat/duck/attributes.py:339:                    duck_type.typical_uses
+app/services/food/knowledge/meat/duck/attributes.py:341:                "duck_type_description": (
+app/services/food/knowledge/meat/duck/attributes.py:342:                    duck_type.description
+app/services/food/knowledge/meat/duck/attributes.py:421:    "build_duck_attributes",
+app/services/food/knowledge/meat/duck/attributes.py:422:    "extract_duck_product_name",
+app/services/food/knowledge/meat/duck/attributes.py:423:    "extract_duck_country_text",
+app/services/food/knowledge/meat/duck/attributes.py:424:    "extract_duck_country_code",
+app/services/food/knowledge/meat/duck/attributes.py:425:    "extract_duck_weight",
+app/services/food/knowledge/meat/duck/attributes.py:426:    "extract_duck_storage_type",
+app/services/food/knowledge/meat/duck/attributes.py:427:    "extract_duck_certifications",
+app/services/food/knowledge/meat/duck/attributes.py:428:    "extract_duck_bone_status",
+app/services/food/knowledge/meat/duck/attributes.py:429:    "extract_duck_skin_status",
+app/services/food/knowledge/meat/duck/scoring.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/scoring.py:15:    "duck_type": 0.30,
+app/services/food/knowledge/meat/duck/scoring.py:133:        parse_result.duck_type_match
+app/services/food/knowledge/meat/duck/scoring.py:136:        duck_type = (
+app/services/food/knowledge/meat/duck/scoring.py:138:            .duck_type_match
+app/services/food/knowledge/meat/duck/scoring.py:139:            .duck_type
+app/services/food/knowledge/meat/duck/scoring.py:143:            duck_type.score
+app/services/food/knowledge/meat/duck/scoring.py:187:        "duck_type": type_score,
+app/services/food/knowledge/meat/duck/scoring.py:209:def calculate_duck_knowledge_score(
+app/services/food/knowledge/meat/duck/scoring.py:211:    duck_type_score: Any,
+app/services/food/knowledge/meat/duck/scoring.py:228:        "duck_type": clamp_score(
+app/services/food/knowledge/meat/duck/scoring.py:229:            duck_type_score
+app/services/food/knowledge/meat/duck/scoring.py:270:def calculate_duck_scores(
+app/services/food/knowledge/meat/duck/scoring.py:305:        calculate_duck_knowledge_score(
+app/services/food/knowledge/meat/duck/scoring.py:306:            duck_type_score=(
+app/services/food/knowledge/meat/duck/scoring.py:307:                registry_scores["duck_type"]
+app/services/food/knowledge/meat/duck/scoring.py:337:        "duck_type": registry_scores[
+app/services/food/knowledge/meat/duck/scoring.py:338:            "duck_type"
+app/services/food/knowledge/meat/duck/scoring.py:360:def calculate_duck_final_score(
+app/services/food/knowledge/meat/duck/scoring.py:410:    "calculate_duck_knowledge_score",
+app/services/food/knowledge/meat/duck/scoring.py:411:    "calculate_duck_scores",
+app/services/food/knowledge/meat/duck/scoring.py:412:    "calculate_duck_final_score",
+app/services/food/knowledge/meat/duck/cut_registry.py:11:DUCK_CUT_REGISTRY_ID = "duck.cuts"
+app/services/food/knowledge/meat/duck/cut_registry.py:122:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/duck/__init__.py:37:from app.services.food.knowledge.meat.duck.breed_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:42:from app.services.food.knowledge.meat.duck.cut_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:47:from app.services.food.knowledge.meat.duck.parser import (
+app/services/food/knowledge/meat/duck/__init__.py:50:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/__init__.py:53:from app.services.food.knowledge.meat.duck.type_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:85:from app.services.food.knowledge.meat.duck.attributes import (
+app/services/food/knowledge/meat/duck/__init__.py:86:    build_duck_attributes,
+app/services/food/knowledge/meat/duck/__init__.py:87:    extract_duck_bone_status,
+app/services/food/knowledge/meat/duck/__init__.py:88:    extract_duck_certifications,
+app/services/food/knowledge/meat/duck/__init__.py:89:    extract_duck_country_code,
+app/services/food/knowledge/meat/duck/__init__.py:90:    extract_duck_country_text,
+app/services/food/knowledge/meat/duck/__init__.py:91:    extract_duck_product_name,
+app/services/food/knowledge/meat/duck/__init__.py:92:    extract_duck_skin_status,
+app/services/food/knowledge/meat/duck/__init__.py:93:    extract_duck_storage_type,
+app/services/food/knowledge/meat/duck/__init__.py:94:    extract_duck_weight,
+app/services/food/knowledge/meat/duck/__init__.py:98:    "build_duck_attributes",
+app/services/food/knowledge/meat/duck/__init__.py:99:    "extract_duck_product_name",
+app/services/food/knowledge/meat/duck/__init__.py:100:    "extract_duck_country_text",
+app/services/food/knowledge/meat/duck/__init__.py:101:    "extract_duck_country_code",
+app/services/food/knowledge/meat/duck/__init__.py:102:    "extract_duck_weight",
+app/services/food/knowledge/meat/duck/__init__.py:103:    "extract_duck_storage_type",
+app/services/food/knowledge/meat/duck/__init__.py:104:    "extract_duck_certifications",
+app/services/food/knowledge/meat/duck/__init__.py:105:    "extract_duck_bone_status",
+app/services/food/knowledge/meat/duck/__init__.py:106:    "extract_duck_skin_status",
+app/services/food/knowledge/meat/duck/__init__.py:117:from app.services.food.knowledge.meat.duck.provider import (
+app/services/food/knowledge/meat/duck/__init__.py:120:from app.services.food.knowledge.meat.duck.rules import (
+app/services/food/knowledge/meat/duck/__init__.py:121:    apply_duck_rules,
+app/services/food/knowledge/meat/duck/__init__.py:124:from app.services.food.knowledge.meat.duck.scoring import (
+app/services/food/knowledge/meat/duck/__init__.py:125:    calculate_duck_final_score,
+app/services/food/knowledge/meat/duck/__init__.py:126:    calculate_duck_knowledge_score,
+app/services/food/knowledge/meat/duck/__init__.py:127:    calculate_duck_scores,
+app/services/food/knowledge/meat/duck/__init__.py:131:    "calculate_duck_scores",
+app/services/food/knowledge/meat/duck/__init__.py:132:    "calculate_duck_knowledge_score",
+app/services/food/knowledge/meat/duck/__init__.py:133:    "calculate_duck_final_score",
+app/services/food/knowledge/meat/duck/__init__.py:134:    "apply_duck_rules",
+app/services/food/knowledge/meat/duck/rules.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/rules.py:11:def apply_duck_rules(
+app/services/food/knowledge/meat/duck/rules.py:56:    duck_type = attributes.get("duck_type")
+app/services/food/knowledge/meat/duck/rules.py:60:    if duck_type:
+app/services/food/knowledge/meat/duck/rules.py:62:            f"오리 유형은 {duck_type}입니다."
+app/services/food/knowledge/meat/duck/rules.py:66:            "duck_type_description"
+app/services/food/knowledge/meat/duck/rules.py:118:            "duck_type_typical_uses"
+app/services/food/knowledge/meat/duck/rules.py:137:        "duck_type_flavor_intensity"
+app/services/food/knowledge/meat/duck/rules.py:157:        "duck_type_tenderness_level"
+app/services/food/knowledge/meat/duck/rules.py:173:            "duck_type",
+app/services/food/knowledge/meat/duck/rules.py:245:            "duck_type_premium"
+app/services/food/knowledge/meat/duck/rules.py:357:    "apply_duck_rules",
+app/services/food/knowledge/meat/duck/type_registry.py:11:DUCK_TYPE_REGISTRY_ID = "duck.types"
+app/services/food/knowledge/meat/duck/type_registry.py:62:    def duck_type(self) -> DuckType:
+app/services/food/knowledge/meat/duck/type_registry.py:110:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/duck/breed_registry.py:11:DUCK_BREED_REGISTRY_ID = "duck.breeds"
+app/services/food/knowledge/meat/duck/breed_registry.py:121:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/duck/parser.py:9:from app.services.food.knowledge.meat.duck.breed_registry import (
+app/services/food/knowledge/meat/duck/parser.py:13:from app.services.food.knowledge.meat.duck.cut_registry import (
+app/services/food/knowledge/meat/duck/parser.py:17:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/parser.py:20:from app.services.food.knowledge.meat.duck.type_registry import (
+app/services/food/knowledge/meat/duck/parser.py:56:        "duck_type",
+app/services/food/knowledge/meat/duck/parser.py:65:        "duck_breed",
+app/services/food/knowledge/meat/duck/parser.py:74:        "duck_cut",
+app/services/food/knowledge/meat/duck/parser.py:164:            duck_type=result.duck_type,
+app/services/food/knowledge/meat/duck/parser.py:167:            duck_type_confidence=(
+app/services/food/knowledge/meat/duck/parser.py:168:                result.duck_type_confidence
+app/services/food/knowledge/meat/duck/parser.py:176:            duck_type_match=(
+app/services/food/knowledge/meat/duck/parser.py:177:                result.duck_type_match
+app/services/food/knowledge/meat/duck/parser.py:203:        duck_type = self._canonical_name(
+app/services/food/knowledge/meat/duck/parser.py:258:                "category_id": "duck",
+app/services/food/knowledge/meat/duck/parser.py:271:            duck_type=duck_type,
+app/services/food/knowledge/meat/duck/parser.py:274:            duck_type_confidence=(
+app/services/food/knowledge/meat/duck/parser.py:279:            duck_type_match=type_match,
+app/services/food/knowledge/meat/__init__.py:1:from app.services.food.knowledge.meat.beef import (
+app/services/food/knowledge/meat/__init__.py:5:from app.services.food.knowledge.meat.lamb import (
+app/services/food/knowledge/meat/chicken/parser_models.py:22:    chicken_type: str | None = None
+app/services/food/knowledge/meat/chicken/parser_models.py:26:    chicken_type_confidence: float = 0.0
+app/services/food/knowledge/meat/chicken/parser_models.py:30:    chicken_type_match: RegistryMatch | None = None
+app/services/food/knowledge/meat/chicken/parser_models.py:42:    def has_chicken_type(self) -> bool:
+app/services/food/knowledge/meat/chicken/parser_models.py:43:        return self.chicken_type is not None
+app/services/food/knowledge/meat/chicken/parser_models.py:56:            self.has_chicken_type
+app/services/food/knowledge/meat/chicken/parser_models.py:70:            self.has_chicken_type
+app/services/food/knowledge/meat/chicken/provider.py:9:from app.services.food.knowledge.meat.chicken.attributes import (
+app/services/food/knowledge/meat/chicken/provider.py:10:    build_chicken_attributes,
+app/services/food/knowledge/meat/chicken/provider.py:11:    extract_chicken_product_name,
+app/services/food/knowledge/meat/chicken/provider.py:13:from app.services.food.knowledge.meat.chicken.parser import (
+app/services/food/knowledge/meat/chicken/provider.py:16:from app.services.food.knowledge.meat.chicken.rules import (
+app/services/food/knowledge/meat/chicken/provider.py:17:    apply_chicken_rules,
+app/services/food/knowledge/meat/chicken/provider.py:19:from app.services.food.knowledge.meat.chicken.scoring import (
+app/services/food/knowledge/meat/chicken/provider.py:20:    calculate_chicken_final_score,
+app/services/food/knowledge/meat/chicken/provider.py:21:    calculate_chicken_scores,
+app/services/food/knowledge/meat/chicken/provider.py:50:    category_id = "chicken"
+app/services/food/knowledge/meat/chicken/provider.py:57:        "chicken",
+app/services/food/knowledge/meat/chicken/provider.py:166:            extract_chicken_product_name(
+app/services/food/knowledge/meat/chicken/provider.py:177:        attributes = build_chicken_attributes(
+app/services/food/knowledge/meat/chicken/provider.py:182:        scores = calculate_chicken_scores(
+app/services/food/knowledge/meat/chicken/provider.py:189:            apply_chicken_rules(
+app/services/food/knowledge/meat/chicken/provider.py:197:            calculate_chicken_final_score(
+app/services/food/knowledge/meat/chicken/attributes.py:6:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/attributes.py:11:def extract_chicken_product_name(
+app/services/food/knowledge/meat/chicken/attributes.py:27:def extract_chicken_country_text(
+app/services/food/knowledge/meat/chicken/attributes.py:50:def extract_chicken_country_code(
+app/services/food/knowledge/meat/chicken/attributes.py:71:def extract_chicken_weight(
+app/services/food/knowledge/meat/chicken/attributes.py:94:def extract_chicken_storage_type(
+app/services/food/knowledge/meat/chicken/attributes.py:117:def extract_chicken_certifications(
+app/services/food/knowledge/meat/chicken/attributes.py:155:def extract_chicken_bone_status(
+app/services/food/knowledge/meat/chicken/attributes.py:178:def extract_chicken_skin_status(
+app/services/food/knowledge/meat/chicken/attributes.py:217:def build_chicken_attributes(
+app/services/food/knowledge/meat/chicken/attributes.py:244:            extract_chicken_product_name(
+app/services/food/knowledge/meat/chicken/attributes.py:249:            extract_chicken_country_text(
+app/services/food/knowledge/meat/chicken/attributes.py:254:            extract_chicken_country_code(
+app/services/food/knowledge/meat/chicken/attributes.py:258:        "weight": extract_chicken_weight(
+app/services/food/knowledge/meat/chicken/attributes.py:262:            extract_chicken_storage_type(
+app/services/food/knowledge/meat/chicken/attributes.py:267:            extract_chicken_certifications(
+app/services/food/knowledge/meat/chicken/attributes.py:272:            extract_chicken_bone_status(
+app/services/food/knowledge/meat/chicken/attributes.py:277:            extract_chicken_skin_status(
+app/services/food/knowledge/meat/chicken/attributes.py:281:        "chicken_type": (
+app/services/food/knowledge/meat/chicken/attributes.py:282:            parse_result.chicken_type
+app/services/food/knowledge/meat/chicken/attributes.py:287:        "chicken_type_confidence": (
+app/services/food/knowledge/meat/chicken/attributes.py:288:            parse_result.chicken_type_confidence
+app/services/food/knowledge/meat/chicken/attributes.py:309:        parse_result.chicken_type_match
+app/services/food/knowledge/meat/chicken/attributes.py:312:        chicken_type = (
+app/services/food/knowledge/meat/chicken/attributes.py:314:            .chicken_type_match
+app/services/food/knowledge/meat/chicken/attributes.py:315:            .chicken_type
+app/services/food/knowledge/meat/chicken/attributes.py:320:                "chicken_type_registry_key": (
+app/services/food/knowledge/meat/chicken/attributes.py:321:                    chicken_type.registry_key
+app/services/food/knowledge/meat/chicken/attributes.py:323:                "chicken_type_category": (
+app/services/food/knowledge/meat/chicken/attributes.py:324:                    chicken_type.type_category
+app/services/food/knowledge/meat/chicken/attributes.py:326:                "chicken_type_score": (
+app/services/food/knowledge/meat/chicken/attributes.py:327:                    chicken_type.score
+app/services/food/knowledge/meat/chicken/attributes.py:329:                "chicken_type_premium": (
+app/services/food/knowledge/meat/chicken/attributes.py:330:                    chicken_type.premium
+app/services/food/knowledge/meat/chicken/attributes.py:332:                "chicken_type_flavor_intensity": (
+app/services/food/knowledge/meat/chicken/attributes.py:333:                    chicken_type.flavor_intensity
+app/services/food/knowledge/meat/chicken/attributes.py:335:                "chicken_type_tenderness_level": (
+app/services/food/knowledge/meat/chicken/attributes.py:336:                    chicken_type.tenderness_level
+app/services/food/knowledge/meat/chicken/attributes.py:338:                "chicken_type_typical_uses": list(
+app/services/food/knowledge/meat/chicken/attributes.py:339:                    chicken_type.typical_uses
+app/services/food/knowledge/meat/chicken/attributes.py:341:                "chicken_type_description": (
+app/services/food/knowledge/meat/chicken/attributes.py:342:                    chicken_type.description
+app/services/food/knowledge/meat/chicken/attributes.py:421:    "build_chicken_attributes",
+app/services/food/knowledge/meat/chicken/attributes.py:422:    "extract_chicken_product_name",
+app/services/food/knowledge/meat/chicken/attributes.py:423:    "extract_chicken_country_text",
+app/services/food/knowledge/meat/chicken/attributes.py:424:    "extract_chicken_country_code",
+app/services/food/knowledge/meat/chicken/attributes.py:425:    "extract_chicken_weight",
+app/services/food/knowledge/meat/chicken/attributes.py:426:    "extract_chicken_storage_type",
+app/services/food/knowledge/meat/chicken/attributes.py:427:    "extract_chicken_certifications",
+app/services/food/knowledge/meat/chicken/attributes.py:428:    "extract_chicken_bone_status",
+app/services/food/knowledge/meat/chicken/attributes.py:429:    "extract_chicken_skin_status",
+app/services/food/knowledge/meat/chicken/scoring.py:6:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/scoring.py:15:    "chicken_type": 0.30,
+app/services/food/knowledge/meat/chicken/scoring.py:133:        parse_result.chicken_type_match
+app/services/food/knowledge/meat/chicken/scoring.py:136:        chicken_type = (
+app/services/food/knowledge/meat/chicken/scoring.py:138:            .chicken_type_match
+app/services/food/knowledge/meat/chicken/scoring.py:139:            .chicken_type
+app/services/food/knowledge/meat/chicken/scoring.py:143:            chicken_type.score
+app/services/food/knowledge/meat/chicken/scoring.py:187:        "chicken_type": type_score,
+app/services/food/knowledge/meat/chicken/scoring.py:209:def calculate_chicken_knowledge_score(
+app/services/food/knowledge/meat/chicken/scoring.py:211:    chicken_type_score: Any,
+app/services/food/knowledge/meat/chicken/scoring.py:228:        "chicken_type": clamp_score(
+app/services/food/knowledge/meat/chicken/scoring.py:229:            chicken_type_score
+app/services/food/knowledge/meat/chicken/scoring.py:270:def calculate_chicken_scores(
+app/services/food/knowledge/meat/chicken/scoring.py:305:        calculate_chicken_knowledge_score(
+app/services/food/knowledge/meat/chicken/scoring.py:306:            chicken_type_score=(
+app/services/food/knowledge/meat/chicken/scoring.py:308:                    "chicken_type"
+app/services/food/knowledge/meat/chicken/scoring.py:339:        "chicken_type": registry_scores[
+app/services/food/knowledge/meat/chicken/scoring.py:340:            "chicken_type"
+app/services/food/knowledge/meat/chicken/scoring.py:362:def calculate_chicken_final_score(
+app/services/food/knowledge/meat/chicken/scoring.py:412:    "calculate_chicken_knowledge_score",
+app/services/food/knowledge/meat/chicken/scoring.py:413:    "calculate_chicken_scores",
+app/services/food/knowledge/meat/chicken/scoring.py:414:    "calculate_chicken_final_score",
+app/services/food/knowledge/meat/chicken/cut_registry.py:11:CHICKEN_CUT_REGISTRY_ID = "chicken.cuts"
+app/services/food/knowledge/meat/chicken/cut_registry.py:122:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/chicken/__init__.py:1:from app.services.food.knowledge.meat.chicken.attributes import (
+app/services/food/knowledge/meat/chicken/__init__.py:2:    build_chicken_attributes,
+app/services/food/knowledge/meat/chicken/__init__.py:3:    extract_chicken_bone_status,
+app/services/food/knowledge/meat/chicken/__init__.py:4:    extract_chicken_certifications,
+app/services/food/knowledge/meat/chicken/__init__.py:5:    extract_chicken_country_code,
+app/services/food/knowledge/meat/chicken/__init__.py:6:    extract_chicken_country_text,
+app/services/food/knowledge/meat/chicken/__init__.py:7:    extract_chicken_product_name,
+app/services/food/knowledge/meat/chicken/__init__.py:8:    extract_chicken_skin_status,
+app/services/food/knowledge/meat/chicken/__init__.py:9:    extract_chicken_storage_type,
+app/services/food/knowledge/meat/chicken/__init__.py:10:    extract_chicken_weight,
+app/services/food/knowledge/meat/chicken/__init__.py:12:from app.services.food.knowledge.meat.chicken.breed_registry import (
+app/services/food/knowledge/meat/chicken/__init__.py:17:from app.services.food.knowledge.meat.chicken.cut_registry import (
+app/services/food/knowledge/meat/chicken/__init__.py:22:from app.services.food.knowledge.meat.chicken.parser import (
+app/services/food/knowledge/meat/chicken/__init__.py:25:from app.services.food.knowledge.meat.chicken.provider import (
+app/services/food/knowledge/meat/chicken/__init__.py:28:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/__init__.py:31:from app.services.food.knowledge.meat.chicken.rules import (
+app/services/food/knowledge/meat/chicken/__init__.py:32:    apply_chicken_rules,
+app/services/food/knowledge/meat/chicken/__init__.py:35:from app.services.food.knowledge.meat.chicken.scoring import (
+app/services/food/knowledge/meat/chicken/__init__.py:39:    calculate_chicken_final_score,
+app/services/food/knowledge/meat/chicken/__init__.py:40:    calculate_chicken_knowledge_score,
+app/services/food/knowledge/meat/chicken/__init__.py:41:    calculate_chicken_scores,
+app/services/food/knowledge/meat/chicken/__init__.py:46:from app.services.food.knowledge.meat.chicken.type_registry import (
+app/services/food/knowledge/meat/chicken/__init__.py:66:    "build_chicken_attributes",
+app/services/food/knowledge/meat/chicken/__init__.py:67:    "extract_chicken_product_name",
+app/services/food/knowledge/meat/chicken/__init__.py:68:    "extract_chicken_country_text",
+app/services/food/knowledge/meat/chicken/__init__.py:69:    "extract_chicken_country_code",
+app/services/food/knowledge/meat/chicken/__init__.py:70:    "extract_chicken_weight",
+app/services/food/knowledge/meat/chicken/__init__.py:71:    "extract_chicken_storage_type",
+app/services/food/knowledge/meat/chicken/__init__.py:72:    "extract_chicken_certifications",
+app/services/food/knowledge/meat/chicken/__init__.py:73:    "extract_chicken_bone_status",
+app/services/food/knowledge/meat/chicken/__init__.py:74:    "extract_chicken_skin_status",
+app/services/food/knowledge/meat/chicken/__init__.py:81:    "calculate_chicken_knowledge_score",
+app/services/food/knowledge/meat/chicken/__init__.py:82:    "calculate_chicken_scores",
+app/services/food/knowledge/meat/chicken/__init__.py:83:    "calculate_chicken_final_score",
+app/services/food/knowledge/meat/chicken/__init__.py:84:    "apply_chicken_rules",
+app/services/food/knowledge/meat/chicken/rules.py:6:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/rules.py:11:def apply_chicken_rules(
+app/services/food/knowledge/meat/chicken/rules.py:56:    chicken_type = attributes.get(
+app/services/food/knowledge/meat/chicken/rules.py:57:        "chicken_type"
+app/services/food/knowledge/meat/chicken/rules.py:62:    if chicken_type:
+app/services/food/knowledge/meat/chicken/rules.py:64:            f"닭 유형은 {chicken_type}입니다."
+app/services/food/knowledge/meat/chicken/rules.py:68:            "chicken_type_description"
+app/services/food/knowledge/meat/chicken/rules.py:120:            "chicken_type_typical_uses"
+app/services/food/knowledge/meat/chicken/rules.py:139:        "chicken_type_flavor_intensity"
+app/services/food/knowledge/meat/chicken/rules.py:159:        "chicken_type_tenderness_level"
+app/services/food/knowledge/meat/chicken/rules.py:175:            "chicken_type",
+app/services/food/knowledge/meat/chicken/rules.py:247:            "chicken_type_premium"
+app/services/food/knowledge/meat/chicken/rules.py:359:    "apply_chicken_rules",
+app/services/food/knowledge/meat/chicken/type_registry.py:11:CHICKEN_TYPE_REGISTRY_ID = "chicken.types"
+app/services/food/knowledge/meat/chicken/type_registry.py:62:    def chicken_type(self) -> ChickenType:
+app/services/food/knowledge/meat/chicken/type_registry.py:110:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/chicken/breed_registry.py:11:CHICKEN_BREED_REGISTRY_ID = "chicken.breeds"
+app/services/food/knowledge/meat/chicken/breed_registry.py:121:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/chicken/parser.py:9:from app.services.food.knowledge.meat.chicken.breed_registry import (
+app/services/food/knowledge/meat/chicken/parser.py:13:from app.services.food.knowledge.meat.chicken.cut_registry import (
+app/services/food/knowledge/meat/chicken/parser.py:17:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/parser.py:20:from app.services.food.knowledge.meat.chicken.type_registry import (
+app/services/food/knowledge/meat/chicken/parser.py:56:        "chicken_type",
+app/services/food/knowledge/meat/chicken/parser.py:65:        "chicken_breed",
+app/services/food/knowledge/meat/chicken/parser.py:74:        "chicken_cut",
+app/services/food/knowledge/meat/chicken/parser.py:164:            chicken_type=result.chicken_type,
+app/services/food/knowledge/meat/chicken/parser.py:167:            chicken_type_confidence=(
+app/services/food/knowledge/meat/chicken/parser.py:168:                result.chicken_type_confidence
+app/services/food/knowledge/meat/chicken/parser.py:176:            chicken_type_match=(
+app/services/food/knowledge/meat/chicken/parser.py:177:                result.chicken_type_match
+app/services/food/knowledge/meat/chicken/parser.py:203:        chicken_type = self._canonical_name(
+app/services/food/knowledge/meat/chicken/parser.py:258:                "category_id": "chicken",
+app/services/food/knowledge/meat/chicken/parser.py:271:            chicken_type=chicken_type,
+app/services/food/knowledge/meat/chicken/parser.py:274:            chicken_type_confidence=(
+app/services/food/knowledge/meat/chicken/parser.py:279:            chicken_type_match=type_match,
+app/services/food/knowledge/registry.py:10:from app.services.food.knowledge.meat.beef.provider import (
+app/services/food/knowledge/registry.py:13:from app.services.food.knowledge.meat.lamb.provider import (
+app/services/food/knowledge/registry.py:16:from app.services.food.knowledge.meat.chicken.provider import (
+app/services/food/knowledge/registry.py:19:from app.services.food.knowledge.meat.duck.provider import (
+app/services/food/knowledge/registry.py:23:class FoodKnowledgeRegistry:
+app/services/food/knowledge/registry.py:31:        self._providers: OrderedDict[
+app/services/food/knowledge/registry.py:47:            category_id in self._providers
+app/services/food/knowledge/registry.py:54:        self._providers[category_id] = provider
+app/services/food/knowledge/registry.py:60:        return self._providers.pop(
+app/services/food/knowledge/registry.py:69:        return self._providers.get(
+app/services/food/knowledge/registry.py:98:        for provider in self._providers.values():
+app/services/food/knowledge/registry.py:107:    def list_providers(
+app/services/food/knowledge/registry.py:110:        return list(self._providers.values())
+app/services/food/knowledge/registry.py:113:        return list(self._providers.keys())
+app/services/food/knowledge/registry.py:124:            in self._providers
+app/services/food/knowledge/registry.py:130:        return iter(self._providers.values())
+app/services/food/knowledge/registry.py:146:FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
+app/services/food/knowledge/registry.py:203:def list_food_providers() -> List[FoodKnowledgeProvider]:
+app/services/food/knowledge/registry.py:204:    return FOOD_KNOWLEDGE_REGISTRY.list_providers()
+app/services/food/knowledge/__init__.py:13:    FoodKnowledgeRegistry,
+app/services/food/knowledge/__init__.py:15:    list_food_providers,
+app/services/food/knowledge/__init__.py:37:    "FoodKnowledgeRegistry",
+app/services/food/knowledge/__init__.py:48:    "list_food_providers",
+app/services/food/knowledge/common/base_registry.py:497:            key=lambda item: item[0],
+app/services/food/knowledge/common/base_registry.py:567:            key=lambda alias: (
+app/services/food/knowledge/common/base_registry.py:659:            key=lambda candidate: (
+app/ui/admin_dashboard.py:357:                lambda x:
+app/ui/streamlit_app.py:1764:        key=lambda item: (
+app/ui/streamlit_app.py:2359:        key=lambda x: x[1],
+app/ui/streamlit_app.py:2656:    candidates.sort(key=lambda x: x[0], reverse=True)
+app/ui/streamlit_app.py:3312:            key=lambda pair: pair[1],
+app/ui/streamlit_app.py:4188:            key=lambda row: _num(
+app/ui/streamlit_app.py:4205:            key=lambda row: _num(
+app/ui/streamlit_app.py:4222:            key=lambda row: _num(
+app/ui/streamlit_app.py:4277:            key=lambda value: value[0],
+app/ui/streamlit_app.py:5565:            key=lambda item: (
+app/main.py:764:            key=lambda x: (
+app/main.py:775:            key=lambda x: (
+app/main.py:786:            key=lambda x: (
+app/main.py:797:            key=lambda x: x.get("adaptive_score") or 0,
+app/services/recommendation/reason_engine.py:108:        key=lambda item: item[1],
+app/services/price_intelligence_engine.py:166:            key=lambda pair: pair[1],
+app/services/generator_service.py:250:        return min(valid, key=lambda x: x["price"]) if valid else None
+app/services/generator_service.py:251:    return min(valid, key=lambda x: x["price_per_100g"])
+app/services/generator_service.py:258:    return max(valid, key=lambda x: (x.get("quality_score") or 0, x.get("review_count") or 0))
+app/services/generator_service.py:312:    products = sorted(products, key=lambda x: x["score"], reverse=True)
+app/services/ai_ranking_engine_v8.py:122:        key=lambda x: (
+app/services/market_signal_propagation_v52.py:160:        key=lambda row: (
+app/services/food/category_registry.py:54:    "beef": FoodCategoryConfig(
+app/services/food/category_registry.py:55:        category_id="beef",
+app/services/food/category_registry.py:64:            "beef",
+app/services/food/category_registry.py:75:        provider_id="beef",
+app/services/food/category_registry.py:182:            key=lambda config: (
+app/services/food/registry_data/lamb/cuts.yaml:1:registry_id: lamb.cuts
+app/services/food/registry_data/lamb/cuts.yaml:5:  category_id: lamb
+app/services/food/registry_data/lamb/cuts.yaml:15:      - lamb rack
+app/services/food/registry_data/lamb/cuts.yaml:39:      - lamb loin
+app/services/food/registry_data/lamb/cuts.yaml:63:      - lamb leg
+app/services/food/registry_data/lamb/cuts.yaml:88:      - lamb shoulder
+app/services/food/registry_data/lamb/cuts.yaml:114:      - lamb shank
+app/services/food/registry_data/lamb/cuts.yaml:139:      - lamb breast
+app/services/food/registry_data/lamb/ages.yaml:1:registry_id: lamb.ages
+app/services/food/registry_data/lamb/ages.yaml:5:  category_id: lamb
+app/services/food/registry_data/lamb/ages.yaml:12:  lamb:
+app/services/food/registry_data/lamb/ages.yaml:15:      - lamb
+app/services/food/registry_data/lamb/ages.yaml:20:    age_category: lamb
+app/services/food/registry_data/lamb/breeds.yaml:1:registry_id: lamb.breeds
+app/services/food/registry_data/lamb/breeds.yaml:5:  category_id: lamb
+app/services/food/registry_data/beef/grades.yaml:1:registry_id: beef.grades
+app/services/food/registry_data/beef/grades.yaml:6:  domain: beef
+app/services/food/registry_data/beef/aging.yaml:1:registry_id: beef.aging
+app/services/food/registry_data/beef/aging.yaml:6:  domain: beef
+app/services/food/registry_data/beef/cuts.yaml:1:registry_id: beef.cuts
+app/services/food/registry_data/beef/cuts.yaml:6:  domain: beef
+app/services/food/registry_data/beef/breeds.yaml:1:registry_id: beef.breeds
+app/services/food/registry_data/beef/breeds.yaml:6:  domain: beef
+app/services/food/registry_data/duck/cuts.yaml:1:registry_id: duck.cuts
+app/services/food/registry_data/duck/cuts.yaml:4:  category_id: duck
+app/services/food/registry_data/duck/cuts.yaml:10:  whole_duck:
+app/services/food/registry_data/duck/cuts.yaml:12:    aliases: [오리한마리, 오리 한마리, 통 오리, whole duck, whole bird]
+app/services/food/registry_data/duck/cuts.yaml:26:    aliases: [오리 가슴살, 오리가슴, 오리 가슴, duck breast, breast fillet]
+app/services/food/registry_data/duck/cuts.yaml:40:    aliases: [오리 안심, duck tenderloin, duck tender]
+app/services/food/registry_data/duck/cuts.yaml:54:    aliases: [오리 다리살, 오리넓적다리살, 오리 넓적다리살, duck thigh, duck thigh meat]
+app/services/food/registry_data/duck/cuts.yaml:68:    aliases: [오리 다리, 오리장각, 오리 장각, duck leg, whole duck leg]
+app/services/food/registry_data/duck/cuts.yaml:82:    aliases: [오리 날개, duck wing, duck wings, whole duck wing]
+app/services/food/registry_data/duck/cuts.yaml:96:    aliases: [오리 목, 오리목살, 오리 목살, duck neck]
+app/services/food/registry_data/duck/cuts.yaml:110:    aliases: [오리 근위, 오리똥집, 오리 똥집, duck gizzard, gizzard]
+app/services/food/registry_data/duck/cuts.yaml:124:    aliases: [오리 염통, 오리심장, 오리 심장, duck heart]
+app/services/food/registry_data/duck/cuts.yaml:138:    aliases: [오리 간, duck liver, foie gras, 푸아그라]
+app/services/food/registry_data/duck/cuts.yaml:152:    aliases: [오리 껍질, duck skin]
+app/services/food/registry_data/duck/types.yaml:1:registry_id: duck.types
+app/services/food/registry_data/duck/types.yaml:4:  category_id: duck
+app/services/food/registry_data/duck/types.yaml:10:  domestic_duck:
+app/services/food/registry_data/duck/types.yaml:12:    aliases: [식용오리, 식용 오리, 육용 오리, domestic duck, meat duck]
+app/services/food/registry_data/duck/types.yaml:13:    type_category: domestic_duck
+app/services/food/registry_data/duck/types.yaml:21:  duckling:
+app/services/food/registry_data/duck/types.yaml:23:    aliases: [어린 오리, 오리새끼, 오리 새끼, duckling, young duck]
+app/services/food/registry_data/duck/types.yaml:24:    type_category: duckling
+app/services/food/registry_data/duck/types.yaml:32:  native_duck:
+app/services/food/registry_data/duck/types.yaml:34:    aliases: [토종 오리, native duck, korean native duck]
+app/services/food/registry_data/duck/types.yaml:35:    type_category: native_duck
+app/services/food/registry_data/duck/types.yaml:43:  smoked_duck:
+app/services/food/registry_data/duck/types.yaml:45:    aliases: [훈제 오리, 오리훈제, 오리 훈제, smoked duck, smoked duck meat]
+app/services/food/registry_data/duck/types.yaml:46:    type_category: smoked_duck
+app/services/food/registry_data/duck/types.yaml:54:  roast_duck:
+app/services/food/registry_data/duck/types.yaml:56:    aliases: [구이용 오리, 로스트덕, 로스트 덕, roast duck, roasting duck]
+app/services/food/registry_data/duck/types.yaml:57:    type_category: roast_duck
+app/services/food/registry_data/duck/breeds.yaml:1:registry_id: duck.breeds
+app/services/food/registry_data/duck/breeds.yaml:4:  category_id: duck
+app/services/food/registry_data/duck/breeds.yaml:12:    aliases: [Pekin, pekin, Pekin duck, pekin duck, 페킨오리, 페킨 오리, 북경오리, 북경 오리]
+app/services/food/registry_data/duck/breeds.yaml:15:    breed_type: meat_duck
+app/services/food/registry_data/duck/breeds.yaml:26:    aliases: [Cherry Valley, cherry valley, Cherry Valley duck, cherry valley duck, 체리 밸리, 체리밸리오리, 체리밸리 오리]
+app/services/food/registry_data/duck/breeds.yaml:29:    breed_type: commercial_meat_duck
+app/services/food/registry_data/duck/breeds.yaml:40:    aliases: [Muscovy, muscovy, Muscovy duck, muscovy duck, 머스코비오리, 머스코비 오리, 사향오리, 사향 오리]
+app/services/food/registry_data/duck/breeds.yaml:43:    breed_type: meat_duck
+app/services/food/registry_data/duck/breeds.yaml:52:  mule_duck:
+app/services/food/registry_data/duck/breeds.yaml:54:    aliases: [Mulard, mulard, Mule duck, mule duck, 뮬라드오리, 뮬라드 오리, 뮬덕, 뮬 덕]
+app/services/food/registry_data/duck/breeds.yaml:57:    breed_type: hybrid_duck
+app/services/food/registry_data/duck/breeds.yaml:68:    aliases: [청둥 오리, Mallard, mallard, Mallard duck, mallard duck]
+app/services/food/registry_data/chicken/cuts.yaml:1:registry_id: chicken.cuts
+app/services/food/registry_data/chicken/cuts.yaml:4:  category_id: chicken
+app/services/food/registry_data/chicken/cuts.yaml:10:  whole_chicken: {canonical_name: 통닭, aliases: [닭한마리, 닭 한마리, whole chicken, whole bird], english_name: Whole Chicken, cut_group: whole, score: 82, premium: false, tenderness_score: 78, flavor_score: 82, fat_score: 72, yield_score: 90, cooking_methods: [roasting, boiling, frying, soup], description: 닭 한 마리 전체를 사용하는 상품}
+app/services/food/registry_data/chicken/cuts.yaml:11:  breast: {canonical_name: 닭가슴살, aliases: [닭 가슴살, chicken breast, breast fillet], english_name: Chicken Breast, cut_group: breast, score: 82, premium: false, tenderness_score: 78, flavor_score: 70, fat_score: 25, yield_score: 88, cooking_methods: [grilling, pan_searing, boiling, roasting], description: 지방이 적고 담백한 닭 가슴 부위}
+app/services/food/registry_data/chicken/cuts.yaml:12:  tenderloin: {canonical_name: 닭안심, aliases: [닭 안심, 치킨 텐더로인, chicken tenderloin, chicken tender], english_name: Chicken Tenderloin, cut_group: breast, score: 86, premium: false, tenderness_score: 92, flavor_score: 72, fat_score: 22, yield_score: 55, cooking_methods: [frying, grilling, pan_searing], description: 가슴살 안쪽의 부드러운 소형 부위}
+app/services/food/registry_data/chicken/cuts.yaml:13:  thigh: {canonical_name: 닭다리살, aliases: [닭 다리살, 넓적다리살, 넓적 다리살, chicken thigh, thigh meat], english_name: Chicken Thigh, cut_group: leg, score: 88, premium: false, tenderness_score: 88, flavor_score: 90, fat_score: 78, yield_score: 82, cooking_methods: [grilling, frying, braising, roasting], description: 풍미와 지방감이 비교적 풍부한 넓적다리 부위}
+app/services/food/registry_data/chicken/cuts.yaml:14:  drumstick: {canonical_name: 북채, aliases: [닭북채, 닭 북채, chicken drumstick, drumstick], english_name: Chicken Drumstick, cut_group: leg, score: 84, premium: false, tenderness_score: 82, flavor_score: 88, fat_score: 70, yield_score: 78, cooking_methods: [frying, roasting, braising], description: 닭 다리의 아래쪽 부위}
+app/services/food/registry_data/chicken/cuts.yaml:15:  whole_leg: {canonical_name: 장각, aliases: [닭장각, 닭 장각, whole leg, chicken whole leg, leg quarter], english_name: Chicken Whole Leg, cut_group: leg, score: 85, premium: false, tenderness_score: 84, flavor_score: 89, fat_score: 74, yield_score: 88, cooking_methods: [roasting, frying, braising], description: 넓적다리와 북채가 연결된 전체 다리 부위}
+app/services/food/registry_data/chicken/cuts.yaml:16:  wing: {canonical_name: 닭날개, aliases: [닭 날개, chicken wing, whole wing], english_name: Chicken Wing, cut_group: wing, score: 84, premium: false, tenderness_score: 80, flavor_score: 90, fat_score: 82, yield_score: 58, cooking_methods: [frying, grilling, roasting], description: 봉과 윙중간 등을 포함하는 닭 날개 전체 부위}
+app/services/food/registry_data/chicken/cuts.yaml:17:  drumette: {canonical_name: 닭봉, aliases: [닭 봉, 윙봉, 윙 봉, chicken drumette, drumette], english_name: Chicken Drumette, cut_group: wing, score: 86, premium: false, tenderness_score: 84, flavor_score: 90, fat_score: 80, yield_score: 62, cooking_methods: [frying, grilling, roasting], description: 닭 날개의 몸통 쪽에 가까운 봉 형태 부위}
+app/services/food/registry_data/chicken/cuts.yaml:18:  wingette: {canonical_name: 윙중간, aliases: [윙 중간, 닭윙중간, 닭 윙중간, wingette, wing flat, chicken flat], english_name: Chicken Wingette, cut_group: wing, score: 85, premium: false, tenderness_score: 80, flavor_score: 90, fat_score: 84, yield_score: 52, cooking_methods: [frying, grilling, roasting], description: 닭 날개의 가운데 평평한 부위}
+app/services/food/registry_data/chicken/cuts.yaml:19:  feet: {canonical_name: 닭발, aliases: [닭 발, chicken feet, chicken foot], english_name: Chicken Feet, cut_group: offal, score: 72, premium: false, tenderness_score: 40, flavor_score: 84, fat_score: 48, yield_score: 42, cooking_methods: [braising, grilling, slow_cooking], description: 콜라겐이 풍부하고 양념 조리에 주로 사용되는 부위}
+app/services/food/registry_data/chicken/cuts.yaml:20:  gizzard: {canonical_name: 닭근위, aliases: [닭 근위, 닭똥집, 닭 똥집, chicken gizzard, gizzard], english_name: Chicken Gizzard, cut_group: offal, score: 74, premium: false, tenderness_score: 52, flavor_score: 82, fat_score: 35, yield_score: 40, cooking_methods: [grilling, frying, stir_frying], description: 쫄깃한 식감이 특징인 닭의 근위 부위}
+app/services/food/registry_data/chicken/cuts.yaml:21:  heart: {canonical_name: 닭염통, aliases: [닭 염통, 닭심장, 닭 심장, chicken heart], english_name: Chicken Heart, cut_group: offal, score: 75, premium: false, tenderness_score: 62, flavor_score: 86, fat_score: 45, yield_score: 32, cooking_methods: [grilling, skewering, stir_frying], description: 풍미가 진하고 꼬치나 구이에 사용되는 심장 부위}
+app/services/food/registry_data/chicken/cuts.yaml:22:  liver: {canonical_name: 닭간, aliases: [닭 간, chicken liver], english_name: Chicken Liver, cut_group: offal, score: 72, premium: false, tenderness_score: 72, flavor_score: 88, fat_score: 55, yield_score: 38, cooking_methods: [pan_searing, stir_frying, braising], description: 풍미가 강하고 부드러운 식감의 간 부위}
+app/services/food/registry_data/chicken/cuts.yaml:23:  skin: {canonical_name: 닭껍질, aliases: [닭 껍질, chicken skin], english_name: Chicken Skin, cut_group: skin, score: 68, premium: false, tenderness_score: 58, flavor_score: 88, fat_score: 98, yield_score: 45, cooking_methods: [grilling, frying, roasting], description: 지방감과 바삭한 식감으로 활용되는 닭 껍질}
+app/services/food/registry_data/chicken/types.yaml:1:registry_id: chicken.types
+app/services/food/registry_data/chicken/types.yaml:4:  category_id: chicken
+app/services/food/registry_data/chicken/types.yaml:20:  native_chicken:
+app/services/food/registry_data/chicken/types.yaml:22:    aliases: [토종 닭, native chicken, korean native chicken]
+app/services/food/registry_data/chicken/types.yaml:23:    type_category: native_chicken
+app/services/food/registry_data/chicken/types.yaml:30:  young_chicken:
+app/services/food/registry_data/chicken/types.yaml:32:    aliases: [어린닭, 어린 닭, young chicken]
+app/services/food/registry_data/chicken/types.yaml:33:    type_category: young_chicken
+app/services/food/registry_data/chicken/types.yaml:42:    aliases: [오골 닭, silkie, silkie chicken]
+app/services/food/registry_data/chicken/breeds.yaml:1:registry_id: chicken.breeds
+app/services/food/registry_data/chicken/breeds.yaml:4:  category_id: chicken
+app/services/food/__init__.py:23:    FoodKnowledgeRegistry,
+app/services/food/__init__.py:28:    list_food_providers,
+app/services/food/__init__.py:52:    "FoodKnowledgeRegistry",
+app/services/food/__init__.py:63:    "list_food_providers",
+app/services/food/knowledge/registry_loader.py:52:            예: beef.grades, fruit.varieties
+app/services/food/knowledge/registry_loader.py:148:            beef.grades
+app/services/food/knowledge/registry_loader.py:325:        beef.grades를 아래 경로 후보로 변환한다.
+app/services/food/knowledge/registry_loader.py:327:        registry_data/beef/grades.yaml
+app/services/food/knowledge/registry_loader.py:328:        registry_data/beef/grades.yml
+app/services/food/knowledge/registry_loader.py:329:        registry_data/beef/grades.json
+app/services/food/knowledge/registry_loader.py:539:        # registry_id: beef.grades
+app/services/food/knowledge/meat/lamb/age_registry.py:26:LAMB_AGE_REGISTRY_ID = "lamb.ages"
+app/services/food/knowledge/meat/lamb/age_registry.py:41:        예: lamb, hogget, mutton
+app/services/food/knowledge/meat/lamb/age_registry.py:202:        app/services/food/registry_data/lamb/ages.yaml
+app/services/food/knowledge/meat/lamb/age_registry.py:386:            key=lambda entry: (
+app/services/food/knowledge/meat/lamb/age_registry.py:464:def get_lamb_age_registry() -> LambAgeRegistry:
+app/services/food/knowledge/meat/lamb/age_registry.py:468:def get_lamb_age(
+app/services/food/knowledge/meat/lamb/age_registry.py:471:    return get_lamb_age_registry().get(
+app/services/food/knowledge/meat/lamb/age_registry.py:476:def lookup_lamb_age(
+app/services/food/knowledge/meat/lamb/age_registry.py:479:    return get_lamb_age_registry().lookup(
+app/services/food/knowledge/meat/lamb/age_registry.py:484:def match_lamb_age(
+app/services/food/knowledge/meat/lamb/age_registry.py:487:    return get_lamb_age_registry().match(
+app/services/food/knowledge/meat/lamb/age_registry.py:492:def list_lamb_ages() -> list[LambAge]:
+app/services/food/knowledge/meat/lamb/age_registry.py:493:    return get_lamb_age_registry().list()
+app/services/food/knowledge/meat/lamb/age_registry.py:501:    "get_lamb_age_registry",
+app/services/food/knowledge/meat/lamb/age_registry.py:502:    "get_lamb_age",
+app/services/food/knowledge/meat/lamb/age_registry.py:503:    "lookup_lamb_age",
+app/services/food/knowledge/meat/lamb/age_registry.py:504:    "match_lamb_age",
+app/services/food/knowledge/meat/lamb/age_registry.py:505:    "list_lamb_ages",
+app/services/food/knowledge/meat/lamb/provider.py:9:from app.services.food.knowledge.meat.lamb.attributes import (
+app/services/food/knowledge/meat/lamb/provider.py:10:    build_lamb_attributes,
+app/services/food/knowledge/meat/lamb/provider.py:11:    extract_lamb_product_name,
+app/services/food/knowledge/meat/lamb/provider.py:13:from app.services.food.knowledge.meat.lamb.parser import (
+app/services/food/knowledge/meat/lamb/provider.py:16:from app.services.food.knowledge.meat.lamb.rules import (
+app/services/food/knowledge/meat/lamb/provider.py:17:    apply_lamb_rules,
+app/services/food/knowledge/meat/lamb/provider.py:19:from app.services.food.knowledge.meat.lamb.scoring import (
+app/services/food/knowledge/meat/lamb/provider.py:20:    calculate_lamb_final_score,
+app/services/food/knowledge/meat/lamb/provider.py:21:    calculate_lamb_scores,
+app/services/food/knowledge/meat/lamb/provider.py:50:    category_id = "lamb"
+app/services/food/knowledge/meat/lamb/provider.py:64:        "lamb",
+app/services/food/knowledge/meat/lamb/provider.py:170:            extract_lamb_product_name(
+app/services/food/knowledge/meat/lamb/provider.py:181:        attributes = build_lamb_attributes(
+app/services/food/knowledge/meat/lamb/provider.py:186:        scores = calculate_lamb_scores(
+app/services/food/knowledge/meat/lamb/provider.py:192:        reasons, warnings = apply_lamb_rules(
+app/services/food/knowledge/meat/lamb/provider.py:199:            calculate_lamb_final_score(
+app/services/food/knowledge/meat/lamb/attributes.py:6:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/attributes.py:11:def extract_lamb_product_name(
+app/services/food/knowledge/meat/lamb/attributes.py:27:def extract_lamb_country_text(
+app/services/food/knowledge/meat/lamb/attributes.py:52:def extract_lamb_country_code(
+app/services/food/knowledge/meat/lamb/attributes.py:73:def extract_lamb_weight(
+app/services/food/knowledge/meat/lamb/attributes.py:87:def extract_lamb_storage_type(
+app/services/food/knowledge/meat/lamb/attributes.py:112:def extract_lamb_certifications(
+app/services/food/knowledge/meat/lamb/attributes.py:158:def build_lamb_attributes(
+app/services/food/knowledge/meat/lamb/attributes.py:187:        "product_name": extract_lamb_product_name(
+app/services/food/knowledge/meat/lamb/attributes.py:190:        "country": extract_lamb_country_text(
+app/services/food/knowledge/meat/lamb/attributes.py:193:        "country_code": extract_lamb_country_code(
+app/services/food/knowledge/meat/lamb/attributes.py:196:        "weight": extract_lamb_weight(
+app/services/food/knowledge/meat/lamb/attributes.py:199:        "storage_type": extract_lamb_storage_type(
+app/services/food/knowledge/meat/lamb/attributes.py:203:            extract_lamb_certifications(
+app/services/food/knowledge/meat/lamb/attributes.py:346:    "build_lamb_attributes",
+app/services/food/knowledge/meat/lamb/attributes.py:347:    "extract_lamb_product_name",
+app/services/food/knowledge/meat/lamb/attributes.py:348:    "extract_lamb_country_text",
+app/services/food/knowledge/meat/lamb/attributes.py:349:    "extract_lamb_country_code",
+app/services/food/knowledge/meat/lamb/attributes.py:350:    "extract_lamb_weight",
+app/services/food/knowledge/meat/lamb/attributes.py:351:    "extract_lamb_storage_type",
+app/services/food/knowledge/meat/lamb/attributes.py:352:    "extract_lamb_certifications",
+app/services/food/knowledge/meat/lamb/scoring.py:6:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/scoring.py:177:def calculate_lamb_knowledge_score(
+app/services/food/knowledge/meat/lamb/scoring.py:241:def calculate_lamb_scores(
+app/services/food/knowledge/meat/lamb/scoring.py:276:        calculate_lamb_knowledge_score(
+app/services/food/knowledge/meat/lamb/scoring.py:315:def calculate_lamb_final_score(
+app/services/food/knowledge/meat/lamb/scoring.py:368:    "calculate_lamb_knowledge_score",
+app/services/food/knowledge/meat/lamb/scoring.py:369:    "calculate_lamb_scores",
+app/services/food/knowledge/meat/lamb/scoring.py:370:    "calculate_lamb_final_score",
+app/services/food/knowledge/meat/lamb/cut_registry.py:25:LAMB_CUT_REGISTRY_ID = "lamb.cuts"
+app/services/food/knowledge/meat/lamb/cut_registry.py:202:        app/services/food/registry_data/lamb/cuts.yaml
+app/services/food/knowledge/meat/lamb/cut_registry.py:396:            key=lambda cut: (
+app/services/food/knowledge/meat/lamb/cut_registry.py:504:def get_lamb_cut_registry(
+app/services/food/knowledge/meat/lamb/cut_registry.py:509:def get_lamb_cut(
+app/services/food/knowledge/meat/lamb/cut_registry.py:512:    return get_lamb_cut_registry().get(
+app/services/food/knowledge/meat/lamb/cut_registry.py:517:def lookup_lamb_cut(
+app/services/food/knowledge/meat/lamb/cut_registry.py:520:    return get_lamb_cut_registry().lookup(
+app/services/food/knowledge/meat/lamb/cut_registry.py:525:def match_lamb_cut(
+app/services/food/knowledge/meat/lamb/cut_registry.py:528:    return get_lamb_cut_registry().match(
+app/services/food/knowledge/meat/lamb/cut_registry.py:533:def list_lamb_cuts(
+app/services/food/knowledge/meat/lamb/cut_registry.py:538:    return get_lamb_cut_registry().list(
+app/services/food/knowledge/meat/lamb/cut_registry.py:549:    "get_lamb_cut_registry",
+app/services/food/knowledge/meat/lamb/cut_registry.py:550:    "get_lamb_cut",
+app/services/food/knowledge/meat/lamb/cut_registry.py:551:    "lookup_lamb_cut",
+app/services/food/knowledge/meat/lamb/cut_registry.py:552:    "match_lamb_cut",
+app/services/food/knowledge/meat/lamb/cut_registry.py:553:    "list_lamb_cuts",
+app/services/food/knowledge/meat/lamb/__init__.py:1:from app.services.food.knowledge.meat.lamb.age_registry import (
+app/services/food/knowledge/meat/lamb/__init__.py:6:from app.services.food.knowledge.meat.lamb.attributes import (
+app/services/food/knowledge/meat/lamb/__init__.py:7:    build_lamb_attributes,
+app/services/food/knowledge/meat/lamb/__init__.py:8:    extract_lamb_certifications,
+app/services/food/knowledge/meat/lamb/__init__.py:9:    extract_lamb_country_code,
+app/services/food/knowledge/meat/lamb/__init__.py:10:    extract_lamb_country_text,
+app/services/food/knowledge/meat/lamb/__init__.py:11:    extract_lamb_product_name,
+app/services/food/knowledge/meat/lamb/__init__.py:12:    extract_lamb_storage_type,
+app/services/food/knowledge/meat/lamb/__init__.py:13:    extract_lamb_weight,
+app/services/food/knowledge/meat/lamb/__init__.py:15:from app.services.food.knowledge.meat.lamb.breed_registry import (
+app/services/food/knowledge/meat/lamb/__init__.py:20:from app.services.food.knowledge.meat.lamb.cut_registry import (
+app/services/food/knowledge/meat/lamb/__init__.py:25:from app.services.food.knowledge.meat.lamb.parser import (
+app/services/food/knowledge/meat/lamb/__init__.py:28:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/__init__.py:31:from app.services.food.knowledge.meat.lamb.provider import (
+app/services/food/knowledge/meat/lamb/__init__.py:34:from app.services.food.knowledge.meat.lamb.rules import (
+app/services/food/knowledge/meat/lamb/__init__.py:35:    apply_lamb_rules,
+app/services/food/knowledge/meat/lamb/__init__.py:38:from app.services.food.knowledge.meat.lamb.scoring import (
+app/services/food/knowledge/meat/lamb/__init__.py:42:    calculate_lamb_final_score,
+app/services/food/knowledge/meat/lamb/__init__.py:43:    calculate_lamb_knowledge_score,
+app/services/food/knowledge/meat/lamb/__init__.py:44:    calculate_lamb_scores,
+app/services/food/knowledge/meat/lamb/__init__.py:64:    "build_lamb_attributes",
+app/services/food/knowledge/meat/lamb/__init__.py:65:    "extract_lamb_product_name",
+app/services/food/knowledge/meat/lamb/__init__.py:66:    "extract_lamb_country_text",
+app/services/food/knowledge/meat/lamb/__init__.py:67:    "extract_lamb_country_code",
+app/services/food/knowledge/meat/lamb/__init__.py:68:    "extract_lamb_weight",
+app/services/food/knowledge/meat/lamb/__init__.py:69:    "extract_lamb_storage_type",
+app/services/food/knowledge/meat/lamb/__init__.py:70:    "extract_lamb_certifications",
+app/services/food/knowledge/meat/lamb/__init__.py:77:    "calculate_lamb_knowledge_score",
+app/services/food/knowledge/meat/lamb/__init__.py:78:    "calculate_lamb_scores",
+app/services/food/knowledge/meat/lamb/__init__.py:79:    "calculate_lamb_final_score",
+app/services/food/knowledge/meat/lamb/__init__.py:80:    "apply_lamb_rules",
+app/services/food/knowledge/meat/lamb/rules.py:6:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/rules.py:11:def apply_lamb_rules(
+app/services/food/knowledge/meat/lamb/rules.py:324:    "apply_lamb_rules",
+app/services/food/knowledge/meat/lamb/breed_registry.py:25:LAMB_BREED_REGISTRY_ID = "lamb.breeds"
+app/services/food/knowledge/meat/lamb/breed_registry.py:186:        app/services/food/registry_data/lamb/breeds.yaml
+app/services/food/knowledge/meat/lamb/breed_registry.py:362:            key=lambda breed: (
+app/services/food/knowledge/meat/lamb/breed_registry.py:462:def get_lamb_breed_registry(
+app/services/food/knowledge/meat/lamb/breed_registry.py:467:def get_lamb_breed(
+app/services/food/knowledge/meat/lamb/breed_registry.py:470:    return get_lamb_breed_registry().get(
+app/services/food/knowledge/meat/lamb/breed_registry.py:475:def lookup_lamb_breed(
+app/services/food/knowledge/meat/lamb/breed_registry.py:478:    return get_lamb_breed_registry().lookup(
+app/services/food/knowledge/meat/lamb/breed_registry.py:483:def match_lamb_breed(
+app/services/food/knowledge/meat/lamb/breed_registry.py:486:    return get_lamb_breed_registry().match(
+app/services/food/knowledge/meat/lamb/breed_registry.py:491:def list_lamb_breeds(
+app/services/food/knowledge/meat/lamb/breed_registry.py:495:    return get_lamb_breed_registry().list(
+app/services/food/knowledge/meat/lamb/breed_registry.py:505:    "get_lamb_breed_registry",
+app/services/food/knowledge/meat/lamb/breed_registry.py:506:    "get_lamb_breed",
+app/services/food/knowledge/meat/lamb/breed_registry.py:507:    "lookup_lamb_breed",
+app/services/food/knowledge/meat/lamb/breed_registry.py:508:    "match_lamb_breed",
+app/services/food/knowledge/meat/lamb/breed_registry.py:509:    "list_lamb_breeds",
+app/services/food/knowledge/meat/lamb/parser.py:9:from app.services.food.knowledge.meat.lamb.age_registry import (
+app/services/food/knowledge/meat/lamb/parser.py:13:from app.services.food.knowledge.meat.lamb.breed_registry import (
+app/services/food/knowledge/meat/lamb/parser.py:17:from app.services.food.knowledge.meat.lamb.cut_registry import (
+app/services/food/knowledge/meat/lamb/parser.py:21:from app.services.food.knowledge.meat.lamb.parser_models import (
+app/services/food/knowledge/meat/lamb/parser.py:59:        "lamb_age",
+app/services/food/knowledge/meat/lamb/parser.py:65:        "lamb_breed",
+app/services/food/knowledge/meat/lamb/parser.py:73:        "lamb_cut",
+app/services/food/knowledge/meat/lamb/parser.py:272:                "category_id": "lamb",
+app/services/food/knowledge/meat/beef/grade_registry.py:22:BEEF_GRADE_REGISTRY_ID = "beef.grades"
+app/services/food/knowledge/meat/beef/grade_registry.py:390:            key=lambda item: item[0],
+app/services/food/knowledge/meat/beef/grade_registry.py:565:            key=lambda grade: (
+app/services/food/knowledge/meat/beef/grade_registry.py:626:            key=lambda value: (
+app/services/food/knowledge/meat/beef/grade_registry.py:823:_default_beef_grade_registry = (
+app/services/food/knowledge/meat/beef/grade_registry.py:828:def get_beef_grade_registry(
+app/services/food/knowledge/meat/beef/grade_registry.py:830:    return _default_beef_grade_registry
+app/services/food/knowledge/meat/beef/grade_registry.py:833:def get_beef_grade(
+app/services/food/knowledge/meat/beef/grade_registry.py:838:    return get_beef_grade_registry().get(
+app/services/food/knowledge/meat/beef/grade_registry.py:844:def lookup_beef_grade(
+app/services/food/knowledge/meat/beef/grade_registry.py:850:    return get_beef_grade_registry().lookup(
+app/services/food/knowledge/meat/beef/grade_registry.py:857:def match_beef_grade(
+app/services/food/knowledge/meat/beef/grade_registry.py:862:    return get_beef_grade_registry().match(
+app/services/food/knowledge/meat/beef/grade_registry.py:868:def list_beef_grades(
+app/services/food/knowledge/meat/beef/grade_registry.py:873:    return get_beef_grade_registry().list(
+app/services/food/knowledge/meat/beef/grade_registry.py:888:    "get_beef_grade_registry",
+app/services/food/knowledge/meat/beef/grade_registry.py:889:    "get_beef_grade",
+app/services/food/knowledge/meat/beef/grade_registry.py:890:    "lookup_beef_grade",
+app/services/food/knowledge/meat/beef/grade_registry.py:891:    "match_beef_grade",
+app/services/food/knowledge/meat/beef/grade_registry.py:892:    "list_beef_grades",
+app/services/food/knowledge/meat/beef/provider.py:8:from app.services.food.knowledge.meat.beef.attributes import (
+app/services/food/knowledge/meat/beef/provider.py:9:    build_beef_attributes,
+app/services/food/knowledge/meat/beef/provider.py:10:    extract_beef_product_name,
+app/services/food/knowledge/meat/beef/provider.py:12:from app.services.food.knowledge.meat.beef.parser import (
+app/services/food/knowledge/meat/beef/provider.py:15:from app.services.food.knowledge.meat.beef.rules import (
+app/services/food/knowledge/meat/beef/provider.py:16:    apply_beef_rules,
+app/services/food/knowledge/meat/beef/provider.py:18:from app.services.food.knowledge.meat.beef.scoring import (
+app/services/food/knowledge/meat/beef/provider.py:19:    calculate_beef_final_score,
+app/services/food/knowledge/meat/beef/provider.py:20:    calculate_beef_scores,
+app/services/food/knowledge/meat/beef/provider.py:46:    category_id = "beef"
+app/services/food/knowledge/meat/beef/provider.py:55:        "beef",
+app/services/food/knowledge/meat/beef/provider.py:148:        product_name = extract_beef_product_name(
+app/services/food/knowledge/meat/beef/provider.py:158:        attributes = build_beef_attributes(
+app/services/food/knowledge/meat/beef/provider.py:163:        scores = calculate_beef_scores(
+app/services/food/knowledge/meat/beef/provider.py:169:        reasons, warnings = apply_beef_rules(
+app/services/food/knowledge/meat/beef/provider.py:186:                calculate_beef_final_score(
+app/services/food/knowledge/meat/beef/attributes.py:6:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/attributes.py:19:def extract_beef_product_name(
+app/services/food/knowledge/meat/beef/attributes.py:35:def extract_beef_country_text(
+app/services/food/knowledge/meat/beef/attributes.py:78:def extract_beef_weight(
+app/services/food/knowledge/meat/beef/attributes.py:92:def extract_beef_marbling(
+app/services/food/knowledge/meat/beef/attributes.py:105:def build_beef_attributes(
+app/services/food/knowledge/meat/beef/attributes.py:119:        "product_name": extract_beef_product_name(
+app/services/food/knowledge/meat/beef/attributes.py:122:        "country": extract_beef_country_text(
+app/services/food/knowledge/meat/beef/attributes.py:130:        "weight": extract_beef_weight(
+app/services/food/knowledge/meat/beef/attributes.py:133:        "marbling": extract_beef_marbling(
+app/services/food/knowledge/meat/beef/attributes.py:224:    "build_beef_attributes",
+app/services/food/knowledge/meat/beef/attributes.py:225:    "extract_beef_country_text",
+app/services/food/knowledge/meat/beef/attributes.py:226:    "extract_beef_marbling",
+app/services/food/knowledge/meat/beef/attributes.py:227:    "extract_beef_product_name",
+app/services/food/knowledge/meat/beef/attributes.py:228:    "extract_beef_weight",
+app/services/food/knowledge/meat/beef/scoring.py:5:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/scoring.py:126:def calculate_beef_knowledge_score(
+app/services/food/knowledge/meat/beef/scoring.py:190:def calculate_beef_scores(
+app/services/food/knowledge/meat/beef/scoring.py:209:        calculate_beef_knowledge_score(
+app/services/food/knowledge/meat/beef/scoring.py:263:def calculate_beef_final_score(
+app/services/food/knowledge/meat/beef/scoring.py:304:    "calculate_beef_knowledge_score",
+app/services/food/knowledge/meat/beef/scoring.py:305:    "calculate_beef_scores",
+app/services/food/knowledge/meat/beef/scoring.py:306:    "calculate_beef_final_score",
+app/services/food/knowledge/meat/beef/cut_registry.py:25:BEEF_CUT_REGISTRY_ID = "beef.cuts"
+app/services/food/knowledge/meat/beef/cut_registry.py:173:        app/services/food/registry_data/beef/cuts.yaml
+app/services/food/knowledge/meat/beef/cut_registry.py:331:            key=lambda cut: (
+app/services/food/knowledge/meat/beef/cut_registry.py:368:            key=lambda cut: (
+app/services/food/knowledge/meat/beef/cut_registry.py:396:            key=lambda cut: cut.score,
+app/services/food/knowledge/meat/beef/cut_registry.py:474:def get_beef_cut_registry() -> BeefCutRegistry:
+app/services/food/knowledge/meat/beef/cut_registry.py:478:def get_beef_cut(
+app/services/food/knowledge/meat/beef/cut_registry.py:481:    return get_beef_cut_registry().get(
+app/services/food/knowledge/meat/beef/cut_registry.py:486:def lookup_beef_cut(
+app/services/food/knowledge/meat/beef/cut_registry.py:489:    return get_beef_cut_registry().lookup(
+app/services/food/knowledge/meat/beef/cut_registry.py:494:def match_beef_cut(
+app/services/food/knowledge/meat/beef/cut_registry.py:497:    return get_beef_cut_registry().match(
+app/services/food/knowledge/meat/beef/cut_registry.py:502:def list_beef_cuts() -> list[BeefCut]:
+app/services/food/knowledge/meat/beef/cut_registry.py:503:    return get_beef_cut_registry().list()
+app/services/food/knowledge/meat/beef/cut_registry.py:506:def premium_beef_cuts() -> list[BeefCut]:
+app/services/food/knowledge/meat/beef/cut_registry.py:508:        get_beef_cut_registry()
+app/services/food/knowledge/meat/beef/cut_registry.py:513:def beef_cuts_for_cooking(
+app/services/food/knowledge/meat/beef/cut_registry.py:517:        get_beef_cut_registry()
+app/services/food/knowledge/meat/beef/cut_registry.py:529:    "beef_cuts_for_cooking",
+app/services/food/knowledge/meat/beef/cut_registry.py:530:    "get_beef_cut",
+app/services/food/knowledge/meat/beef/cut_registry.py:531:    "get_beef_cut_registry",
+app/services/food/knowledge/meat/beef/cut_registry.py:532:    "list_beef_cuts",
+app/services/food/knowledge/meat/beef/cut_registry.py:533:    "lookup_beef_cut",
+app/services/food/knowledge/meat/beef/cut_registry.py:534:    "match_beef_cut",
+app/services/food/knowledge/meat/beef/cut_registry.py:535:    "premium_beef_cuts",
+app/services/food/knowledge/meat/beef/__init__.py:1:from app.services.food.knowledge.meat.beef.provider import (
+app/services/food/knowledge/meat/beef/__init__.py:5:from app.services.food.knowledge.meat.beef.grade_registry import (
+app/services/food/knowledge/meat/beef/__init__.py:11:    get_beef_grade,
+app/services/food/knowledge/meat/beef/__init__.py:12:    get_beef_grade_registry,
+app/services/food/knowledge/meat/beef/__init__.py:13:    list_beef_grades,
+app/services/food/knowledge/meat/beef/__init__.py:14:    lookup_beef_grade,
+app/services/food/knowledge/meat/beef/__init__.py:15:    match_beef_grade,
+app/services/food/knowledge/meat/beef/__init__.py:21:from app.services.food.knowledge.meat.beef.breed_registry import (
+app/services/food/knowledge/meat/beef/__init__.py:26:    get_beef_breed,
+app/services/food/knowledge/meat/beef/__init__.py:27:    get_beef_breed_registry,
+app/services/food/knowledge/meat/beef/__init__.py:28:    list_beef_breeds,
+app/services/food/knowledge/meat/beef/__init__.py:29:    lookup_beef_breed,
+app/services/food/knowledge/meat/beef/__init__.py:30:    match_beef_breed,
+app/services/food/knowledge/meat/beef/__init__.py:34:from app.services.food.knowledge.meat.beef.cut_registry import (
+app/services/food/knowledge/meat/beef/__init__.py:39:    beef_cuts_for_cooking,
+app/services/food/knowledge/meat/beef/__init__.py:40:    get_beef_cut,
+app/services/food/knowledge/meat/beef/__init__.py:41:    get_beef_cut_registry,
+app/services/food/knowledge/meat/beef/__init__.py:42:    list_beef_cuts,
+app/services/food/knowledge/meat/beef/__init__.py:43:    lookup_beef_cut,
+app/services/food/knowledge/meat/beef/__init__.py:44:    match_beef_cut,
+app/services/food/knowledge/meat/beef/__init__.py:45:    premium_beef_cuts,
+app/services/food/knowledge/meat/beef/__init__.py:55:    "get_beef_grade",
+app/services/food/knowledge/meat/beef/__init__.py:56:    "get_beef_grade_registry",
+app/services/food/knowledge/meat/beef/__init__.py:57:    "list_beef_grades",
+app/services/food/knowledge/meat/beef/__init__.py:58:    "lookup_beef_grade",
+app/services/food/knowledge/meat/beef/__init__.py:59:    "match_beef_grade",
+app/services/food/knowledge/meat/beef/__init__.py:66:    "get_beef_breed",
+app/services/food/knowledge/meat/beef/__init__.py:67:    "get_beef_breed_registry",
+app/services/food/knowledge/meat/beef/__init__.py:68:    "list_beef_breeds",
+app/services/food/knowledge/meat/beef/__init__.py:69:    "lookup_beef_breed",
+app/services/food/knowledge/meat/beef/__init__.py:70:    "match_beef_breed",
+app/services/food/knowledge/meat/beef/__init__.py:75:    "beef_cuts_for_cooking",
+app/services/food/knowledge/meat/beef/__init__.py:76:    "get_beef_cut",
+app/services/food/knowledge/meat/beef/__init__.py:77:    "get_beef_cut_registry",
+app/services/food/knowledge/meat/beef/__init__.py:78:    "list_beef_cuts",
+app/services/food/knowledge/meat/beef/__init__.py:79:    "lookup_beef_cut",
+app/services/food/knowledge/meat/beef/__init__.py:80:    "match_beef_cut",
+app/services/food/knowledge/meat/beef/__init__.py:81:    "premium_beef_cuts",
+app/services/food/knowledge/meat/beef/rules.py:6:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/rules.py:11:def apply_beef_rules(
+app/services/food/knowledge/meat/beef/rules.py:205:    "apply_beef_rules",
+app/services/food/knowledge/meat/beef/breed_registry.py:23:BEEF_BREED_REGISTRY_ID = "beef.breeds"
+app/services/food/knowledge/meat/beef/breed_registry.py:280:            key=lambda breed: (
+app/services/food/knowledge/meat/beef/breed_registry.py:365:_default_beef_breed_registry = (
+app/services/food/knowledge/meat/beef/breed_registry.py:370:def get_beef_breed_registry(
+app/services/food/knowledge/meat/beef/breed_registry.py:372:    return _default_beef_breed_registry
+app/services/food/knowledge/meat/beef/breed_registry.py:375:def get_beef_breed(
+app/services/food/knowledge/meat/beef/breed_registry.py:380:    return get_beef_breed_registry().get(
+app/services/food/knowledge/meat/beef/breed_registry.py:386:def lookup_beef_breed(
+app/services/food/knowledge/meat/beef/breed_registry.py:391:    return get_beef_breed_registry().lookup(
+app/services/food/knowledge/meat/beef/breed_registry.py:397:def match_beef_breed(
+app/services/food/knowledge/meat/beef/breed_registry.py:400:    return get_beef_breed_registry().match(
+app/services/food/knowledge/meat/beef/breed_registry.py:405:def list_beef_breeds(
+app/services/food/knowledge/meat/beef/breed_registry.py:409:    return get_beef_breed_registry().list(
+app/services/food/knowledge/meat/beef/breed_registry.py:419:    "get_beef_breed_registry",
+app/services/food/knowledge/meat/beef/breed_registry.py:420:    "get_beef_breed",
+app/services/food/knowledge/meat/beef/breed_registry.py:421:    "lookup_beef_breed",
+app/services/food/knowledge/meat/beef/breed_registry.py:422:    "match_beef_breed",
+app/services/food/knowledge/meat/beef/breed_registry.py:423:    "list_beef_breeds",
+app/services/food/knowledge/meat/beef/parser.py:9:from app.services.food.knowledge.meat.beef.breed_registry import (
+app/services/food/knowledge/meat/beef/parser.py:13:from app.services.food.knowledge.meat.beef.cut_registry import (
+app/services/food/knowledge/meat/beef/parser.py:17:from app.services.food.knowledge.meat.beef.grade_registry import (
+app/services/food/knowledge/meat/beef/parser.py:21:from app.services.food.knowledge.meat.beef.parser_models import (
+app/services/food/knowledge/meat/beef/parser.py:67:        "beef_breed",
+app/services/food/knowledge/meat/beef/parser.py:74:        "beef_grade",
+app/services/food/knowledge/meat/beef/parser.py:82:        "beef_cut",
+app/services/food/knowledge/meat/beef/parser.py:113:            "korean beef",
+app/services/food/knowledge/meat/beef/parser.py:122:            "american beef",
+app/services/food/knowledge/meat/beef/parser.py:127:            "australian beef",
+app/services/food/knowledge/meat/beef/parser.py:135:            "japanese beef",
+app/services/food/knowledge/meat/beef/parser.py:154:        "beef",
+app/services/food/knowledge/meat/beef/parser.py:309:            "domain": "beef",
+app/services/food/knowledge/meat/beef/parser.py:486:                "parseable beef text"
+app/services/food/knowledge/meat/beef/parser.py:801:def get_default_beef_parser() -> BeefParser:
+app/services/food/knowledge/meat/beef/parser.py:815:def parse_beef_text(
+app/services/food/knowledge/meat/beef/parser.py:821:    return get_default_beef_parser().parse(
+app/services/food/knowledge/meat/beef/parser.py:826:def parse_beef_product(
+app/services/food/knowledge/meat/beef/parser.py:835:    parser = get_default_beef_parser()
+app/services/food/knowledge/meat/beef/parser.py:852:    "get_default_beef_parser",
+app/services/food/knowledge/meat/beef/parser.py:853:    "parse_beef_text",
+app/services/food/knowledge/meat/beef/parser.py:854:    "parse_beef_product",
+app/services/food/knowledge/meat/duck/parser_models.py:22:    duck_type: str | None = None
+app/services/food/knowledge/meat/duck/parser_models.py:26:    duck_type_confidence: float = 0.0
+app/services/food/knowledge/meat/duck/parser_models.py:30:    duck_type_match: RegistryMatch | None = None
+app/services/food/knowledge/meat/duck/parser_models.py:42:    def has_duck_type(self) -> bool:
+app/services/food/knowledge/meat/duck/parser_models.py:43:        return self.duck_type is not None
+app/services/food/knowledge/meat/duck/parser_models.py:56:            self.has_duck_type
+app/services/food/knowledge/meat/duck/parser_models.py:70:            self.has_duck_type
+app/services/food/knowledge/meat/duck/provider.py:9:from app.services.food.knowledge.meat.duck.attributes import (
+app/services/food/knowledge/meat/duck/provider.py:10:    build_duck_attributes,
+app/services/food/knowledge/meat/duck/provider.py:11:    extract_duck_product_name,
+app/services/food/knowledge/meat/duck/provider.py:13:from app.services.food.knowledge.meat.duck.parser import (
+app/services/food/knowledge/meat/duck/provider.py:16:from app.services.food.knowledge.meat.duck.rules import (
+app/services/food/knowledge/meat/duck/provider.py:17:    apply_duck_rules,
+app/services/food/knowledge/meat/duck/provider.py:19:from app.services.food.knowledge.meat.duck.scoring import (
+app/services/food/knowledge/meat/duck/provider.py:20:    calculate_duck_final_score,
+app/services/food/knowledge/meat/duck/provider.py:21:    calculate_duck_scores,
+app/services/food/knowledge/meat/duck/provider.py:50:    category_id = "duck"
+app/services/food/knowledge/meat/duck/provider.py:57:        "duck",
+app/services/food/knowledge/meat/duck/provider.py:165:            extract_duck_product_name(
+app/services/food/knowledge/meat/duck/provider.py:176:        attributes = build_duck_attributes(
+app/services/food/knowledge/meat/duck/provider.py:181:        scores = calculate_duck_scores(
+app/services/food/knowledge/meat/duck/provider.py:188:            apply_duck_rules(
+app/services/food/knowledge/meat/duck/provider.py:196:            calculate_duck_final_score(
+app/services/food/knowledge/meat/duck/attributes.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/attributes.py:11:def extract_duck_product_name(
+app/services/food/knowledge/meat/duck/attributes.py:27:def extract_duck_country_text(
+app/services/food/knowledge/meat/duck/attributes.py:50:def extract_duck_country_code(
+app/services/food/knowledge/meat/duck/attributes.py:71:def extract_duck_weight(
+app/services/food/knowledge/meat/duck/attributes.py:94:def extract_duck_storage_type(
+app/services/food/knowledge/meat/duck/attributes.py:117:def extract_duck_certifications(
+app/services/food/knowledge/meat/duck/attributes.py:155:def extract_duck_bone_status(
+app/services/food/knowledge/meat/duck/attributes.py:178:def extract_duck_skin_status(
+app/services/food/knowledge/meat/duck/attributes.py:217:def build_duck_attributes(
+app/services/food/knowledge/meat/duck/attributes.py:244:            extract_duck_product_name(
+app/services/food/knowledge/meat/duck/attributes.py:249:            extract_duck_country_text(
+app/services/food/knowledge/meat/duck/attributes.py:254:            extract_duck_country_code(
+app/services/food/knowledge/meat/duck/attributes.py:258:        "weight": extract_duck_weight(
+app/services/food/knowledge/meat/duck/attributes.py:262:            extract_duck_storage_type(
+app/services/food/knowledge/meat/duck/attributes.py:267:            extract_duck_certifications(
+app/services/food/knowledge/meat/duck/attributes.py:272:            extract_duck_bone_status(
+app/services/food/knowledge/meat/duck/attributes.py:277:            extract_duck_skin_status(
+app/services/food/knowledge/meat/duck/attributes.py:281:        "duck_type": (
+app/services/food/knowledge/meat/duck/attributes.py:282:            parse_result.duck_type
+app/services/food/knowledge/meat/duck/attributes.py:287:        "duck_type_confidence": (
+app/services/food/knowledge/meat/duck/attributes.py:288:            parse_result.duck_type_confidence
+app/services/food/knowledge/meat/duck/attributes.py:309:        parse_result.duck_type_match
+app/services/food/knowledge/meat/duck/attributes.py:312:        duck_type = (
+app/services/food/knowledge/meat/duck/attributes.py:314:            .duck_type_match
+app/services/food/knowledge/meat/duck/attributes.py:315:            .duck_type
+app/services/food/knowledge/meat/duck/attributes.py:320:                "duck_type_registry_key": (
+app/services/food/knowledge/meat/duck/attributes.py:321:                    duck_type.registry_key
+app/services/food/knowledge/meat/duck/attributes.py:323:                "duck_type_category": (
+app/services/food/knowledge/meat/duck/attributes.py:324:                    duck_type.type_category
+app/services/food/knowledge/meat/duck/attributes.py:326:                "duck_type_score": (
+app/services/food/knowledge/meat/duck/attributes.py:327:                    duck_type.score
+app/services/food/knowledge/meat/duck/attributes.py:329:                "duck_type_premium": (
+app/services/food/knowledge/meat/duck/attributes.py:330:                    duck_type.premium
+app/services/food/knowledge/meat/duck/attributes.py:332:                "duck_type_flavor_intensity": (
+app/services/food/knowledge/meat/duck/attributes.py:333:                    duck_type.flavor_intensity
+app/services/food/knowledge/meat/duck/attributes.py:335:                "duck_type_tenderness_level": (
+app/services/food/knowledge/meat/duck/attributes.py:336:                    duck_type.tenderness_level
+app/services/food/knowledge/meat/duck/attributes.py:338:                "duck_type_typical_uses": list(
+app/services/food/knowledge/meat/duck/attributes.py:339:                    duck_type.typical_uses
+app/services/food/knowledge/meat/duck/attributes.py:341:                "duck_type_description": (
+app/services/food/knowledge/meat/duck/attributes.py:342:                    duck_type.description
+app/services/food/knowledge/meat/duck/attributes.py:421:    "build_duck_attributes",
+app/services/food/knowledge/meat/duck/attributes.py:422:    "extract_duck_product_name",
+app/services/food/knowledge/meat/duck/attributes.py:423:    "extract_duck_country_text",
+app/services/food/knowledge/meat/duck/attributes.py:424:    "extract_duck_country_code",
+app/services/food/knowledge/meat/duck/attributes.py:425:    "extract_duck_weight",
+app/services/food/knowledge/meat/duck/attributes.py:426:    "extract_duck_storage_type",
+app/services/food/knowledge/meat/duck/attributes.py:427:    "extract_duck_certifications",
+app/services/food/knowledge/meat/duck/attributes.py:428:    "extract_duck_bone_status",
+app/services/food/knowledge/meat/duck/attributes.py:429:    "extract_duck_skin_status",
+app/services/food/knowledge/meat/duck/scoring.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/scoring.py:15:    "duck_type": 0.30,
+app/services/food/knowledge/meat/duck/scoring.py:133:        parse_result.duck_type_match
+app/services/food/knowledge/meat/duck/scoring.py:136:        duck_type = (
+app/services/food/knowledge/meat/duck/scoring.py:138:            .duck_type_match
+app/services/food/knowledge/meat/duck/scoring.py:139:            .duck_type
+app/services/food/knowledge/meat/duck/scoring.py:143:            duck_type.score
+app/services/food/knowledge/meat/duck/scoring.py:187:        "duck_type": type_score,
+app/services/food/knowledge/meat/duck/scoring.py:209:def calculate_duck_knowledge_score(
+app/services/food/knowledge/meat/duck/scoring.py:211:    duck_type_score: Any,
+app/services/food/knowledge/meat/duck/scoring.py:228:        "duck_type": clamp_score(
+app/services/food/knowledge/meat/duck/scoring.py:229:            duck_type_score
+app/services/food/knowledge/meat/duck/scoring.py:270:def calculate_duck_scores(
+app/services/food/knowledge/meat/duck/scoring.py:305:        calculate_duck_knowledge_score(
+app/services/food/knowledge/meat/duck/scoring.py:306:            duck_type_score=(
+app/services/food/knowledge/meat/duck/scoring.py:307:                registry_scores["duck_type"]
+app/services/food/knowledge/meat/duck/scoring.py:337:        "duck_type": registry_scores[
+app/services/food/knowledge/meat/duck/scoring.py:338:            "duck_type"
+app/services/food/knowledge/meat/duck/scoring.py:360:def calculate_duck_final_score(
+app/services/food/knowledge/meat/duck/scoring.py:410:    "calculate_duck_knowledge_score",
+app/services/food/knowledge/meat/duck/scoring.py:411:    "calculate_duck_scores",
+app/services/food/knowledge/meat/duck/scoring.py:412:    "calculate_duck_final_score",
+app/services/food/knowledge/meat/duck/cut_registry.py:11:DUCK_CUT_REGISTRY_ID = "duck.cuts"
+app/services/food/knowledge/meat/duck/cut_registry.py:122:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/duck/__init__.py:37:from app.services.food.knowledge.meat.duck.breed_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:42:from app.services.food.knowledge.meat.duck.cut_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:47:from app.services.food.knowledge.meat.duck.parser import (
+app/services/food/knowledge/meat/duck/__init__.py:50:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/__init__.py:53:from app.services.food.knowledge.meat.duck.type_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:85:from app.services.food.knowledge.meat.duck.attributes import (
+app/services/food/knowledge/meat/duck/__init__.py:86:    build_duck_attributes,
+app/services/food/knowledge/meat/duck/__init__.py:87:    extract_duck_bone_status,
+app/services/food/knowledge/meat/duck/__init__.py:88:    extract_duck_certifications,
+app/services/food/knowledge/meat/duck/__init__.py:89:    extract_duck_country_code,
+app/services/food/knowledge/meat/duck/__init__.py:90:    extract_duck_country_text,
+app/services/food/knowledge/meat/duck/__init__.py:91:    extract_duck_product_name,
+app/services/food/knowledge/meat/duck/__init__.py:92:    extract_duck_skin_status,
+app/services/food/knowledge/meat/duck/__init__.py:93:    extract_duck_storage_type,
+app/services/food/knowledge/meat/duck/__init__.py:94:    extract_duck_weight,
+app/services/food/knowledge/meat/duck/__init__.py:98:    "build_duck_attributes",
+app/services/food/knowledge/meat/duck/__init__.py:99:    "extract_duck_product_name",
+app/services/food/knowledge/meat/duck/__init__.py:100:    "extract_duck_country_text",
+app/services/food/knowledge/meat/duck/__init__.py:101:    "extract_duck_country_code",
+app/services/food/knowledge/meat/duck/__init__.py:102:    "extract_duck_weight",
+app/services/food/knowledge/meat/duck/__init__.py:103:    "extract_duck_storage_type",
+app/services/food/knowledge/meat/duck/__init__.py:104:    "extract_duck_certifications",
+app/services/food/knowledge/meat/duck/__init__.py:105:    "extract_duck_bone_status",
+app/services/food/knowledge/meat/duck/__init__.py:106:    "extract_duck_skin_status",
+app/services/food/knowledge/meat/duck/__init__.py:117:from app.services.food.knowledge.meat.duck.provider import (
+app/services/food/knowledge/meat/duck/__init__.py:120:from app.services.food.knowledge.meat.duck.rules import (
+app/services/food/knowledge/meat/duck/__init__.py:121:    apply_duck_rules,
+app/services/food/knowledge/meat/duck/__init__.py:124:from app.services.food.knowledge.meat.duck.scoring import (
+app/services/food/knowledge/meat/duck/__init__.py:125:    calculate_duck_final_score,
+app/services/food/knowledge/meat/duck/__init__.py:126:    calculate_duck_knowledge_score,
+app/services/food/knowledge/meat/duck/__init__.py:127:    calculate_duck_scores,
+app/services/food/knowledge/meat/duck/__init__.py:131:    "calculate_duck_scores",
+app/services/food/knowledge/meat/duck/__init__.py:132:    "calculate_duck_knowledge_score",
+app/services/food/knowledge/meat/duck/__init__.py:133:    "calculate_duck_final_score",
+app/services/food/knowledge/meat/duck/__init__.py:134:    "apply_duck_rules",
+app/services/food/knowledge/meat/duck/rules.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/rules.py:11:def apply_duck_rules(
+app/services/food/knowledge/meat/duck/rules.py:56:    duck_type = attributes.get("duck_type")
+app/services/food/knowledge/meat/duck/rules.py:60:    if duck_type:
+app/services/food/knowledge/meat/duck/rules.py:62:            f"오리 유형은 {duck_type}입니다."
+app/services/food/knowledge/meat/duck/rules.py:66:            "duck_type_description"
+app/services/food/knowledge/meat/duck/rules.py:118:            "duck_type_typical_uses"
+app/services/food/knowledge/meat/duck/rules.py:137:        "duck_type_flavor_intensity"
+app/services/food/knowledge/meat/duck/rules.py:157:        "duck_type_tenderness_level"
+app/services/food/knowledge/meat/duck/rules.py:173:            "duck_type",
+app/services/food/knowledge/meat/duck/rules.py:245:            "duck_type_premium"
+app/services/food/knowledge/meat/duck/rules.py:357:    "apply_duck_rules",
+app/services/food/knowledge/meat/duck/type_registry.py:11:DUCK_TYPE_REGISTRY_ID = "duck.types"
+app/services/food/knowledge/meat/duck/type_registry.py:62:    def duck_type(self) -> DuckType:
+app/services/food/knowledge/meat/duck/type_registry.py:110:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/duck/breed_registry.py:11:DUCK_BREED_REGISTRY_ID = "duck.breeds"
+app/services/food/knowledge/meat/duck/breed_registry.py:121:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/duck/parser.py:9:from app.services.food.knowledge.meat.duck.breed_registry import (
+app/services/food/knowledge/meat/duck/parser.py:13:from app.services.food.knowledge.meat.duck.cut_registry import (
+app/services/food/knowledge/meat/duck/parser.py:17:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/parser.py:20:from app.services.food.knowledge.meat.duck.type_registry import (
+app/services/food/knowledge/meat/duck/parser.py:56:        "duck_type",
+app/services/food/knowledge/meat/duck/parser.py:65:        "duck_breed",
+app/services/food/knowledge/meat/duck/parser.py:74:        "duck_cut",
+app/services/food/knowledge/meat/duck/parser.py:164:            duck_type=result.duck_type,
+app/services/food/knowledge/meat/duck/parser.py:167:            duck_type_confidence=(
+app/services/food/knowledge/meat/duck/parser.py:168:                result.duck_type_confidence
+app/services/food/knowledge/meat/duck/parser.py:176:            duck_type_match=(
+app/services/food/knowledge/meat/duck/parser.py:177:                result.duck_type_match
+app/services/food/knowledge/meat/duck/parser.py:203:        duck_type = self._canonical_name(
+app/services/food/knowledge/meat/duck/parser.py:258:                "category_id": "duck",
+app/services/food/knowledge/meat/duck/parser.py:271:            duck_type=duck_type,
+app/services/food/knowledge/meat/duck/parser.py:274:            duck_type_confidence=(
+app/services/food/knowledge/meat/duck/parser.py:279:            duck_type_match=type_match,
+app/services/food/knowledge/meat/__init__.py:1:from app.services.food.knowledge.meat.beef import (
+app/services/food/knowledge/meat/__init__.py:5:from app.services.food.knowledge.meat.lamb import (
+app/services/food/knowledge/meat/chicken/parser_models.py:22:    chicken_type: str | None = None
+app/services/food/knowledge/meat/chicken/parser_models.py:26:    chicken_type_confidence: float = 0.0
+app/services/food/knowledge/meat/chicken/parser_models.py:30:    chicken_type_match: RegistryMatch | None = None
+app/services/food/knowledge/meat/chicken/parser_models.py:42:    def has_chicken_type(self) -> bool:
+app/services/food/knowledge/meat/chicken/parser_models.py:43:        return self.chicken_type is not None
+app/services/food/knowledge/meat/chicken/parser_models.py:56:            self.has_chicken_type
+app/services/food/knowledge/meat/chicken/parser_models.py:70:            self.has_chicken_type
+app/services/food/knowledge/meat/chicken/provider.py:9:from app.services.food.knowledge.meat.chicken.attributes import (
+app/services/food/knowledge/meat/chicken/provider.py:10:    build_chicken_attributes,
+app/services/food/knowledge/meat/chicken/provider.py:11:    extract_chicken_product_name,
+app/services/food/knowledge/meat/chicken/provider.py:13:from app.services.food.knowledge.meat.chicken.parser import (
+app/services/food/knowledge/meat/chicken/provider.py:16:from app.services.food.knowledge.meat.chicken.rules import (
+app/services/food/knowledge/meat/chicken/provider.py:17:    apply_chicken_rules,
+app/services/food/knowledge/meat/chicken/provider.py:19:from app.services.food.knowledge.meat.chicken.scoring import (
+app/services/food/knowledge/meat/chicken/provider.py:20:    calculate_chicken_final_score,
+app/services/food/knowledge/meat/chicken/provider.py:21:    calculate_chicken_scores,
+app/services/food/knowledge/meat/chicken/provider.py:50:    category_id = "chicken"
+app/services/food/knowledge/meat/chicken/provider.py:57:        "chicken",
+app/services/food/knowledge/meat/chicken/provider.py:166:            extract_chicken_product_name(
+app/services/food/knowledge/meat/chicken/provider.py:177:        attributes = build_chicken_attributes(
+app/services/food/knowledge/meat/chicken/provider.py:182:        scores = calculate_chicken_scores(
+app/services/food/knowledge/meat/chicken/provider.py:189:            apply_chicken_rules(
+app/services/food/knowledge/meat/chicken/provider.py:197:            calculate_chicken_final_score(
+app/services/food/knowledge/meat/chicken/attributes.py:6:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/attributes.py:11:def extract_chicken_product_name(
+app/services/food/knowledge/meat/chicken/attributes.py:27:def extract_chicken_country_text(
+app/services/food/knowledge/meat/chicken/attributes.py:50:def extract_chicken_country_code(
+app/services/food/knowledge/meat/chicken/attributes.py:71:def extract_chicken_weight(
+app/services/food/knowledge/meat/chicken/attributes.py:94:def extract_chicken_storage_type(
+app/services/food/knowledge/meat/chicken/attributes.py:117:def extract_chicken_certifications(
+app/services/food/knowledge/meat/chicken/attributes.py:155:def extract_chicken_bone_status(
+app/services/food/knowledge/meat/chicken/attributes.py:178:def extract_chicken_skin_status(
+app/services/food/knowledge/meat/chicken/attributes.py:217:def build_chicken_attributes(
+app/services/food/knowledge/meat/chicken/attributes.py:244:            extract_chicken_product_name(
+app/services/food/knowledge/meat/chicken/attributes.py:249:            extract_chicken_country_text(
+app/services/food/knowledge/meat/chicken/attributes.py:254:            extract_chicken_country_code(
+app/services/food/knowledge/meat/chicken/attributes.py:258:        "weight": extract_chicken_weight(
+app/services/food/knowledge/meat/chicken/attributes.py:262:            extract_chicken_storage_type(
+app/services/food/knowledge/meat/chicken/attributes.py:267:            extract_chicken_certifications(
+app/services/food/knowledge/meat/chicken/attributes.py:272:            extract_chicken_bone_status(
+app/services/food/knowledge/meat/chicken/attributes.py:277:            extract_chicken_skin_status(
+app/services/food/knowledge/meat/chicken/attributes.py:281:        "chicken_type": (
+app/services/food/knowledge/meat/chicken/attributes.py:282:            parse_result.chicken_type
+app/services/food/knowledge/meat/chicken/attributes.py:287:        "chicken_type_confidence": (
+app/services/food/knowledge/meat/chicken/attributes.py:288:            parse_result.chicken_type_confidence
+app/services/food/knowledge/meat/chicken/attributes.py:309:        parse_result.chicken_type_match
+app/services/food/knowledge/meat/chicken/attributes.py:312:        chicken_type = (
+app/services/food/knowledge/meat/chicken/attributes.py:314:            .chicken_type_match
+app/services/food/knowledge/meat/chicken/attributes.py:315:            .chicken_type
+app/services/food/knowledge/meat/chicken/attributes.py:320:                "chicken_type_registry_key": (
+app/services/food/knowledge/meat/chicken/attributes.py:321:                    chicken_type.registry_key
+app/services/food/knowledge/meat/chicken/attributes.py:323:                "chicken_type_category": (
+app/services/food/knowledge/meat/chicken/attributes.py:324:                    chicken_type.type_category
+app/services/food/knowledge/meat/chicken/attributes.py:326:                "chicken_type_score": (
+app/services/food/knowledge/meat/chicken/attributes.py:327:                    chicken_type.score
+app/services/food/knowledge/meat/chicken/attributes.py:329:                "chicken_type_premium": (
+app/services/food/knowledge/meat/chicken/attributes.py:330:                    chicken_type.premium
+app/services/food/knowledge/meat/chicken/attributes.py:332:                "chicken_type_flavor_intensity": (
+app/services/food/knowledge/meat/chicken/attributes.py:333:                    chicken_type.flavor_intensity
+app/services/food/knowledge/meat/chicken/attributes.py:335:                "chicken_type_tenderness_level": (
+app/services/food/knowledge/meat/chicken/attributes.py:336:                    chicken_type.tenderness_level
+app/services/food/knowledge/meat/chicken/attributes.py:338:                "chicken_type_typical_uses": list(
+app/services/food/knowledge/meat/chicken/attributes.py:339:                    chicken_type.typical_uses
+app/services/food/knowledge/meat/chicken/attributes.py:341:                "chicken_type_description": (
+app/services/food/knowledge/meat/chicken/attributes.py:342:                    chicken_type.description
+app/services/food/knowledge/meat/chicken/attributes.py:421:    "build_chicken_attributes",
+app/services/food/knowledge/meat/chicken/attributes.py:422:    "extract_chicken_product_name",
+app/services/food/knowledge/meat/chicken/attributes.py:423:    "extract_chicken_country_text",
+app/services/food/knowledge/meat/chicken/attributes.py:424:    "extract_chicken_country_code",
+app/services/food/knowledge/meat/chicken/attributes.py:425:    "extract_chicken_weight",
+app/services/food/knowledge/meat/chicken/attributes.py:426:    "extract_chicken_storage_type",
+app/services/food/knowledge/meat/chicken/attributes.py:427:    "extract_chicken_certifications",
+app/services/food/knowledge/meat/chicken/attributes.py:428:    "extract_chicken_bone_status",
+app/services/food/knowledge/meat/chicken/attributes.py:429:    "extract_chicken_skin_status",
+app/services/food/knowledge/meat/chicken/scoring.py:6:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/scoring.py:15:    "chicken_type": 0.30,
+app/services/food/knowledge/meat/chicken/scoring.py:133:        parse_result.chicken_type_match
+app/services/food/knowledge/meat/chicken/scoring.py:136:        chicken_type = (
+app/services/food/knowledge/meat/chicken/scoring.py:138:            .chicken_type_match
+app/services/food/knowledge/meat/chicken/scoring.py:139:            .chicken_type
+app/services/food/knowledge/meat/chicken/scoring.py:143:            chicken_type.score
+app/services/food/knowledge/meat/chicken/scoring.py:187:        "chicken_type": type_score,
+app/services/food/knowledge/meat/chicken/scoring.py:209:def calculate_chicken_knowledge_score(
+app/services/food/knowledge/meat/chicken/scoring.py:211:    chicken_type_score: Any,
+app/services/food/knowledge/meat/chicken/scoring.py:228:        "chicken_type": clamp_score(
+app/services/food/knowledge/meat/chicken/scoring.py:229:            chicken_type_score
+app/services/food/knowledge/meat/chicken/scoring.py:270:def calculate_chicken_scores(
+app/services/food/knowledge/meat/chicken/scoring.py:305:        calculate_chicken_knowledge_score(
+app/services/food/knowledge/meat/chicken/scoring.py:306:            chicken_type_score=(
+app/services/food/knowledge/meat/chicken/scoring.py:308:                    "chicken_type"
+app/services/food/knowledge/meat/chicken/scoring.py:339:        "chicken_type": registry_scores[
+app/services/food/knowledge/meat/chicken/scoring.py:340:            "chicken_type"
+app/services/food/knowledge/meat/chicken/scoring.py:362:def calculate_chicken_final_score(
+app/services/food/knowledge/meat/chicken/scoring.py:412:    "calculate_chicken_knowledge_score",
+app/services/food/knowledge/meat/chicken/scoring.py:413:    "calculate_chicken_scores",
+app/services/food/knowledge/meat/chicken/scoring.py:414:    "calculate_chicken_final_score",
+app/services/food/knowledge/meat/chicken/cut_registry.py:11:CHICKEN_CUT_REGISTRY_ID = "chicken.cuts"
+app/services/food/knowledge/meat/chicken/cut_registry.py:122:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/chicken/__init__.py:1:from app.services.food.knowledge.meat.chicken.attributes import (
+app/services/food/knowledge/meat/chicken/__init__.py:2:    build_chicken_attributes,
+app/services/food/knowledge/meat/chicken/__init__.py:3:    extract_chicken_bone_status,
+app/services/food/knowledge/meat/chicken/__init__.py:4:    extract_chicken_certifications,
+app/services/food/knowledge/meat/chicken/__init__.py:5:    extract_chicken_country_code,
+app/services/food/knowledge/meat/chicken/__init__.py:6:    extract_chicken_country_text,
+app/services/food/knowledge/meat/chicken/__init__.py:7:    extract_chicken_product_name,
+app/services/food/knowledge/meat/chicken/__init__.py:8:    extract_chicken_skin_status,
+app/services/food/knowledge/meat/chicken/__init__.py:9:    extract_chicken_storage_type,
+app/services/food/knowledge/meat/chicken/__init__.py:10:    extract_chicken_weight,
+app/services/food/knowledge/meat/chicken/__init__.py:12:from app.services.food.knowledge.meat.chicken.breed_registry import (
+app/services/food/knowledge/meat/chicken/__init__.py:17:from app.services.food.knowledge.meat.chicken.cut_registry import (
+app/services/food/knowledge/meat/chicken/__init__.py:22:from app.services.food.knowledge.meat.chicken.parser import (
+app/services/food/knowledge/meat/chicken/__init__.py:25:from app.services.food.knowledge.meat.chicken.provider import (
+app/services/food/knowledge/meat/chicken/__init__.py:28:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/__init__.py:31:from app.services.food.knowledge.meat.chicken.rules import (
+app/services/food/knowledge/meat/chicken/__init__.py:32:    apply_chicken_rules,
+app/services/food/knowledge/meat/chicken/__init__.py:35:from app.services.food.knowledge.meat.chicken.scoring import (
+app/services/food/knowledge/meat/chicken/__init__.py:39:    calculate_chicken_final_score,
+app/services/food/knowledge/meat/chicken/__init__.py:40:    calculate_chicken_knowledge_score,
+app/services/food/knowledge/meat/chicken/__init__.py:41:    calculate_chicken_scores,
+app/services/food/knowledge/meat/chicken/__init__.py:46:from app.services.food.knowledge.meat.chicken.type_registry import (
+app/services/food/knowledge/meat/chicken/__init__.py:66:    "build_chicken_attributes",
+app/services/food/knowledge/meat/chicken/__init__.py:67:    "extract_chicken_product_name",
+app/services/food/knowledge/meat/chicken/__init__.py:68:    "extract_chicken_country_text",
+app/services/food/knowledge/meat/chicken/__init__.py:69:    "extract_chicken_country_code",
+app/services/food/knowledge/meat/chicken/__init__.py:70:    "extract_chicken_weight",
+app/services/food/knowledge/meat/chicken/__init__.py:71:    "extract_chicken_storage_type",
+app/services/food/knowledge/meat/chicken/__init__.py:72:    "extract_chicken_certifications",
+app/services/food/knowledge/meat/chicken/__init__.py:73:    "extract_chicken_bone_status",
+app/services/food/knowledge/meat/chicken/__init__.py:74:    "extract_chicken_skin_status",
+app/services/food/knowledge/meat/chicken/__init__.py:81:    "calculate_chicken_knowledge_score",
+app/services/food/knowledge/meat/chicken/__init__.py:82:    "calculate_chicken_scores",
+app/services/food/knowledge/meat/chicken/__init__.py:83:    "calculate_chicken_final_score",
+app/services/food/knowledge/meat/chicken/__init__.py:84:    "apply_chicken_rules",
+app/services/food/knowledge/meat/chicken/rules.py:6:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/rules.py:11:def apply_chicken_rules(
+app/services/food/knowledge/meat/chicken/rules.py:56:    chicken_type = attributes.get(
+app/services/food/knowledge/meat/chicken/rules.py:57:        "chicken_type"
+app/services/food/knowledge/meat/chicken/rules.py:62:    if chicken_type:
+app/services/food/knowledge/meat/chicken/rules.py:64:            f"닭 유형은 {chicken_type}입니다."
+app/services/food/knowledge/meat/chicken/rules.py:68:            "chicken_type_description"
+app/services/food/knowledge/meat/chicken/rules.py:120:            "chicken_type_typical_uses"
+app/services/food/knowledge/meat/chicken/rules.py:139:        "chicken_type_flavor_intensity"
+app/services/food/knowledge/meat/chicken/rules.py:159:        "chicken_type_tenderness_level"
+app/services/food/knowledge/meat/chicken/rules.py:175:            "chicken_type",
+app/services/food/knowledge/meat/chicken/rules.py:247:            "chicken_type_premium"
+app/services/food/knowledge/meat/chicken/rules.py:359:    "apply_chicken_rules",
+app/services/food/knowledge/meat/chicken/type_registry.py:11:CHICKEN_TYPE_REGISTRY_ID = "chicken.types"
+app/services/food/knowledge/meat/chicken/type_registry.py:62:    def chicken_type(self) -> ChickenType:
+app/services/food/knowledge/meat/chicken/type_registry.py:110:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/chicken/breed_registry.py:11:CHICKEN_BREED_REGISTRY_ID = "chicken.breeds"
+app/services/food/knowledge/meat/chicken/breed_registry.py:121:        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+app/services/food/knowledge/meat/chicken/parser.py:9:from app.services.food.knowledge.meat.chicken.breed_registry import (
+app/services/food/knowledge/meat/chicken/parser.py:13:from app.services.food.knowledge.meat.chicken.cut_registry import (
+app/services/food/knowledge/meat/chicken/parser.py:17:from app.services.food.knowledge.meat.chicken.parser_models import (
+app/services/food/knowledge/meat/chicken/parser.py:20:from app.services.food.knowledge.meat.chicken.type_registry import (
+app/services/food/knowledge/meat/chicken/parser.py:56:        "chicken_type",
+app/services/food/knowledge/meat/chicken/parser.py:65:        "chicken_breed",
+app/services/food/knowledge/meat/chicken/parser.py:74:        "chicken_cut",
+app/services/food/knowledge/meat/chicken/parser.py:164:            chicken_type=result.chicken_type,
+app/services/food/knowledge/meat/chicken/parser.py:167:            chicken_type_confidence=(
+app/services/food/knowledge/meat/chicken/parser.py:168:                result.chicken_type_confidence
+app/services/food/knowledge/meat/chicken/parser.py:176:            chicken_type_match=(
+app/services/food/knowledge/meat/chicken/parser.py:177:                result.chicken_type_match
+app/services/food/knowledge/meat/chicken/parser.py:203:        chicken_type = self._canonical_name(
+app/services/food/knowledge/meat/chicken/parser.py:258:                "category_id": "chicken",
+app/services/food/knowledge/meat/chicken/parser.py:271:            chicken_type=chicken_type,
+app/services/food/knowledge/meat/chicken/parser.py:274:            chicken_type_confidence=(
+app/services/food/knowledge/meat/chicken/parser.py:279:            chicken_type_match=type_match,
+app/services/food/knowledge/registry.py:10:from app.services.food.knowledge.meat.beef.provider import (
+app/services/food/knowledge/registry.py:13:from app.services.food.knowledge.meat.lamb.provider import (
+app/services/food/knowledge/registry.py:16:from app.services.food.knowledge.meat.chicken.provider import (
+app/services/food/knowledge/registry.py:19:from app.services.food.knowledge.meat.duck.provider import (
+app/services/food/knowledge/registry.py:23:class FoodKnowledgeRegistry:
+app/services/food/knowledge/registry.py:31:        self._providers: OrderedDict[
+app/services/food/knowledge/registry.py:47:            category_id in self._providers
+app/services/food/knowledge/registry.py:54:        self._providers[category_id] = provider
+app/services/food/knowledge/registry.py:60:        return self._providers.pop(
+app/services/food/knowledge/registry.py:69:        return self._providers.get(
+app/services/food/knowledge/registry.py:98:        for provider in self._providers.values():
+app/services/food/knowledge/registry.py:107:    def list_providers(
+app/services/food/knowledge/registry.py:110:        return list(self._providers.values())
+app/services/food/knowledge/registry.py:113:        return list(self._providers.keys())
+app/services/food/knowledge/registry.py:124:            in self._providers
+app/services/food/knowledge/registry.py:130:        return iter(self._providers.values())
+app/services/food/knowledge/registry.py:146:FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
+app/services/food/knowledge/registry.py:203:def list_food_providers() -> List[FoodKnowledgeProvider]:
+app/services/food/knowledge/registry.py:204:    return FOOD_KNOWLEDGE_REGISTRY.list_providers()
+app/services/food/knowledge/__init__.py:13:    FoodKnowledgeRegistry,
+app/services/food/knowledge/__init__.py:15:    list_food_providers,
+app/services/food/knowledge/__init__.py:37:    "FoodKnowledgeRegistry",
+app/services/food/knowledge/__init__.py:48:    "list_food_providers",
+app/services/food/knowledge/common/base_registry.py:497:            key=lambda item: item[0],
+app/services/food/knowledge/common/base_registry.py:567:            key=lambda alias: (
+app/services/food/knowledge/common/base_registry.py:659:            key=lambda candidate: (
+app/services/food_knowledge/categories/meat.py:1:"""Compatibility wrapper for the beef provider."""
+app/services/food_knowledge/categories/meat.py:3:from app.services.food.knowledge.meat.beef.provider import MeatKnowledge
+app/services/preference_service.py:129:        key=lambda x: x[1],
+app/services/market/deduplicator.py:99:            key=lambda x: (
+app/services/market/deduplicator.py:128:        key=lambda g: (
+app/services/market/registry.py:390:        key=lambda config: (
+app/services/recommendation_pipeline.py:70:            key=lambda x: (
+app/services/recommendation_pipeline.py:79:            key=lambda x: (
+app/services/recommendation_pipeline.py:89:            key=lambda x: (
+app/services/recommendation_pipeline.py:98:        key=lambda x: x.get("v7_final_score") or 0,
+app/services/price_detail_enricher.py:179:            sale_price = min(prices, key=lambda p: abs(p - current_price))
+app/services/product_cluster_representative_v5.py:219:        key=lambda r: (
+app/services/product_cluster_representative_v5.py:229:        key=lambda r: (
+app/services/product_cluster_representative_v5.py:237:        key=lambda r: (
+app/services/product_cluster_representative_v5.py:246:        key=lambda r: (
+app/services/coupang_api.py:69:    path = "/v2/providers/affiliate_open_api/apis/openapi/products/search"
+app/services/ai_ranking_engine_v7.py:141:        key=lambda x: (

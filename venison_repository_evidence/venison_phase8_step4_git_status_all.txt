@@ -1,0 +1,17 @@
+?? app/services/food/knowledge/meat/venison/__init__.py
+?? app/services/food/knowledge/meat/venison/attributes.py
+?? app/services/food/knowledge/meat/venison/breed_registry.py
+?? app/services/food/knowledge/meat/venison/cut_registry.py
+?? app/services/food/knowledge/meat/venison/parser.py
+?? app/services/food/knowledge/meat/venison/parser_models.py
+?? app/services/food/knowledge/meat/venison/rules.py
+?? app/services/food/knowledge/meat/venison/scoring.py
+?? app/services/food/knowledge/meat/venison/type_registry.py
+?? app/services/food/registry_data/venison/breeds.yaml
+?? app/services/food/registry_data/venison/cuts.yaml
+?? app/services/food/registry_data/venison/types.yaml
+?? tests/services/food/knowledge/meat/venison/test_venison_attributes.py
+?? tests/services/food/knowledge/meat/venison/test_venison_parser.py
+?? tests/services/food/knowledge/meat/venison/test_venison_registries.py
+?? tests/services/food/knowledge/meat/venison/test_venison_rules.py
+?? tests/services/food/knowledge/meat/venison/test_venison_scoring.py

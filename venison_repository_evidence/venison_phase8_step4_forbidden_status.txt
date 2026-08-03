@@ -1,0 +1,11 @@
+?? app/services/food/knowledge/meat/chicken/__init__.py
+?? app/services/food/knowledge/meat/chicken/attributes.py
+?? app/services/food/knowledge/meat/chicken/breed_registry.py
+?? app/services/food/knowledge/meat/chicken/cut_registry.py
+?? app/services/food/knowledge/meat/chicken/parser.py
+?? app/services/food/knowledge/meat/chicken/parser_models.py
+?? app/services/food/knowledge/meat/chicken/provider.py
+?? app/services/food/knowledge/meat/chicken/rules.py
+?? app/services/food/knowledge/meat/chicken/scoring.py
+?? app/services/food/knowledge/meat/chicken/type_registry.py
+?? app/services/food/knowledge/meat/duck/__init__.py.phase4_before

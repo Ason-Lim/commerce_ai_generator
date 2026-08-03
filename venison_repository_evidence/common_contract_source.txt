@@ -1,0 +1,3279 @@
+# Common Contract Source
+
+
+============================================================
+FILE: app/services/food/__init__.py
+============================================================
+"""Food Domain Services.
+
+식품 카테고리 판별, Food Knowledge 분석 및
+Registry 기반 Provider 실행 기능을 제공합니다.
+"""
+
+from app.services.food.category_registry import (
+    FOOD_CATEGORY_REGISTRY,
+    FoodCategoryConfig,
+    get_child_categories,
+    get_food_category,
+    iter_food_categories,
+    list_food_categories,
+    register_food_category,
+    require_food_category,
+    resolve_food_category,
+)
+from app.services.food.knowledge import (
+    FOOD_KNOWLEDGE_REGISTRY,
+    FoodAttribute,
+    FoodKnowledgeContext,
+    FoodKnowledgeProvider,
+    FoodKnowledgeRegistry,
+    FoodKnowledgeResult,
+    FoodRuleResult,
+    FoodScore,
+    get_food_provider,
+    list_food_providers,
+    register_food_provider,
+    require_food_provider,
+    resolve_food_provider,
+)
+from app.services.food.resolver import (
+    FoodKnowledgeResolutionError,
+    analyze_food_product,
+    resolve_food_knowledge,
+    resolve_knowledge_provider,
+    resolve_product_category,
+)
+
+__all__ = [
+    "FoodCategoryConfig",
+    "FOOD_CATEGORY_REGISTRY",
+    "get_food_category",
+    "require_food_category",
+    "list_food_categories",
+    "iter_food_categories",
+    "resolve_food_category",
+    "register_food_category",
+    "get_child_categories",
+    "FoodKnowledgeProvider",
+    "FoodKnowledgeRegistry",
+    "FoodKnowledgeContext",
+    "FoodKnowledgeResult",
+    "FoodAttribute",
+    "FoodScore",
+    "FoodRuleResult",
+    "FOOD_KNOWLEDGE_REGISTRY",
+    "register_food_provider",
+    "get_food_provider",
+    "require_food_provider",
+    "resolve_food_provider",
+    "list_food_providers",
+    "FoodKnowledgeResolutionError",
+    "resolve_product_category",
+    "resolve_knowledge_provider",
+    "analyze_food_product",
+    "resolve_food_knowledge",
+]
+
+============================================================
+FILE: app/services/food/knowledge/__init__.py
+============================================================
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.models import (
+    FoodAttribute,
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+    FoodRuleResult,
+    FoodScore,
+)
+from app.services.food.knowledge.registry import (
+    FOOD_KNOWLEDGE_REGISTRY,
+    FoodKnowledgeRegistry,
+    get_food_provider,
+    list_food_providers,
+    register_food_provider,
+    require_food_provider,
+    resolve_food_provider,
+)
+
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryDocument,
+    KnowledgeRegistryError,
+    KnowledgeRegistryFileNotFoundError,
+    KnowledgeRegistryFormatError,
+    KnowledgeRegistryLoader,
+    KnowledgeRegistryValidationError,
+    get_knowledge_registry_entry,
+    get_knowledge_registry_loader,
+    list_knowledge_registries,
+    load_knowledge_registry,
+    load_knowledge_registry_data,
+)
+
+__all__ = [
+    "FoodKnowledgeProvider",
+    "FoodKnowledgeRegistry",
+    "FoodKnowledgeContext",
+    "FoodKnowledgeResult",
+    "FoodAttribute",
+    "FoodScore",
+    "FoodRuleResult",
+    "FOOD_KNOWLEDGE_REGISTRY",
+    "register_food_provider",
+    "get_food_provider",
+    "require_food_provider",
+    "resolve_food_provider",
+    "list_food_providers",
+]
+
+============================================================
+FILE: app/services/food/knowledge/base.py
+============================================================
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Any, Mapping, Sequence
+
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class FoodKnowledgeProvider(ABC):
+    """
+    식품 카테고리별 Knowledge Provider 공통 인터페이스.
+    """
+
+    category_id: str
+    category_name: str
+    aliases: Sequence[str] = ()
+
+    @abstractmethod
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        raise NotImplementedError
+
+============================================================
+FILE: app/services/food/knowledge/fruit/__init__.py
+============================================================
+from app.services.food.knowledge.fruit.parser import (
+    calculate_parse_confidence,
+    detect_fruit_keywords,
+    extract_brix,
+    extract_product_name,
+    extract_weight_grams,
+    parse_fruit_product,
+)
+from app.services.food.knowledge.fruit.provider import (
+    FruitKnowledgeProvider,
+)
+from app.services.food.knowledge.fruit.rules import (
+    build_fruit_rules,
+    evaluate_fruit_rules,
+    split_fruit_rule_messages,
+)
+from app.services.food.knowledge.fruit.scoring import (
+    DEFAULT_FRUIT_SCORE_WEIGHTS,
+    apply_context_score_adjustments,
+    calculate_fruit_final_score,
+    calculate_fruit_scores,
+    calculate_information_score,
+    calculate_sweetness_score,
+    clamp_score,
+)
+
+__all__ = [
+    "FruitKnowledgeProvider",
+    "parse_fruit_product",
+    "extract_product_name",
+    "extract_brix",
+    "extract_weight_grams",
+    "detect_fruit_keywords",
+    "calculate_parse_confidence",
+    "calculate_fruit_scores",
+    "calculate_fruit_final_score",
+    "calculate_sweetness_score",
+    "calculate_information_score",
+    "apply_context_score_adjustments",
+    "clamp_score",
+    "DEFAULT_FRUIT_SCORE_WEIGHTS",
+    "evaluate_fruit_rules",
+    "split_fruit_rule_messages",
+    "build_fruit_rules",
+]
+
+============================================================
+FILE: app/services/food/knowledge/fruit/provider.py
+============================================================
+from __future__ import annotations
+
+from typing import Any, Mapping
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.fruit.parser import (
+    extract_product_name,
+    parse_fruit_product,
+)
+from app.services.food.knowledge.fruit.rules import (
+    build_fruit_rules,
+)
+from app.services.food.knowledge.fruit.scoring import (
+    calculate_fruit_final_score,
+    calculate_fruit_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class FruitKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    category_id = "fruit"
+    category_name = "과일"
+
+    aliases = (
+        "과일",
+        "fruit",
+        "사과",
+        "배",
+        "감귤",
+        "귤",
+        "오렌지",
+        "포도",
+        "복숭아",
+        "수박",
+        "참외",
+        "딸기",
+        "블루베리",
+        "바나나",
+        "망고",
+        "키위",
+    )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        alias_set = {
+            alias.strip().lower()
+            for alias in self.aliases
+        }
+
+        if category_id:
+            normalized_category_id = (
+                category_id.strip().lower()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if normalized_category_id in alias_set:
+                return True
+
+        if product_name:
+            normalized_name = (
+                product_name.strip().lower()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        product_data = dict(product)
+
+        attributes = parse_fruit_product(
+            product_data
+        )
+
+        scores = calculate_fruit_scores(
+            product_data,
+            attributes,
+            context,
+        )
+
+        (
+            rule_results,
+            reasons,
+            warnings,
+        ) = build_fruit_rules(
+            attributes,
+            scores,
+        )
+
+        final_score = (
+            calculate_fruit_final_score(
+                scores,
+                context,
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=extract_product_name(
+                product_data
+            )
+            or None,
+            attributes=attributes,
+            scores=scores,
+            rules=rule_results,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=float(
+                attributes.get(
+                    "confidence",
+                    1.0,
+                )
+            ),
+            metadata={
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "provider_version": "2.1",
+                "priority": (
+                    context.priority
+                    if context
+                    else None
+                ),
+            },
+            raw_product=product_data,
+        )
+
+============================================================
+FILE: app/services/food/knowledge/meat/__init__.py
+============================================================
+from app.services.food.knowledge.meat.beef import (
+    BeefKnowledgeProvider,
+)
+
+from app.services.food.knowledge.meat.lamb import (
+    LambKnowledgeProvider,
+)
+
+__all__ = [
+    "BeefKnowledgeProvider",
+    "LambKnowledgeProvider",
+]
+============================================================
+FILE: app/services/food/knowledge/meat/beef/__init__.py
+============================================================
+from app.services.food.knowledge.meat.beef.provider import (
+    BeefKnowledgeProvider,
+)
+
+from app.services.food.knowledge.meat.beef.grade_registry import (
+    BEEF_GRADE_REGISTRY_ID,
+    BeefGrade,
+    BeefGradeMatch,
+    BeefGradeRegistry,
+    detect_country_code,
+    get_beef_grade,
+    get_beef_grade_registry,
+    list_beef_grades,
+    lookup_beef_grade,
+    match_beef_grade,
+    normalize_country_code,
+    normalize_grade_text,
+)
+
+
+from app.services.food.knowledge.meat.beef.breed_registry import (
+    BEEF_BREED_REGISTRY_ID,
+    BeefBreed,
+    BeefBreedMatch,
+    BeefBreedRegistry,
+    get_beef_breed,
+    get_beef_breed_registry,
+    list_beef_breeds,
+    lookup_beef_breed,
+    match_beef_breed,
+)
+
+
+from app.services.food.knowledge.meat.beef.cut_registry import (
+    BEEF_CUT_REGISTRY_ID,
+    BeefCut,
+    BeefCutMatch,
+    BeefCutRegistry,
+    beef_cuts_for_cooking,
+    get_beef_cut,
+    get_beef_cut_registry,
+    list_beef_cuts,
+    lookup_beef_cut,
+    match_beef_cut,
+    premium_beef_cuts,
+)
+
+__all__ = [
+    "BeefKnowledgeProvider",
+    "BEEF_GRADE_REGISTRY_ID",
+    "BeefGrade",
+    "BeefGradeMatch",
+    "BeefGradeRegistry",
+    "detect_country_code",
+    "get_beef_grade",
+    "get_beef_grade_registry",
+    "list_beef_grades",
+    "lookup_beef_grade",
+    "match_beef_grade",
+    "normalize_country_code",
+    "normalize_grade_text",
+    "BEEF_BREED_REGISTRY_ID",
+    "BeefBreed",
+    "BeefBreedMatch",
+    "BeefBreedRegistry",
+    "get_beef_breed",
+    "get_beef_breed_registry",
+    "list_beef_breeds",
+    "lookup_beef_breed",
+    "match_beef_breed",
+    "BEEF_CUT_REGISTRY_ID",
+    "BeefCut",
+    "BeefCutMatch",
+    "BeefCutRegistry",
+    "beef_cuts_for_cooking",
+    "get_beef_cut",
+    "get_beef_cut_registry",
+    "list_beef_cuts",
+    "lookup_beef_cut",
+    "match_beef_cut",
+    "premium_beef_cuts",
+]
+============================================================
+FILE: app/services/food/knowledge/meat/beef/attributes.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.beef.parser_models import (
+    BeefParseResult,
+)
+
+
+COUNTRY_NAMES: dict[str, str] = {
+    "KR": "대한민국",
+    "US": "미국",
+    "AU": "호주",
+    "JP": "일본",
+}
+
+
+def extract_beef_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_beef_country_text(
+    *,
+    product: Mapping[str, Any],
+    parse_result: BeefParseResult,
+) -> str | None:
+    """
+    상품 원문에 원산지가 있으면 원문을 우선 사용한다.
+
+    원문이 없으면 Parser가 탐지한 국가 코드를
+    표준 국가명으로 변환한다.
+    """
+    raw_country = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+        or product.get("origin")
+    )
+
+    if raw_country is not None:
+        country_text = str(
+            raw_country
+        ).strip()
+
+        if country_text:
+            return country_text
+
+    country_code = parse_result.metadata.get(
+        "country_code"
+    )
+
+    if not country_code:
+        return None
+
+    normalized_country_code = str(
+        country_code
+    )
+
+    return COUNTRY_NAMES.get(
+        normalized_country_code,
+        normalized_country_code,
+    )
+
+
+def extract_beef_weight(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 Mapping에서 중량 또는 수량 정보를 추출한다.
+    """
+    return (
+        product.get("weight")
+        or product.get("quantity")
+        or product.get("weight_text")
+        or product.get("net_weight")
+    )
+
+
+def extract_beef_marbling(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 Mapping에서 마블링 정보를 추출한다.
+    """
+    return (
+        product.get("marbling")
+        or product.get("marbling_score")
+        or product.get("bms")
+    )
+
+
+def build_beef_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: BeefParseResult,
+) -> dict[str, Any]:
+    """
+    Parser의 표준화 값과 Registry 정보를
+    FoodKnowledgeResult용 attributes로 변환한다.
+    """
+    country_code = parse_result.metadata.get(
+        "country_code"
+    )
+
+    attributes: dict[str, Any] = {
+        "product_name": extract_beef_product_name(
+            product
+        ),
+        "country": extract_beef_country_text(
+            product=product,
+            parse_result=parse_result,
+        ),
+        "country_code": country_code,
+        "breed": parse_result.breed,
+        "grade": parse_result.grade,
+        "cut": parse_result.cut,
+        "weight": extract_beef_weight(
+            product
+        ),
+        "marbling": extract_beef_marbling(
+            product
+        ),
+        "confidence": parse_result.confidence,
+        "breed_confidence": (
+            parse_result.breed_confidence
+        ),
+        "grade_confidence": (
+            parse_result.grade_confidence
+        ),
+        "cut_confidence": (
+            parse_result.cut_confidence
+        ),
+        "detected_keywords": list(
+            parse_result.detected_keywords
+        ),
+        "is_complete": parse_result.is_complete,
+    }
+
+    if parse_result.breed_match is not None:
+        breed = parse_result.breed_match.breed
+
+        attributes.update(
+            {
+                "breed_registry_key": (
+                    breed.registry_key
+                ),
+                "breed_score": breed.score,
+                "breed_premium": breed.premium,
+                "breed_origin_country": (
+                    breed.origin_country
+                ),
+                "breed_type": breed.breed_type,
+                "breed_description": (
+                    breed.description
+                ),
+            }
+        )
+
+    if parse_result.grade_match is not None:
+        grade = parse_result.grade_match.grade
+
+        attributes.update(
+            {
+                "grade_registry_key": (
+                    grade.registry_key
+                ),
+                "grade_country_code": (
+                    grade.country_code
+                ),
+                "grade_country_name": (
+                    grade.country_name
+                ),
+                "grade_system": grade.system,
+                "grade_score": grade.score,
+                "grade_premium": grade.premium,
+                "grade_rank": grade.rank,
+                "grade_description": (
+                    grade.description
+                ),
+            }
+        )
+
+    if parse_result.cut_match is not None:
+        cut = parse_result.cut_match.cut
+
+        attributes.update(
+            {
+                "cut_registry_key": (
+                    cut.registry_key
+                ),
+                "cut_score": cut.score,
+                "cut_premium": cut.premium,
+                "cut_tenderness_score": (
+                    cut.tenderness_score
+                ),
+                "cut_fat_level": cut.fat_level,
+                "cut_cooking_methods": list(
+                    cut.cooking_methods
+                ),
+                "cut_description": (
+                    cut.description
+                ),
+            }
+        )
+
+    return attributes
+
+
+__all__ = [
+    "COUNTRY_NAMES",
+    "build_beef_attributes",
+    "extract_beef_country_text",
+    "extract_beef_marbling",
+    "extract_beef_product_name",
+    "extract_beef_weight",
+]
+============================================================
+FILE: app/services/food/knowledge/meat/beef/provider.py
+============================================================
+from __future__ import annotations
+
+from typing import Any, Mapping
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.beef.attributes import (
+    build_beef_attributes,
+    extract_beef_product_name,
+)
+from app.services.food.knowledge.meat.beef.parser import (
+    BeefParser,
+)
+from app.services.food.knowledge.meat.beef.rules import (
+    apply_beef_rules,
+)
+from app.services.food.knowledge.meat.beef.scoring import (
+    calculate_beef_final_score,
+    calculate_beef_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class BeefKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    쇠고기 Knowledge Provider.
+
+    역할:
+    - BeefParser를 통한 상품 속성 분석
+    - Registry 정보를 기반으로 지식 점수 구성
+    - 분석 결과에 따른 이유와 경고 생성
+    - FoodKnowledgeResult 반환
+
+    담당하지 않는 역할:
+    - 상품명 문자열 직접 파싱
+    - 품종, 등급, 부위 별칭 관리
+    - 등급별 점수 하드코딩
+    """
+
+    category_id = "beef"
+    category_name = "소고기"
+
+    aliases = (
+        "소고기",
+        "쇠고기",
+        "한우",
+        "육우",
+        "와규",
+        "beef",
+        "우육",
+        "등심",
+        "안심",
+        "채끝",
+        "갈비",
+        "부채살",
+        "살치살",
+        "토시살",
+        "우삼겹",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: BeefParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+
+        테스트에서는 별도 Registry를 사용하는 BeefParser를
+        전달할 수 있다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else BeefParser()
+        )
+
+    # ==================================================================
+    # Provider selection
+    # ==================================================================
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+        }
+
+        if category_id:
+            normalized_category_id = (
+                category_id.strip().casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                product_name.strip().casefold()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    # ==================================================================
+    # Public API
+    # ==================================================================
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: (
+            FoodKnowledgeContext | None
+        ) = None,
+    ) -> FoodKnowledgeResult:
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = extract_beef_product_name(
+            product_data
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_beef_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_beef_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = apply_beef_rules(
+            attributes=attributes,
+            scores=scores,
+            parse_result=parse_result,
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=(
+                calculate_beef_final_score(
+                    scores
+                )
+            ),
+            confidence=parse_result.confidence,
+            metadata={
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "priority": (
+                    context.priority
+                    if context
+                    else None
+                ),
+                "country_code": (
+                    parse_result.metadata.get(
+                        "country_code"
+                    )
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "BeefKnowledgeProvider",
+]
+
+============================================================
+FILE: app/services/food/knowledge/meat/chicken/__init__.py
+============================================================
+from app.services.food.knowledge.meat.chicken.attributes import (
+    build_chicken_attributes,
+    extract_chicken_bone_status,
+    extract_chicken_certifications,
+    extract_chicken_country_code,
+    extract_chicken_country_text,
+    extract_chicken_product_name,
+    extract_chicken_skin_status,
+    extract_chicken_storage_type,
+    extract_chicken_weight,
+)
+from app.services.food.knowledge.meat.chicken.breed_registry import (
+    ChickenBreed,
+    ChickenBreedMatch,
+    ChickenBreedRegistry,
+)
+from app.services.food.knowledge.meat.chicken.cut_registry import (
+    ChickenCut,
+    ChickenCutMatch,
+    ChickenCutRegistry,
+)
+from app.services.food.knowledge.meat.chicken.parser import (
+    ChickenParser,
+)
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.parser_models import (
+    ChickenParseResult,
+)
+from app.services.food.knowledge.meat.chicken.rules import (
+    apply_chicken_rules,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.chicken.scoring import (
+    DEFAULT_FINAL_SCORE_WEIGHTS,
+    DEFAULT_KNOWLEDGE_WEIGHTS,
+    calculate_available_average,
+    calculate_chicken_final_score,
+    calculate_chicken_knowledge_score,
+    calculate_chicken_scores,
+    clamp_score,
+    extract_registry_scores,
+    safe_float,
+)
+from app.services.food.knowledge.meat.chicken.type_registry import (
+    ChickenType,
+    ChickenTypeMatch,
+    ChickenTypeRegistry,
+)
+
+
+__all__ = [
+    "ChickenType",
+    "ChickenTypeMatch",
+    "ChickenTypeRegistry",
+    "ChickenBreed",
+    "ChickenBreedMatch",
+    "ChickenBreedRegistry",
+    "ChickenCut",
+    "ChickenCutMatch",
+    "ChickenCutRegistry",
+    "ChickenParseResult",
+    "ChickenParser",
+    "ChickenKnowledgeProvider",
+    "build_chicken_attributes",
+    "extract_chicken_product_name",
+    "extract_chicken_country_text",
+    "extract_chicken_country_code",
+    "extract_chicken_weight",
+    "extract_chicken_storage_type",
+    "extract_chicken_certifications",
+    "extract_chicken_bone_status",
+    "extract_chicken_skin_status",
+    "DEFAULT_KNOWLEDGE_WEIGHTS",
+    "DEFAULT_FINAL_SCORE_WEIGHTS",
+    "safe_float",
+    "clamp_score",
+    "calculate_available_average",
+    "extract_registry_scores",
+    "calculate_chicken_knowledge_score",
+    "calculate_chicken_scores",
+    "calculate_chicken_final_score",
+    "apply_chicken_rules",
+    "deduplicate_strings",
+]
+
+============================================================
+FILE: app/services/food/knowledge/meat/chicken/attributes.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.chicken.parser_models import (
+    ChickenParseResult,
+)
+
+
+def extract_chicken_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_chicken_country_text(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 명시된 원산지 정보를 추출한다.
+
+    상품명에서 원산지를 추론하지 않는다.
+    """
+    raw_country = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+        or product.get("origin")
+    )
+
+    if raw_country is None:
+        return None
+
+    country_text = str(raw_country).strip()
+
+    return country_text or None
+
+
+def extract_chicken_country_code(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 명시된 국가 코드를 추출한다.
+    """
+    raw_country_code = (
+        product.get("country_code")
+        or product.get("origin_country_code")
+    )
+
+    if raw_country_code is None:
+        return None
+
+    country_code = str(
+        raw_country_code
+    ).strip().upper()
+
+    return country_code or None
+
+
+def extract_chicken_weight(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 Mapping에서 중량 또는 수량 값을 추출한다.
+
+    단위 변환이나 상품명 기반 추론은 수행하지 않는다.
+    """
+    for field_name in (
+        "weight",
+        "quantity",
+        "weight_text",
+        "net_weight",
+    ):
+        if field_name in product:
+            value = product.get(field_name)
+
+            if value is not None:
+                return value
+
+    return None
+
+
+def extract_chicken_storage_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 냉장·냉동 등 보관 상태를 추출한다.
+    """
+    raw_storage_type = (
+        product.get("storage_type")
+        or product.get("storage")
+        or product.get("temperature_type")
+        or product.get("freshness_type")
+    )
+
+    if raw_storage_type is None:
+        return None
+
+    storage_type = str(
+        raw_storage_type
+    ).strip()
+
+    return storage_type or None
+
+
+def extract_chicken_certifications(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    인증 및 표시 정보를 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("certifications")
+        or product.get("certification")
+        or product.get("labels")
+        or product.get("certificates")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        return [normalized] if normalized else []
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return _deduplicate_strings(
+            [
+                str(value).strip()
+                for value in raw_value
+                if str(value).strip()
+            ]
+        )
+
+    normalized = str(raw_value).strip()
+
+    return [normalized] if normalized else []
+
+
+def extract_chicken_bone_status(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 뼈 포함 여부를 추출한다.
+
+    반환값은 명시된 원문을 정리한 문자열이며,
+    상품명으로부터 boneless/bone-in을 추론하지 않는다.
+    """
+    raw_value = (
+        product.get("bone_status")
+        or product.get("bone_type")
+        or product.get("bone")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(raw_value).strip()
+
+    return normalized or None
+
+
+def extract_chicken_skin_status(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 껍질 포함 여부를 추출한다.
+    """
+    raw_value = (
+        product.get("skin_status")
+        or product.get("skin_type")
+        or product.get("skin")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(raw_value).strip()
+
+    return normalized or None
+
+
+def _deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        normalized = text.casefold()
+
+        if not text or normalized in seen:
+            continue
+
+        seen.add(normalized)
+        result.append(text)
+
+    return result
+
+
+def build_chicken_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: ChickenParseResult,
+) -> dict[str, Any]:
+    """
+    Chicken Parser의 표준화 결과와 Registry 정보를
+    FoodKnowledgeResult용 attributes로 변환한다.
+
+    이 함수는 값을 추출하고 정리할 뿐,
+    추천 점수나 비즈니스 규칙을 계산하지 않는다.
+    """
+    if not isinstance(product, Mapping):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        ChickenParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be ChickenParseResult"
+        )
+
+    attributes: dict[str, Any] = {
+        "product_name": (
+            extract_chicken_product_name(
+                product
+            )
+        ),
+        "country": (
+            extract_chicken_country_text(
+                product
+            )
+        ),
+        "country_code": (
+            extract_chicken_country_code(
+                product
+            )
+        ),
+        "weight": extract_chicken_weight(
+            product
+        ),
+
+============================================================
+FILE: app/services/food/knowledge/meat/chicken/provider.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.attributes import (
+    build_chicken_attributes,
+    extract_chicken_product_name,
+)
+from app.services.food.knowledge.meat.chicken.parser import (
+    ChickenParser,
+)
+from app.services.food.knowledge.meat.chicken.rules import (
+    apply_chicken_rules,
+)
+from app.services.food.knowledge.meat.chicken.scoring import (
+    calculate_chicken_final_score,
+    calculate_chicken_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class ChickenKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    닭고기 Knowledge Provider.
+
+    역할:
+    - ChickenParser 실행
+    - Chicken attributes 구성
+    - Chicken scoring 실행
+    - Chicken rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    """
+
+    category_id = "chicken"
+    category_name = "닭고기"
+
+    aliases = (
+        "닭고기",
+        "닭 고기",
+        "계육",
+        "chicken",
+        "토종닭",
+        "토종 닭",
+        "영계",
+        "오골계",
+        "육계",
+        "닭가슴살",
+        "닭 가슴살",
+        "닭안심",
+        "닭 안심",
+        "닭다리살",
+        "닭 다리살",
+        "닭날개",
+        "닭 날개",
+        "닭봉",
+        "닭 봉",
+        "닭윙",
+        "닭 윙",
+        "닭근위",
+        "닭 근위",
+        "닭똥집",
+        "닭 똥집",
+        "닭발",
+        "닭 발",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: ChickenParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else ChickenParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Chicken Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: (
+            FoodKnowledgeContext | None
+        ) = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Chicken 분석 파이프라인을 순서대로 실행한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_chicken_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_chicken_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_chicken_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = (
+            apply_chicken_rules(
+                attributes=attributes,
+                scores=scores,
+                parse_result=parse_result,
+            )
+        )
+
+        final_score = (
+            calculate_chicken_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=(
+                parse_result.confidence
+            ),
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "parent_category_id": "meat",
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": (
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+
+============================================================
+FILE: app/services/food/knowledge/meat/duck/__init__.py
+============================================================
+from __future__ import annotations
+
+from .breed_registry import (
+    DUCK_BREED_REGISTRY_ID,
+    DuckBreed,
+    DuckBreedMatch,
+    DuckBreedRegistry,
+)
+from .cut_registry import (
+    DUCK_CUT_REGISTRY_ID,
+    DuckCut,
+    DuckCutMatch,
+    DuckCutRegistry,
+)
+from .type_registry import (
+    DUCK_TYPE_REGISTRY_ID,
+    DuckType,
+    DuckTypeMatch,
+    DuckTypeRegistry,
+)
+
+__all__ = [
+    "DUCK_TYPE_REGISTRY_ID",
+    "DUCK_BREED_REGISTRY_ID",
+    "DUCK_CUT_REGISTRY_ID",
+    "DuckType",
+    "DuckTypeMatch",
+    "DuckTypeRegistry",
+    "DuckBreed",
+    "DuckBreedMatch",
+    "DuckBreedRegistry",
+    "DuckCut",
+    "DuckCutMatch",
+    "DuckCutRegistry",
+]
+# BEGIN DUCK PHASE 4 EXPORTS
+from app.services.food.knowledge.meat.duck.breed_registry import (
+    DuckBreed,
+    DuckBreedMatch,
+    DuckBreedRegistry,
+)
+from app.services.food.knowledge.meat.duck.cut_registry import (
+    DuckCut,
+    DuckCutMatch,
+    DuckCutRegistry,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+from app.services.food.knowledge.meat.duck.type_registry import (
+    DuckType,
+    DuckTypeMatch,
+    DuckTypeRegistry,
+)
+
+_PHASE4_EXPORTS = [
+    "DuckType",
+    "DuckTypeMatch",
+    "DuckTypeRegistry",
+    "DuckBreed",
+    "DuckBreedMatch",
+    "DuckBreedRegistry",
+    "DuckCut",
+    "DuckCutMatch",
+    "DuckCutRegistry",
+    "DuckParseResult",
+    "DuckParser",
+]
+
+try:
+    __all__
+except NameError:
+    __all__ = []
+
+for _name in _PHASE4_EXPORTS:
+    if _name not in __all__:
+        __all__.append(_name)
+
+del _name
+# END DUCK PHASE 4 EXPORTS
+# BEGIN DUCK PHASE 5 EXPORTS
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+    extract_duck_bone_status,
+    extract_duck_certifications,
+    extract_duck_country_code,
+    extract_duck_country_text,
+    extract_duck_product_name,
+    extract_duck_skin_status,
+    extract_duck_storage_type,
+    extract_duck_weight,
+)
+
+_PHASE5_EXPORTS = [
+    "build_duck_attributes",
+    "extract_duck_product_name",
+    "extract_duck_country_text",
+    "extract_duck_country_code",
+    "extract_duck_weight",
+    "extract_duck_storage_type",
+    "extract_duck_certifications",
+    "extract_duck_bone_status",
+    "extract_duck_skin_status",
+]
+
+for _name in _PHASE5_EXPORTS:
+    if _name not in __all__:
+        __all__.append(_name)
+
+del _name
+# END DUCK PHASE 5 EXPORTS
+
+# BEGIN DUCK PHASE 9 EXPORTS
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.rules import (
+    apply_duck_rules,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_duck_final_score,
+    calculate_duck_knowledge_score,
+    calculate_duck_scores,
+)
+
+_PHASE9_EXPORTS = [
+    "calculate_duck_scores",
+    "calculate_duck_knowledge_score",
+    "calculate_duck_final_score",
+    "apply_duck_rules",
+    "deduplicate_strings",
+    "DuckKnowledgeProvider",
+]
+
+for _name in _PHASE9_EXPORTS:
+    if _name not in __all__:
+        __all__.append(_name)
+
+del _name
+# END DUCK PHASE 9 EXPORTS
+
+============================================================
+FILE: app/services/food/knowledge/meat/duck/attributes.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+
+
+def extract_duck_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_duck_country_text(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 명시된 원산지 정보를 추출한다.
+
+    상품명에서 원산지를 추론하지 않는다.
+    """
+    raw_country = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+        or product.get("origin")
+    )
+
+    if raw_country is None:
+        return None
+
+    country_text = str(raw_country).strip()
+
+    return country_text or None
+
+
+def extract_duck_country_code(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 명시된 국가 코드를 추출한다.
+    """
+    raw_country_code = (
+        product.get("country_code")
+        or product.get("origin_country_code")
+    )
+
+    if raw_country_code is None:
+        return None
+
+    country_code = str(
+        raw_country_code
+    ).strip().upper()
+
+    return country_code or None
+
+
+def extract_duck_weight(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 Mapping에서 중량 또는 수량 값을 추출한다.
+
+    단위 변환이나 상품명 기반 추론은 수행하지 않는다.
+    """
+    for field_name in (
+        "weight",
+        "quantity",
+        "weight_text",
+        "net_weight",
+    ):
+        if field_name in product:
+            value = product.get(field_name)
+
+            if value is not None:
+                return value
+
+    return None
+
+
+def extract_duck_storage_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 냉장·냉동 등 보관 상태를 추출한다.
+    """
+    raw_storage_type = (
+        product.get("storage_type")
+        or product.get("storage")
+        or product.get("temperature_type")
+        or product.get("freshness_type")
+    )
+
+    if raw_storage_type is None:
+        return None
+
+    storage_type = str(
+        raw_storage_type
+    ).strip()
+
+    return storage_type or None
+
+
+def extract_duck_certifications(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    인증 및 표시 정보를 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("certifications")
+        or product.get("certification")
+        or product.get("labels")
+        or product.get("certificates")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        return [normalized] if normalized else []
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return _deduplicate_strings(
+            [
+                str(value).strip()
+                for value in raw_value
+                if str(value).strip()
+            ]
+        )
+
+    normalized = str(raw_value).strip()
+
+    return [normalized] if normalized else []
+
+
+def extract_duck_bone_status(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 뼈 포함 여부를 추출한다.
+
+    반환값은 명시된 원문을 정리한 문자열이며,
+    상품명으로부터 boneless/bone-in을 추론하지 않는다.
+    """
+    raw_value = (
+        product.get("bone_status")
+        or product.get("bone_type")
+        or product.get("bone")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(raw_value).strip()
+
+    return normalized or None
+
+
+def extract_duck_skin_status(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 껍질 포함 여부를 추출한다.
+    """
+    raw_value = (
+        product.get("skin_status")
+        or product.get("skin_type")
+        or product.get("skin")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(raw_value).strip()
+
+    return normalized or None
+
+
+def _deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        normalized = text.casefold()
+
+        if not text or normalized in seen:
+            continue
+
+        seen.add(normalized)
+        result.append(text)
+
+    return result
+
+
+def build_duck_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: DuckParseResult,
+) -> dict[str, Any]:
+    """
+    Duck Parser의 표준화 결과와 Registry 정보를
+    FoodKnowledgeResult용 attributes로 변환한다.
+
+    이 함수는 값을 추출하고 정리할 뿐,
+    추천 점수나 비즈니스 규칙을 계산하지 않는다.
+    """
+    if not isinstance(product, Mapping):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        DuckParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be DuckParseResult"
+        )
+
+    attributes: dict[str, Any] = {
+        "product_name": (
+            extract_duck_product_name(
+                product
+            )
+        ),
+        "country": (
+            extract_duck_country_text(
+                product
+            )
+        ),
+        "country_code": (
+            extract_duck_country_code(
+                product
+            )
+        ),
+        "weight": extract_duck_weight(
+            product
+        ),
+
+============================================================
+FILE: app/services/food/knowledge/meat/duck/provider.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+    extract_duck_product_name,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.rules import (
+    apply_duck_rules,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_duck_final_score,
+    calculate_duck_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class DuckKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    오리고기 Knowledge Provider.
+
+    역할:
+    - DuckParser 실행
+    - Duck attributes 구성
+    - Duck scoring 실행
+    - Duck rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    """
+
+    category_id = "duck"
+    category_name = "오리고기"
+
+    aliases = (
+        "오리고기",
+        "오리 고기",
+        "오리육",
+        "duck",
+        "훈제오리",
+        "훈제 오리",
+        "백숙오리",
+        "백숙 오리",
+        "생오리",
+        "생 오리",
+        "통오리",
+        "통 오리",
+        "오리가슴살",
+        "오리 가슴살",
+        "오리안심",
+        "오리 안심",
+        "오리다리",
+        "오리 다리",
+        "오리다리살",
+        "오리 다리살",
+        "오리날개",
+        "오리 날개",
+        "오리목",
+        "오리 목",
+        "오리로스",
+        "오리 로스",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: DuckParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else DuckParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Duck Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: (
+            FoodKnowledgeContext | None
+        ) = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Duck 분석 파이프라인을 순서대로 실행한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_duck_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_duck_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_duck_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = (
+            apply_duck_rules(
+                attributes=attributes,
+                scores=scores,
+                parse_result=parse_result,
+            )
+        )
+
+        final_score = (
+            calculate_duck_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=(
+                parse_result.confidence
+            ),
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "parent_category_id": "meat",
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": (
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+            },
+
+============================================================
+FILE: app/services/food/knowledge/meat/lamb/__init__.py
+============================================================
+from app.services.food.knowledge.meat.lamb.age_registry import (
+    LambAge,
+    LambAgeMatch,
+    LambAgeRegistry,
+)
+from app.services.food.knowledge.meat.lamb.attributes import (
+    build_lamb_attributes,
+    extract_lamb_certifications,
+    extract_lamb_country_code,
+    extract_lamb_country_text,
+    extract_lamb_product_name,
+    extract_lamb_storage_type,
+    extract_lamb_weight,
+)
+from app.services.food.knowledge.meat.lamb.breed_registry import (
+    LambBreed,
+    LambBreedMatch,
+    LambBreedRegistry,
+)
+from app.services.food.knowledge.meat.lamb.cut_registry import (
+    LambCut,
+    LambCutMatch,
+    LambCutRegistry,
+)
+from app.services.food.knowledge.meat.lamb.parser import (
+    LambParser,
+)
+from app.services.food.knowledge.meat.lamb.parser_models import (
+    LambParseResult,
+)
+from app.services.food.knowledge.meat.lamb.provider import (
+    LambKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.lamb.rules import (
+    apply_lamb_rules,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.lamb.scoring import (
+    DEFAULT_FINAL_SCORE_WEIGHTS,
+    DEFAULT_KNOWLEDGE_WEIGHTS,
+    calculate_available_average,
+    calculate_lamb_final_score,
+    calculate_lamb_knowledge_score,
+    calculate_lamb_scores,
+    clamp_score,
+    extract_registry_scores,
+    safe_float,
+)
+
+
+__all__ = [
+    "LambAge",
+    "LambAgeMatch",
+    "LambAgeRegistry",
+    "LambBreed",
+    "LambBreedMatch",
+    "LambBreedRegistry",
+    "LambCut",
+    "LambCutMatch",
+    "LambCutRegistry",
+    "LambParseResult",
+    "LambParser",
+    "LambKnowledgeProvider",
+    "build_lamb_attributes",
+    "extract_lamb_product_name",
+    "extract_lamb_country_text",
+    "extract_lamb_country_code",
+    "extract_lamb_weight",
+    "extract_lamb_storage_type",
+    "extract_lamb_certifications",
+    "DEFAULT_KNOWLEDGE_WEIGHTS",
+    "DEFAULT_FINAL_SCORE_WEIGHTS",
+    "safe_float",
+    "clamp_score",
+    "calculate_available_average",
+    "extract_registry_scores",
+    "calculate_lamb_knowledge_score",
+    "calculate_lamb_scores",
+    "calculate_lamb_final_score",
+    "apply_lamb_rules",
+    "deduplicate_strings",
+]
+
+============================================================
+FILE: app/services/food/knowledge/meat/lamb/attributes.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.lamb.parser_models import (
+    LambParseResult,
+)
+
+
+def extract_lamb_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_lamb_country_text(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 원산지 정보를 추출한다.
+
+    원산지를 추론하지 않고 명시된 값만 사용한다.
+    """
+    raw_country = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+        or product.get("origin")
+    )
+
+    if raw_country is None:
+        return None
+
+    country_text = str(
+        raw_country
+    ).strip()
+
+    return country_text or None
+
+
+def extract_lamb_country_code(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 명시된 국가 코드를 추출한다.
+    """
+    raw_country_code = (
+        product.get("country_code")
+        or product.get("origin_country_code")
+    )
+
+    if raw_country_code is None:
+        return None
+
+    country_code = str(
+        raw_country_code
+    ).strip().upper()
+
+    return country_code or None
+
+
+def extract_lamb_weight(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 Mapping에서 중량 또는 수량 정보를 추출한다.
+    """
+    return (
+        product.get("weight")
+        or product.get("quantity")
+        or product.get("weight_text")
+        or product.get("net_weight")
+    )
+
+
+def extract_lamb_storage_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    냉장·냉동 등 보관 상태를 추출한다.
+
+    구조화된 상품 필드에 명시된 값만 사용한다.
+    """
+    raw_storage_type = (
+        product.get("storage_type")
+        or product.get("storage")
+        or product.get("temperature_type")
+        or product.get("freshness_type")
+    )
+
+    if raw_storage_type is None:
+        return None
+
+    storage_type = str(
+        raw_storage_type
+    ).strip()
+
+    return storage_type or None
+
+
+def extract_lamb_certifications(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    인증 및 표시 정보를 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("certifications")
+        or product.get("certification")
+        or product.get("labels")
+        or product.get("certificates")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        return (
+            [normalized]
+            if normalized
+            else []
+        )
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return [
+            str(value).strip()
+            for value in raw_value
+            if str(value).strip()
+        ]
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return (
+        [normalized]
+        if normalized
+        else []
+    )
+
+
+def build_lamb_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: LambParseResult,
+) -> dict[str, Any]:
+    """
+    Parser의 표준화 결과와 Registry 정보를
+    FoodKnowledgeResult용 attributes로 변환한다.
+
+    이 함수는 값을 변환·정리할 뿐,
+    추천 점수나 비즈니스 규칙을 계산하지 않는다.
+    """
+    if not isinstance(
+        product,
+        Mapping,
+    ):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        LambParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be LambParseResult"
+        )
+
+    attributes: dict[str, Any] = {
+        "product_name": extract_lamb_product_name(
+            product
+        ),
+        "country": extract_lamb_country_text(
+            product
+        ),
+        "country_code": extract_lamb_country_code(
+            product
+        ),
+        "weight": extract_lamb_weight(
+            product
+        ),
+        "storage_type": extract_lamb_storage_type(
+            product
+        ),
+        "certifications": (
+            extract_lamb_certifications(
+                product
+            )
+        ),
+        "age": parse_result.age,
+        "breed": parse_result.breed,
+        "cut": parse_result.cut,
+        "confidence": parse_result.confidence,
+        "age_confidence": (
+            parse_result.age_confidence
+        ),
+        "breed_confidence": (
+            parse_result.breed_confidence
+        ),
+        "cut_confidence": (
+            parse_result.cut_confidence
+        ),
+        "detected_keywords": list(
+            parse_result.detected_keywords
+        ),
+        "warnings": list(
+            parse_result.warnings
+        ),
+        "is_complete": parse_result.is_complete,
+    }
+
+    if parse_result.age_match is not None:
+        age = parse_result.age_match.age
+
+        attributes.update(
+            {
+                "age_registry_key": (
+                    age.registry_key
+                ),
+                "age_category": (
+                    age.age_category
+                ),
+                "age_score": age.score,
+                "age_premium": age.premium,
+                "age_min_months": (
+                    age.min_age_months
+                ),
+                "age_max_months": (
+                    age.max_age_months
+                ),
+                "age_permanent_incisor_min": (
+                    age.permanent_incisor_min
+                ),
+                "age_permanent_incisor_max": (
+                    age.permanent_incisor_max
+                ),
+                "age_flavor_intensity": (
+                    age.flavor_intensity
+                ),
+                "age_tenderness_level": (
+                    age.tenderness_level
+                ),
+                "age_policy_region": (
+
+============================================================
+FILE: app/services/food/knowledge/meat/lamb/provider.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.lamb.attributes import (
+    build_lamb_attributes,
+    extract_lamb_product_name,
+)
+from app.services.food.knowledge.meat.lamb.parser import (
+    LambParser,
+)
+from app.services.food.knowledge.meat.lamb.rules import (
+    apply_lamb_rules,
+)
+from app.services.food.knowledge.meat.lamb.scoring import (
+    calculate_lamb_final_score,
+    calculate_lamb_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class LambKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    양고기 Knowledge Provider.
+
+    역할:
+    - LambParser 실행
+    - Lamb attributes 구성
+    - Lamb scoring 실행
+    - Lamb rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    """
+
+    category_id = "lamb"
+    category_name = "양고기"
+
+    aliases = (
+        "양고기",
+        "양 고기",
+        "램",
+        "램고기",
+        "램 고기",
+        "어린양",
+        "어린 양",
+        "호깃",
+        "호겟",
+        "머튼",
+        "lamb",
+        "hogget",
+        "mutton",
+        "양갈비",
+        "양 갈비",
+        "램랙",
+        "램 랙",
+        "프렌치랙",
+        "프렌치 랙",
+        "양등심",
+        "양 등심",
+        "램로인",
+        "램 로인",
+        "램숄더",
+        "램 숄더",
+        "램생크",
+        "램 생크",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: LambParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+
+        테스트에서는 별도 Registry를 사용하는
+        LambParser를 전달할 수 있다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else LambParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Lamb Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            if not normalized_name:
+                return False
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        """
+        양고기 상품을 분석하고 표준 결과를 반환한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_lamb_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_lamb_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_lamb_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = apply_lamb_rules(
+            attributes=attributes,
+            scores=scores,
+            parse_result=parse_result,
+        )
+
+        final_score = (
+            calculate_lamb_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=parse_result.confidence,
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "parent_category_id": "meat",
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": (
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+            },
+            raw_product=product_data,
+        )
+
+============================================================
+FILE: app/services/food/knowledge/models.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Mapping
+
+
+@dataclass(frozen=True)
+class FoodKnowledgeContext:
+    """
+    Food Knowledge 분석 실행 문맥.
+    """
+
+    query: str | None = None
+    priority: str | None = None
+    user_mode: str | None = None
+    season: str | None = None
+    region: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class FoodAttribute:
+    key: str
+    value: Any
+    label: str | None = None
+    confidence: float = 1.0
+    source: str | None = None
+
+
+@dataclass
+class FoodScore:
+    key: str
+    score: float
+    label: str | None = None
+    reason: str | None = None
+    weight: float = 1.0
+
+
+@dataclass
+class FoodRuleResult:
+    rule_id: str
+    matched: bool
+    message: str | None = None
+    severity: str = "info"
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class FoodKnowledgeResult:
+    category_id: str
+    category_name: str
+    product_name: str | None = None
+
+    attributes: Dict[str, Any] = field(default_factory=dict)
+    attribute_details: List[FoodAttribute] = field(default_factory=list)
+
+    scores: Dict[str, float] = field(default_factory=dict)
+    score_details: List[FoodScore] = field(default_factory=list)
+
+    rules: List[FoodRuleResult] = field(default_factory=list)
+    reasons: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+
+    final_score: float | None = None
+    confidence: float = 1.0
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    raw_product: Dict[str, Any] | None = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+============================================================
+FILE: app/services/food/knowledge/registry.py
+============================================================
+from __future__ import annotations
+
+from collections import OrderedDict
+from typing import Iterable, List
+
+from app.services.food.knowledge.base import FoodKnowledgeProvider
+from app.services.food.knowledge.fruit.provider import (
+    FruitKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.beef.provider import (
+    BeefKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.lamb.provider import (
+    LambKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+
+class FoodKnowledgeRegistry:
+    """
+    Food Knowledge Provider Registry.
+
+    Provider 등록 순서가 상품명 자동 판별 우선순위가 된다.
+    """
+
+    def __init__(self) -> None:
+        self._providers: OrderedDict[
+            str,
+            FoodKnowledgeProvider,
+        ] = OrderedDict()
+
+    def register(
+        self,
+        provider: FoodKnowledgeProvider,
+        *,
+        replace: bool = False,
+    ) -> None:
+        category_id = self._normalize_category_id(
+            provider.category_id
+        )
+
+        if (
+            category_id in self._providers
+            and not replace
+        ):
+            raise ValueError(
+                f"이미 등록된 Food Provider입니다: {category_id}"
+            )
+
+        self._providers[category_id] = provider
+
+    def unregister(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.pop(
+            self._normalize_category_id(category_id),
+            None,
+        )
+
+    def get(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.get(
+            self._normalize_category_id(category_id)
+        )
+
+    def require(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider:
+        provider = self.get(category_id)
+
+        if provider is None:
+            raise KeyError(
+                f"등록되지 않은 Food Provider입니다: {category_id}"
+            )
+
+        return provider
+
+    def resolve(
+        self,
+        *,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> FoodKnowledgeProvider | None:
+        if category_id:
+            direct_provider = self.get(category_id)
+
+            if direct_provider is not None:
+                return direct_provider
+
+        for provider in self._providers.values():
+            if provider.supports(
+                category_id=category_id,
+                product_name=product_name,
+            ):
+                return provider
+
+        return None
+
+    def list_providers(
+        self,
+    ) -> List[FoodKnowledgeProvider]:
+        return list(self._providers.values())
+
+    def list_category_ids(self) -> List[str]:
+        return list(self._providers.keys())
+
+    def __contains__(
+        self,
+        category_id: object,
+    ) -> bool:
+        if not isinstance(category_id, str):
+            return False
+
+        return (
+            self._normalize_category_id(category_id)
+            in self._providers
+        )
+
+    def __iter__(
+        self,
+    ) -> Iterable[FoodKnowledgeProvider]:
+        return iter(self._providers.values())
+
+    @staticmethod
+    def _normalize_category_id(
+        category_id: str,
+    ) -> str:
+        normalized = str(category_id).strip().lower()
+
+        if not normalized:
+            raise ValueError(
+                "category_id가 비어 있습니다."
+            )
+
+        return normalized
+
+
+FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
+
+FOOD_KNOWLEDGE_REGISTRY.register(
+    FruitKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    BeefKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    LambKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    ChickenKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    DuckKnowledgeProvider()
+)
+
+
+def register_food_provider(
+    provider: FoodKnowledgeProvider,
+    *,
+    replace: bool = False,
+) -> None:
+    FOOD_KNOWLEDGE_REGISTRY.register(
+        provider,
+        replace=replace,
+    )
+
+
+def get_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.get(
+        category_id
+    )
+
+
+def require_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider:
+    return FOOD_KNOWLEDGE_REGISTRY.require(
+        category_id
+    )
+
+
+def resolve_food_provider(
+    *,
+    category_id: str | None = None,
+    product_name: str | None = None,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.resolve(
+        category_id=category_id,
+        product_name=product_name,
+    )
+
+
+def list_food_providers() -> List[FoodKnowledgeProvider]:
+    return FOOD_KNOWLEDGE_REGISTRY.list_providers()
+
+============================================================
+FILE: app/services/food/resolver.py
+============================================================
+from __future__ import annotations
+
+from typing import Any, Mapping
+
+from app.services.food.category_registry import (
+    FoodCategoryConfig,
+    resolve_food_category as resolve_category_config,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+from app.services.food.knowledge.registry import (
+    get_food_provider,
+    resolve_food_provider,
+)
+
+
+class FoodKnowledgeResolutionError(RuntimeError):
+    pass
+
+
+def resolve_product_category(
+    product: Mapping[str, Any],
+    *,
+    category_id: str | None = None,
+) -> FoodCategoryConfig | None:
+    product_name = _extract_product_name(
+        product
+    )
+
+    explicit_category_id = (
+        category_id
+        or _extract_category_id(product)
+    )
+
+    return resolve_category_config(
+        category_id=explicit_category_id,
+        product_name=product_name,
+    )
+
+
+def resolve_knowledge_provider(
+    product: Mapping[str, Any],
+    *,
+    category_id: str | None = None,
+):
+    product_name = _extract_product_name(
+        product
+    )
+
+    category_config = resolve_product_category(
+        product,
+        category_id=category_id,
+    )
+
+    if (
+        category_config is not None
+        and category_config.provider_id
+    ):
+        provider = get_food_provider(
+            category_config.provider_id
+        )
+
+        if provider is not None:
+            return provider
+
+    resolved_category_id = (
+        category_config.category_id
+        if category_config is not None
+        else category_id
+    )
+
+    return resolve_food_provider(
+        category_id=resolved_category_id,
+        product_name=product_name,
+    )
+
+
+def analyze_food_product(
+    product: Mapping[str, Any],
+    *,
+    category_id: str | None = None,
+    context: FoodKnowledgeContext | None = None,
+    strict: bool = False,
+) -> FoodKnowledgeResult | None:
+    provider = resolve_knowledge_provider(
+        product,
+        category_id=category_id,
+    )
+
+    if provider is None:
+        if strict:
+            raise FoodKnowledgeResolutionError(
+                "상품을 처리할 Food Knowledge Provider를 "
+                "찾지 못했습니다. "
+                f"category_id={category_id!r}, "
+                f"product_name={_extract_product_name(product)!r}"
+            )
+
+        return None
+
+    return provider.analyze(
+        product,
+        context=context,
+    )
+
+
+def resolve_food_knowledge(
+    product: Mapping[str, Any],
+    *,
+    category_id: str | None = None,
+    context: FoodKnowledgeContext | None = None,
+    strict: bool = False,
+) -> FoodKnowledgeResult | None:
+    """
+    Food Knowledge Engine 대표 진입점.
+    """
+
+    return analyze_food_product(
+        product,
+        category_id=category_id,
+        context=context,
+        strict=strict,
+    )
+
+
+def _extract_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or ""
+    ).strip()
+
+
+def _extract_category_id(
+    product: Mapping[str, Any],
+) -> str | None:
+    value = (
+        product.get("food_category_id")
+        or product.get("category_id")
+        or product.get("category")
+        or product.get("category_name")
+    )
+
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+
+    return normalized or None

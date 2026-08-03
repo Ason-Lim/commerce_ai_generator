@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IERA Conversation Turn",
+  "type": "object",
+  "required": [
+    "turn_id",
+    "speaker",
+    "source_fidelity"
+  ],
+  "properties": {
+    "turn_id": {
+      "type": "string"
+    },
+    "speaker": {
+      "enum": [
+        "user",
+        "assistant",
+        "system",
+        "tool",
+        "unknown"
+      ]
+    },
+    "timestamp": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "content_summary": {
+      "type": "string"
+    },
+    "source_fidelity": {
+      "enum": [
+        "direct_context",
+        "verbatim_export",
+        "summary_derived",
+        "editorial_reconstruction"
+      ]
+    },
+    "phase": {
+      "type": "string"
+    }
+  }
+}

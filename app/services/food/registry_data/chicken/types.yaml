@@ -1,0 +1,59 @@
+registry_id: chicken.types
+version: "1.0.0"
+metadata:
+  category_id: chicken
+  parent_category_id: meat
+  description: 닭고기 상품 유형 Registry
+  language: ko
+  status: active
+data:
+  broiler:
+    canonical_name: 육계
+    aliases: [broiler, 일반육계, 일반 육계]
+    type_category: broiler
+    score: 78
+    premium: false
+    flavor_intensity: mild
+    tenderness_level: high
+    typical_uses: [roasting, frying, grilling]
+    description: 일반적인 육용 닭으로 유통되는 닭고기 유형
+  native_chicken:
+    canonical_name: 토종닭
+    aliases: [토종 닭, native chicken, korean native chicken]
+    type_category: native_chicken
+    score: 88
+    premium: true
+    flavor_intensity: rich
+    tenderness_level: medium
+    typical_uses: [soup, braising, boiling]
+    description: 토종닭으로 명시되어 유통되는 닭고기 유형
+  young_chicken:
+    canonical_name: 영계
+    aliases: [어린닭, 어린 닭, young chicken]
+    type_category: young_chicken
+    score: 82
+    premium: false
+    flavor_intensity: mild
+    tenderness_level: high
+    typical_uses: [soup, roasting, frying]
+    description: 비교적 어린 닭으로 표시된 상품 유형
+  silkie:
+    canonical_name: 오골계
+    aliases: [오골 닭, silkie, silkie chicken]
+    type_category: silkie
+    score: 86
+    premium: true
+    flavor_intensity: rich
+    tenderness_level: medium
+    typical_uses: [soup, boiling, braising]
+    description: 오골계로 명시되어 유통되는 닭고기 유형
+  spent_hen:
+    canonical_name: 노계
+    aliases: [늙은닭, 늙은 닭, spent hen]
+    type_category: spent_hen
+    score: 65
+    premium: false
+    flavor_intensity: strong
+    tenderness_level: low
+    typical_uses: [soup, stock, slow_cooking]
+    description: 성장한 산란계 또는 노계로 표시된 상품 유형

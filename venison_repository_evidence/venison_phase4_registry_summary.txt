@@ -1,0 +1,21 @@
+# Venison Phase 4 Registry Evidence
+
+## Registry IDs
+- venison.types
+- venison.breeds
+- venison.cuts
+
+## Entry Counts
+- types: 5
+- breeds: 5
+- cuts: 10
+
+## Representative Match
+- type: young_deer / 어린사슴
+- breed: red_deer / 레드디어
+- cut: tenderloin / 사슴안심
+
+## Scope
+?? app/services/food/knowledge/meat/venison/
+?? app/services/food/registry_data/venison/
+?? tests/services/food/knowledge/meat/venison/

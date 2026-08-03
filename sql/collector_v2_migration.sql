@@ -1,0 +1,20 @@
+-- Collector V2 migration
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS raw_link TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS redirect_url TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS search_url TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS brand TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS maker TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category1 TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category2 TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category3 TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category4 TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS mall_product_id TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_identity_key TEXT;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS weight_g INTEGER;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_per_100g NUMERIC;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS member_price INTEGER;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS benefit_price INTEGER;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS max_benefit_price INTEGER;
+ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS raw_payload JSONB;
+CREATE INDEX IF NOT EXISTS idx_online_food_price_snapshot_identity ON online_food_price_snapshot(product_identity_key);

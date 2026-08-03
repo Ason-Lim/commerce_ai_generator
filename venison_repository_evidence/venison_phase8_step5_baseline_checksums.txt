@@ -1,0 +1,4 @@
+dbd8e3dc0c5fa558af7f8763e01475f9aee80b27a909cd5f86c72dac87cdfcd4  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/duck/provider.py
+46effb751b51033e500fc6042f5505cd2819947566b0cd25e3cde48179d3dce8  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/__init__.py
+b7c6c45f5a90c7904216bb34dcf9f5eb02f5440665f3578eec02cf68ac7830fb  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/rules.py
+0b184a48e4871f259a7c7aa406b1d3e59735026b85b35f4dbc721363b25bdd0a  /Users/mom/commerce_ai_generator/app/services/food/knowledge/meat/venison/scoring.py

@@ -1,0 +1,217 @@
+registry_id: venison.cuts
+version: 1.0.0
+metadata:
+  category_id: venison
+  parent_category_id: meat
+  description: Venison cut registry
+  language: ko
+  status: active
+data:
+  tenderloin:
+    canonical_name: 사슴안심
+    aliases:
+    - 사슴 안심
+    - 베니슨 안심
+    - venison tenderloin
+    - deer tenderloin
+    score: 96
+    premium: true
+    english_name: Tenderloin
+    cut_group: loin
+    tenderness_score: 96
+    flavor_score: 86
+    fat_score: 30
+    yield_score: 55
+    cooking_methods:
+    - 스테이크
+    - 팬시어링
+    - 저온조리
+    description: 사슴고기에서 가장 부드러운 프리미엄 부위 중 하나입니다.
+  loin:
+    canonical_name: 사슴등심
+    aliases:
+    - 사슴 등심
+    - 베니슨 등심
+    - venison loin
+    - deer loin
+    - backstrap
+    score: 94
+    premium: true
+    english_name: Loin
+    cut_group: loin
+    tenderness_score: 92
+    flavor_score: 90
+    fat_score: 35
+    yield_score: 72
+    cooking_methods:
+    - 스테이크
+    - 구이
+    - 로스트
+    description: 부드러움과 풍미의 균형이 좋은 대표적인 사슴고기 부위입니다.
+  rack:
+    canonical_name: 사슴갈비
+    aliases:
+    - 사슴 갈비
+    - 베니슨 랙
+    - 베니슨랙
+    - venison rack
+    - deer rack
+    score: 93
+    premium: true
+    english_name: Rack
+    cut_group: rib
+    tenderness_score: 90
+    flavor_score: 92
+    fat_score: 45
+    yield_score: 60
+    cooking_methods:
+    - 로스트
+    - 오븐구이
+    - 그릴
+    description: 뼈를 포함한 프리미엄 갈비 부위로 로스트와 구이에 적합합니다.
+  leg:
+    canonical_name: 사슴뒷다리
+    aliases:
+    - 사슴 뒷다리
+    - 사슴 다리
+    - 베니슨 레그
+    - venison leg
+    - deer leg
+    - haunch
+    score: 88
+    premium: false
+    english_name: Leg
+    cut_group: leg
+    tenderness_score: 78
+    flavor_score: 90
+    fat_score: 28
+    yield_score: 90
+    cooking_methods:
+    - 로스트
+    - 불고기
+    - 육포
+    description: 수율이 높고 활용도가 넓은 사슴 뒷다리 부위입니다.
+  shoulder:
+    canonical_name: 사슴앞다리
+    aliases:
+    - 사슴 앞다리
+    - 사슴 어깨살
+    - 베니슨 숄더
+    - venison shoulder
+    - deer shoulder
+    score: 84
+    premium: false
+    english_name: Shoulder
+    cut_group: shoulder
+    tenderness_score: 70
+    flavor_score: 92
+    fat_score: 38
+    yield_score: 85
+    cooking_methods:
+    - 스튜
+    - 찜
+    - 저온조리
+    description: 결합조직이 있어 장시간 조리에 적합한 풍미 높은 부위입니다.
+  shank:
+    canonical_name: 사슴사태
+    aliases:
+    - 사슴 사태
+    - 베니슨 생크
+    - venison shank
+    - deer shank
+    score: 82
+    premium: false
+    english_name: Shank
+    cut_group: leg
+    tenderness_score: 62
+    flavor_score: 94
+    fat_score: 25
+    yield_score: 65
+    cooking_methods:
+    - 브레이징
+    - 스튜
+    - 찜
+    description: 콜라겐이 많아 장시간 습열 조리에 적합한 부위입니다.
+  neck:
+    canonical_name: 사슴목살
+    aliases:
+    - 사슴 목살
+    - 베니슨 넥
+    - venison neck
+    - deer neck
+    score: 80
+    premium: false
+    english_name: Neck
+    cut_group: neck
+    tenderness_score: 65
+    flavor_score: 93
+    fat_score: 32
+    yield_score: 68
+    cooking_methods:
+    - 스튜
+    - 탕
+    - 다짐육
+    description: 풍미가 진하며 스튜와 다짐육에 활용하기 좋은 부위입니다.
+  rib:
+    canonical_name: 사슴갈비살
+    aliases:
+    - 사슴 갈비살
+    - 베니슨 립
+    - venison rib
+    - deer rib
+    score: 86
+    premium: false
+    english_name: Rib
+    cut_group: rib
+    tenderness_score: 80
+    flavor_score: 92
+    fat_score: 48
+    yield_score: 70
+    cooking_methods:
+    - 구이
+    - 찜
+    - 바비큐
+    description: 뼈 주변의 진한 풍미를 기대할 수 있는 갈비 부위입니다.
+  trim:
+    canonical_name: 사슴정육
+    aliases:
+    - 사슴 정육
+    - 사슴살
+    - 사슴 고기
+    - 사슴고기
+    - 녹육
+    - venison meat
+    - deer meat
+    score: 78
+    premium: false
+    english_name: Venison Trim
+    cut_group: trim
+    tenderness_score: 72
+    flavor_score: 85
+    fat_score: 25
+    yield_score: 88
+    cooking_methods:
+    - 불고기
+    - 다짐육
+    - 전골
+    description: 여러 조리에 활용할 수 있는 일반 사슴 정육입니다.
+  whole:
+    canonical_name: 통사슴
+    aliases:
+    - 통 사슴
+    - 사슴 한 마리
+    - whole deer
+    - whole venison
+    score: 75
+    premium: false
+    english_name: Whole Deer
+    cut_group: whole
+    tenderness_score: 70
+    flavor_score: 86
+    fat_score: 30
+    yield_score: 95
+    cooking_methods:
+    - 정육
+    - 분할
+    - 로스트
+    description: 부위별 분할 전의 전체 도체 또는 통사슴 상품입니다.

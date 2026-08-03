@@ -1,0 +1,4 @@
+{"question_id": "Q-001", "question": "Wisdom은 어떻게 생성되는가?", "status": "explored", "source_fidelity": "summary_derived"}
+{"question_id": "Q-002", "question": "Institution는 왜 존재하는가?", "status": "explored", "source_fidelity": "summary_derived"}
+{"question_id": "Q-003", "question": "AI는 Living Institution에서 어떤 역할을 맡아야 하는가?", "status": "explored", "source_fidelity": "summary_derived"}
+{"question_id": "Q-004", "question": "논의 과정과 공식 문서의 provenance를 어떻게 보존할 것인가?", "status": "active", "source_fidelity": "direct_context"}

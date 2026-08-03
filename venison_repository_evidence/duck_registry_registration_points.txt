@@ -1,0 +1,41 @@
+# Food Registry Data References
+
+app/services/food/category_registry.py:57:        parent_category_id="meat",
+app/services/food/registry_data/lamb/cuts.yaml:6:  parent_category_id: meat
+app/services/food/registry_data/lamb/ages.yaml:6:  parent_category_id: meat
+app/services/food/registry_data/lamb/breeds.yaml:6:  parent_category_id: meat
+app/services/food/registry_data/duck/cuts.yaml:4:  category_id: duck
+app/services/food/registry_data/duck/cuts.yaml:5:  parent_category_id: meat
+app/services/food/registry_data/duck/cuts.yaml:10:  whole_duck:
+app/services/food/registry_data/duck/types.yaml:4:  category_id: duck
+app/services/food/registry_data/duck/types.yaml:5:  parent_category_id: meat
+app/services/food/registry_data/duck/types.yaml:10:  domestic_duck:
+app/services/food/registry_data/duck/types.yaml:32:  native_duck:
+app/services/food/registry_data/duck/types.yaml:43:  smoked_duck:
+app/services/food/registry_data/duck/types.yaml:54:  roast_duck:
+app/services/food/registry_data/duck/breeds.yaml:4:  category_id: duck
+app/services/food/registry_data/duck/breeds.yaml:5:  parent_category_id: meat
+app/services/food/registry_data/duck/breeds.yaml:52:  mule_duck:
+app/services/food/registry_data/chicken/cuts.yaml:5:  parent_category_id: meat
+app/services/food/registry_data/chicken/types.yaml:5:  parent_category_id: meat
+app/services/food/registry_data/chicken/breeds.yaml:5:  parent_category_id: meat
+app/services/food/knowledge/meat/lamb/provider.py:226:                "parent_category_id": "meat",
+app/services/food/knowledge/meat/duck/provider.py:50:    category_id = "duck"
+app/services/food/knowledge/meat/duck/provider.py:57:        "duck",
+app/services/food/knowledge/meat/duck/provider.py:225:                "parent_category_id": "meat",
+app/services/food/knowledge/meat/duck/parser.py:258:                "category_id": "duck",
+app/services/food/knowledge/meat/chicken/provider.py:226:                "parent_category_id": "meat",
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:24:    assert result.metadata["category_id"] == "duck"
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:45:    assert provider.category_id == "duck"
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:57:        category_id="duck"
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:115:    assert result.category_id == "duck"
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:141:        == "duck"
+tests/services/food/knowledge/test_duck_registry_integration.py:24:    provider = get_food_provider("duck")
+tests/services/food/knowledge/test_duck_registry_integration.py:31:        require_food_provider("duck")
+tests/services/food/knowledge/test_duck_registry_integration.py:47:        "duck",
+tests/services/food/knowledge/test_duck_registry_integration.py:53:        category_id="duck"
+tests/services/food/knowledge/test_duck_registry_integration.py:98:        "duck"
+tests/services/food/knowledge/test_duck_registry_integration.py:114:    assert result.category_id == "duck"
+tests/services/food/knowledge/test_duck_registry_integration.py:117:        == "duck"
+tests/services/food/knowledge/test_chicken_registry_integration.py:47:        "duck",
+tests/services/food/knowledge/test_food_knowledge_registry.py:21:        "duck",

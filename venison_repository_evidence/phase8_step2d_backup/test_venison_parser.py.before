@@ -1,0 +1,418 @@
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.venison import (
+    VenisonBreedRegistry,
+    VenisonCutRegistry,
+    VenisonParser,
+    VenisonTypeRegistry,
+)
+from app.services.food.knowledge.meat.venison.parser_models import (
+    VenisonParseResult,
+)
+
+
+def test_parse_complete_venison_product() -> None:
+    result = VenisonParser().parse(
+        "어린사슴 레드디어 사슴안심 500g"
+    )
+
+    assert isinstance(
+        result,
+        VenisonParseResult,
+    )
+    assert (
+        result.venison_type
+        == "어린사슴"
+    )
+    assert result.breed == "레드디어"
+    assert result.cut == "사슴안심"
+    assert result.is_complete is True
+    assert result.is_usable is True
+
+    assert (
+        result.metadata["category_id"]
+        == "venison"
+    )
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 3
+    )
+    assert result.confidence > 0.0
+
+
+def test_parse_product_uses_structured_fields() -> None:
+    result = VenisonParser().parse_product(
+        {
+            "product_name": "뉴질랜드 사슴고기",
+            "venison_type": "어린 사슴",
+            "deer_species": "Red Deer",
+            "cut": "사슴 안심",
+            "option_name": "냉장 500g",
+        }
+    )
+
+    assert result.venison_type is not None
+    assert result.breed is not None
+    assert result.cut is not None
+
+    assert (
+        result.venison_type_match
+        is not None
+    )
+    assert result.breed_match is not None
+    assert result.cut_match is not None
+
+    assert (
+        result
+        .venison_type_match
+        .entry
+        .registry_key
+        == "young_deer"
+    )
+    assert (
+        result
+        .breed_match
+        .entry
+        .registry_key
+        == "red_deer"
+    )
+    assert (
+        result
+        .cut_match
+        .entry
+        .registry_key
+        == "tenderloin"
+    )
+
+    assert (
+        result.metadata["source_type"]
+        == "mapping"
+    )
+
+    source_fields = (
+        result.metadata["source_fields"]
+    )
+
+    assert "product_name" in source_fields
+    assert "venison_type" in source_fields
+    assert "deer_species" in source_fields
+    assert "cut" in source_fields
+
+
+def test_parse_cut_only_is_usable() -> None:
+    result = VenisonParser().parse(
+        "뉴질랜드산 사슴안심 1kg"
+    )
+
+    assert result.venison_type is None
+    assert result.breed is None
+    assert result.cut == "사슴안심"
+    assert result.is_complete is False
+    assert result.is_usable is True
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 1
+    )
+
+
+def test_parse_breed_only_is_not_usable() -> None:
+    result = VenisonParser().parse(
+        "Red Deer premium"
+    )
+
+    assert result.breed == "레드디어"
+    assert result.venison_type is None
+    assert result.cut is None
+    assert result.is_complete is False
+    assert result.is_usable is False
+
+
+def test_parser_preserves_detected_aliases() -> None:
+    result = VenisonParser().parse(
+        "어린 사슴 레드 디어 사슴 안심"
+    )
+
+    assert len(
+        result.detected_keywords
+    ) == 3
+
+    assert any(
+        "어린" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "레드" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "안심" in keyword
+        for keyword in result.detected_keywords
+    )
+
+
+def test_parser_matches_wild_elk_leg() -> None:
+    result = VenisonParser().parse(
+        "야생 사슴 엘크 사슴 뒷다리"
+    )
+
+    assert (
+        result.venison_type_match
+        is not None
+    )
+    assert result.breed_match is not None
+    assert result.cut_match is not None
+
+    assert (
+        result
+        .venison_type_match
+        .entry
+        .registry_key
+        == "wild_venison"
+    )
+    assert (
+        result
+        .breed_match
+        .entry
+        .registry_key
+        == "elk"
+    )
+    assert (
+        result
+        .cut_match
+        .entry
+        .registry_key
+        == "leg"
+    )
+
+
+def test_parser_matches_sika_and_loin() -> None:
+    result = VenisonParser().parse(
+        "국내산 꽃사슴 사슴등심 구이용"
+    )
+
+    assert result.breed_match is not None
+    assert result.cut_match is not None
+
+    assert (
+        result
+        .breed_match
+        .entry
+        .registry_key
+        == "sika_deer"
+    )
+    assert (
+        result
+        .cut_match
+        .entry
+        .registry_key
+        == "loin"
+    )
+
+
+def test_parser_does_not_match_other_meat() -> None:
+    result = VenisonParser().parse(
+        "한우 1++ 등심 스테이크"
+    )
+
+    assert result.venison_type is None
+    assert result.breed is None
+    assert result.cut is None
+    assert result.is_usable is False
+
+
+def test_unknown_text_returns_unusable() -> None:
+    result = VenisonParser().parse(
+        "상품 정보가 없는 테스트 문자열"
+    )
+
+    assert result.venison_type is None
+    assert result.breed is None
+    assert result.cut is None
+    assert result.is_complete is False
+    assert result.is_usable is False
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 0
+    )
+
+
+def test_parse_product_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        VenisonParser().parse_product(
+            "사슴안심"  # type: ignore[arg-type]
+        )
+
+
+def test_parse_product_rejects_empty_mapping() -> None:
+    with pytest.raises(
+        ValueError,
+        match="usable text field",
+    ):
+        VenisonParser().parse_product({})
+
+
+def test_parse_result_confidences() -> None:
+    result = VenisonParser().parse(
+        "어린사슴 레드디어 사슴안심"
+    )
+
+    assert (
+        result.venison_type_confidence
+        > 0.0
+    )
+    assert result.breed_confidence > 0.0
+    assert result.cut_confidence > 0.0
+    assert result.confidence > 0.0
+
+
+def test_parse_product_deduplicates_text() -> None:
+    result = VenisonParser().parse_product(
+        {
+            "product_name": "어린사슴",
+            "title": "어린사슴",
+            "venison_type": "어린사슴",
+        }
+    )
+
+    assert result.original_text == "어린사슴"
+    assert (
+        result.venison_type
+        == "어린사슴"
+    )
+
+
+def test_parser_dependency_injection() -> None:
+    type_registry = VenisonTypeRegistry()
+    breed_registry = VenisonBreedRegistry()
+    cut_registry = VenisonCutRegistry()
+
+    parser = VenisonParser(
+        type_registry=type_registry,
+        breed_registry=breed_registry,
+        cut_registry=cut_registry,
+    )
+
+    assert (
+        parser.type_registry
+        is type_registry
+    )
+    assert (
+        parser.breed_registry
+        is breed_registry
+    )
+    assert (
+        parser.cut_registry
+        is cut_registry
+    )
+
+
+def test_structured_cut_overrides_generic_product_name() -> None:
+    result = VenisonParser().parse_product(
+        {
+            "product_name": "뉴질랜드 사슴고기",
+            "cut": "사슴 안심",
+        }
+    )
+
+    assert result.cut_match is not None
+    assert (
+        result
+        .cut_match
+        .entry
+        .registry_key
+        == "tenderloin"
+    )
+    assert result.cut == "사슴안심"
+
+    assert (
+        result.metadata[
+            "structured_field_priority"
+        ]
+        is True
+    )
+    assert (
+        "cut"
+        in result.metadata[
+            "explicit_match_fields"
+        ]
+    )
+
+
+def test_structured_type_overrides_name_context() -> None:
+    result = VenisonParser().parse_product(
+        {
+            "product_name": (
+                "일반 사슴고기 정육"
+            ),
+            "venison_type": "야생 사슴",
+        }
+    )
+
+    assert (
+        result.venison_type_match
+        is not None
+    )
+    assert (
+        result
+        .venison_type_match
+        .entry
+        .registry_key
+        == "wild_venison"
+    )
+
+
+def test_structured_breed_overrides_name_context() -> None:
+    result = VenisonParser().parse_product(
+        {
+            "product_name": (
+                "프리미엄 사슴고기"
+            ),
+            "deer_species": "Red Deer",
+        }
+    )
+
+    assert result.breed_match is not None
+    assert (
+        result
+        .breed_match
+        .entry
+        .registry_key
+        == "red_deer"
+    )
+
+
+def test_combined_text_remains_fallback() -> None:
+    result = VenisonParser().parse_product(
+        {
+            "product_name": (
+                "어린사슴 레드디어 "
+                "사슴안심 500g"
+            )
+        }
+    )
+
+    assert (
+        result.venison_type_match
+        is not None
+    )
+    assert result.breed_match is not None
+    assert result.cut_match is not None
+
+    assert (
+        result.metadata[
+            "explicit_match_fields"
+        ]
+        == []
+    )

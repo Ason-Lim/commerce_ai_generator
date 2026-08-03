@@ -1,0 +1,2667 @@
+# Duck Baseline Full Source
+
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/__init__.py
+================================================================
+from __future__ import annotations
+
+from .breed_registry import (
+    DUCK_BREED_REGISTRY_ID,
+    DuckBreed,
+    DuckBreedMatch,
+    DuckBreedRegistry,
+)
+from .cut_registry import (
+    DUCK_CUT_REGISTRY_ID,
+    DuckCut,
+    DuckCutMatch,
+    DuckCutRegistry,
+)
+from .type_registry import (
+    DUCK_TYPE_REGISTRY_ID,
+    DuckType,
+    DuckTypeMatch,
+    DuckTypeRegistry,
+)
+
+__all__ = [
+    "DUCK_TYPE_REGISTRY_ID",
+    "DUCK_BREED_REGISTRY_ID",
+    "DUCK_CUT_REGISTRY_ID",
+    "DuckType",
+    "DuckTypeMatch",
+    "DuckTypeRegistry",
+    "DuckBreed",
+    "DuckBreedMatch",
+    "DuckBreedRegistry",
+    "DuckCut",
+    "DuckCutMatch",
+    "DuckCutRegistry",
+]
+# BEGIN DUCK PHASE 4 EXPORTS
+from app.services.food.knowledge.meat.duck.breed_registry import (
+    DuckBreed,
+    DuckBreedMatch,
+    DuckBreedRegistry,
+)
+from app.services.food.knowledge.meat.duck.cut_registry import (
+    DuckCut,
+    DuckCutMatch,
+    DuckCutRegistry,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+from app.services.food.knowledge.meat.duck.type_registry import (
+    DuckType,
+    DuckTypeMatch,
+    DuckTypeRegistry,
+)
+
+_PHASE4_EXPORTS = [
+    "DuckType",
+    "DuckTypeMatch",
+    "DuckTypeRegistry",
+    "DuckBreed",
+    "DuckBreedMatch",
+    "DuckBreedRegistry",
+    "DuckCut",
+    "DuckCutMatch",
+    "DuckCutRegistry",
+    "DuckParseResult",
+    "DuckParser",
+]
+
+try:
+    __all__
+except NameError:
+    __all__ = []
+
+for _name in _PHASE4_EXPORTS:
+    if _name not in __all__:
+        __all__.append(_name)
+
+del _name
+# END DUCK PHASE 4 EXPORTS
+# BEGIN DUCK PHASE 5 EXPORTS
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+    extract_duck_bone_status,
+    extract_duck_certifications,
+    extract_duck_country_code,
+    extract_duck_country_text,
+    extract_duck_product_name,
+    extract_duck_skin_status,
+    extract_duck_storage_type,
+    extract_duck_weight,
+)
+
+_PHASE5_EXPORTS = [
+    "build_duck_attributes",
+    "extract_duck_product_name",
+    "extract_duck_country_text",
+    "extract_duck_country_code",
+    "extract_duck_weight",
+    "extract_duck_storage_type",
+    "extract_duck_certifications",
+    "extract_duck_bone_status",
+    "extract_duck_skin_status",
+]
+
+for _name in _PHASE5_EXPORTS:
+    if _name not in __all__:
+        __all__.append(_name)
+
+del _name
+# END DUCK PHASE 5 EXPORTS
+
+# BEGIN DUCK PHASE 9 EXPORTS
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.rules import (
+    apply_duck_rules,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_duck_final_score,
+    calculate_duck_knowledge_score,
+    calculate_duck_scores,
+)
+
+_PHASE9_EXPORTS = [
+    "calculate_duck_scores",
+    "calculate_duck_knowledge_score",
+    "calculate_duck_final_score",
+    "apply_duck_rules",
+    "deduplicate_strings",
+    "DuckKnowledgeProvider",
+]
+
+for _name in _PHASE9_EXPORTS:
+    if _name not in __all__:
+        __all__.append(_name)
+
+del _name
+# END DUCK PHASE 9 EXPORTS
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/attributes.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+
+
+def extract_duck_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_duck_country_text(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 명시된 원산지 정보를 추출한다.
+
+    상품명에서 원산지를 추론하지 않는다.
+    """
+    raw_country = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+        or product.get("origin")
+    )
+
+    if raw_country is None:
+        return None
+
+    country_text = str(raw_country).strip()
+
+    return country_text or None
+
+
+def extract_duck_country_code(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    상품 Mapping에서 명시된 국가 코드를 추출한다.
+    """
+    raw_country_code = (
+        product.get("country_code")
+        or product.get("origin_country_code")
+    )
+
+    if raw_country_code is None:
+        return None
+
+    country_code = str(
+        raw_country_code
+    ).strip().upper()
+
+    return country_code or None
+
+
+def extract_duck_weight(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 Mapping에서 중량 또는 수량 값을 추출한다.
+
+    단위 변환이나 상품명 기반 추론은 수행하지 않는다.
+    """
+    for field_name in (
+        "weight",
+        "quantity",
+        "weight_text",
+        "net_weight",
+    ):
+        if field_name in product:
+            value = product.get(field_name)
+
+            if value is not None:
+                return value
+
+    return None
+
+
+def extract_duck_storage_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 냉장·냉동 등 보관 상태를 추출한다.
+    """
+    raw_storage_type = (
+        product.get("storage_type")
+        or product.get("storage")
+        or product.get("temperature_type")
+        or product.get("freshness_type")
+    )
+
+    if raw_storage_type is None:
+        return None
+
+    storage_type = str(
+        raw_storage_type
+    ).strip()
+
+    return storage_type or None
+
+
+def extract_duck_certifications(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    인증 및 표시 정보를 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("certifications")
+        or product.get("certification")
+        or product.get("labels")
+        or product.get("certificates")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        return [normalized] if normalized else []
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return _deduplicate_strings(
+            [
+                str(value).strip()
+                for value in raw_value
+                if str(value).strip()
+            ]
+        )
+
+    normalized = str(raw_value).strip()
+
+    return [normalized] if normalized else []
+
+
+def extract_duck_bone_status(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 뼈 포함 여부를 추출한다.
+
+    반환값은 명시된 원문을 정리한 문자열이며,
+    상품명으로부터 boneless/bone-in을 추론하지 않는다.
+    """
+    raw_value = (
+        product.get("bone_status")
+        or product.get("bone_type")
+        or product.get("bone")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(raw_value).strip()
+
+    return normalized or None
+
+
+def extract_duck_skin_status(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    구조화된 상품 필드에서 껍질 포함 여부를 추출한다.
+    """
+    raw_value = (
+        product.get("skin_status")
+        or product.get("skin_type")
+        or product.get("skin")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(raw_value).strip()
+
+    return normalized or None
+
+
+def _deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        normalized = text.casefold()
+
+        if not text or normalized in seen:
+            continue
+
+        seen.add(normalized)
+        result.append(text)
+
+    return result
+
+
+def build_duck_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: DuckParseResult,
+) -> dict[str, Any]:
+    """
+    Duck Parser의 표준화 결과와 Registry 정보를
+    FoodKnowledgeResult용 attributes로 변환한다.
+
+    이 함수는 값을 추출하고 정리할 뿐,
+    추천 점수나 비즈니스 규칙을 계산하지 않는다.
+    """
+    if not isinstance(product, Mapping):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        DuckParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be DuckParseResult"
+        )
+
+    attributes: dict[str, Any] = {
+        "product_name": (
+            extract_duck_product_name(
+                product
+            )
+        ),
+        "country": (
+            extract_duck_country_text(
+                product
+            )
+        ),
+        "country_code": (
+            extract_duck_country_code(
+                product
+            )
+        ),
+        "weight": extract_duck_weight(
+            product
+        ),
+        "storage_type": (
+            extract_duck_storage_type(
+                product
+            )
+        ),
+        "certifications": (
+            extract_duck_certifications(
+                product
+            )
+        ),
+        "bone_status": (
+            extract_duck_bone_status(
+                product
+            )
+        ),
+        "skin_status": (
+            extract_duck_skin_status(
+                product
+            )
+        ),
+        "duck_type": (
+            parse_result.duck_type
+        ),
+        "breed": parse_result.breed,
+        "cut": parse_result.cut,
+        "confidence": parse_result.confidence,
+        "duck_type_confidence": (
+            parse_result.duck_type_confidence
+        ),
+        "breed_confidence": (
+            parse_result.breed_confidence
+        ),
+        "cut_confidence": (
+            parse_result.cut_confidence
+        ),
+        "detected_keywords": list(
+            parse_result.detected_keywords
+        ),
+        "warnings": list(
+            parse_result.warnings
+        ),
+        "is_complete": (
+            parse_result.is_complete
+        ),
+        "is_usable": parse_result.is_usable,
+    }
+
+    if (
+        parse_result.duck_type_match
+        is not None
+    ):
+        duck_type = (
+            parse_result
+            .duck_type_match
+            .duck_type
+        )
+
+        attributes.update(
+            {
+                "duck_type_registry_key": (
+                    duck_type.registry_key
+                ),
+                "duck_type_category": (
+                    duck_type.type_category
+                ),
+                "duck_type_score": (
+                    duck_type.score
+                ),
+                "duck_type_premium": (
+                    duck_type.premium
+                ),
+                "duck_type_flavor_intensity": (
+                    duck_type.flavor_intensity
+                ),
+                "duck_type_tenderness_level": (
+                    duck_type.tenderness_level
+                ),
+                "duck_type_typical_uses": list(
+                    duck_type.typical_uses
+                ),
+                "duck_type_description": (
+                    duck_type.description
+                ),
+            }
+        )
+
+    if parse_result.breed_match is not None:
+        breed = parse_result.breed_match.breed
+
+        attributes.update(
+            {
+                "breed_registry_key": (
+                    breed.registry_key
+                ),
+                "breed_english_name": (
+                    breed.english_name
+                ),
+                "breed_origin_country": (
+                    breed.origin_country
+                ),
+                "breed_type": breed.breed_type,
+                "breed_score": breed.score,
+                "breed_premium": breed.premium,
+                "breed_flavor_score": (
+                    breed.flavor_score
+                ),
+                "breed_tenderness_score": (
+                    breed.tenderness_score
+                ),
+                "breed_growth_score": (
+                    breed.growth_score
+                ),
+                "breed_rarity_score": (
+                    breed.rarity_score
+                ),
+                "breed_description": (
+                    breed.description
+                ),
+            }
+        )
+
+    if parse_result.cut_match is not None:
+        cut = parse_result.cut_match.cut
+
+        attributes.update(
+            {
+                "cut_registry_key": (
+                    cut.registry_key
+                ),
+                "cut_english_name": (
+                    cut.english_name
+                ),
+                "cut_group": cut.cut_group,
+                "cut_score": cut.score,
+                "cut_premium": cut.premium,
+                "cut_tenderness_score": (
+                    cut.tenderness_score
+                ),
+                "cut_flavor_score": (
+                    cut.flavor_score
+                ),
+                "cut_fat_score": (
+                    cut.fat_score
+                ),
+                "cut_yield_score": (
+                    cut.yield_score
+                ),
+                "cut_cooking_methods": list(
+                    cut.cooking_methods
+                ),
+                "cut_description": (
+                    cut.description
+                ),
+            }
+        )
+
+    return attributes
+
+
+__all__ = [
+    "build_duck_attributes",
+    "extract_duck_product_name",
+    "extract_duck_country_text",
+    "extract_duck_country_code",
+    "extract_duck_weight",
+    "extract_duck_storage_type",
+    "extract_duck_certifications",
+    "extract_duck_bone_status",
+    "extract_duck_skin_status",
+]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/breed_registry.py
+================================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryEntry, RegistryMatch
+from app.services.food.knowledge.common.base_registry import AliasMatch, BaseAliasRegistry, normalize_string_list, optional_string, safe_float
+from app.services.food.knowledge.registry_loader import KnowledgeRegistryLoader, get_knowledge_registry_loader
+
+DUCK_BREED_REGISTRY_ID = "duck.breeds"
+
+
+def _aliases(canonical_name: str, raw_aliases: Any) -> tuple[str, ...]:
+    values = [canonical_name, *normalize_string_list(raw_aliases)]
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+    return tuple(result)
+
+
+def _optional_score(value: Any) -> float | None:
+    if value is None:
+        return None
+    return max(0.0, min(100.0, safe_float(value, default=0.0)))
+
+
+@dataclass(frozen=True, kw_only=True)
+class DuckBreed(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    score: float
+    premium: bool
+    english_name: str | None
+    origin_country: str | None
+    breed_type: str | None
+    flavor_score: float | None
+    tenderness_score: float | None
+    growth_score: float | None
+    rarity_score: float | None
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        canonical_name = str(self.canonical_name).strip()
+        if not canonical_name:
+            raise ValueError("canonical_name must not be empty")
+        object.__setattr__(self, "canonical_name", canonical_name)
+        object.__setattr__(self, "aliases", tuple(str(v).strip() for v in self.aliases if str(v).strip()))
+        object.__setattr__(self, "score", max(0.0, min(100.0, float(self.score))))
+        object.__setattr__(self, "premium", bool(self.premium))
+        for field_name in ("english_name", "origin_country", "breed_type", "description"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, str(value).strip() or None)
+        for field_name in ("flavor_score", "tenderness_score", "growth_score", "rarity_score"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, max(0.0, min(100.0, float(value))))
+
+
+@dataclass(frozen=True, kw_only=True)
+class DuckBreedMatch(RegistryMatch[DuckBreed]):
+    @property
+    def breed(self) -> DuckBreed:
+        return self.entry
+
+
+class DuckBreedRegistry(BaseAliasRegistry[DuckBreed]):
+    registry_id = DUCK_BREED_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(self, loader: KnowledgeRegistryLoader | None = None) -> None:
+        super().__init__(loader=loader or get_knowledge_registry_loader())
+
+    def build_entry(self, registry_key: str, raw_entry: Mapping[str, Any]) -> DuckBreed:
+        known_fields = {"canonical_name", "aliases", "score", "premium", "english_name", "origin_country", "breed_type", "flavor_score", "tenderness_score", "growth_score", "rarity_score", "description"}
+        metadata = {key: copy.deepcopy(value) for key, value in raw_entry.items() if key not in known_fields}
+        canonical_name = str(raw_entry.get("canonical_name", registry_key)).strip()
+        return DuckBreed(
+            registry_key=registry_key,
+            canonical_name=canonical_name or registry_key,
+            aliases=_aliases(canonical_name, raw_entry.get("aliases")),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            english_name=optional_string(raw_entry.get("english_name")),
+            origin_country=optional_string(raw_entry.get("origin_country")),
+            breed_type=optional_string(raw_entry.get("breed_type")),
+            flavor_score=_optional_score(raw_entry.get("flavor_score")),
+            tenderness_score=_optional_score(raw_entry.get("tenderness_score")),
+            growth_score=_optional_score(raw_entry.get("growth_score")),
+            rarity_score=_optional_score(raw_entry.get("rarity_score")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(self, text: str) -> DuckBreedMatch | None:
+        raw_match = super().match(text)
+        return None if raw_match is None else self._convert_match(raw_match)
+
+    def find_all(self, text: str) -> list[DuckBreedMatch]:
+        return [self._convert_match(match) for match in super().find_all(text)]
+
+    def lookup(self, text: str) -> DuckBreed | None:
+        match = self.match(text)
+        return None if match is None else match.entry
+
+    def list(self, *, premium_only: bool = False, breed_type: str | None = None) -> list[DuckBreed]:
+        entries = [entry for entry in super().list() if isinstance(entry, DuckBreed)]
+        if premium_only:
+            entries = [entry for entry in entries if entry.premium]
+        if breed_type is not None:
+            normalized = str(breed_type).strip().lower()
+            entries = [entry for entry in entries if (entry.breed_type or "").lower() == normalized]
+        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+
+    @staticmethod
+    def _convert_match(raw_match: AliasMatch[DuckBreed]) -> DuckBreedMatch:
+        return DuckBreedMatch(entry=raw_match.entry, matched_alias=raw_match.matched_alias, normalized_alias=raw_match.normalized_alias, match_start=raw_match.match_start, match_end=raw_match.match_end, confidence=raw_match.confidence, exact_match=raw_match.exact_match)
+
+
+__all__ = ["DUCK_BREED_REGISTRY_ID", "DuckBreed", "DuckBreedMatch", "DuckBreedRegistry"]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/cut_registry.py
+================================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryEntry, RegistryMatch
+from app.services.food.knowledge.common.base_registry import AliasMatch, BaseAliasRegistry, normalize_string_list, optional_string, safe_float
+from app.services.food.knowledge.registry_loader import KnowledgeRegistryLoader, get_knowledge_registry_loader
+
+DUCK_CUT_REGISTRY_ID = "duck.cuts"
+
+
+def _aliases(canonical_name: str, raw_aliases: Any) -> tuple[str, ...]:
+    values = [canonical_name, *normalize_string_list(raw_aliases)]
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+    return tuple(result)
+
+
+def _optional_score(value: Any) -> float | None:
+    if value is None:
+        return None
+    return max(0.0, min(100.0, safe_float(value, default=0.0)))
+
+
+@dataclass(frozen=True, kw_only=True)
+class DuckCut(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    score: float
+    premium: bool
+    english_name: str | None
+    cut_group: str | None
+    tenderness_score: float | None
+    flavor_score: float | None
+    fat_score: float | None
+    yield_score: float | None
+    cooking_methods: tuple[str, ...]
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        canonical_name = str(self.canonical_name).strip()
+        if not canonical_name:
+            raise ValueError("canonical_name must not be empty")
+        object.__setattr__(self, "canonical_name", canonical_name)
+        object.__setattr__(self, "aliases", tuple(str(v).strip() for v in self.aliases if str(v).strip()))
+        object.__setattr__(self, "cooking_methods", tuple(str(v).strip() for v in self.cooking_methods if str(v).strip()))
+        object.__setattr__(self, "score", max(0.0, min(100.0, float(self.score))))
+        object.__setattr__(self, "premium", bool(self.premium))
+        for field_name in ("english_name", "cut_group", "description"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, str(value).strip() or None)
+        for field_name in ("tenderness_score", "flavor_score", "fat_score", "yield_score"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, max(0.0, min(100.0, float(value))))
+
+
+@dataclass(frozen=True, kw_only=True)
+class DuckCutMatch(RegistryMatch[DuckCut]):
+    @property
+    def cut(self) -> DuckCut:
+        return self.entry
+
+
+class DuckCutRegistry(BaseAliasRegistry[DuckCut]):
+    registry_id = DUCK_CUT_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(self, loader: KnowledgeRegistryLoader | None = None) -> None:
+        super().__init__(loader=loader or get_knowledge_registry_loader())
+
+    def build_entry(self, registry_key: str, raw_entry: Mapping[str, Any]) -> DuckCut:
+        known_fields = {"canonical_name", "aliases", "score", "premium", "english_name", "cut_group", "tenderness_score", "flavor_score", "fat_score", "yield_score", "cooking_methods", "description"}
+        metadata = {key: copy.deepcopy(value) for key, value in raw_entry.items() if key not in known_fields}
+        canonical_name = str(raw_entry.get("canonical_name", registry_key)).strip()
+        return DuckCut(
+            registry_key=registry_key,
+            canonical_name=canonical_name or registry_key,
+            aliases=_aliases(canonical_name, raw_entry.get("aliases")),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            english_name=optional_string(raw_entry.get("english_name")),
+            cut_group=optional_string(raw_entry.get("cut_group")),
+            tenderness_score=_optional_score(raw_entry.get("tenderness_score")),
+            flavor_score=_optional_score(raw_entry.get("flavor_score")),
+            fat_score=_optional_score(raw_entry.get("fat_score")),
+            yield_score=_optional_score(raw_entry.get("yield_score")),
+            cooking_methods=normalize_string_list(raw_entry.get("cooking_methods")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(self, text: str) -> DuckCutMatch | None:
+        raw_match = super().match(text)
+        return None if raw_match is None else self._convert_match(raw_match)
+
+    def find_all(self, text: str) -> list[DuckCutMatch]:
+        return [self._convert_match(match) for match in super().find_all(text)]
+
+    def lookup(self, text: str) -> DuckCut | None:
+        match = self.match(text)
+        return None if match is None else match.entry
+
+    def list(self, *, premium_only: bool = False, cut_group: str | None = None) -> list[DuckCut]:
+        entries = [entry for entry in super().list() if isinstance(entry, DuckCut)]
+        if premium_only:
+            entries = [entry for entry in entries if entry.premium]
+        if cut_group is not None:
+            normalized = str(cut_group).strip().lower()
+            entries = [entry for entry in entries if (entry.cut_group or "").lower() == normalized]
+        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+
+    @staticmethod
+    def _convert_match(raw_match: AliasMatch[DuckCut]) -> DuckCutMatch:
+        return DuckCutMatch(entry=raw_match.entry, matched_alias=raw_match.matched_alias, normalized_alias=raw_match.normalized_alias, match_start=raw_match.match_start, match_end=raw_match.match_end, confidence=raw_match.confidence, exact_match=raw_match.exact_match)
+
+
+__all__ = ["DUCK_CUT_REGISTRY_ID", "DuckCut", "DuckCutMatch", "DuckCutRegistry"]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/parser_models.py
+================================================================
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.parser_models import (
+    BaseParseResult,
+)
+
+
+@dataclass(frozen=True)
+class DuckParseResult(BaseParseResult):
+    """
+    Duck Parser 결과.
+
+    Registry에서 탐지한 오리고기 상품 유형, 품종·계통,
+    부위 정보를 원본 RegistryMatch와 함께 보존한다.
+    """
+
+    duck_type: str | None = None
+    breed: str | None = None
+    cut: str | None = None
+
+    duck_type_confidence: float = 0.0
+    breed_confidence: float = 0.0
+    cut_confidence: float = 0.0
+
+    duck_type_match: RegistryMatch | None = None
+    breed_match: RegistryMatch | None = None
+    cut_match: RegistryMatch | None = None
+
+    detected_keywords: list[str] = field(
+        default_factory=list
+    )
+    warnings: list[str] = field(
+        default_factory=list
+    )
+
+    @property
+    def has_duck_type(self) -> bool:
+        return self.duck_type is not None
+
+    @property
+    def has_breed(self) -> bool:
+        return self.breed is not None
+
+    @property
+    def has_cut(self) -> bool:
+        return self.cut is not None
+
+    @property
+    def is_complete(self) -> bool:
+        return (
+            self.has_duck_type
+            and self.has_breed
+            and self.has_cut
+        )
+
+    @property
+    def is_usable(self) -> bool:
+        """
+        유형 또는 부위 중 하나 이상을 인식했는지 여부.
+
+        오리 품종·상업 계통은 상품명에 자주 표시되지 않으므로
+        품종 누락만으로 결과를 unusable로 판단하지 않는다.
+        """
+        return (
+            self.has_duck_type
+            or self.has_cut
+        )
+
+
+__all__ = [
+    "DuckParseResult",
+]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/parser.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.common.parser_base import (
+    BaseKnowledgeParser,
+)
+from app.services.food.knowledge.meat.duck.breed_registry import (
+    DuckBreedMatch,
+    DuckBreedRegistry,
+)
+from app.services.food.knowledge.meat.duck.cut_registry import (
+    DuckCutMatch,
+    DuckCutRegistry,
+)
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+from app.services.food.knowledge.meat.duck.type_registry import (
+    DuckTypeMatch,
+    DuckTypeRegistry,
+)
+
+
+class DuckParser(
+    BaseKnowledgeParser[DuckParseResult]
+):
+    """
+    오리고기 상품 Parser.
+
+    담당 책임:
+    - 입력 상품 텍스트 구성
+    - 상품 유형 Registry 검색
+    - 품종·상업 계통 Registry 검색
+    - 부위 Registry 검색
+    - 필드별 confidence 계산
+    - DuckParseResult 생성
+
+    담당하지 않는 책임:
+    - Registry 점수 계산
+    - 추천 또는 최종 점수 계산
+    - 비즈니스 규칙 적용
+    - UI 렌더링
+    """
+
+    _NAME_FIELDS: tuple[str, ...] = (
+        "product_name",
+        "title",
+        "name",
+        "raw_name",
+        "display_name",
+    )
+
+    _TYPE_FIELDS: tuple[str, ...] = (
+        "duck_type",
+        "poultry_type",
+        "meat_type",
+        "product_type",
+        "species",
+    )
+
+    _BREED_FIELDS: tuple[str, ...] = (
+        "breed",
+        "duck_breed",
+        "poultry_breed",
+        "strain",
+        "line",
+    )
+
+    _CUT_FIELDS: tuple[str, ...] = (
+        "cut",
+        "part",
+        "duck_cut",
+        "cut_name",
+        "meat_part",
+    )
+
+    _OPTION_FIELDS: tuple[str, ...] = (
+        "option",
+        "option_name",
+        "variant",
+        "description",
+        "summary",
+    )
+
+    def __init__(
+        self,
+        *,
+        type_registry: DuckTypeRegistry | None = None,
+        breed_registry: DuckBreedRegistry | None = None,
+        cut_registry: DuckCutRegistry | None = None,
+    ) -> None:
+        self.type_registry = (
+            type_registry
+            if type_registry is not None
+            else DuckTypeRegistry()
+        )
+        self.breed_registry = (
+            breed_registry
+            if breed_registry is not None
+            else DuckBreedRegistry()
+        )
+        self.cut_registry = (
+            cut_registry
+            if cut_registry is not None
+            else DuckCutRegistry()
+        )
+
+    def parse(
+        self,
+        text: str,
+    ) -> DuckParseResult:
+        normalized_text = self.validate_text(
+            text
+        )
+
+        return self._parse_text(
+            original_text=str(text),
+            normalized_text=normalized_text,
+        )
+
+    def parse_product(
+        self,
+        product: Mapping[str, Any],
+    ) -> DuckParseResult:
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        original_text = self._build_product_text(
+            product
+        )
+        normalized_text = self.validate_text(
+            original_text
+        )
+
+        result = self._parse_text(
+            original_text=original_text,
+            normalized_text=normalized_text,
+        )
+
+        metadata = dict(result.metadata)
+        metadata.update(
+            {
+                "source_type": "mapping",
+                "source_fields": (
+                    self._matched_source_fields(
+                        product
+                    )
+                ),
+            }
+        )
+
+        return DuckParseResult(
+            original_text=result.original_text,
+            normalized_text=result.normalized_text,
+            confidence=result.confidence,
+            metadata=metadata,
+            duck_type=result.duck_type,
+            breed=result.breed,
+            cut=result.cut,
+            duck_type_confidence=(
+                result.duck_type_confidence
+            ),
+            breed_confidence=(
+                result.breed_confidence
+            ),
+            cut_confidence=(
+                result.cut_confidence
+            ),
+            duck_type_match=(
+                result.duck_type_match
+            ),
+            breed_match=result.breed_match,
+            cut_match=result.cut_match,
+            detected_keywords=list(
+                result.detected_keywords
+            ),
+            warnings=list(result.warnings),
+        )
+
+    def _parse_text(
+        self,
+        *,
+        original_text: str,
+        normalized_text: str,
+    ) -> DuckParseResult:
+        type_match = self.type_registry.match(
+            normalized_text
+        )
+        breed_match = self.breed_registry.match(
+            normalized_text
+        )
+        cut_match = self.cut_registry.match(
+            normalized_text
+        )
+
+        duck_type = self._canonical_name(
+            type_match
+        )
+        breed = self._canonical_name(
+            breed_match
+        )
+        cut = self._canonical_name(
+            cut_match
+        )
+
+        type_confidence = self._match_confidence(
+            type_match
+        )
+        breed_confidence = self._match_confidence(
+            breed_match
+        )
+        cut_confidence = self._match_confidence(
+            cut_match
+        )
+
+        detected_keywords = (
+            self._detected_keywords(
+                type_match=type_match,
+                breed_match=breed_match,
+                cut_match=cut_match,
+            )
+        )
+
+        matched_field_count = sum(
+            match is not None
+            for match in (
+                type_match,
+                breed_match,
+                cut_match,
+            )
+        )
+
+        confidence = self._calculate_confidence(
+            type_confidence=type_confidence,
+            breed_confidence=breed_confidence,
+            cut_confidence=cut_confidence,
+        )
+
+        warnings = self._build_warnings(
+            normalized_text=normalized_text,
+            type_match=type_match,
+            breed_match=breed_match,
+            cut_match=cut_match,
+        )
+
+        return DuckParseResult(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            confidence=confidence,
+            metadata={
+                "category_id": "duck",
+                "matched_field_count": (
+                    matched_field_count
+                ),
+                "expected_field_count": 3,
+                "is_complete": (
+                    matched_field_count == 3
+                ),
+                "is_usable": (
+                    type_match is not None
+                    or cut_match is not None
+                ),
+            },
+            duck_type=duck_type,
+            breed=breed,
+            cut=cut,
+            duck_type_confidence=(
+                type_confidence
+            ),
+            breed_confidence=breed_confidence,
+            cut_confidence=cut_confidence,
+            duck_type_match=type_match,
+            breed_match=breed_match,
+            cut_match=cut_match,
+            detected_keywords=detected_keywords,
+            warnings=warnings,
+        )
+
+    def _build_product_text(
+        self,
+        product: Mapping[str, Any],
+    ) -> str:
+        values: list[str] = []
+
+        for field_name in self._all_text_fields():
+            value = self._stringify_value(
+                product.get(field_name)
+            )
+
+            if value:
+                values.append(value)
+
+        values = self._deduplicate_texts(
+            values
+        )
+
+        if not values:
+            raise ValueError(
+                "product does not contain "
+                "a usable text field"
+            )
+
+        return " ".join(values)
+
+    def _matched_source_fields(
+        self,
+        product: Mapping[str, Any],
+    ) -> list[str]:
+        result: list[str] = []
+
+        for field_name in self._all_text_fields():
+            value = self._stringify_value(
+                product.get(field_name)
+            )
+
+            if value:
+                result.append(field_name)
+
+        return result
+
+
+    @staticmethod
+    def _stringify_value(
+        value: Any,
+    ) -> str:
+        """
+        상품 Mapping의 값을 Parser 입력 문자열로 변환한다.
+
+        문자열과 숫자는 직접 변환하고,
+        list/tuple/set은 비어 있지 않은 항목만 결합한다.
+        Mapping과 그 외 복합 객체는 Parser 입력에서 제외한다.
+        """
+        if value is None:
+            return ""
+
+        if isinstance(value, str):
+            return value.strip()
+
+        if isinstance(value, (int, float)):
+            return str(value).strip()
+
+        if isinstance(value, (list, tuple, set)):
+            parts = [
+                DuckParser._stringify_value(item)
+                for item in value
+            ]
+            return " ".join(
+                part for part in parts if part
+            )
+
+        return ""
+
+    @staticmethod
+    def _deduplicate_texts(
+        values: list[str],
+    ) -> list[str]:
+        """
+        입력 순서를 유지하면서 중복 텍스트를 제거한다.
+        """
+        result: list[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            text = str(value).strip()
+            normalized = text.casefold()
+
+            if not text or normalized in seen:
+                continue
+
+            seen.add(normalized)
+            result.append(text)
+
+        return result
+
+    @classmethod
+    def _all_text_fields(
+        cls,
+    ) -> tuple[str, ...]:
+        ordered: list[str] = []
+        seen: set[str] = set()
+
+        for field_name in (
+            *cls._NAME_FIELDS,
+            *cls._TYPE_FIELDS,
+            *cls._BREED_FIELDS,
+            *cls._CUT_FIELDS,
+            *cls._OPTION_FIELDS,
+        ):
+            if field_name in seen:
+                continue
+
+            seen.add(field_name)
+            ordered.append(field_name)
+
+        return tuple(ordered)
+
+    @staticmethod
+    def _canonical_name(
+        match: (
+            DuckTypeMatch
+            | DuckBreedMatch
+            | DuckCutMatch
+            | None
+        ),
+    ) -> str | None:
+        if match is None:
+            return None
+
+        return match.canonical_name
+
+    @staticmethod
+    def _match_confidence(
+        match: (
+            DuckTypeMatch
+            | DuckBreedMatch
+            | DuckCutMatch
+            | None
+        ),
+    ) -> float:
+        if match is None:
+            return 0.0
+
+        return max(
+            0.0,
+            min(
+                1.0,
+                float(match.confidence),
+            ),
+        )
+
+    @staticmethod
+    def _detected_keywords(
+        *,
+        type_match: DuckTypeMatch | None,
+        breed_match: DuckBreedMatch | None,
+        cut_match: DuckCutMatch | None,
+    ) -> list[str]:
+        keywords: list[str] = []
+        seen: set[str] = set()
+
+        for match in (
+            type_match,
+            breed_match,
+            cut_match,
+        ):
+            if match is None:
+                continue
+
+            keyword = str(
+                match.matched_alias
+            ).strip()
+
+            normalized = keyword.casefold()
+
+            if (
+                not keyword
+                or normalized in seen
+            ):
+                continue
+
+            seen.add(normalized)
+            keywords.append(keyword)
+
+        return keywords
+
+    @staticmethod
+    def _calculate_confidence(
+        *,
+        type_confidence: float,
+        breed_confidence: float,
+        cut_confidence: float,
+    ) -> float:
+        available = [
+            value
+            for value in (
+                type_confidence,
+                breed_confidence,
+                cut_confidence,
+            )
+            if value > 0.0
+        ]
+
+        if not available:
+            return 0.0
+
+        coverage = len(available) / 3.0
+        average = sum(available) / len(
+            available
+        )
+
+        return round(
+            max(
+                0.0,
+                min(
+                    1.0,
+                    average * (
+                        0.70
+                        + 0.30 * coverage
+                    ),
+                ),
+            ),
+            4,
+        )
+
+    @staticmethod
+    def _build_warnings(
+        *,
+        normalized_text: str,
+        type_match: DuckTypeMatch | None,
+        breed_match: DuckBreedMatch | None,
+        cut_match: DuckCutMatch | None,
+    ) -> list[str]:
+        warnings: list[str] = []
+
+        if not normalized_text:
+            warnings.append(
+                "분석할 상품 텍스트가 없습니다."
+            )
+            return warnings
+
+        if (
+            type_match is None
+            and breed_match is None
+            and cut_match is None
+        ):
+            warnings.append(
+                "오리고기 유형, 품종 또는 부위를 "
+                "인식하지 못했습니다."
+            )
+            return warnings
+
+        if type_match is None:
+            warnings.append(
+                "오리고기 상품 유형을 인식하지 "
+                "못했습니다."
+            )
+
+        if breed_match is None:
+            warnings.append(
+                "오리 품종 또는 상업 계통을 인식하지 "
+                "못했습니다."
+            )
+
+        if cut_match is None:
+            warnings.append(
+                "오리고기 부위를 인식하지 못했습니다."
+            )
+
+        return warnings
+
+
+__all__ = [
+    "DuckParser",
+]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/provider.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+    extract_duck_product_name,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.rules import (
+    apply_duck_rules,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_duck_final_score,
+    calculate_duck_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class DuckKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    오리고기 Knowledge Provider.
+
+    역할:
+    - DuckParser 실행
+    - Duck attributes 구성
+    - Duck scoring 실행
+    - Duck rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    """
+
+    category_id = "duck"
+    category_name = "오리고기"
+
+    aliases = (
+        "오리고기",
+        "오리 고기",
+        "오리육",
+        "duck",
+        "훈제오리",
+        "훈제 오리",
+        "백숙오리",
+        "백숙 오리",
+        "생오리",
+        "생 오리",
+        "통오리",
+        "통 오리",
+        "오리가슴살",
+        "오리 가슴살",
+        "오리안심",
+        "오리 안심",
+        "오리다리",
+        "오리 다리",
+        "오리다리살",
+        "오리 다리살",
+        "오리날개",
+        "오리 날개",
+        "오리목",
+        "오리 목",
+        "오리로스",
+        "오리 로스",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: DuckParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else DuckParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Duck Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: (
+            FoodKnowledgeContext | None
+        ) = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Duck 분석 파이프라인을 순서대로 실행한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_duck_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_duck_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_duck_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = (
+            apply_duck_rules(
+                attributes=attributes,
+                scores=scores,
+                parse_result=parse_result,
+            )
+        )
+
+        final_score = (
+            calculate_duck_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=(
+                parse_result.confidence
+            ),
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "parent_category_id": "meat",
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": (
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "DuckKnowledgeProvider",
+]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/rules.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+
+
+def apply_duck_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, float],
+    parse_result: DuckParseResult,
+) -> tuple[
+    list[str],
+    list[str],
+]:
+    """
+    오리고기 분석 결과를 기반으로 추천 이유와 경고를 생성한다.
+
+    Rules는 설명과 경고만 생성하며,
+    attributes 또는 scores를 변경하지 않는다.
+    """
+    if not isinstance(
+        attributes,
+        Mapping,
+    ):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        DuckParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be DuckParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    country = attributes.get("country")
+    duck_type = attributes.get("duck_type")
+    breed = attributes.get("breed")
+    cut = attributes.get("cut")
+
+    if duck_type:
+        reasons.append(
+            f"오리 유형은 {duck_type}입니다."
+        )
+
+        type_description = attributes.get(
+            "duck_type_description"
+        )
+
+        if type_description:
+            reasons.append(
+                str(type_description)
+            )
+
+    if breed:
+        reasons.append(
+            f"품종 또는 상업 계통은 {breed}입니다."
+        )
+
+    if country:
+        reasons.append(
+            f"원산지는 {country}입니다."
+        )
+    elif not any(
+        "원산지" in warning
+        for warning in warnings
+    ):
+        warnings.append(
+            "원산지 정보가 확인되지 않았습니다."
+        )
+
+    if cut:
+        reasons.append(
+            f"{cut} 부위 상품입니다."
+        )
+
+    cooking_methods = (
+        attributes.get(
+            "cut_cooking_methods"
+        )
+        or []
+    )
+
+    if cooking_methods:
+        method_text = ", ".join(
+            str(method).strip()
+            for method in cooking_methods
+            if str(method).strip()
+        )
+
+        if method_text:
+            reasons.append(
+                "Registry 기준 권장 조리 방식은 "
+                f"{method_text}입니다."
+            )
+
+    typical_uses = (
+        attributes.get(
+            "duck_type_typical_uses"
+        )
+        or []
+    )
+
+    if typical_uses:
+        use_text = ", ".join(
+            str(use).strip()
+            for use in typical_uses
+            if str(use).strip()
+        )
+
+        if use_text:
+            reasons.append(
+                "Registry 기준 대표 활용 방식은 "
+                f"{use_text}입니다."
+            )
+
+    flavor_intensity = attributes.get(
+        "duck_type_flavor_intensity"
+    )
+
+    if flavor_intensity == "mild":
+        reasons.append(
+            "오리 유형 기준 풍미가 비교적 "
+            "순한 편입니다."
+        )
+    elif flavor_intensity == "medium":
+        reasons.append(
+            "오리 유형 기준 적당한 풍미를 "
+            "기대할 수 있습니다."
+        )
+    elif flavor_intensity == "strong":
+        reasons.append(
+            "오리 유형 기준 풍미가 진한 "
+            "편입니다."
+        )
+
+    tenderness_level = attributes.get(
+        "duck_type_tenderness_level"
+    )
+
+    if tenderness_level == "high":
+        reasons.append(
+            "오리 유형 기준 부드러운 육질을 "
+            "기대할 수 있습니다."
+        )
+    elif tenderness_level == "low":
+        warnings.append(
+            "오리 유형 기준 육질이 단단할 수 있어 "
+            "장시간 조리가 적합할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "duck_type",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "오리 유형 Registry 기준 상품성이 "
+            "높은 유형입니다."
+        )
+
+    if (
+        scores.get(
+            "breed",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종 Registry 기준 평가가 "
+            "높은 품종 또는 계통입니다."
+        )
+
+    if (
+        scores.get(
+            "cut",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "상품성이 높은 부위로 "
+            "분류됩니다."
+        )
+
+    if (
+        scores.get(
+            "tenderness",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 부드러운 식감을 "
+            "기대할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "flavor",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 풍미 평가가 "
+            "높은 상품입니다."
+        )
+
+    if (
+        scores.get(
+            "rarity",
+            0.0,
+        )
+        >= 80.0
+    ):
+        reasons.append(
+            "품종 Registry 기준 희소성이 "
+            "높은 상품입니다."
+        )
+
+    if (
+        attributes.get(
+            "duck_type_premium"
+        )
+        or attributes.get(
+            "breed_premium"
+        )
+        or attributes.get(
+            "cut_premium"
+        )
+    ):
+        reasons.append(
+            "Registry에서 프리미엄 속성이 "
+            "확인되었습니다."
+        )
+
+    storage_type = attributes.get(
+        "storage_type"
+    )
+
+    if storage_type:
+        reasons.append(
+            f"보관 상태는 {storage_type}입니다."
+        )
+
+    certifications = (
+        attributes.get(
+            "certifications"
+        )
+        or []
+    )
+
+    if certifications:
+        certification_text = ", ".join(
+            str(certification).strip()
+            for certification in certifications
+            if str(certification).strip()
+        )
+
+        if certification_text:
+            reasons.append(
+                "표시된 인증 정보는 "
+                f"{certification_text}입니다."
+            )
+
+    bone_status = attributes.get(
+        "bone_status"
+    )
+
+    if bone_status:
+        reasons.append(
+            f"뼈 상태 표시는 {bone_status}입니다."
+        )
+
+    skin_status = attributes.get(
+        "skin_status"
+    )
+
+    if skin_status:
+        reasons.append(
+            f"껍질 상태 표시는 {skin_status}입니다."
+        )
+
+    if not parse_result.is_complete:
+        warnings.append(
+            "오리 유형, 품종, 부위 정보가 "
+            "모두 확인되지 않았습니다."
+        )
+
+    if (
+        scores.get(
+            "knowledge",
+            0.0,
+        )
+        <= 0.0
+    ):
+        warnings.append(
+            "오리고기 Registry 기반 평가 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    return (
+        deduplicate_strings(reasons),
+        deduplicate_strings(warnings),
+    )
+
+
+def deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    """
+    빈 문자열과 중복 문자열을 제거한다.
+
+    최초 등장 순서는 유지한다.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        normalized = str(value).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(normalized)
+
+    return result
+
+
+__all__ = [
+    "apply_duck_rules",
+    "deduplicate_strings",
+]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/scoring.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+)
+
+
+DEFAULT_KNOWLEDGE_WEIGHTS: dict[str, float] = {
+    "duck_type": 0.30,
+    "breed": 0.20,
+    "cut": 0.50,
+}
+
+
+DEFAULT_FINAL_SCORE_WEIGHTS: dict[str, float] = {
+    "quality": 0.20,
+    "price": 0.15,
+    "trust": 0.15,
+    "knowledge": 0.50,
+}
+
+
+def safe_float(
+    value: Any,
+    default: float = 0.0,
+) -> float:
+    """
+    값을 안전하게 float로 변환한다.
+    """
+    if value is None:
+        return float(default)
+
+    if isinstance(value, bool):
+        return float(value)
+
+    try:
+        return float(value)
+    except (
+        TypeError,
+        ValueError,
+        OverflowError,
+    ):
+        return float(default)
+
+
+def clamp_score(
+    value: Any,
+    *,
+    minimum: float = 0.0,
+    maximum: float = 100.0,
+) -> float:
+    """
+    점수를 지정된 범위로 제한한다.
+    """
+    normalized = safe_float(
+        value,
+        default=minimum,
+    )
+
+    return max(
+        minimum,
+        min(
+            maximum,
+            normalized,
+        ),
+    )
+
+
+def calculate_available_average(
+    *values: Any,
+) -> float:
+    """
+    0보다 큰 유효 점수만 평균에 포함한다.
+    """
+    normalized_values: list[float] = []
+
+    for value in values:
+        normalized = clamp_score(value)
+
+        if normalized > 0.0:
+            normalized_values.append(
+                normalized
+            )
+
+    if not normalized_values:
+        return 0.0
+
+    return round(
+        sum(normalized_values)
+        / len(normalized_values),
+        2,
+    )
+
+
+def extract_registry_scores(
+    parse_result: DuckParseResult,
+) -> dict[str, float]:
+    """
+    DuckParseResult의 Registry Match에서 점수를 추출한다.
+
+    Parser가 인식하지 못한 항목은 0점으로 반환한다.
+    """
+    if not isinstance(
+        parse_result,
+        DuckParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be DuckParseResult"
+        )
+
+    type_score = 0.0
+    breed_score = 0.0
+    cut_score = 0.0
+
+    breed_tenderness_score = 0.0
+    cut_tenderness_score = 0.0
+
+    breed_flavor_score = 0.0
+    cut_flavor_score = 0.0
+
+    growth_score = 0.0
+    rarity_score = 0.0
+    fat_score = 0.0
+    yield_score = 0.0
+
+    if (
+        parse_result.duck_type_match
+        is not None
+    ):
+        duck_type = (
+            parse_result
+            .duck_type_match
+            .duck_type
+        )
+
+        type_score = clamp_score(
+            duck_type.score
+        )
+
+    if parse_result.breed_match is not None:
+        breed = parse_result.breed_match.breed
+
+        breed_score = clamp_score(
+            breed.score
+        )
+        breed_tenderness_score = (
+            clamp_score(
+                breed.tenderness_score
+            )
+        )
+        breed_flavor_score = clamp_score(
+            breed.flavor_score
+        )
+        growth_score = clamp_score(
+            breed.growth_score
+        )
+        rarity_score = clamp_score(
+            breed.rarity_score
+        )
+
+    if parse_result.cut_match is not None:
+        cut = parse_result.cut_match.cut
+
+        cut_score = clamp_score(
+            cut.score
+        )
+        cut_tenderness_score = clamp_score(
+            cut.tenderness_score
+        )
+        cut_flavor_score = clamp_score(
+            cut.flavor_score
+        )
+        fat_score = clamp_score(
+            cut.fat_score
+        )
+        yield_score = clamp_score(
+            cut.yield_score
+        )
+
+    return {
+        "duck_type": type_score,
+        "breed": breed_score,
+        "cut": cut_score,
+        "tenderness": (
+            calculate_available_average(
+                breed_tenderness_score,
+                cut_tenderness_score,
+            )
+        ),
+        "flavor": (
+            calculate_available_average(
+                breed_flavor_score,
+                cut_flavor_score,
+            )
+        ),
+        "growth": growth_score,
+        "rarity": rarity_score,
+        "fat": fat_score,
+        "yield": yield_score,
+    }
+
+
+def calculate_duck_knowledge_score(
+    *,
+    duck_type_score: Any,
+    breed_score: Any,
+    cut_score: Any,
+    weights: Mapping[str, float] | None = None,
+) -> float:
+    """
+    인식된 Duck Registry 항목만 이용해
+    Knowledge 점수를 계산한다.
+
+    인식되지 않은 항목은 분모에서 제외한다.
+    """
+    score_weights = dict(
+        weights
+        or DEFAULT_KNOWLEDGE_WEIGHTS
+    )
+
+    registry_scores = {
+        "duck_type": clamp_score(
+            duck_type_score
+        ),
+        "breed": clamp_score(
+            breed_score
+        ),
+        "cut": clamp_score(
+            cut_score
+        ),
+    }
+
+    weighted_sum = 0.0
+    total_weight = 0.0
+
+    for key, score in registry_scores.items():
+        if score <= 0.0:
+            continue
+
+        weight = max(
+            0.0,
+            safe_float(
+                score_weights.get(key)
+            ),
+        )
+
+        if weight <= 0.0:
+            continue
+
+        weighted_sum += score * weight
+        total_weight += weight
+
+    if total_weight <= 0.0:
+        return 0.0
+
+    return round(
+        clamp_score(
+            weighted_sum / total_weight
+        ),
+        2,
+    )
+
+
+def calculate_duck_scores(
+    *,
+    product: Mapping[str, Any],
+    parse_result: DuckParseResult,
+    context: FoodKnowledgeContext | None = None,
+) -> dict[str, float]:
+    """
+    외부 상품 점수와 Duck Registry 점수를 구성한다.
+
+    현재 context는 Provider 인터페이스 호환성을 위해
+    전달받으며, priority별 가중치는 아직 적용하지 않는다.
+    """
+    if not isinstance(
+        product,
+        Mapping,
+    ):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        DuckParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be DuckParseResult"
+        )
+
+    del context
+
+    registry_scores = extract_registry_scores(
+        parse_result
+    )
+
+    knowledge_score = (
+        calculate_duck_knowledge_score(
+            duck_type_score=(
+                registry_scores["duck_type"]
+            ),
+            breed_score=registry_scores[
+                "breed"
+            ],
+            cut_score=registry_scores[
+                "cut"
+            ],
+        )
+    )
+
+    return {
+        "quality": round(
+            clamp_score(
+                product.get("quality_score")
+            ),
+            2,
+        ),
+        "price": round(
+            clamp_score(
+                product.get("price_score")
+            ),
+            2,
+        ),
+        "trust": round(
+            clamp_score(
+                product.get("trust_score")
+            ),
+            2,
+        ),
+        "duck_type": registry_scores[
+            "duck_type"
+        ],
+        "breed": registry_scores["breed"],
+        "cut": registry_scores["cut"],
+        "tenderness": registry_scores[
+            "tenderness"
+        ],
+        "flavor": registry_scores[
+            "flavor"
+        ],
+        "growth": registry_scores[
+            "growth"
+        ],
+        "rarity": registry_scores[
+            "rarity"
+        ],
+        "fat": registry_scores["fat"],
+        "yield": registry_scores["yield"],
+        "knowledge": knowledge_score,
+    }
+
+
+def calculate_duck_final_score(
+    scores: Mapping[str, Any],
+    *,
+    weights: Mapping[str, float] | None = None,
+) -> float:
+    """
+    외부 상품 점수와 Duck Knowledge 점수로
+    최종 점수를 계산한다.
+    """
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    score_weights = dict(
+        weights
+        or DEFAULT_FINAL_SCORE_WEIGHTS
+    )
+
+    weighted_sum = 0.0
+
+    for key, weight in score_weights.items():
+        normalized_weight = max(
+            0.0,
+            safe_float(weight),
+        )
+
+        weighted_sum += (
+            clamp_score(
+                scores.get(key)
+            )
+            * normalized_weight
+        )
+
+    return round(
+        clamp_score(weighted_sum),
+        2,
+    )
+
+
+__all__ = [
+    "DEFAULT_KNOWLEDGE_WEIGHTS",
+    "DEFAULT_FINAL_SCORE_WEIGHTS",
+    "safe_float",
+    "clamp_score",
+    "calculate_available_average",
+    "extract_registry_scores",
+    "calculate_duck_knowledge_score",
+    "calculate_duck_scores",
+    "calculate_duck_final_score",
+]
+
+================================================================
+FILE: app/services/food/knowledge/meat/duck/type_registry.py
+================================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryEntry, RegistryMatch
+from app.services.food.knowledge.common.base_registry import AliasMatch, BaseAliasRegistry, normalize_string_list, optional_string, safe_float
+from app.services.food.knowledge.registry_loader import KnowledgeRegistryLoader, get_knowledge_registry_loader
+
+DUCK_TYPE_REGISTRY_ID = "duck.types"
+
+
+def _aliases(canonical_name: str, raw_aliases: Any) -> tuple[str, ...]:
+    values = [canonical_name, *normalize_string_list(raw_aliases)]
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+    return tuple(result)
+
+
+@dataclass(frozen=True, kw_only=True)
+class DuckType(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    type_category: str
+    score: float
+    premium: bool
+    flavor_intensity: str | None
+    tenderness_level: str | None
+    typical_uses: tuple[str, ...]
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        canonical_name = str(self.canonical_name).strip()
+        type_category = str(self.type_category).strip().lower()
+        if not canonical_name:
+            raise ValueError("canonical_name must not be empty")
+        if not type_category:
+            raise ValueError("type_category must not be empty")
+        object.__setattr__(self, "canonical_name", canonical_name)
+        object.__setattr__(self, "type_category", type_category)
+        object.__setattr__(self, "aliases", tuple(str(v).strip() for v in self.aliases if str(v).strip()))
+        object.__setattr__(self, "typical_uses", tuple(str(v).strip() for v in self.typical_uses if str(v).strip()))
+        object.__setattr__(self, "score", max(0.0, min(100.0, float(self.score))))
+        object.__setattr__(self, "premium", bool(self.premium))
+        for field_name in ("flavor_intensity", "tenderness_level", "description"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, str(value).strip() or None)
+
+
+@dataclass(frozen=True, kw_only=True)
+class DuckTypeMatch(RegistryMatch[DuckType]):
+    @property
+    def duck_type(self) -> DuckType:
+        return self.entry
+
+
+class DuckTypeRegistry(BaseAliasRegistry[DuckType]):
+    registry_id = DUCK_TYPE_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(self, loader: KnowledgeRegistryLoader | None = None) -> None:
+        super().__init__(loader=loader or get_knowledge_registry_loader())
+
+    def build_entry(self, registry_key: str, raw_entry: Mapping[str, Any]) -> DuckType:
+        known_fields = {"canonical_name", "aliases", "type_category", "score", "premium", "flavor_intensity", "tenderness_level", "typical_uses", "description"}
+        metadata = {key: copy.deepcopy(value) for key, value in raw_entry.items() if key not in known_fields}
+        canonical_name = str(raw_entry.get("canonical_name", registry_key)).strip()
+        return DuckType(
+            registry_key=registry_key,
+            canonical_name=canonical_name or registry_key,
+            aliases=_aliases(canonical_name, raw_entry.get("aliases")),
+            type_category=str(raw_entry.get("type_category", registry_key)).strip().lower() or registry_key.lower(),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            flavor_intensity=optional_string(raw_entry.get("flavor_intensity")),
+            tenderness_level=optional_string(raw_entry.get("tenderness_level")),
+            typical_uses=normalize_string_list(raw_entry.get("typical_uses")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(self, text: str) -> DuckTypeMatch | None:
+        raw_match = super().match(text)
+        return None if raw_match is None else self._convert_match(raw_match)
+
+    def find_all(self, text: str) -> list[DuckTypeMatch]:
+        return [self._convert_match(match) for match in super().find_all(text)]
+
+    def lookup(self, text: str) -> DuckType | None:
+        match = self.match(text)
+        return None if match is None else match.entry
+
+    def list(self, *, premium_only: bool = False, type_category: str | None = None) -> list[DuckType]:
+        entries = [entry for entry in super().list() if isinstance(entry, DuckType)]
+        if premium_only:
+            entries = [entry for entry in entries if entry.premium]
+        if type_category is not None:
+            normalized = str(type_category).strip().lower()
+            entries = [entry for entry in entries if entry.type_category == normalized]
+        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+
+    @staticmethod
+    def _convert_match(raw_match: AliasMatch[DuckType]) -> DuckTypeMatch:
+        return DuckTypeMatch(entry=raw_match.entry, matched_alias=raw_match.matched_alias, normalized_alias=raw_match.normalized_alias, match_start=raw_match.match_start, match_end=raw_match.match_end, confidence=raw_match.confidence, exact_match=raw_match.exact_match)
+
+
+__all__ = ["DUCK_TYPE_REGISTRY_ID", "DuckType", "DuckTypeMatch", "DuckTypeRegistry"]

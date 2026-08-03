@@ -1,0 +1,50 @@
+# Venison Phase 8 Step 2C
+
+## Objective
+
+Resolve the authoritative data source used by
+KnowledgeRegistryLoader for registry ID `venison.cuts`.
+
+## Confirmed Before Execution
+
+- VenisonCutRegistry delegates data access to
+  KnowledgeRegistryLoader.
+- Runtime Registry contains `tenderloin`.
+- Breast Registry key and aliases are absent.
+- cut_registry.py is an adapter/model file, not the
+  authoritative data store.
+
+## Modification
+
+- Application source modified: NO
+- Registry data modified: NO
+- Test source modified: NO
+
+## Required Output
+
+- Loader implementation
+- Loader runtime paths
+- Raw `venison.cuts` data
+- Raw `tenderloin` entry
+- Repository or external data source path
+- Current regression baseline
+
+## Step 2D Entry Condition
+
+Step 2D may add the `breast` entry only after the
+authoritative source path is identified.
+
+Required canonical contract:
+
+- registry_key: breast
+- canonical_name: 사슴가슴살
+- english_name: Breast
+- cut_group: breast
+
+Required aliases:
+
+- 사슴가슴살
+- 사슴 가슴살
+- 가슴살
+- venison breast
+- deer breast

@@ -1,0 +1,7 @@
+{"term_id": "TERM-001", "term": "Institutional Capability", "definition": "AI를 직원이나 주권자가 아닌 조직적 능력으로 보는 개념", "source_discoveries": ["AD-176"], "status": "working_term"}
+{"term_id": "TERM-002", "term": "Institutional Wisdom Engine", "definition": "Wisdom 생성·정제·계승을 지원하는 시스템 개념", "source_discoveries": ["AD-191", "AD-215"], "status": "working_term"}
+{"term_id": "TERM-003", "term": "Decision Episode", "definition": "Institutional Wisdom의 최소 운영 단위", "source_discoveries": ["AD-210", "AD-211", "AD-250"], "status": "working_term"}
+{"term_id": "TERM-004", "term": "Temporal Contract", "definition": "Institutional Entity의 유효 시간·검토·대체 관계", "source_discoveries": ["AD-203", "AD-255"], "status": "working_term"}
+{"term_id": "TERM-005", "term": "Institutional Awareness", "definition": "운영·학습·정체성 Loop의 건전성을 관찰하는 메타 기능", "source_discoveries": ["AD-216", "AD-258"], "status": "working_term"}
+{"term_id": "TERM-006", "term": "Institutional Capability Gain", "definition": "AI 도입 이후 Institution 자체의 능력 향상 지표", "source_discoveries": ["AD-244"], "status": "working_term"}
+{"term_id": "TERM-007", "term": "Stewardship Engineering", "definition": "통제가 아닌 공동체의 자율적 성숙을 지원하는 경계", "source_discoveries": ["AD-232"], "status": "working_term"}

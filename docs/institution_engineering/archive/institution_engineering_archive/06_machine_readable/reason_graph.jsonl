@@ -1,0 +1,6 @@
+{"edge_id": "RG-001", "subject": "AD-177", "predicate": "supports", "object": "AI-AXIOM-PURPOSE-PRECEDES-INTELLIGENCE"}
+{"edge_id": "RG-002", "subject": "AD-193", "predicate": "supports", "object": "RH-001"}
+{"edge_id": "RG-003", "subject": "AD-210", "predicate": "refined_by", "object": "AD-250"}
+{"edge_id": "RG-004", "subject": "AD-203", "predicate": "refined_by", "object": "AD-255"}
+{"edge_id": "RG-005", "subject": "AD-243", "predicate": "supports", "object": "AD-244"}
+{"edge_id": "RG-006", "subject": "AD-216", "predicate": "refined_by", "object": "AD-258"}

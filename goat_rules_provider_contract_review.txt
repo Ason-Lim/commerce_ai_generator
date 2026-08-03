@@ -1,0 +1,6071 @@
+==================================================
+GOAT RULES / PROVIDER CONTRACT REVIEW — RETRY
+==================================================
+
+===== 1. Repository Identity =====
+/Users/mom/commerce_ai_generator
+main
+39ce15d (HEAD -> main, origin/main, origin/HEAD) feat(food): complete venison provider integration
+420b046 feat(food): add Duck Knowledge Provider and registry integration
+84f79d0 docs(governance): install governance operations package v1.0
+db236d1 (tag: governance-registry-v1.0) docs(governance): approve Governance Registry v1.0 Official
+3850507 (tag: project-governance-architecture-v1.0) docs(governance): approve Project Governance Architecture v1.0 Official
+
+===== 2. Current Goat Files =====
+app/services/food/knowledge/meat/goat/__init__.py
+app/services/food/knowledge/meat/goat/attributes.py
+app/services/food/knowledge/meat/goat/breed_registry.py
+app/services/food/knowledge/meat/goat/cut_registry.py
+app/services/food/knowledge/meat/goat/parser_models.py
+app/services/food/knowledge/meat/goat/parser.py
+app/services/food/knowledge/meat/goat/scoring.py
+app/services/food/knowledge/meat/goat/type_registry.py
+
+===== 3. Current Goat Tests =====
+tests/services/food/knowledge/meat/goat/test_goat_parser_models.py
+tests/services/food/knowledge/meat/goat/test_goat_parser.py
+tests/services/food/knowledge/meat/goat/test_goat_registries.py
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py
+
+===== 4. Venison Rules =====
+PATH: app/services/food/knowledge/meat/venison/rules.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.venison.parser_models import (
+    VenisonParseResult,
+)
+
+
+def apply_venison_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, float],
+    parse_result: VenisonParseResult,
+) -> tuple[list[str], list[str]]:
+    """
+    사슴고기 분석 결과를 기반으로 추천 이유와 경고를 생성한다.
+
+    Rules는 설명과 경고만 생성하며,
+    attributes, scores 또는 parse_result를 변경하지 않는다.
+    """
+    if not isinstance(attributes, Mapping):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(scores, Mapping):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        VenisonParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be VenisonParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    country = attributes.get("country")
+    venison_type = attributes.get(
+        "venison_type"
+    )
+    breed = attributes.get("breed")
+    cut = attributes.get("cut")
+
+    if venison_type:
+        reasons.append(
+            f"사슴고기 유형은 {venison_type}입니다."
+        )
+
+        type_description = attributes.get(
+            "venison_type_description"
+        )
+
+        if type_description:
+            reasons.append(
+                str(type_description)
+            )
+
+    if breed:
+        reasons.append(
+            f"사슴 품종 또는 종은 {breed}입니다."
+        )
+
+        breed_description = attributes.get(
+            "breed_description"
+        )
+
+        if breed_description:
+            reasons.append(
+                str(breed_description)
+            )
+
+    if country:
+        reasons.append(
+            f"원산지는 {country}입니다."
+        )
+    elif not any(
+        "원산지" in warning
+        for warning in warnings
+    ):
+        warnings.append(
+            "원산지 정보가 확인되지 않았습니다."
+        )
+
+    if cut:
+        reasons.append(
+            f"{cut} 부위 상품입니다."
+        )
+
+        cut_description = attributes.get(
+            "cut_description"
+        )
+
+        if cut_description:
+            reasons.append(
+                str(cut_description)
+            )
+
+    cooking_methods = (
+        attributes.get(
+            "cut_cooking_methods"
+        )
+        or []
+    )
+
+    if cooking_methods:
+        method_text = ", ".join(
+            str(method).strip()
+            for method in cooking_methods
+            if str(method).strip()
+        )
+
+        if method_text:
+            reasons.append(
+                "Registry 기준 권장 조리 방식은 "
+                f"{method_text}입니다."
+            )
+
+    typical_uses = (
+        attributes.get(
+            "venison_type_typical_uses"
+        )
+        or []
+    )
+
+    if typical_uses:
+        use_text = ", ".join(
+            str(use).strip()
+            for use in typical_uses
+            if str(use).strip()
+        )
+
+        if use_text:
+            reasons.append(
+                "Registry 기준 대표 활용 방식은 "
+                f"{use_text}입니다."
+            )
+
+    flavor_intensity = attributes.get(
+        "venison_type_flavor_intensity"
+    )
+
+    if flavor_intensity == "mild":
+        reasons.append(
+            "사슴고기 유형 기준 풍미가 비교적 "
+            "순한 편입니다."
+        )
+    elif flavor_intensity == "medium":
+        reasons.append(
+            "사슴고기 유형 기준 적당한 풍미를 "
+            "기대할 수 있습니다."
+        )
+    elif flavor_intensity == "strong":
+        reasons.append(
+            "사슴고기 유형 기준 풍미가 진한 "
+            "편입니다."
+        )
+
+    tenderness_level = attributes.get(
+        "venison_type_tenderness_level"
+    )
+
+    if tenderness_level == "high":
+        reasons.append(
+            "사슴고기 유형 기준 부드러운 육질을 "
+            "기대할 수 있습니다."
+        )
+    elif tenderness_level == "low":
+        warnings.append(
+            "사슴고기 유형 기준 육질이 단단할 수 있어 "
+            "장시간 조리가 적합할 수 있습니다."
+        )
+
+    if scores.get(
+        "venison_type",
+        0.0,
+    ) >= 85.0:
+        reasons.append(
+            "사슴고기 유형 Registry 기준 평가가 "
+            "높은 유형입니다."
+        )
+
+    if scores.get(
+        "breed",
+        0.0,
+    ) >= 85.0:
+        reasons.append(
+            "품종 Registry 기준 평가가 "
+            "높은 품종 또는 종입니다."
+        )
+
+    if scores.get(
+        "cut",
+        0.0,
+    ) >= 85.0:
+        reasons.append(
+            "Registry 기준 상품성이 높은 "
+            "부위입니다."
+        )
+
+    if scores.get(
+        "tenderness",
+        0.0,
+    ) >= 85.0:
+        reasons.append(
+            "품종과 부위 기준 부드러운 식감을 "
+            "기대할 수 있습니다."
+        )
+
+    if scores.get(
+        "flavor",
+        0.0,
+    ) >= 85.0:
+        reasons.append(
+            "품종과 부위 기준 풍미 평가가 "
+            "높은 상품입니다."
+        )
+
+    if scores.get(
+        "rarity",
+        0.0,
+    ) >= 80.0:
+        reasons.append(
+            "품종 Registry 기준 희소성이 "
+            "높은 상품입니다."
+        )
+
+    if (
+        attributes.get(
+            "venison_type_premium"
+        )
+        or attributes.get(
+            "breed_premium"
+        )
+        or attributes.get(
+            "cut_premium"
+        )
+    ):
+        reasons.append(
+            "Registry에서 프리미엄 속성이 "
+            "확인되었습니다."
+        )
+
+    storage_type = attributes.get(
+        "storage_type"
+    )
+
+    if storage_type:
+        reasons.append(
+            f"보관 상태는 {storage_type}입니다."
+        )
+
+    certifications = (
+        attributes.get("certifications")
+        or []
+    )
+
+    if certifications:
+        certification_text = ", ".join(
+            str(certification).strip()
+            for certification in certifications
+            if str(certification).strip()
+        )
+
+        if certification_text:
+            reasons.append(
+                "표시된 인증 정보는 "
+                f"{certification_text}입니다."
+            )
+
+    bone_status = attributes.get(
+        "bone_status"
+    )
+
+    if bone_status:
+        reasons.append(
+            f"뼈 상태 표시는 {bone_status}입니다."
+        )
+
+    skin_status = attributes.get(
+        "skin_status"
+    )
+
+    if skin_status:
+        reasons.append(
+            f"껍질 상태 표시는 {skin_status}입니다."
+        )
+
+    if not parse_result.is_complete:
+        warnings.append(
+            "사슴고기 유형, 품종, 부위 정보가 "
+            "모두 확인되지 않았습니다."
+        )
+
+    if scores.get(
+        "knowledge",
+        0.0,
+    ) <= 0.0:
+        warnings.append(
+            "사슴고기 Registry 기반 평가 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    return (
+        deduplicate_strings(reasons),
+        deduplicate_strings(warnings),
+    )
+
+
+def deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    """
+    빈 문자열과 중복 문자열을 제거한다.
+
+    최초 등장 순서는 유지한다.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        normalized = str(value).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(normalized)
+
+    return result
+
+
+__all__ = [
+    "apply_venison_rules",
+    "deduplicate_strings",
+]
+
+===== 5. Duck Rules =====
+PATH: app/services/food/knowledge/meat/duck/rules.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.duck.parser_models import (
+    DuckParseResult,
+)
+
+
+def apply_duck_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, float],
+    parse_result: DuckParseResult,
+) -> tuple[
+    list[str],
+    list[str],
+]:
+    """
+    오리고기 분석 결과를 기반으로 추천 이유와 경고를 생성한다.
+
+    Rules는 설명과 경고만 생성하며,
+    attributes 또는 scores를 변경하지 않는다.
+    """
+    if not isinstance(
+        attributes,
+        Mapping,
+    ):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        DuckParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be DuckParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    country = attributes.get("country")
+    duck_type = attributes.get("duck_type")
+    breed = attributes.get("breed")
+    cut = attributes.get("cut")
+
+    if duck_type:
+        reasons.append(
+            f"오리 유형은 {duck_type}입니다."
+        )
+
+        type_description = attributes.get(
+            "duck_type_description"
+        )
+
+        if type_description:
+            reasons.append(
+                str(type_description)
+            )
+
+    if breed:
+        reasons.append(
+            f"품종 또는 상업 계통은 {breed}입니다."
+        )
+
+    if country:
+        reasons.append(
+            f"원산지는 {country}입니다."
+        )
+    elif not any(
+        "원산지" in warning
+        for warning in warnings
+    ):
+        warnings.append(
+            "원산지 정보가 확인되지 않았습니다."
+        )
+
+    if cut:
+        reasons.append(
+            f"{cut} 부위 상품입니다."
+        )
+
+    cooking_methods = (
+        attributes.get(
+            "cut_cooking_methods"
+        )
+        or []
+    )
+
+    if cooking_methods:
+        method_text = ", ".join(
+            str(method).strip()
+            for method in cooking_methods
+            if str(method).strip()
+        )
+
+        if method_text:
+            reasons.append(
+                "Registry 기준 권장 조리 방식은 "
+                f"{method_text}입니다."
+            )
+
+    typical_uses = (
+        attributes.get(
+            "duck_type_typical_uses"
+        )
+        or []
+    )
+
+    if typical_uses:
+        use_text = ", ".join(
+            str(use).strip()
+            for use in typical_uses
+            if str(use).strip()
+        )
+
+        if use_text:
+            reasons.append(
+                "Registry 기준 대표 활용 방식은 "
+                f"{use_text}입니다."
+            )
+
+    flavor_intensity = attributes.get(
+        "duck_type_flavor_intensity"
+    )
+
+    if flavor_intensity == "mild":
+        reasons.append(
+            "오리 유형 기준 풍미가 비교적 "
+            "순한 편입니다."
+        )
+    elif flavor_intensity == "medium":
+        reasons.append(
+            "오리 유형 기준 적당한 풍미를 "
+            "기대할 수 있습니다."
+        )
+    elif flavor_intensity == "strong":
+        reasons.append(
+            "오리 유형 기준 풍미가 진한 "
+            "편입니다."
+        )
+
+    tenderness_level = attributes.get(
+        "duck_type_tenderness_level"
+    )
+
+    if tenderness_level == "high":
+        reasons.append(
+            "오리 유형 기준 부드러운 육질을 "
+            "기대할 수 있습니다."
+        )
+    elif tenderness_level == "low":
+        warnings.append(
+            "오리 유형 기준 육질이 단단할 수 있어 "
+            "장시간 조리가 적합할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "duck_type",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "오리 유형 Registry 기준 상품성이 "
+            "높은 유형입니다."
+        )
+
+    if (
+        scores.get(
+            "breed",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종 Registry 기준 평가가 "
+            "높은 품종 또는 계통입니다."
+        )
+
+    if (
+        scores.get(
+            "cut",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "상품성이 높은 부위로 "
+            "분류됩니다."
+        )
+
+    if (
+        scores.get(
+            "tenderness",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 부드러운 식감을 "
+            "기대할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "flavor",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 풍미 평가가 "
+            "높은 상품입니다."
+        )
+
+    if (
+        scores.get(
+            "rarity",
+            0.0,
+        )
+        >= 80.0
+    ):
+        reasons.append(
+            "품종 Registry 기준 희소성이 "
+            "높은 상품입니다."
+        )
+
+    if (
+        attributes.get(
+            "duck_type_premium"
+        )
+        or attributes.get(
+            "breed_premium"
+        )
+        or attributes.get(
+            "cut_premium"
+        )
+    ):
+        reasons.append(
+            "Registry에서 프리미엄 속성이 "
+            "확인되었습니다."
+        )
+
+    storage_type = attributes.get(
+        "storage_type"
+    )
+
+    if storage_type:
+        reasons.append(
+            f"보관 상태는 {storage_type}입니다."
+        )
+
+    certifications = (
+        attributes.get(
+            "certifications"
+        )
+        or []
+    )
+
+    if certifications:
+        certification_text = ", ".join(
+            str(certification).strip()
+            for certification in certifications
+            if str(certification).strip()
+        )
+
+        if certification_text:
+            reasons.append(
+                "표시된 인증 정보는 "
+                f"{certification_text}입니다."
+            )
+
+    bone_status = attributes.get(
+        "bone_status"
+    )
+
+    if bone_status:
+        reasons.append(
+            f"뼈 상태 표시는 {bone_status}입니다."
+        )
+
+    skin_status = attributes.get(
+        "skin_status"
+    )
+
+    if skin_status:
+        reasons.append(
+            f"껍질 상태 표시는 {skin_status}입니다."
+        )
+
+    if not parse_result.is_complete:
+        warnings.append(
+            "오리 유형, 품종, 부위 정보가 "
+            "모두 확인되지 않았습니다."
+        )
+
+    if (
+        scores.get(
+            "knowledge",
+            0.0,
+        )
+        <= 0.0
+    ):
+        warnings.append(
+            "오리고기 Registry 기반 평가 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    return (
+        deduplicate_strings(reasons),
+        deduplicate_strings(warnings),
+    )
+
+
+def deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    """
+    빈 문자열과 중복 문자열을 제거한다.
+
+    최초 등장 순서는 유지한다.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        normalized = str(value).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(normalized)
+
+    return result
+
+
+__all__ = [
+    "apply_duck_rules",
+    "deduplicate_strings",
+]
+
+===== 6. Lamb Rules =====
+PATH: app/services/food/knowledge/meat/lamb/rules.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.lamb.parser_models import (
+    LambParseResult,
+)
+
+
+def apply_lamb_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, float],
+    parse_result: LambParseResult,
+) -> tuple[
+    list[str],
+    list[str],
+]:
+    """
+    양고기 분석 결과를 기반으로
+    추천 이유와 경고를 생성한다.
+
+    Rules는 설명과 경고만 생성하며,
+    점수를 직접 변경하지 않는다.
+    """
+    if not isinstance(
+        attributes,
+        Mapping,
+    ):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        LambParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be LambParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    country = attributes.get(
+        "country"
+    )
+    age = attributes.get(
+        "age"
+    )
+    breed = attributes.get(
+        "breed"
+    )
+    cut = attributes.get(
+        "cut"
+    )
+
+    if age:
+        reasons.append(
+            f"연령 분류는 {age}입니다."
+        )
+
+        age_description = attributes.get(
+            "age_description"
+        )
+
+        if age_description:
+            reasons.append(
+                str(age_description)
+            )
+
+    if breed:
+        reasons.append(
+            f"품종은 {breed}입니다."
+        )
+
+    if country:
+        reasons.append(
+            f"원산지는 {country}입니다."
+        )
+    elif not any(
+        "원산지" in warning
+        for warning in warnings
+    ):
+        warnings.append(
+            "원산지 정보가 확인되지 않았습니다."
+        )
+
+    if cut:
+        reasons.append(
+            f"{cut} 부위 상품입니다."
+        )
+
+    cooking_methods = (
+        attributes.get(
+            "cut_cooking_methods"
+        )
+        or []
+    )
+
+    if cooking_methods:
+        method_text = ", ".join(
+            str(method)
+            for method in cooking_methods
+            if str(method).strip()
+        )
+
+        if method_text:
+            reasons.append(
+                "Registry 기준 권장 조리 방식은 "
+                f"{method_text}입니다."
+            )
+
+    flavor_intensity = attributes.get(
+        "age_flavor_intensity"
+    )
+
+    if flavor_intensity == "mild":
+        reasons.append(
+            "연령 분류 기준 풍미 강도가 "
+            "비교적 순한 편입니다."
+        )
+    elif flavor_intensity == "medium":
+        reasons.append(
+            "연령 분류 기준 적당한 풍미를 "
+            "기대할 수 있습니다."
+        )
+    elif flavor_intensity == "strong":
+        reasons.append(
+            "연령 분류 기준 양고기 풍미가 "
+            "강한 편입니다."
+        )
+
+    tenderness_level = attributes.get(
+        "age_tenderness_level"
+    )
+
+    if tenderness_level == "high":
+        reasons.append(
+            "연령 분류 기준 부드러운 육질을 "
+            "기대할 수 있습니다."
+        )
+    elif tenderness_level == "low":
+        warnings.append(
+            "연령 분류 기준 육질이 단단할 수 있어 "
+            "장시간 조리가 적합할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "age",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "연령 분류 기준 상품성이 높은 "
+            "양고기입니다."
+        )
+
+    if (
+        scores.get(
+            "breed",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종 Registry 기준 평가가 "
+            "높은 품종입니다."
+        )
+
+    if (
+        scores.get(
+            "cut",
+            0.0,
+        )
+        >= 90.0
+    ):
+        reasons.append(
+            "상품성이 높은 부위로 "
+            "분류됩니다."
+        )
+
+    if (
+        scores.get(
+            "tenderness",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 부드러운 식감을 "
+            "기대할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "flavor",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 풍미 평가가 "
+            "높은 상품입니다."
+        )
+
+    if (
+        attributes.get(
+            "age_premium"
+        )
+        or attributes.get(
+            "breed_premium"
+        )
+        or attributes.get(
+            "cut_premium"
+        )
+    ):
+        reasons.append(
+            "Registry에서 프리미엄 속성이 "
+            "확인되었습니다."
+        )
+
+    storage_type = attributes.get(
+        "storage_type"
+    )
+
+    if storage_type:
+        reasons.append(
+            f"보관 상태는 {storage_type}입니다."
+        )
+
+    certifications = (
+        attributes.get(
+            "certifications"
+        )
+        or []
+    )
+
+    if certifications:
+        certification_text = ", ".join(
+            str(certification)
+            for certification in certifications
+            if str(certification).strip()
+        )
+
+        if certification_text:
+            reasons.append(
+                "표시된 인증 정보는 "
+                f"{certification_text}입니다."
+            )
+
+    if not parse_result.is_complete:
+        warnings.append(
+            "연령, 품종, 부위 정보가 "
+            "모두 확인되지 않았습니다."
+        )
+
+    if (
+        scores.get(
+            "knowledge",
+            0.0,
+        )
+        <= 0.0
+    ):
+        warnings.append(
+            "양고기 Registry 기반 평가 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    return (
+        deduplicate_strings(
+            reasons
+        ),
+        deduplicate_strings(
+            warnings
+        ),
+    )
+
+
+def deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    """
+    빈 문자열과 중복 문자열을 제거한다.
+
+    최초 등장 순서는 유지한다.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        normalized = str(
+            value
+        ).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(
+            normalized
+        )
+
+    return result
+
+
+__all__ = [
+    "apply_lamb_rules",
+    "deduplicate_strings",
+]
+
+===== 7. Chicken Rules =====
+PATH: app/services/food/knowledge/meat/chicken/rules.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.meat.chicken.parser_models import (
+    ChickenParseResult,
+)
+
+
+def apply_chicken_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, float],
+    parse_result: ChickenParseResult,
+) -> tuple[
+    list[str],
+    list[str],
+]:
+    """
+    닭고기 분석 결과를 기반으로 추천 이유와 경고를 생성한다.
+
+    Rules는 설명과 경고만 생성하며,
+    attributes 또는 scores를 변경하지 않는다.
+    """
+    if not isinstance(
+        attributes,
+        Mapping,
+    ):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        ChickenParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be ChickenParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    country = attributes.get("country")
+    chicken_type = attributes.get(
+        "chicken_type"
+    )
+    breed = attributes.get("breed")
+    cut = attributes.get("cut")
+
+    if chicken_type:
+        reasons.append(
+            f"닭 유형은 {chicken_type}입니다."
+        )
+
+        type_description = attributes.get(
+            "chicken_type_description"
+        )
+
+        if type_description:
+            reasons.append(
+                str(type_description)
+            )
+
+    if breed:
+        reasons.append(
+            f"품종은 {breed}입니다."
+        )
+
+    if country:
+        reasons.append(
+            f"원산지는 {country}입니다."
+        )
+    elif not any(
+        "원산지" in warning
+        for warning in warnings
+    ):
+        warnings.append(
+            "원산지 정보가 확인되지 않았습니다."
+        )
+
+    if cut:
+        reasons.append(
+            f"{cut} 부위 상품입니다."
+        )
+
+    cooking_methods = (
+        attributes.get(
+            "cut_cooking_methods"
+        )
+        or []
+    )
+
+    if cooking_methods:
+        method_text = ", ".join(
+            str(method).strip()
+            for method in cooking_methods
+            if str(method).strip()
+        )
+
+        if method_text:
+            reasons.append(
+                "Registry 기준 권장 조리 방식은 "
+                f"{method_text}입니다."
+            )
+
+    typical_uses = (
+        attributes.get(
+            "chicken_type_typical_uses"
+        )
+        or []
+    )
+
+    if typical_uses:
+        use_text = ", ".join(
+            str(use).strip()
+            for use in typical_uses
+            if str(use).strip()
+        )
+
+        if use_text:
+            reasons.append(
+                "Registry 기준 대표 활용 방식은 "
+                f"{use_text}입니다."
+            )
+
+    flavor_intensity = attributes.get(
+        "chicken_type_flavor_intensity"
+    )
+
+    if flavor_intensity == "mild":
+        reasons.append(
+            "닭 유형 기준 풍미가 비교적 "
+            "순한 편입니다."
+        )
+    elif flavor_intensity == "medium":
+        reasons.append(
+            "닭 유형 기준 적당한 풍미를 "
+            "기대할 수 있습니다."
+        )
+    elif flavor_intensity == "strong":
+        reasons.append(
+            "닭 유형 기준 풍미가 진한 "
+            "편입니다."
+        )
+
+    tenderness_level = attributes.get(
+        "chicken_type_tenderness_level"
+    )
+
+    if tenderness_level == "high":
+        reasons.append(
+            "닭 유형 기준 부드러운 육질을 "
+            "기대할 수 있습니다."
+        )
+    elif tenderness_level == "low":
+        warnings.append(
+            "닭 유형 기준 육질이 단단할 수 있어 "
+            "장시간 조리가 적합할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "chicken_type",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "닭 유형 Registry 기준 상품성이 "
+            "높은 유형입니다."
+        )
+
+    if (
+        scores.get(
+            "breed",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종 Registry 기준 평가가 "
+            "높은 품종입니다."
+        )
+
+    if (
+        scores.get(
+            "cut",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "상품성이 높은 부위로 "
+            "분류됩니다."
+        )
+
+    if (
+        scores.get(
+            "tenderness",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 부드러운 식감을 "
+            "기대할 수 있습니다."
+        )
+
+    if (
+        scores.get(
+            "flavor",
+            0.0,
+        )
+        >= 85.0
+    ):
+        reasons.append(
+            "품종과 부위 기준 풍미 평가가 "
+            "높은 상품입니다."
+        )
+
+    if (
+        scores.get(
+            "rarity",
+            0.0,
+        )
+        >= 80.0
+    ):
+        reasons.append(
+            "품종 Registry 기준 희소성이 "
+            "높은 상품입니다."
+        )
+
+    if (
+        attributes.get(
+            "chicken_type_premium"
+        )
+        or attributes.get(
+            "breed_premium"
+        )
+        or attributes.get(
+            "cut_premium"
+        )
+    ):
+        reasons.append(
+            "Registry에서 프리미엄 속성이 "
+            "확인되었습니다."
+        )
+
+    storage_type = attributes.get(
+        "storage_type"
+    )
+
+    if storage_type:
+        reasons.append(
+            f"보관 상태는 {storage_type}입니다."
+        )
+
+    certifications = (
+        attributes.get(
+            "certifications"
+        )
+        or []
+    )
+
+    if certifications:
+        certification_text = ", ".join(
+            str(certification).strip()
+            for certification in certifications
+            if str(certification).strip()
+        )
+
+        if certification_text:
+            reasons.append(
+                "표시된 인증 정보는 "
+                f"{certification_text}입니다."
+            )
+
+    bone_status = attributes.get(
+        "bone_status"
+    )
+
+    if bone_status:
+        reasons.append(
+            f"뼈 상태 표시는 {bone_status}입니다."
+        )
+
+    skin_status = attributes.get(
+        "skin_status"
+    )
+
+    if skin_status:
+        reasons.append(
+            f"껍질 상태 표시는 {skin_status}입니다."
+        )
+
+    if not parse_result.is_complete:
+        warnings.append(
+            "닭 유형, 품종, 부위 정보가 "
+            "모두 확인되지 않았습니다."
+        )
+
+    if (
+        scores.get(
+            "knowledge",
+            0.0,
+        )
+        <= 0.0
+    ):
+        warnings.append(
+            "닭고기 Registry 기반 평가 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    return (
+        deduplicate_strings(reasons),
+        deduplicate_strings(warnings),
+    )
+
+
+def deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    """
+    빈 문자열과 중복 문자열을 제거한다.
+
+    최초 등장 순서는 유지한다.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        normalized = str(value).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(normalized)
+
+    return result
+
+
+__all__ = [
+    "apply_chicken_rules",
+    "deduplicate_strings",
+]
+
+===== 8. Venison Rule Tests =====
+PATH: tests/services/food/knowledge/meat/venison/test_venison_rules.py
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.meat.venison import (
+    VenisonParser,
+    apply_venison_rules,
+    build_venison_attributes,
+    calculate_venison_scores,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.venison.parser_models import (
+    VenisonParseResult,
+)
+
+
+def _analyze_rules(
+    product: dict[str, object],
+) -> tuple[list[str], list[str]]:
+    parse_result = (
+        VenisonParser().parse_product(product)
+    )
+
+    attributes = build_venison_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_venison_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    return apply_venison_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+
+def test_complete_product_generates_reasons() -> None:
+    reasons, warnings = _analyze_rules(
+        {
+            "product_name": (
+                "뉴질랜드산 어린사슴 "
+                "레드디어 사슴가슴살 500g"
+            ),
+            "venison_type": "어린 사슴",
+            "deer_species": "Red Deer",
+            "cut": "사슴 가슴살",
+            "country": "뉴질랜드",
+            "country_code": "NZ",
+            "weight": "500g",
+            "storage_type": "냉동",
+            "certifications": [
+                "HACCP",
+            ],
+            "bone_status": "boneless",
+            "skin_status": "skinless",
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        }
+    )
+
+    assert (
+        "사슴고기 유형은 어린사슴입니다."
+        in reasons
+    )
+    assert (
+        "사슴 품종 또는 종은 레드디어입니다."
+        in reasons
+    )
+    assert (
+        "원산지는 뉴질랜드입니다."
+        in reasons
+    )
+    assert (
+        "사슴가슴살 부위 상품입니다."
+        in reasons
+    )
+    assert (
+        "보관 상태는 냉동입니다."
+        in reasons
+    )
+    assert (
+        "표시된 인증 정보는 HACCP입니다."
+        in reasons
+    )
+    assert (
+        "뼈 상태 표시는 boneless입니다."
+        in reasons
+    )
+    assert (
+        "껍질 상태 표시는 skinless입니다."
+        in reasons
+    )
+    assert warnings == []
+
+
+def test_registry_guidance_is_included() -> None:
+    reasons, _ = _analyze_rules(
+        {
+            "product_name": (
+                "뉴질랜드산 어린사슴 "
+                "레드디어 사슴가슴살"
+            ),
+            "venison_type": "어린 사슴",
+            "deer_species": "Red Deer",
+            "cut": "사슴가슴살",
+            "country": "뉴질랜드",
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        }
+    )
+
+    assert any(
+        reason.startswith(
+            "Registry 기준 권장 조리 방식은 "
+        )
+        for reason in reasons
+    )
+
+    assert any(
+        reason.startswith(
+            "Registry 기준 대표 활용 방식은 "
+        )
+        for reason in reasons
+    )
+
+    assert (
+        "사슴고기 유형 Registry 기준 평가가 "
+        "높은 유형입니다."
+        in reasons
+    )
+
+    assert (
+        "품종 Registry 기준 평가가 "
+        "높은 품종 또는 종입니다."
+        in reasons
+    )
+
+    assert (
+        "Registry에서 프리미엄 속성이 "
+        "확인되었습니다."
+        in reasons
+    )
+
+
+def test_breast_contract_generates_cut_reason() -> None:
+    reasons, warnings = _analyze_rules(
+        {
+            "product_name": "사슴가슴살",
+            "cut": "venison breast",
+            "country": "뉴질랜드",
+        }
+    )
+
+    assert (
+        "사슴가슴살 부위 상품입니다."
+        in reasons
+    )
+
+    assert any(
+        reason.startswith(
+            "Registry 기준 권장 조리 방식은 "
+        )
+        for reason in reasons
+    )
+
+    assert (
+        "사슴고기 유형, 품종, 부위 정보가 "
+        "모두 확인되지 않았습니다."
+        in warnings
+    )
+
+    assert not any(
+        "평가 점수를 계산할 수 없습니다"
+        in warning
+        for warning in warnings
+    )
+
+
+def test_missing_origin_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "사슴가슴살",
+        }
+    )
+
+    assert (
+        "원산지 정보가 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_incomplete_parse_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "사슴가슴살",
+            "country": "뉴질랜드",
+        }
+    )
+
+    assert (
+        "사슴고기 유형, 품종, 부위 정보가 "
+        "모두 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_zero_knowledge_generates_warning() -> None:
+    parse_result = VenisonParser().parse(
+        "일반 식품 상품"
+    )
+
+    reasons, warnings = apply_venison_rules(
+        attributes={
+            "country": "대한민국",
+            "venison_type": None,
+            "breed": None,
+            "cut": None,
+        },
+        scores={
+            "knowledge": 0.0,
+        },
+        parse_result=parse_result,
+    )
+
+    assert reasons == [
+        "원산지는 대한민국입니다.",
+    ]
+
+    assert (
+        "사슴고기 Registry 기반 평가 점수를 "
+        "계산할 수 없습니다."
+        in warnings
+    )
+
+
+def test_parser_warnings_are_preserved() -> None:
+    parse_result = VenisonParser().parse(
+        "사슴가슴살"
+    )
+
+    assert parse_result.warnings
+
+    _, warnings = apply_venison_rules(
+        attributes={
+            "country": None,
+            "venison_type": None,
+            "breed": None,
+            "cut": "사슴가슴살",
+        },
+        scores={
+            "knowledge": 83.0,
+            "cut": 83.0,
+        },
+        parse_result=parse_result,
+    )
+
+    for warning in parse_result.warnings:
+        assert warning in warnings
+
+
+def test_rules_do_not_mutate_inputs() -> None:
+    product = {
+        "product_name": "사슴가슴살",
+        "cut": "사슴가슴살",
+    }
+
+    parse_result = (
+        VenisonParser().parse_product(product)
+    )
+
+    attributes = build_venison_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_venison_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    attributes_before = deepcopy(attributes)
+    scores_before = deepcopy(scores)
+    warnings_before = list(
+        parse_result.warnings
+    )
+
+    apply_venison_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert attributes == attributes_before
+    assert scores == scores_before
+    assert (
+        parse_result.warnings
+        == warnings_before
+    )
+
+
+def test_deduplicate_strings_preserves_order() -> None:
+    assert deduplicate_strings(
+        [
+            "",
+            "첫 번째",
+            "두 번째",
+            "첫 번째",
+            "  세 번째  ",
+            "두 번째",
+        ]
+    ) == [
+        "첫 번째",
+        "두 번째",
+        "세 번째",
+    ]
+
+
+def test_rules_reject_invalid_attributes() -> None:
+    parse_result = VenisonParser().parse(
+        "사슴가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="attributes must be a Mapping",
+    ):
+        apply_venison_rules(
+            attributes=[],  # type: ignore[arg-type]
+            scores={},
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_scores() -> None:
+    parse_result = VenisonParser().parse(
+        "사슴가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        apply_venison_rules(
+            attributes={},
+            scores=[],  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "VenisonParseResult"
+        ),
+    ):
+        apply_venison_rules(
+            attributes={},
+            scores={},
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_rules_return_string_lists() -> None:
+    parse_result = VenisonParseResult(
+        original_text="사슴가슴살",
+        normalized_text="사슴가슴살",
+    )
+
+    reasons, warnings = apply_venison_rules(
+        attributes={},
+        scores={},
+        parse_result=parse_result,
+    )
+
+    assert isinstance(reasons, list)
+    assert isinstance(warnings, list)
+    assert all(
+        isinstance(item, str)
+        for item in reasons
+    )
+    assert all(
+        isinstance(item, str)
+        for item in warnings
+    )
+
+===== 9. Duck Rule Tests =====
+PATH: tests/services/food/knowledge/meat/duck/test_duck_rules.py
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.rules import (
+    apply_duck_rules,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_duck_scores,
+)
+
+
+def _analyze_rules(
+    product: dict[str, object],
+) -> tuple[list[str], list[str]]:
+    parse_result = DuckParser().parse_product(
+        product
+    )
+    attributes = build_duck_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+    scores = calculate_duck_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    return apply_duck_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+
+def test_complete_product_generates_reasons() -> None:
+    reasons, warnings = _analyze_rules(
+        {
+            "product_name": (
+                "국내산 훈제오리 체리밸리 "
+                "오리가슴살 500g"
+            ),
+            "country": "대한민국",
+            "storage_type": "냉장",
+            "certifications": [
+                "무항생제",
+                "HACCP",
+            ],
+            "bone_status": "boneless",
+            "skin_status": "skinless",
+        }
+    )
+
+    assert "오리 유형은 훈제오리입니다." in reasons
+    assert (
+        "품종 또는 상업 계통은 "
+        "체리밸리입니다."
+        in reasons
+    )
+    assert "원산지는 대한민국입니다." in reasons
+    assert "오리가슴살 부위 상품입니다." in reasons
+    assert (
+        "보관 상태는 냉장입니다."
+        in reasons
+    )
+    assert (
+        "표시된 인증 정보는 "
+        "무항생제, HACCP입니다."
+        in reasons
+    )
+    assert (
+        "뼈 상태 표시는 boneless입니다."
+        in reasons
+    )
+    assert (
+        "껍질 상태 표시는 skinless입니다."
+        in reasons
+    )
+    assert warnings == []
+
+
+def test_complete_product_includes_registry_guidance() -> None:
+    reasons, _ = _analyze_rules(
+        {
+            "product_name": (
+                "국내산 훈제오리 체리밸리 "
+                "오리가슴살"
+            ),
+            "country": "대한민국",
+        }
+    )
+
+    assert any(
+        reason.startswith(
+            "Registry 기준 권장 조리 방식은 "
+        )
+        for reason in reasons
+    )
+
+    assert (
+        "품종 Registry 기준 평가가 "
+        "높은 품종 또는 계통입니다."
+        in reasons
+    )
+    assert (
+        "상품성이 높은 부위로 "
+        "분류됩니다."
+        in reasons
+    )
+    assert (
+        "품종과 부위 기준 부드러운 식감을 "
+        "기대할 수 있습니다."
+        in reasons
+    )
+    assert (
+        "품종과 부위 기준 풍미 평가가 "
+        "높은 상품입니다."
+        in reasons
+    )
+    assert (
+        "Registry에서 프리미엄 속성이 "
+        "확인되었습니다."
+        in reasons
+    )
+
+
+def test_missing_origin_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "오리가슴살",
+        }
+    )
+
+    assert (
+        "원산지 정보가 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_incomplete_parse_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "오리가슴살",
+            "country": "대한민국",
+        }
+    )
+
+    assert (
+        "오리 유형, 품종, 부위 정보가 "
+        "모두 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_zero_knowledge_generates_warning() -> None:
+    parse_result = DuckParser().parse(
+        "일반 식품 상품"
+    )
+
+    attributes = {
+        "country": "대한민국",
+        "duck_type": None,
+        "breed": None,
+        "cut": None,
+    }
+    scores = {
+        "knowledge": 0.0,
+    }
+
+    _, warnings = apply_duck_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "오리고기 Registry 기반 평가 점수를 "
+        "계산할 수 없습니다."
+        in warnings
+    )
+
+
+def test_parser_warnings_are_preserved() -> None:
+    parse_result = DuckParser().parse_product(
+        {
+            "product_name": "오리가슴살",
+        }
+    )
+
+    reasons, warnings = apply_duck_rules(
+        attributes={
+            "country": None,
+            "duck_type": None,
+            "breed": None,
+            "cut": "오리가슴살",
+        },
+        scores={
+            "knowledge": 90.0,
+            "cut": 90.0,
+        },
+        parse_result=parse_result,
+    )
+
+    assert reasons == [
+        "오리가슴살 부위 상품입니다.",
+        "상품성이 높은 부위로 분류됩니다.",
+    ]
+
+    for warning in parse_result.warnings:
+        assert warning in warnings
+
+
+def test_rules_do_not_mutate_inputs() -> None:
+    parse_result = DuckParser().parse_product(
+        {
+            "product_name": "오리가슴살",
+        }
+    )
+
+    attributes = {
+        "country": None,
+        "duck_type": None,
+        "breed": None,
+        "cut": "오리가슴살",
+        "certifications": [],
+    }
+    scores = {
+        "knowledge": 90.0,
+        "cut": 90.0,
+    }
+
+    original_attributes = dict(attributes)
+    original_scores = dict(scores)
+
+    apply_duck_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert attributes == original_attributes
+    assert scores == original_scores
+
+
+def test_deduplicate_strings_preserves_order() -> None:
+    assert deduplicate_strings(
+        [
+            "첫 번째",
+            "",
+            "두 번째",
+            "첫 번째",
+            " 두 번째 ",
+            "세 번째",
+        ]
+    ) == [
+        "첫 번째",
+        "두 번째",
+        "세 번째",
+    ]
+
+
+def test_rules_reject_invalid_attributes() -> None:
+    parse_result = DuckParser().parse(
+        "오리가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="attributes must be a Mapping",
+    ):
+        apply_duck_rules(
+            attributes=[],  # type: ignore[arg-type]
+            scores={},
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_scores() -> None:
+    parse_result = DuckParser().parse(
+        "오리가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        apply_duck_rules(
+            attributes={},
+            scores=[],  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "DuckParseResult"
+        ),
+    ):
+        apply_duck_rules(
+            attributes={},
+            scores={},
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+===== 10. Lamb Rule Tests =====
+PATH: tests/services/food/knowledge/meat/lamb/test_lamb_rules.py
+[NOT FOUND]
+
+===== 11. Chicken Rule Tests =====
+PATH: tests/services/food/knowledge/meat/chicken/test_chicken_rules.py
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.chicken.attributes import (
+    build_chicken_attributes,
+)
+from app.services.food.knowledge.meat.chicken.parser import (
+    ChickenParser,
+)
+from app.services.food.knowledge.meat.chicken.rules import (
+    apply_chicken_rules,
+    deduplicate_strings,
+)
+from app.services.food.knowledge.meat.chicken.scoring import (
+    calculate_chicken_scores,
+)
+
+
+def _analyze_rules(
+    product: dict[str, object],
+) -> tuple[list[str], list[str]]:
+    parse_result = ChickenParser().parse_product(
+        product
+    )
+    attributes = build_chicken_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+    scores = calculate_chicken_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    return apply_chicken_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+
+def test_complete_product_generates_reasons() -> None:
+    reasons, warnings = _analyze_rules(
+        {
+            "product_name": (
+                "국내산 토종닭 Ross 308 "
+                "닭다리살 500g"
+            ),
+            "country": "대한민국",
+            "storage_type": "냉장",
+            "certifications": [
+                "무항생제",
+                "HACCP",
+            ],
+            "bone_status": "boneless",
+            "skin_status": "skinless",
+        }
+    )
+
+    assert "닭 유형은 토종닭입니다." in reasons
+    assert "품종은 로스 308입니다." in reasons
+    assert "원산지는 대한민국입니다." in reasons
+    assert "닭다리살 부위 상품입니다." in reasons
+    assert (
+        "보관 상태는 냉장입니다."
+        in reasons
+    )
+    assert (
+        "표시된 인증 정보는 "
+        "무항생제, HACCP입니다."
+        in reasons
+    )
+    assert (
+        "뼈 상태 표시는 boneless입니다."
+        in reasons
+    )
+    assert (
+        "껍질 상태 표시는 skinless입니다."
+        in reasons
+    )
+    assert warnings == []
+
+
+def test_complete_product_includes_registry_guidance() -> None:
+    reasons, _ = _analyze_rules(
+        {
+            "product_name": (
+                "국내산 토종닭 Ross 308 "
+                "닭다리살"
+            ),
+            "country": "대한민국",
+        }
+    )
+
+    assert (
+        "Registry 기준 권장 조리 방식은 "
+        "grilling, frying, braising, "
+        "roasting입니다."
+        in reasons
+    )
+    assert (
+        "Registry 기준 대표 활용 방식은 "
+        "soup, braising, boiling입니다."
+        in reasons
+    )
+    assert (
+        "닭 유형 Registry 기준 상품성이 "
+        "높은 유형입니다."
+        in reasons
+    )
+    assert (
+        "상품성이 높은 부위로 "
+        "분류됩니다."
+        in reasons
+    )
+    assert (
+        "품종과 부위 기준 부드러운 식감을 "
+        "기대할 수 있습니다."
+        in reasons
+    )
+
+
+def test_missing_origin_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "닭가슴살",
+        }
+    )
+
+    assert (
+        "원산지 정보가 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_incomplete_parse_generates_warning() -> None:
+    _, warnings = _analyze_rules(
+        {
+            "product_name": "닭가슴살",
+            "country": "대한민국",
+        }
+    )
+
+    assert (
+        "닭 유형, 품종, 부위 정보가 "
+        "모두 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_zero_knowledge_generates_warning() -> None:
+    parse_result = ChickenParser().parse(
+        "일반 식품 상품"
+    )
+
+    attributes = {
+        "country": "대한민국",
+        "chicken_type": None,
+        "breed": None,
+        "cut": None,
+    }
+    scores = {
+        "knowledge": 0.0,
+    }
+
+    _, warnings = apply_chicken_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "닭고기 Registry 기반 평가 점수를 "
+        "계산할 수 없습니다."
+        in warnings
+    )
+
+
+def test_parser_warnings_are_preserved() -> None:
+    parse_result = ChickenParser().parse_product(
+        {
+            "product_name": "닭가슴살",
+        }
+    )
+
+    reasons, warnings = apply_chicken_rules(
+        attributes={
+            "country": None,
+            "chicken_type": None,
+            "breed": None,
+            "cut": "닭가슴살",
+        },
+        scores={
+            "knowledge": 82.0,
+            "cut": 82.0,
+        },
+        parse_result=parse_result,
+    )
+
+    assert reasons == [
+        "닭가슴살 부위 상품입니다.",
+    ]
+    for warning in parse_result.warnings:
+        assert warning in warnings
+
+
+def test_rules_do_not_mutate_inputs() -> None:
+    parse_result = ChickenParser().parse_product(
+        {
+            "product_name": "닭가슴살",
+        }
+    )
+
+    attributes = {
+        "country": None,
+        "chicken_type": None,
+        "breed": None,
+        "cut": "닭가슴살",
+        "certifications": [],
+    }
+    scores = {
+        "knowledge": 82.0,
+        "cut": 82.0,
+    }
+
+    original_attributes = dict(attributes)
+    original_scores = dict(scores)
+
+    apply_chicken_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert attributes == original_attributes
+    assert scores == original_scores
+
+
+def test_deduplicate_strings_preserves_order() -> None:
+    assert deduplicate_strings(
+        [
+            "첫 번째",
+            "",
+            "두 번째",
+            "첫 번째",
+            " 두 번째 ",
+            "세 번째",
+        ]
+    ) == [
+        "첫 번째",
+        "두 번째",
+        "세 번째",
+    ]
+
+
+def test_rules_reject_invalid_attributes() -> None:
+    parse_result = ChickenParser().parse(
+        "닭가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="attributes must be a Mapping",
+    ):
+        apply_chicken_rules(
+            attributes=[],  # type: ignore[arg-type]
+            scores={},
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_scores() -> None:
+    parse_result = ChickenParser().parse(
+        "닭가슴살"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        apply_chicken_rules(
+            attributes={},
+            scores=[],  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "ChickenParseResult"
+        ),
+    ):
+        apply_chicken_rules(
+            attributes={},
+            scores={},
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+===== 12. Available Rule Test Files =====
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py
+tests/services/food/knowledge/meat/duck/test_duck_rules.py
+tests/services/food/knowledge/meat/venison/test_venison_rules.py
+
+===== 13. Venison Provider =====
+PATH: app/services/food/knowledge/meat/venison/provider.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.venison.attributes import (
+    build_venison_attributes,
+    extract_venison_product_name,
+)
+from app.services.food.knowledge.meat.venison.parser import (
+    VenisonParser,
+)
+from app.services.food.knowledge.meat.venison.rules import (
+    apply_venison_rules,
+)
+from app.services.food.knowledge.meat.venison.scoring import (
+    calculate_venison_final_score,
+    calculate_venison_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class VenisonKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    Venison Knowledge Provider.
+
+    기존 Venison Parser, Attributes, Scoring, Rules를
+    순서대로 오케스트레이션하고 FoodKnowledgeResult를 생성한다.
+    """
+
+    category_id = "venison"
+    category_name = "사슴고기"
+    parent_category_id = "meat"
+    provider_id = "venison"
+
+    aliases = (
+        "사슴고기",
+        "사슴 고기",
+        "사슴육",
+        "사슴 육",
+        "녹육",
+        "venison",
+        "deer meat",
+        "deer",
+        "엘크고기",
+        "엘크 고기",
+        "elk meat",
+        "레드디어",
+        "red deer",
+        "어린사슴",
+        "어린 사슴",
+        "송아지사슴",
+        "사슴안심",
+        "사슴 안심",
+        "venison tenderloin",
+        "deer tenderloin",
+        "사슴등심",
+        "사슴 등심",
+        "venison loin",
+        "사슴가슴살",
+        "사슴 가슴살",
+        "venison breast",
+        "deer breast",
+        "사슴다리",
+        "사슴 다리",
+        "사슴다리살",
+        "사슴 다리살",
+        "venison leg",
+        "사슴어깨",
+        "사슴 어깨",
+        "venison shoulder",
+        "사슴목살",
+        "사슴 목살",
+        "venison neck",
+        "사슴갈비",
+        "사슴 갈비",
+        "venison ribs",
+        "사슴로스",
+        "사슴 로스",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: VenisonParser | None = None,
+    ) -> None:
+        self.parser = (
+            parser
+            if parser is not None
+            else VenisonParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if normalized_category_id in {
+                self.category_id,
+                self.provider_id,
+            }:
+                return True
+
+            if normalized_category_id in alias_set:
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: (
+            FoodKnowledgeContext | None
+        ) = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Venison 분석 파이프라인을 실행한다.
+        """
+        if not isinstance(product, Mapping):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        if not product:
+            raise ValueError(
+                "product must not be empty"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_venison_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_venison_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_venison_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = (
+            apply_venison_rules(
+                attributes=attributes,
+                scores=scores,
+                parse_result=parse_result,
+            )
+        )
+
+        final_score = (
+            calculate_venison_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=product_name or None,
+            attributes=dict(attributes),
+            scores=dict(scores),
+            reasons=list(reasons),
+            warnings=list(warnings),
+            final_score=final_score,
+            confidence=parse_result.confidence,
+            metadata={
+                "provider_id": self.provider_id,
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "category_id": self.category_id,
+                "parent_category_id": (
+                    self.parent_category_id
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": list(
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+            },
+            raw_product=dict(product_data),
+        )
+
+
+__all__ = [
+    "VenisonKnowledgeProvider",
+]
+
+===== 14. Duck Provider =====
+PATH: app/services/food/knowledge/meat/duck/provider.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.attributes import (
+    build_duck_attributes,
+    extract_duck_product_name,
+)
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.rules import (
+    apply_duck_rules,
+)
+from app.services.food.knowledge.meat.duck.scoring import (
+    calculate_duck_final_score,
+    calculate_duck_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class DuckKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    오리고기 Knowledge Provider.
+
+    역할:
+    - DuckParser 실행
+    - Duck attributes 구성
+    - Duck scoring 실행
+    - Duck rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    """
+
+    category_id = "duck"
+    category_name = "오리고기"
+
+    aliases = (
+        "오리고기",
+        "오리 고기",
+        "오리육",
+        "duck",
+        "훈제오리",
+        "훈제 오리",
+        "백숙오리",
+        "백숙 오리",
+        "생오리",
+        "생 오리",
+        "통오리",
+        "통 오리",
+        "오리가슴살",
+        "오리 가슴살",
+        "오리안심",
+        "오리 안심",
+        "오리다리",
+        "오리 다리",
+        "오리다리살",
+        "오리 다리살",
+        "오리날개",
+        "오리 날개",
+        "오리목",
+        "오리 목",
+        "오리로스",
+        "오리 로스",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: DuckParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else DuckParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Duck Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: (
+            FoodKnowledgeContext | None
+        ) = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Duck 분석 파이프라인을 순서대로 실행한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_duck_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_duck_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_duck_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = (
+            apply_duck_rules(
+                attributes=attributes,
+                scores=scores,
+                parse_result=parse_result,
+            )
+        )
+
+        final_score = (
+            calculate_duck_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=(
+                parse_result.confidence
+            ),
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "parent_category_id": "meat",
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": (
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "DuckKnowledgeProvider",
+]
+
+===== 15. Lamb Provider =====
+PATH: app/services/food/knowledge/meat/lamb/provider.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.lamb.attributes import (
+    build_lamb_attributes,
+    extract_lamb_product_name,
+)
+from app.services.food.knowledge.meat.lamb.parser import (
+    LambParser,
+)
+from app.services.food.knowledge.meat.lamb.rules import (
+    apply_lamb_rules,
+)
+from app.services.food.knowledge.meat.lamb.scoring import (
+    calculate_lamb_final_score,
+    calculate_lamb_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class LambKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    양고기 Knowledge Provider.
+
+    역할:
+    - LambParser 실행
+    - Lamb attributes 구성
+    - Lamb scoring 실행
+    - Lamb rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    """
+
+    category_id = "lamb"
+    category_name = "양고기"
+
+    aliases = (
+        "양고기",
+        "양 고기",
+        "램",
+        "램고기",
+        "램 고기",
+        "어린양",
+        "어린 양",
+        "호깃",
+        "호겟",
+        "머튼",
+        "lamb",
+        "hogget",
+        "mutton",
+        "양갈비",
+        "양 갈비",
+        "램랙",
+        "램 랙",
+        "프렌치랙",
+        "프렌치 랙",
+        "양등심",
+        "양 등심",
+        "램로인",
+        "램 로인",
+        "램숄더",
+        "램 숄더",
+        "램생크",
+        "램 생크",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: LambParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+
+        테스트에서는 별도 Registry를 사용하는
+        LambParser를 전달할 수 있다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else LambParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Lamb Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            if not normalized_name:
+                return False
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        """
+        양고기 상품을 분석하고 표준 결과를 반환한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_lamb_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_lamb_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_lamb_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = apply_lamb_rules(
+            attributes=attributes,
+            scores=scores,
+            parse_result=parse_result,
+        )
+
+        final_score = (
+            calculate_lamb_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=parse_result.confidence,
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "parent_category_id": "meat",
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": (
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "LambKnowledgeProvider",
+]
+
+===== 16. Chicken Provider =====
+PATH: app/services/food/knowledge/meat/chicken/provider.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.attributes import (
+    build_chicken_attributes,
+    extract_chicken_product_name,
+)
+from app.services.food.knowledge.meat.chicken.parser import (
+    ChickenParser,
+)
+from app.services.food.knowledge.meat.chicken.rules import (
+    apply_chicken_rules,
+)
+from app.services.food.knowledge.meat.chicken.scoring import (
+    calculate_chicken_final_score,
+    calculate_chicken_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class ChickenKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    닭고기 Knowledge Provider.
+
+    역할:
+    - ChickenParser 실행
+    - Chicken attributes 구성
+    - Chicken scoring 실행
+    - Chicken rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    """
+
+    category_id = "chicken"
+    category_name = "닭고기"
+
+    aliases = (
+        "닭고기",
+        "닭 고기",
+        "계육",
+        "chicken",
+        "토종닭",
+        "토종 닭",
+        "영계",
+        "오골계",
+        "육계",
+        "닭가슴살",
+        "닭 가슴살",
+        "닭안심",
+        "닭 안심",
+        "닭다리살",
+        "닭 다리살",
+        "닭날개",
+        "닭 날개",
+        "닭봉",
+        "닭 봉",
+        "닭윙",
+        "닭 윙",
+        "닭근위",
+        "닭 근위",
+        "닭똥집",
+        "닭 똥집",
+        "닭발",
+        "닭 발",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: ChickenParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else ChickenParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Chicken Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in alias_set
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: (
+            FoodKnowledgeContext | None
+        ) = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Chicken 분석 파이프라인을 순서대로 실행한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_chicken_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_chicken_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_chicken_scores(
+            product=product_data,
+            parse_result=parse_result,
+            context=context,
+        )
+
+        reasons, warnings = (
+            apply_chicken_rules(
+                attributes=attributes,
+                scores=scores,
+                parse_result=parse_result,
+            )
+        )
+
+        final_score = (
+            calculate_chicken_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=(
+                parse_result.confidence
+            ),
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "parent_category_id": "meat",
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result.metadata.get(
+                        "matched_field_count",
+                        0,
+                    )
+                ),
+                "expected_field_count": (
+                    parse_result.metadata.get(
+                        "expected_field_count",
+                        3,
+                    )
+                ),
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+                "source_type": (
+                    parse_result.metadata.get(
+                        "source_type"
+                    )
+                ),
+                "source_fields": (
+                    parse_result.metadata.get(
+                        "source_fields",
+                        [],
+                    )
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "ChickenKnowledgeProvider",
+]
+
+===== 17. Venison Provider Tests =====
+PATH: tests/services/food/knowledge/meat/venison/test_venison_provider.py
+from __future__ import annotations
+
+from collections.abc import Mapping
+
+import pytest
+
+from app.services.food.knowledge import (
+    FoodKnowledgeResult,
+)
+from app.services.food.knowledge.meat.venison import (
+    VenisonKnowledgeProvider,
+)
+
+
+@pytest.fixture
+def complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "뉴질랜드산 어린사슴 "
+            "레드디어 사슴가슴살 500g"
+        ),
+        "venison_type": "어린 사슴",
+        "deer_species": "Red Deer",
+        "cut": "venison breast",
+        "country": "뉴질랜드",
+        "country_code": "NZ",
+        "weight": "500g",
+        "storage_type": "냉동",
+        "certifications": ["HACCP"],
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_provider_identity() -> None:
+    provider = VenisonKnowledgeProvider()
+
+    assert provider.category_id == "venison"
+    assert provider.parent_category_id == "meat"
+    assert provider.provider_id == "venison"
+
+
+def test_provider_analyzes_complete_product(
+    complete_product: dict[str, object],
+) -> None:
+    provider = VenisonKnowledgeProvider()
+
+    result = provider.analyze(
+        complete_product
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "venison"
+
+    assert result.attributes[
+        "venison_type"
+    ] == "어린사슴"
+
+    assert result.attributes[
+        "breed"
+    ] == "레드디어"
+
+    assert result.attributes[
+        "cut"
+    ] == "사슴가슴살"
+
+    assert result.attributes[
+        "cut_registry_key"
+    ] == "breast"
+
+    assert result.scores[
+        "venison_type"
+    ] == 92.0
+
+    assert result.scores["breed"] == 90.0
+    assert result.scores["cut"] == 83.0
+    assert result.scores["knowledge"] == 87.1
+    assert result.final_score == 83.55
+
+    assert result.reasons
+    assert result.warnings == []
+
+    assert result.metadata[
+        "provider_id"
+    ] == "venison"
+
+
+def test_provider_preserves_breast_contract() -> None:
+    provider = VenisonKnowledgeProvider()
+
+    result = provider.analyze(
+        {
+            "product_name": "사슴가슴살",
+            "cut": "deer breast",
+            "country": "뉴질랜드",
+        }
+    )
+
+    assert result.attributes[
+        "cut"
+    ] == "사슴가슴살"
+
+    assert result.attributes[
+        "cut_registry_key"
+    ] == "breast"
+
+    assert result.attributes[
+        "cut_score"
+    ] == 83.0
+
+    assert result.scores["cut"] == 83.0
+    assert result.scores["knowledge"] == 83.0
+
+    assert any(
+        "사슴가슴살 부위 상품입니다."
+        == reason
+        for reason in result.reasons
+    )
+
+
+def test_provider_supports_cut_only_product() -> None:
+    provider = VenisonKnowledgeProvider()
+
+    result = provider.analyze(
+        {
+            "product_name": "사슴 안심 1kg",
+            "cut": "venison tenderloin",
+            "country": "뉴질랜드",
+        }
+    )
+
+    assert result.attributes[
+        "venison_type"
+    ] is None
+
+    assert result.attributes[
+        "breed"
+    ] is None
+
+    assert result.attributes[
+        "cut"
+    ] == "사슴안심"
+
+    assert result.attributes[
+        "cut_registry_key"
+    ] == "tenderloin"
+
+    assert result.scores["cut"] == 96.0
+    assert result.scores["knowledge"] == 96.0
+
+
+def test_provider_returns_mapping_fields(
+    complete_product: dict[str, object],
+) -> None:
+    result = VenisonKnowledgeProvider().analyze(
+        complete_product
+    )
+
+    assert isinstance(
+        result.attributes,
+        Mapping,
+    )
+
+    assert isinstance(
+        result.scores,
+        Mapping,
+    )
+
+    assert isinstance(result.reasons, list)
+    assert isinstance(result.warnings, list)
+    assert isinstance(result.metadata, Mapping)
+
+
+def test_provider_rejects_non_mapping() -> None:
+    provider = VenisonKnowledgeProvider()
+
+    with pytest.raises(TypeError):
+        provider.analyze(
+            "사슴가슴살"  # type: ignore[arg-type]
+        )
+
+
+def test_provider_rejects_empty_product() -> None:
+    provider = VenisonKnowledgeProvider()
+
+    with pytest.raises(ValueError):
+        provider.analyze({})
+
+
+def test_provider_creates_independent_results(
+    complete_product: dict[str, object],
+) -> None:
+    provider = VenisonKnowledgeProvider()
+
+    first = provider.analyze(
+        complete_product
+    )
+
+    second = provider.analyze(
+        complete_product
+    )
+
+    assert first is not second
+    assert first.attributes is not second.attributes
+    assert first.scores is not second.scores
+    assert first.reasons is not second.reasons
+    assert first.warnings is not second.warnings
+
+
+def test_provider_complete_result_metadata(
+    complete_product: dict[str, object],
+) -> None:
+    result = VenisonKnowledgeProvider().analyze(
+        complete_product
+    )
+
+    assert result.metadata[
+        "provider_id"
+    ] == "venison"
+
+    assert result.metadata[
+        "category_id"
+    ] == "venison"
+
+    assert result.metadata[
+        "parent_category_id"
+    ] == "meat"
+
+===== 18. Duck Provider Tests =====
+PATH: tests/services/food/knowledge/meat/duck/test_duck_provider.py
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.duck.parser import (
+    DuckParser,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+@pytest.fixture
+def provider() -> DuckKnowledgeProvider:
+    return DuckKnowledgeProvider()
+
+
+@pytest.fixture
+def complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "국내산 훈제오리 체리밸리 "
+            "오리가슴살 500g"
+        ),
+        "country": "대한민국",
+        "country_code": "KR",
+        "storage_type": "냉장",
+        "certifications": [
+            "무항생제",
+            "HACCP",
+        ],
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_provider_identity(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    assert provider.category_id == "duck"
+    assert provider.category_name == "오리고기"
+    assert isinstance(
+        provider.parser,
+        DuckParser,
+    )
+
+
+def test_provider_supports_category_id(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    assert provider.supports(
+        category_id="duck"
+    )
+    assert provider.supports(
+        category_id="DUCK"
+    )
+    assert provider.supports(
+        category_id="오리고기"
+    )
+    assert not provider.supports(
+        category_id="chicken"
+    )
+
+
+def test_provider_supports_product_name(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    assert provider.supports(
+        product_name="국내산 오리가슴살 1kg"
+    )
+    assert provider.supports(
+        product_name="훈제오리 슬라이스"
+    )
+    assert provider.supports(
+        product_name="Duck Breast 500g"
+    )
+    assert not provider.supports(
+        product_name="한우 등심 500g"
+    )
+
+
+def test_provider_accepts_parser_injection() -> None:
+    parser = DuckParser()
+    provider = DuckKnowledgeProvider(
+        parser=parser
+    )
+
+    assert provider.parser is parser
+
+
+def test_provider_complete_analysis(
+    provider: DuckKnowledgeProvider,
+    complete_product: dict[str, object],
+) -> None:
+    context = FoodKnowledgeContext(
+        query="프리미엄 오리가슴살",
+        priority="quality",
+    )
+
+    result = provider.analyze(
+        complete_product,
+        context=context,
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "duck"
+    assert result.category_name == "오리고기"
+    assert result.product_name == (
+        "국내산 훈제오리 체리밸리 "
+        "오리가슴살 500g"
+    )
+
+    assert (
+        result.attributes["duck_type"]
+        == "훈제오리"
+    )
+    assert result.attributes["breed"] == (
+        "체리밸리"
+    )
+    assert result.attributes["cut"] == (
+        "오리가슴살"
+    )
+
+    assert result.scores["knowledge"] == 86.6
+    assert result.final_score == 83.3
+    assert result.confidence > 0.0
+    assert result.warnings == []
+    assert result.reasons
+
+    assert (
+        result.metadata["provider_id"]
+        == "duck"
+    )
+    assert (
+        result.metadata[
+            "parent_category_id"
+        ]
+        == "meat"
+    )
+    assert (
+        result.metadata["priority"]
+        == "quality"
+    )
+    assert (
+        result.metadata["is_complete"]
+        is True
+    )
+    assert (
+        result.metadata["is_usable"]
+        is True
+    )
+    assert result.raw_product == (
+        complete_product
+    )
+    assert (
+        result.raw_product
+        is not complete_product
+    )
+
+
+def test_provider_cut_only_analysis(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    product = {
+        "product_name": "국내산 오리가슴살 1kg",
+        "country": "대한민국",
+    }
+
+    result = provider.analyze(product)
+
+    assert result.attributes[
+        "duck_type"
+    ] is None
+    assert result.attributes["breed"] is None
+    assert result.attributes["cut"] == (
+        "오리가슴살"
+    )
+
+    assert result.scores["knowledge"] == 90.0
+    assert result.final_score == 45.0
+    assert result.confidence > 0.0
+    assert result.warnings
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 1
+    )
+    assert (
+        result.metadata["is_complete"]
+        is False
+    )
+    assert (
+        result.metadata["is_usable"]
+        is True
+    )
+
+
+def test_provider_unrecognized_analysis(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    result = provider.analyze(
+        {
+            "product_name": "일반 식품 상품",
+            "country": "대한민국",
+        }
+    )
+
+    assert result.attributes[
+        "duck_type"
+    ] is None
+    assert result.attributes["breed"] is None
+    assert result.attributes["cut"] is None
+
+    assert result.scores["knowledge"] == 0.0
+    assert result.final_score == 0.0
+    assert result.confidence == 0.0
+    assert result.warnings
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 0
+    )
+    assert (
+        result.metadata["is_complete"]
+        is False
+    )
+    assert (
+        result.metadata["is_usable"]
+        is False
+    )
+
+
+def test_provider_preserves_structured_fields(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    result = provider.analyze(
+        {
+            "product_name": "국내산 오리고기",
+            "duck_type": "훈제오리",
+            "duck_breed": "Cherry Valley",
+            "cut": "오리가슴살",
+            "country": "대한민국",
+            "weight": "500g",
+            "storage_type": "냉장",
+            "bone_status": "boneless",
+            "skin_status": "skinless",
+        }
+    )
+
+    assert result.attributes[
+        "duck_type"
+    ] == "훈제오리"
+    assert result.attributes["breed"] == (
+        "체리밸리"
+    )
+    assert result.attributes["cut"] == (
+        "오리가슴살"
+    )
+    assert result.attributes["weight"] == "500g"
+    assert (
+        result.attributes["storage_type"]
+        == "냉장"
+    )
+    assert (
+        result.attributes["bone_status"]
+        == "boneless"
+    )
+    assert (
+        result.attributes["skin_status"]
+        == "skinless"
+    )
+
+
+def test_provider_does_not_mutate_product(
+    provider: DuckKnowledgeProvider,
+    complete_product: dict[str, object],
+) -> None:
+    original = {
+        key: (
+            list(value)
+            if isinstance(value, list)
+            else value
+        )
+        for key, value in complete_product.items()
+    }
+
+    provider.analyze(complete_product)
+
+    assert complete_product == original
+
+
+def test_provider_rejects_invalid_input(
+    provider: DuckKnowledgeProvider,
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        provider.analyze(
+            "오리고기"  # type: ignore[arg-type]
+        )
+
+===== 19. Lamb Provider Tests =====
+PATH: tests/services/food/knowledge/meat/lamb/test_lamb_provider.py
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.lamb import (
+    LambKnowledgeProvider,
+    LambParser,
+    apply_lamb_rules,
+    build_lamb_attributes,
+    calculate_lamb_final_score,
+    calculate_lamb_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+from app.services.food.knowledge.registry import (
+    get_food_provider,
+    resolve_food_provider,
+)
+
+
+@pytest.fixture
+def provider() -> LambKnowledgeProvider:
+    return LambKnowledgeProvider()
+
+
+@pytest.fixture
+def complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "호주산 도퍼 어린양 프렌치랙 500g"
+        ),
+        "country": "호주",
+        "country_code": "AU",
+        "weight": "500g",
+        "storage_type": "냉동",
+        "certifications": [
+            "할랄",
+        ],
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_lamb_provider_is_registered() -> None:
+    provider = get_food_provider(
+        "lamb"
+    )
+
+    assert provider is not None
+    assert provider.category_id == "lamb"
+    assert provider.category_name == "양고기"
+
+
+def test_lamb_provider_resolves_by_product_name() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "호주산 프렌치랙 어린양"
+        )
+    )
+
+    assert provider is not None
+    assert provider.category_id == "lamb"
+
+
+@pytest.mark.parametrize(
+    (
+        "category_id",
+        "product_name",
+        "expected",
+    ),
+    [
+        (
+            "lamb",
+            None,
+            True,
+        ),
+        (
+            "양고기",
+            None,
+            True,
+        ),
+        (
+            None,
+            "뉴질랜드 어린양 램랙",
+            True,
+        ),
+        (
+            None,
+            "도퍼 프렌치랙",
+            True,
+        ),
+        (
+            "beef",
+            None,
+            False,
+        ),
+        (
+            None,
+            "국내산 한우 등심",
+            False,
+        ),
+    ],
+)
+def test_lamb_provider_supports(
+    provider: LambKnowledgeProvider,
+    category_id: str | None,
+    product_name: str | None,
+    expected: bool,
+) -> None:
+    assert (
+        provider.supports(
+            category_id=category_id,
+            product_name=product_name,
+        )
+        is expected
+    )
+
+
+def test_lamb_parser_complete_product(
+    complete_product: dict[str, object],
+) -> None:
+    result = LambParser().parse_product(
+        complete_product
+    )
+
+    assert result.age == "램"
+    assert result.breed == "도퍼"
+    assert result.cut == "램랙"
+    assert result.confidence > 0.0
+    assert result.is_complete is True
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 3
+    )
+
+
+def test_lamb_scoring_complete_product(
+    complete_product: dict[str, object],
+) -> None:
+    parse_result = (
+        LambParser().parse_product(
+            complete_product
+        )
+    )
+
+    scores = calculate_lamb_scores(
+        product=complete_product,
+        parse_result=parse_result,
+    )
+
+    assert scores == {
+        "quality": 80.0,
+        "price": 70.0,
+        "trust": 90.0,
+        "age": 90.0,
+        "breed": 88.0,
+        "cut": 95.0,
+        "tenderness": 90.0,
+        "flavor": 86.0,
+        "knowledge": 91.5,
+    }
+
+    assert (
+        calculate_lamb_final_score(
+            scores
+        )
+        == 85.75
+    )
+
+
+def test_lamb_rules_complete_product(
+    complete_product: dict[str, object],
+) -> None:
+    parse_result = (
+        LambParser().parse_product(
+            complete_product
+        )
+    )
+
+    attributes = build_lamb_attributes(
+        product=complete_product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_lamb_scores(
+        product=complete_product,
+        parse_result=parse_result,
+    )
+
+    reasons, warnings = apply_lamb_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert reasons
+    assert warnings == []
+
+    assert any(
+        "연령 분류는 램" in reason
+        for reason in reasons
+    )
+    assert any(
+        "품종은 도퍼" in reason
+        for reason in reasons
+    )
+    assert any(
+        "램랙 부위" in reason
+        for reason in reasons
+    )
+
+
+def test_lamb_provider_complete_analysis(
+    provider: LambKnowledgeProvider,
+    complete_product: dict[str, object],
+) -> None:
+    context = FoodKnowledgeContext(
+        query="프리미엄 양갈비",
+        priority="quality",
+    )
+
+    result = provider.analyze(
+        complete_product,
+        context=context,
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "lamb"
+    assert result.category_name == "양고기"
+
+    assert result.attributes["age"] == "램"
+    assert result.attributes["breed"] == "도퍼"
+    assert result.attributes["cut"] == "램랙"
+
+    assert result.scores["knowledge"] == 91.5
+    assert result.final_score == 85.75
+    assert result.warnings == []
+
+    assert (
+        result.metadata["provider_id"]
+        == "lamb"
+    )
+    assert (
+        result.metadata[
+            "parent_category_id"
+        ]
+        == "meat"
+    )
+    assert (
+        result.metadata["priority"]
+        == "quality"
+    )
+    assert (
+        result.metadata["is_complete"]
+        is True
+    )
+
+
+def test_lamb_provider_incomplete_analysis(
+    provider: LambKnowledgeProvider,
+) -> None:
+    product = {
+        "product_name": (
+            "수입산 양고기 냉동 1kg"
+        ),
+    }
+
+    result = provider.analyze(
+        product
+    )
+
+    assert result.attributes["age"] is None
+    assert result.attributes["breed"] is None
+    assert result.attributes["cut"] is None
+
+    assert result.scores["knowledge"] == 0.0
+    assert result.final_score == 0.0
+    assert result.confidence == 0.0
+
+    assert result.reasons == []
+    assert result.warnings
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 0
+    )
+    assert (
+        result.metadata["is_complete"]
+        is False
+    )
+
+
+def test_lamb_provider_rejects_invalid_input(
+    provider: LambKnowledgeProvider,
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "product must be a Mapping"
+        ),
+    ):
+        provider.analyze(
+            "양고기"  # type: ignore[arg-type]
+        )
+
+===== 20. Chicken Provider Tests =====
+PATH: tests/services/food/knowledge/meat/chicken/test_chicken_provider.py
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.meat.chicken.parser import (
+    ChickenParser,
+)
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+@pytest.fixture
+def provider() -> ChickenKnowledgeProvider:
+    return ChickenKnowledgeProvider()
+
+
+@pytest.fixture
+def complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "국내산 토종닭 Ross 308 "
+            "닭다리살 500g"
+        ),
+        "country": "대한민국",
+        "country_code": "KR",
+        "storage_type": "냉장",
+        "certifications": [
+            "무항생제",
+            "HACCP",
+        ],
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_provider_identity(
+    provider: ChickenKnowledgeProvider,
+) -> None:
+    assert provider.category_id == "chicken"
+    assert provider.category_name == "닭고기"
+    assert isinstance(
+        provider.parser,
+        ChickenParser,
+    )
+
+
+def test_provider_supports_category_id(
+    provider: ChickenKnowledgeProvider,
+) -> None:
+    assert provider.supports(
+        category_id="chicken"
+    )
+    assert provider.supports(
+        category_id="CHICKEN"
+    )
+    assert provider.supports(
+        category_id="닭고기"
+    )
+    assert not provider.supports(
+        category_id="lamb"
+    )
+
+
+def test_provider_supports_product_name(
+    provider: ChickenKnowledgeProvider,
+) -> None:
+    assert provider.supports(
+        product_name="국내산 닭가슴살 1kg"
+    )
+    assert provider.supports(
+        product_name="토종닭 백숙용"
+    )
+    assert provider.supports(
+        product_name="Chicken Breast 500g"
+    )
+    assert not provider.supports(
+        product_name="한우 등심 500g"
+    )
+
+
+def test_provider_accepts_parser_injection() -> None:
+    parser = ChickenParser()
+    provider = ChickenKnowledgeProvider(
+        parser=parser
+    )
+
+    assert provider.parser is parser
+
+
+def test_provider_complete_analysis(
+    provider: ChickenKnowledgeProvider,
+    complete_product: dict[str, object],
+) -> None:
+    context = FoodKnowledgeContext(
+        query="프리미엄 닭다리살",
+        priority="quality",
+    )
+
+    result = provider.analyze(
+        complete_product,
+        context=context,
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "chicken"
+    assert result.category_name == "닭고기"
+    assert result.product_name == (
+        "국내산 토종닭 Ross 308 "
+        "닭다리살 500g"
+    )
+
+    assert (
+        result.attributes["chicken_type"]
+        == "토종닭"
+    )
+    assert result.attributes["breed"] == (
+        "로스 308"
+    )
+    assert result.attributes["cut"] == (
+        "닭다리살"
+    )
+
+    assert result.scores["knowledge"] == 86.8
+    assert result.final_score == 83.4
+    assert result.confidence > 0.0
+    assert result.warnings == []
+    assert result.reasons
+
+    assert (
+        result.metadata["provider_id"]
+        == "chicken"
+    )
+    assert (
+        result.metadata[
+            "parent_category_id"
+        ]
+        == "meat"
+    )
+    assert (
+        result.metadata["priority"]
+        == "quality"
+    )
+    assert (
+        result.metadata["is_complete"]
+        is True
+    )
+    assert (
+        result.metadata["is_usable"]
+        is True
+    )
+    assert result.raw_product == (
+        complete_product
+    )
+    assert (
+        result.raw_product
+        is not complete_product
+    )
+
+
+def test_provider_cut_only_analysis(
+    provider: ChickenKnowledgeProvider,
+) -> None:
+    product = {
+        "product_name": "국내산 닭가슴살 1kg",
+        "country": "대한민국",
+    }
+
+    result = provider.analyze(product)
+
+    assert result.attributes[
+        "chicken_type"
+    ] is None
+    assert result.attributes["breed"] is None
+    assert result.attributes["cut"] == (
+        "닭가슴살"
+    )
+
+    assert result.scores["knowledge"] == 82.0
+    assert result.final_score == 41.0
+    assert result.confidence > 0.0
+    assert result.warnings
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 1
+    )
+    assert (
+        result.metadata["is_complete"]
+        is False
+    )
+    assert (
+        result.metadata["is_usable"]
+        is True
+    )
+
+
+def test_provider_unrecognized_analysis(
+    provider: ChickenKnowledgeProvider,
+) -> None:
+    result = provider.analyze(
+        {
+            "product_name": "일반 식품 상품",
+            "country": "대한민국",
+        }
+    )
+
+    assert result.attributes[
+        "chicken_type"
+    ] is None
+    assert result.attributes["breed"] is None
+    assert result.attributes["cut"] is None
+
+    assert result.scores["knowledge"] == 0.0
+    assert result.final_score == 0.0
+    assert result.confidence == 0.0
+    assert result.warnings
+
+    assert (
+        result.metadata[
+            "matched_field_count"
+        ]
+        == 0
+    )
+    assert (
+        result.metadata["is_complete"]
+        is False
+    )
+    assert (
+        result.metadata["is_usable"]
+        is False
+    )
+
+
+def test_provider_preserves_structured_fields(
+    provider: ChickenKnowledgeProvider,
+) -> None:
+    result = provider.analyze(
+        {
+            "product_name": "국내산 닭고기",
+            "chicken_type": "영계",
+            "chicken_breed": "Cobb 500",
+            "cut": "닭안심",
+            "country": "대한민국",
+            "weight": "500g",
+            "storage_type": "냉장",
+            "bone_status": "boneless",
+            "skin_status": "skinless",
+        }
+    )
+
+    assert result.attributes[
+        "chicken_type"
+    ] == "영계"
+    assert result.attributes["breed"] == (
+        "코브 500"
+    )
+    assert result.attributes["cut"] == "닭안심"
+    assert result.attributes["weight"] == "500g"
+    assert (
+        result.attributes["storage_type"]
+        == "냉장"
+    )
+    assert (
+        result.attributes["bone_status"]
+        == "boneless"
+    )
+    assert (
+        result.attributes["skin_status"]
+        == "skinless"
+    )
+
+
+def test_provider_does_not_mutate_product(
+    provider: ChickenKnowledgeProvider,
+    complete_product: dict[str, object],
+) -> None:
+    original = {
+        key: (
+            list(value)
+            if isinstance(value, list)
+            else value
+        )
+        for key, value in complete_product.items()
+    }
+
+    provider.analyze(complete_product)
+
+    assert complete_product == original
+
+
+def test_provider_rejects_invalid_input(
+    provider: ChickenKnowledgeProvider,
+) -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        provider.analyze(
+            "닭고기"  # type: ignore[arg-type]
+        )
+
+===== 21. Available Provider Test Files =====
+tests/services/food/knowledge/meat/chicken/test_chicken_provider.py
+tests/services/food/knowledge/meat/duck/test_duck_provider.py
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py
+tests/services/food/knowledge/meat/venison/test_venison_provider.py
+
+===== 22. Common Provider Contract =====
+PATH: app/services/food/knowledge/base.py
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Any, Mapping, Sequence
+
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class FoodKnowledgeProvider(ABC):
+    """
+    식품 카테고리별 Knowledge Provider 공통 인터페이스.
+    """
+
+    category_id: str
+    category_name: str
+    aliases: Sequence[str] = ()
+
+    @abstractmethod
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        raise NotImplementedError
+
+===== 23. FoodKnowledgeResult Contract =====
+PATH: app/services/food/knowledge/models.py
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Mapping
+
+
+@dataclass(frozen=True)
+class FoodKnowledgeContext:
+    """
+    Food Knowledge 분석 실행 문맥.
+    """
+
+    query: str | None = None
+    priority: str | None = None
+    user_mode: str | None = None
+    season: str | None = None
+    region: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class FoodAttribute:
+    key: str
+    value: Any
+    label: str | None = None
+    confidence: float = 1.0
+    source: str | None = None
+
+
+@dataclass
+class FoodScore:
+    key: str
+    score: float
+    label: str | None = None
+    reason: str | None = None
+    weight: float = 1.0
+
+
+@dataclass
+class FoodRuleResult:
+    rule_id: str
+    matched: bool
+    message: str | None = None
+    severity: str = "info"
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class FoodKnowledgeResult:
+    category_id: str
+    category_name: str
+    product_name: str | None = None
+
+    attributes: Dict[str, Any] = field(default_factory=dict)
+    attribute_details: List[FoodAttribute] = field(default_factory=list)
+
+    scores: Dict[str, float] = field(default_factory=dict)
+    score_details: List[FoodScore] = field(default_factory=list)
+
+    rules: List[FoodRuleResult] = field(default_factory=list)
+    reasons: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+
+    final_score: float | None = None
+    confidence: float = 1.0
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    raw_product: Dict[str, Any] | None = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+===== 24. Food Knowledge Registry =====
+PATH: app/services/food/knowledge/registry.py
+from __future__ import annotations
+
+from collections import OrderedDict
+from typing import Iterable, List
+
+from app.services.food.knowledge.base import FoodKnowledgeProvider
+from app.services.food.knowledge.fruit.provider import (
+    FruitKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.beef.provider import (
+    BeefKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.lamb.provider import (
+    LambKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.venison.provider import (
+    VenisonKnowledgeProvider,
+)
+
+class FoodKnowledgeRegistry:
+    """
+    Food Knowledge Provider Registry.
+
+    Provider 등록 순서가 상품명 자동 판별 우선순위가 된다.
+    """
+
+    def __init__(self) -> None:
+        self._providers: OrderedDict[
+            str,
+            FoodKnowledgeProvider,
+        ] = OrderedDict()
+
+    def register(
+        self,
+        provider: FoodKnowledgeProvider,
+        *,
+        replace: bool = False,
+    ) -> None:
+        category_id = self._normalize_category_id(
+            provider.category_id
+        )
+
+        if (
+            category_id in self._providers
+            and not replace
+        ):
+            raise ValueError(
+                f"이미 등록된 Food Provider입니다: {category_id}"
+            )
+
+        self._providers[category_id] = provider
+
+    def unregister(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.pop(
+            self._normalize_category_id(category_id),
+            None,
+        )
+
+    def get(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.get(
+            self._normalize_category_id(category_id)
+        )
+
+    def require(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider:
+        provider = self.get(category_id)
+
+        if provider is None:
+            raise KeyError(
+                f"등록되지 않은 Food Provider입니다: {category_id}"
+            )
+
+        return provider
+
+    def resolve(
+        self,
+        *,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> FoodKnowledgeProvider | None:
+        if category_id:
+            direct_provider = self.get(category_id)
+
+            if direct_provider is not None:
+                return direct_provider
+
+        for provider in self._providers.values():
+            if provider.supports(
+                category_id=category_id,
+                product_name=product_name,
+            ):
+                return provider
+
+        return None
+
+    def list_providers(
+        self,
+    ) -> List[FoodKnowledgeProvider]:
+        return list(self._providers.values())
+
+    def list_category_ids(self) -> List[str]:
+        return list(self._providers.keys())
+
+    def __contains__(
+        self,
+        category_id: object,
+    ) -> bool:
+        if not isinstance(category_id, str):
+            return False
+
+        return (
+            self._normalize_category_id(category_id)
+            in self._providers
+        )
+
+    def __iter__(
+        self,
+    ) -> Iterable[FoodKnowledgeProvider]:
+        return iter(self._providers.values())
+
+    @staticmethod
+    def _normalize_category_id(
+        category_id: str,
+    ) -> str:
+        normalized = str(category_id).strip().lower()
+
+        if not normalized:
+            raise ValueError(
+                "category_id가 비어 있습니다."
+            )
+
+        return normalized
+
+
+FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
+
+FOOD_KNOWLEDGE_REGISTRY.register(
+    FruitKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    VenisonKnowledgeProvider()
+)
+
+FOOD_KNOWLEDGE_REGISTRY.register(
+    BeefKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    LambKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    ChickenKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    DuckKnowledgeProvider()
+)
+
+
+def register_food_provider(
+    provider: FoodKnowledgeProvider,
+    *,
+    replace: bool = False,
+) -> None:
+    FOOD_KNOWLEDGE_REGISTRY.register(
+        provider,
+        replace=replace,
+    )
+
+
+def get_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.get(
+        category_id
+    )
+
+
+def require_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider:
+    return FOOD_KNOWLEDGE_REGISTRY.require(
+        category_id
+    )
+
+
+def resolve_food_provider(
+    *,
+    category_id: str | None = None,
+    product_name: str | None = None,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.resolve(
+        category_id=category_id,
+        product_name=product_name,
+    )
+
+
+def list_food_providers() -> List[FoodKnowledgeProvider]:
+    return FOOD_KNOWLEDGE_REGISTRY.list_providers()
+
+===== 25. Provider Contract Signatures =====
+app/services/food/knowledge/base.py:8:    FoodKnowledgeResult,
+app/services/food/knowledge/base.py:12:class FoodKnowledgeProvider(ABC):
+app/services/food/knowledge/base.py:17:    category_id: str
+app/services/food/knowledge/base.py:22:    def supports(
+app/services/food/knowledge/base.py:24:        category_id: str | None = None,
+app/services/food/knowledge/base.py:30:    def analyze(
+app/services/food/knowledge/base.py:34:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/models.py:49:class FoodKnowledgeResult:
+app/services/food/knowledge/models.py:50:    category_id: str
+app/services/food/knowledge/registry.py:45:        category_id = self._normalize_category_id(
+app/services/food/knowledge/registry.py:46:            provider.category_id
+app/services/food/knowledge/registry.py:50:            category_id in self._providers
+app/services/food/knowledge/registry.py:54:                f"이미 등록된 Food Provider입니다: {category_id}"
+app/services/food/knowledge/registry.py:57:        self._providers[category_id] = provider
+app/services/food/knowledge/registry.py:61:        category_id: str,
+app/services/food/knowledge/registry.py:64:            self._normalize_category_id(category_id),
+app/services/food/knowledge/registry.py:70:        category_id: str,
+app/services/food/knowledge/registry.py:73:            self._normalize_category_id(category_id)
+app/services/food/knowledge/registry.py:78:        category_id: str,
+app/services/food/knowledge/registry.py:80:        provider = self.get(category_id)
+app/services/food/knowledge/registry.py:84:                f"등록되지 않은 Food Provider입니다: {category_id}"
+app/services/food/knowledge/registry.py:92:        category_id: str | None = None,
+app/services/food/knowledge/registry.py:95:        if category_id:
+app/services/food/knowledge/registry.py:96:            direct_provider = self.get(category_id)
+app/services/food/knowledge/registry.py:103:                category_id=category_id,
+app/services/food/knowledge/registry.py:115:    def list_category_ids(self) -> List[str]:
+app/services/food/knowledge/registry.py:120:        category_id: object,
+app/services/food/knowledge/registry.py:122:        if not isinstance(category_id, str):
+app/services/food/knowledge/registry.py:126:            self._normalize_category_id(category_id)
+app/services/food/knowledge/registry.py:136:    def _normalize_category_id(
+app/services/food/knowledge/registry.py:137:        category_id: str,
+app/services/food/knowledge/registry.py:139:        normalized = str(category_id).strip().lower()
+app/services/food/knowledge/registry.py:143:                "category_id가 비어 있습니다."
+app/services/food/knowledge/registry.py:184:    category_id: str,
+app/services/food/knowledge/registry.py:187:        category_id
+app/services/food/knowledge/registry.py:192:    category_id: str,
+app/services/food/knowledge/registry.py:195:        category_id
+app/services/food/knowledge/registry.py:201:    category_id: str | None = None,
+app/services/food/knowledge/registry.py:205:        category_id=category_id,
+app/services/food/knowledge/meat/chicken/provider.py:25:    FoodKnowledgeResult,
+app/services/food/knowledge/meat/chicken/provider.py:29:class ChickenKnowledgeProvider(
+app/services/food/knowledge/meat/chicken/provider.py:41:    - FoodKnowledgeResult 생성
+app/services/food/knowledge/meat/chicken/provider.py:50:    category_id = "chicken"
+app/services/food/knowledge/meat/chicken/provider.py:97:    def supports(
+app/services/food/knowledge/meat/chicken/provider.py:99:        category_id: str | None = None,
+app/services/food/knowledge/meat/chicken/provider.py:103:        category_id 또는 상품명을 기준으로
+app/services/food/knowledge/meat/chicken/provider.py:112:        if category_id:
+app/services/food/knowledge/meat/chicken/provider.py:113:            normalized_category_id = (
+app/services/food/knowledge/meat/chicken/provider.py:114:                str(category_id)
+app/services/food/knowledge/meat/chicken/provider.py:120:                normalized_category_id
+app/services/food/knowledge/meat/chicken/provider.py:121:                == self.category_id
+app/services/food/knowledge/meat/chicken/provider.py:126:                normalized_category_id
+app/services/food/knowledge/meat/chicken/provider.py:145:    def analyze(
+app/services/food/knowledge/meat/chicken/provider.py:151:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/meat/chicken/provider.py:202:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/chicken/provider.py:203:            category_id=self.category_id,
+app/services/food/knowledge/meat/chicken/provider.py:217:                "provider_id": (
+app/services/food/knowledge/meat/chicken/provider.py:218:                    self.category_id
+app/services/food/knowledge/meat/chicken/provider.py:226:                "parent_category_id": "meat",
+app/services/food/knowledge/meat/chicken/attributes.py:224:    FoodKnowledgeResult용 attributes로 변환한다.
+app/services/food/knowledge/meat/chicken/parser.py:258:                "category_id": "chicken",
+app/services/food/knowledge/meat/duck/provider.py:25:    FoodKnowledgeResult,
+app/services/food/knowledge/meat/duck/provider.py:29:class DuckKnowledgeProvider(
+app/services/food/knowledge/meat/duck/provider.py:41:    - FoodKnowledgeResult 생성
+app/services/food/knowledge/meat/duck/provider.py:50:    category_id = "duck"
+app/services/food/knowledge/meat/duck/provider.py:96:    def supports(
+app/services/food/knowledge/meat/duck/provider.py:98:        category_id: str | None = None,
+app/services/food/knowledge/meat/duck/provider.py:102:        category_id 또는 상품명을 기준으로
+app/services/food/knowledge/meat/duck/provider.py:111:        if category_id:
+app/services/food/knowledge/meat/duck/provider.py:112:            normalized_category_id = (
+app/services/food/knowledge/meat/duck/provider.py:113:                str(category_id)
+app/services/food/knowledge/meat/duck/provider.py:119:                normalized_category_id
+app/services/food/knowledge/meat/duck/provider.py:120:                == self.category_id
+app/services/food/knowledge/meat/duck/provider.py:125:                normalized_category_id
+app/services/food/knowledge/meat/duck/provider.py:144:    def analyze(
+app/services/food/knowledge/meat/duck/provider.py:150:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/meat/duck/provider.py:201:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/duck/provider.py:202:            category_id=self.category_id,
+app/services/food/knowledge/meat/duck/provider.py:216:                "provider_id": (
+app/services/food/knowledge/meat/duck/provider.py:217:                    self.category_id
+app/services/food/knowledge/meat/duck/provider.py:225:                "parent_category_id": "meat",
+app/services/food/knowledge/meat/duck/attributes.py:224:    FoodKnowledgeResult용 attributes로 변환한다.
+app/services/food/knowledge/meat/duck/parser.py:258:                "category_id": "duck",
+app/services/food/knowledge/meat/lamb/provider.py:25:    FoodKnowledgeResult,
+app/services/food/knowledge/meat/lamb/provider.py:29:class LambKnowledgeProvider(
+app/services/food/knowledge/meat/lamb/provider.py:41:    - FoodKnowledgeResult 생성
+app/services/food/knowledge/meat/lamb/provider.py:50:    category_id = "lamb"
+app/services/food/knowledge/meat/lamb/provider.py:100:    def supports(
+app/services/food/knowledge/meat/lamb/provider.py:102:        category_id: str | None = None,
+app/services/food/knowledge/meat/lamb/provider.py:106:        category_id 또는 상품명을 기준으로
+app/services/food/knowledge/meat/lamb/provider.py:115:        if category_id:
+app/services/food/knowledge/meat/lamb/provider.py:116:            normalized_category_id = (
+app/services/food/knowledge/meat/lamb/provider.py:117:                str(category_id)
+app/services/food/knowledge/meat/lamb/provider.py:123:                normalized_category_id
+app/services/food/knowledge/meat/lamb/provider.py:124:                == self.category_id
+app/services/food/knowledge/meat/lamb/provider.py:129:                normalized_category_id
+app/services/food/knowledge/meat/lamb/provider.py:151:    def analyze(
+app/services/food/knowledge/meat/lamb/provider.py:155:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/meat/lamb/provider.py:204:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/lamb/provider.py:205:            category_id=self.category_id,
+app/services/food/knowledge/meat/lamb/provider.py:217:                "provider_id": (
+app/services/food/knowledge/meat/lamb/provider.py:218:                    self.category_id
+app/services/food/knowledge/meat/lamb/provider.py:226:                "parent_category_id": "meat",
+app/services/food/knowledge/meat/lamb/attributes.py:165:    FoodKnowledgeResult용 attributes로 변환한다.
+app/services/food/knowledge/meat/lamb/parser.py:272:                "category_id": "lamb",
+app/services/food/knowledge/meat/venison/provider.py:25:    FoodKnowledgeResult,
+app/services/food/knowledge/meat/venison/provider.py:29:class VenisonKnowledgeProvider(
+app/services/food/knowledge/meat/venison/provider.py:36:    순서대로 오케스트레이션하고 FoodKnowledgeResult를 생성한다.
+app/services/food/knowledge/meat/venison/provider.py:39:    category_id = "venison"
+app/services/food/knowledge/meat/venison/provider.py:41:    parent_category_id = "meat"
+app/services/food/knowledge/meat/venison/provider.py:42:    provider_id = "venison"
+app/services/food/knowledge/meat/venison/provider.py:101:    def supports(
+app/services/food/knowledge/meat/venison/provider.py:103:        category_id: str | None = None,
+app/services/food/knowledge/meat/venison/provider.py:107:        category_id 또는 상품명을 기준으로 지원 여부를 반환한다.
+app/services/food/knowledge/meat/venison/provider.py:115:        if category_id:
+app/services/food/knowledge/meat/venison/provider.py:116:            normalized_category_id = (
+app/services/food/knowledge/meat/venison/provider.py:117:                str(category_id)
+app/services/food/knowledge/meat/venison/provider.py:122:            if normalized_category_id in {
+app/services/food/knowledge/meat/venison/provider.py:123:                self.category_id,
+app/services/food/knowledge/meat/venison/provider.py:124:                self.provider_id,
+app/services/food/knowledge/meat/venison/provider.py:128:            if normalized_category_id in alias_set:
+app/services/food/knowledge/meat/venison/provider.py:145:    def analyze(
+app/services/food/knowledge/meat/venison/provider.py:151:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/meat/venison/provider.py:204:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/venison/provider.py:205:            category_id=self.category_id,
+app/services/food/knowledge/meat/venison/provider.py:215:                "provider_id": self.provider_id,
+app/services/food/knowledge/meat/venison/provider.py:219:                "category_id": self.category_id,
+app/services/food/knowledge/meat/venison/provider.py:220:                "parent_category_id": (
+app/services/food/knowledge/meat/venison/provider.py:221:                    self.parent_category_id
+app/services/food/knowledge/meat/venison/attributes.py:224:    FoodKnowledgeResult용 attributes로 변환한다.
+app/services/food/knowledge/meat/venison/parser.py:257:            "category_id": "venison",
+app/services/food/knowledge/meat/venison/parser.py:424:                "category_id": "venison",
+
+===== 26. Provider Resolver Search =====
+app/services/food/__init__.py:31:    resolve_food_provider,
+app/services/food/__init__.py:62:    "resolve_food_provider",
+app/services/food/knowledge/registry.py:110:    def list_providers(
+app/services/food/knowledge/registry.py:199:def resolve_food_provider(
+app/services/food/knowledge/registry.py:211:    return FOOD_KNOWLEDGE_REGISTRY.list_providers()
+app/services/food/knowledge/__init__.py:18:    resolve_food_provider,
+app/services/food/knowledge/__init__.py:47:    "resolve_food_provider",
+app/services/food/resolver.py:15:    resolve_food_provider,
+app/services/food/resolver.py:43:def resolve_knowledge_provider(
+app/services/food/resolver.py:74:    return resolve_food_provider(
+app/services/food_knowledge/resolver.py:19:    resolve_food_provider,
+app/services/food_knowledge/resolver.py:45:def resolve_knowledge_provider(
+app/services/food_knowledge/resolver.py:74:    return resolve_food_provider(
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:19:    resolve_food_provider,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:58:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:9:    resolve_food_provider,
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:89:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:111:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:122:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:6:    resolve_food_provider,
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:36:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:62:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:87:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:112:        provider = resolve_food_provider(
+tests/services/food/knowledge/test_duck_registry_integration.py:19:    resolve_food_provider,
+tests/services/food/knowledge/test_duck_registry_integration.py:62:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_duck_registry_integration.py:73:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_chicken_registry_integration.py:19:    resolve_food_provider,
+tests/services/food/knowledge/test_chicken_registry_integration.py:62:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_chicken_registry_integration.py:73:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_food_knowledge_registry.py:6:    resolve_food_provider,
+tests/services/food/knowledge/test_food_knowledge_registry.py:45:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_food_knowledge_registry.py:56:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_food_knowledge_registry.py:67:    provider = resolve_food_provider(
+
+===== 27. Integration and Priority Test Candidates =====
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py
+tests/services/food/knowledge/test_chicken_registry_integration.py
+tests/services/food/knowledge/test_duck_registry_integration.py
+tests/services/food/knowledge/test_food_knowledge_registry.py
+
+===== 28. Integration Test Contents =====
+
+----- tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py -----
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge import (
+    resolve_food_provider,
+)
+from app.services.food.knowledge.meat.beef import (
+    BeefKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.venison import (
+    VenisonKnowledgeProvider,
+)
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "사슴 안심",
+        "사슴 안심 1kg",
+        "사슴 등심",
+        "사슴 등심 500g",
+        "사슴가슴살",
+        "뉴질랜드산 사슴고기",
+        "레드디어 안심",
+        "레드디어 등심",
+        "premium venison tenderloin",
+        "red deer sirloin",
+        "deer meat loin",
+        "elk meat shoulder",
+    ],
+)
+def test_explicit_venison_species_precedes_beef_cut_match(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name,
+    )
+
+    assert isinstance(
+        provider,
+        VenisonKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "한우 안심",
+        "한우 등심",
+        "소고기 안심",
+        "소고기 등심",
+        "쇠고기 안심",
+        "국내산 한우 채끝",
+        "beef tenderloin",
+        "beef sirloin",
+    ],
+)
+def test_explicit_beef_products_remain_beef(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name,
+    )
+
+    assert isinstance(
+        provider,
+        BeefKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "안심",
+        "안심 1kg",
+        "등심",
+        "등심 500g",
+        "채끝",
+        "가슴살",
+        "냉동 안심",
+    ],
+)
+def test_generic_cut_terms_do_not_false_positive_as_venison(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name,
+    )
+
+    assert not isinstance(
+        provider,
+        VenisonKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "사슴 안심",
+        "사슴 등심",
+        "레드디어 안심",
+        "premium venison tenderloin",
+    ],
+)
+def test_provider_resolution_is_deterministic(
+    product_name: str,
+) -> None:
+    provider_types = []
+
+    for _ in range(5):
+        provider = resolve_food_provider(
+            product_name=product_name,
+        )
+
+        provider_types.append(
+            type(provider)
+            if provider is not None
+            else None
+        )
+
+    assert len(set(provider_types)) == 1
+    assert provider_types[0] is VenisonKnowledgeProvider
+
+----- tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py -----
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge import (
+    FoodKnowledgeResult,
+    get_food_provider,
+    list_food_providers,
+    resolve_food_provider,
+)
+from app.services.food.knowledge.meat.venison import (
+    VenisonKnowledgeProvider,
+)
+
+
+def _category_id(
+    provider: object,
+) -> str | None:
+    value = getattr(
+        provider,
+        "category_id",
+        None,
+    )
+
+    return (
+        str(value)
+        if value is not None
+        else None
+    )
+
+
+def test_venison_registered_once() -> None:
+    matches = [
+        provider
+        for provider in list_food_providers()
+        if _category_id(provider) == "venison"
+    ]
+
+    assert len(matches) == 1
+    assert isinstance(
+        matches[0],
+        VenisonKnowledgeProvider,
+    )
+
+
+def test_existing_meat_providers_preserved() -> None:
+    category_ids = {
+        _category_id(provider)
+        for provider in list_food_providers()
+    }
+
+    assert {
+        "beef",
+        "lamb",
+        "chicken",
+        "duck",
+        "venison",
+    }.issubset(category_ids)
+
+
+def test_get_venison_provider() -> None:
+    provider = get_food_provider("venison")
+
+    assert isinstance(
+        provider,
+        VenisonKnowledgeProvider,
+    )
+
+    assert provider.category_id == "venison"
+    assert provider.parent_category_id == "meat"
+    assert provider.provider_id == "venison"
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "뉴질랜드산 사슴고기 500g",
+        "사슴 안심 1kg",
+        "사슴가슴살 냉동육",
+        "premium venison tenderloin",
+        "red deer venison loin",
+        "New Zealand deer meat",
+        "elk meat shoulder",
+    ],
+)
+def test_resolve_venison_provider(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert isinstance(
+        provider,
+        VenisonKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "국내산 닭날개 1kg",
+        "오리 백숙용 1마리",
+        "한우 등심 500g",
+        "양고기 프렌치랙",
+    ],
+)
+def test_non_venison_boundary(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert not isinstance(
+        provider,
+        VenisonKnowledgeProvider,
+    )
+
+
+def test_registry_to_result_e2e() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "뉴질랜드산 어린사슴 "
+            "레드디어 사슴가슴살 500g"
+        )
+    )
+
+    assert isinstance(
+        provider,
+        VenisonKnowledgeProvider,
+    )
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "뉴질랜드산 어린사슴 "
+                "레드디어 사슴가슴살 500g"
+            ),
+            "venison_type": "어린 사슴",
+            "deer_species": "Red Deer",
+            "cut": "venison breast",
+            "country": "뉴질랜드",
+            "country_code": "NZ",
+            "weight": "500g",
+            "storage_type": "냉동",
+            "certifications": ["HACCP"],
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        }
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "venison"
+    assert result.attributes[
+        "venison_type"
+    ] == "어린사슴"
+    assert result.attributes[
+        "breed"
+    ] == "레드디어"
+    assert result.attributes[
+        "cut"
+    ] == "사슴가슴살"
+    assert result.attributes[
+        "cut_registry_key"
+    ] == "breast"
+    assert result.scores[
+        "knowledge"
+    ] == 87.1
+    assert result.final_score == 83.55
+    assert result.warnings == []
+
+----- tests/services/food/knowledge/test_chicken_registry_integration.py -----
+from __future__ import annotations
+
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.breed_registry import (
+    ChickenBreedRegistry,
+)
+from app.services.food.knowledge.meat.chicken.cut_registry import (
+    ChickenCutRegistry,
+)
+from app.services.food.knowledge.meat.chicken.type_registry import (
+    ChickenTypeRegistry,
+)
+from app.services.food.knowledge.registry import (
+    get_food_provider,
+    list_food_providers,
+    require_food_provider,
+    resolve_food_provider,
+)
+
+
+def test_chicken_provider_is_registered() -> None:
+    provider = get_food_provider("chicken")
+
+    assert isinstance(
+        provider,
+        ChickenKnowledgeProvider,
+    )
+    assert (
+        require_food_provider("chicken")
+        is provider
+    )
+
+
+def test_default_provider_order_includes_chicken() -> None:
+    category_ids = [
+        provider.category_id
+        for provider in list_food_providers()
+    ]
+
+    required = {
+        "fruit",
+        "venison",
+        "beef",
+        "lamb",
+        "chicken",
+        "duck",
+    }
+
+    assert required.issubset(set(category_ids))
+
+    assert len(category_ids) == len(set(category_ids))
+
+    assert (
+        category_ids.index("venison")
+        < category_ids.index("beef")
+    )
+
+
+def test_resolve_chicken_by_category_id() -> None:
+    provider = resolve_food_provider(
+        category_id="chicken"
+    )
+
+    assert isinstance(
+        provider,
+        ChickenKnowledgeProvider,
+    )
+
+
+def test_resolve_chicken_by_product_name() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "국내산 토종닭 닭다리살 500g"
+        )
+    )
+
+    assert isinstance(
+        provider,
+        ChickenKnowledgeProvider,
+    )
+
+
+def test_chicken_registry_data_loads() -> None:
+    type_registry = ChickenTypeRegistry()
+    breed_registry = ChickenBreedRegistry()
+    cut_registry = ChickenCutRegistry()
+
+    assert type_registry.registry_id == (
+        "chicken.types"
+    )
+    assert breed_registry.registry_id == (
+        "chicken.breeds"
+    )
+    assert cut_registry.registry_id == (
+        "chicken.cuts"
+    )
+
+    assert type_registry.list()
+    assert breed_registry.list()
+    assert cut_registry.list()
+
+
+def test_registered_provider_analyzes_product() -> None:
+    provider = require_food_provider(
+        "chicken"
+    )
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "국내산 토종닭 Ross 308 "
+                "닭다리살 500g"
+            ),
+            "country": "대한민국",
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        }
+    )
+
+    assert result.category_id == "chicken"
+    assert (
+        result.metadata["provider_id"]
+        == "chicken"
+    )
+    assert (
+        result.metadata[
+            "parent_category_id"
+        ]
+        == "meat"
+    )
+    assert result.scores["knowledge"] == 86.8
+    assert result.final_score == 83.4
+
+----- tests/services/food/knowledge/test_duck_registry_integration.py -----
+from __future__ import annotations
+
+from app.services.food.knowledge.meat.duck.breed_registry import (
+    DuckBreedRegistry,
+)
+from app.services.food.knowledge.meat.duck.cut_registry import (
+    DuckCutRegistry,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.type_registry import (
+    DuckTypeRegistry,
+)
+from app.services.food.knowledge.registry import (
+    get_food_provider,
+    list_food_providers,
+    require_food_provider,
+    resolve_food_provider,
+)
+
+
+def test_duck_provider_is_registered() -> None:
+    provider = get_food_provider("duck")
+
+    assert isinstance(
+        provider,
+        DuckKnowledgeProvider,
+    )
+    assert (
+        require_food_provider("duck")
+        is provider
+    )
+
+
+def test_default_provider_order_includes_duck() -> None:
+    category_ids = [
+        provider.category_id
+        for provider in list_food_providers()
+    ]
+
+    required = {
+        "fruit",
+        "venison",
+        "beef",
+        "lamb",
+        "chicken",
+        "duck",
+    }
+
+    assert required.issubset(set(category_ids))
+
+    assert len(category_ids) == len(set(category_ids))
+
+    assert (
+        category_ids.index("venison")
+        < category_ids.index("beef")
+    )
+
+
+def test_resolve_duck_by_category_id() -> None:
+    provider = resolve_food_provider(
+        category_id="duck"
+    )
+
+    assert isinstance(
+        provider,
+        DuckKnowledgeProvider,
+    )
+
+
+def test_resolve_duck_by_product_name() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "국내산 훈제오리 체리밸리 "
+            "오리가슴살 500g"
+        )
+    )
+
+    assert isinstance(
+        provider,
+        DuckKnowledgeProvider,
+    )
+
+
+def test_duck_registry_data_loads() -> None:
+    type_registry = DuckTypeRegistry()
+    breed_registry = DuckBreedRegistry()
+    cut_registry = DuckCutRegistry()
+
+    assert type_registry.registry_id == (
+        "duck.types"
+    )
+    assert breed_registry.registry_id == (
+        "duck.breeds"
+    )
+    assert cut_registry.registry_id == (
+        "duck.cuts"
+    )
+
+    assert type_registry.list()
+    assert breed_registry.list()
+    assert cut_registry.list()
+
+
+def test_registered_provider_analyzes_product() -> None:
+    provider = require_food_provider(
+        "duck"
+    )
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "국내산 훈제오리 체리밸리 "
+                "오리가슴살 500g"
+            ),
+            "country": "대한민국",
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        }
+    )
+
+    assert result.category_id == "duck"
+    assert (
+        result.metadata["provider_id"]
+        == "duck"
+    )
+    assert (
+        result.metadata[
+            "parent_category_id"
+        ]
+        == "meat"
+    )
+    assert result.scores["knowledge"] == 86.6
+    assert result.final_score == 83.3
+
+===== 29. Current Provider Order =====
+1 FruitKnowledgeProvider None fruit
+2 VenisonKnowledgeProvider venison venison
+3 BeefKnowledgeProvider None beef
+4 LambKnowledgeProvider None lamb
+5 ChickenKnowledgeProvider None chicken
+6 DuckKnowledgeProvider None duck
+
+===== 30. Goat Runtime Dependency Check =====
+
+===== 31. Goat Responsibility Boundary Search =====
+app/services/food/knowledge/meat/goat/attributes.py:217:def build_goat_attributes(
+app/services/food/knowledge/meat/goat/attributes.py:224:    FoodKnowledgeResult용 attributes로 변환한다.
+app/services/food/knowledge/meat/goat/attributes.py:421:    "build_goat_attributes",
+app/services/food/knowledge/meat/goat/scoring.py:270:def calculate_goat_scores(
+app/services/food/knowledge/meat/goat/scoring.py:411:    "calculate_goat_scores",
+app/services/food/knowledge/meat/goat/__init__.py:4:    build_goat_attributes,
+app/services/food/knowledge/meat/goat/__init__.py:38:    calculate_goat_scores,
+app/services/food/knowledge/meat/goat/__init__.py:65:    "build_goat_attributes",
+app/services/food/knowledge/meat/goat/__init__.py:81:    "calculate_goat_scores",
+app/services/food/knowledge/meat/goat/parser.py:123:    def parse_product(
+
+===== 32. Common Contract Modification Check =====
+
+===== 33. Goat Compile Check =====
+Goat compile: PASS
+
+===== 34. Existing Goat Test Baseline =====
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 0.33s
+Goat test exit code: 0
+
+===== 35. Full Test Collection Baseline =====
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_cut_matching[\uc0ac\uc2b4\uac00\uc2b4\uc0b4 \uad6c\uc774-breast]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_cut_matching[\uc0ac\uc2b4 \uc0ac\ud0dc \ucc1c\uc6a9-shank]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_cut_matching[\uc0ac\uc2b4 \ubaa9\uc0b4 1kg-neck]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_cut_matching[\uc0ac\uc2b4 \uac08\ube44\uc0b4 \uad6c\uc774-rib]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_cut_matching[\uc0ac\uc2b4\uace0\uae30 \uc815\uc721-trim]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_cut_matching[\ud1b5 \uc0ac\uc2b4 \ud55c \ub9c8\ub9ac-whole]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_registry_lookup
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_breast_aliases[\uc0ac\uc2b4\uac00\uc2b4\uc0b4]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_breast_aliases[\uc0ac\uc2b4 \uac00\uc2b4\uc0b4]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_breast_aliases[\uac00\uc2b4\uc0b4]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_breast_aliases[\ubca0\ub2c8\uc2a8 \uac00\uc2b4\uc0b4]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_breast_aliases[venison breast]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_breast_aliases[deer breast]
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_breast_registry_contract
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_registry_unknown_returns_none
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_premium_filters
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_venison_registry_filters
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_registry_lists_sorted_by_score
+tests/services/food/knowledge/meat/venison/test_venison_registries.py::test_registry_metadata_is_exposed
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_venison_registered_once
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_existing_meat_providers_preserved
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_get_venison_provider
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_resolve_venison_provider[\ub274\uc9c8\ub79c\ub4dc\uc0b0 \uc0ac\uc2b4\uace0\uae30 500g]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_resolve_venison_provider[\uc0ac\uc2b4 \uc548\uc2ec 1kg]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_resolve_venison_provider[\uc0ac\uc2b4\uac00\uc2b4\uc0b4 \ub0c9\ub3d9\uc721]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_resolve_venison_provider[premium venison tenderloin]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_resolve_venison_provider[red deer venison loin]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_resolve_venison_provider[New Zealand deer meat]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_resolve_venison_provider[elk meat shoulder]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_non_venison_boundary[\uad6d\ub0b4\uc0b0 \ub2ed\ub0a0\uac1c 1kg]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_non_venison_boundary[\uc624\ub9ac \ubc31\uc219\uc6a9 1\ub9c8\ub9ac]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_non_venison_boundary[\ud55c\uc6b0 \ub4f1\uc2ec 500g]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_non_venison_boundary[\uc591\uace0\uae30 \ud504\ub80c\uce58\ub799]
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py::test_registry_to_result_e2e
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_complete_product_generates_reasons
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_registry_guidance_is_included
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_breast_contract_generates_cut_reason
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_missing_origin_generates_warning
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_incomplete_parse_generates_warning
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_zero_knowledge_generates_warning
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_parser_warnings_are_preserved
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_rules_do_not_mutate_inputs
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_deduplicate_strings_preserves_order
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_rules_reject_invalid_attributes
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_rules_reject_invalid_scores
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_rules_reject_invalid_parse_result
+tests/services/food/knowledge/meat/venison/test_venison_rules.py::test_rules_return_string_lists
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_safe_float_and_clamp_score
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_calculate_available_average
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_extract_registry_scores_complete_product
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_calculate_venison_knowledge_score_complete
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_knowledge_score_renormalizes_missing_fields
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_calculate_venison_scores_complete_product
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_calculate_venison_scores_cut_only
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_calculate_venison_final_score
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_final_score_supports_custom_weights
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_scoring_clamps_external_scores
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_scoring_rejects_invalid_product
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_scoring_rejects_invalid_parse_result
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_extract_scores_rejects_invalid_parse_result
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py::test_final_score_rejects_non_mapping
+tests/services/food/knowledge/test_chicken_registry_integration.py::test_chicken_provider_is_registered
+tests/services/food/knowledge/test_chicken_registry_integration.py::test_default_provider_order_includes_chicken
+tests/services/food/knowledge/test_chicken_registry_integration.py::test_resolve_chicken_by_category_id
+tests/services/food/knowledge/test_chicken_registry_integration.py::test_resolve_chicken_by_product_name
+tests/services/food/knowledge/test_chicken_registry_integration.py::test_chicken_registry_data_loads
+tests/services/food/knowledge/test_chicken_registry_integration.py::test_registered_provider_analyzes_product
+tests/services/food/knowledge/test_duck_registry_integration.py::test_duck_provider_is_registered
+tests/services/food/knowledge/test_duck_registry_integration.py::test_default_provider_order_includes_duck
+tests/services/food/knowledge/test_duck_registry_integration.py::test_resolve_duck_by_category_id
+tests/services/food/knowledge/test_duck_registry_integration.py::test_resolve_duck_by_product_name
+tests/services/food/knowledge/test_duck_registry_integration.py::test_duck_registry_data_loads
+tests/services/food/knowledge/test_duck_registry_integration.py::test_registered_provider_analyzes_product
+tests/services/food/knowledge/test_food_knowledge_registry.py::test_default_food_providers_are_registered
+tests/services/food/knowledge/test_food_knowledge_registry.py::test_registry_gets_lamb_provider
+tests/services/food/knowledge/test_food_knowledge_registry.py::test_registry_resolves_lamb_product
+tests/services/food/knowledge/test_food_knowledge_registry.py::test_registry_still_resolves_beef_product
+tests/services/food/knowledge/test_food_knowledge_registry.py::test_registry_still_resolves_fruit_product
+
+405 tests collected in 0.25s
+pytest collection exit code: 0
+
+===== 36. Git Status =====
+ M .gitignore
+ M README.md
+ M app/main.py
+ M app/services/analytics_logger.py
+ M app/services/context_logger.py
+ M app/services/db_product_collector.py
+ M app/services/generator_service.py
+ M app/services/naver_shopping_api_collector.py
+ M app/ui/admin_dashboard.py
+ M app/ui/streamlit_app.py
+ D commerce_ai_generator_mvp_architecture.docx
+ D docs/governance/03_governance_registry_v1.0_rc1.md
+ M docs/governance/approvals/approval_log.md
+ M docs/governance/releases/release_history.md
+ M requirements.txt
+?? 05_governance_operations_standard.md
+?? CONTEXT_INTELLIGENCE.md
+?? "MANIFEST (1).sha256"
+?? MANIFEST.sha256
+?? "README (1).md"
+?? __init__.py
+?? app/design/
+?? app/services/ai_ranking_engine_v7.py
+?? app/services/ai_ranking_engine_v8.py
+?? app/services/badge_engine.py
+?? app/services/collector_v4_runner.py
+?? app/services/collectors/
+?? app/services/common/
+?? app/services/coupang_api.py
+?? app/services/deduplication_engine_v81.py
+?? app/services/deduplication_engine_v82.py
+?? app/services/deduplication_engine_v83.py
+?? app/services/explainability_service.py
+?? app/services/food/knowledge/meat/chicken/
+?? app/services/food/knowledge/meat/duck/__init__.py.phase4_before
+?? app/services/food/knowledge/meat/goat/
+?? app/services/food/registry_data/chicken/
+?? app/services/food/registry_data/goat/
+?? app/services/food_intelligence/
+?? app/services/food_knowledge/
+?? app/services/impression_logger.py
+?? app/services/kurly_nmart_collector.py
+?? app/services/kurly_nmart_collector_v3.py
+?? app/services/kurly_review_playwright_collector.py
+?? app/services/market/
+?? app/services/market_aggregator.py
+?? app/services/market_collector_v5.py
+?? app/services/market_collector_v51.py
+?? app/services/market_identity_cluster_v53.py
+?? app/services/market_representative_price_v54.py
+?? app/services/market_signal_propagation_v52.py
+?? app/services/naver_datalab_service.py
+?? app/services/new_shopping_api_collector.py
+?? app/services/platform_normalizer_v84.py
+?? app/services/platform_score_engine.py
+?? app/services/preference_service.py
+?? app/services/price_detail_enricher.py
+?? app/services/price_intelligence_engine.py
+?? app/services/product_attribute_engine_v8
+?? app/services/product_attribute_engine_v8.py
+?? app/services/product_cluster_representative_v5.py
+?? app/services/product_family_variant_v6.py
+?? app/services/product_identity_cluster_v4.py
+?? app/services/product_identity_engine.py
+?? app/services/product_identity_engine_v3.py
+?? app/services/product_quality_engine_v10.py
+?? app/services/product_quality_engine_v10_runner.py
+?? app/services/product_quality_engine_v9.py
+?? app/services/product_variety_engine_v7.py
+?? app/services/recommendation/
+?? app/services/recommendation_compare_engine_v62.py
+?? app/services/recommendation_engine.py
+?? app/services/recommendation_intelligence_v55.py
+?? app/services/recommendation_pipeline.py
+?? app/services/recommendation_reasoner.py
+?? app/services/recommendation_story_engine_v61.py
+?? app/services/search_context.py
+?? app/services/session_context_service.py
+?? app/tools/
+?? app/ui/components/
+?? app/ui/hero_renderer_v3.py
+?? app/ui/html_utils.py
+?? app/ui/product_card_renderer.py
+?? approval_log(2).md
+?? approval_log(3).md
+?? audit_trail.md
+?? backups/
+?? commerce_ai_generator_governance_bundle.zip
+?? commerce_ai_generator_governance_bundle/
+?? commit_governance_docs.sh
+?? context_intelligence_design(1).py
+?? "context_intelligence_md_python_package 2/"
+?? context_intelligence_md_python_package.zip
+?? context_intelligence_md_python_package/
+?? docs/AI/
+?? docs/Analytics/
+?? docs/Architecture/
+?? "docs/Commerce AI Generator \354\266\224\354\262\234 UX-\354\227\224\354\247\204 V2 \354\204\244\352\263\204\353\254\270\354\204\234.docx"
+?? "docs/Commerce AI Generator \354\266\224\354\262\234 UX-\354\227\224\354\247\204 V2 \354\204\244\352\263\204\353\254\270\354\204\234.pdf"
+?? docs/UX/
+?? docs/__init__.py
+?? docs/admin_dashboard.md
+?? docs/commerce_ai_generator_architecture_handbook_v1.0.md
+?? docs/commerce_ai_generator_architecture_handbook_v1.1.md
+?? docs/design.md
+?? docs/governance/governance_change_log.md
+?? docs/governance/governance_release_notes.md
+?? docs/institution_engineering/
+?? docs/logging.md
+?? docs/recommendation_engine.md
+?? docs/streamlit_issues.md
+?? duck_registry_baseline_review.txt
+?? "foundation documents/"
+?? goat_phase2_baseline_review.txt
+?? goat_rules_provider_contract_review.txt
+?? governance_change_log(1).md
+?? governance_change_log.md
+?? governance_dashboard.md
+?? governance_release_notes(1).md
+?? governance_release_notes.md
+?? hero_renderer_v3_score_simple.py
+?? lamb_registry_loader_audit.txt
+?? master_architecture_inventory.txt
+?? milestone_registry.md
+?? pytest.ini
+?? release_history(2).md
+?? release_history(3).md
+?? scripts/create_ai_docs.py
+?? scripts/create_ai_docs_revisepy
+?? scripts/sync_context_intelligence_docs.py
+?? scripts/update_docs_v2.py
+?? sql/
+?? streamlit_app_card_grouped_fixed.py
+?? tests/services/food/knowledge/meat/chicken/
+?? tests/services/food/knowledge/meat/goat/
+?? venison_repository_evidence/
+?? "\360\237\223\201 Commerce AI Generator Development"
+
+==================================================
+CONTRACT REVIEW COMPLETE
+==================================================

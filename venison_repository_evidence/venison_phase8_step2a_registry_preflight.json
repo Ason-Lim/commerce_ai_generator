@@ -1,0 +1,597 @@
+{
+  "candidate_files": [
+    {
+      "path": "app/services/food/knowledge/meat/venison/__init__.py",
+      "imports": [
+        {
+          "line": 1,
+          "module": "__future__",
+          "symbols": [
+            "annotations"
+          ]
+        },
+        {
+          "line": 3,
+          "module": "breed_registry",
+          "symbols": [
+            "VENISON_BREED_REGISTRY_ID",
+            "VenisonBreed",
+            "VenisonBreedMatch",
+            "VenisonBreedRegistry"
+          ]
+        },
+        {
+          "line": 9,
+          "module": "cut_registry",
+          "symbols": [
+            "VENISON_CUT_REGISTRY_ID",
+            "VenisonCut",
+            "VenisonCutMatch",
+            "VenisonCutRegistry"
+          ]
+        },
+        {
+          "line": 15,
+          "module": "type_registry",
+          "symbols": [
+            "VENISON_TYPE_REGISTRY_ID",
+            "VenisonType",
+            "VenisonTypeMatch",
+            "VenisonTypeRegistry"
+          ]
+        },
+        {
+          "line": 37,
+          "module": "parser",
+          "symbols": [
+            "VenisonParser"
+          ]
+        },
+        {
+          "line": 40,
+          "module": "parser_models",
+          "symbols": [
+            "VenisonParseResult"
+          ]
+        },
+        {
+          "line": 54,
+          "module": "attributes",
+          "symbols": [
+            "build_venison_attributes",
+            "extract_venison_bone_status",
+            "extract_venison_certifications",
+            "extract_venison_country_code",
+            "extract_venison_country_text",
+            "extract_venison_product_name",
+            "extract_venison_skin_status",
+            "extract_venison_storage_type",
+            "extract_venison_weight"
+          ]
+        },
+        {
+          "line": 88,
+          "module": "scoring",
+          "symbols": [
+            "DEFAULT_KNOWLEDGE_WEIGHTS",
+            "DEFAULT_FINAL_SCORE_WEIGHTS",
+            "safe_float",
+            "clamp_score",
+            "calculate_available_average",
+            "extract_registry_scores",
+            "calculate_venison_knowledge_score",
+            "calculate_venison_scores",
+            "calculate_venison_final_score"
+          ]
+        }
+      ],
+      "classes": [],
+      "functions": [],
+      "assignments": [
+        {
+          "line": 22,
+          "text": "__all__ = ['VENISON_TYPE_REGISTRY_ID', 'VENISON_BREED_REGISTRY_ID', 'VENISON_CUT_REGISTRY_ID', 'VenisonType', 'VenisonTypeMatch', 'VenisonTypeRegistry', 'VenisonBreed', 'VenisonBreedMatch', 'VenisonBreedRegistry', 'VenisonCut', 'VenisonCutMatch', 'VenisonCutRegistry']"
+        },
+        {
+          "line": 100,
+          "text": "_PHASE7_EXPORTS = ['DEFAULT_KNOWLEDGE_WEIGHTS', 'DEFAULT_FINAL_SCORE_WEIGHTS', 'safe_float', 'clamp_score', 'calculate_available_average', 'extract_registry_scores', 'calculate_venison_knowledge_score', 'calculate_venison_scores', 'calculate_venison_final_score']"
+        }
+      ],
+      "contains_tenderloin": false,
+      "contains_breast": false
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/attributes.py",
+      "imports": [
+        {
+          "line": 1,
+          "module": "__future__",
+          "symbols": [
+            "annotations"
+          ]
+        },
+        {
+          "line": 3,
+          "module": "collections.abc",
+          "symbols": [
+            "Mapping"
+          ]
+        },
+        {
+          "line": 4,
+          "module": "typing",
+          "symbols": [
+            "Any"
+          ]
+        },
+        {
+          "line": 6,
+          "module": "app.services.food.knowledge.meat.venison.parser_models",
+          "symbols": [
+            "VenisonParseResult"
+          ]
+        }
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "line": 11,
+          "name": "extract_venison_product_name"
+        },
+        {
+          "line": 27,
+          "name": "extract_venison_country_text"
+        },
+        {
+          "line": 50,
+          "name": "extract_venison_country_code"
+        },
+        {
+          "line": 71,
+          "name": "extract_venison_weight"
+        },
+        {
+          "line": 94,
+          "name": "extract_venison_storage_type"
+        },
+        {
+          "line": 117,
+          "name": "extract_venison_certifications"
+        },
+        {
+          "line": 155,
+          "name": "extract_venison_bone_status"
+        },
+        {
+          "line": 178,
+          "name": "extract_venison_skin_status"
+        },
+        {
+          "line": 198,
+          "name": "_deduplicate_strings"
+        },
+        {
+          "line": 217,
+          "name": "build_venison_attributes"
+        }
+      ],
+      "assignments": [
+        {
+          "line": 242,
+          "text": "attributes: dict[str, Any] = {'product_name': extract_venison_product_name(product), 'country': extract_venison_country_text(product), 'country_code': extract_venison_country_code(product), 'weight': extract_venison_weight(product), 'storage_type': extract_venison_storage_type(product), 'certifications': extract_venison_certifications(product), 'bone_status': extract_venison_bone_status(product), 'skin_status': extract_venison_skin_status(product), 'venison_type': parse_result.venison_type, 'breed': parse_result.breed, 'cut': parse_result.cut, 'confidence': parse_result.confidence, 'venison_type_confidence': parse_result.venison_type_confidence, 'breed_confidence': parse_result.breed_confidence, 'cut_confidence': parse_result.cut_confidence, 'detected_keywords': list(parse_result.detected_keywords), 'warnings': list(parse_result.warnings), 'is_complete': parse_result.is_complete, 'is_usable': parse_result.is_usable}"
+        },
+        {
+          "line": 383,
+          "text": "cut = parse_result.cut_match.cut"
+        }
+      ],
+      "contains_tenderloin": false,
+      "contains_breast": false
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/cut_registry.py",
+      "imports": [
+        {
+          "line": 1,
+          "module": "__future__",
+          "symbols": [
+            "annotations"
+          ]
+        },
+        {
+          "line": 3,
+          "module": null,
+          "symbols": [
+            "copy"
+          ]
+        },
+        {
+          "line": 4,
+          "module": "dataclasses",
+          "symbols": [
+            "dataclass"
+          ]
+        },
+        {
+          "line": 5,
+          "module": "typing",
+          "symbols": [
+            "Any",
+            "Mapping"
+          ]
+        },
+        {
+          "line": 7,
+          "module": "app.services.food.knowledge.common.base_model",
+          "symbols": [
+            "RegistryEntry",
+            "RegistryMatch"
+          ]
+        },
+        {
+          "line": 8,
+          "module": "app.services.food.knowledge.common.base_registry",
+          "symbols": [
+            "AliasMatch",
+            "BaseAliasRegistry",
+            "normalize_string_list",
+            "optional_string",
+            "safe_float"
+          ]
+        },
+        {
+          "line": 9,
+          "module": "app.services.food.knowledge.registry_loader",
+          "symbols": [
+            "KnowledgeRegistryLoader",
+            "get_knowledge_registry_loader"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "line": 34,
+          "name": "VenisonCut",
+          "bases": [
+            "RegistryEntry"
+          ]
+        },
+        {
+          "line": 69,
+          "name": "VenisonCutMatch",
+          "bases": [
+            "RegistryMatch[VenisonCut]"
+          ]
+        },
+        {
+          "line": 75,
+          "name": "VenisonCutRegistry",
+          "bases": [
+            "BaseAliasRegistry[VenisonCut]"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "line": 14,
+          "name": "_aliases"
+        },
+        {
+          "line": 27,
+          "name": "_optional_score"
+        },
+        {
+          "line": 48,
+          "name": "__post_init__"
+        },
+        {
+          "line": 71,
+          "name": "cut"
+        },
+        {
+          "line": 80,
+          "name": "__init__"
+        },
+        {
+          "line": 83,
+          "name": "build_entry"
+        },
+        {
+          "line": 104,
+          "name": "match"
+        },
+        {
+          "line": 108,
+          "name": "find_all"
+        },
+        {
+          "line": 111,
+          "name": "lookup"
+        },
+        {
+          "line": 115,
+          "name": "list"
+        },
+        {
+          "line": 125,
+          "name": "_convert_match"
+        }
+      ],
+      "assignments": [
+        {
+          "line": 11,
+          "text": "VENISON_CUT_REGISTRY_ID = 'venison.cuts'"
+        },
+        {
+          "line": 129,
+          "text": "__all__ = ['VENISON_CUT_REGISTRY_ID', 'VenisonCut', 'VenisonCutMatch', 'VenisonCutRegistry']"
+        },
+        {
+          "line": 76,
+          "text": "registry_id = VENISON_CUT_REGISTRY_ID"
+        },
+        {
+          "line": 84,
+          "text": "known_fields = {'canonical_name', 'aliases', 'score', 'premium', 'english_name', 'cut_group', 'tenderness_score', 'flavor_score', 'fat_score', 'yield_score', 'cooking_methods', 'description'}"
+        },
+        {
+          "line": 86,
+          "text": "canonical_name = str(raw_entry.get('canonical_name', registry_key)).strip()"
+        },
+        {
+          "line": 116,
+          "text": "entries = [entry for entry in super().list() if isinstance(entry, VenisonCut)]"
+        },
+        {
+          "line": 120,
+          "text": "normalized = str(cut_group).strip().lower()"
+        },
+        {
+          "line": 121,
+          "text": "entries = [entry for entry in entries if (entry.cut_group or '').lower() == normalized]"
+        }
+      ],
+      "contains_tenderloin": false,
+      "contains_breast": false
+    },
+    {
+      "path": "app/services/food/knowledge/meat/venison/parser.py",
+      "imports": [
+        {
+          "line": 1,
+          "module": "__future__",
+          "symbols": [
+            "annotations"
+          ]
+        },
+        {
+          "line": 3,
+          "module": "collections.abc",
+          "symbols": [
+            "Mapping"
+          ]
+        },
+        {
+          "line": 4,
+          "module": "typing",
+          "symbols": [
+            "Any"
+          ]
+        },
+        {
+          "line": 6,
+          "module": "app.services.food.knowledge.common.parser_base",
+          "symbols": [
+            "BaseKnowledgeParser"
+          ]
+        },
+        {
+          "line": 9,
+          "module": "app.services.food.knowledge.meat.venison.breed_registry",
+          "symbols": [
+            "VenisonBreedMatch",
+            "VenisonBreedRegistry"
+          ]
+        },
+        {
+          "line": 13,
+          "module": "app.services.food.knowledge.meat.venison.cut_registry",
+          "symbols": [
+            "VenisonCutMatch",
+            "VenisonCutRegistry"
+          ]
+        },
+        {
+          "line": 17,
+          "module": "app.services.food.knowledge.meat.venison.parser_models",
+          "symbols": [
+            "VenisonParseResult"
+          ]
+        },
+        {
+          "line": 20,
+          "module": "app.services.food.knowledge.meat.venison.type_registry",
+          "symbols": [
+            "VenisonTypeMatch",
+            "VenisonTypeRegistry"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "line": 26,
+          "name": "VenisonParser",
+          "bases": [
+            "BaseKnowledgeParser[VenisonParseResult]"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "line": 87,
+          "name": "__init__"
+        },
+        {
+          "line": 110,
+          "name": "parse"
+        },
+        {
+          "line": 123,
+          "name": "parse_product"
+        },
+        {
+          "line": 326,
+          "name": "_build_selected_field_text"
+        },
+        {
+          "line": 353,
+          "name": "_parse_text"
+        },
+        {
+          "line": 452,
+          "name": "_build_product_text"
+        },
+        {
+          "line": 478,
+          "name": "_matched_source_fields"
+        },
+        {
+          "line": 495,
+          "name": "_stringify_value"
+        },
+        {
+          "line": 527,
+          "name": "_deduplicate_texts"
+        },
+        {
+          "line": 549,
+          "name": "_all_text_fields"
+        },
+        {
+          "line": 571,
+          "name": "_canonical_name"
+        },
+        {
+          "line": 585,
+          "name": "_match_confidence"
+        },
+        {
+          "line": 605,
+          "name": "_detected_keywords"
+        },
+        {
+          "line": 640,
+          "name": "_calculate_confidence"
+        },
+        {
+          "line": 680,
+          "name": "_build_warnings"
+        }
+      ],
+      "assignments": [
+        {
+          "line": 71,
+          "text": "_CUT_FIELDS: tuple[str, ...] = ('cut', 'part', 'venison_cut', 'cut_name', 'meat_part')"
+        },
+        {
+          "line": 94,
+          "text": "self.type_registry = type_registry if type_registry is not None else VenisonTypeRegistry()"
+        },
+        {
+          "line": 99,
+          "text": "self.breed_registry = breed_registry if breed_registry is not None else VenisonBreedRegistry()"
+        },
+        {
+          "line": 104,
+          "text": "self.cut_registry = cut_registry if cut_registry is not None else VenisonCutRegistry()"
+        },
+        {
+          "line": 171,
+          "text": "explicit_cut_text = self._build_selected_field_text(product, self._CUT_FIELDS)"
+        },
+        {
+          "line": 178,
+          "text": "explicit_type_match = self.type_registry.match(explicit_type_text) if explicit_type_text else None"
+        },
+        {
+          "line": 185,
+          "text": "explicit_breed_match = self.breed_registry.match(explicit_breed_text) if explicit_breed_text else None"
+        },
+        {
+          "line": 192,
+          "text": "explicit_cut_match = self.cut_registry.match(explicit_cut_text) if explicit_cut_text else None"
+        },
+        {
+          "line": 210,
+          "text": "cut_match = explicit_cut_match if explicit_cut_match is not None else combined_result.cut_match"
+        },
+        {
+          "line": 222,
+          "text": "cut_confidence = self._match_confidence(cut_match)"
+        },
+        {
+          "line": 226,
+          "text": "matched_field_count = sum((match is not None for match in (type_match, breed_match, cut_match)))"
+        },
+        {
+          "line": 235,
+          "text": "confidence = self._calculate_confidence(type_confidence=type_confidence, breed_confidence=breed_confidence, cut_confidence=cut_confidence)"
+        },
+        {
+          "line": 241,
+          "text": "detected_keywords = self._detected_keywords(type_match=type_match, breed_match=breed_match, cut_match=cut_match)"
+        },
+        {
+          "line": 249,
+          "text": "warnings = self._build_warnings(normalized_text=normalized_text, type_match=type_match, breed_match=breed_match, cut_match=cut_match)"
+        },
+        {
+          "line": 256,
+          "text": "metadata = {'category_id': 'venison', 'matched_field_count': matched_field_count, 'expected_field_count': 3, 'is_complete': matched_field_count == 3, 'is_usable': type_match is not None or cut_match is not None, 'source_type': 'mapping', 'source_fields': self._matched_source_fields(product), 'structured_field_priority': True, 'explicit_match_fields': [field_name for field_name, match in (('venison_type', explicit_type_match), ('breed', explicit_breed_match), ('cut', explicit_cut_match)) if match is not None]}"
+        },
+        {
+          "line": 359,
+          "text": "type_match = self.type_registry.match(normalized_text)"
+        },
+        {
+          "line": 362,
+          "text": "breed_match = self.breed_registry.match(normalized_text)"
+        },
+        {
+          "line": 365,
+          "text": "cut_match = self.cut_registry.match(normalized_text)"
+        },
+        {
+          "line": 375,
+          "text": "cut = self._canonical_name(cut_match)"
+        },
+        {
+          "line": 385,
+          "text": "cut_confidence = self._match_confidence(cut_match)"
+        },
+        {
+          "line": 389,
+          "text": "detected_keywords = self._detected_keywords(type_match=type_match, breed_match=breed_match, cut_match=cut_match)"
+        },
+        {
+          "line": 397,
+          "text": "matched_field_count = sum((match is not None for match in (type_match, breed_match, cut_match)))"
+        },
+        {
+          "line": 406,
+          "text": "confidence = self._calculate_confidence(type_confidence=type_confidence, breed_confidence=breed_confidence, cut_confidence=cut_confidence)"
+        },
+        {
+          "line": 412,
+          "text": "warnings = self._build_warnings(normalized_text=normalized_text, type_match=type_match, breed_match=breed_match, cut_match=cut_match)"
+        },
+        {
+          "line": 646,
+          "text": "available = [value for value in (type_confidence, breed_confidence, cut_confidence) if value > 0.0]"
+        }
+      ],
+      "contains_tenderloin": false,
+      "contains_breast": false
+    }
+  ]
+}

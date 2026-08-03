@@ -1,0 +1,108 @@
+# Venison Phase 8 Step 4 Final Verification
+
+## Status
+
+COMPLETE
+
+## Implementation Scope
+
+Created:
+
+- app/services/food/knowledge/meat/venison/rules.py
+- tests/services/food/knowledge/meat/venison/test_venison_rules.py
+
+Modified:
+
+- app/services/food/knowledge/meat/venison/__init__.py
+
+## Implemented Rules Contract
+
+- apply_venison_rules
+- deduplicate_strings
+
+Input:
+
+- attributes
+- scores
+- VenisonParseResult
+
+Output:
+
+- reasons
+- warnings
+
+## Responsibility Boundary
+
+Rules:
+
+- generates explanatory reasons
+- generates warnings
+- preserves Parser warnings
+- deduplicates output strings
+
+Rules does not:
+
+- parse products
+- calculate scores
+- modify input objects
+- create FoodKnowledgeResult
+- register providers
+
+## Verification
+
+- Rules contract: PASS
+- Python import and signature: PASS
+- Targeted Rules tests: PASS
+- Venison regression: PASS
+- Full regression: PASS
+- Breast Runtime Rules probe: PASS
+- File-level scope audit: PASS
+
+## Scope Audit Correction
+
+The original scope audit used the default untracked-file
+display mode of git status.
+
+Git therefore reported untracked directories rather than
+individual files.
+
+The corrected audit uses:
+
+git status --short --untracked-files=all
+
+This exposes individual files and permits accurate
+file-level scope classification.
+
+The original audit failure was an audit-script defect,
+not an implementation defect.
+
+## Breast Runtime Contract
+
+- canonical cut: 사슴가슴살
+- registry key: breast
+- cut score: 83.0
+- knowledge score: 87.1
+- final score: 83.55
+- Rules reasons: generated
+- Rules warnings: none for complete product
+
+## Governance Classification
+
+Fact:
+
+- Rules implementation exists.
+- Rules tests pass.
+- Venison regression passes.
+- Full regression passes.
+- Runtime Breast contract passes.
+- Corrected scope audit passes.
+
+Assumption:
+
+- None required for Step 4 completion.
+
+## Final Decision
+
+VENISON PHASE 8 STEP 4 COMPLETE
+
+RULES LAYER IMPLEMENTATION: PASS

@@ -1,0 +1,66 @@
+# Venison Phase 8 Step 2D
+
+## Objective
+
+Implement the Venison Breast cut through the
+authoritative YAML Registry architecture.
+
+## Authoritative Source
+
+- Registry ID: venison.cuts
+- Registry file:
+  app/services/food/registry_data/venison/cuts.yaml
+
+## Implementation
+
+Added Registry key:
+
+- breast
+
+Canonical name:
+
+- 사슴가슴살
+
+Aliases:
+
+- 사슴가슴살
+- 사슴 가슴살
+- 가슴살
+- 베니슨 가슴살
+- venison breast
+- deer breast
+
+## Initial Internal Calibration
+
+- score: 83
+- premium: false
+- tenderness_score: 72
+- flavor_score: 90
+- fat_score: 38
+- yield_score: 76
+
+These values are internal initial calibration values,
+not externally verified biological measurements.
+
+## Architecture Compliance
+
+- Parser hard-coding: NO
+- cut_registry.py modification: NO
+- Registry Loader modification: NO
+- Common model modification: NO
+- Authoritative YAML modification: YES
+- Venison test modification: YES
+- Other domain modification: NO
+
+## Required Verification
+
+- YAML load
+- Registry lookup
+- Alias normalization
+- Parser recognition
+- Attribute propagation
+- Tenderloin preservation
+- Targeted tests
+- Venison regression
+- Full regression
+- Diff scope audit

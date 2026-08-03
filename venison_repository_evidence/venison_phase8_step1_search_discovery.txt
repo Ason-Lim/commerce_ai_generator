@@ -1,0 +1,30 @@
+# Venison Phase 8 Step 1
+
+## Scope
+- Search architecture discovery
+- Registry alias discovery
+- Parser behavior matrix
+- Search test coverage discovery
+- Regression baseline
+
+## Architecture Decision
+- Decision: EXTEND_EXISTING_VENISON_SEARCH_COMPONENT
+- Reason: Venison-specific search/query symbols were discovered.
+
+## Modification
+- Application source modified: NO
+- Test source modified: NO
+
+## Next Step
+Phase 8 Step 2 shall implement or extend the query
+normalization and expansion contract according to the
+discovered architecture.
+
+Required target aliases:
+- 사슴가슴살
+- 사슴 가슴살
+- 가슴살
+- venison breast
+
+Required canonical concept:
+- Venison breast cut

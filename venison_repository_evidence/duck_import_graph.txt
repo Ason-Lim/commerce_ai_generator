@@ -1,0 +1,191 @@
+# Duck Import Graph
+
+app/services/food/knowledge/meat/duck/provider.py:9:from app.services.food.knowledge.meat.duck.attributes import (
+app/services/food/knowledge/meat/duck/provider.py:13:from app.services.food.knowledge.meat.duck.parser import (
+app/services/food/knowledge/meat/duck/provider.py:14:    DuckParser,
+app/services/food/knowledge/meat/duck/provider.py:16:from app.services.food.knowledge.meat.duck.rules import (
+app/services/food/knowledge/meat/duck/provider.py:19:from app.services.food.knowledge.meat.duck.scoring import (
+app/services/food/knowledge/meat/duck/provider.py:29:class DuckKnowledgeProvider(
+app/services/food/knowledge/meat/duck/provider.py:36:    - DuckParser 실행
+app/services/food/knowledge/meat/duck/provider.py:85:        parser: DuckParser | None = None,
+app/services/food/knowledge/meat/duck/provider.py:93:            else DuckParser()
+app/services/food/knowledge/meat/duck/provider.py:266:    "DuckKnowledgeProvider",
+app/services/food/knowledge/meat/duck/attributes.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/attributes.py:223:    Duck Parser의 표준화 결과와 Registry 정보를
+app/services/food/knowledge/meat/duck/scoring.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/scoring.py:105:    DuckParseResult의 Registry Match에서 점수를 추출한다.
+app/services/food/knowledge/meat/duck/scoring.py:217:    인식된 Duck Registry 항목만 이용해
+app/services/food/knowledge/meat/duck/scoring.py:277:    외부 상품 점수와 Duck Registry 점수를 구성한다.
+app/services/food/knowledge/meat/duck/cut_registry.py:34:class DuckCut(RegistryEntry):
+app/services/food/knowledge/meat/duck/cut_registry.py:69:class DuckCutMatch(RegistryMatch[DuckCut]):
+app/services/food/knowledge/meat/duck/cut_registry.py:75:class DuckCutRegistry(BaseAliasRegistry[DuckCut]):
+app/services/food/knowledge/meat/duck/cut_registry.py:129:__all__ = ["DUCK_CUT_REGISTRY_ID", "DuckCut", "DuckCutMatch", "DuckCutRegistry"]
+app/services/food/knowledge/meat/duck/__init__.py:7:    DuckBreedRegistry,
+app/services/food/knowledge/meat/duck/__init__.py:13:    DuckCutRegistry,
+app/services/food/knowledge/meat/duck/__init__.py:19:    DuckTypeRegistry,
+app/services/food/knowledge/meat/duck/__init__.py:28:    "DuckTypeRegistry",
+app/services/food/knowledge/meat/duck/__init__.py:31:    "DuckBreedRegistry",
+app/services/food/knowledge/meat/duck/__init__.py:34:    "DuckCutRegistry",
+app/services/food/knowledge/meat/duck/__init__.py:37:from app.services.food.knowledge.meat.duck.breed_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:40:    DuckBreedRegistry,
+app/services/food/knowledge/meat/duck/__init__.py:42:from app.services.food.knowledge.meat.duck.cut_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:45:    DuckCutRegistry,
+app/services/food/knowledge/meat/duck/__init__.py:47:from app.services.food.knowledge.meat.duck.parser import (
+app/services/food/knowledge/meat/duck/__init__.py:48:    DuckParser,
+app/services/food/knowledge/meat/duck/__init__.py:50:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/__init__.py:53:from app.services.food.knowledge.meat.duck.type_registry import (
+app/services/food/knowledge/meat/duck/__init__.py:56:    DuckTypeRegistry,
+app/services/food/knowledge/meat/duck/__init__.py:62:    "DuckTypeRegistry",
+app/services/food/knowledge/meat/duck/__init__.py:65:    "DuckBreedRegistry",
+app/services/food/knowledge/meat/duck/__init__.py:68:    "DuckCutRegistry",
+app/services/food/knowledge/meat/duck/__init__.py:70:    "DuckParser",
+app/services/food/knowledge/meat/duck/__init__.py:85:from app.services.food.knowledge.meat.duck.attributes import (
+app/services/food/knowledge/meat/duck/__init__.py:117:from app.services.food.knowledge.meat.duck.provider import (
+app/services/food/knowledge/meat/duck/__init__.py:118:    DuckKnowledgeProvider,
+app/services/food/knowledge/meat/duck/__init__.py:120:from app.services.food.knowledge.meat.duck.rules import (
+app/services/food/knowledge/meat/duck/__init__.py:124:from app.services.food.knowledge.meat.duck.scoring import (
+app/services/food/knowledge/meat/duck/__init__.py:136:    "DuckKnowledgeProvider",
+app/services/food/knowledge/meat/duck/rules.py:6:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/type_registry.py:28:class DuckType(RegistryEntry):
+app/services/food/knowledge/meat/duck/type_registry.py:60:class DuckTypeMatch(RegistryMatch[DuckType]):
+app/services/food/knowledge/meat/duck/type_registry.py:66:class DuckTypeRegistry(BaseAliasRegistry[DuckType]):
+app/services/food/knowledge/meat/duck/type_registry.py:117:__all__ = ["DUCK_TYPE_REGISTRY_ID", "DuckType", "DuckTypeMatch", "DuckTypeRegistry"]
+app/services/food/knowledge/meat/duck/breed_registry.py:34:class DuckBreed(RegistryEntry):
+app/services/food/knowledge/meat/duck/breed_registry.py:68:class DuckBreedMatch(RegistryMatch[DuckBreed]):
+app/services/food/knowledge/meat/duck/breed_registry.py:74:class DuckBreedRegistry(BaseAliasRegistry[DuckBreed]):
+app/services/food/knowledge/meat/duck/breed_registry.py:128:__all__ = ["DUCK_BREED_REGISTRY_ID", "DuckBreed", "DuckBreedMatch", "DuckBreedRegistry"]
+app/services/food/knowledge/meat/duck/parser.py:9:from app.services.food.knowledge.meat.duck.breed_registry import (
+app/services/food/knowledge/meat/duck/parser.py:11:    DuckBreedRegistry,
+app/services/food/knowledge/meat/duck/parser.py:13:from app.services.food.knowledge.meat.duck.cut_registry import (
+app/services/food/knowledge/meat/duck/parser.py:15:    DuckCutRegistry,
+app/services/food/knowledge/meat/duck/parser.py:17:from app.services.food.knowledge.meat.duck.parser_models import (
+app/services/food/knowledge/meat/duck/parser.py:20:from app.services.food.knowledge.meat.duck.type_registry import (
+app/services/food/knowledge/meat/duck/parser.py:22:    DuckTypeRegistry,
+app/services/food/knowledge/meat/duck/parser.py:26:class DuckParser(
+app/services/food/knowledge/meat/duck/parser.py:90:        type_registry: DuckTypeRegistry | None = None,
+app/services/food/knowledge/meat/duck/parser.py:91:        breed_registry: DuckBreedRegistry | None = None,
+app/services/food/knowledge/meat/duck/parser.py:92:        cut_registry: DuckCutRegistry | None = None,
+app/services/food/knowledge/meat/duck/parser.py:97:            else DuckTypeRegistry()
+app/services/food/knowledge/meat/duck/parser.py:102:            else DuckBreedRegistry()
+app/services/food/knowledge/meat/duck/parser.py:107:            else DuckCutRegistry()
+app/services/food/knowledge/meat/duck/parser.py:351:                DuckParser._stringify_value(item)
+app/services/food/knowledge/meat/duck/parser.py:560:    "DuckParser",
+app/services/food/knowledge/registry.py:19:from app.services.food.knowledge.meat.duck.provider import (
+app/services/food/knowledge/registry.py:20:    DuckKnowledgeProvider,
+app/services/food/knowledge/registry.py:161:    DuckKnowledgeProvider()
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:5:from app.services.food.knowledge.meat.duck.parser import (
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:6:    DuckParser,
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:8:from app.services.food.knowledge.meat.duck.parser_models import (
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:14:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:30:    result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:72:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:85:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:97:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:106:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:124:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:142:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:153:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:170:        DuckParser().parse_product(  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:180:        DuckParser().parse_product({})
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:184:    result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:195:    result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:208:    from app.services.food.knowledge.meat.duck import (
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:209:        DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:210:        DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:211:        DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:214:    type_registry = DuckTypeRegistry()
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:215:    breed_registry = DuckBreedRegistry()
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:216:    cut_registry = DuckCutRegistry()
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:218:    parser = DuckParser(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:5:from app.services.food.knowledge.meat.duck.parser import (
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:6:    DuckParser,
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:8:from app.services.food.knowledge.meat.duck.scoring import (
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:68:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:123:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:154:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:178:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:217:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:232:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:5:from app.services.food.knowledge.meat.duck.attributes import (
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:16:from app.services.food.knowledge.meat.duck.parser import (
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:17:    DuckParser,
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:81:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:162:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:201:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:253:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:296:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:5:from app.services.food.knowledge.meat.duck.attributes import (
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:8:from app.services.food.knowledge.meat.duck.parser import (
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:9:    DuckParser,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:11:from app.services.food.knowledge.meat.duck.rules import (
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:15:from app.services.food.knowledge.meat.duck.scoring import (
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:23:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:162:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:190:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:220:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:269:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:285:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:5:from app.services.food.knowledge.meat.duck import (
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:11:    DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:14:    DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:17:    DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:22:def type_registry() -> DuckTypeRegistry:
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:23:    return DuckTypeRegistry()
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:27:def breed_registry() -> DuckBreedRegistry:
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:28:    return DuckBreedRegistry()
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:32:def cut_registry() -> DuckCutRegistry:
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:33:    return DuckCutRegistry()
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:43:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:44:    breed_registry: DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:45:    cut_registry: DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:71:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:92:    breed_registry: DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:119:    cut_registry: DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:130:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:131:    breed_registry: DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:132:    cut_registry: DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:148:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:149:    breed_registry: DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:150:    cut_registry: DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:160:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:161:    breed_registry: DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:162:    cut_registry: DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:196:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:207:    breed_registry: DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:223:    cut_registry: DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:239:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:240:    breed_registry: DuckBreedRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:241:    cut_registry: DuckCutRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_registries.py:253:    type_registry: DuckTypeRegistry,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:5:from app.services.food.knowledge.meat.duck.parser import (
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:6:    DuckParser,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:8:from app.services.food.knowledge.meat.duck.provider import (
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:9:    DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:18:def provider() -> DuckKnowledgeProvider:
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:19:    return DuckKnowledgeProvider()
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:43:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:49:        DuckParser,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:54:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:71:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:88:    parser = DuckParser()
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:89:    provider = DuckKnowledgeProvider(
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:97:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:171:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:210:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:247:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:288:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:306:    provider: DuckKnowledgeProvider,
+tests/services/food/knowledge/test_duck_registry_integration.py:3:from app.services.food.knowledge.meat.duck.breed_registry import (
+tests/services/food/knowledge/test_duck_registry_integration.py:4:    DuckBreedRegistry,
+tests/services/food/knowledge/test_duck_registry_integration.py:6:from app.services.food.knowledge.meat.duck.cut_registry import (
+tests/services/food/knowledge/test_duck_registry_integration.py:7:    DuckCutRegistry,
+tests/services/food/knowledge/test_duck_registry_integration.py:9:from app.services.food.knowledge.meat.duck.provider import (
+tests/services/food/knowledge/test_duck_registry_integration.py:10:    DuckKnowledgeProvider,
+tests/services/food/knowledge/test_duck_registry_integration.py:12:from app.services.food.knowledge.meat.duck.type_registry import (
+tests/services/food/knowledge/test_duck_registry_integration.py:13:    DuckTypeRegistry,
+tests/services/food/knowledge/test_duck_registry_integration.py:28:        DuckKnowledgeProvider,
+tests/services/food/knowledge/test_duck_registry_integration.py:58:        DuckKnowledgeProvider,
+tests/services/food/knowledge/test_duck_registry_integration.py:72:        DuckKnowledgeProvider,
+tests/services/food/knowledge/test_duck_registry_integration.py:77:    type_registry = DuckTypeRegistry()
+tests/services/food/knowledge/test_duck_registry_integration.py:78:    breed_registry = DuckBreedRegistry()
+tests/services/food/knowledge/test_duck_registry_integration.py:79:    cut_registry = DuckCutRegistry()

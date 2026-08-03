@@ -1,0 +1,4 @@
+7abedbea3ce321c7591361f124d3c5fe2d2fa0ab80813e2b7a84767750c8f8c7  /Users/mom/commerce_ai_generator/app/services/food/registry_data/venison/cuts.yaml
+3c554a9c68c832574b4627d71ea33e4e6bcb9123ef01b357b616db152520e7e2  /Users/mom/commerce_ai_generator/tests/services/food/knowledge/meat/venison/test_venison_registries.py
+b98c2bcf535300a0d8874602e6fc9486901905bd927a2c90b28c41e1af20cc32  /Users/mom/commerce_ai_generator/tests/services/food/knowledge/meat/venison/test_venison_parser.py
+76d2b56349a1bb359733bd24c1709f7c7086d5c5b86a0716989961b98fd836d2  /Users/mom/commerce_ai_generator/tests/services/food/knowledge/meat/venison/test_venison_attributes.py

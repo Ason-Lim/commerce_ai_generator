@@ -1,0 +1,994 @@
+=== CURRENT STATUS ===
+main
+ M .gitignore
+ M README.md
+ M app/main.py
+ M app/services/analytics_logger.py
+ M app/services/context_logger.py
+ M app/services/db_product_collector.py
+ M app/services/food/knowledge/registry.py
+ M app/services/generator_service.py
+ M app/services/naver_shopping_api_collector.py
+ M app/ui/admin_dashboard.py
+ M app/ui/streamlit_app.py
+ D docs/governance/03_governance_registry_v1.0_rc1.md
+ M requirements.txt
+ M tests/services/food/knowledge/test_food_knowledge_registry.py
+?? CONTEXT_INTELLIGENCE.md
+?? __init__.py
+?? app/design/
+?? app/services/ai_ranking_engine_v7.py
+?? app/services/ai_ranking_engine_v8.py
+?? app/services/badge_engine.py
+?? app/services/collector_v4_runner.py
+?? app/services/collectors/
+?? app/services/common/
+?? app/services/coupang_api.py
+?? app/services/deduplication_engine_v81.py
+?? app/services/deduplication_engine_v82.py
+?? app/services/deduplication_engine_v83.py
+?? app/services/explainability_service.py
+?? app/services/food/knowledge/meat/chicken/
+?? app/services/food/registry_data/chicken/
+?? app/services/food_intelligence/
+?? app/services/food_knowledge/
+?? app/services/impression_logger.py
+?? app/services/kurly_nmart_collector.py
+?? app/services/kurly_nmart_collector_v3.py
+?? app/services/kurly_review_playwright_collector.py
+?? app/services/market/
+?? app/services/market_aggregator.py
+?? app/services/market_collector_v5.py
+?? app/services/market_collector_v51.py
+?? app/services/market_identity_cluster_v53.py
+?? app/services/market_representative_price_v54.py
+?? app/services/market_signal_propagation_v52.py
+?? app/services/naver_datalab_service.py
+?? app/services/new_shopping_api_collector.py
+?? app/services/platform_normalizer_v84.py
+?? app/services/platform_score_engine.py
+?? app/services/preference_service.py
+?? app/services/price_detail_enricher.py
+?? app/services/price_intelligence_engine.py
+?? app/services/product_attribute_engine_v8
+?? app/services/product_attribute_engine_v8.py
+?? app/services/product_cluster_representative_v5.py
+?? app/services/product_family_variant_v6.py
+?? app/services/product_identity_cluster_v4.py
+?? app/services/product_identity_engine.py
+?? app/services/product_identity_engine_v3.py
+?? app/services/product_quality_engine_v10.py
+?? app/services/product_quality_engine_v10_runner.py
+?? app/services/product_quality_engine_v9.py
+?? app/services/product_variety_engine_v7.py
+?? app/services/recommendation/
+?? app/services/recommendation_compare_engine_v62.py
+?? app/services/recommendation_engine.py
+?? app/services/recommendation_intelligence_v55.py
+?? app/services/recommendation_pipeline.py
+?? app/services/recommendation_reasoner.py
+?? app/services/recommendation_story_engine_v61.py
+?? app/services/search_context.py
+?? app/services/session_context_service.py
+?? app/tools/
+?? app/ui/components/
+?? app/ui/hero_renderer_v3.py
+?? app/ui/html_utils.py
+?? app/ui/product_card_renderer.py
+?? backups/
+?? chicken_phase2.zip
+?? chicken_phase2/
+?? commerce_ai_generator_governance_bundle.zip
+?? commerce_ai_generator_governance_bundle/
+?? commit_governance_docs.sh
+?? context_intelligence_design(1).py
+?? context_intelligence_md_python_package.zip
+?? context_intelligence_md_python_package/
+?? docs/AI/
+?? docs/Analytics/
+?? docs/Architecture/
+?? "docs/Commerce AI Generator \354\266\224\354\262\234 UX-\354\227\224\354\247\204 V2 \354\204\244\352\263\204\353\254\270\354\204\234.docx"
+?? "docs/Commerce AI Generator \354\266\224\354\262\234 UX-\354\227\224\354\247\204 V2 \354\204\244\352\263\204\353\254\270\354\204\234.pdf"
+?? docs/UX/
+?? docs/__init__.py
+?? docs/admin_dashboard.md
+?? docs/commerce_ai_generator_architecture_handbook_v1.0.md
+?? docs/commerce_ai_generator_architecture_handbook_v1.1.md
+?? docs/design.md
+?? docs/logging.md
+?? docs/recommendation_engine.md
+?? docs/streamlit_issues.md
+?? duck_registry_baseline_review.txt
+?? hero_renderer_v3_score_simple.py
+?? lamb_registry_loader_audit.txt
+?? master_architecture_inventory.txt
+?? scripts/create_ai_docs.py
+?? scripts/create_ai_docs_revisepy
+?? scripts/sync_context_intelligence_docs.py
+?? scripts/update_docs_v2.py
+?? sql/
+?? streamlit_app_card_grouped_fixed.py
+?? tests/services/food/knowledge/meat/chicken/
+?? tests/services/food/knowledge/test_chicken_registry_integration.py
+?? "\360\237\223\201 Commerce AI Generator Development"
+
+==================================================
+FILE: app/services/food/knowledge/meat/chicken/type_registry.py
+==================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryEntry, RegistryMatch
+from app.services.food.knowledge.common.base_registry import AliasMatch, BaseAliasRegistry, normalize_string_list, optional_string, safe_float
+from app.services.food.knowledge.registry_loader import KnowledgeRegistryLoader, get_knowledge_registry_loader
+
+CHICKEN_TYPE_REGISTRY_ID = "chicken.types"
+
+
+def _aliases(canonical_name: str, raw_aliases: Any) -> tuple[str, ...]:
+    values = [canonical_name, *normalize_string_list(raw_aliases)]
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+    return tuple(result)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChickenType(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    type_category: str
+    score: float
+    premium: bool
+    flavor_intensity: str | None
+    tenderness_level: str | None
+    typical_uses: tuple[str, ...]
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        canonical_name = str(self.canonical_name).strip()
+        type_category = str(self.type_category).strip().lower()
+        if not canonical_name:
+            raise ValueError("canonical_name must not be empty")
+        if not type_category:
+            raise ValueError("type_category must not be empty")
+        object.__setattr__(self, "canonical_name", canonical_name)
+        object.__setattr__(self, "type_category", type_category)
+        object.__setattr__(self, "aliases", tuple(str(v).strip() for v in self.aliases if str(v).strip()))
+        object.__setattr__(self, "typical_uses", tuple(str(v).strip() for v in self.typical_uses if str(v).strip()))
+        object.__setattr__(self, "score", max(0.0, min(100.0, float(self.score))))
+        object.__setattr__(self, "premium", bool(self.premium))
+        for field_name in ("flavor_intensity", "tenderness_level", "description"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, str(value).strip() or None)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChickenTypeMatch(RegistryMatch[ChickenType]):
+    @property
+    def chicken_type(self) -> ChickenType:
+        return self.entry
+
+
+class ChickenTypeRegistry(BaseAliasRegistry[ChickenType]):
+    registry_id = CHICKEN_TYPE_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(self, loader: KnowledgeRegistryLoader | None = None) -> None:
+        super().__init__(loader=loader or get_knowledge_registry_loader())
+
+    def build_entry(self, registry_key: str, raw_entry: Mapping[str, Any]) -> ChickenType:
+        known_fields = {"canonical_name", "aliases", "type_category", "score", "premium", "flavor_intensity", "tenderness_level", "typical_uses", "description"}
+        metadata = {key: copy.deepcopy(value) for key, value in raw_entry.items() if key not in known_fields}
+        canonical_name = str(raw_entry.get("canonical_name", registry_key)).strip()
+        return ChickenType(
+            registry_key=registry_key,
+            canonical_name=canonical_name or registry_key,
+            aliases=_aliases(canonical_name, raw_entry.get("aliases")),
+            type_category=str(raw_entry.get("type_category", registry_key)).strip().lower() or registry_key.lower(),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            flavor_intensity=optional_string(raw_entry.get("flavor_intensity")),
+            tenderness_level=optional_string(raw_entry.get("tenderness_level")),
+            typical_uses=normalize_string_list(raw_entry.get("typical_uses")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(self, text: str) -> ChickenTypeMatch | None:
+        raw_match = super().match(text)
+        return None if raw_match is None else self._convert_match(raw_match)
+
+    def find_all(self, text: str) -> list[ChickenTypeMatch]:
+        return [self._convert_match(match) for match in super().find_all(text)]
+
+    def lookup(self, text: str) -> ChickenType | None:
+        match = self.match(text)
+        return None if match is None else match.entry
+
+    def list(self, *, premium_only: bool = False, type_category: str | None = None) -> list[ChickenType]:
+        entries = [entry for entry in super().list() if isinstance(entry, ChickenType)]
+        if premium_only:
+            entries = [entry for entry in entries if entry.premium]
+        if type_category is not None:
+            normalized = str(type_category).strip().lower()
+            entries = [entry for entry in entries if entry.type_category == normalized]
+        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+
+    @staticmethod
+    def _convert_match(raw_match: AliasMatch[ChickenType]) -> ChickenTypeMatch:
+        return ChickenTypeMatch(entry=raw_match.entry, matched_alias=raw_match.matched_alias, normalized_alias=raw_match.normalized_alias, match_start=raw_match.match_start, match_end=raw_match.match_end, confidence=raw_match.confidence, exact_match=raw_match.exact_match)
+
+
+__all__ = ["CHICKEN_TYPE_REGISTRY_ID", "ChickenType", "ChickenTypeMatch", "ChickenTypeRegistry"]
+
+==================================================
+FILE: app/services/food/knowledge/meat/chicken/breed_registry.py
+==================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryEntry, RegistryMatch
+from app.services.food.knowledge.common.base_registry import AliasMatch, BaseAliasRegistry, normalize_string_list, optional_string, safe_float
+from app.services.food.knowledge.registry_loader import KnowledgeRegistryLoader, get_knowledge_registry_loader
+
+CHICKEN_BREED_REGISTRY_ID = "chicken.breeds"
+
+
+def _aliases(canonical_name: str, raw_aliases: Any) -> tuple[str, ...]:
+    values = [canonical_name, *normalize_string_list(raw_aliases)]
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+    return tuple(result)
+
+
+def _optional_score(value: Any) -> float | None:
+    if value is None:
+        return None
+    return max(0.0, min(100.0, safe_float(value, default=0.0)))
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChickenBreed(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    score: float
+    premium: bool
+    english_name: str | None
+    origin_country: str | None
+    breed_type: str | None
+    flavor_score: float | None
+    tenderness_score: float | None
+    growth_score: float | None
+    rarity_score: float | None
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        canonical_name = str(self.canonical_name).strip()
+        if not canonical_name:
+            raise ValueError("canonical_name must not be empty")
+        object.__setattr__(self, "canonical_name", canonical_name)
+        object.__setattr__(self, "aliases", tuple(str(v).strip() for v in self.aliases if str(v).strip()))
+        object.__setattr__(self, "score", max(0.0, min(100.0, float(self.score))))
+        object.__setattr__(self, "premium", bool(self.premium))
+        for field_name in ("english_name", "origin_country", "breed_type", "description"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, str(value).strip() or None)
+        for field_name in ("flavor_score", "tenderness_score", "growth_score", "rarity_score"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, max(0.0, min(100.0, float(value))))
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChickenBreedMatch(RegistryMatch[ChickenBreed]):
+    @property
+    def breed(self) -> ChickenBreed:
+        return self.entry
+
+
+class ChickenBreedRegistry(BaseAliasRegistry[ChickenBreed]):
+    registry_id = CHICKEN_BREED_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(self, loader: KnowledgeRegistryLoader | None = None) -> None:
+        super().__init__(loader=loader or get_knowledge_registry_loader())
+
+    def build_entry(self, registry_key: str, raw_entry: Mapping[str, Any]) -> ChickenBreed:
+        known_fields = {"canonical_name", "aliases", "score", "premium", "english_name", "origin_country", "breed_type", "flavor_score", "tenderness_score", "growth_score", "rarity_score", "description"}
+        metadata = {key: copy.deepcopy(value) for key, value in raw_entry.items() if key not in known_fields}
+        canonical_name = str(raw_entry.get("canonical_name", registry_key)).strip()
+        return ChickenBreed(
+            registry_key=registry_key,
+            canonical_name=canonical_name or registry_key,
+            aliases=_aliases(canonical_name, raw_entry.get("aliases")),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            english_name=optional_string(raw_entry.get("english_name")),
+            origin_country=optional_string(raw_entry.get("origin_country")),
+            breed_type=optional_string(raw_entry.get("breed_type")),
+            flavor_score=_optional_score(raw_entry.get("flavor_score")),
+            tenderness_score=_optional_score(raw_entry.get("tenderness_score")),
+            growth_score=_optional_score(raw_entry.get("growth_score")),
+            rarity_score=_optional_score(raw_entry.get("rarity_score")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(self, text: str) -> ChickenBreedMatch | None:
+        raw_match = super().match(text)
+        return None if raw_match is None else self._convert_match(raw_match)
+
+    def find_all(self, text: str) -> list[ChickenBreedMatch]:
+        return [self._convert_match(match) for match in super().find_all(text)]
+
+    def lookup(self, text: str) -> ChickenBreed | None:
+        match = self.match(text)
+        return None if match is None else match.entry
+
+    def list(self, *, premium_only: bool = False, breed_type: str | None = None) -> list[ChickenBreed]:
+        entries = [entry for entry in super().list() if isinstance(entry, ChickenBreed)]
+        if premium_only:
+            entries = [entry for entry in entries if entry.premium]
+        if breed_type is not None:
+            normalized = str(breed_type).strip().lower()
+            entries = [entry for entry in entries if (entry.breed_type or "").lower() == normalized]
+        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+
+    @staticmethod
+    def _convert_match(raw_match: AliasMatch[ChickenBreed]) -> ChickenBreedMatch:
+        return ChickenBreedMatch(entry=raw_match.entry, matched_alias=raw_match.matched_alias, normalized_alias=raw_match.normalized_alias, match_start=raw_match.match_start, match_end=raw_match.match_end, confidence=raw_match.confidence, exact_match=raw_match.exact_match)
+
+
+__all__ = ["CHICKEN_BREED_REGISTRY_ID", "ChickenBreed", "ChickenBreedMatch", "ChickenBreedRegistry"]
+
+==================================================
+FILE: app/services/food/knowledge/meat/chicken/cut_registry.py
+==================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryEntry, RegistryMatch
+from app.services.food.knowledge.common.base_registry import AliasMatch, BaseAliasRegistry, normalize_string_list, optional_string, safe_float
+from app.services.food.knowledge.registry_loader import KnowledgeRegistryLoader, get_knowledge_registry_loader
+
+CHICKEN_CUT_REGISTRY_ID = "chicken.cuts"
+
+
+def _aliases(canonical_name: str, raw_aliases: Any) -> tuple[str, ...]:
+    values = [canonical_name, *normalize_string_list(raw_aliases)]
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+    return tuple(result)
+
+
+def _optional_score(value: Any) -> float | None:
+    if value is None:
+        return None
+    return max(0.0, min(100.0, safe_float(value, default=0.0)))
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChickenCut(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    score: float
+    premium: bool
+    english_name: str | None
+    cut_group: str | None
+    tenderness_score: float | None
+    flavor_score: float | None
+    fat_score: float | None
+    yield_score: float | None
+    cooking_methods: tuple[str, ...]
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        canonical_name = str(self.canonical_name).strip()
+        if not canonical_name:
+            raise ValueError("canonical_name must not be empty")
+        object.__setattr__(self, "canonical_name", canonical_name)
+        object.__setattr__(self, "aliases", tuple(str(v).strip() for v in self.aliases if str(v).strip()))
+        object.__setattr__(self, "cooking_methods", tuple(str(v).strip() for v in self.cooking_methods if str(v).strip()))
+        object.__setattr__(self, "score", max(0.0, min(100.0, float(self.score))))
+        object.__setattr__(self, "premium", bool(self.premium))
+        for field_name in ("english_name", "cut_group", "description"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, str(value).strip() or None)
+        for field_name in ("tenderness_score", "flavor_score", "fat_score", "yield_score"):
+            value = getattr(self, field_name)
+            if value is not None:
+                object.__setattr__(self, field_name, max(0.0, min(100.0, float(value))))
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChickenCutMatch(RegistryMatch[ChickenCut]):
+    @property
+    def cut(self) -> ChickenCut:
+        return self.entry
+
+
+class ChickenCutRegistry(BaseAliasRegistry[ChickenCut]):
+    registry_id = CHICKEN_CUT_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(self, loader: KnowledgeRegistryLoader | None = None) -> None:
+        super().__init__(loader=loader or get_knowledge_registry_loader())
+
+    def build_entry(self, registry_key: str, raw_entry: Mapping[str, Any]) -> ChickenCut:
+        known_fields = {"canonical_name", "aliases", "score", "premium", "english_name", "cut_group", "tenderness_score", "flavor_score", "fat_score", "yield_score", "cooking_methods", "description"}
+        metadata = {key: copy.deepcopy(value) for key, value in raw_entry.items() if key not in known_fields}
+        canonical_name = str(raw_entry.get("canonical_name", registry_key)).strip()
+        return ChickenCut(
+            registry_key=registry_key,
+            canonical_name=canonical_name or registry_key,
+            aliases=_aliases(canonical_name, raw_entry.get("aliases")),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            english_name=optional_string(raw_entry.get("english_name")),
+            cut_group=optional_string(raw_entry.get("cut_group")),
+            tenderness_score=_optional_score(raw_entry.get("tenderness_score")),
+            flavor_score=_optional_score(raw_entry.get("flavor_score")),
+            fat_score=_optional_score(raw_entry.get("fat_score")),
+            yield_score=_optional_score(raw_entry.get("yield_score")),
+            cooking_methods=normalize_string_list(raw_entry.get("cooking_methods")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(self, text: str) -> ChickenCutMatch | None:
+        raw_match = super().match(text)
+        return None if raw_match is None else self._convert_match(raw_match)
+
+    def find_all(self, text: str) -> list[ChickenCutMatch]:
+        return [self._convert_match(match) for match in super().find_all(text)]
+
+    def lookup(self, text: str) -> ChickenCut | None:
+        match = self.match(text)
+        return None if match is None else match.entry
+
+    def list(self, *, premium_only: bool = False, cut_group: str | None = None) -> list[ChickenCut]:
+        entries = [entry for entry in super().list() if isinstance(entry, ChickenCut)]
+        if premium_only:
+            entries = [entry for entry in entries if entry.premium]
+        if cut_group is not None:
+            normalized = str(cut_group).strip().lower()
+            entries = [entry for entry in entries if (entry.cut_group or "").lower() == normalized]
+        return sorted(entries, key=lambda entry: (-entry.score, entry.canonical_name))
+
+    @staticmethod
+    def _convert_match(raw_match: AliasMatch[ChickenCut]) -> ChickenCutMatch:
+        return ChickenCutMatch(entry=raw_match.entry, matched_alias=raw_match.matched_alias, normalized_alias=raw_match.normalized_alias, match_start=raw_match.match_start, match_end=raw_match.match_end, confidence=raw_match.confidence, exact_match=raw_match.exact_match)
+
+
+__all__ = ["CHICKEN_CUT_REGISTRY_ID", "ChickenCut", "ChickenCutMatch", "ChickenCutRegistry"]
+
+==================================================
+FILE: app/services/food/registry_data/chicken/types.yaml
+==================================================
+registry_id: chicken.types
+version: "1.0.0"
+metadata:
+  category_id: chicken
+  parent_category_id: meat
+  description: 닭고기 상품 유형 Registry
+  language: ko
+  status: active
+data:
+  broiler:
+    canonical_name: 육계
+    aliases: [broiler, 일반육계, 일반 육계]
+    type_category: broiler
+    score: 78
+    premium: false
+    flavor_intensity: mild
+    tenderness_level: high
+    typical_uses: [roasting, frying, grilling]
+    description: 일반적인 육용 닭으로 유통되는 닭고기 유형
+  native_chicken:
+    canonical_name: 토종닭
+    aliases: [토종 닭, native chicken, korean native chicken]
+    type_category: native_chicken
+    score: 88
+    premium: true
+    flavor_intensity: rich
+    tenderness_level: medium
+    typical_uses: [soup, braising, boiling]
+    description: 토종닭으로 명시되어 유통되는 닭고기 유형
+  young_chicken:
+    canonical_name: 영계
+    aliases: [어린닭, 어린 닭, young chicken]
+    type_category: young_chicken
+    score: 82
+    premium: false
+    flavor_intensity: mild
+    tenderness_level: high
+    typical_uses: [soup, roasting, frying]
+    description: 비교적 어린 닭으로 표시된 상품 유형
+  silkie:
+    canonical_name: 오골계
+    aliases: [오골 닭, silkie, silkie chicken]
+    type_category: silkie
+    score: 86
+    premium: true
+    flavor_intensity: rich
+    tenderness_level: medium
+    typical_uses: [soup, boiling, braising]
+    description: 오골계로 명시되어 유통되는 닭고기 유형
+  spent_hen:
+    canonical_name: 노계
+    aliases: [늙은닭, 늙은 닭, spent hen]
+    type_category: spent_hen
+    score: 65
+    premium: false
+    flavor_intensity: strong
+    tenderness_level: low
+    typical_uses: [soup, stock, slow_cooking]
+    description: 성장한 산란계 또는 노계로 표시된 상품 유형
+
+==================================================
+FILE: app/services/food/registry_data/chicken/breeds.yaml
+==================================================
+registry_id: chicken.breeds
+version: "1.0.0"
+metadata:
+  category_id: chicken
+  parent_category_id: meat
+  description: 닭 품종 및 상업 계통 Registry
+  language: ko
+  status: active
+data:
+  ross_308:
+    canonical_name: 로스 308
+    aliases: [Ross 308, ross 308, Ross308, ross308, 로스308]
+    english_name: Ross 308
+    origin_country: United Kingdom
+    breed_type: commercial_broiler
+    score: 82
+    premium: false
+    flavor_score: 76
+    tenderness_score: 82
+    growth_score: 94
+    rarity_score: 35
+    description: 상업용 육계 생산에 널리 활용되는 육계 계통
+  cobb_500:
+    canonical_name: 코브 500
+    aliases: [Cobb 500, cobb 500, Cobb500, cobb500, 코브500]
+    english_name: Cobb 500
+    origin_country: United States
+    breed_type: commercial_broiler
+    score: 82
+    premium: false
+    flavor_score: 76
+    tenderness_score: 82
+    growth_score: 94
+    rarity_score: 35
+    description: 성장성과 사료 효율을 중심으로 유통되는 상업용 육계 계통
+  arbor_acres:
+    canonical_name: 아버 에이커스
+    aliases: [Arbor Acres, arbor acres, ArborAcres, arboracres, 아버에이커스]
+    english_name: Arbor Acres
+    origin_country: United States
+    breed_type: commercial_broiler
+    score: 80
+    premium: false
+    flavor_score: 75
+    tenderness_score: 81
+    growth_score: 92
+    rarity_score: 38
+    description: 상업용 육계 생산에 활용되는 대표적인 육계 계통
+
+==================================================
+FILE: app/services/food/registry_data/chicken/cuts.yaml
+==================================================
+registry_id: chicken.cuts
+version: "1.0.0"
+metadata:
+  category_id: chicken
+  parent_category_id: meat
+  description: 닭고기 부위 Registry
+  language: ko
+  status: active
+data:
+  whole_chicken: {canonical_name: 통닭, aliases: [닭한마리, 닭 한마리, whole chicken, whole bird], english_name: Whole Chicken, cut_group: whole, score: 82, premium: false, tenderness_score: 78, flavor_score: 82, fat_score: 72, yield_score: 90, cooking_methods: [roasting, boiling, frying, soup], description: 닭 한 마리 전체를 사용하는 상품}
+  breast: {canonical_name: 닭가슴살, aliases: [닭 가슴살, chicken breast, breast fillet], english_name: Chicken Breast, cut_group: breast, score: 82, premium: false, tenderness_score: 78, flavor_score: 70, fat_score: 25, yield_score: 88, cooking_methods: [grilling, pan_searing, boiling, roasting], description: 지방이 적고 담백한 닭 가슴 부위}
+  tenderloin: {canonical_name: 닭안심, aliases: [닭 안심, 치킨 텐더로인, chicken tenderloin, chicken tender], english_name: Chicken Tenderloin, cut_group: breast, score: 86, premium: false, tenderness_score: 92, flavor_score: 72, fat_score: 22, yield_score: 55, cooking_methods: [frying, grilling, pan_searing], description: 가슴살 안쪽의 부드러운 소형 부위}
+  thigh: {canonical_name: 닭다리살, aliases: [닭 다리살, 넓적다리살, 넓적 다리살, chicken thigh, thigh meat], english_name: Chicken Thigh, cut_group: leg, score: 88, premium: false, tenderness_score: 88, flavor_score: 90, fat_score: 78, yield_score: 82, cooking_methods: [grilling, frying, braising, roasting], description: 풍미와 지방감이 비교적 풍부한 넓적다리 부위}
+  drumstick: {canonical_name: 북채, aliases: [닭북채, 닭 북채, chicken drumstick, drumstick], english_name: Chicken Drumstick, cut_group: leg, score: 84, premium: false, tenderness_score: 82, flavor_score: 88, fat_score: 70, yield_score: 78, cooking_methods: [frying, roasting, braising], description: 닭 다리의 아래쪽 부위}
+  whole_leg: {canonical_name: 장각, aliases: [닭장각, 닭 장각, whole leg, chicken whole leg, leg quarter], english_name: Chicken Whole Leg, cut_group: leg, score: 85, premium: false, tenderness_score: 84, flavor_score: 89, fat_score: 74, yield_score: 88, cooking_methods: [roasting, frying, braising], description: 넓적다리와 북채가 연결된 전체 다리 부위}
+  wing: {canonical_name: 닭날개, aliases: [닭 날개, chicken wing, whole wing], english_name: Chicken Wing, cut_group: wing, score: 84, premium: false, tenderness_score: 80, flavor_score: 90, fat_score: 82, yield_score: 58, cooking_methods: [frying, grilling, roasting], description: 봉과 윙중간 등을 포함하는 닭 날개 전체 부위}
+  drumette: {canonical_name: 닭봉, aliases: [닭 봉, 윙봉, 윙 봉, chicken drumette, drumette], english_name: Chicken Drumette, cut_group: wing, score: 86, premium: false, tenderness_score: 84, flavor_score: 90, fat_score: 80, yield_score: 62, cooking_methods: [frying, grilling, roasting], description: 닭 날개의 몸통 쪽에 가까운 봉 형태 부위}
+  wingette: {canonical_name: 윙중간, aliases: [윙 중간, 닭윙중간, 닭 윙중간, wingette, wing flat, chicken flat], english_name: Chicken Wingette, cut_group: wing, score: 85, premium: false, tenderness_score: 80, flavor_score: 90, fat_score: 84, yield_score: 52, cooking_methods: [frying, grilling, roasting], description: 닭 날개의 가운데 평평한 부위}
+  feet: {canonical_name: 닭발, aliases: [닭 발, chicken feet, chicken foot], english_name: Chicken Feet, cut_group: offal, score: 72, premium: false, tenderness_score: 40, flavor_score: 84, fat_score: 48, yield_score: 42, cooking_methods: [braising, grilling, slow_cooking], description: 콜라겐이 풍부하고 양념 조리에 주로 사용되는 부위}
+  gizzard: {canonical_name: 닭근위, aliases: [닭 근위, 닭똥집, 닭 똥집, chicken gizzard, gizzard], english_name: Chicken Gizzard, cut_group: offal, score: 74, premium: false, tenderness_score: 52, flavor_score: 82, fat_score: 35, yield_score: 40, cooking_methods: [grilling, frying, stir_frying], description: 쫄깃한 식감이 특징인 닭의 근위 부위}
+  heart: {canonical_name: 닭염통, aliases: [닭 염통, 닭심장, 닭 심장, chicken heart], english_name: Chicken Heart, cut_group: offal, score: 75, premium: false, tenderness_score: 62, flavor_score: 86, fat_score: 45, yield_score: 32, cooking_methods: [grilling, skewering, stir_frying], description: 풍미가 진하고 꼬치나 구이에 사용되는 심장 부위}
+  liver: {canonical_name: 닭간, aliases: [닭 간, chicken liver], english_name: Chicken Liver, cut_group: offal, score: 72, premium: false, tenderness_score: 72, flavor_score: 88, fat_score: 55, yield_score: 38, cooking_methods: [pan_searing, stir_frying, braising], description: 풍미가 강하고 부드러운 식감의 간 부위}
+  skin: {canonical_name: 닭껍질, aliases: [닭 껍질, chicken skin], english_name: Chicken Skin, cut_group: skin, score: 68, premium: false, tenderness_score: 58, flavor_score: 88, fat_score: 98, yield_score: 45, cooking_methods: [grilling, frying, roasting], description: 지방감과 바삭한 식감으로 활용되는 닭 껍질}
+
+=== BASE REGISTRY SIGNATURES ===
+10:from app.services.food.knowledge.registry_loader import (
+12:    get_knowledge_registry_loader,
+19:class DomainRegistryError(RuntimeError):
+23:class DomainRegistryEntryNotFoundError(
+29:class DomainRegistryConfigurationError(
+36:class AliasCandidate:
+48:    def to_dict(self) -> dict[str, Any]:
+66:class AliasMatch(Generic[EntryT]):
+82:    def to_dict(self) -> dict[str, Any]:
+86:            entry_payload = entry.to_dict()
+88:            entry_payload = copy.deepcopy(
+92:            entry_payload = {
+97:            "entry": entry_payload,
+116:class BaseKnowledgeRegistry(
+131:    def __init__(
+133:        loader: KnowledgeRegistryLoader | None = None,
+141:        self.loader = (
+142:            loader
+143:            or get_knowledge_registry_loader()
+147:    def build_entry(
+154:    def get(
+160:        raw_entry = self.loader.get_entry(
+188:    def require(
+200:    def contains(
+204:        return self.loader.contains(
+209:    def keys(self) -> list[str]:
+210:        return self.loader.list_entries(
+214:    def list(
+217:        raw_data = self.loader.load_data(
+250:    def raw_data(
+254:            self.loader.load_data(
+260:    def raw_entry(
+266:        return self.loader.get_entry(
+272:    def reload(self) -> None:
+273:        self.loader.clear_cache(
+279:    def _clear_local_cache(self) -> None:
+285:class BaseAliasRegistry(
+301:    def __init__(
+303:        loader: KnowledgeRegistryLoader | None = None,
+305:        super().__init__(loader=loader)
+313:    def normalize_text(
+339:    def canonical_name_from_raw(
+353:    def aliases_from_raw(
+411:    def alias_metadata_from_raw(
+425:    def lookup(
+444:    def match(
+509:    def find_all(
+558:    def aliases(self) -> list[str]:
+575:    def alias_candidates(
+586:    def _build_alias_index(
+671:    def calculate_match_confidence(
+704:    def _build_match(
+757:    def _match_sort_key(
+766:    def clear_cache(self) -> None:
+771:        YAML 데이터까지 다시 읽어야 할 때는 reload()를 사용한다.
+775:    def _clear_local_cache(self) -> None:
+780:def optional_string(
+791:def safe_float(
+805:def optional_float(
+820:def optional_int(
+835:def normalize_string_list(
+
+=== REGISTRY LOADER ===
+from __future__ import annotations
+
+import copy
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from threading import RLock
+from typing import Any, Mapping
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
+
+
+SUPPORTED_EXTENSIONS = {
+    ".yaml",
+    ".yml",
+    ".json",
+}
+
+
+class KnowledgeRegistryError(RuntimeError):
+    """Knowledge Registry 처리 중 발생한 기본 예외."""
+
+
+class KnowledgeRegistryFileNotFoundError(
+    KnowledgeRegistryError
+):
+    """Registry 데이터 파일을 찾지 못한 경우."""
+
+
+class KnowledgeRegistryFormatError(
+    KnowledgeRegistryError
+):
+    """Registry 파일 형식 또는 최상위 구조가 잘못된 경우."""
+
+
+class KnowledgeRegistryValidationError(
+    KnowledgeRegistryError
+):
+    """Registry 데이터 검증에 실패한 경우."""
+
+
+@dataclass(frozen=True)
+class KnowledgeRegistryDocument:
+    """
+    하나의 Registry 데이터 문서를 표현한다.
+
+    attributes:
+        registry_id:
+            예: beef.grades, fruit.varieties
+
+        source_path:
+            실제 데이터 파일 경로
+
+        data:
+            Registry 본문
+
+        version:
+            Registry 데이터 버전
+
+        metadata:
+            설명, 작성자, 스키마 버전 등의 부가 정보
+    """
+
+    registry_id: str
+    source_path: Path
+    data: dict[str, Any]
+    version: str | None = None
+    metadata: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "registry_id": self.registry_id,
+            "source_path": str(self.source_path),
+            "version": self.version,
+            "metadata": copy.deepcopy(
+                self.metadata or {}
+            ),
+            "data": copy.deepcopy(self.data),
+        }
+
+
+class KnowledgeRegistryLoader:
+    """
+    YAML/JSON 기반 Food Knowledge Registry Loader.
+
+    특징:
+    - YAML 및 JSON 지원
+    - 메모리 캐시
+    - 파일 수정 시 자동 재로딩
+    - 최상위 구조 검증
+    - Registry ID 기반 접근
+    - 반환값 방어적 복사
+    """
+
+    def __init__(
+        self,
+        base_directory: str | Path | None = None,
+        *,
+        use_cache: bool = True,
+        auto_reload: bool = True,
+    ) -> None:
+        self.base_directory = (
+            Path(base_directory)
+            if base_directory is not None
+            else self.default_base_directory()
+        ).resolve()
+
+        self.use_cache = use_cache
+        self.auto_reload = auto_reload
+
+        self._cache: dict[
+            Path,
+            KnowledgeRegistryDocument,
+        ] = {}
+
+        self._modified_times: dict[
+            Path,
+            int,
+        ] = {}
+
+        self._lock = RLock()
+
+    @staticmethod
+    def default_base_directory() -> Path:
+        return (
+            Path(__file__)
+            .resolve()
+            .parent
+            .parent
+            / "registry_data"
+        )
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+
+        예:
+            beef.grades
+            fruit.varieties
+        """
+
+        source_path = self.resolve_path(
+            registry_id
+        )
+
+        if source_path is None:
+            if required:
+                raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+
+            return None
+
+        return self.load_path(
+            source_path,
+            registry_id=registry_id,
+            validate=validate,
+            force_reload=force_reload,
+        )
+
+    def load_path(
+        self,
+        source_path: str | Path,
+        *,
+        registry_id: str | None = None,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument:
+        path = Path(source_path).resolve()
+
+        if not path.exists():
+            raise KnowledgeRegistryFileNotFoundError(
+                f"Registry file not found: {path}"
+            )
+
+        if not path.is_file():
+            raise KnowledgeRegistryFormatError(
+                f"Registry path is not a file: {path}"
+            )
+
+        if path.suffix.lower() not in (
+            SUPPORTED_EXTENSIONS
+        ):
+            raise KnowledgeRegistryFormatError(
+                "Unsupported Registry extension: "
+                f"{path.suffix}"
+            )
+
+        with self._lock:
+            if (
+                self.use_cache
+                and not force_reload
+                and self._can_use_cached(path)
+            ):
+                return self._copy_document(
+                    self._cache[path]
+                )
+
+            raw_payload = self._read_file(path)
+
+            normalized = (
+                self._normalize_document_payload(
+                    raw_payload,
+                    source_path=path,
+                )
+            )
+
+            resolved_registry_id = (
+                registry_id
+                or normalized["registry_id"]
+                or self.path_to_registry_id(path)
+            )
+
+            data = normalized["data"]
+            version = normalized["version"]
+            metadata = normalized["metadata"]
+
+            if validate:
+                self.validate_data(
+                    data,
+                    registry_id=(
+                        resolved_registry_id
+                    ),
+                )
+
+            document = KnowledgeRegistryDocument(
+                registry_id=(
+                    resolved_registry_id
+                ),
+                source_path=path,
+                data=data,
+                version=version,
+                metadata=metadata,
+            )
+
+            if self.use_cache:
+                self._cache[path] = document
+                self._modified_times[path] = (
+                    path.stat().st_mtime_ns
+                )
+
+            return self._copy_document(document)
+
+    def load_data(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> dict[str, Any] | None:
+        document = self.load(
+            registry_id,
+            required=required,
+            validate=validate,
+            force_reload=force_reload,
+        )
+
+        if document is None:
+            return None
+
+        return copy.deepcopy(document.data)
+
+    def get_entry(
+        self,
+        registry_id: str,
+        entry_key: str,
+
+=== BASELINE CHECKSUMS ===
+0d2c5628e1d13d39023e6ef9b1610850519e3f4783b685907c3915021bc0a8f8  app/services/food/knowledge/meat/chicken/type_registry.py
+e0b4b370cc0dbe835aaef6777d28eebe6775bab9c7d4ffe08fc4f0f73d6109ee  app/services/food/knowledge/meat/chicken/breed_registry.py
+e361edd0019ea727155089e0f88b4b0e6d6d2369ab52deedd0057f939df7380b  app/services/food/knowledge/meat/chicken/cut_registry.py
+5cee43a5576c357913c8b9777045a528a50a1d4ef6cf6230023ba23e0c04119f  app/services/food/registry_data/chicken/types.yaml
+78b20a2dcd226bf201828ebd66e3f686c39b5bf92adfa968f2a37fba07620a8d  app/services/food/registry_data/chicken/breeds.yaml
+8dd63039888ed6edf99dddcb0f94303a0d77cebf3986b97d318c1c23d56e0104  app/services/food/registry_data/chicken/cuts.yaml

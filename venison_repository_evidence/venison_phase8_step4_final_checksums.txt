@@ -1,0 +1,3 @@
+b7c6c45f5a90c7904216bb34dcf9f5eb02f5440665f3578eec02cf68ac7830fb  app/services/food/knowledge/meat/venison/rules.py
+46effb751b51033e500fc6042f5505cd2819947566b0cd25e3cde48179d3dce8  app/services/food/knowledge/meat/venison/__init__.py
+ed671c5c40e2541be06ba774bfdec8a6bb9f55cd3555e172cbd3ae4a81b27adc  tests/services/food/knowledge/meat/venison/test_venison_rules.py

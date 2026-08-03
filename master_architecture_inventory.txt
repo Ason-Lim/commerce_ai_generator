@@ -1,0 +1,222 @@
+===== Git 상태 =====
+ M .gitignore
+ M README.md
+ M app/main.py
+ M app/services/analytics_logger.py
+ M app/services/context_logger.py
+ M app/services/db_product_collector.py
+ M app/services/generator_service.py
+ M app/services/naver_shopping_api_collector.py
+ M app/ui/admin_dashboard.py
+ M app/ui/streamlit_app.py
+ M requirements.txt
+?? CONTEXT_INTELLIGENCE.md
+?? __init__.py
+?? app/design/
+?? app/services/ai_ranking_engine_v7.py
+?? app/services/ai_ranking_engine_v8.py
+?? app/services/badge_engine.py
+?? app/services/collector_v4_runner.py
+?? app/services/collectors/
+?? app/services/common/
+?? app/services/coupang_api.py
+?? app/services/deduplication_engine_v81.py
+?? app/services/deduplication_engine_v82.py
+?? app/services/deduplication_engine_v83.py
+?? app/services/explainability_service.py
+?? app/services/food/
+?? app/services/food_intelligence/
+?? app/services/food_knowledge/
+?? app/services/impression_logger.py
+?? app/services/kurly_nmart_collector.py
+?? app/services/kurly_nmart_collector_v3.py
+?? app/services/kurly_review_playwright_collector.py
+?? app/services/market/
+?? app/services/market_aggregator.py
+?? app/services/market_collector_v5.py
+?? app/services/market_collector_v51.py
+?? app/services/market_identity_cluster_v53.py
+?? app/services/market_representative_price_v54.py
+?? app/services/market_signal_propagation_v52.py
+?? app/services/naver_datalab_service.py
+?? app/services/new_shopping_api_collector.py
+?? app/services/platform_normalizer_v84.py
+?? app/services/platform_score_engine.py
+?? app/services/preference_service.py
+?? app/services/price_detail_enricher.py
+?? app/services/price_intelligence_engine.py
+?? app/services/product_attribute_engine_v8
+?? app/services/product_attribute_engine_v8.py
+?? app/services/product_cluster_representative_v5.py
+?? app/services/product_family_variant_v6.py
+?? app/services/product_identity_cluster_v4.py
+?? app/services/product_identity_engine.py
+?? app/services/product_identity_engine_v3.py
+?? app/services/product_quality_engine_v10.py
+?? app/services/product_quality_engine_v10_runner.py
+?? app/services/product_quality_engine_v9.py
+?? app/services/product_variety_engine_v7.py
+?? app/services/recommendation/
+?? app/services/recommendation_compare_engine_v62.py
+?? app/services/recommendation_engine.py
+?? app/services/recommendation_intelligence_v55.py
+?? app/services/recommendation_pipeline.py
+?? app/services/recommendation_reasoner.py
+?? app/services/recommendation_story_engine_v61.py
+?? app/services/search_context.py
+?? app/services/search_context.py.bak
+?? app/services/session_context_service.py
+?? app/tools/
+?? app/ui/components/
+?? app/ui/hero_renderer_v3.py
+?? app/ui/html_utils.py
+?? app/ui/product_card_renderer.py
+?? backups/
+?? context_intelligence_design(1).py
+?? context_intelligence_md_python_package.zip
+?? context_intelligence_md_python_package/
+?? docs/
+?? hero_renderer_v3_score_simple.py
+?? master_architecture_inventory.txt
+?? scripts/create_ai_docs.py
+?? scripts/create_ai_docs_revisepy
+?? scripts/sync_context_intelligence_docs.py
+?? scripts/update_docs_v2.py
+?? sql/
+?? streamlit_app_card_grouped_fixed.py
+?? "\360\237\223\201 Commerce AI Generator Development"
+
+===== Food 디렉토리 =====
+app/services/food/__init__.py
+app/services/food/__pycache__/__init__.cpython-314.pyc
+app/services/food/__pycache__/category_registry.cpython-314.pyc
+app/services/food/__pycache__/models.cpython-314.pyc
+app/services/food/__pycache__/resolver.cpython-314.pyc
+app/services/food/category_registry.py
+app/services/food/knowledge/__init__.py
+app/services/food/knowledge/__init__.py.bak
+app/services/food/knowledge/__pycache__/__init__.cpython-314.pyc
+app/services/food/knowledge/__pycache__/base.cpython-314.pyc
+app/services/food/knowledge/__pycache__/models.cpython-314.pyc
+app/services/food/knowledge/__pycache__/registry_loader.cpython-314.pyc
+app/services/food/knowledge/__pycache__/registry.cpython-314.pyc
+app/services/food/knowledge/base.py
+app/services/food/knowledge/common/__init__.py
+app/services/food/knowledge/common/__init__.py.before_fix.bak
+app/services/food/knowledge/common/__pycache__/__init__.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/base_model.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/base_registry.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/confidence.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/constants.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/normalizer.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/parser_base.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/parser_models.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/parser_utils.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/parser.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/rules.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/scoring.cpython-314.pyc
+app/services/food/knowledge/common/__pycache__/text.cpython-314.pyc
+app/services/food/knowledge/common/base_model.py
+app/services/food/knowledge/common/base_registry.py
+app/services/food/knowledge/common/confidence.py
+app/services/food/knowledge/common/constants.py
+app/services/food/knowledge/common/normalizer.py
+app/services/food/knowledge/common/parser_base.py
+app/services/food/knowledge/common/parser_models.py
+app/services/food/knowledge/common/parser_utils.py
+app/services/food/knowledge/common/parser.py
+app/services/food/knowledge/common/rules.py
+app/services/food/knowledge/common/scoring.py
+app/services/food/knowledge/common/text.py
+app/services/food/knowledge/fruit/__init__.py
+app/services/food/knowledge/fruit/__pycache__/__init__.cpython-314.pyc
+app/services/food/knowledge/fruit/__pycache__/parser.cpython-314.pyc
+app/services/food/knowledge/fruit/__pycache__/provider.cpython-314.pyc
+app/services/food/knowledge/fruit/__pycache__/rules.cpython-314.pyc
+app/services/food/knowledge/fruit/__pycache__/scoring.cpython-314.pyc
+app/services/food/knowledge/fruit/parser.py
+app/services/food/knowledge/fruit/provider.py
+app/services/food/knowledge/fruit/rules.py
+app/services/food/knowledge/fruit/scoring.py
+app/services/food/knowledge/meat/__init__.py
+app/services/food/knowledge/meat/__pycache__/__init__.cpython-314.pyc
+app/services/food/knowledge/meat/__pycache__/common.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__init__.py
+app/services/food/knowledge/meat/beef/__init__.py.bak
+app/services/food/knowledge/meat/beef/__pycache__/__init__.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/attributes.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/breed_registry.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/cut_registry.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/grade_registry.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/parser_models.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/parser.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/provider.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/rules.cpython-314.pyc
+app/services/food/knowledge/meat/beef/__pycache__/scoring.cpython-314.pyc
+app/services/food/knowledge/meat/beef/attributes.py
+app/services/food/knowledge/meat/beef/breed_registry.py
+app/services/food/knowledge/meat/beef/cut_registry.py
+app/services/food/knowledge/meat/beef/grade_registry.py
+app/services/food/knowledge/meat/beef/grade_registry.py.phase43.bak
+app/services/food/knowledge/meat/beef/parser_models.py
+app/services/food/knowledge/meat/beef/parser.py
+app/services/food/knowledge/meat/beef/provider.py
+app/services/food/knowledge/meat/beef/provider.py.bak
+app/services/food/knowledge/meat/beef/rules.py
+app/services/food/knowledge/meat/beef/scoring.py
+app/services/food/knowledge/meat/common.py
+app/services/food/knowledge/models.py
+app/services/food/knowledge/registry_loader.py
+app/services/food/knowledge/registry.py
+app/services/food/models.py
+app/services/food/registry_data/beef/aging.yaml
+app/services/food/registry_data/beef/breeds.yaml
+app/services/food/registry_data/beef/cuts.yaml
+app/services/food/registry_data/beef/grades.yaml
+app/services/food/registry_data/fruit/certifications.yaml
+app/services/food/registry_data/fruit/grades.yaml
+app/services/food/registry_data/fruit/varieties.yaml
+app/services/food/resolver.py
+
+===== 핵심 클래스 =====
+app/services/food/knowledge/registry_loader.py:23:class KnowledgeRegistryError(RuntimeError):
+app/services/food/knowledge/registry_loader.py:27:class KnowledgeRegistryFileNotFoundError(
+app/services/food/knowledge/registry_loader.py:33:class KnowledgeRegistryFormatError(
+app/services/food/knowledge/registry_loader.py:39:class KnowledgeRegistryValidationError(
+app/services/food/knowledge/registry_loader.py:46:class KnowledgeRegistryDocument:
+app/services/food/knowledge/registry_loader.py:85:class KnowledgeRegistryLoader:
+app/services/food/knowledge/models.py:49:class FoodKnowledgeResult:
+app/services/food/knowledge/common/parser_models.py:12:class BaseParseResult:
+app/services/food/knowledge/common/base_model.py:130:class RegistryMatch(
+
+===== Provider 등록 =====
+app/services/food/__init__.py:7:from app.services.food.category_registry import (
+app/services/food/knowledge/registry_loader.py:644:def get_knowledge_registry_loader(
+app/services/food/knowledge/registry_loader.py:649:def load_knowledge_registry(
+app/services/food/knowledge/registry_loader.py:664:def load_knowledge_registry_data(
+app/services/food/knowledge/registry_loader.py:679:def get_knowledge_registry_entry(
+app/services/food/knowledge/registry_loader.py:705:    "get_knowledge_registry_loader",
+app/services/food/knowledge/registry_loader.py:706:    "load_knowledge_registry",
+app/services/food/knowledge/registry_loader.py:707:    "load_knowledge_registry_data",
+app/services/food/knowledge/registry_loader.py:708:    "get_knowledge_registry_entry",
+app/services/food/knowledge/meat/beef/grade_registry.py:18:    get_knowledge_registry_loader,
+app/services/food/knowledge/meat/beef/grade_registry.py:165:                or get_knowledge_registry_loader()
+app/services/food/knowledge/meat/beef/cut_registry.py:21:    get_knowledge_registry_loader,
+app/services/food/knowledge/meat/beef/cut_registry.py:185:                or get_knowledge_registry_loader()
+app/services/food/knowledge/meat/beef/breed_registry.py:19:    get_knowledge_registry_loader,
+app/services/food/knowledge/meat/beef/breed_registry.py:128:                or get_knowledge_registry_loader()
+app/services/food/knowledge/meat/beef/grade_registry.py.phase43.bak:11:    get_knowledge_registry_loader,
+app/services/food/knowledge/meat/beef/grade_registry.py.phase43.bak:166:            or get_knowledge_registry_loader()
+app/services/food/knowledge/registry.py:140:FOOD_KNOWLEDGE_REGISTRY.register(
+app/services/food/knowledge/registry.py:143:FOOD_KNOWLEDGE_REGISTRY.register(
+app/services/food/knowledge/registry.py:153:    FOOD_KNOWLEDGE_REGISTRY.register(
+app/services/food/knowledge/__init__.py:28:    get_knowledge_registry_entry,
+app/services/food/knowledge/__init__.py:29:    get_knowledge_registry_loader,
+app/services/food/knowledge/__init__.py:31:    load_knowledge_registry,
+app/services/food/knowledge/__init__.py:32:    load_knowledge_registry_data,
+app/services/food/knowledge/common/base_registry.py:12:    get_knowledge_registry_loader,
+app/services/food/knowledge/common/base_registry.py:143:            or get_knowledge_registry_loader()
+app/services/food/resolver.py:5:from app.services.food.category_registry import (
+
+===== 컴파일 =====
+compileall_exit=0

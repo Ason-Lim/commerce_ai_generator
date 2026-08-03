@@ -1,0 +1,17 @@
+# Existing Meat Test Files
+
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py
+tests/services/food/knowledge/meat/chicken/test_chicken_parser.py
+tests/services/food/knowledge/meat/chicken/test_chicken_provider.py
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py
+tests/services/food/knowledge/meat/duck/test_duck_parser.py
+tests/services/food/knowledge/meat/duck/test_duck_provider.py
+tests/services/food/knowledge/meat/duck/test_duck_registries.py
+tests/services/food/knowledge/meat/duck/test_duck_rules.py
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py
+tests/services/food/knowledge/test_chicken_registry_integration.py
+tests/services/food/knowledge/test_duck_registry_integration.py
+tests/services/food/knowledge/test_food_knowledge_registry.py

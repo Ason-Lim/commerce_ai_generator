@@ -39,6 +39,17 @@ def deduplicate_products(products):
 def normalize_product(raw):
     price = raw.get("price")
     original_price = raw.get("original_price")
+    
+    member_price = raw.get("member_price")
+    benefit_price = raw.get("benefit_price")
+    max_benefit_price = raw.get("max_benefit_price")
+
+    ai_estimated_price = (
+        member_price
+        or benefit_price
+        or max_benefit_price
+        or price
+    )
 
     discount_rate = raw.get("discount_rate")
     if discount_rate is None:
@@ -96,8 +107,13 @@ def normalize_product(raw):
         "platform": raw.get("platform"),
         "platform_label": build_platform_label(raw),
         "price": price,
+        "sale_price": price,
         "original_price": original_price,
         "discount_rate": round(float(discount_rate or 0), 1),
+        "member_price": member_price,
+        "benefit_price": benefit_price,
+        "max_benefit_price": max_benefit_price,
+        "ai_estimated_price": ai_estimated_price,
         "price_per_100g": price_per_100g,
         "weight_g": raw.get("weight_g"),
         "rating": raw.get("rating"),

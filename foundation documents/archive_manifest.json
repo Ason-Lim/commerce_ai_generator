@@ -1,0 +1,127 @@
+{
+  "archive_id": "IERA-2026-001",
+  "snapshot_id": "SNAPSHOT-0001",
+  "generated_at": "2026-07-31T06:42:57.555132+00:00",
+  "scope": {
+    "discovery_start": "AD-175",
+    "discovery_end": "AD-260",
+    "raw_transcript_completeness": "partial"
+  },
+  "source_quality": {
+    "direct_context_records": true,
+    "summary_derived_records": true,
+    "complete_verbatim_export_attached": false
+  },
+  "files": [
+    {
+      "path": "00_README.md",
+      "sha256": "7dfde2781358231a42fffc083bbe6119e892bde3bedfe7e71dea37cd386d1641",
+      "size_bytes": 2053
+    },
+    {
+      "path": "01_raw_transcript/conversation.jsonl",
+      "sha256": "9a75c25cf924e57c0579b635052f92bed96a3d2a1ec24891bdbceda02370350e",
+      "size_bytes": 1006
+    },
+    {
+      "path": "01_raw_transcript/full_conversation_partial.md",
+      "sha256": "49394d1442c8f7a037793b8a9c0b782fc3e11bbe7a2c88b1e99eb2f9ca4a72a1",
+      "size_bytes": 1690
+    },
+    {
+      "path": "01_raw_transcript/full_conversation_partial.txt",
+      "sha256": "49394d1442c8f7a037793b8a9c0b782fc3e11bbe7a2c88b1e99eb2f9ca4a72a1",
+      "size_bytes": 1690
+    },
+    {
+      "path": "02_normalized_discussion/decisions.jsonl",
+      "sha256": "159933663e88cfc8178025f7ebd8706cc0810d54c78d29f5e440ff5574b1d4e8",
+      "size_bytes": 574
+    },
+    {
+      "path": "02_normalized_discussion/discoveries.jsonl",
+      "sha256": "57838e4e18d6794e3ad7aa2e4e3567d190ca137a82fadcbce11bd65c1fa96be1",
+      "size_bytes": 42027
+    },
+    {
+      "path": "02_normalized_discussion/hypotheses.jsonl",
+      "sha256": "f9fd3b2b39cb2efae02bad3b8277bb5c15f4e830a7e3672a61dd1e3efad289a0",
+      "size_bytes": 577
+    },
+    {
+      "path": "02_normalized_discussion/questions.jsonl",
+      "sha256": "b1b89236bad0c8618eabee687f7b1fc7b447c0a1ec23e2d6648fdba941bc8ab4",
+      "size_bytes": 618
+    },
+    {
+      "path": "02_normalized_discussion/terminology_changes.jsonl",
+      "sha256": "66e4460e9463844696fc7eb575edcda18a92b9fd91876d59800ee55054fb5f02",
+      "size_bytes": 1449
+    },
+    {
+      "path": "03_traceability/discovery_to_document_map.csv",
+      "sha256": "ce9366a806c27c61d812bd7e29440a86cc236b0dfb95c143b0b71dffeecf4202",
+      "size_bytes": 980
+    },
+    {
+      "path": "03_traceability/rejected_alternatives.md",
+      "sha256": "8d3be159a4016d8eae45a7dce02198aa599a715d72347b160efc1124e35ae36f",
+      "size_bytes": 493
+    },
+    {
+      "path": "03_traceability/unresolved_questions.md",
+      "sha256": "687786650cf4f248d1c7cbacec8c853f7ffe5f53fcdfcbea4de22a3db63d72b7",
+      "size_bytes": 484
+    },
+    {
+      "path": "04_timeline/conceptual_timeline.md",
+      "sha256": "41bbefdac6b3fbb317746eda5788b53a4fdf1bb599dc8b9f69e9923306423a66",
+      "size_bytes": 1401
+    },
+    {
+      "path": "04_timeline/phase_transition_log.md",
+      "sha256": "73964fabcd0c5fdf8c9c9d28c6e8a37ca27bc1f6dd75a752499aa9c315244c35",
+      "size_bytes": 478
+    },
+    {
+      "path": "05_official_documents/README.md",
+      "sha256": "ed236c95970e94f4afd30381eb865a2016a0c9f6bebd6aebb4ed69c121d31dd1",
+      "size_bytes": 227
+    },
+    {
+      "path": "06_machine_readable/entity_relationships.json",
+      "sha256": "06c811c6682f643e7206954880dbb467987eca587bd2eab5d25b69491d58c492",
+      "size_bytes": 1429
+    },
+    {
+      "path": "06_machine_readable/reason_graph.jsonl",
+      "sha256": "d8102978ce12bd89bd4674a5e7785cbd7c3f3d822f30e496d517ff1a456a3ca0",
+      "size_bytes": 566
+    },
+    {
+      "path": "06_machine_readable/snapshot_template.json",
+      "sha256": "8e00ef91eaec73f5a6c9869d9b48ad2194fc6c2f791b79ee1393a3bc683b6ee4",
+      "size_bytes": 302
+    },
+    {
+      "path": "schemas/conversation_turn.schema.json",
+      "sha256": "6c79f163585ec012ea68261b0416134100cf7cf497b5d1c8fdc57f5b28f53582",
+      "size_bytes": 800
+    },
+    {
+      "path": "schemas/discovery.schema.json",
+      "sha256": "abb25c5f2784728776fe66203e61f2020ce971ecc177668ef568840c78832dc2",
+      "size_bytes": 1285
+    },
+    {
+      "path": "scripts/build_archive.py",
+      "sha256": "2872c3d248262a58d10fc201ec510b574d50307e26d5115b13c4c600e5446f56",
+      "size_bytes": 2335
+    },
+    {
+      "path": "scripts/validate_archive.py",
+      "sha256": "ec9a2b85712c434ec9ed5c1e8c729204cf0ba9e25645cfb86e5ad8f0b0e9ead6",
+      "size_bytes": 1796
+    }
+  ]
+}

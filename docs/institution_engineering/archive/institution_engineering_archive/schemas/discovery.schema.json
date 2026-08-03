@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IERA Discovery Record",
+  "type": "object",
+  "required": [
+    "discovery_id",
+    "title",
+    "record_type",
+    "status",
+    "source_fidelity"
+  ],
+  "properties": {
+    "discovery_id": {
+      "type": "string",
+      "pattern": "^AD-[0-9]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "record_type": {
+      "const": "architecture_discovery"
+    },
+    "status": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "source_turns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_fidelity": {
+      "enum": [
+        "direct_context",
+        "verbatim_export",
+        "summary_derived",
+        "editorial_reconstruction"
+      ]
+    },
+    "validation_status": {
+      "type": "string"
+    },
+    "official_document_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "superseded_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

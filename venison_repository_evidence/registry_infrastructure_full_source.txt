@@ -1,0 +1,3698 @@
+# Registry Infrastructure Full Source
+
+
+================================================================
+FILE: app/services/food/category_registry.py
+================================================================
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterable, List, Sequence
+
+
+@dataclass(frozen=True)
+class FoodCategoryConfig:
+    category_id: str
+    display_name: str
+
+    parent_category_id: str | None = None
+    aliases: Sequence[str] = field(default_factory=tuple)
+    provider_id: str | None = None
+    enabled: bool = True
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+FOOD_CATEGORY_REGISTRY: Dict[str, FoodCategoryConfig] = {
+    "fruit": FoodCategoryConfig(
+        category_id="fruit",
+        display_name="과일",
+        aliases=(
+            "과일",
+            "fruit",
+            "사과",
+            "배",
+            "감귤",
+            "귤",
+            "오렌지",
+            "포도",
+            "복숭아",
+            "수박",
+            "참외",
+            "딸기",
+            "블루베리",
+            "바나나",
+            "망고",
+            "키위",
+        ),
+        provider_id="fruit",
+    ),
+    "meat": FoodCategoryConfig(
+        category_id="meat",
+        display_name="축산·육류",
+        aliases=(
+            "고기",
+            "육류",
+            "축산",
+            "meat",
+        ),
+        provider_id=None,
+    ),
+    "beef": FoodCategoryConfig(
+        category_id="beef",
+        display_name="소고기",
+        parent_category_id="meat",
+        aliases=(
+            "소고기",
+            "쇠고기",
+            "한우",
+            "육우",
+            "와규",
+            "beef",
+            "우육",
+            "등심",
+            "안심",
+            "채끝",
+            "갈비",
+            "부채살",
+            "살치살",
+            "토시살",
+            "우삼겹",
+        ),
+        provider_id="beef",
+    ),
+}
+
+
+def get_food_category(
+    category_id: str,
+) -> FoodCategoryConfig | None:
+    normalized = str(category_id).strip().lower()
+
+    if not normalized:
+        return None
+
+    return FOOD_CATEGORY_REGISTRY.get(
+        normalized
+    )
+
+
+def require_food_category(
+    category_id: str,
+) -> FoodCategoryConfig:
+    config = get_food_category(category_id)
+
+    if config is None:
+        raise KeyError(
+            f"등록되지 않은 식품 카테고리입니다: {category_id}"
+        )
+
+    return config
+
+
+def list_food_categories(
+    *,
+    enabled_only: bool = True,
+) -> List[FoodCategoryConfig]:
+    categories = list(
+        FOOD_CATEGORY_REGISTRY.values()
+    )
+
+    if not enabled_only:
+        return categories
+
+    return [
+        category
+        for category in categories
+        if category.enabled
+    ]
+
+
+def register_food_category(
+    config: FoodCategoryConfig,
+    *,
+    replace: bool = False,
+) -> None:
+    category_id = str(
+        config.category_id
+    ).strip().lower()
+
+    if not category_id:
+        raise ValueError(
+            "category_id가 비어 있습니다."
+        )
+
+    if (
+        category_id in FOOD_CATEGORY_REGISTRY
+        and not replace
+    ):
+        raise ValueError(
+            f"이미 등록된 식품 카테고리입니다: {category_id}"
+        )
+
+    FOOD_CATEGORY_REGISTRY[category_id] = config
+
+
+def resolve_food_category(
+    *,
+    category_id: str | None = None,
+    product_name: str | None = None,
+) -> FoodCategoryConfig | None:
+    if category_id:
+        normalized_category_id = (
+            category_id.strip().lower()
+        )
+
+        direct_match = get_food_category(
+            normalized_category_id
+        )
+
+        if direct_match is not None:
+            return direct_match
+
+        for config in FOOD_CATEGORY_REGISTRY.values():
+            aliases = {
+                alias.strip().lower()
+                for alias in config.aliases
+            }
+
+            if normalized_category_id in aliases:
+                return config
+
+    if product_name:
+        normalized_name = (
+            product_name.strip().lower()
+        )
+
+        candidates = sorted(
+            FOOD_CATEGORY_REGISTRY.values(),
+            key=lambda config: (
+                config.parent_category_id is None,
+                -max(
+                    (
+                        len(alias)
+                        for alias in config.aliases
+                    ),
+                    default=0,
+                ),
+            ),
+        )
+
+        for config in candidates:
+            if not config.enabled:
+                continue
+
+            aliases = sorted(
+                (
+                    alias.strip().lower()
+                    for alias in config.aliases
+                    if alias.strip()
+                ),
+                key=len,
+                reverse=True,
+            )
+
+            if any(
+                alias in normalized_name
+                for alias in aliases
+            ):
+                return config
+
+    return None
+
+
+def get_child_categories(
+    parent_category_id: str,
+) -> List[FoodCategoryConfig]:
+    normalized_parent_id = (
+        parent_category_id.strip().lower()
+    )
+
+    return [
+        config
+        for config in FOOD_CATEGORY_REGISTRY.values()
+        if (
+            config.parent_category_id
+            == normalized_parent_id
+        )
+    ]
+
+
+def iter_food_categories() -> Iterable[FoodCategoryConfig]:
+    return iter(
+        FOOD_CATEGORY_REGISTRY.values()
+    )
+
+================================================================
+FILE: app/services/food/knowledge/common/__init__.py
+================================================================
+from app.services.food.knowledge.common.confidence import (
+    calculate_field_confidence,
+    is_available,
+)
+from app.services.food.knowledge.common.normalizer import (
+    normalize_boolean,
+    normalize_volume_ml,
+    normalize_weight_grams,
+    safe_float,
+    safe_int,
+)
+from app.services.food.knowledge.common.parser import (
+    extract_first_number,
+    extract_origin,
+    extract_price,
+    extract_product_name,
+    extract_weight_grams,
+    extract_weight_text,
+    first_non_empty,
+)
+from app.services.food.knowledge.common.rules import (
+    WARNING_SEVERITIES,
+    create_rule,
+    merge_rule_results,
+    split_rule_messages,
+)
+from app.services.food.knowledge.common.scoring import (
+    apply_score_boost,
+    clamp_score,
+    first_numeric_score,
+    normalize_range_score,
+    weighted_average,
+)
+from app.services.food.knowledge.common.text import (
+    contains_keyword,
+    deduplicate_texts,
+    detect_keywords,
+    normalize_text,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasCandidate,
+    AliasMatch,
+    BaseAliasRegistry,
+    BaseKnowledgeRegistry,
+    DomainRegistryConfigurationError,
+    DomainRegistryEntryNotFoundError,
+    DomainRegistryError,
+    normalize_string_list,
+    optional_float,
+    optional_int,
+    optional_string,
+)
+from app.services.food.knowledge.common.base_model import (
+    EntryT,
+    RegistryEntry,
+    RegistryMatch,
+    to_plain_value,
+)
+
+
+from app.services.food.knowledge.common.parser_models import (
+    BaseParseResult,
+)
+
+from app.services.food.knowledge.common.parser_base import (
+    BaseKnowledgeParser,
+    ParseResultT,
+)
+
+__all__ = [
+    "safe_float",
+    "safe_int",
+    "normalize_boolean",
+    "normalize_weight_grams",
+    "normalize_volume_ml",
+    "normalize_text",
+    "contains_keyword",
+    "detect_keywords",
+    "deduplicate_texts",
+    "first_non_empty",
+    "extract_product_name",
+    "extract_origin",
+    "extract_price",
+    "extract_weight_text",
+    "extract_weight_grams",
+    "extract_first_number",
+    "clamp_score",
+    "normalize_range_score",
+    "weighted_average",
+    "first_numeric_score",
+    "apply_score_boost",
+    "calculate_field_confidence",
+    "is_available",
+    "split_rule_messages",
+    "merge_rule_results",
+    "create_rule",
+    "WARNING_SEVERITIES",
+    "AliasCandidate",
+    "AliasMatch",
+    "BaseAliasRegistry",
+    "BaseKnowledgeRegistry",
+    "DomainRegistryConfigurationError",
+    "DomainRegistryEntryNotFoundError",
+    "DomainRegistryError",
+    "normalize_string_list",
+    "optional_float",
+    "optional_int",
+    "optional_string",
+    "EntryT",
+    "RegistryEntry",
+    "RegistryMatch",
+    "to_plain_value",
+    "BaseKnowledgeParser",
+    "BaseParseResult",
+    "ParseResultT",
+]
+
+================================================================
+FILE: app/services/food/knowledge/common/base_model.py
+================================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass, fields
+from typing import Any, Generic, Mapping, TypeVar
+
+
+EntryT = TypeVar(
+    "EntryT",
+    bound="RegistryEntry",
+)
+
+
+def to_plain_value(
+    value: Any,
+) -> Any:
+    """
+    Registry 모델 값을 외부 API에서 사용하기 쉬운 형태로 변환한다.
+
+    변환 규칙:
+    - RegistryEntry -> dict
+    - RegistryMatch -> dict
+    - dataclass 내부 tuple -> list
+    - Mapping -> dict
+    - set/frozenset -> list
+    - 나머지 값 -> deepcopy
+    """
+    if isinstance(value, RegistryEntry):
+        return value.to_dict()
+
+    if isinstance(value, RegistryMatch):
+        return value.to_dict()
+
+    if isinstance(value, Mapping):
+        return {
+            str(key): to_plain_value(item)
+            for key, item in value.items()
+        }
+
+    if isinstance(
+        value,
+        (list, tuple, set, frozenset),
+    ):
+        return [
+            to_plain_value(item)
+            for item in value
+        ]
+
+    return copy.deepcopy(value)
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class RegistryEntry:
+    """
+    모든 Knowledge Registry 항목의 공통 기반 모델.
+
+    kw_only=True를 사용하는 이유:
+    하위 dataclass가 필수 필드를 추가할 때 metadata의 기본값과
+    필드 순서가 충돌하는 문제를 방지하기 위함이다.
+    """
+
+    registry_key: str
+    metadata: dict[str, Any]
+
+    def __post_init__(self) -> None:
+        registry_key = str(
+            self.registry_key
+        ).strip()
+
+        if not registry_key:
+            raise ValueError(
+                "registry_key must not be empty"
+            )
+
+        metadata = dict(
+            self.metadata or {}
+        )
+
+        object.__setattr__(
+            self,
+            "registry_key",
+            registry_key,
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            copy.deepcopy(metadata),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        dataclass의 모든 필드를 JSON 친화적인 dict로 변환한다.
+
+        하위 모델에서 별도의 to_dict()를 작성하지 않아도
+        추가 필드가 자동으로 포함된다.
+        """
+        return {
+            item.name: to_plain_value(
+                getattr(self, item.name)
+            )
+            for item in fields(self)
+        }
+
+    def metadata_value(
+        self,
+        key: str,
+        default: Any = None,
+    ) -> Any:
+        return copy.deepcopy(
+            self.metadata.get(
+                key,
+                default,
+            )
+        )
+
+    def has_metadata(
+        self,
+        key: str,
+    ) -> bool:
+        return key in self.metadata
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class RegistryMatch(
+    Generic[EntryT]
+):
+    """
+    별칭 기반 Registry 검색 결과의 공통 모델.
+    """
+
+    entry: EntryT
+    matched_alias: str
+    normalized_alias: str
+    match_start: int
+    match_end: int
+    confidence: float
+    exact_match: bool
+
+    def __post_init__(self) -> None:
+        if not isinstance(
+            self.entry,
+            RegistryEntry,
+        ):
+            raise TypeError(
+                "entry must be a RegistryEntry "
+                "instance"
+            )
+
+        match_start = int(
+            self.match_start
+        )
+        match_end = int(
+            self.match_end
+        )
+
+        if match_start < 0:
+            raise ValueError(
+                "match_start must be >= 0"
+            )
+
+        if match_end < match_start:
+            raise ValueError(
+                "match_end must be greater than "
+                "or equal to match_start"
+            )
+
+        confidence = max(
+            0.0,
+            min(
+                1.0,
+                float(self.confidence),
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "matched_alias",
+            str(
+                self.matched_alias
+            ),
+        )
+        object.__setattr__(
+            self,
+            "normalized_alias",
+            str(
+                self.normalized_alias
+            ),
+        )
+        object.__setattr__(
+            self,
+            "match_start",
+            match_start,
+        )
+        object.__setattr__(
+            self,
+            "match_end",
+            match_end,
+        )
+        object.__setattr__(
+            self,
+            "confidence",
+            confidence,
+        )
+        object.__setattr__(
+            self,
+            "exact_match",
+            bool(
+                self.exact_match
+            ),
+        )
+
+    @property
+    def registry_key(self) -> str:
+        return self.entry.registry_key
+
+    @property
+    def canonical_name(self) -> str | None:
+        value = getattr(
+            self.entry,
+            "canonical_name",
+            None,
+        )
+
+        if value is None:
+            return None
+
+        return str(value)
+
+    @property
+    def matched_length(self) -> int:
+        return (
+            self.match_end
+            - self.match_start
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = self.entry.to_dict()
+
+        payload.update(
+            {
+                "matched_alias": (
+                    self.matched_alias
+                ),
+                "normalized_alias": (
+                    self.normalized_alias
+                ),
+                "match_start": (
+                    self.match_start
+                ),
+                "match_end": (
+                    self.match_end
+                ),
+                "matched_length": (
+                    self.matched_length
+                ),
+                "confidence": (
+                    self.confidence
+                ),
+                "exact_match": (
+                    self.exact_match
+                ),
+            }
+        )
+
+        return payload
+
+
+__all__ = [
+    "EntryT",
+    "RegistryEntry",
+    "RegistryMatch",
+    "to_plain_value",
+]
+
+================================================================
+FILE: app/services/food/knowledge/common/base_registry.py
+================================================================
+from __future__ import annotations
+
+import copy
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from threading import RLock
+from typing import Any, Generic, Iterable, Mapping, TypeVar
+
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+EntryT = TypeVar("EntryT")
+
+
+class DomainRegistryError(RuntimeError):
+    """도메인 전용 Knowledge Registry 기본 예외."""
+
+
+class DomainRegistryEntryNotFoundError(
+    DomainRegistryError
+):
+    """요청한 Registry 엔트리를 찾지 못한 경우."""
+
+
+class DomainRegistryConfigurationError(
+    DomainRegistryError
+):
+    """Registry 설정 또는 데이터 구조가 잘못된 경우."""
+
+
+@dataclass(frozen=True)
+class AliasCandidate:
+    """
+    Registry 엔트리의 검색 가능한 별칭 정보.
+    """
+
+    registry_key: str
+    alias: str
+    normalized_alias: str
+    canonical_name: str
+    priority: int = 0
+    metadata: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "registry_key": self.registry_key,
+            "alias": self.alias,
+            "normalized_alias": (
+                self.normalized_alias
+            ),
+            "canonical_name": (
+                self.canonical_name
+            ),
+            "priority": self.priority,
+            "metadata": copy.deepcopy(
+                self.metadata or {}
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class AliasMatch(Generic[EntryT]):
+    """
+    자유 텍스트에서 발견한 Registry 엔트리 매칭 결과.
+    """
+
+    entry: EntryT
+    registry_key: str
+    canonical_name: str
+    matched_alias: str
+    normalized_alias: str
+    match_start: int
+    match_end: int
+    confidence: float
+    exact_match: bool
+    metadata: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        entry = self.entry
+
+        if hasattr(entry, "to_dict"):
+            entry_payload = entry.to_dict()
+        elif isinstance(entry, Mapping):
+            entry_payload = copy.deepcopy(
+                dict(entry)
+            )
+        else:
+            entry_payload = {
+                "value": copy.deepcopy(entry)
+            }
+
+        return {
+            "entry": entry_payload,
+            "registry_key": self.registry_key,
+            "canonical_name": (
+                self.canonical_name
+            ),
+            "matched_alias": self.matched_alias,
+            "normalized_alias": (
+                self.normalized_alias
+            ),
+            "match_start": self.match_start,
+            "match_end": self.match_end,
+            "confidence": self.confidence,
+            "exact_match": self.exact_match,
+            "metadata": copy.deepcopy(
+                self.metadata or {}
+            ),
+        }
+
+
+class BaseKnowledgeRegistry(
+    Generic[EntryT],
+    ABC,
+):
+    """
+    KnowledgeRegistryLoader 위에 구축되는 도메인 Registry 기반 클래스.
+
+    하위 클래스는 다음을 정의한다.
+
+    - registry_id
+    - build_entry()
+    """
+
+    registry_id: str = ""
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        if not self.registry_id:
+            raise DomainRegistryConfigurationError(
+                f"{type(self).__name__}.registry_id "
+                "must not be empty."
+            )
+
+        self.loader = (
+            loader
+            or get_knowledge_registry_loader()
+        )
+
+    @abstractmethod
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> EntryT:
+        """원시 Registry 데이터를 도메인 엔트리로 변환한다."""
+
+    def get(
+        self,
+        registry_key: str,
+        *,
+        required: bool = False,
+    ) -> EntryT | None:
+        raw_entry = self.loader.get_entry(
+            self.registry_id,
+            registry_key,
+            default=None,
+        )
+
+        if raw_entry is None:
+            if required:
+                raise (
+                    DomainRegistryEntryNotFoundError(
+                        f"{self.registry_id}: unknown "
+                        f"registry key {registry_key!r}"
+                    )
+                )
+
+            return None
+
+        if not isinstance(raw_entry, Mapping):
+            raise DomainRegistryConfigurationError(
+                f"{self.registry_id}.{registry_key}: "
+                "entry must be a mapping."
+            )
+
+        return self.build_entry(
+            registry_key,
+            raw_entry,
+        )
+
+    def require(
+        self,
+        registry_key: str,
+    ) -> EntryT:
+        entry = self.get(
+            registry_key,
+            required=True,
+        )
+
+        assert entry is not None
+        return entry
+
+    def contains(
+        self,
+        registry_key: str,
+    ) -> bool:
+        return self.loader.contains(
+            self.registry_id,
+            registry_key,
+        )
+
+    def keys(self) -> list[str]:
+        return self.loader.list_entries(
+            self.registry_id
+        )
+
+    def list(
+        self,
+    ) -> list[EntryT]:
+        raw_data = self.loader.load_data(
+            self.registry_id
+        )
+
+        if not raw_data:
+            return []
+
+        result: list[EntryT] = []
+
+        for registry_key, raw_entry in (
+            raw_data.items()
+        ):
+            if not isinstance(
+                raw_entry,
+                Mapping,
+            ):
+                raise (
+                    DomainRegistryConfigurationError(
+                        f"{self.registry_id}."
+                        f"{registry_key}: entry must "
+                        "be a mapping."
+                    )
+                )
+
+            result.append(
+                self.build_entry(
+                    registry_key,
+                    raw_entry,
+                )
+            )
+
+        return result
+
+    def raw_data(
+        self,
+    ) -> dict[str, Any]:
+        return (
+            self.loader.load_data(
+                self.registry_id
+            )
+            or {}
+        )
+
+    def raw_entry(
+        self,
+        registry_key: str,
+        *,
+        default: Any = None,
+    ) -> Any:
+        return self.loader.get_entry(
+            self.registry_id,
+            registry_key,
+            default=default,
+        )
+
+    def reload(self) -> None:
+        self.loader.clear_cache(
+            self.registry_id
+        )
+
+        self._clear_local_cache()
+
+    def _clear_local_cache(self) -> None:
+        """
+        하위 클래스의 로컬 인덱스 캐시를 비우는 훅.
+        """
+
+
+class BaseAliasRegistry(
+    BaseKnowledgeRegistry[EntryT],
+    ABC,
+):
+    """
+    별칭 검색을 지원하는 도메인 Registry 기반 클래스.
+
+    YAML 엔트리에서 기본적으로 다음 필드를 읽는다.
+
+    canonical_name: 표준 이름
+    aliases: 별칭 목록
+    """
+
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(loader=loader)
+
+        self._alias_index: (
+            tuple[AliasCandidate, ...] | None
+        ) = None
+
+        self._index_lock = RLock()
+
+    def normalize_text(
+        self,
+        value: Any,
+    ) -> str:
+        """
+        기본 별칭 비교 정규화.
+
+        - 소문자 변환
+        - 공백과 구두점 제거
+        - 숫자, 영문, 한글, + 유지
+
+        하위 Registry에서 필요하면 재정의할 수 있다.
+        """
+
+        if value is None:
+            return ""
+
+        text = str(value).strip().lower()
+        text = text.replace("＋", "+")
+
+        return re.sub(
+            r"[^0-9a-z가-힣+]+",
+            "",
+            text,
+        )
+
+    def canonical_name_from_raw(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> str:
+        value = raw_entry.get(
+            self.canonical_name_field,
+            registry_key,
+        )
+
+        normalized = str(value).strip()
+
+        return normalized or registry_key
+
+    def aliases_from_raw(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> list[str]:
+        """
+        표준명과 aliases를 합쳐 중복 없는 별칭 목록을 만든다.
+        """
+
+        canonical_name = (
+            self.canonical_name_from_raw(
+                registry_key,
+                raw_entry,
+            )
+        )
+
+        raw_aliases = raw_entry.get(
+            self.aliases_field,
+            [],
+        )
+
+        values: list[Any] = [
+            canonical_name,
+        ]
+
+        if isinstance(
+            raw_aliases,
+            (list, tuple, set),
+        ):
+            values.extend(raw_aliases)
+
+        elif raw_aliases:
+            values.append(raw_aliases)
+
+        result: list[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            alias = str(value).strip()
+
+            if not alias:
+                continue
+
+            normalized_alias = (
+                self.normalize_text(alias)
+            )
+
+            if (
+                not normalized_alias
+                or normalized_alias in seen
+            ):
+                continue
+
+            seen.add(normalized_alias)
+            result.append(alias)
+
+        return result
+
+    def alias_metadata_from_raw(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """
+        별칭 후보에 저장할 부가 정보.
+
+        국가, 카테고리 등 검색 우선순위 판단에 필요한 값은
+        하위 클래스에서 재정의할 수 있다.
+        """
+
+        return {}
+
+    def lookup(
+        self,
+        query: str,
+        *,
+        required: bool = False,
+    ) -> EntryT | None:
+        match = self.match(query)
+
+        if match is not None:
+            return match.entry
+
+        if required:
+            raise DomainRegistryEntryNotFoundError(
+                f"{self.registry_id}: no match "
+                f"for {query!r}"
+            )
+
+        return None
+
+    def match(
+        self,
+        text: str,
+    ) -> AliasMatch[EntryT] | None:
+        normalized_text = self.normalize_text(
+            text
+        )
+
+        if not normalized_text:
+            return None
+
+        matches: list[
+            tuple[
+                tuple[int, int, int, int],
+                AliasCandidate,
+                int,
+            ]
+        ] = []
+
+        for candidate in self.alias_candidates():
+            position = normalized_text.find(
+                candidate.normalized_alias
+            )
+
+            if position < 0:
+                continue
+
+            exact_match = (
+                normalized_text
+                == candidate.normalized_alias
+            )
+
+            ranking = (
+                int(exact_match),
+                len(
+                    candidate.normalized_alias
+                ),
+                candidate.priority,
+                -position,
+            )
+
+            matches.append(
+                (
+                    ranking,
+                    candidate,
+                    position,
+                )
+            )
+
+        if not matches:
+            return None
+
+        matches.sort(
+            key=lambda item: item[0],
+            reverse=True,
+        )
+
+        _, candidate, position = matches[0]
+
+        return self._build_match(
+            normalized_text=normalized_text,
+            candidate=candidate,
+            position=position,
+        )
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[AliasMatch[EntryT]]:
+        normalized_text = self.normalize_text(
+            text
+        )
+
+        if not normalized_text:
+            return []
+
+        best_by_key: dict[
+            str,
+            AliasMatch[EntryT],
+        ] = {}
+
+        for candidate in self.alias_candidates():
+            position = normalized_text.find(
+                candidate.normalized_alias
+            )
+
+            if position < 0:
+                continue
+
+            match = self._build_match(
+                normalized_text=normalized_text,
+                candidate=candidate,
+                position=position,
+            )
+
+            existing = best_by_key.get(
+                candidate.registry_key
+            )
+
+            if (
+                existing is None
+                or self._match_sort_key(match)
+                > self._match_sort_key(existing)
+            ):
+                best_by_key[
+                    candidate.registry_key
+                ] = match
+
+        return sorted(
+            best_by_key.values(),
+            key=self._match_sort_key,
+            reverse=True,
+        )
+
+    def aliases(self) -> list[str]:
+        values = {
+            candidate.alias
+            for candidate
+            in self.alias_candidates()
+        }
+
+        return sorted(
+            values,
+            key=lambda alias: (
+                -len(
+                    self.normalize_text(alias)
+                ),
+                alias,
+            ),
+        )
+
+    def alias_candidates(
+        self,
+    ) -> tuple[AliasCandidate, ...]:
+        with self._index_lock:
+            if self._alias_index is None:
+                self._alias_index = (
+                    self._build_alias_index()
+                )
+
+            return self._alias_index
+
+    def _build_alias_index(
+        self,
+    ) -> tuple[AliasCandidate, ...]:
+        raw_data = self.raw_data()
+
+        candidates: list[AliasCandidate] = []
+
+        for registry_key, raw_entry in (
+            raw_data.items()
+        ):
+            if not isinstance(
+                raw_entry,
+                Mapping,
+            ):
+                raise (
+                    DomainRegistryConfigurationError(
+                        f"{self.registry_id}."
+                        f"{registry_key}: entry must "
+                        "be a mapping."
+                    )
+                )
+
+            canonical_name = (
+                self.canonical_name_from_raw(
+                    registry_key,
+                    raw_entry,
+                )
+            )
+
+            aliases = self.aliases_from_raw(
+                registry_key,
+                raw_entry,
+            )
+
+            metadata = (
+                self.alias_metadata_from_raw(
+                    registry_key,
+                    raw_entry,
+                )
+            )
+
+            alias_count = len(aliases)
+
+            for index, alias in enumerate(
+                aliases
+            ):
+                normalized_alias = (
+                    self.normalize_text(alias)
+                )
+
+                if not normalized_alias:
+                    continue
+
+                candidates.append(
+                    AliasCandidate(
+                        registry_key=registry_key,
+                        alias=alias,
+                        normalized_alias=(
+                            normalized_alias
+                        ),
+                        canonical_name=(
+                            canonical_name
+                        ),
+                        priority=(
+                            alias_count - index
+                        ),
+                        metadata=copy.deepcopy(
+                            metadata
+                        ),
+                    )
+                )
+
+        candidates.sort(
+            key=lambda candidate: (
+                len(
+                    candidate.normalized_alias
+                ),
+                candidate.priority,
+                candidate.registry_key,
+            ),
+            reverse=True,
+        )
+
+        return tuple(candidates)
+
+    def calculate_match_confidence(
+        self,
+        *,
+        normalized_text: str,
+        candidate: AliasCandidate,
+        exact_match: bool,
+    ) -> float:
+        """
+        기본 매칭 신뢰도.
+
+        부분 일치: 0.75
+        정확 일치: +0.20
+        긴 별칭: 최대 +0.05
+        """
+
+        confidence = 0.75
+
+        if exact_match:
+            confidence += 0.20
+
+        alias_length_bonus = min(
+            len(candidate.normalized_alias)
+            / 100,
+            0.05,
+        )
+
+        confidence += alias_length_bonus
+
+        return round(
+            min(confidence, 1.0),
+            2,
+        )
+
+    def _build_match(
+        self,
+        *,
+        normalized_text: str,
+        candidate: AliasCandidate,
+        position: int,
+    ) -> AliasMatch[EntryT]:
+        entry = self.require(
+            candidate.registry_key
+        )
+
+        exact_match = (
+            normalized_text
+            == candidate.normalized_alias
+        )
+
+        confidence = (
+            self.calculate_match_confidence(
+                normalized_text=(
+                    normalized_text
+                ),
+                candidate=candidate,
+                exact_match=exact_match,
+            )
+        )
+
+        return AliasMatch(
+            entry=entry,
+            registry_key=(
+                candidate.registry_key
+            ),
+            canonical_name=(
+                candidate.canonical_name
+            ),
+            matched_alias=candidate.alias,
+            normalized_alias=(
+                candidate.normalized_alias
+            ),
+            match_start=position,
+            match_end=(
+                position
+                + len(
+                    candidate.normalized_alias
+                )
+            ),
+            confidence=confidence,
+            exact_match=exact_match,
+            metadata=copy.deepcopy(
+                candidate.metadata or {}
+            ),
+        )
+
+    @staticmethod
+    def _match_sort_key(
+        match: AliasMatch[EntryT],
+    ) -> tuple[float, int, int]:
+        return (
+            match.confidence,
+            len(match.normalized_alias),
+            -match.match_start,
+        )
+
+    def clear_cache(self) -> None:
+        """
+        Registry의 로컬 별칭 인덱스 캐시를 초기화한다.
+
+        Loader가 보관하는 YAML 데이터 캐시는 유지한다.
+        YAML 데이터까지 다시 읽어야 할 때는 reload()를 사용한다.
+        """
+        self._clear_local_cache()
+
+    def _clear_local_cache(self) -> None:
+        with self._index_lock:
+            self._alias_index = None
+
+
+def optional_string(
+    value: Any,
+) -> str | None:
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+
+    return normalized or None
+
+
+def safe_float(
+    value: Any,
+    *,
+    default: float = 0.0,
+) -> float:
+    try:
+        return float(value)
+    except (
+        TypeError,
+        ValueError,
+    ):
+        return default
+
+
+def optional_float(
+    value: Any,
+) -> float | None:
+    if value is None:
+        return None
+
+    try:
+        return float(value)
+    except (
+        TypeError,
+        ValueError,
+    ):
+        return None
+
+
+def optional_int(
+    value: Any,
+) -> int | None:
+    if value is None:
+        return None
+
+    try:
+        return int(value)
+    except (
+        TypeError,
+        ValueError,
+    ):
+        return None
+
+
+def normalize_string_list(
+    value: Any,
+) -> tuple[str, ...]:
+    if value is None:
+        return ()
+
+    if isinstance(
+        value,
+        (list, tuple, set),
+    ):
+        values: Iterable[Any] = value
+    else:
+        values = (value,)
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for item in values:
+        normalized = str(item).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(normalized)
+
+    return tuple(result)
+
+
+__all__ = [
+    "EntryT",
+    "DomainRegistryError",
+    "DomainRegistryEntryNotFoundError",
+    "DomainRegistryConfigurationError",
+    "AliasCandidate",
+    "AliasMatch",
+    "BaseKnowledgeRegistry",
+    "BaseAliasRegistry",
+    "optional_string",
+    "safe_float",
+    "optional_float",
+    "optional_int",
+    "normalize_string_list",
+]
+
+================================================================
+FILE: app/services/food/knowledge/common/confidence.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.common.constants import (
+    DEFAULT_CONFIDENCE_FIELD_WEIGHT,
+)
+from app.services.food.knowledge.common.normalizer import (
+    safe_float,
+)
+
+
+def is_available(
+    value: Any,
+) -> bool:
+    if value is None:
+        return False
+
+    if isinstance(value, str):
+        return bool(value.strip())
+
+    if isinstance(value, (list, tuple, set, dict)):
+        return bool(value)
+
+    return True
+
+
+def calculate_field_confidence(
+    fields: Mapping[str, Any],
+    *,
+    weights: Mapping[str, float] | None = None,
+    required_fields: set[str] | None = None,
+    required_field_penalty: float = 0.1,
+) -> float:
+    if not fields:
+        return 0.0
+
+    weights = weights or {}
+    required_fields = required_fields or set()
+
+    available_weight = 0.0
+    total_weight = 0.0
+    missing_required_count = 0
+
+    for field_name, value in fields.items():
+        field_weight = safe_float(
+            weights.get(
+                field_name,
+                DEFAULT_CONFIDENCE_FIELD_WEIGHT,
+            ),
+            default=DEFAULT_CONFIDENCE_FIELD_WEIGHT,
+        )
+
+        if field_weight is None:
+            field_weight = DEFAULT_CONFIDENCE_FIELD_WEIGHT
+
+        field_weight = max(0.0, field_weight)
+        total_weight += field_weight
+
+        if is_available(value):
+            available_weight += field_weight
+        elif field_name in required_fields:
+            missing_required_count += 1
+
+    if total_weight <= 0:
+        return 0.0
+
+    confidence = (
+        available_weight / total_weight
+    )
+
+    confidence -= (
+        missing_required_count
+        * max(0.0, required_field_penalty)
+    )
+
+    return round(
+        max(0.0, min(1.0, confidence)),
+        2,
+    )
+
+================================================================
+FILE: app/services/food/knowledge/common/constants.py
+================================================================
+from __future__ import annotations
+
+
+MIN_SCORE = 0.0
+MAX_SCORE = 100.0
+
+DEFAULT_CONFIDENCE_FIELD_WEIGHT = 1.0
+
+PRODUCT_NAME_KEYS = (
+    "product_name",
+    "productName",
+    "title",
+    "name",
+    "display_name",
+)
+
+ORIGIN_KEYS = (
+    "origin",
+    "country_of_origin",
+    "origin_name",
+    "production_area",
+    "region",
+)
+
+WEIGHT_KEYS = (
+    "weight",
+    "quantity",
+    "package_weight",
+    "net_weight",
+    "volume",
+)
+
+PRICE_KEYS = (
+    "price",
+    "sale_price",
+    "discount_price",
+    "final_price",
+    "product_price",
+)
+
+QUALITY_SCORE_KEYS = (
+    "quality_score",
+    "v7_quality_score",
+    "ai_quality_score",
+)
+
+PRICE_SCORE_KEYS = (
+    "price_score",
+    "v7_price_score",
+    "price_value_score",
+    "ai_price_score",
+)
+
+TRUST_SCORE_KEYS = (
+    "trust_score",
+    "reaction_trust_score",
+    "ai_trust_score",
+)
+
+================================================================
+FILE: app/services/food/knowledge/common/normalizer.py
+================================================================
+from __future__ import annotations
+
+import re
+from typing import Any
+
+from app.services.food.knowledge.common.text import (
+    normalize_text,
+)
+
+
+_NUMBER_PATTERN = re.compile(
+    r"-?\d+(?:\.\d+)?"
+)
+
+_WEIGHT_PATTERNS = (
+    (
+        re.compile(
+            r"(?P<value>\d+(?:\.\d+)?)\s*(?:kg|킬로그램|킬로)",
+            flags=re.IGNORECASE,
+        ),
+        1000.0,
+    ),
+    (
+        re.compile(
+            r"(?P<value>\d+(?:\.\d+)?)\s*(?:g|그램)",
+            flags=re.IGNORECASE,
+        ),
+        1.0,
+    ),
+)
+
+_MILLILITER_PATTERNS = (
+    (
+        re.compile(
+            r"(?P<value>\d+(?:\.\d+)?)\s*(?:l|리터)",
+            flags=re.IGNORECASE,
+        ),
+        1000.0,
+    ),
+    (
+        re.compile(
+            r"(?P<value>\d+(?:\.\d+)?)\s*(?:ml|밀리리터)",
+            flags=re.IGNORECASE,
+        ),
+        1.0,
+    ),
+)
+
+
+def safe_float(
+    value: Any,
+    *,
+    default: float | None = 0.0,
+) -> float | None:
+    if value is None or value == "":
+        return default
+
+    if isinstance(value, bool):
+        return default
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    text = normalize_text(value).replace(",", "")
+
+    matched = _NUMBER_PATTERN.search(text)
+
+    if not matched:
+        return default
+
+    try:
+        return float(matched.group())
+    except ValueError:
+        return default
+
+
+def safe_int(
+    value: Any,
+    *,
+    default: int | None = 0,
+) -> int | None:
+    parsed = safe_float(
+        value,
+        default=None,
+    )
+
+    if parsed is None:
+        return default
+
+    return int(parsed)
+
+
+def normalize_weight_grams(
+    value: Any,
+) -> float | None:
+    text = normalize_text(
+        value,
+        lowercase=True,
+    )
+
+    if not text:
+        return None
+
+    for pattern, multiplier in _WEIGHT_PATTERNS:
+        matched = pattern.search(text)
+
+        if not matched:
+            continue
+
+        parsed = safe_float(
+            matched.group("value"),
+            default=None,
+        )
+
+        if parsed is None:
+            continue
+
+        return round(
+            parsed * multiplier,
+            2,
+        )
+
+    return None
+
+
+def normalize_volume_ml(
+    value: Any,
+) -> float | None:
+    text = normalize_text(
+        value,
+        lowercase=True,
+    )
+
+    if not text:
+        return None
+
+    for pattern, multiplier in _MILLILITER_PATTERNS:
+        matched = pattern.search(text)
+
+        if not matched:
+            continue
+
+        parsed = safe_float(
+            matched.group("value"),
+            default=None,
+        )
+
+        if parsed is None:
+            continue
+
+        return round(
+            parsed * multiplier,
+            2,
+        )
+
+    return None
+
+
+def normalize_boolean(
+    value: Any,
+    *,
+    default: bool | None = None,
+) -> bool | None:
+    if isinstance(value, bool):
+        return value
+
+    if value is None:
+        return default
+
+    normalized = normalize_text(
+        value,
+        lowercase=True,
+    )
+
+    true_values = {
+        "true",
+        "yes",
+        "y",
+        "1",
+        "예",
+        "맞음",
+        "포함",
+        "해당",
+    }
+
+    false_values = {
+        "false",
+        "no",
+        "n",
+        "0",
+        "아니오",
+        "아님",
+        "미포함",
+        "비해당",
+    }
+
+    if normalized in true_values:
+        return True
+
+    if normalized in false_values:
+        return False
+
+    return default
+
+================================================================
+FILE: app/services/food/knowledge/common/parser_base.py
+================================================================
+from __future__ import annotations
+
+import re
+import unicodedata
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
+
+from app.services.food.knowledge.common.parser_models import (
+    BaseParseResult,
+)
+
+
+ParseResultT = TypeVar(
+    "ParseResultT",
+    bound=BaseParseResult,
+)
+
+
+class BaseKnowledgeParser(
+    Generic[ParseResultT],
+    ABC,
+):
+    """
+    Food Knowledge Parser 공통 인터페이스.
+
+    Parser의 책임:
+    - 입력 텍스트 정규화
+    - Registry 검색 조합
+    - 도메인 ParseResult 생성
+
+    Parser가 담당하지 않는 책임:
+    - 최종 추천 점수 계산
+    - 사용자 메시지 생성
+    - UI 표현
+    """
+
+    def normalize_text(
+        self,
+        text: str,
+    ) -> str:
+        """
+        검색 안정성을 위한 기본 텍스트 정규화.
+
+        - Unicode NFKC 정규화
+        - 연속 공백 축소
+        - 앞뒤 공백 제거
+        """
+        normalized = unicodedata.normalize(
+            "NFKC",
+            str(text or ""),
+        )
+
+        normalized = re.sub(
+            r"\s+",
+            " ",
+            normalized,
+        )
+
+        return normalized.strip()
+
+    def validate_text(
+        self,
+        text: str,
+    ) -> str:
+        """
+        입력값을 검사하고 정규화된 문자열을 반환한다.
+        """
+        normalized = self.normalize_text(
+            text
+        )
+
+        if not normalized:
+            raise ValueError(
+                "parser input text must not be empty"
+            )
+
+        return normalized
+
+    @abstractmethod
+    def parse(
+        self,
+        text: str,
+    ) -> ParseResultT:
+        """
+        입력 텍스트를 분석하여 도메인 ParseResult를 반환한다.
+        """
+        raise NotImplementedError
+
+
+__all__ = [
+    "BaseKnowledgeParser",
+    "ParseResultT",
+]
+
+================================================================
+FILE: app/services/food/knowledge/common/parser_models.py
+================================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass, field
+from typing import Any, Mapping
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class BaseParseResult:
+    """
+    모든 Food Knowledge Parser 결과의 공통 기반 모델.
+
+    하위 도메인 예:
+        FruitParseResult
+        BeefParseResult
+        CheeseParseResult
+        TeaParseResult
+    """
+
+    original_text: str
+    normalized_text: str
+    confidence: float = 0.0
+    metadata: Mapping[str, Any] = field(
+        default_factory=dict
+    )
+
+    def __post_init__(self) -> None:
+        original_text = str(
+            self.original_text
+        ).strip()
+
+        normalized_text = str(
+            self.normalized_text
+        ).strip()
+
+        confidence = max(
+            0.0,
+            min(
+                1.0,
+                float(self.confidence),
+            ),
+        )
+
+        metadata = copy.deepcopy(
+            dict(self.metadata)
+        )
+
+        object.__setattr__(
+            self,
+            "original_text",
+            original_text,
+        )
+        object.__setattr__(
+            self,
+            "normalized_text",
+            normalized_text,
+        )
+        object.__setattr__(
+            self,
+            "confidence",
+            confidence,
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            metadata,
+        )
+
+    @property
+    def has_match(self) -> bool:
+        """
+        Parser가 하나 이상의 의미 있는 속성을 감지했는지 나타낸다.
+
+        도메인 ParseResult에서 필요하면 재정의한다.
+        """
+        return self.confidence > 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        API·로그·테스트에서 사용할 JSON 친화적 표현.
+        """
+        return {
+            "original_text": self.original_text,
+            "normalized_text": (
+                self.normalized_text
+            ),
+            "confidence": self.confidence,
+            "has_match": self.has_match,
+            "metadata": self._serialize_value(
+                self.metadata
+            ),
+        }
+
+    @classmethod
+    def _serialize_value(
+        cls,
+        value: Any,
+    ) -> Any:
+        if value is None:
+            return None
+
+        if hasattr(value, "to_dict"):
+            return value.to_dict()
+
+        if isinstance(value, Mapping):
+            return {
+                str(key): cls._serialize_value(
+                    item
+                )
+                for key, item in value.items()
+            }
+
+        if isinstance(
+            value,
+            (list, tuple, set, frozenset),
+        ):
+            return [
+                cls._serialize_value(item)
+                for item in value
+            ]
+
+        if isinstance(
+            value,
+            (
+                str,
+                int,
+                float,
+                bool,
+            ),
+        ):
+            return value
+
+        return copy.deepcopy(value)
+
+
+__all__ = [
+    "BaseParseResult",
+]
+
+================================================================
+FILE: app/services/food/knowledge/common/parser_utils.py
+================================================================
+from __future__ import annotations
+
+import re
+from collections.abc import Iterable, Mapping
+from typing import Any
+
+
+_PRODUCT_NAME_KEYS = (
+    "product_name",
+    "name",
+    "title",
+    "product_title",
+    "item_name",
+    "display_name",
+)
+
+_ORIGIN_KEYS = (
+    "origin",
+    "country_of_origin",
+    "origin_name",
+    "production_area",
+    "region",
+)
+
+_PRICE_KEYS = (
+    "price",
+    "sale_price",
+    "discount_price",
+    "final_price",
+    "current_price",
+)
+
+_WEIGHT_KEYS = (
+    "weight",
+    "quantity",
+    "package_weight",
+    "net_weight",
+)
+
+
+def _is_empty(
+    value: Any,
+) -> bool:
+    if value is None:
+        return True
+
+    if isinstance(value, str):
+        return not value.strip()
+
+    return False
+
+
+def first_non_empty(
+    data: Mapping[str, Any],
+    keys: Iterable[str],
+    default: Any = None,
+) -> Any:
+    """
+    Mapping에서 지정한 키를 순서대로 확인하고
+    첫 번째 유효 값을 반환한다.
+    """
+    for key in keys:
+        value = data.get(key)
+
+        if not _is_empty(value):
+            return value
+
+    return default
+
+
+def extract_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품명 후보 필드 중 첫 번째 유효 값을 문자열로 반환한다.
+    """
+    value = first_non_empty(
+        product,
+        _PRODUCT_NAME_KEYS,
+        default="",
+    )
+
+    return str(value).strip()
+
+
+def extract_origin(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    원산지 관련 필드에서 값을 추출한다.
+    """
+    value = first_non_empty(
+        product,
+        _ORIGIN_KEYS,
+    )
+
+    if _is_empty(value):
+        return None
+
+    return str(value).strip()
+
+
+def extract_first_number(
+    value: Any,
+    default: float | None = None,
+) -> float | None:
+    """
+    문자열 또는 숫자에서 첫 번째 숫자를 추출한다.
+
+    예:
+        "당도 14.5 브릭스" -> 14.5
+        "12,900원" -> 12900.0
+        3500 -> 3500.0
+    """
+    if value is None:
+        return default
+
+    if isinstance(value, bool):
+        return default
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    text = str(value).replace(",", "")
+
+    matched = re.search(
+        r"[-+]?\d+(?:\.\d+)?",
+        text,
+    )
+
+    if not matched:
+        return default
+
+    try:
+        return float(matched.group(0))
+    except (TypeError, ValueError):
+        return default
+
+
+def extract_price(
+    product: Mapping[str, Any] | Any,
+) -> float | None:
+    """
+    Mapping 또는 단일 값에서 가격을 추출한다.
+    """
+    if isinstance(product, Mapping):
+        value = first_non_empty(
+            product,
+            _PRICE_KEYS,
+        )
+    else:
+        value = product
+
+    return extract_first_number(value)
+
+
+def extract_weight_text(
+    product: Mapping[str, Any] | Any,
+    *,
+    fallback_to_product_name: bool = True,
+) -> str | None:
+    """
+    무게 표현이 포함된 원문을 반환한다.
+    """
+    if not isinstance(product, Mapping):
+        if _is_empty(product):
+            return None
+
+        return str(product).strip()
+
+    value = first_non_empty(
+        product,
+        _WEIGHT_KEYS,
+    )
+
+    if not _is_empty(value):
+        return str(value).strip()
+
+    if fallback_to_product_name:
+        product_name = extract_product_name(
+            product
+        )
+
+        if product_name:
+            return product_name
+
+    return None
+
+
+def extract_weight_grams(
+    product: Mapping[str, Any] | Any,
+    *,
+    fallback_to_product_name: bool = True,
+) -> float | None:
+    """
+    무게를 gram 단위로 변환한다.
+
+    지원 예:
+        500g
+        1kg
+        1.5 kg
+        1000그램
+        2킬로그램
+    """
+    text = extract_weight_text(
+        product,
+        fallback_to_product_name=(
+            fallback_to_product_name
+        ),
+    )
+
+    if not text:
+        return None
+
+    normalized = (
+        str(text)
+        .replace(",", "")
+        .strip()
+        .lower()
+    )
+
+    patterns = (
+        (
+            r"(?P<value>\d+(?:\.\d+)?)\s*"
+            r"(?:kg|킬로그램|킬로)",
+            1000.0,
+        ),
+        (
+            r"(?P<value>\d+(?:\.\d+)?)\s*"
+            r"(?:g|그램)",
+            1.0,
+        ),
+    )
+
+    for pattern, multiplier in patterns:
+        matched = re.search(
+            pattern,
+            normalized,
+            flags=re.IGNORECASE,
+        )
+
+        if not matched:
+            continue
+
+        try:
+            return (
+                float(matched.group("value"))
+                * multiplier
+            )
+        except (TypeError, ValueError):
+            return None
+
+    return None
+
+
+__all__ = [
+    "extract_first_number",
+    "extract_origin",
+    "extract_price",
+    "extract_product_name",
+    "extract_weight_grams",
+    "extract_weight_text",
+    "first_non_empty",
+]
+
+================================================================
+FILE: app/services/food/knowledge/common/parser.py
+================================================================
+"""
+기존 Common Parser API 호환 모듈.
+
+새 Parser 추상 클래스는 parser_base.py에 있으며,
+이 모듈은 기존 Fruit 코드 등이 사용하던 상품 데이터
+추출 함수의 import 경로를 유지한다.
+"""
+
+from app.services.food.knowledge.common.parser_utils import (
+    extract_first_number,
+    extract_origin,
+    extract_price,
+    extract_product_name,
+    extract_weight_grams,
+    extract_weight_text,
+    first_non_empty,
+)
+
+
+__all__ = [
+    "extract_first_number",
+    "extract_origin",
+    "extract_price",
+    "extract_product_name",
+    "extract_weight_grams",
+    "extract_weight_text",
+    "first_non_empty",
+]
+
+================================================================
+FILE: app/services/food/knowledge/common/rules.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import Any
+
+from app.services.food.knowledge.common.text import (
+    deduplicate_texts,
+)
+from app.services.food.knowledge.models import (
+    FoodRuleResult,
+)
+
+
+WARNING_SEVERITIES = {
+    "warning",
+    "error",
+    "critical",
+}
+
+
+def split_rule_messages(
+    rule_results: Iterable[FoodRuleResult],
+) -> tuple[list[str], list[str]]:
+    reasons: list[str] = []
+    warnings: list[str] = []
+
+    for rule in rule_results:
+        if not rule.matched:
+            continue
+
+        message = str(
+            rule.message or ""
+        ).strip()
+
+        if not message:
+            continue
+
+        severity = str(
+            rule.severity or "info"
+        ).strip().lower()
+
+        if severity in WARNING_SEVERITIES:
+            warnings.append(message)
+        else:
+            reasons.append(message)
+
+    return (
+        deduplicate_texts(reasons),
+        deduplicate_texts(warnings),
+    )
+
+
+def merge_rule_results(
+    *rule_groups: Iterable[FoodRuleResult],
+) -> list[FoodRuleResult]:
+    result: list[FoodRuleResult] = []
+    seen: set[tuple[str, str]] = set()
+
+    for rule_group in rule_groups:
+        for rule in rule_group:
+            key = (
+                str(rule.rule_id),
+                str(rule.message),
+            )
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            result.append(rule)
+
+    return result
+
+
+def create_rule(
+    *,
+    rule_id: str,
+    message: str,
+    severity: str = "info",
+    matched: bool = True,
+    metadata: dict[str, Any] | None = None,
+) -> FoodRuleResult:
+    return FoodRuleResult(
+        rule_id=rule_id,
+        matched=matched,
+        message=message,
+        severity=severity,
+        metadata=metadata or {},
+    )
+
+================================================================
+FILE: app/services/food/knowledge/common/scoring.py
+================================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.common.constants import (
+    MAX_SCORE,
+    MIN_SCORE,
+)
+from app.services.food.knowledge.common.normalizer import (
+    safe_float,
+)
+
+
+def clamp_score(
+    value: Any,
+    *,
+    minimum: float = MIN_SCORE,
+    maximum: float = MAX_SCORE,
+) -> float:
+    parsed = safe_float(
+        value,
+        default=minimum,
+    )
+
+    if parsed is None:
+        parsed = minimum
+
+    return round(
+        max(
+            minimum,
+            min(maximum, parsed),
+        ),
+        2,
+    )
+
+
+def normalize_range_score(
+    value: Any,
+    *,
+    minimum_value: float,
+    maximum_value: float,
+    minimum_score: float = MIN_SCORE,
+    maximum_score: float = MAX_SCORE,
+) -> float:
+    parsed = safe_float(
+        value,
+        default=None,
+    )
+
+    if parsed is None:
+        return minimum_score
+
+    if maximum_value <= minimum_value:
+        raise ValueError(
+            "maximum_value must be greater than minimum_value"
+        )
+
+    ratio = (
+        parsed - minimum_value
+    ) / (
+        maximum_value - minimum_value
+    )
+
+    score = (
+        minimum_score
+        + ratio
+        * (
+            maximum_score
+            - minimum_score
+        )
+    )
+
+    return clamp_score(
+        score,
+        minimum=minimum_score,
+        maximum=maximum_score,
+    )
+
+
+def weighted_average(
+    scores: Mapping[str, Any],
+    weights: Mapping[str, float],
+    *,
+    normalize_weights: bool = True,
+) -> float:
+    weighted_sum = 0.0
+    total_weight = 0.0
+
+    for key, weight in weights.items():
+        parsed_weight = safe_float(
+            weight,
+            default=0.0,
+        )
+
+        if parsed_weight is None:
+            continue
+
+        if parsed_weight <= 0:
+            continue
+
+        score = clamp_score(
+            scores.get(key, 0.0)
+        )
+
+        weighted_sum += score * parsed_weight
+        total_weight += parsed_weight
+
+    if total_weight <= 0:
+        return 0.0
+
+    if normalize_weights:
+        weighted_sum /= total_weight
+
+    return clamp_score(weighted_sum)
+
+
+def first_numeric_score(
+    product: Mapping[str, Any],
+    keys: tuple[str, ...],
+    *,
+    default: float = 0.0,
+) -> float:
+    for key in keys:
+        value = product.get(key)
+
+        parsed = safe_float(
+            value,
+            default=None,
+        )
+
+        if parsed is not None:
+            return clamp_score(parsed)
+
+    return clamp_score(default)
+
+
+def apply_score_boost(
+    score: Any,
+    boost: Any,
+) -> float:
+    parsed_score = clamp_score(score)
+
+    parsed_boost = safe_float(
+        boost,
+        default=0.0,
+    )
+
+    if parsed_boost is None:
+        parsed_boost = 0.0
+
+    return clamp_score(
+        parsed_score + parsed_boost
+    )
+
+================================================================
+FILE: app/services/food/knowledge/common/text.py
+================================================================
+from __future__ import annotations
+
+import re
+import unicodedata
+from collections.abc import Iterable
+from typing import Any
+
+
+_WHITESPACE_PATTERN = re.compile(r"\s+")
+
+
+def normalize_text(
+    value: Any,
+    *,
+    lowercase: bool = False,
+) -> str:
+    if value is None:
+        return ""
+
+    text = unicodedata.normalize(
+        "NFKC",
+        str(value),
+    )
+
+    text = _WHITESPACE_PATTERN.sub(
+        " ",
+        text,
+    ).strip()
+
+    if lowercase:
+        text = text.lower()
+
+    return text
+
+
+def contains_keyword(
+    text: Any,
+    keyword: Any,
+    *,
+    case_sensitive: bool = False,
+) -> bool:
+    normalized_text = normalize_text(
+        text,
+        lowercase=not case_sensitive,
+    )
+    normalized_keyword = normalize_text(
+        keyword,
+        lowercase=not case_sensitive,
+    )
+
+    if not normalized_text or not normalized_keyword:
+        return False
+
+    return normalized_keyword in normalized_text
+
+
+def detect_keywords(
+    text: Any,
+    keywords: Iterable[str],
+    *,
+    case_sensitive: bool = False,
+) -> list[str]:
+    return [
+        keyword
+        for keyword in keywords
+        if contains_keyword(
+            text,
+            keyword,
+            case_sensitive=case_sensitive,
+        )
+    ]
+
+
+def deduplicate_texts(
+    values: Iterable[Any],
+) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+
+    for value in values:
+        normalized = normalize_text(value)
+
+        if not normalized:
+            continue
+
+        comparison_key = normalized.lower()
+
+        if comparison_key in seen:
+            continue
+
+        seen.add(comparison_key)
+        result.append(normalized)
+
+    return result
+
+================================================================
+FILE: app/services/food/knowledge/registry_loader.py
+================================================================
+from __future__ import annotations
+
+import copy
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from threading import RLock
+from typing import Any, Mapping
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
+
+
+SUPPORTED_EXTENSIONS = {
+    ".yaml",
+    ".yml",
+    ".json",
+}
+
+
+class KnowledgeRegistryError(RuntimeError):
+    """Knowledge Registry 처리 중 발생한 기본 예외."""
+
+
+class KnowledgeRegistryFileNotFoundError(
+    KnowledgeRegistryError
+):
+    """Registry 데이터 파일을 찾지 못한 경우."""
+
+
+class KnowledgeRegistryFormatError(
+    KnowledgeRegistryError
+):
+    """Registry 파일 형식 또는 최상위 구조가 잘못된 경우."""
+
+
+class KnowledgeRegistryValidationError(
+    KnowledgeRegistryError
+):
+    """Registry 데이터 검증에 실패한 경우."""
+
+
+@dataclass(frozen=True)
+class KnowledgeRegistryDocument:
+    """
+    하나의 Registry 데이터 문서를 표현한다.
+
+    attributes:
+        registry_id:
+            예: beef.grades, fruit.varieties
+
+        source_path:
+            실제 데이터 파일 경로
+
+        data:
+            Registry 본문
+
+        version:
+            Registry 데이터 버전
+
+        metadata:
+            설명, 작성자, 스키마 버전 등의 부가 정보
+    """
+
+    registry_id: str
+    source_path: Path
+    data: dict[str, Any]
+    version: str | None = None
+    metadata: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "registry_id": self.registry_id,
+            "source_path": str(self.source_path),
+            "version": self.version,
+            "metadata": copy.deepcopy(
+                self.metadata or {}
+            ),
+            "data": copy.deepcopy(self.data),
+        }
+
+
+class KnowledgeRegistryLoader:
+    """
+    YAML/JSON 기반 Food Knowledge Registry Loader.
+
+    특징:
+    - YAML 및 JSON 지원
+    - 메모리 캐시
+    - 파일 수정 시 자동 재로딩
+    - 최상위 구조 검증
+    - Registry ID 기반 접근
+    - 반환값 방어적 복사
+    """
+
+    def __init__(
+        self,
+        base_directory: str | Path | None = None,
+        *,
+        use_cache: bool = True,
+        auto_reload: bool = True,
+    ) -> None:
+        self.base_directory = (
+            Path(base_directory)
+            if base_directory is not None
+            else self.default_base_directory()
+        ).resolve()
+
+        self.use_cache = use_cache
+        self.auto_reload = auto_reload
+
+        self._cache: dict[
+            Path,
+            KnowledgeRegistryDocument,
+        ] = {}
+
+        self._modified_times: dict[
+            Path,
+            int,
+        ] = {}
+
+        self._lock = RLock()
+
+    @staticmethod
+    def default_base_directory() -> Path:
+        return (
+            Path(__file__)
+            .resolve()
+            .parent
+            .parent
+            / "registry_data"
+        )
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+
+        예:
+            beef.grades
+            fruit.varieties
+        """
+
+        source_path = self.resolve_path(
+            registry_id
+        )
+
+        if source_path is None:
+            if required:
+                raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+
+            return None
+
+        return self.load_path(
+            source_path,
+            registry_id=registry_id,
+            validate=validate,
+            force_reload=force_reload,
+        )
+
+    def load_path(
+        self,
+        source_path: str | Path,
+        *,
+        registry_id: str | None = None,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument:
+        path = Path(source_path).resolve()
+
+        if not path.exists():
+            raise KnowledgeRegistryFileNotFoundError(
+                f"Registry file not found: {path}"
+            )
+
+        if not path.is_file():
+            raise KnowledgeRegistryFormatError(
+                f"Registry path is not a file: {path}"
+            )
+
+        if path.suffix.lower() not in (
+            SUPPORTED_EXTENSIONS
+        ):
+            raise KnowledgeRegistryFormatError(
+                "Unsupported Registry extension: "
+                f"{path.suffix}"
+            )
+
+        with self._lock:
+            if (
+                self.use_cache
+                and not force_reload
+                and self._can_use_cached(path)
+            ):
+                return self._copy_document(
+                    self._cache[path]
+                )
+
+            raw_payload = self._read_file(path)
+
+            normalized = (
+                self._normalize_document_payload(
+                    raw_payload,
+                    source_path=path,
+                )
+            )
+
+            resolved_registry_id = (
+                registry_id
+                or normalized["registry_id"]
+                or self.path_to_registry_id(path)
+            )
+
+            data = normalized["data"]
+            version = normalized["version"]
+            metadata = normalized["metadata"]
+
+            if validate:
+                self.validate_data(
+                    data,
+                    registry_id=(
+                        resolved_registry_id
+                    ),
+                )
+
+            document = KnowledgeRegistryDocument(
+                registry_id=(
+                    resolved_registry_id
+                ),
+                source_path=path,
+                data=data,
+                version=version,
+                metadata=metadata,
+            )
+
+            if self.use_cache:
+                self._cache[path] = document
+                self._modified_times[path] = (
+                    path.stat().st_mtime_ns
+                )
+
+            return self._copy_document(document)
+
+    def load_data(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> dict[str, Any] | None:
+        document = self.load(
+            registry_id,
+            required=required,
+            validate=validate,
+            force_reload=force_reload,
+        )
+
+        if document is None:
+            return None
+
+        return copy.deepcopy(document.data)
+
+    def get_entry(
+        self,
+        registry_id: str,
+        entry_key: str,
+        *,
+        default: Any = None,
+        required_registry: bool = True,
+    ) -> Any:
+        data = self.load_data(
+            registry_id,
+            required=required_registry,
+        )
+
+        if data is None:
+            return copy.deepcopy(default)
+
+        return copy.deepcopy(
+            data.get(entry_key, default)
+        )
+
+    def list_entries(
+        self,
+        registry_id: str,
+    ) -> list[str]:
+        data = self.load_data(registry_id)
+
+        if not data:
+            return []
+
+        return list(data.keys())
+
+    def contains(
+        self,
+        registry_id: str,
+        entry_key: str,
+    ) -> bool:
+        data = self.load_data(registry_id)
+
+        return bool(
+            data
+            and entry_key in data
+        )
+
+    def resolve_path(
+        self,
+        registry_id: str,
+    ) -> Path | None:
+        """
+        beef.grades를 아래 경로 후보로 변환한다.
+
+        registry_data/beef/grades.yaml
+        registry_data/beef/grades.yml
+        registry_data/beef/grades.json
+        """
+
+        relative_path = Path(
+            *registry_id.split(".")
+        )
+
+        for extension in (
+            ".yaml",
+            ".yml",
+            ".json",
+        ):
+            candidate = (
+                self.base_directory
+                / relative_path
+            ).with_suffix(extension)
+
+            if candidate.is_file():
+                return candidate.resolve()
+
+        return None
+
+    def path_to_registry_id(
+        self,
+        source_path: str | Path,
+    ) -> str:
+        path = Path(source_path).resolve()
+
+        try:
+            relative_path = path.relative_to(
+                self.base_directory
+            )
+        except ValueError:
+            relative_path = Path(path.name)
+
+        without_suffix = relative_path.with_suffix(
+            ""
+        )
+
+        return ".".join(
+            without_suffix.parts
+        )
+
+    def discover(
+        self,
+    ) -> list[str]:
+        """
+        base_directory 내부의 모든 Registry ID를 반환한다.
+        """
+
+        if not self.base_directory.exists():
+            return []
+
+        registry_ids: set[str] = set()
+
+        for extension in (
+            "*.yaml",
+            "*.yml",
+            "*.json",
+        ):
+            for path in (
+                self.base_directory.rglob(
+                    extension
+                )
+            ):
+                registry_ids.add(
+                    self.path_to_registry_id(path)
+                )
+
+        return sorted(registry_ids)
+
+    def validate_data(
+        self,
+        data: Any,
+        *,
+        registry_id: str,
+    ) -> None:
+        if not isinstance(data, Mapping):
+            raise (
+                KnowledgeRegistryValidationError(
+                    f"{registry_id}: Registry data "
+                    "must be a mapping."
+                )
+            )
+
+        for entry_key, entry_value in data.items():
+            if not isinstance(entry_key, str):
+                raise (
+                    KnowledgeRegistryValidationError(
+                        f"{registry_id}: Registry "
+                        "entry keys must be strings."
+                    )
+                )
+
+            if not entry_key.strip():
+                raise (
+                    KnowledgeRegistryValidationError(
+                        f"{registry_id}: Empty "
+                        "entry key is not allowed."
+                    )
+                )
+
+            if not isinstance(
+                entry_value,
+                Mapping,
+            ):
+                raise (
+                    KnowledgeRegistryValidationError(
+                        f"{registry_id}.{entry_key}: "
+                        "entry value must be a mapping."
+                    )
+                )
+
+    def clear_cache(
+        self,
+        registry_id: str | None = None,
+    ) -> None:
+        with self._lock:
+            if registry_id is None:
+                self._cache.clear()
+                self._modified_times.clear()
+                return
+
+            path = self.resolve_path(registry_id)
+
+            if path is None:
+                return
+
+            self._cache.pop(path, None)
+            self._modified_times.pop(
+                path,
+                None,
+            )
+
+    def cache_info(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "enabled": self.use_cache,
+                "auto_reload": self.auto_reload,
+                "size": len(self._cache),
+                "registry_ids": sorted(
+                    document.registry_id
+                    for document
+                    in self._cache.values()
+                ),
+            }
+
+    def _read_file(
+        self,
+        source_path: Path,
+    ) -> Any:
+        suffix = source_path.suffix.lower()
+
+        with source_path.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+            if suffix == ".json":
+                try:
+                    return json.load(file)
+                except json.JSONDecodeError as exc:
+                    raise (
+                        KnowledgeRegistryFormatError(
+                            "Invalid JSON Registry: "
+                            f"{source_path}: {exc}"
+                        )
+                    ) from exc
+
+            if suffix in {".yaml", ".yml"}:
+                if yaml is None:
+                    raise (
+                        KnowledgeRegistryFormatError(
+                            "PyYAML is required to "
+                            "load YAML Registry files."
+                        )
+                    )
+
+                try:
+                    return (
+                        yaml.safe_load(file)
+                        or {}
+                    )
+                except yaml.YAMLError as exc:
+                    raise (
+                        KnowledgeRegistryFormatError(
+                            "Invalid YAML Registry: "
+                            f"{source_path}: {exc}"
+                        )
+                    ) from exc
+
+        raise KnowledgeRegistryFormatError(
+            f"Unsupported file: {source_path}"
+        )
+
+    def _normalize_document_payload(
+        self,
+        payload: Any,
+        *,
+        source_path: Path,
+    ) -> dict[str, Any]:
+        if not isinstance(payload, Mapping):
+            raise KnowledgeRegistryFormatError(
+                "Registry document root must be "
+                f"a mapping: {source_path}"
+            )
+
+        payload_dict = dict(payload)
+
+        # Metadata wrapper 형식:
+        #
+        # registry_id: beef.grades
+        # version: "1.0"
+        # metadata: {...}
+        # data: {...}
+        if "data" in payload_dict:
+            data = payload_dict.get("data")
+
+            if not isinstance(data, Mapping):
+                raise (
+                    KnowledgeRegistryFormatError(
+                        "Registry 'data' must be a "
+                        f"mapping: {source_path}"
+                    )
+                )
+
+            metadata = payload_dict.get(
+                "metadata"
+            ) or {}
+
+            if not isinstance(
+                metadata,
+                Mapping,
+            ):
+                raise (
+                    KnowledgeRegistryFormatError(
+                        "Registry 'metadata' must be "
+                        f"a mapping: {source_path}"
+                    )
+                )
+
+            return {
+                "registry_id": (
+                    payload_dict.get(
+                        "registry_id"
+                    )
+                ),
+                "version": (
+                    _optional_string(
+                        payload_dict.get(
+                            "version"
+                        )
+                    )
+                ),
+                "metadata": dict(metadata),
+                "data": dict(data),
+            }
+
+        # 단순 Registry 형식도 지원:
+        #
+        # 한우: {...}
+        # 와규: {...}
+        return {
+            "registry_id": None,
+            "version": None,
+            "metadata": {},
+            "data": payload_dict,
+        }
+
+    def _can_use_cached(
+        self,
+        path: Path,
+    ) -> bool:
+        if path not in self._cache:
+            return False
+
+        if not self.auto_reload:
+            return True
+
+        cached_mtime = self._modified_times.get(
+            path
+        )
+
+        current_mtime = path.stat().st_mtime_ns
+
+        return cached_mtime == current_mtime
+
+    @staticmethod
+    def _copy_document(
+        document: KnowledgeRegistryDocument,
+    ) -> KnowledgeRegistryDocument:
+        return KnowledgeRegistryDocument(
+            registry_id=document.registry_id,
+            source_path=document.source_path,
+            data=copy.deepcopy(document.data),
+            version=document.version,
+            metadata=copy.deepcopy(
+                document.metadata or {}
+            ),
+        )
+
+
+def _optional_string(
+    value: Any,
+) -> str | None:
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+
+    return normalized or None
+
+
+_default_loader = KnowledgeRegistryLoader()
+
+
+def get_knowledge_registry_loader(
+) -> KnowledgeRegistryLoader:
+    return _default_loader
+
+
+def load_knowledge_registry(
+    registry_id: str,
+    *,
+    required: bool = True,
+    validate: bool = True,
+    force_reload: bool = False,
+) -> KnowledgeRegistryDocument | None:
+    return _default_loader.load(
+        registry_id,
+        required=required,
+        validate=validate,
+        force_reload=force_reload,
+    )
+
+
+def load_knowledge_registry_data(
+    registry_id: str,
+    *,
+    required: bool = True,
+    validate: bool = True,
+    force_reload: bool = False,
+) -> dict[str, Any] | None:
+    return _default_loader.load_data(
+        registry_id,
+        required=required,
+        validate=validate,
+        force_reload=force_reload,
+    )
+
+
+def get_knowledge_registry_entry(
+    registry_id: str,
+    entry_key: str,
+    *,
+    default: Any = None,
+) -> Any:
+    return _default_loader.get_entry(
+        registry_id,
+        entry_key,
+        default=default,
+    )
+
+
+def list_knowledge_registries(
+) -> list[str]:
+    return _default_loader.discover()
+
+
+__all__ = [
+    "SUPPORTED_EXTENSIONS",
+    "KnowledgeRegistryError",
+    "KnowledgeRegistryFileNotFoundError",
+    "KnowledgeRegistryFormatError",
+    "KnowledgeRegistryValidationError",
+    "KnowledgeRegistryDocument",
+    "KnowledgeRegistryLoader",
+    "get_knowledge_registry_loader",
+    "load_knowledge_registry",
+    "load_knowledge_registry_data",
+    "get_knowledge_registry_entry",
+    "list_knowledge_registries",
+]
+
+================================================================
+FILE: app/services/food/knowledge/registry.py
+================================================================
+from __future__ import annotations
+
+from collections import OrderedDict
+from typing import Iterable, List
+
+from app.services.food.knowledge.base import FoodKnowledgeProvider
+from app.services.food.knowledge.fruit.provider import (
+    FruitKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.beef.provider import (
+    BeefKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.lamb.provider import (
+    LambKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+
+class FoodKnowledgeRegistry:
+    """
+    Food Knowledge Provider Registry.
+
+    Provider 등록 순서가 상품명 자동 판별 우선순위가 된다.
+    """
+
+    def __init__(self) -> None:
+        self._providers: OrderedDict[
+            str,
+            FoodKnowledgeProvider,
+        ] = OrderedDict()
+
+    def register(
+        self,
+        provider: FoodKnowledgeProvider,
+        *,
+        replace: bool = False,
+    ) -> None:
+        category_id = self._normalize_category_id(
+            provider.category_id
+        )
+
+        if (
+            category_id in self._providers
+            and not replace
+        ):
+            raise ValueError(
+                f"이미 등록된 Food Provider입니다: {category_id}"
+            )
+
+        self._providers[category_id] = provider
+
+    def unregister(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.pop(
+            self._normalize_category_id(category_id),
+            None,
+        )
+
+    def get(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.get(
+            self._normalize_category_id(category_id)
+        )
+
+    def require(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider:
+        provider = self.get(category_id)
+
+        if provider is None:
+            raise KeyError(
+                f"등록되지 않은 Food Provider입니다: {category_id}"
+            )
+
+        return provider
+
+    def resolve(
+        self,
+        *,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> FoodKnowledgeProvider | None:
+        if category_id:
+            direct_provider = self.get(category_id)
+
+            if direct_provider is not None:
+                return direct_provider
+
+        for provider in self._providers.values():
+            if provider.supports(
+                category_id=category_id,
+                product_name=product_name,
+            ):
+                return provider
+
+        return None
+
+    def list_providers(
+        self,
+    ) -> List[FoodKnowledgeProvider]:
+        return list(self._providers.values())
+
+    def list_category_ids(self) -> List[str]:
+        return list(self._providers.keys())
+
+    def __contains__(
+        self,
+        category_id: object,
+    ) -> bool:
+        if not isinstance(category_id, str):
+            return False
+
+        return (
+            self._normalize_category_id(category_id)
+            in self._providers
+        )
+
+    def __iter__(
+        self,
+    ) -> Iterable[FoodKnowledgeProvider]:
+        return iter(self._providers.values())
+
+    @staticmethod
+    def _normalize_category_id(
+        category_id: str,
+    ) -> str:
+        normalized = str(category_id).strip().lower()
+
+        if not normalized:
+            raise ValueError(
+                "category_id가 비어 있습니다."
+            )
+
+        return normalized
+
+
+FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
+
+FOOD_KNOWLEDGE_REGISTRY.register(
+    FruitKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    BeefKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    LambKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    ChickenKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    DuckKnowledgeProvider()
+)
+
+
+def register_food_provider(
+    provider: FoodKnowledgeProvider,
+    *,
+    replace: bool = False,
+) -> None:
+    FOOD_KNOWLEDGE_REGISTRY.register(
+        provider,
+        replace=replace,
+    )
+
+
+def get_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.get(
+        category_id
+    )
+
+
+def require_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider:
+    return FOOD_KNOWLEDGE_REGISTRY.require(
+        category_id
+    )
+
+
+def resolve_food_provider(
+    *,
+    category_id: str | None = None,
+    product_name: str | None = None,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.resolve(
+        category_id=category_id,
+        product_name=product_name,
+    )
+
+
+def list_food_providers() -> List[FoodKnowledgeProvider]:
+    return FOOD_KNOWLEDGE_REGISTRY.list_providers()
