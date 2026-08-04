@@ -1,0 +1,32 @@
+light:
+  canonical_name: light
+  aliases:
+    - light body
+    - light-bodied
+    - 라이트 바디
+  body_level: 1
+  score: 80
+  premium: false
+  description: Light-bodied wine
+
+medium:
+  canonical_name: medium
+  aliases:
+    - medium body
+    - medium-bodied
+    - 미디엄 바디
+  body_level: 2
+  score: 84
+  premium: false
+  description: Medium-bodied wine
+
+full:
+  canonical_name: full
+  aliases:
+    - full body
+    - full-bodied
+    - 풀 바디
+  body_level: 3
+  score: 88
+  premium: true
+  description: Full-bodied wine

@@ -13,6 +13,9 @@ from app.services.food.knowledge.cheese.provider import (
 from app.services.food.knowledge.coffee.provider import (
     CoffeeKnowledgeProvider,
 )
+from app.services.food.knowledge.wine.provider import (
+    WineKnowledgeProvider,
+)
 from app.services.food.knowledge.meat.beef.provider import (
     BeefKnowledgeProvider,
 )
@@ -165,6 +168,9 @@ FOOD_KNOWLEDGE_REGISTRY.register(
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     CoffeeKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    WineKnowledgeProvider()
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     VenisonKnowledgeProvider()

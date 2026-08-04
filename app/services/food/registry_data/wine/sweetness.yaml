@@ -1,0 +1,38 @@
+dry:
+  canonical_name: dry
+  aliases:
+    - dry
+    - 드라이
+    - 무감미
+  sweetness_level: 1
+  residual_sugar_min: 0
+  residual_sugar_max: 4
+  score: 85
+  premium: false
+  description: Dry wine
+
+off_dry:
+  canonical_name: off_dry
+  aliases:
+    - off dry
+    - off-dry
+    - 세미 드라이
+  sweetness_level: 2
+  residual_sugar_min: 4
+  residual_sugar_max: 12
+  score: 82
+  premium: false
+  description: Off-dry wine
+
+sweet:
+  canonical_name: sweet
+  aliases:
+    - sweet
+    - 스위트
+    - 달콤한
+  sweetness_level: 4
+  residual_sugar_min: 45
+  residual_sugar_max: null
+  score: 84
+  premium: false
+  description: Sweet wine

@@ -50,6 +50,7 @@ def test_cheese_provider_registration_order() -> None:
         "fruit",
         "cheese",
         "coffee",
+        "wine",
         "venison",
         "goat",
         "beef",

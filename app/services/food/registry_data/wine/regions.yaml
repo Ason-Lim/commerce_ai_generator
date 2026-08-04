@@ -1,0 +1,37 @@
+bordeaux:
+  canonical_name: bordeaux
+  aliases:
+    - bordeaux
+    - 보르도
+  country_code: FR
+  country_name: France
+  appellation: Bordeaux
+  score: 92
+  premium: true
+  description: Bordeaux wine region
+
+burgundy:
+  canonical_name: burgundy
+  aliases:
+    - burgundy
+    - bourgogne
+    - 부르고뉴
+  country_code: FR
+  country_name: France
+  appellation: Bourgogne
+  score: 94
+  premium: true
+  description: Burgundy wine region
+
+napa_valley:
+  canonical_name: napa_valley
+  aliases:
+    - napa valley
+    - 나파 밸리
+    - 나파밸리
+  country_code: US
+  country_name: United States
+  appellation: Napa Valley AVA
+  score: 91
+  premium: true
+  description: Napa Valley wine region

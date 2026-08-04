@@ -1,0 +1,36 @@
+cabernet_sauvignon:
+  canonical_name: cabernet_sauvignon
+  aliases:
+    - cabernet sauvignon
+    - 카베르네 소비뇽
+    - 까베르네 소비뇽
+  color: red
+  species: vitis_vinifera
+  aromatic: false
+  score: 90
+  premium: true
+  description: Cabernet Sauvignon grape
+
+chardonnay:
+  canonical_name: chardonnay
+  aliases:
+    - chardonnay
+    - 샤르도네
+  color: white
+  species: vitis_vinifera
+  aromatic: false
+  score: 89
+  premium: true
+  description: Chardonnay grape
+
+riesling:
+  canonical_name: riesling
+  aliases:
+    - riesling
+    - 리슬링
+  color: white
+  species: vitis_vinifera
+  aromatic: true
+  score: 88
+  premium: true
+  description: Riesling grape

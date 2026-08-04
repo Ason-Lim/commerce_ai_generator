@@ -1,0 +1,31 @@
+low:
+  canonical_name: low
+  aliases:
+    - low acidity
+    - 낮은 산도
+    - 저산도
+  acidity_level: 1
+  score: 78
+  premium: false
+  description: Low-acidity wine
+
+medium:
+  canonical_name: medium
+  aliases:
+    - medium acidity
+    - 중간 산도
+  acidity_level: 2
+  score: 83
+  premium: false
+  description: Medium-acidity wine
+
+high:
+  canonical_name: high
+  aliases:
+    - high acidity
+    - 높은 산도
+    - 고산도
+  acidity_level: 3
+  score: 87
+  premium: true
+  description: High-acidity wine
