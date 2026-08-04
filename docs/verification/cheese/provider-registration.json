@@ -1,0 +1,50 @@
+{
+  "report_id": "IPR-CHEESE-2026-001",
+  "project": "Commerce AI Generator",
+  "domain": "10_Cheese",
+  "verification_type": "Provider Registration Verification",
+  "status": "FAIL",
+  "provider": {
+    "class": "CheeseKnowledgeProvider",
+    "category_id": "cheese",
+    "category_name": "치즈"
+  },
+  "expected_registry_order": [
+    "fruit",
+    "cheese",
+    "venison",
+    "goat",
+    "beef",
+    "lamb",
+    "chicken",
+    "duck"
+  ],
+  "actual_registry_order": [
+    "fruit",
+    "cheese",
+    "coffee",
+    "wine",
+    "venison",
+    "goat",
+    "beef",
+    "lamb",
+    "chicken",
+    "duck"
+  ],
+  "provider_count": 1,
+  "checks": {
+    "registry_contains_cheese": true,
+    "provider_retrieval": true,
+    "required_provider_retrieval": true,
+    "provider_contract": true,
+    "category_id": true,
+    "category_name": true,
+    "provider_class": true,
+    "registered_exactly_once": true,
+    "registry_order": false,
+    "category_ids_unique": true
+  },
+  "failed_checks": [
+    "registry_order"
+  ]
+}

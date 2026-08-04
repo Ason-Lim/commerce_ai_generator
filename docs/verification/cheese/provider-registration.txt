@@ -1,0 +1,32 @@
+PROVIDER REGISTRATION VERIFICATION
+
+Provider Class: CheeseKnowledgeProvider
+Category ID: cheese
+Category Name: 치즈
+Provider Count: 1
+
+Registry Order:
+1. fruit
+2. cheese
+3. coffee
+4. wine
+5. venison
+6. goat
+7. beef
+8. lamb
+9. chicken
+10. duck
+
+Checks:
+- registry_contains_cheese: PASS
+- provider_retrieval: PASS
+- required_provider_retrieval: PASS
+- provider_contract: PASS
+- category_id: PASS
+- category_name: PASS
+- provider_class: PASS
+- registered_exactly_once: PASS
+- registry_order: FAIL
+- category_ids_unique: PASS
+
+Final Status: FAIL
