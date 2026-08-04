@@ -34,3 +34,28 @@ riesling:
   score: 88
   premium: true
   description: Riesling grape
+
+merlot:
+  canonical_name: merlot
+  aliases:
+    - merlot
+    - 메를로
+  color: red
+  species: vitis_vinifera
+  aromatic: false
+  score: 88
+  premium: true
+  description: Merlot grape
+
+pinot_noir:
+  canonical_name: pinot_noir
+  aliases:
+    - pinot noir
+    - 피노 누아
+    - 피노누아
+  color: red
+  species: vitis_vinifera
+  aromatic: false
+  score: 91
+  premium: true
+  description: Pinot Noir grape

@@ -78,6 +78,13 @@ class WineKnowledgeProvider(
         "chardonnay",
         "리슬링",
         "riesling",
+        "메를로",
+        "merlot",
+        "피노 누아",
+        "피노누아",
+        "pinot noir",
+        "샴페인",
+        "champagne",
     )
 
     def __init__(

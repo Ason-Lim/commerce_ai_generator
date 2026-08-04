@@ -84,6 +84,9 @@ def test_resolve_wine_provider_by_category(
         "부르고뉴 샤르도네 화이트와인",
         "Napa Valley Cabernet Sauvignon Wine",
         "리슬링 스파클링 와인",
+        "Merlot",
+        "Pinot Noir",
+        "Champagne Brut",
     ],
 )
 def test_resolve_wine_provider_by_product_name(

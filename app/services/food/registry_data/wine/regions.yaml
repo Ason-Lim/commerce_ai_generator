@@ -35,3 +35,15 @@ napa_valley:
   score: 91
   premium: true
   description: Napa Valley wine region
+
+champagne:
+  canonical_name: champagne
+  aliases:
+    - champagne
+    - 샴페인
+  country_code: FR
+  country_name: France
+  appellation: Champagne
+  score: 95
+  premium: true
+  description: Champagne wine region
