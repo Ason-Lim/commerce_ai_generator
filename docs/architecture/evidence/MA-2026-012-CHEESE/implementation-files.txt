@@ -1,0 +1,12 @@
+app/services/food/knowledge/cheese/__init__.py
+app/services/food/knowledge/cheese/aging_registry.py
+app/services/food/knowledge/cheese/attributes.py
+app/services/food/knowledge/cheese/milk_source_registry.py
+app/services/food/knowledge/cheese/origin_registry.py
+app/services/food/knowledge/cheese/parser_models.py
+app/services/food/knowledge/cheese/parser.py
+app/services/food/knowledge/cheese/provider.py
+app/services/food/knowledge/cheese/rules.py
+app/services/food/knowledge/cheese/scoring.py
+app/services/food/knowledge/cheese/texture_registry.py
+app/services/food/knowledge/cheese/type_registry.py

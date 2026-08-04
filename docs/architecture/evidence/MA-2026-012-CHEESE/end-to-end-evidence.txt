@@ -1,0 +1,104 @@
+CATEGORY: cheese
+CATEGORY NAME: 치즈
+PROVIDER: CheeseKnowledgeProvider
+PRODUCT: 프랑스 산양유 브리 소프트 치즈 12개월 숙성
+KNOWLEDGE SCORE: 92.6
+FINAL SCORE: 86.3
+CONFIDENCE: 0.784
+
+ATTRIBUTES:
+{'aging': '장기숙성',
+ 'aging_category': 'long_aged',
+ 'aging_confidence': 0.8,
+ 'aging_description': '12개월 이상 숙성하여 풍미가 깊고 조직이 단단해지는 유형입니다.',
+ 'aging_flavor_intensity': 'strong',
+ 'aging_maximum_months': 23,
+ 'aging_minimum_months': 12,
+ 'aging_premium': True,
+ 'aging_registry_key': 'long_aged',
+ 'aging_score': 94.0,
+ 'certifications': [],
+ 'cheese_type': '브리',
+ 'cheese_type_category': 'soft_ripened',
+ 'cheese_type_confidence': 0.77,
+ 'cheese_type_description': '흰 곰팡이 외피와 부드러운 내부 조직을 가진 연성 숙성 치즈입니다.',
+ 'cheese_type_flavor_score': 88.0,
+ 'cheese_type_premium': True,
+ 'cheese_type_registry_key': 'brie',
+ 'cheese_type_score': 92.0,
+ 'cheese_type_typical_uses': ['치즈 플래터', '와인 페어링', '베이킹'],
+ 'cheese_type_versatility_score': 82.0,
+ 'confidence': 0.784,
+ 'country': '프랑스',
+ 'country_code': 'FR',
+ 'detected_keywords': ['브리', '산양유', '프랑스산', '소프트', '12개월 숙성'],
+ 'fat_content': None,
+ 'is_complete': True,
+ 'is_usable': True,
+ 'matched_field_count': 5,
+ 'milk_source': '산양유',
+ 'milk_source_availability_score': 68.0,
+ 'milk_source_category': 'goat',
+ 'milk_source_confidence': 0.78,
+ 'milk_source_description': '산뜻한 산미와 고유한 향을 나타낼 수 있는 염소 원유입니다.',
+ 'milk_source_premium': True,
+ 'milk_source_registry_key': 'goat',
+ 'milk_source_richness_score': 87.0,
+ 'milk_source_score': 91.0,
+ 'origin': '프랑스',
+ 'origin_confidence': 0.79,
+ 'origin_country_code': 'FR',
+ 'origin_description': '연성 숙성 치즈와 블루치즈를 포함한 다양한 전통 치즈 생산국입니다.',
+ 'origin_premium': True,
+ 'origin_registry_key': 'france',
+ 'origin_score': 96.0,
+ 'origin_tradition_score': 99.0,
+ 'packaging_type': None,
+ 'parser_warnings': [],
+ 'pasteurization': None,
+ 'product_name': '프랑스 산양유 브리 소프트 치즈 12개월 숙성',
+ 'rind_type': None,
+ 'storage_type': None,
+ 'texture': '연성',
+ 'texture_category': 'soft',
+ 'texture_confidence': 0.78,
+ 'texture_description': '눌렀을 때 쉽게 변형되고 크리미한 특성을 보이는 질감입니다.',
+ 'texture_firmness_score': 30.0,
+ 'texture_moisture_score': 82.0,
+ 'texture_premium': True,
+ 'texture_registry_key': 'soft',
+ 'texture_score': 89.0,
+ 'weight': None}
+
+SCORES:
+{'aging': 94.0,
+ 'availability': 68.0,
+ 'cheese_type': 92.0,
+ 'firmness': 30.0,
+ 'flavor': 88.0,
+ 'knowledge': 92.6,
+ 'milk_source': 91.0,
+ 'moisture': 82.0,
+ 'origin': 96.0,
+ 'price': 70.0,
+ 'quality': 80.0,
+ 'richness': 87.0,
+ 'texture': 89.0,
+ 'tradition': 99.0,
+ 'trust': 90.0,
+ 'versatility': 82.0}
+
+REASONS:
+['치즈 종류는 브리입니다.',
+ '사용 원유는 산양유입니다.',
+ '원산지는 프랑스입니다.',
+ '치즈 질감은 연성입니다.',
+ '숙성 유형은 장기숙성입니다.',
+ 'Registry 기준 대표 활용 방식은 치즈 플래터, 와인 페어링, 베이킹입니다.',
+ 'Registry에서 프리미엄 속성이 확인되었습니다.',
+ 'Cheese Knowledge 평가가 매우 높은 수준입니다.']
+
+WARNINGS:
+[]
+
+END-TO-END VERIFICATION: PASS

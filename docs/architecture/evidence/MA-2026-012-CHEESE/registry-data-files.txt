@@ -1,0 +1,5 @@
+app/services/food/registry_data/cheese/aging.yaml
+app/services/food/registry_data/cheese/milk_sources.yaml
+app/services/food/registry_data/cheese/origins.yaml
+app/services/food/registry_data/cheese/textures.yaml
+app/services/food/registry_data/cheese/types.yaml
