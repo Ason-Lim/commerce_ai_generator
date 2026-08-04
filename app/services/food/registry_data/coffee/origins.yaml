@@ -1,0 +1,114 @@
+registry_id: coffee.origins
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee origin registry
+  language: ko
+  status: active
+data:
+  ethiopia:
+    canonical_name: 에티오피아
+    aliases:
+      - 에티오피아산
+      - ethiopia
+      - ethiopian
+      - 에티오피아 원두
+    country_code: ET
+    score: 96
+    premium: true
+    acidity_score: 94
+    body_score: 72
+    aroma_score: 98
+    description: 꽃과 과일 계열의 복합적인 향미로 잘 알려진 대표적인 커피 생산국입니다.
+
+  colombia:
+    canonical_name: 콜롬비아
+    aliases:
+      - 콜롬비아산
+      - colombia
+      - colombian
+      - 콜롬비아 원두
+    country_code: CO
+    score: 91
+    premium: true
+    acidity_score: 84
+    body_score: 84
+    aroma_score: 88
+    description: 균형 잡힌 산미와 단맛, 바디를 나타내는 커피로 잘 알려진 생산국입니다.
+
+  brazil:
+    canonical_name: 브라질
+    aliases:
+      - 브라질산
+      - brazil
+      - brazilian
+      - 브라질 원두
+    country_code: BR
+    score: 87
+    premium: false
+    acidity_score: 65
+    body_score: 90
+    aroma_score: 82
+    description: 견과류와 초콜릿 계열 풍미 및 안정적인 바디로 잘 알려진 생산국입니다.
+
+  kenya:
+    canonical_name: 케냐
+    aliases:
+      - 케냐산
+      - kenya
+      - kenyan
+      - 케냐 원두
+    country_code: KE
+    score: 95
+    premium: true
+    acidity_score: 98
+    body_score: 82
+    aroma_score: 95
+    description: 선명한 산미와 과일 계열 풍미로 잘 알려진 대표적인 고품질 생산국입니다.
+
+  guatemala:
+    canonical_name: 과테말라
+    aliases:
+      - 과테말라산
+      - guatemala
+      - guatemalan
+      - 과테말라 원두
+    country_code: GT
+    score: 92
+    premium: true
+    acidity_score: 86
+    body_score: 88
+    aroma_score: 90
+    description: 균형 있는 산미와 풍부한 바디, 향신료 및 초콜릿 계열 풍미로 알려져 있습니다.
+
+  costa_rica:
+    canonical_name: 코스타리카
+    aliases:
+      - 코스타리카산
+      - costa rica
+      - costa rican
+      - 코스타리카 원두
+    country_code: CR
+    score: 93
+    premium: true
+    acidity_score: 91
+    body_score: 80
+    aroma_score: 92
+    description: 깨끗한 향미와 밝은 산미가 나타나는 커피 생산지로 잘 알려져 있습니다.
+
+  indonesia:
+    canonical_name: 인도네시아
+    aliases:
+      - 인도네시아산
+      - indonesia
+      - indonesian
+      - 인도네시아 원두
+      - 수마트라
+      - sumatra
+    country_code: ID
+    score: 89
+    premium: true
+    acidity_score: 58
+    body_score: 96
+    aroma_score: 87
+    description: 묵직한 바디와 허브, 향신료 및 흙내음 계열 특성이 나타날 수 있는 생산국입니다.

@@ -49,6 +49,7 @@ def test_cheese_provider_registration_order() -> None:
     assert category_ids == [
         "fruit",
         "cheese",
+        "coffee",
         "venison",
         "goat",
         "beef",

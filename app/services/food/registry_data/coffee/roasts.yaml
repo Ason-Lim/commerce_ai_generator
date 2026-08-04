@@ -1,0 +1,93 @@
+registry_id: coffee.roasts
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee roast level registry
+  language: ko
+  status: active
+data:
+  light:
+    canonical_name: 라이트 로스트
+    aliases:
+      - 라이트 로스팅
+      - 약배전
+      - 약하게 볶은
+      - light roast
+      - light roasted
+      - blonde roast
+    roast_level: light
+    score: 91
+    premium: true
+    acidity_score: 96
+    body_score: 65
+    aroma_score: 94
+    description: 원두 고유의 산미와 향을 비교적 선명하게 유지하는 약한 배전 단계입니다.
+
+  medium_light:
+    canonical_name: 미디엄 라이트 로스트
+    aliases:
+      - 미디엄 라이트
+      - 중약배전
+      - medium light roast
+      - medium-light roast
+    roast_level: medium_light
+    score: 93
+    premium: true
+    acidity_score: 90
+    body_score: 76
+    aroma_score: 95
+    description: 밝은 산미와 단맛, 바디의 균형을 추구하는 중약배전 단계입니다.
+
+  medium:
+    canonical_name: 미디엄 로스트
+    aliases:
+      - 미디엄 로스팅
+      - 중배전
+      - medium roast
+      - medium roasted
+      - 시티 로스트
+      - city roast
+    roast_level: medium
+    score: 92
+    premium: true
+    acidity_score: 82
+    body_score: 84
+    aroma_score: 92
+    description: 산미와 단맛, 바디의 균형이 비교적 잘 나타나는 중간 배전 단계입니다.
+
+  medium_dark:
+    canonical_name: 미디엄 다크 로스트
+    aliases:
+      - 미디엄 다크
+      - 중강배전
+      - medium dark roast
+      - medium-dark roast
+      - 풀 시티 로스트
+      - full city roast
+    roast_level: medium_dark
+    score: 88
+    premium: false
+    acidity_score: 68
+    body_score: 92
+    aroma_score: 86
+    description: 산미를 낮추고 단맛과 바디, 로스팅 향을 강화한 중강배전 단계입니다.
+
+  dark:
+    canonical_name: 다크 로스트
+    aliases:
+      - 다크 로스팅
+      - 강배전
+      - 강하게 볶은
+      - dark roast
+      - dark roasted
+      - 프렌치 로스트
+      - french roast
+      - 이탈리안 로스트
+      - italian roast
+    roast_level: dark
+    score: 82
+    premium: false
+    acidity_score: 45
+    body_score: 96
+    aroma_score: 78
+    description: 강한 로스팅 향과 쓴맛, 묵직한 바디가 나타나는 강배전 단계입니다.

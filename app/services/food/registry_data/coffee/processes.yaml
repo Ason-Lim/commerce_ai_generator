@@ -1,0 +1,110 @@
+registry_id: coffee.processes
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee processing method registry
+  language: ko
+  status: active
+data:
+  washed:
+    canonical_name: 워시드
+    aliases:
+      - 수세식
+      - 수세 가공
+      - 워시드 프로세스
+      - washed
+      - washed process
+      - fully washed
+    process_category: washed
+    score: 91
+    premium: true
+    clarity_score: 96
+    sweetness_score: 82
+    body_score: 76
+    description: 과육을 제거하고 물을 이용해 처리하여 깨끗하고 선명한 향미가 나타날 수 있는 방식입니다.
+
+  natural:
+    canonical_name: 내추럴
+    aliases:
+      - 건식
+      - 건식 가공
+      - 내추럴 프로세스
+      - natural
+      - natural process
+      - dry process
+      - dry processed
+    process_category: natural
+    score: 92
+    premium: true
+    clarity_score: 78
+    sweetness_score: 96
+    body_score: 90
+    description: 커피 체리를 건조한 뒤 과육을 제거하여 과일 향과 단맛, 바디가 강조될 수 있는 방식입니다.
+
+  honey:
+    canonical_name: 허니
+    aliases:
+      - 허니 프로세스
+      - 펄프드 내추럴
+      - honey
+      - honey process
+      - pulped natural
+      - semi washed
+      - semi-washed
+    process_category: honey
+    score: 94
+    premium: true
+    clarity_score: 88
+    sweetness_score: 95
+    body_score: 86
+    description: 일부 점액질을 남긴 상태로 건조하여 단맛과 깨끗한 향미의 균형을 추구하는 방식입니다.
+
+  anaerobic:
+    canonical_name: 무산소 발효
+    aliases:
+      - 무산소
+      - 무산소 프로세스
+      - 혐기성 발효
+      - anaerobic
+      - anaerobic process
+      - anaerobic fermentation
+    process_category: anaerobic
+    score: 96
+    premium: true
+    clarity_score: 84
+    sweetness_score: 97
+    body_score: 88
+    description: 산소가 제한된 환경에서 발효하여 강한 향과 독특한 풍미를 형성할 수 있는 방식입니다.
+
+  carbonic_maceration:
+    canonical_name: 탄산 침용
+    aliases:
+      - 탄산침용
+      - 카보닉 마세레이션
+      - carbonic maceration
+      - carbonic process
+      - cm process
+    process_category: carbonic_maceration
+    score: 97
+    premium: true
+    clarity_score: 86
+    sweetness_score: 98
+    body_score: 87
+    description: 이산화탄소 환경에서 발효하여 독특하고 강한 과일 향을 형성할 수 있는 가공 방식입니다.
+
+  wet_hulled:
+    canonical_name: 웻 헐드
+    aliases:
+      - 웻헐드
+      - 습식 탈곡
+      - 길링 바사
+      - giling basah
+      - wet hulled
+      - wet-hulled
+    process_category: wet_hulled
+    score: 87
+    premium: true
+    clarity_score: 68
+    sweetness_score: 78
+    body_score: 96
+    description: 수분이 남은 상태에서 탈곡하여 묵직한 바디와 독특한 향미가 나타날 수 있는 방식입니다.

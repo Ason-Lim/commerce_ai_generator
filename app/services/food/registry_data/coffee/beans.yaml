@@ -1,0 +1,87 @@
+registry_id: coffee.beans
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee bean species and composition registry
+  language: ko
+  status: active
+data:
+  arabica:
+    canonical_name: 아라비카
+    aliases:
+      - 아라비카 원두
+      - arabica
+      - coffea arabica
+      - 100% arabica
+      - 100% 아라비카
+    species: coffea_arabica
+    composition_type: single_species
+    score: 92
+    premium: true
+    acidity_score: 88
+    body_score: 76
+    aroma_score: 92
+    description: 향미의 복합성과 산미가 잘 나타나는 대표적인 커피 종입니다.
+
+  robusta:
+    canonical_name: 로부스타
+    aliases:
+      - 로부스타 원두
+      - robusta
+      - coffea canephora
+      - canephora
+    species: coffea_canephora
+    composition_type: single_species
+    score: 76
+    premium: false
+    acidity_score: 45
+    body_score: 92
+    aroma_score: 68
+    description: 묵직한 바디와 강한 쓴맛이 나타날 수 있는 커피 종입니다.
+
+  liberica:
+    canonical_name: 리베리카
+    aliases:
+      - 리베리카 원두
+      - liberica
+      - coffea liberica
+    species: coffea_liberica
+    composition_type: single_species
+    score: 86
+    premium: true
+    acidity_score: 70
+    body_score: 88
+    aroma_score: 90
+    description: 독특한 향과 묵직한 질감을 가질 수 있는 희소성이 높은 커피 종입니다.
+
+  excelsa:
+    canonical_name: 엑셀사
+    aliases:
+      - 엑셀사 원두
+      - excelsa
+      - coffea excelsa
+    species: coffea_excelsa
+    composition_type: single_species
+    score: 87
+    premium: true
+    acidity_score: 84
+    body_score: 74
+    aroma_score: 89
+    description: 과일 향과 산뜻한 산미가 나타날 수 있는 희소 커피 유형입니다.
+
+  arabica_robusta_blend:
+    canonical_name: 아라비카 로부스타 블렌드
+    aliases:
+      - 아라비카 로부스타 혼합
+      - 아라비카 로부스타 블렌드
+      - arabica robusta blend
+      - arabica and robusta
+      - 아라비카+로부스타
+    species: mixed
+    composition_type: blend
+    score: 82
+    premium: false
+    acidity_score: 68
+    body_score: 88
+    aroma_score: 78
+    description: 아라비카의 향미와 로부스타의 바디를 조합한 블렌드 유형입니다.
