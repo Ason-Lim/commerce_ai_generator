@@ -1,0 +1,2384 @@
+# Tea Parser Contract Evidence
+
+generated_at=2026-08-04T14:08:12Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+============================================================
+FILE: app/services/food/knowledge/coffee/parser.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, Sequence
+
+from app.services.food.knowledge.coffee.bean_registry import (
+    CoffeeBeanMatch,
+    CoffeeBeanRegistry,
+)
+from app.services.food.knowledge.coffee.origin_registry import (
+    CoffeeOriginMatch,
+    CoffeeOriginRegistry,
+)
+from app.services.food.knowledge.coffee.parser_models import (
+    CoffeeParseResult,
+)
+from app.services.food.knowledge.coffee.process_registry import (
+    CoffeeProcessMatch,
+    CoffeeProcessRegistry,
+)
+from app.services.food.knowledge.coffee.roast_registry import (
+    CoffeeRoastMatch,
+    CoffeeRoastRegistry,
+)
+from app.services.food.knowledge.common.parser_base import (
+    BaseKnowledgeParser,
+)
+
+
+class CoffeeParser(
+    BaseKnowledgeParser[CoffeeParseResult]
+):
+    """
+    Coffee 상품 Parser.
+
+    책임:
+    - 상품 텍스트 구성 및 정규화
+    - Coffee Registry 검색
+    - 구조화 필드 우선 적용
+    - confidence와 warning 계산
+    - CoffeeParseResult 생성
+
+    담당하지 않는 책임:
+    - Attribute 구성
+    - 점수 계산
+    - 추천 이유 생성
+    - Provider orchestration
+    """
+
+    _NAME_FIELDS: tuple[str, ...] = (
+        "product_name",
+        "title",
+        "name",
+        "raw_name",
+        "display_name",
+    )
+
+    _BEAN_FIELDS: tuple[str, ...] = (
+        "bean",
+        "bean_type",
+        "coffee_bean",
+        "species",
+        "coffee_species",
+        "composition",
+    )
+
+    _ORIGIN_FIELDS: tuple[str, ...] = (
+        "origin",
+        "country",
+        "origin_country",
+        "country_of_origin",
+        "coffee_origin",
+        "region",
+    )
+
+    _ROAST_FIELDS: tuple[str, ...] = (
+        "roast",
+        "roast_level",
+        "roasting",
+        "roasting_level",
+        "roast_type",
+    )
+
+    _PROCESS_FIELDS: tuple[str, ...] = (
+        "process",
+        "processing",
+        "process_method",
+        "processing_method",
+        "coffee_process",
+    )
+
+    _OPTION_FIELDS: tuple[str, ...] = (
+        "option",
+        "option_name",
+        "variant",
+        "description",
+        "summary",
+        "flavor_notes",
+        "tasting_notes",
+    )
+
+    def __init__(
+        self,
+        *,
+        bean_registry: CoffeeBeanRegistry | None = None,
+        origin_registry: CoffeeOriginRegistry | None = None,
+        roast_registry: CoffeeRoastRegistry | None = None,
+        process_registry: CoffeeProcessRegistry | None = None,
+    ) -> None:
+        self.bean_registry = (
+            bean_registry
+            if bean_registry is not None
+            else CoffeeBeanRegistry()
+        )
+
+        self.origin_registry = (
+            origin_registry
+            if origin_registry is not None
+            else CoffeeOriginRegistry()
+        )
+
+        self.roast_registry = (
+            roast_registry
+            if roast_registry is not None
+            else CoffeeRoastRegistry()
+        )
+
+        self.process_registry = (
+            process_registry
+            if process_registry is not None
+            else CoffeeProcessRegistry()
+        )
+
+    def parse(
+        self,
+        text: str,
+    ) -> CoffeeParseResult:
+        original_text = str(text or "").strip()
+
+        normalized_text = self.validate_text(
+            original_text
+        )
+
+        return self._parse_text(
+            original_text=original_text,
+            normalized_text=normalized_text,
+        )
+
+    def parse_product(
+        self,
+        product: Mapping[str, Any],
+    ) -> CoffeeParseResult:
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        if not product:
+            raise ValueError(
+                "product must not be empty"
+            )
+
+        original_text = self._build_product_text(
+            product
+        )
+
+        normalized_text = self.validate_text(
+            original_text
+        )
+
+        bean_match = self._match_structured_first(
+            product=product,
+            field_names=self._BEAN_FIELDS,
+            registry=self.bean_registry,
+            fallback_text=normalized_text,
+        )
+
+        origin_match = self._match_structured_first(
+            product=product,
+            field_names=self._ORIGIN_FIELDS,
+            registry=self.origin_registry,
+            fallback_text=normalized_text,
+        )
+
+        roast_match = self._match_structured_first(
+            product=product,
+            field_names=self._ROAST_FIELDS,
+            registry=self.roast_registry,
+            fallback_text=normalized_text,
+        )
+
+        process_match = (
+            self._match_structured_first(
+                product=product,
+                field_names=self._PROCESS_FIELDS,
+                registry=self.process_registry,
+                fallback_text=normalized_text,
+            )
+        )
+
+        return self._build_result(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            bean_match=bean_match,
+            origin_match=origin_match,
+            roast_match=roast_match,
+            process_match=process_match,
+            metadata={
+                "source_type": "mapping",
+                "source_fields": (
+                    self._matched_source_fields(
+                        product
+                    )
+                ),
+                "structured_field_priority": True,
+            },
+        )
+
+    def _parse_text(
+        self,
+        *,
+        original_text: str,
+        normalized_text: str,
+    ) -> CoffeeParseResult:
+        return self._build_result(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            bean_match=self.bean_registry.match(
+                normalized_text
+            ),
+            origin_match=self.origin_registry.match(
+                normalized_text
+            ),
+            roast_match=self.roast_registry.match(
+                normalized_text
+            ),
+            process_match=self.process_registry.match(
+                normalized_text
+            ),
+            metadata={
+                "source_type": "text",
+                "source_fields": [],
+                "structured_field_priority": False,
+            },
+        )
+
+    def _build_result(
+        self,
+        *,
+        original_text: str,
+        normalized_text: str,
+        bean_match: CoffeeBeanMatch | None,
+        origin_match: CoffeeOriginMatch | None,
+        roast_match: CoffeeRoastMatch | None,
+        process_match: CoffeeProcessMatch | None,
+        metadata: Mapping[str, Any],
+    ) -> CoffeeParseResult:
+        matches = (
+            bean_match,
+            origin_match,
+            roast_match,
+            process_match,
+        )
+
+        matched_field_count = sum(
+            match is not None
+            for match in matches
+        )
+
+        confidences = [
+            match.confidence
+            for match in matches
+            if match is not None
+        ]
+
+        confidence = (
+            round(
+                sum(confidences)
+                / len(confidences),
+                4,
+            )
+            if confidences
+            else 0.0
+        )
+
+        result_metadata = dict(metadata)
+        result_metadata.update(
+            {
+                "category_id": "coffee",
+                "matched_field_count": (
+                    matched_field_count
+                ),
+                "expected_field_count": 4,
+                "is_complete": (
+                    matched_field_count == 4
+                ),
+            }
+        )
+
+        return CoffeeParseResult(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            confidence=confidence,
+            metadata=result_metadata,
+            bean=self._canonical_name(
+                bean_match
+            ),
+            origin=self._canonical_name(
+                origin_match
+            ),
+            roast=self._canonical_name(
+                roast_match
+            ),
+            process=self._canonical_name(
+                process_match
+            ),
+            bean_confidence=(
+                self._match_confidence(
+                    bean_match
+                )
+            ),
+            origin_confidence=(
+                self._match_confidence(
+                    origin_match
+                )
+            ),
+            roast_confidence=(
+                self._match_confidence(
+                    roast_match
+                )
+            ),
+            process_confidence=(
+                self._match_confidence(
+                    process_match
+                )
+            ),
+            bean_match=bean_match,
+            origin_match=origin_match,
+            roast_match=roast_match,
+            process_match=process_match,
+            detected_keywords=(
+                self._detected_keywords(
+                    matches
+                )
+            ),
+            warnings=self._build_warnings(
+                bean_match=bean_match,
+                origin_match=origin_match,
+                roast_match=roast_match,
+                process_match=process_match,
+            ),
+        )
+
+    def _build_product_text(
+        self,
+        product: Mapping[str, Any],
+    ) -> str:
+        values: list[str] = []
+
+        for field_name in self._all_text_fields():
+            value = self._stringify_value(
+                product.get(field_name)
+            )
+
+            if value:
+                values.append(value)
+
+        values = self._deduplicate_texts(
+            values
+        )
+
+        if not values:
+            raise ValueError(
+                "product does not contain "
+                "a usable text field"
+            )
+
+        return " ".join(values)
+
+    def _match_structured_first(
+        self,
+        *,
+        product: Mapping[str, Any],
+        field_names: Sequence[str],
+        registry: Any,
+        fallback_text: str,
+    ) -> Any:
+        structured_values = [
+            self._stringify_value(
+                product.get(field_name)
+            )
+            for field_name in field_names
+        ]
+
+        structured_values = [
+            value
+            for value in structured_values
+            if value
+        ]
+
+        if structured_values:
+            structured_text = " ".join(
+                self._deduplicate_texts(
+                    structured_values
+                )
+            )
+
+            match = registry.match(
+                structured_text
+            )
+
+            if match is not None:
+                return match
+
+        return registry.match(
+            fallback_text
+        )
+
+    @staticmethod
+    def _canonical_name(
+        match: Any,
+    ) -> str | None:
+        if match is None:
+            return None
+
+        return match.entry.canonical_name
+
+    @staticmethod
+    def _match_confidence(
+        match: Any,
+    ) -> float:
+        if match is None:
+            return 0.0
+
+        return float(match.confidence)
+
+    @staticmethod
+    def _detected_keywords(
+        matches: Sequence[Any],
+    ) -> list[str]:
+        result: list[str] = []
+        seen: set[str] = set()
+
+        for match in matches:
+            if match is None:
+                continue
+
+            keyword = str(
+                match.matched_alias
+            ).strip()
+
+            key = keyword.casefold()
+
+            if (
+                keyword
+                and key not in seen
+            ):
+
+============================================================
+FILE: app/services/food/knowledge/wine/parser.py
+============================================================
+from __future__ import annotations
+
+import re
+from collections.abc import Mapping, Sequence
+from typing import Any, TypeVar
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.parser_base import (
+    BaseKnowledgeParser,
+)
+from app.services.food.knowledge.wine.acidity_registry import (
+    WineAcidityMatch,
+    WineAcidityRegistry,
+)
+from app.services.food.knowledge.wine.body_registry import (
+    WineBodyMatch,
+    WineBodyRegistry,
+)
+from app.services.food.knowledge.wine.grape_registry import (
+    WineGrapeMatch,
+    WineGrapeRegistry,
+)
+from app.services.food.knowledge.wine.parser_models import (
+    WineParseResult,
+)
+from app.services.food.knowledge.wine.region_registry import (
+    WineRegionMatch,
+    WineRegionRegistry,
+)
+from app.services.food.knowledge.wine.sweetness_registry import (
+    WineSweetnessMatch,
+    WineSweetnessRegistry,
+)
+from app.services.food.knowledge.wine.type_registry import (
+    WineTypeMatch,
+    WineTypeRegistry,
+)
+
+
+MatchT = TypeVar(
+    "MatchT",
+    bound=RegistryMatch[Any],
+)
+
+
+_VINTAGE_PATTERN = re.compile(
+    r"(?<!\d)(18\d{2}|19\d{2}|20\d{2}|2100)(?!\d)"
+)
+
+_ALCOHOL_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"(?<!\d)(\d{1,2}(?:\.\d+)?)\s*(?:%|도)(?!\w)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\babv\s*[:=]?\s*(\d{1,2}(?:\.\d+)?)\s*%?",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?<!\d)(\d{1,2}(?:\.\d+)?)\s*\babv\b",
+        re.IGNORECASE,
+    ),
+)
+
+
+class WineParser(
+    BaseKnowledgeParser[WineParseResult]
+):
+    """
+    Wine 상품 Parser.
+
+    책임:
+    - 상품 텍스트 구성 및 정규화
+    - Wine Registry 검색
+    - 구조화 필드 우선 적용
+    - 빈티지 및 알코올 도수 추출
+    - confidence와 warning 계산
+    - WineParseResult 생성
+
+    담당하지 않는 책임:
+    - Attribute 구성
+    - 점수 계산
+    - 추천 이유 생성
+    - Provider orchestration
+    """
+
+    _NAME_FIELDS: tuple[str, ...] = (
+        "product_name",
+        "title",
+        "name",
+        "raw_name",
+        "display_name",
+    )
+
+    _TYPE_FIELDS: tuple[str, ...] = (
+        "wine_type",
+        "type",
+        "style",
+        "wine_style",
+        "color",
+    )
+
+    _GRAPE_FIELDS: tuple[str, ...] = (
+        "grape",
+        "grape_variety",
+        "variety",
+        "varietal",
+    )
+
+    _REGION_FIELDS: tuple[str, ...] = (
+        "region",
+        "wine_region",
+        "origin_region",
+        "appellation",
+        "origin",
+        "country",
+    )
+
+    _SWEETNESS_FIELDS: tuple[str, ...] = (
+        "sweetness",
+        "sweetness_type",
+        "sugar_level",
+    )
+
+    _BODY_FIELDS: tuple[str, ...] = (
+        "body",
+        "body_type",
+        "body_level",
+    )
+
+    _ACIDITY_FIELDS: tuple[str, ...] = (
+        "acidity",
+        "acidity_type",
+        "acidity_level",
+    )
+
+    _VINTAGE_FIELDS: tuple[str, ...] = (
+        "vintage",
+        "vintage_year",
+        "year",
+    )
+
+    _ALCOHOL_FIELDS: tuple[str, ...] = (
+        "alcohol_percent",
+        "alcohol",
+        "abv",
+        "alcohol_content",
+    )
+
+    _OPTION_FIELDS: tuple[str, ...] = (
+        "option",
+        "option_name",
+        "variant",
+        "description",
+        "summary",
+    )
+
+    def __init__(
+        self,
+        *,
+        type_registry: WineTypeRegistry | None = None,
+        grape_registry: WineGrapeRegistry | None = None,
+        region_registry: WineRegionRegistry | None = None,
+        sweetness_registry: WineSweetnessRegistry | None = None,
+        body_registry: WineBodyRegistry | None = None,
+        acidity_registry: WineAcidityRegistry | None = None,
+    ) -> None:
+        self.type_registry = (
+            type_registry
+            if type_registry is not None
+            else WineTypeRegistry()
+        )
+        self.grape_registry = (
+            grape_registry
+            if grape_registry is not None
+            else WineGrapeRegistry()
+        )
+        self.region_registry = (
+            region_registry
+            if region_registry is not None
+            else WineRegionRegistry()
+        )
+        self.sweetness_registry = (
+            sweetness_registry
+            if sweetness_registry is not None
+            else WineSweetnessRegistry()
+        )
+        self.body_registry = (
+            body_registry
+            if body_registry is not None
+            else WineBodyRegistry()
+        )
+        self.acidity_registry = (
+            acidity_registry
+            if acidity_registry is not None
+            else WineAcidityRegistry()
+        )
+
+    def parse(
+        self,
+        text: str,
+    ) -> WineParseResult:
+        original_text = str(text or "").strip()
+        normalized_text = self.validate_text(
+            original_text
+        )
+
+        return self._parse_text(
+            original_text=original_text,
+            normalized_text=normalized_text,
+        )
+
+    def parse_product(
+        self,
+        product: Mapping[str, Any],
+    ) -> WineParseResult:
+        if not isinstance(product, Mapping):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        if not product:
+            raise ValueError(
+                "product must not be empty"
+            )
+
+        original_text = self._build_product_text(
+            product
+        )
+        normalized_text = self.validate_text(
+            original_text
+        )
+
+        type_match = self._match_structured_first(
+            product=product,
+            field_names=self._TYPE_FIELDS,
+            registry=self.type_registry,
+            fallback_text=normalized_text,
+        )
+        grape_match = self._match_structured_first(
+            product=product,
+            field_names=self._GRAPE_FIELDS,
+            registry=self.grape_registry,
+            fallback_text=normalized_text,
+        )
+        region_match = self._match_structured_first(
+            product=product,
+            field_names=self._REGION_FIELDS,
+            registry=self.region_registry,
+            fallback_text=normalized_text,
+        )
+        sweetness_match = self._match_structured_first(
+            product=product,
+            field_names=self._SWEETNESS_FIELDS,
+            registry=self.sweetness_registry,
+            fallback_text=normalized_text,
+        )
+        body_match = self._match_structured_first(
+            product=product,
+            field_names=self._BODY_FIELDS,
+            registry=self.body_registry,
+            fallback_text=normalized_text,
+        )
+        acidity_match = self._match_structured_first(
+            product=product,
+            field_names=self._ACIDITY_FIELDS,
+            registry=self.acidity_registry,
+            fallback_text=normalized_text,
+        )
+
+        vintage = self._extract_structured_int(
+            product,
+            self._VINTAGE_FIELDS,
+        )
+        if vintage is None:
+            vintage = self._extract_vintage(
+                normalized_text
+            )
+
+        alcohol_percent = self._extract_structured_float(
+            product,
+            self._ALCOHOL_FIELDS,
+        )
+        if alcohol_percent is None:
+            alcohol_percent = self._extract_alcohol_percent(
+                normalized_text
+            )
+
+        return self._build_result(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            type_match=type_match,
+            grape_match=grape_match,
+            region_match=region_match,
+            sweetness_match=sweetness_match,
+            body_match=body_match,
+            acidity_match=acidity_match,
+            vintage=vintage,
+            alcohol_percent=alcohol_percent,
+            metadata={
+                "source_type": "mapping",
+                "source_fields": (
+                    self._matched_source_fields(
+                        product
+                    )
+                ),
+                "structured_field_priority": True,
+            },
+        )
+
+    def _parse_text(
+        self,
+        *,
+        original_text: str,
+        normalized_text: str,
+    ) -> WineParseResult:
+        return self._build_result(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            type_match=self.type_registry.match(
+                normalized_text
+            ),
+            grape_match=self.grape_registry.match(
+                normalized_text
+            ),
+            region_match=self.region_registry.match(
+                normalized_text
+            ),
+            sweetness_match=(
+                self.sweetness_registry.match(
+                    normalized_text
+                )
+            ),
+            body_match=self.body_registry.match(
+                normalized_text
+            ),
+            acidity_match=self.acidity_registry.match(
+                normalized_text
+            ),
+            vintage=self._extract_vintage(
+                normalized_text
+            ),
+            alcohol_percent=(
+                self._extract_alcohol_percent(
+                    normalized_text
+                )
+            ),
+            metadata={
+                "source_type": "text",
+                "structured_field_priority": False,
+            },
+        )
+
+    def _build_result(
+        self,
+        *,
+        original_text: str,
+        normalized_text: str,
+        type_match: WineTypeMatch | None,
+        grape_match: WineGrapeMatch | None,
+        region_match: WineRegionMatch | None,
+        sweetness_match: WineSweetnessMatch | None,
+        body_match: WineBodyMatch | None,
+        acidity_match: WineAcidityMatch | None,
+        vintage: int | None,
+        alcohol_percent: float | None,
+        metadata: Mapping[str, Any],
+    ) -> WineParseResult:
+        matches: tuple[RegistryMatch[Any] | None, ...] = (
+            type_match,
+            grape_match,
+            region_match,
+            sweetness_match,
+            body_match,
+            acidity_match,
+        )
+
+        detected_keywords = [
+            match.matched_alias
+            for match in matches
+            if match is not None
+        ]
+
+        if vintage is not None:
+            detected_keywords.append(
+                str(vintage)
+            )
+
+        if alcohol_percent is not None:
+            detected_keywords.append(
+                f"{alcohol_percent:g}%"
+            )
+
+        warnings: list[str] = []
+
+        if not any(
+            match is not None
+            for match in matches
+        ):
+            warnings.append(
+                "Wine Registry에서 일치하는 "
+                "속성을 찾지 못했습니다."
+            )
+
+        confidence = self._calculate_confidence(
+            matches
+        )
+
+        return WineParseResult(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            confidence=confidence,
+            metadata=dict(metadata),
+            wine_type=self._registry_key(
+                type_match
+            ),
+            grape=self._registry_key(
+                grape_match
+            ),
+            region=self._registry_key(
+                region_match
+            ),
+            sweetness=self._registry_key(
+                sweetness_match
+            ),
+            body=self._registry_key(
+                body_match
+            ),
+            acidity=self._registry_key(
+                acidity_match
+            ),
+            vintage=vintage,
+            alcohol_percent=alcohol_percent,
+            wine_type_confidence=self._match_confidence(
+                type_match
+            ),
+            grape_confidence=self._match_confidence(
+                grape_match
+            ),
+            region_confidence=self._match_confidence(
+                region_match
+            ),
+            sweetness_confidence=self._match_confidence(
+                sweetness_match
+            ),
+            body_confidence=self._match_confidence(
+                body_match
+            ),
+            acidity_confidence=self._match_confidence(
+                acidity_match
+            ),
+            wine_type_match=type_match,
+            grape_match=grape_match,
+            region_match=region_match,
+            sweetness_match=sweetness_match,
+            body_match=body_match,
+            acidity_match=acidity_match,
+            detected_keywords=detected_keywords,
+
+============================================================
+FILE: app/services/food/knowledge/cheese/parser.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, Sequence
+
+from app.services.food.knowledge.cheese.aging_registry import (
+    CheeseAgingMatch,
+    CheeseAgingRegistry,
+)
+from app.services.food.knowledge.cheese.milk_source_registry import (
+    CheeseMilkSourceMatch,
+    CheeseMilkSourceRegistry,
+)
+from app.services.food.knowledge.cheese.origin_registry import (
+    CheeseOriginMatch,
+    CheeseOriginRegistry,
+)
+from app.services.food.knowledge.cheese.parser_models import (
+    CheeseParseResult,
+)
+from app.services.food.knowledge.cheese.texture_registry import (
+    CheeseTextureMatch,
+    CheeseTextureRegistry,
+)
+from app.services.food.knowledge.cheese.type_registry import (
+    CheeseTypeMatch,
+    CheeseTypeRegistry,
+)
+from app.services.food.knowledge.common.parser_base import (
+    BaseKnowledgeParser,
+)
+
+
+class CheeseParser(
+    BaseKnowledgeParser[CheeseParseResult]
+):
+    """
+    Cheese 상품 Parser.
+
+    책임:
+    - 상품 텍스트 구성 및 정규화
+    - Cheese Registry 검색
+    - 구조화 필드 우선 적용
+    - confidence와 warning 계산
+    - CheeseParseResult 생성
+
+    담당하지 않는 책임:
+    - Attribute 구성
+    - 점수 계산
+    - 추천 이유 생성
+    - Provider orchestration
+    """
+
+    _NAME_FIELDS: tuple[str, ...] = (
+        "product_name",
+        "title",
+        "name",
+        "raw_name",
+        "display_name",
+    )
+
+    _TYPE_FIELDS: tuple[str, ...] = (
+        "cheese_type",
+        "type",
+        "style",
+        "cheese_style",
+        "variety",
+    )
+
+    _MILK_SOURCE_FIELDS: tuple[str, ...] = (
+        "milk_source",
+        "milk_type",
+        "source_milk",
+        "raw_milk",
+    )
+
+    _ORIGIN_FIELDS: tuple[str, ...] = (
+        "origin",
+        "country",
+        "origin_country",
+        "country_of_origin",
+    )
+
+    _TEXTURE_FIELDS: tuple[str, ...] = (
+        "texture",
+        "cheese_texture",
+        "firmness",
+    )
+
+    _AGING_FIELDS: tuple[str, ...] = (
+        "aging",
+        "aging_type",
+        "maturity",
+        "maturation",
+        "aged",
+    )
+
+    _OPTION_FIELDS: tuple[str, ...] = (
+        "option",
+        "option_name",
+        "variant",
+        "description",
+        "summary",
+    )
+
+    def __init__(
+        self,
+        *,
+        type_registry: CheeseTypeRegistry | None = None,
+        milk_source_registry: (
+            CheeseMilkSourceRegistry | None
+        ) = None,
+        origin_registry: (
+            CheeseOriginRegistry | None
+        ) = None,
+        texture_registry: (
+            CheeseTextureRegistry | None
+        ) = None,
+        aging_registry: CheeseAgingRegistry | None = None,
+    ) -> None:
+        self.type_registry = (
+            type_registry
+            if type_registry is not None
+            else CheeseTypeRegistry()
+        )
+
+        self.milk_source_registry = (
+            milk_source_registry
+            if milk_source_registry is not None
+            else CheeseMilkSourceRegistry()
+        )
+
+        self.origin_registry = (
+            origin_registry
+            if origin_registry is not None
+            else CheeseOriginRegistry()
+        )
+
+        self.texture_registry = (
+            texture_registry
+            if texture_registry is not None
+            else CheeseTextureRegistry()
+        )
+
+        self.aging_registry = (
+            aging_registry
+            if aging_registry is not None
+            else CheeseAgingRegistry()
+        )
+
+    def parse(
+        self,
+        text: str,
+    ) -> CheeseParseResult:
+        original_text = str(text or "").strip()
+
+        normalized_text = self.validate_text(
+            original_text
+        )
+
+        return self._parse_text(
+            original_text=original_text,
+            normalized_text=normalized_text,
+        )
+
+    def parse_product(
+        self,
+        product: Mapping[str, Any],
+    ) -> CheeseParseResult:
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        if not product:
+            raise ValueError(
+                "product must not be empty"
+            )
+
+        original_text = self._build_product_text(
+            product
+        )
+
+        normalized_text = self.validate_text(
+            original_text
+        )
+
+        type_match = self._match_structured_first(
+            product=product,
+            field_names=self._TYPE_FIELDS,
+            registry=self.type_registry,
+            fallback_text=normalized_text,
+        )
+
+        milk_source_match = (
+            self._match_structured_first(
+                product=product,
+                field_names=(
+                    self._MILK_SOURCE_FIELDS
+                ),
+                registry=(
+                    self.milk_source_registry
+                ),
+                fallback_text=normalized_text,
+            )
+        )
+
+        origin_match = self._match_structured_first(
+            product=product,
+            field_names=self._ORIGIN_FIELDS,
+            registry=self.origin_registry,
+            fallback_text=normalized_text,
+        )
+
+        texture_match = (
+            self._match_structured_first(
+                product=product,
+                field_names=self._TEXTURE_FIELDS,
+                registry=self.texture_registry,
+                fallback_text=normalized_text,
+            )
+        )
+
+        aging_match = self._match_structured_first(
+            product=product,
+            field_names=self._AGING_FIELDS,
+            registry=self.aging_registry,
+            fallback_text=normalized_text,
+        )
+
+        result = self._build_result(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            type_match=type_match,
+            milk_source_match=milk_source_match,
+            origin_match=origin_match,
+            texture_match=texture_match,
+            aging_match=aging_match,
+            metadata={
+                "source_type": "mapping",
+                "source_fields": (
+                    self._matched_source_fields(
+                        product
+                    )
+                ),
+                "structured_field_priority": True,
+            },
+        )
+
+        return result
+
+    def _parse_text(
+        self,
+        *,
+        original_text: str,
+        normalized_text: str,
+    ) -> CheeseParseResult:
+        return self._build_result(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            type_match=self.type_registry.match(
+                normalized_text
+            ),
+            milk_source_match=(
+                self.milk_source_registry.match(
+                    normalized_text
+                )
+            ),
+            origin_match=self.origin_registry.match(
+                normalized_text
+            ),
+            texture_match=(
+                self.texture_registry.match(
+                    normalized_text
+                )
+            ),
+            aging_match=self.aging_registry.match(
+                normalized_text
+            ),
+            metadata={
+                "source_type": "text",
+                "source_fields": [],
+                "structured_field_priority": False,
+            },
+        )
+
+    def _build_result(
+        self,
+        *,
+        original_text: str,
+        normalized_text: str,
+        type_match: CheeseTypeMatch | None,
+        milk_source_match: (
+            CheeseMilkSourceMatch | None
+        ),
+        origin_match: CheeseOriginMatch | None,
+        texture_match: CheeseTextureMatch | None,
+        aging_match: CheeseAgingMatch | None,
+        metadata: Mapping[str, Any],
+    ) -> CheeseParseResult:
+        matches = (
+            type_match,
+            milk_source_match,
+            origin_match,
+            texture_match,
+            aging_match,
+        )
+
+        matched_field_count = sum(
+            match is not None
+            for match in matches
+        )
+
+        confidences = [
+            match.confidence
+            for match in matches
+            if match is not None
+        ]
+
+        confidence = (
+            round(
+                sum(confidences)
+                / len(confidences),
+                4,
+            )
+            if confidences
+            else 0.0
+        )
+
+        detected_keywords = (
+            self._detected_keywords(
+                matches
+            )
+        )
+
+        warnings = self._build_warnings(
+            type_match=type_match,
+            milk_source_match=(
+                milk_source_match
+            ),
+            origin_match=origin_match,
+            texture_match=texture_match,
+            aging_match=aging_match,
+        )
+
+        result_metadata = dict(metadata)
+        result_metadata.update(
+            {
+                "category_id": "cheese",
+                "matched_field_count": (
+                    matched_field_count
+                ),
+                "expected_field_count": 5,
+                "is_complete": (
+                    matched_field_count == 5
+                ),
+            }
+        )
+
+        return CheeseParseResult(
+            original_text=original_text,
+            normalized_text=normalized_text,
+            confidence=confidence,
+            metadata=result_metadata,
+            cheese_type=(
+                self._canonical_name(
+                    type_match
+                )
+            ),
+            milk_source=(
+                self._canonical_name(
+                    milk_source_match
+                )
+            ),
+            origin=(
+                self._canonical_name(
+                    origin_match
+                )
+            ),
+            texture=(
+                self._canonical_name(
+                    texture_match
+                )
+            ),
+            aging=(
+                self._canonical_name(
+                    aging_match
+                )
+            ),
+            cheese_type_confidence=(
+                self._match_confidence(
+                    type_match
+                )
+            ),
+            milk_source_confidence=(
+                self._match_confidence(
+                    milk_source_match
+                )
+            ),
+            origin_confidence=(
+                self._match_confidence(
+                    origin_match
+                )
+            ),
+            texture_confidence=(
+                self._match_confidence(
+                    texture_match
+                )
+            ),
+            aging_confidence=(
+                self._match_confidence(
+                    aging_match
+                )
+            ),
+            cheese_type_match=type_match,
+            milk_source_match=milk_source_match,
+            origin_match=origin_match,
+            texture_match=texture_match,
+            aging_match=aging_match,
+            detected_keywords=detected_keywords,
+            warnings=warnings,
+        )
+
+    def _build_product_text(
+        self,
+        product: Mapping[str, Any],
+    ) -> str:
+        values: list[str] = []
+
+        for field_name in self._all_text_fields():
+            value = self._stringify_value(
+                product.get(field_name)
+            )
+
+            if value:
+                values.append(value)
+
+        values = self._deduplicate_texts(
+            values
+        )
+
+        if not values:
+            raise ValueError(
+                "product does not contain "
+                "a usable text field"
+            )
+
+        return " ".join(values)
+
+    def _match_structured_first(
+        self,
+        *,
+        product: Mapping[str, Any],
+        field_names: Sequence[str],
+        registry: Any,
+        fallback_text: str,
+    ) -> Any:
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_parser.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.coffee import (
+    CoffeeBeanRegistry,
+    CoffeeOriginRegistry,
+    CoffeeParseResult,
+    CoffeeParser,
+    CoffeeProcessRegistry,
+    CoffeeRoastRegistry,
+)
+
+
+def test_parser_registry_injection() -> None:
+    bean_registry = CoffeeBeanRegistry()
+    origin_registry = CoffeeOriginRegistry()
+    roast_registry = CoffeeRoastRegistry()
+    process_registry = CoffeeProcessRegistry()
+
+    parser = CoffeeParser(
+        bean_registry=bean_registry,
+        origin_registry=origin_registry,
+        roast_registry=roast_registry,
+        process_registry=process_registry,
+    )
+
+    assert parser.bean_registry is bean_registry
+    assert parser.origin_registry is origin_registry
+    assert parser.roast_registry is roast_registry
+    assert parser.process_registry is process_registry
+
+
+def test_parse_complete_coffee_text() -> None:
+    result = CoffeeParser().parse(
+        "에티오피아 100% 아라비카 "
+        "라이트 로스트 워시드 원두"
+    )
+
+    assert isinstance(
+        result,
+        CoffeeParseResult,
+    )
+
+    assert result.bean == "아라비카"
+    assert result.origin == "에티오피아"
+    assert result.roast == "라이트 로스트"
+    assert result.process == "워시드"
+
+    assert result.matched_field_count == 4
+    assert result.is_complete is True
+    assert result.is_usable is True
+    assert result.confidence > 0.0
+    assert result.warnings == []
+
+
+def test_parse_product_uses_structured_fields() -> None:
+    result = CoffeeParser().parse_product(
+        {
+            "product_name": "프리미엄 원두",
+            "bean_type": "100% arabica",
+            "origin_country": "Ethiopia",
+            "roast_level": "medium light roast",
+            "processing_method": "washed process",
+            "option_name": "200g",
+        }
+    )
+
+    assert result.bean == "아라비카"
+    assert result.origin == "에티오피아"
+    assert result.roast == (
+        "미디엄 라이트 로스트"
+    )
+    assert result.process == "워시드"
+
+    assert result.bean_match is not None
+    assert result.bean_match.entry.registry_key == (
+        "arabica"
+    )
+    assert result.origin_match.entry.registry_key == (
+        "ethiopia"
+    )
+    assert result.roast_match.entry.registry_key == (
+        "medium_light"
+    )
+    assert result.process_match.entry.registry_key == (
+        "washed"
+    )
+
+    assert result.metadata["source_type"] == (
+        "mapping"
+    )
+    assert (
+        result.metadata[
+            "structured_field_priority"
+        ]
+        is True
+    )
+
+
+def test_bean_only_is_usable() -> None:
+    result = CoffeeParser().parse(
+        "100% 아라비카 원두"
+    )
+
+    assert result.bean == "아라비카"
+    assert result.is_usable is True
+    assert result.is_complete is False
+    assert result.warnings
+
+
+def test_origin_only_is_not_usable() -> None:
+    result = CoffeeParser().parse(
+        "에티오피아 여행 상품"
+    )
+
+    assert result.origin == "에티오피아"
+    assert result.bean is None
+    assert result.is_usable is False
+
+
+def test_origin_and_process_are_usable() -> None:
+    result = CoffeeParser().parse(
+        "에티오피아 워시드 커피"
+    )
+
+    assert result.origin == "에티오피아"
+    assert result.process == "워시드"
+    assert result.matched_field_count == 2
+    assert result.is_usable is True
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_bean"),
+    [
+        ("100% 아라비카 원두", "아라비카"),
+        ("로부스타 커피", "로부스타"),
+        ("리베리카 원두", "리베리카"),
+        ("엑셀사 커피", "엑셀사"),
+        (
+            "아라비카 로부스타 블렌드",
+            "아라비카 로부스타 블렌드",
+        ),
+    ],
+)
+def test_parser_bean_examples(
+    text: str,
+    expected_bean: str,
+) -> None:
+    result = CoffeeParser().parse(text)
+
+    assert result.bean == expected_bean
+    assert result.bean_match is not None
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_origin"),
+    [
+        ("에티오피아 원두", "에티오피아"),
+        ("콜롬비아산 커피", "콜롬비아"),
+        ("브라질 원두", "브라질"),
+        ("케냐 AA", "케냐"),
+        ("과테말라 커피", "과테말라"),
+        ("코스타리카 원두", "코스타리카"),
+        ("수마트라 만델링", "인도네시아"),
+    ],
+)
+def test_parser_origin_examples(
+    text: str,
+    expected_origin: str,
+) -> None:
+    result = CoffeeParser().parse(text)
+
+    assert result.origin == expected_origin
+    assert result.origin_match is not None
+
+
+def test_parser_preserves_detected_aliases() -> None:
+    result = CoffeeParser().parse(
+        "에티오피아 100% 아라비카 "
+        "라이트 로스트 워시드"
+    )
+
+    assert len(result.detected_keywords) == 4
+
+    assert any(
+        "아라비카" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "에티오피아" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "라이트" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "워시드" in keyword
+        for keyword in result.detected_keywords
+    )
+
+
+def test_roast_alias_boundary() -> None:
+    medium_light = CoffeeParser().parse(
+        "미디엄 라이트 로스트"
+    )
+    medium = CoffeeParser().parse(
+        "미디엄 로스트"
+    )
+    medium_dark = CoffeeParser().parse(
+        "미디엄 다크 로스트"
+    )
+
+    assert medium_light.roast == (
+        "미디엄 라이트 로스트"
+    )
+    assert medium_light.roast_match.entry.registry_key == (
+        "medium_light"
+    )
+
+    assert medium.roast == "미디엄 로스트"
+    assert medium.roast_match.entry.registry_key == (
+        "medium"
+    )
+
+    assert medium_dark.roast == (
+        "미디엄 다크 로스트"
+    )
+    assert medium_dark.roast_match.entry.registry_key == (
+        "medium_dark"
+    )
+
+
+def test_unknown_text_returns_unusable() -> None:
+    result = CoffeeParser().parse(
+        "상품 정보가 없는 일반 문자열"
+    )
+
+    assert result.bean is None
+    assert result.origin is None
+    assert result.roast is None
+    assert result.process is None
+
+    assert result.matched_field_count == 0
+    assert result.confidence == 0.0
+    assert result.is_usable is False
+    assert result.warnings
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "국내산 한우 1++ 등심",
+        "프랑스 브리 치즈",
+        "훈제오리 슬라이스",
+        "토종닭 가슴살",
+        "양고기 프렌치랙",
+    ],
+)
+def test_parser_non_coffee_boundary(
+    text: str,
+) -> None:
+    result = CoffeeParser().parse(text)
+
+    assert result.bean is None
+    assert result.is_usable is False
+
+
+def test_parse_product_deduplicates_text() -> None:
+    result = CoffeeParser().parse_product(
+        {
+            "product_name": "아라비카 원두",
+            "title": "아라비카 원두",
+            "bean_type": "아라비카 원두",
+        }
+    )
+
+    assert result.original_text == (
+        "아라비카 원두"
+    )
+    assert result.bean == "아라비카"
+
+
+def test_parse_product_source_fields() -> None:
+    result = CoffeeParser().parse_product(
+        {
+            "product_name": "프리미엄 원두",
+            "origin": "에티오피아",
+            "roast_level": "라이트 로스트",
+        }
+    )
+
+    assert result.metadata["source_fields"] == [
+        "product_name",
+        "origin",
+        "roast_level",
+    ]
+
+
+def test_confidences_are_bounded() -> None:
+    result = CoffeeParser().parse(
+        "에티오피아 아라비카 원두"
+    )
+
+    for confidence in (
+        result.confidence,
+        result.bean_confidence,
+        result.origin_confidence,
+        result.roast_confidence,
+        result.process_confidence,
+    ):
+        assert 0.0 <= confidence <= 1.0
+
+
+def test_parse_rejects_empty_text() -> None:
+    with pytest.raises(
+        ValueError,
+        match="must not be empty",
+    ):
+        CoffeeParser().parse("")
+
+
+def test_parse_product_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        CoffeeParser().parse_product(
+            "아라비카"  # type: ignore[arg-type]
+        )
+
+
+def test_parse_product_rejects_empty_mapping() -> None:
+    with pytest.raises(
+        ValueError,
+        match="product must not be empty",
+    ):
+        CoffeeParser().parse_product({})
+
+
+def test_parse_product_rejects_no_usable_fields() -> None:
+    with pytest.raises(
+        ValueError,
+        match="usable text field",
+    ):
+        CoffeeParser().parse_product(
+            {
+                "price": 10000,
+                "review_count": 10,
+            }
+        )
+
+
+def test_parsing_is_deterministic() -> None:
+    parser = CoffeeParser()
+    text = (
+        "에티오피아 100% 아라비카 "
+        "라이트 로스트 워시드"
+    )
+
+    first = parser.parse(text)
+    second = parser.parse(text)
+
+    assert first.to_dict() == second.to_dict()
+    assert first is not second
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_parser.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.wine.parser import (
+    WineParser,
+)
+from app.services.food.knowledge.wine.parser_models import (
+    WineParseResult,
+)
+
+
+def test_wine_parser_detects_multiple_attributes() -> None:
+    parser = WineParser()
+
+    result = parser.parse(
+        "2020 보르도 카베르네 소비뇽 "
+        "레드 와인 드라이 풀 바디 높은 산도 13.5%"
+    )
+
+    assert isinstance(
+        result,
+        WineParseResult,
+    )
+    assert result.wine_type == "red"
+    assert (
+        result.grape
+        == "cabernet_sauvignon"
+    )
+    assert result.region == "bordeaux"
+    assert result.sweetness == "dry"
+    assert result.body == "full"
+    assert result.acidity == "high"
+    assert result.vintage == 2020
+    assert result.alcohol_percent == 13.5
+    assert result.is_complete is True
+    assert result.is_usable is True
+
+
+@pytest.mark.parametrize(
+    (
+        "text",
+        "field_name",
+        "expected",
+    ),
+    [
+        (
+            "화이트 와인",
+            "wine_type",
+            "white",
+        ),
+        (
+            "샤르도네 와인",
+            "grape",
+            "chardonnay",
+        ),
+        (
+            "부르고뉴 와인",
+            "region",
+            "burgundy",
+        ),
+        (
+            "세미 드라이 와인",
+            "sweetness",
+            "off_dry",
+        ),
+        (
+            "미디엄 바디 와인",
+            "body",
+            "medium",
+        ),
+        (
+            "낮은 산도 와인",
+            "acidity",
+            "low",
+        ),
+    ],
+)
+def test_wine_parser_detects_each_registry_field(
+    text: str,
+    field_name: str,
+    expected: str,
+) -> None:
+    result = WineParser().parse(
+        text
+    )
+
+    assert (
+        getattr(result, field_name)
+        == expected
+    )
+
+
+def test_wine_parser_extracts_vintage() -> None:
+    result = WineParser().parse(
+        "2019 나파 밸리 레드 와인"
+    )
+
+    assert result.vintage == 2019
+
+
+@pytest.mark.parametrize(
+    (
+        "text",
+        "expected",
+    ),
+    [
+        (
+            "알코올 12.5%",
+            12.5,
+        ),
+        (
+            "ABV 14%",
+            14.0,
+        ),
+        (
+            "도수 13도",
+            13.0,
+        ),
+    ],
+)
+def test_wine_parser_extracts_alcohol_percent(
+    text: str,
+    expected: float,
+) -> None:
+    result = WineParser().parse(
+        text
+    )
+
+    assert (
+        result.alcohol_percent
+        == expected
+    )
+
+
+def test_wine_parser_uses_structured_fields_first() -> None:
+    result = WineParser().parse_product(
+        {
+            "product_name": (
+                "일반 레드 와인"
+            ),
+            "wine_type": (
+                "화이트 와인"
+            ),
+            "grape_variety": (
+                "샤르도네"
+            ),
+            "region": "부르고뉴",
+            "sweetness": "드라이",
+            "body": "미디엄 바디",
+            "acidity": "높은 산도",
+            "vintage": 2021,
+            "alcohol_percent": 12.5,
+        }
+    )
+
+    assert result.wine_type == "white"
+    assert result.grape == "chardonnay"
+    assert result.region == "burgundy"
+    assert result.sweetness == "dry"
+    assert result.body == "medium"
+    assert result.acidity == "high"
+    assert result.vintage == 2021
+    assert result.alcohol_percent == 12.5
+    assert (
+        result.metadata[
+            "structured_field_priority"
+        ]
+        is True
+    )
+
+
+def test_wine_parser_records_detection_evidence() -> None:
+    result = WineParser().parse(
+        "보르도 카베르네 소비뇽 레드 와인"
+    )
+
+    assert "보르도" in result.detected_keywords
+    assert (
+        "카베르네 소비뇽"
+        in result.detected_keywords
+    )
+    assert "레드 와인" in result.detected_keywords
+    assert result.confidence > 0.0
+
+
+def test_wine_parser_returns_unusable_result_for_unknown_text() -> None:
+    result = WineParser().parse(
+        "등록되지 않은 임의의 상품"
+    )
+
+    assert result.has_match is False
+    assert result.is_usable is False
+    assert result.confidence == 0.0
+    assert result.warnings
+
+
+def test_wine_parser_rejects_empty_text() -> None:
+    parser = WineParser()
+
+    with pytest.raises(ValueError):
+        parser.parse("")
+
+
+def test_wine_parser_rejects_non_mapping_product() -> None:
+    parser = WineParser()
+
+    with pytest.raises(TypeError):
+        parser.parse_product(  # type: ignore[arg-type]
+            "not-a-mapping"
+        )
+
+
+def test_wine_parser_rejects_empty_product() -> None:
+    parser = WineParser()
+
+    with pytest.raises(ValueError):
+        parser.parse_product({})
+
+
+def test_wine_parser_is_deterministic() -> None:
+    parser = WineParser()
+    text = (
+        "2020 보르도 카베르네 소비뇽 "
+        "레드 와인 드라이"
+    )
+
+    first = parser.parse(text)
+    second = parser.parse(text)
+
+    assert first.to_dict() == second.to_dict()
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_parser.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.cheese import (
+    CheeseAgingRegistry,
+    CheeseMilkSourceRegistry,
+    CheeseOriginRegistry,
+    CheeseParser,
+    CheeseParseResult,
+    CheeseTextureRegistry,
+    CheeseTypeRegistry,
+)
+
+
+def test_parser_registry_injection() -> None:
+    type_registry = CheeseTypeRegistry()
+    milk_registry = CheeseMilkSourceRegistry()
+    origin_registry = CheeseOriginRegistry()
+    texture_registry = CheeseTextureRegistry()
+    aging_registry = CheeseAgingRegistry()
+
+    parser = CheeseParser(
+        type_registry=type_registry,
+        milk_source_registry=milk_registry,
+        origin_registry=origin_registry,
+        texture_registry=texture_registry,
+        aging_registry=aging_registry,
+    )
+
+    assert parser.type_registry is type_registry
+    assert (
+        parser.milk_source_registry
+        is milk_registry
+    )
+    assert parser.origin_registry is origin_registry
+    assert (
+        parser.texture_registry
+        is texture_registry
+    )
+    assert parser.aging_registry is aging_registry
+
+
+def test_parse_complete_cheese_text() -> None:
+    result = CheeseParser().parse(
+        "프랑스 산양유 브리 "
+        "부드러운 치즈 12개월 숙성"
+    )
+
+    assert isinstance(
+        result,
+        CheeseParseResult,
+    )
+
+    assert result.cheese_type == "브리"
+    assert result.milk_source == "산양유"
+    assert result.origin == "프랑스"
+    assert result.texture == "연성"
+    assert result.aging == "장기숙성"
+
+    assert result.matched_field_count == 5
+    assert result.is_complete is True
+    assert result.is_usable is True
+    assert result.confidence > 0.0
+    assert result.warnings == []
+
+
+def test_parse_product_uses_structured_fields() -> None:
+    result = CheeseParser().parse_product(
+        {
+            "product_name": "프리미엄 치즈",
+            "cheese_type": "parmigiano reggiano",
+            "milk_source": "cow milk",
+            "origin_country": "Italy",
+            "texture": "hard cheese",
+            "aging": "24개월 숙성",
+            "option_name": "200g",
+        }
+    )
+
+    assert result.cheese_type == (
+        "파르미자노 레지아노"
+    )
+    assert result.milk_source == "우유"
+    assert result.origin == "이탈리아"
+    assert result.texture == "경질"
+    assert result.aging == "초장기숙성"
+
+    assert (
+        result.cheese_type_match
+        is not None
+    )
+    assert (
+        result.cheese_type_match
+        .entry
+        .registry_key
+        == "parmesan"
+    )
+    assert (
+        result.milk_source_match
+        .entry
+        .registry_key
+        == "cow"
+    )
+    assert (
+        result.origin_match
+        .entry
+        .registry_key
+        == "italy"
+    )
+    assert (
+        result.texture_match
+        .entry
+        .registry_key
+        == "hard"
+    )
+    assert (
+        result.aging_match
+        .entry
+        .registry_key
+        == "extra_aged"
+    )
+
+    assert (
+        result.metadata["source_type"]
+        == "mapping"
+    )
+    assert (
+        result.metadata[
+            "structured_field_priority"
+        ]
+        is True
+    )
+
+
+def test_parse_type_only_is_usable() -> None:
+    result = CheeseParser().parse(
+        "플레인 크림치즈 200g"
+    )
+
+    assert result.cheese_type == "크림치즈"
+    assert result.is_usable is True
+    assert result.is_complete is False
+    assert result.warnings
+
+
+def test_parse_milk_only_is_not_usable() -> None:
+    result = CheeseParser().parse(
+        "산양유 1L"
+    )
+
+    assert result.milk_source == "산양유"
+    assert result.cheese_type is None
+    assert result.is_usable is False
+
+
+def test_parse_origin_and_aging_is_usable() -> None:
+    result = CheeseParser().parse(
+        "프랑스산 12개월 숙성"
+    )
+
+    assert result.origin == "프랑스"
+    assert result.aging == "장기숙성"
+    assert result.matched_field_count == 2
+    assert result.is_usable is True
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_type"),
+    [
+        ("이탈리아 모짜렐라", "모차렐라"),
+        ("숙성 체다치즈", "체다"),
+        ("프랑스 까망베르", "카망베르"),
+        ("네덜란드 고다", "고다"),
+        (
+            "파르미자노 레지아노",
+            "파르미자노 레지아노",
+        ),
+        ("블루 치즈 소스용", "블루치즈"),
+    ],
+)
+def test_parser_cheese_type_examples(
+    text: str,
+    expected_type: str,
+) -> None:
+    result = CheeseParser().parse(text)
+
+    assert result.cheese_type == expected_type
+    assert result.cheese_type_match is not None
+
+
+def test_parser_preserves_detected_aliases() -> None:
+    result = CheeseParser().parse(
+        "프랑스 산양유 브리 "
+        "소프트 치즈 12개월 숙성"
+    )
+
+    assert len(result.detected_keywords) == 5
+
+    assert any(
+        "브리" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "산양" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "프랑스" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "소프트" in keyword
+        for keyword in result.detected_keywords
+    )
+    assert any(
+        "12개월" in keyword
+        for keyword in result.detected_keywords
+    )
+
+
+def test_parser_texture_alias_boundary() -> None:
+    semi_hard = CheeseParser().parse(
+        "세미 하드 치즈"
+    )
+    hard = CheeseParser().parse(
+        "단단한 하드치즈"
+    )
+
+    assert semi_hard.texture == "반경질"
+    assert (
+        semi_hard.texture_match
+        .entry
+        .registry_key
+        == "semi_hard"
+    )
+
+    assert hard.texture == "경질"
+    assert (
+        hard.texture_match
+        .entry
+        .registry_key
+        == "hard"
+    )
+
+
+def test_parser_unknown_text_returns_unusable() -> None:
+    result = CheeseParser().parse(
+        "상품 정보가 없는 일반 문자열"
+    )
+
+    assert result.cheese_type is None
+    assert result.milk_source is None
+    assert result.origin is None
+    assert result.texture is None
+    assert result.aging is None
+
+    assert result.matched_field_count == 0
+    assert result.confidence == 0.0
+    assert result.is_usable is False
+    assert result.warnings
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "한우 1++ 등심 500g",
+        "양고기 프렌치랙",
+        "훈제오리 슬라이스",
+        "닭가슴살 1kg",
+        "사슴 안심 스테이크",
+    ],
+)
+def test_parser_non_cheese_boundary(
+    text: str,
+) -> None:
+    result = CheeseParser().parse(text)
+
+    assert result.cheese_type is None
+    assert result.is_usable is False
+
+
+def test_parse_product_deduplicates_text() -> None:
+    result = CheeseParser().parse_product(
+        {
+            "product_name": "체다치즈",
+            "title": "체다치즈",
+            "cheese_type": "체다치즈",
+        }
+    )
+
+    assert result.original_text == "체다치즈"
+    assert result.cheese_type == "체다"
+
+
+def test_parse_product_source_fields() -> None:
+    result = CheeseParser().parse_product(
+        {
+            "product_name": "브리 치즈",
+            "country": "프랑스",
+            "aging": "단기 숙성",
+        }
+    )
+
+    assert result.metadata["source_fields"] == [
+        "product_name",
+        "country",
+        "aging",
+    ]
+
+
+def test_parser_confidences_are_bounded() -> None:
+    result = CheeseParser().parse(
+        "프랑스 브리 치즈"
+    )
+
+    for confidence in (
+        result.confidence,
+        result.cheese_type_confidence,
+        result.milk_source_confidence,
+        result.origin_confidence,
+        result.texture_confidence,
+        result.aging_confidence,
+    ):
+        assert 0.0 <= confidence <= 1.0
+
+
+def test_parse_rejects_empty_text() -> None:
+    with pytest.raises(
+        ValueError,
+        match="must not be empty",
+    ):
+        CheeseParser().parse("")
+
+
+def test_parse_product_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        CheeseParser().parse_product(
+            "체다치즈"  # type: ignore[arg-type]
+        )
+
+
+def test_parse_product_rejects_empty_mapping() -> None:
+    with pytest.raises(
+        ValueError,
+        match="product must not be empty",
+    ):
+        CheeseParser().parse_product({})
+
+
+def test_parse_product_rejects_no_usable_fields() -> None:
+    with pytest.raises(
+        ValueError,
+        match="usable text field",
+    ):
+        CheeseParser().parse_product(
+            {
+                "price": 10000,
+                "review_count": 10,
+            }
+        )
+
+
+def test_parsing_is_deterministic() -> None:
+    parser = CheeseParser()
+    text = (
+        "프랑스 산양유 브리 "
+        "소프트 치즈 12개월 숙성"
+    )
+
+    first = parser.parse(text)
+    second = parser.parse(text)
+
+    assert first.to_dict() == second.to_dict()
+    assert first is not second

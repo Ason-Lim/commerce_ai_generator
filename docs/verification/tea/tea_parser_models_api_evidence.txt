@@ -1,0 +1,111 @@
+
+========================================================================
+FILE: app/services/food/knowledge/common/parser_models.py
+========================================================================
+{'class': 'BaseParseResult', 'bases': [], 'line': 12}
+{'field': 'original_text', 'annotation': 'str', 'default': None}
+{'field': 'normalized_text', 'annotation': 'str', 'default': None}
+{'field': 'confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'metadata', 'annotation': 'Mapping[str, Any]', 'default': 'field(default_factory=dict)'}
+{'method': '__post_init__', 'line': 30}
+{'method': 'has_match', 'line': 73}
+{'method': 'to_dict', 'line': 81}
+{'method': '_serialize_value', 'line': 98}
+
+========================================================================
+FILE: app/services/food/knowledge/coffee/parser_models.py
+========================================================================
+{'class': 'CoffeeParseResult', 'bases': ['BaseParseResult'], 'line': 27}
+{'field': 'bean', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'origin', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'roast', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'process', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'bean_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'origin_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'roast_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'process_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'bean_match', 'annotation': 'CoffeeBeanMatch | None', 'default': 'None'}
+{'field': 'origin_match', 'annotation': 'CoffeeOriginMatch | None', 'default': 'None'}
+{'field': 'roast_match', 'annotation': 'CoffeeRoastMatch | None', 'default': 'None'}
+{'field': 'process_match', 'annotation': 'CoffeeProcessMatch | None', 'default': 'None'}
+{'field': 'detected_keywords', 'annotation': 'list[str]', 'default': 'field(default_factory=list)'}
+{'field': 'warnings', 'annotation': 'list[str]', 'default': 'field(default_factory=list)'}
+{'method': '__post_init__', 'line': 61}
+{'method': 'has_bean', 'line': 103}
+{'method': 'has_origin', 'line': 107}
+{'method': 'has_roast', 'line': 111}
+{'method': 'has_process', 'line': 115}
+{'method': 'matched_field_count', 'line': 119}
+{'method': 'is_complete', 'line': 130}
+{'method': 'is_usable', 'line': 134}
+{'method': 'has_match', 'line': 148}
+{'method': 'to_dict', 'line': 151}
+{'method': '_deduplicate_strings', 'line': 207}
+
+========================================================================
+FILE: app/services/food/knowledge/wine/parser_models.py
+========================================================================
+{'class': 'WineParseResult', 'bases': ['BaseParseResult'], 'line': 33}
+{'field': 'wine_type', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'grape', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'region', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'sweetness', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'body', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'acidity', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'vintage', 'annotation': 'int | None', 'default': 'None'}
+{'field': 'alcohol_percent', 'annotation': 'float | None', 'default': 'None'}
+{'field': 'wine_type_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'grape_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'region_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'sweetness_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'body_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'acidity_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'wine_type_match', 'annotation': 'WineTypeMatch | None', 'default': 'None'}
+{'field': 'grape_match', 'annotation': 'WineGrapeMatch | None', 'default': 'None'}
+{'field': 'region_match', 'annotation': 'WineRegionMatch | None', 'default': 'None'}
+{'field': 'sweetness_match', 'annotation': 'WineSweetnessMatch | None', 'default': 'None'}
+{'field': 'body_match', 'annotation': 'WineBodyMatch | None', 'default': 'None'}
+{'field': 'acidity_match', 'annotation': 'WineAcidityMatch | None', 'default': 'None'}
+{'field': 'detected_keywords', 'annotation': 'list[str]', 'default': 'field(default_factory=list)'}
+{'field': 'warnings', 'annotation': 'list[str]', 'default': 'field(default_factory=list)'}
+{'method': '__post_init__', 'line': 65}
+{'method': 'matched_field_count', 'line': 130}
+{'method': 'is_complete', 'line': 144}
+{'method': 'is_usable', 'line': 148}
+{'method': 'has_match', 'line': 157}
+{'method': 'to_dict', 'line': 160}
+{'method': '_deduplicate_strings', 'line': 208}
+
+========================================================================
+FILE: app/services/food/knowledge/cheese/parser_models.py
+========================================================================
+{'class': 'CheeseParseResult', 'bases': ['BaseParseResult'], 'line': 30}
+{'field': 'cheese_type', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'milk_source', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'origin', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'texture', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'aging', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'cheese_type_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'milk_source_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'origin_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'texture_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'aging_confidence', 'annotation': 'float', 'default': '0.0'}
+{'field': 'cheese_type_match', 'annotation': 'CheeseTypeMatch | None', 'default': 'None'}
+{'field': 'milk_source_match', 'annotation': 'CheeseMilkSourceMatch | None', 'default': 'None'}
+{'field': 'origin_match', 'annotation': 'CheeseOriginMatch | None', 'default': 'None'}
+{'field': 'texture_match', 'annotation': 'CheeseTextureMatch | None', 'default': 'None'}
+{'field': 'aging_match', 'annotation': 'CheeseAgingMatch | None', 'default': 'None'}
+{'field': 'detected_keywords', 'annotation': 'list[str]', 'default': 'field(default_factory=list)'}
+{'field': 'warnings', 'annotation': 'list[str]', 'default': 'field(default_factory=list)'}
+{'method': '__post_init__', 'line': 66}
+{'method': 'has_cheese_type', 'line': 109}
+{'method': 'has_milk_source', 'line': 113}
+{'method': 'has_origin', 'line': 117}
+{'method': 'has_texture', 'line': 121}
+{'method': 'has_aging', 'line': 125}
+{'method': 'matched_field_count', 'line': 129}
+{'method': 'is_complete', 'line': 141}
+{'method': 'is_usable', 'line': 145}
+{'method': 'has_match', 'line': 159}
+{'method': 'to_dict', 'line': 162}
+{'method': '_deduplicate_strings', 'line': 229}

@@ -1,0 +1,78 @@
+{
+  "document_id": "RIV-2026-013-TEA",
+  "generated_at_utc": "2026-08-04T10:32:41.399914+00:00",
+  "project_root": "/Users/mom/commerce_ai_generator",
+  "overall_status": "FAIL",
+  "checks": [
+    {
+      "check_id": "RIV-1",
+      "title": "Registry file composition",
+      "status": "PENDING",
+      "evidence": [
+        "Tea domain directory exists: False",
+        "Tea Python files: 0",
+        "Registry-related Python files: 0"
+      ],
+      "violations": [
+        "Tea domain directory is missing: app/services/food/knowledge/tea"
+      ]
+    },
+    {
+      "check_id": "RIV-2",
+      "title": "Registry declarative data composition",
+      "status": "PENDING",
+      "evidence": [
+        "Tea registry data directory exists: False",
+        "Declarative data files: 0"
+      ],
+      "violations": [
+        "No Tea YAML/JSON/TOML/CSV Registry data files were found."
+      ]
+    },
+    {
+      "check_id": "RIV-3",
+      "title": "Registry support layer",
+      "status": "PENDING",
+      "evidence": [
+        "Registry support files: 0"
+      ],
+      "violations": [
+        "No identifiable Registry support or loader file found."
+      ]
+    },
+    {
+      "check_id": "RIV-4",
+      "title": "Registry contract compliance",
+      "status": "PENDING",
+      "evidence": [],
+      "violations": [
+        "No Registry implementation was available for AST inspection."
+      ]
+    },
+    {
+      "check_id": "RIV-5",
+      "title": "Registry implementation scope compliance",
+      "status": "FAIL",
+      "evidence": [
+        "git status exit code: 0",
+        "M docs/verification/cheese/provider-registration.json\n M docs/verification/cheese/provider-registration.txt\n M tools/verification/__init__.py\n?? \"docs/architecture/tools/Integration Verification Tool v1.0.md\"\n?? docs/verification/cheese/cross-domain-regression.txt\n?? docs/verification/cheese/integration-verification-suite.json\n?? docs/verification/cheese/provider-selection.txt\n?? docs/verification/cheese/result-contract.txt\n?? docs/verification/cheese/runtime-routing.txt\n?? docs/verification/tea/tea_registry_evidence.py\n?? tests/tools/verification/integration/test_integration_verifier.py\n?? tools/verification/integration/__init__.py\n?? tools/verification/integration/cli.py\n?? tools/verification/integration/integration_verifier.py\n?? tools/verification/integration/profiles.py"
+      ],
+      "violations": [
+        "Outside Tea authorized scope: ocs/verification/cheese/provider-registration.json",
+        "Outside Tea authorized scope: docs/verification/cheese/provider-registration.txt",
+        "Outside Tea authorized scope: tools/verification/__init__.py",
+        "Outside Tea authorized scope: \"docs/architecture/tools/Integration Verification Tool v1.0.md\"",
+        "Outside Tea authorized scope: docs/verification/cheese/cross-domain-regression.txt",
+        "Outside Tea authorized scope: docs/verification/cheese/integration-verification-suite.json",
+        "Outside Tea authorized scope: docs/verification/cheese/provider-selection.txt",
+        "Outside Tea authorized scope: docs/verification/cheese/result-contract.txt",
+        "Outside Tea authorized scope: docs/verification/cheese/runtime-routing.txt",
+        "Outside Tea authorized scope: tests/tools/verification/integration/test_integration_verifier.py",
+        "Outside Tea authorized scope: tools/verification/integration/__init__.py",
+        "Outside Tea authorized scope: tools/verification/integration/cli.py",
+        "Outside Tea authorized scope: tools/verification/integration/integration_verifier.py",
+        "Outside Tea authorized scope: tools/verification/integration/profiles.py"
+      ]
+    }
+  ]
+}

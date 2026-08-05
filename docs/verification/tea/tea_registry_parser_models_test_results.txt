@@ -1,0 +1,44 @@
+
+==================================== ERRORS ====================================
+__ ERROR collecting tests/services/food/knowledge/tea/test_tea_registries.py ___
+ImportError while importing test module '/Users/mom/commerce_ai_generator/tests/services/food/knowledge/tea/test_tea_registries.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/services/food/knowledge/tea/test_tea_registries.py:5: in <module>
+    from app.services.food.knowledge.tea.origin_registry import (
+app/services/food/knowledge/tea/__init__.py:9: in <module>
+    from app.services.food.knowledge.tea.parser_models import (
+E   ModuleNotFoundError: No module named 'app.services.food.knowledge.tea.parser_models'
+_ ERROR collecting tests/services/food/knowledge/tea/test_tea_registry_integration.py _
+ImportError while importing test module '/Users/mom/commerce_ai_generator/tests/services/food/knowledge/tea/test_tea_registry_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/services/food/knowledge/tea/test_tea_registry_integration.py:8: in <module>
+    from app.services.food.knowledge.tea.flavor_registry import (
+app/services/food/knowledge/tea/__init__.py:9: in <module>
+    from app.services.food.knowledge.tea.parser_models import (
+E   ModuleNotFoundError: No module named 'app.services.food.knowledge.tea.parser_models'
+_ ERROR collecting tests/services/food/knowledge/tea/test_tea_parser_models.py _
+ImportError while importing test module '/Users/mom/commerce_ai_generator/tests/services/food/knowledge/tea/test_tea_parser_models.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/services/food/knowledge/tea/test_tea_parser_models.py:10: in <module>
+    from app.services.food.knowledge.tea.parser_models import (
+app/services/food/knowledge/tea/__init__.py:9: in <module>
+    from app.services.food.knowledge.tea.parser_models import (
+E   ModuleNotFoundError: No module named 'app.services.food.knowledge.tea.parser_models'
+=========================== short test summary info ============================
+ERROR tests/services/food/knowledge/tea/test_tea_registries.py
+ERROR tests/services/food/knowledge/tea/test_tea_registry_integration.py
+ERROR tests/services/food/knowledge/tea/test_tea_parser_models.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+3 errors in 0.37s

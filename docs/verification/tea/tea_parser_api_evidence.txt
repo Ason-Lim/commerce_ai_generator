@@ -1,0 +1,60 @@
+
+========================================================================
+FILE: app/services/food/knowledge/coffee/parser.py
+========================================================================
+{'class': 'CoffeeParser', 'bases': ['BaseKnowledgeParser[CoffeeParseResult]'], 'line': 30}
+{'method': '__init__', 'signature': 'def __init__(self, *, bean_registry: CoffeeBeanRegistry | None=None, origin_registry: CoffeeOriginRegistry | None=None, roast_registry: CoffeeRoastRegistry | None=None, process_registry: CoffeeProcessRegistry | None=None) -> None:', 'line': 102}
+{'method': 'parse', 'signature': 'def parse(self, text: str) -> CoffeeParseResult:', 'line': 134}
+{'method': 'parse_product', 'signature': 'def parse_product(self, product: Mapping[str, Any]) -> CoffeeParseResult:', 'line': 149}
+{'method': '_parse_text', 'signature': 'def _parse_text(self, *, original_text: str, normalized_text: str) -> CoffeeParseResult:', 'line': 222}
+{'method': '_build_result', 'signature': 'def _build_result(self, *, original_text: str, normalized_text: str, bean_match: CoffeeBeanMatch | None, origin_match: CoffeeOriginMatch | None, roast_match: CoffeeRoastMatch | None, process_match: CoffeeProcessMatch | None, metadata: Mapping[str, Any]) -> CoffeeParseResult:', 'line': 250}
+{'method': '_build_product_text', 'signature': 'def _build_product_text(self, product: Mapping[str, Any]) -> str:', 'line': 357}
+{'method': '_match_structured_first', 'signature': 'def _match_structured_first(self, *, product: Mapping[str, Any], field_names: Sequence[str], registry: Any, fallback_text: str) -> Any:', 'line': 383}
+{'method': '_canonical_name', 'signature': '@staticmethod', 'line': 423}
+{'method': '_match_confidence', 'signature': '@staticmethod', 'line': 432}
+{'method': '_detected_keywords', 'signature': '@staticmethod', 'line': 441}
+{'method': '_build_warnings', 'signature': '@staticmethod', 'line': 467}
+{'method': '_all_text_fields', 'signature': '@classmethod', 'line': 499}
+{'method': '_matched_source_fields', 'signature': '@classmethod', 'line': 522}
+{'method': '_stringify_value', 'signature': '@staticmethod', 'line': 535}
+{'method': '_deduplicate_texts', 'signature': '@staticmethod', 'line': 564}
+
+========================================================================
+FILE: app/services/food/knowledge/wine/parser.py
+========================================================================
+{'class': 'WineParser', 'bases': ['BaseKnowledgeParser[WineParseResult]'], 'line': 68}
+{'method': '__init__', 'signature': 'def __init__(self, *, type_registry: WineTypeRegistry | None=None, grape_registry: WineGrapeRegistry | None=None, region_registry: WineRegionRegistry | None=None, sweetness_registry: WineSweetnessRegistry | None=None, body_registry: WineBodyRegistry | None=None, acidity_registry: WineAcidityRegistry | None=None) -> None:', 'line': 160}
+{'method': 'parse', 'signature': 'def parse(self, text: str) -> WineParseResult:', 'line': 201}
+{'method': 'parse_product', 'signature': 'def parse_product(self, product: Mapping[str, Any]) -> WineParseResult:', 'line': 215}
+{'method': '_parse_text', 'signature': 'def _parse_text(self, *, original_text: str, normalized_text: str) -> WineParseResult:', 'line': 313}
+{'method': '_build_result', 'signature': 'def _build_result(self, *, original_text: str, normalized_text: str, type_match: WineTypeMatch | None, grape_match: WineGrapeMatch | None, region_match: WineRegionMatch | None, sweetness_match: WineSweetnessMatch | None, body_match: WineBodyMatch | None, acidity_match: WineAcidityMatch | None, vintage: int | None, alcohol_percent: float | None, metadata: Mapping[str, Any]) -> WineParseResult:', 'line': 356}
+{'method': '_build_product_text', 'signature': 'def _build_product_text(self, product: Mapping[str, Any]) -> str:', 'line': 464}
+{'method': '_match_structured_first', 'signature': 'def _match_structured_first(self, *, product: Mapping[str, Any], field_names: Sequence[str], registry: Any, fallback_text: str) -> Any:', 'line': 519}
+{'method': '_matched_source_fields', 'signature': 'def _matched_source_fields(self, product: Mapping[str, Any]) -> list[str]:', 'line': 559}
+{'method': '_registry_key', 'signature': '@staticmethod', 'line': 587}
+{'method': '_match_confidence', 'signature': '@staticmethod', 'line': 596}
+{'method': '_calculate_confidence', 'signature': 'def _calculate_confidence(self, matches: Sequence[RegistryMatch[Any] | None]) -> float:', 'line': 610}
+{'method': '_extract_vintage', 'signature': '@staticmethod', 'line': 631}
+{'method': '_extract_alcohol_percent', 'signature': '@staticmethod', 'line': 644}
+{'method': '_extract_structured_int', 'signature': '@staticmethod', 'line': 661}
+{'method': '_extract_structured_float', 'signature': '@staticmethod', 'line': 687}
+
+========================================================================
+FILE: app/services/food/knowledge/cheese/parser.py
+========================================================================
+{'class': 'CheeseParser', 'bases': ['BaseKnowledgeParser[CheeseParseResult]'], 'line': 34}
+{'method': '__init__', 'signature': 'def __init__(self, *, type_registry: CheeseTypeRegistry | None=None, milk_source_registry: CheeseMilkSourceRegistry | None=None, origin_registry: CheeseOriginRegistry | None=None, texture_registry: CheeseTextureRegistry | None=None, aging_registry: CheeseAgingRegistry | None=None) -> None:', 'line': 106}
+{'method': 'parse', 'signature': 'def parse(self, text: str) -> CheeseParseResult:', 'line': 151}
+{'method': 'parse_product', 'signature': 'def parse_product(self, product: Mapping[str, Any]) -> CheeseParseResult:', 'line': 166}
+{'method': '_parse_text', 'signature': 'def _parse_text(self, *, original_text: str, normalized_text: str) -> CheeseParseResult:', 'line': 255}
+{'method': '_build_result', 'signature': 'def _build_result(self, *, original_text: str, normalized_text: str, type_match: CheeseTypeMatch | None, milk_source_match: CheeseMilkSourceMatch | None, origin_match: CheeseOriginMatch | None, texture_match: CheeseTextureMatch | None, aging_match: CheeseAgingMatch | None, metadata: Mapping[str, Any]) -> CheeseParseResult:', 'line': 290}
+{'method': '_build_product_text', 'signature': 'def _build_product_text(self, product: Mapping[str, Any]) -> str:', 'line': 427}
+{'method': '_match_structured_first', 'signature': 'def _match_structured_first(self, *, product: Mapping[str, Any], field_names: Sequence[str], registry: Any, fallback_text: str) -> Any:', 'line': 453}
+{'method': '_canonical_name', 'signature': '@staticmethod', 'line': 493}
+{'method': '_match_confidence', 'signature': '@staticmethod', 'line': 502}
+{'method': '_detected_keywords', 'signature': '@staticmethod', 'line': 511}
+{'method': '_build_warnings', 'signature': '@staticmethod', 'line': 537}
+{'method': '_all_text_fields', 'signature': '@classmethod', 'line': 577}
+{'method': '_matched_source_fields', 'signature': '@classmethod', 'line': 601}
+{'method': '_stringify_value', 'signature': '@staticmethod', 'line': 614}
+{'method': '_deduplicate_texts', 'signature': '@staticmethod', 'line': 643}

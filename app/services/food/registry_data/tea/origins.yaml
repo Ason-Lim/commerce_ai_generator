@@ -1,0 +1,132 @@
+darjeeling:
+  canonical_name: darjeeling
+  aliases:
+    - Darjeeling
+    - darjeeling tea
+    - 다즐링
+    - 다즐링 티
+  country_code: IN
+  country_name: India
+  region_name: Darjeeling
+  score: 0
+  premium: false
+  description: Tea-producing region in Darjeeling, India
+
+assam:
+  canonical_name: assam
+  aliases:
+    - Assam
+    - assam tea
+    - 아삼
+    - 아쌈
+    - 아삼 티
+  country_code: IN
+  country_name: India
+  region_name: Assam
+  score: 0
+  premium: false
+  description: Tea-producing region in Assam, India
+
+uji:
+  canonical_name: uji
+  aliases:
+    - Uji
+    - uji tea
+    - 우지
+    - 우지차
+    - 우지 녹차
+  country_code: JP
+  country_name: Japan
+  region_name: Uji
+  score: 0
+  premium: false
+  description: Tea-producing region in Uji, Japan
+
+shizuoka:
+  canonical_name: shizuoka
+  aliases:
+    - Shizuoka
+    - shizuoka tea
+    - 시즈오카
+    - 시즈오카 차
+  country_code: JP
+  country_name: Japan
+  region_name: Shizuoka
+  score: 0
+  premium: false
+  description: Tea-producing region in Shizuoka, Japan
+
+jeju:
+  canonical_name: jeju
+  aliases:
+    - Jeju
+    - jeju tea
+    - 제주
+    - 제주 차
+    - 제주 녹차
+  country_code: KR
+  country_name: South Korea
+  region_name: Jeju
+  score: 0
+  premium: false
+  description: Tea-producing region on Jeju Island, South Korea
+
+boseong:
+  canonical_name: boseong
+  aliases:
+    - Boseong
+    - boseong tea
+    - 보성
+    - 보성차
+    - 보성 녹차
+  country_code: KR
+  country_name: South Korea
+  region_name: Boseong
+  score: 0
+  premium: false
+  description: Tea-producing region in Boseong, South Korea
+
+yunnan:
+  canonical_name: yunnan
+  aliases:
+    - Yunnan
+    - yunnan tea
+    - 운남
+    - 윈난
+    - 윈난 차
+  country_code: CN
+  country_name: China
+  region_name: Yunnan
+  score: 0
+  premium: false
+  description: Tea-producing region in Yunnan, China
+
+fujian:
+  canonical_name: fujian
+  aliases:
+    - Fujian
+    - fujian tea
+    - 복건
+    - 푸젠
+    - 푸젠 차
+  country_code: CN
+  country_name: China
+  region_name: Fujian
+  score: 0
+  premium: false
+  description: Tea-producing region in Fujian, China
+
+ceylon:
+  canonical_name: ceylon
+  aliases:
+    - Ceylon
+    - ceylon tea
+    - 실론
+    - 실론티
+    - 스리랑카 홍차
+  country_code: LK
+  country_name: Sri Lanka
+  region_name:
+  score: 0
+  premium: false
+  description: Tea origin associated with Sri Lanka

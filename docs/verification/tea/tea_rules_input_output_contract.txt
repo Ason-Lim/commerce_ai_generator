@@ -1,0 +1,632 @@
+app/services/food/knowledge/coffee/rules.py:6:from app.services.food.knowledge.coffee.parser_models import (
+app/services/food/knowledge/coffee/rules.py:7:    CoffeeParseResult,
+app/services/food/knowledge/coffee/rules.py:11:def deduplicate_strings(
+app/services/food/knowledge/coffee/rules.py:36:def apply_coffee_rules(
+app/services/food/knowledge/coffee/rules.py:38:    attributes: Mapping[str, Any],
+app/services/food/knowledge/coffee/rules.py:39:    scores: Mapping[str, Any],
+app/services/food/knowledge/coffee/rules.py:40:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/rules.py:51:    - attributes, scores, parse_result 수정
+app/services/food/knowledge/coffee/rules.py:54:        attributes,
+app/services/food/knowledge/coffee/rules.py:58:            "attributes must be a Mapping"
+app/services/food/knowledge/coffee/rules.py:62:        scores,
+app/services/food/knowledge/coffee/rules.py:66:            "scores must be a Mapping"
+app/services/food/knowledge/coffee/rules.py:71:        CoffeeParseResult,
+app/services/food/knowledge/coffee/rules.py:74:            "parse_result must be CoffeeParseResult"
+app/services/food/knowledge/coffee/rules.py:77:    reasons: list[str] = []
+app/services/food/knowledge/coffee/rules.py:78:    warnings: list[str] = list(
+app/services/food/knowledge/coffee/rules.py:79:        parse_result.warnings
+app/services/food/knowledge/coffee/rules.py:83:        attributes.get("bean")
+app/services/food/knowledge/coffee/rules.py:86:        attributes.get("origin")
+app/services/food/knowledge/coffee/rules.py:89:        attributes.get("country")
+app/services/food/knowledge/coffee/rules.py:92:        attributes.get("roast")
+app/services/food/knowledge/coffee/rules.py:95:        attributes.get("process")
+app/services/food/knowledge/coffee/rules.py:98:        attributes.get("grind_type")
+app/services/food/knowledge/coffee/rules.py:100:    product_form = _optional_text(
+app/services/food/knowledge/coffee/rules.py:101:        attributes.get("product_form")
+app/services/food/knowledge/coffee/rules.py:104:        attributes.get("weight")
+app/services/food/knowledge/coffee/rules.py:107:        attributes.get("altitude")
+app/services/food/knowledge/coffee/rules.py:110:        attributes.get("roast_date")
+app/services/food/knowledge/coffee/rules.py:113:    decaf = attributes.get("decaf")
+app/services/food/knowledge/coffee/rules.py:115:    certifications = deduplicate_strings(
+app/services/food/knowledge/coffee/rules.py:116:        attributes.get("certifications")
+app/services/food/knowledge/coffee/rules.py:120:    flavor_notes = deduplicate_strings(
+app/services/food/knowledge/coffee/rules.py:121:        attributes.get("flavor_notes")
+app/services/food/knowledge/coffee/rules.py:126:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:133:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:138:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:143:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:148:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:152:    if product_form:
+app/services/food/knowledge/coffee/rules.py:153:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:154:            f"상품 형태는 {product_form}입니다."
+app/services/food/knowledge/coffee/rules.py:158:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:163:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:168:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:173:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:177:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:182:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:188:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:194:        attributes
+app/services/food/knowledge/coffee/rules.py:198:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:203:    knowledge_score = _safe_score(
+app/services/food/knowledge/coffee/rules.py:204:        scores.get("knowledge")
+app/services/food/knowledge/coffee/rules.py:207:    if knowledge_score >= 90.0:
+app/services/food/knowledge/coffee/rules.py:208:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:212:    elif knowledge_score >= 80.0:
+app/services/food/knowledge/coffee/rules.py:213:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:217:    elif knowledge_score > 0.0:
+app/services/food/knowledge/coffee/rules.py:218:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:224:        scores.get("acidity")
+app/services/food/knowledge/coffee/rules.py:228:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:234:        scores.get("body")
+app/services/food/knowledge/coffee/rules.py:238:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:244:        scores.get("aroma")
+app/services/food/knowledge/coffee/rules.py:248:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:254:        scores.get("sweetness")
+app/services/food/knowledge/coffee/rules.py:258:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:264:        scores.get("clarity")
+app/services/food/knowledge/coffee/rules.py:268:        reasons.append(
+app/services/food/knowledge/coffee/rules.py:274:        warnings.append(
+app/services/food/knowledge/coffee/rules.py:279:        warnings.append(
+app/services/food/knowledge/coffee/rules.py:284:        warnings.append(
+app/services/food/knowledge/coffee/rules.py:289:        warnings.append(
+app/services/food/knowledge/coffee/rules.py:293:    if knowledge_score <= 0.0:
+app/services/food/knowledge/coffee/rules.py:294:        warnings.append(
+app/services/food/knowledge/coffee/rules.py:300:        warnings.append(
+app/services/food/knowledge/coffee/rules.py:306:        deduplicate_strings(reasons),
+app/services/food/knowledge/coffee/rules.py:307:        deduplicate_strings(warnings),
+app/services/food/knowledge/coffee/rules.py:311:def _premium_fields(
+app/services/food/knowledge/coffee/rules.py:312:    attributes: Mapping[str, Any],
+app/services/food/knowledge/coffee/rules.py:324:        if bool(attributes.get(key))
+app/services/food/knowledge/coffee/rules.py:328:def _safe_score(
+app/services/food/knowledge/coffee/rules.py:345:def _optional_text(
+app/services/food/knowledge/coffee/rules.py:358:    "deduplicate_strings",
+app/services/food/knowledge/wine/rules.py:6:from app.services.food.knowledge.wine.parser_models import (
+app/services/food/knowledge/wine/rules.py:7:    WineParseResult,
+app/services/food/knowledge/wine/rules.py:11:def apply_wine_rules(
+app/services/food/knowledge/wine/rules.py:13:    attributes: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:14:    scores: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:15:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/rules.py:24:    if not isinstance(attributes, Mapping):
+app/services/food/knowledge/wine/rules.py:26:            "attributes must be a Mapping"
+app/services/food/knowledge/wine/rules.py:29:    if not isinstance(scores, Mapping):
+app/services/food/knowledge/wine/rules.py:31:            "scores must be a Mapping"
+app/services/food/knowledge/wine/rules.py:36:        WineParseResult,
+app/services/food/knowledge/wine/rules.py:39:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/rules.py:42:    reasons: list[str] = []
+app/services/food/knowledge/wine/rules.py:43:    warnings: list[str] = list(
+app/services/food/knowledge/wine/rules.py:44:        parse_result.warnings
+app/services/food/knowledge/wine/rules.py:48:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:50:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:51:        warnings=warnings,
+app/services/food/knowledge/wine/rules.py:55:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:56:        scores=scores,
+app/services/food/knowledge/wine/rules.py:57:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:58:        warnings=warnings,
+app/services/food/knowledge/wine/rules.py:62:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:63:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:67:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:68:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:72:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:73:        warnings=warnings,
+app/services/food/knowledge/wine/rules.py:77:        _deduplicate_strings(reasons),
+app/services/food/knowledge/wine/rules.py:78:        _deduplicate_strings(warnings),
+app/services/food/knowledge/wine/rules.py:82:def _apply_information_rules(
+app/services/food/knowledge/wine/rules.py:84:    attributes: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:85:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/rules.py:86:    reasons: list[str],
+app/services/food/knowledge/wine/rules.py:87:    warnings: list[str],
+app/services/food/knowledge/wine/rules.py:90:        reasons.append(
+app/services/food/knowledge/wine/rules.py:95:        reasons.append(
+app/services/food/knowledge/wine/rules.py:100:        warnings.append(
+app/services/food/knowledge/wine/rules.py:105:        reasons.append(
+app/services/food/knowledge/wine/rules.py:110:        warnings.append(
+app/services/food/knowledge/wine/rules.py:115:        reasons.append(
+app/services/food/knowledge/wine/rules.py:120:        warnings.append(
+app/services/food/knowledge/wine/rules.py:124:    if not attributes.get("producer"):
+app/services/food/knowledge/wine/rules.py:125:        warnings.append(
+app/services/food/knowledge/wine/rules.py:129:    if not attributes.get("volume"):
+app/services/food/knowledge/wine/rules.py:130:        warnings.append(
+app/services/food/knowledge/wine/rules.py:135:def _apply_quality_rules(
+app/services/food/knowledge/wine/rules.py:137:    attributes: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:138:    scores: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:139:    reasons: list[str],
+app/services/food/knowledge/wine/rules.py:140:    warnings: list[str],
+app/services/food/knowledge/wine/rules.py:143:        scores.get("quality")
+app/services/food/knowledge/wine/rules.py:146:        scores.get("trust")
+app/services/food/knowledge/wine/rules.py:148:    knowledge_score = _safe_score(
+app/services/food/knowledge/wine/rules.py:149:        scores.get("knowledge")
+app/services/food/knowledge/wine/rules.py:153:        reasons.append(
+app/services/food/knowledge/wine/rules.py:157:        reasons.append(
+app/services/food/knowledge/wine/rules.py:161:        warnings.append(
+app/services/food/knowledge/wine/rules.py:166:        reasons.append(
+app/services/food/knowledge/wine/rules.py:171:        warnings.append(
+app/services/food/knowledge/wine/rules.py:175:    if knowledge_score >= 90.0:
+app/services/food/knowledge/wine/rules.py:176:        reasons.append(
+app/services/food/knowledge/wine/rules.py:180:    elif knowledge_score >= 80.0:
+app/services/food/knowledge/wine/rules.py:181:        reasons.append(
+app/services/food/knowledge/wine/rules.py:184:    elif knowledge_score == 0.0:
+app/services/food/knowledge/wine/rules.py:185:        warnings.append(
+app/services/food/knowledge/wine/rules.py:191:        attributes.get("region_premium") is True
+app/services/food/knowledge/wine/rules.py:192:        or attributes.get("grape_premium") is True
+app/services/food/knowledge/wine/rules.py:194:        reasons.append(
+app/services/food/knowledge/wine/rules.py:199:def _apply_style_rules(
+app/services/food/knowledge/wine/rules.py:201:    attributes: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:202:    reasons: list[str],
+app/services/food/knowledge/wine/rules.py:204:    if attributes.get(
+app/services/food/knowledge/wine/rules.py:207:        reasons.append(
+app/services/food/knowledge/wine/rules.py:211:    if attributes.get(
+app/services/food/knowledge/wine/rules.py:214:        reasons.append(
+app/services/food/knowledge/wine/rules.py:218:    if attributes.get("body") == "full":
+app/services/food/knowledge/wine/rules.py:219:        reasons.append(
+app/services/food/knowledge/wine/rules.py:223:    if attributes.get("acidity") == "high":
+app/services/food/knowledge/wine/rules.py:224:        reasons.append(
+app/services/food/knowledge/wine/rules.py:228:    if attributes.get("sweetness") == "dry":
+app/services/food/knowledge/wine/rules.py:229:        reasons.append(
+app/services/food/knowledge/wine/rules.py:233:    if attributes.get(
+app/services/food/knowledge/wine/rules.py:236:        reasons.append(
+app/services/food/knowledge/wine/rules.py:241:def _apply_certification_rules(
+app/services/food/knowledge/wine/rules.py:243:    attributes: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:244:    reasons: list[str],
+app/services/food/knowledge/wine/rules.py:246:    certifications = attributes.get(
+app/services/food/knowledge/wine/rules.py:252:            reasons.append(
+app/services/food/knowledge/wine/rules.py:256:    if attributes.get("organic") is True:
+app/services/food/knowledge/wine/rules.py:257:        reasons.append(
+app/services/food/knowledge/wine/rules.py:261:    if attributes.get("biodynamic") is True:
+app/services/food/knowledge/wine/rules.py:262:        reasons.append(
+app/services/food/knowledge/wine/rules.py:267:def _apply_data_consistency_rules(
+app/services/food/knowledge/wine/rules.py:269:    attributes: Mapping[str, Any],
+app/services/food/knowledge/wine/rules.py:270:    warnings: list[str],
+app/services/food/knowledge/wine/rules.py:272:    vintage = attributes.get("vintage")
+app/services/food/knowledge/wine/rules.py:278:            warnings.append(
+app/services/food/knowledge/wine/rules.py:286:                warnings.append(
+app/services/food/knowledge/wine/rules.py:290:    alcohol_percent = attributes.get(
+app/services/food/knowledge/wine/rules.py:300:            warnings.append(
+app/services/food/knowledge/wine/rules.py:308:                warnings.append(
+app/services/food/knowledge/wine/rules.py:313:        attributes.get("wine_type_sparkling")
+app/services/food/knowledge/wine/rules.py:315:        and attributes.get("wine_type_fortified")
+app/services/food/knowledge/wine/rules.py:318:        warnings.append(
+app/services/food/knowledge/wine/rules.py:324:def _safe_score(
+app/services/food/knowledge/wine/rules.py:341:def _deduplicate_strings(
+app/services/food/knowledge/cheese/rules.py:6:from app.services.food.knowledge.cheese.parser_models import (
+app/services/food/knowledge/cheese/rules.py:7:    CheeseParseResult,
+app/services/food/knowledge/cheese/rules.py:11:def deduplicate_strings(
+app/services/food/knowledge/cheese/rules.py:37:def apply_cheese_rules(
+app/services/food/knowledge/cheese/rules.py:39:    attributes: Mapping[str, Any],
+app/services/food/knowledge/cheese/rules.py:40:    scores: Mapping[str, Any],
+app/services/food/knowledge/cheese/rules.py:41:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/rules.py:51:        attributes,
+app/services/food/knowledge/cheese/rules.py:55:            "attributes must be a Mapping"
+app/services/food/knowledge/cheese/rules.py:59:        scores,
+app/services/food/knowledge/cheese/rules.py:63:            "scores must be a Mapping"
+app/services/food/knowledge/cheese/rules.py:68:        CheeseParseResult,
+app/services/food/knowledge/cheese/rules.py:71:            "parse_result must be CheeseParseResult"
+app/services/food/knowledge/cheese/rules.py:74:    reasons: list[str] = []
+app/services/food/knowledge/cheese/rules.py:75:    warnings: list[str] = list(
+app/services/food/knowledge/cheese/rules.py:76:        parse_result.warnings
+app/services/food/knowledge/cheese/rules.py:80:        attributes.get("cheese_type")
+app/services/food/knowledge/cheese/rules.py:83:        attributes.get("milk_source")
+app/services/food/knowledge/cheese/rules.py:86:        attributes.get("origin")
+app/services/food/knowledge/cheese/rules.py:89:        attributes.get("country")
+app/services/food/knowledge/cheese/rules.py:92:        attributes.get("texture")
+app/services/food/knowledge/cheese/rules.py:95:        attributes.get("aging")
+app/services/food/knowledge/cheese/rules.py:98:        attributes.get("storage_type")
+app/services/food/knowledge/cheese/rules.py:101:        attributes.get("packaging_type")
+app/services/food/knowledge/cheese/rules.py:104:        attributes.get("pasteurization")
+app/services/food/knowledge/cheese/rules.py:107:        attributes.get("rind_type")
+app/services/food/knowledge/cheese/rules.py:110:    certifications = deduplicate_strings(
+app/services/food/knowledge/cheese/rules.py:111:        attributes.get("certifications")
+app/services/food/knowledge/cheese/rules.py:115:    typical_uses = deduplicate_strings(
+app/services/food/knowledge/cheese/rules.py:116:        attributes.get(
+app/services/food/knowledge/cheese/rules.py:123:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:128:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:135:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:140:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:145:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:150:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:155:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:160:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:166:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:171:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:177:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:183:        attributes
+app/services/food/knowledge/cheese/rules.py:187:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:192:    knowledge_score = _safe_score(
+app/services/food/knowledge/cheese/rules.py:193:        scores.get("knowledge")
+app/services/food/knowledge/cheese/rules.py:196:    if knowledge_score >= 90.0:
+app/services/food/knowledge/cheese/rules.py:197:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:201:    elif knowledge_score >= 80.0:
+app/services/food/knowledge/cheese/rules.py:202:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:206:    elif knowledge_score > 0.0:
+app/services/food/knowledge/cheese/rules.py:207:        reasons.append(
+app/services/food/knowledge/cheese/rules.py:213:        warnings.append(
+app/services/food/knowledge/cheese/rules.py:218:        warnings.append(
+app/services/food/knowledge/cheese/rules.py:223:        warnings.append(
+app/services/food/knowledge/cheese/rules.py:228:        warnings.append(
+app/services/food/knowledge/cheese/rules.py:233:        warnings.append(
+app/services/food/knowledge/cheese/rules.py:237:    if knowledge_score <= 0.0:
+app/services/food/knowledge/cheese/rules.py:238:        warnings.append(
+app/services/food/knowledge/cheese/rules.py:244:        warnings.append(
+app/services/food/knowledge/cheese/rules.py:250:        deduplicate_strings(reasons),
+app/services/food/knowledge/cheese/rules.py:251:        deduplicate_strings(warnings),
+app/services/food/knowledge/cheese/rules.py:255:def _premium_fields(
+app/services/food/knowledge/cheese/rules.py:256:    attributes: Mapping[str, Any],
+app/services/food/knowledge/cheese/rules.py:269:        if bool(attributes.get(key))
+app/services/food/knowledge/cheese/rules.py:273:def _safe_score(
+app/services/food/knowledge/cheese/rules.py:290:def _optional_text(
+app/services/food/knowledge/cheese/rules.py:305:    "deduplicate_strings",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:7:from app.services.food.knowledge.coffee import (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:10:    build_coffee_attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:11:    calculate_coffee_scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:12:    deduplicate_strings,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:16:def _complete_product() -> dict[str, object]:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:18:        "product_name": (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:29:        "product_form": "원두",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:48:def _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:49:    product: dict[str, object],
+tests/services/food/knowledge/coffee/test_coffee_rules.py:52:        CoffeeParser().parse_product(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:53:            product
+tests/services/food/knowledge/coffee/test_coffee_rules.py:57:    attributes = build_coffee_attributes(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:58:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:62:    scores = calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:63:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:68:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:69:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:74:def test_complete_product_generates_reasons() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:75:    reasons, warnings = _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:76:        _complete_product()
+tests/services/food/knowledge/coffee/test_coffee_rules.py:81:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:85:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:89:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:93:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:97:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:101:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:105:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:109:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:113:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:118:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:123:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:128:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:131:    assert warnings == []
+tests/services/food/knowledge/coffee/test_coffee_rules.py:134:def test_registry_and_score_guidance_is_included() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:135:    reasons, _ = _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:136:        _complete_product()
+tests/services/food/knowledge/coffee/test_coffee_rules.py:142:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:148:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:154:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:160:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:166:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:170:def test_partial_product_generates_warnings() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:171:    reasons, warnings = _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:173:            "product_name": (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:181:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:185:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:191:        in warnings
+tests/services/food/knowledge/coffee/test_coffee_rules.py:196:        in warnings
+tests/services/food/knowledge/coffee/test_coffee_rules.py:200:def test_unknown_product_generates_warnings() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:201:    reasons, warnings = _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:203:            "product_name": "일반 식품 상품",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:207:    assert reasons == []
+tests/services/food/knowledge/coffee/test_coffee_rules.py:212:        in warnings
+tests/services/food/knowledge/coffee/test_coffee_rules.py:218:        in warnings
+tests/services/food/knowledge/coffee/test_coffee_rules.py:222:def test_explicit_country_is_used() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:223:    reasons, _ = _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:225:            "product_name": (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:234:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:238:def test_decaf_reason() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:239:    reasons, _ = _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:241:            "product_name": "아라비카 원두",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:249:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:253:def test_rules_preserve_parser_warnings() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:254:    product = {
+tests/services/food/knowledge/coffee/test_coffee_rules.py:255:        "product_name": "아라비카 원두",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:259:        CoffeeParser().parse_product(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:260:            product
+tests/services/food/knowledge/coffee/test_coffee_rules.py:264:    attributes = build_coffee_attributes(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:265:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:269:    scores = calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:270:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:274:    _, warnings = apply_coffee_rules(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:275:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:276:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:280:    for warning in parse_result.warnings:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:281:        assert warning in warnings
+tests/services/food/knowledge/coffee/test_coffee_rules.py:284:def test_rules_do_not_duplicate_warnings() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:285:    _, warnings = _apply(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:287:            "product_name": "아라비카 원두",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:291:    assert len(warnings) == len(set(warnings))
+tests/services/food/knowledge/coffee/test_coffee_rules.py:294:def test_rules_do_not_mutate_inputs() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:295:    product = _complete_product()
+tests/services/food/knowledge/coffee/test_coffee_rules.py:298:        CoffeeParser().parse_product(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:299:            product
+tests/services/food/knowledge/coffee/test_coffee_rules.py:303:    attributes = build_coffee_attributes(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:304:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:308:    scores = calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:309:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:313:    attributes_before = deepcopy(attributes)
+tests/services/food/knowledge/coffee/test_coffee_rules.py:314:    scores_before = deepcopy(scores)
+tests/services/food/knowledge/coffee/test_coffee_rules.py:320:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:321:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:325:    assert attributes == attributes_before
+tests/services/food/knowledge/coffee/test_coffee_rules.py:326:    assert scores == scores_before
+tests/services/food/knowledge/coffee/test_coffee_rules.py:333:def test_deduplicate_strings() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:334:    assert deduplicate_strings(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:351:def test_deduplicate_strings_accepts_generator() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:361:    assert deduplicate_strings(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:369:def test_rules_reject_invalid_attributes() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:376:        match="attributes must be a Mapping",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:379:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_rules.py:380:            scores={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:385:def test_rules_reject_invalid_scores() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:392:        match="scores must be a Mapping",
+tests/services/food/knowledge/coffee/test_coffee_rules.py:395:            attributes={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:396:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_rules.py:401:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:406:            "CoffeeParseResult"
+tests/services/food/knowledge/coffee/test_coffee_rules.py:410:            attributes={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:411:            scores={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:416:def test_rules_return_string_lists() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:421:    reasons, warnings = apply_coffee_rules(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:422:        attributes={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:423:        scores={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:427:    assert isinstance(reasons, list)
+tests/services/food/knowledge/coffee/test_coffee_rules.py:428:    assert isinstance(warnings, list)
+tests/services/food/knowledge/coffee/test_coffee_rules.py:432:        for item in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:437:        for item in warnings
+tests/services/food/knowledge/coffee/test_coffee_rules.py:441:def test_rules_do_not_calculate_scores() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:446:    reasons, warnings = apply_coffee_rules(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:447:        attributes={
+tests/services/food/knowledge/coffee/test_coffee_rules.py:450:        scores={
+tests/services/food/knowledge/coffee/test_coffee_rules.py:451:            "knowledge": 50.0,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:458:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:463:        in reasons
+tests/services/food/knowledge/coffee/test_coffee_rules.py:465:    assert warnings
+tests/services/food/knowledge/coffee/test_coffee_rules.py:468:def test_rules_are_deterministic() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:469:    product = _complete_product()
+tests/services/food/knowledge/coffee/test_coffee_rules.py:472:        CoffeeParser().parse_product(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:473:            product
+tests/services/food/knowledge/coffee/test_coffee_rules.py:477:    attributes = build_coffee_attributes(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:478:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:482:    scores = calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:483:        product=product,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:488:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:489:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:494:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:495:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:5:from app.services.food.knowledge.wine.attributes import (
+tests/services/food/knowledge/wine/test_wine_rules.py:6:    build_wine_attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:8:from app.services.food.knowledge.wine.parser import (
+tests/services/food/knowledge/wine/test_wine_rules.py:11:from app.services.food.knowledge.wine.rules import (
+tests/services/food/knowledge/wine/test_wine_rules.py:14:from app.services.food.knowledge.wine.scoring import (
+tests/services/food/knowledge/wine/test_wine_rules.py:15:    calculate_wine_scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:19:def _build_analysis(
+tests/services/food/knowledge/wine/test_wine_rules.py:20:    product: dict[str, object],
+tests/services/food/knowledge/wine/test_wine_rules.py:26:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_rules.py:27:        product
+tests/services/food/knowledge/wine/test_wine_rules.py:30:    attributes = build_wine_attributes(
+tests/services/food/knowledge/wine/test_wine_rules.py:31:        product=product,
+tests/services/food/knowledge/wine/test_wine_rules.py:35:    scores = calculate_wine_scores(
+tests/services/food/knowledge/wine/test_wine_rules.py:36:        product=product,
+tests/services/food/knowledge/wine/test_wine_rules.py:41:        attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:42:        scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:47:def test_apply_wine_rules_for_complete_product() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:48:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:49:        "product_name": (
+tests/services/food/knowledge/wine/test_wine_rules.py:60:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:61:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:64:    reasons, warnings = apply_wine_rules(
+tests/services/food/knowledge/wine/test_wine_rules.py:65:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:66:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:70:    assert reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:74:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:78:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:82:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:86:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:88:    assert not warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:91:def test_apply_wine_rules_warns_for_missing_information() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:92:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:93:        "product_name": "보르도 레드 와인",
+tests/services/food/knowledge/wine/test_wine_rules.py:96:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:97:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:100:    reasons, warnings = apply_wine_rules(
+tests/services/food/knowledge/wine/test_wine_rules.py:101:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:102:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:106:    assert reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:109:        in warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:113:        in warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:118:        in warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:122:        in warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:126:def test_apply_wine_rules_for_unknown_product() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:127:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:128:        "product_name": (
+tests/services/food/knowledge/wine/test_wine_rules.py:133:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:134:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:137:    reasons, warnings = apply_wine_rules(
+tests/services/food/knowledge/wine/test_wine_rules.py:138:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:139:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:145:        in warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:150:        in warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:154:def test_apply_wine_rules_detects_premium_registry_data() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:155:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:156:        "product_name": (
+tests/services/food/knowledge/wine/test_wine_rules.py:163:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:164:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:167:    reasons, _ = apply_wine_rules(
+tests/services/food/knowledge/wine/test_wine_rules.py:168:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:169:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:176:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:180:def test_apply_wine_rules_detects_style_information() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:181:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:182:        "product_name": (
+tests/services/food/knowledge/wine/test_wine_rules.py:190:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:191:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:194:    reasons, _ = apply_wine_rules(
+tests/services/food/knowledge/wine/test_wine_rules.py:195:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:196:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:202:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:206:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:210:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:214:def test_apply_wine_rules_detects_certifications() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:215:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:216:        "product_name": "보르도 레드 와인",
+tests/services/food/knowledge/wine/test_wine_rules.py:227:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:228:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:231:    reasons, _ = apply_wine_rules(
+tests/services/food/knowledge/wine/test_wine_rules.py:232:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:233:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:239:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:243:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:247:        in reasons
+tests/services/food/knowledge/wine/test_wine_rules.py:251:def test_apply_wine_rules_preserves_parser_warnings() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:252:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:253:        "product_name": (
+tests/services/food/knowledge/wine/test_wine_rules.py:258:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:259:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:262:    _, warnings = apply_wine_rules(
+tests/services/food/knowledge/wine/test_wine_rules.py:263:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:264:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:271:        in warnings
+tests/services/food/knowledge/wine/test_wine_rules.py:275:def test_apply_wine_rules_deduplicates_results() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:276:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:277:        "product_name": "보르도 레드 와인",
+tests/services/food/knowledge/wine/test_wine_rules.py:280:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:281:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:285:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:286:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:290:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:291:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:300:def test_apply_wine_rules_does_not_modify_inputs() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:301:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:302:        "product_name": (
+tests/services/food/knowledge/wine/test_wine_rules.py:307:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:308:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:311:    attributes_before = dict(attributes)
+tests/services/food/knowledge/wine/test_wine_rules.py:312:    scores_before = dict(scores)
+tests/services/food/knowledge/wine/test_wine_rules.py:315:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:316:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:320:    assert attributes == attributes_before
+tests/services/food/knowledge/wine/test_wine_rules.py:321:    assert scores == scores_before
+tests/services/food/knowledge/wine/test_wine_rules.py:324:def test_apply_wine_rules_rejects_invalid_inputs() -> None:
+tests/services/food/knowledge/wine/test_wine_rules.py:325:    product = {
+tests/services/food/knowledge/wine/test_wine_rules.py:326:        "product_name": "보르도 레드 와인",
+tests/services/food/knowledge/wine/test_wine_rules.py:329:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:330:        _build_analysis(product)
+tests/services/food/knowledge/wine/test_wine_rules.py:335:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_rules.py:336:            scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:342:            attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:343:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_rules.py:349:            attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:350:            scores=scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:7:from app.services.food.knowledge.cheese import (
+tests/services/food/knowledge/cheese/test_cheese_rules.py:10:    build_cheese_attributes,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:11:    calculate_cheese_scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:12:    deduplicate_strings,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:16:def _complete_product() -> dict[str, object]:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:18:        "product_name": (
+tests/services/food/knowledge/cheese/test_cheese_rules.py:42:def _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:43:    product: dict[str, object],
+tests/services/food/knowledge/cheese/test_cheese_rules.py:46:        CheeseParser().parse_product(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:47:            product
+tests/services/food/knowledge/cheese/test_cheese_rules.py:51:    attributes = build_cheese_attributes(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:52:        product=product,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:56:    scores = calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:57:        product=product,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:62:        attributes=attributes,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:63:        scores=scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:68:def test_complete_product_generates_reasons() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:69:    reasons, warnings = _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:70:        _complete_product()
+tests/services/food/knowledge/cheese/test_cheese_rules.py:73:    assert "치즈 종류는 브리입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:74:    assert "사용 원유는 산양유입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:75:    assert "원산지는 프랑스입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:76:    assert "치즈 질감은 연성입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:77:    assert "숙성 유형은 장기숙성입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:78:    assert "보관 상태는 냉장입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:79:    assert "상품 형태는 wheel입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:83:        in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:87:        in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:92:        in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:95:    assert warnings == []
+tests/services/food/knowledge/cheese/test_cheese_rules.py:98:def test_registry_guidance_is_included() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:99:    reasons, _ = _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:100:        _complete_product()
+tests/services/food/knowledge/cheese/test_cheese_rules.py:104:        reason.startswith(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:107:        for reason in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:113:        in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:117:def test_high_knowledge_generates_reason() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:118:    reasons, _ = _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:119:        _complete_product()
+tests/services/food/knowledge/cheese/test_cheese_rules.py:125:        in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:129:def test_partial_product_generates_warnings() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:130:    reasons, warnings = _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:132:            "product_name": (
+tests/services/food/knowledge/cheese/test_cheese_rules.py:142:        in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:146:        in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:152:        in warnings
+tests/services/food/knowledge/cheese/test_cheese_rules.py:156:        in warnings
+tests/services/food/knowledge/cheese/test_cheese_rules.py:161:        in warnings
+tests/services/food/knowledge/cheese/test_cheese_rules.py:165:def test_unknown_product_generates_zero_score_warning() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:166:    reasons, warnings = _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:168:            "product_name": "일반 식품 상품",
+tests/services/food/knowledge/cheese/test_cheese_rules.py:172:    assert reasons == []
+tests/services/food/knowledge/cheese/test_cheese_rules.py:177:        in warnings
+tests/services/food/knowledge/cheese/test_cheese_rules.py:183:        in warnings
+tests/services/food/knowledge/cheese/test_cheese_rules.py:187:def test_explicit_country_is_used_in_reason() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:188:    reasons, _ = _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:190:            "product_name": "프랑스 브리 치즈",
+tests/services/food/knowledge/cheese/test_cheese_rules.py:195:    assert "원산지는 France입니다." in reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:198:def test_rules_preserve_parser_warnings() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:199:    product = {
+tests/services/food/knowledge/cheese/test_cheese_rules.py:200:        "product_name": "플레인 크림치즈",
+tests/services/food/knowledge/cheese/test_cheese_rules.py:204:        CheeseParser().parse_product(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:205:            product
+tests/services/food/knowledge/cheese/test_cheese_rules.py:209:    attributes = build_cheese_attributes(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:210:        product=product,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:214:    scores = calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:215:        product=product,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:219:    _, warnings = apply_cheese_rules(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:220:        attributes=attributes,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:221:        scores=scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:225:    for warning in parse_result.warnings:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:226:        assert warning in warnings
+tests/services/food/knowledge/cheese/test_cheese_rules.py:229:def test_rules_do_not_duplicate_warnings() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:230:    _, warnings = _apply(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:232:            "product_name": "플레인 크림치즈",
+tests/services/food/knowledge/cheese/test_cheese_rules.py:236:    assert len(warnings) == len(set(warnings))
+tests/services/food/knowledge/cheese/test_cheese_rules.py:239:def test_rules_do_not_mutate_inputs() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:240:    product = _complete_product()
+tests/services/food/knowledge/cheese/test_cheese_rules.py:243:        CheeseParser().parse_product(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:244:            product
+tests/services/food/knowledge/cheese/test_cheese_rules.py:248:    attributes = build_cheese_attributes(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:249:        product=product,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:253:    scores = calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:254:        product=product,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:258:    attributes_before = deepcopy(attributes)
+tests/services/food/knowledge/cheese/test_cheese_rules.py:259:    scores_before = deepcopy(scores)
+tests/services/food/knowledge/cheese/test_cheese_rules.py:265:        attributes=attributes,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:266:        scores=scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:270:    assert attributes == attributes_before
+tests/services/food/knowledge/cheese/test_cheese_rules.py:271:    assert scores == scores_before
+tests/services/food/knowledge/cheese/test_cheese_rules.py:278:def test_deduplicate_strings() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:279:    assert deduplicate_strings(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:296:def test_deduplicate_strings_accepts_generator() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:306:    assert deduplicate_strings(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:314:def test_rules_reject_invalid_attributes() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:321:        match="attributes must be a Mapping",
+tests/services/food/knowledge/cheese/test_cheese_rules.py:324:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_rules.py:325:            scores={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:330:def test_rules_reject_invalid_scores() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:337:        match="scores must be a Mapping",
+tests/services/food/knowledge/cheese/test_cheese_rules.py:340:            attributes={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:341:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_rules.py:346:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:351:            "CheeseParseResult"
+tests/services/food/knowledge/cheese/test_cheese_rules.py:355:            attributes={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:356:            scores={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:361:def test_rules_do_not_calculate_scores() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:366:    reasons, warnings = apply_cheese_rules(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:367:        attributes={
+tests/services/food/knowledge/cheese/test_cheese_rules.py:370:        scores={
+tests/services/food/knowledge/cheese/test_cheese_rules.py:371:            "knowledge": 50.0,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:376:    assert reasons
+tests/services/food/knowledge/cheese/test_cheese_rules.py:377:    assert warnings

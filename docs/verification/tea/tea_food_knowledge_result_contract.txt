@@ -1,0 +1,1697 @@
+app/services/food/knowledge/fruit/provider.py:16:    calculate_fruit_final_score,
+app/services/food/knowledge/fruit/provider.py:112:        final_score = (
+app/services/food/knowledge/fruit/provider.py:113:            calculate_fruit_final_score(
+app/services/food/knowledge/fruit/provider.py:119:        return FoodKnowledgeResult(
+app/services/food/knowledge/fruit/provider.py:126:            attributes=attributes,
+app/services/food/knowledge/fruit/provider.py:127:            scores=scores,
+app/services/food/knowledge/fruit/provider.py:129:            reasons=reasons,
+app/services/food/knowledge/fruit/provider.py:130:            warnings=warnings,
+app/services/food/knowledge/fruit/provider.py:131:            final_score=final_score,
+app/services/food/knowledge/fruit/provider.py:138:            metadata={
+app/services/food/knowledge/fruit/scoring.py:69:def calculate_fruit_final_score(
+app/services/food/knowledge/fruit/scoring.py:256:    "calculate_fruit_final_score",
+app/services/food/knowledge/fruit/__init__.py:20:    calculate_fruit_final_score,
+app/services/food/knowledge/fruit/__init__.py:36:    "calculate_fruit_final_score",
+app/services/food/knowledge/fruit/rules.py:120:                metadata={
+app/services/food/knowledge/fruit/rules.py:134:                metadata={
+app/services/food/knowledge/fruit/rules.py:147:            metadata={
+app/services/food/knowledge/fruit/rules.py:249:                metadata={
+app/services/food/knowledge/fruit/rules.py:271:                metadata={
+app/services/food/knowledge/fruit/rules.py:335:                metadata={
+app/services/food/knowledge/registry_loader.py:246:                metadata=metadata,
+app/services/food/knowledge/registry_loader.py:624:            metadata=copy.deepcopy(
+app/services/food/knowledge/models.py:49:class FoodKnowledgeResult:
+app/services/food/knowledge/models.py:64:    final_score: float | None = None
+app/services/food/knowledge/meat/lamb/age_registry.py:333:            metadata=metadata,
+app/services/food/knowledge/meat/lamb/provider.py:20:    calculate_lamb_final_score,
+app/services/food/knowledge/meat/lamb/provider.py:175:        parse_result = (
+app/services/food/knowledge/meat/lamb/provider.py:183:            parse_result=parse_result,
+app/services/food/knowledge/meat/lamb/provider.py:188:            parse_result=parse_result,
+app/services/food/knowledge/meat/lamb/provider.py:193:            attributes=attributes,
+app/services/food/knowledge/meat/lamb/provider.py:194:            scores=scores,
+app/services/food/knowledge/meat/lamb/provider.py:195:            parse_result=parse_result,
+app/services/food/knowledge/meat/lamb/provider.py:198:        final_score = (
+app/services/food/knowledge/meat/lamb/provider.py:199:            calculate_lamb_final_score(
+app/services/food/knowledge/meat/lamb/provider.py:204:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/lamb/provider.py:210:            attributes=attributes,
+app/services/food/knowledge/meat/lamb/provider.py:211:            scores=scores,
+app/services/food/knowledge/meat/lamb/provider.py:212:            reasons=reasons,
+app/services/food/knowledge/meat/lamb/provider.py:213:            warnings=warnings,
+app/services/food/knowledge/meat/lamb/provider.py:214:            final_score=final_score,
+app/services/food/knowledge/meat/lamb/provider.py:215:            confidence=parse_result.confidence,
+app/services/food/knowledge/meat/lamb/provider.py:216:            metadata={
+app/services/food/knowledge/meat/lamb/provider.py:233:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/lamb/provider.py:239:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/lamb/provider.py:245:                    parse_result.is_complete
+app/services/food/knowledge/meat/lamb/provider.py:248:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/lamb/provider.py:253:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/lamb/attributes.py:161:    parse_result: LambParseResult,
+app/services/food/knowledge/meat/lamb/attributes.py:179:        parse_result,
+app/services/food/knowledge/meat/lamb/attributes.py:183:            "parse_result must be LambParseResult"
+app/services/food/knowledge/meat/lamb/attributes.py:207:        "age": parse_result.age,
+app/services/food/knowledge/meat/lamb/attributes.py:208:        "breed": parse_result.breed,
+app/services/food/knowledge/meat/lamb/attributes.py:209:        "cut": parse_result.cut,
+app/services/food/knowledge/meat/lamb/attributes.py:210:        "confidence": parse_result.confidence,
+app/services/food/knowledge/meat/lamb/attributes.py:212:            parse_result.age_confidence
+app/services/food/knowledge/meat/lamb/attributes.py:215:            parse_result.breed_confidence
+app/services/food/knowledge/meat/lamb/attributes.py:218:            parse_result.cut_confidence
+app/services/food/knowledge/meat/lamb/attributes.py:221:            parse_result.detected_keywords
+app/services/food/knowledge/meat/lamb/attributes.py:224:            parse_result.warnings
+app/services/food/knowledge/meat/lamb/attributes.py:226:        "is_complete": parse_result.is_complete,
+app/services/food/knowledge/meat/lamb/attributes.py:229:    if parse_result.age_match is not None:
+app/services/food/knowledge/meat/lamb/attributes.py:230:        age = parse_result.age_match.age
+app/services/food/knowledge/meat/lamb/attributes.py:272:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/lamb/attributes.py:273:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/lamb/attributes.py:307:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/lamb/attributes.py:308:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/lamb/scoring.py:98:    parse_result: LambParseResult,
+app/services/food/knowledge/meat/lamb/scoring.py:106:        parse_result,
+app/services/food/knowledge/meat/lamb/scoring.py:110:            "parse_result must be LambParseResult"
+app/services/food/knowledge/meat/lamb/scoring.py:123:    if parse_result.age_match is not None:
+app/services/food/knowledge/meat/lamb/scoring.py:125:            parse_result.age_match.age.score
+app/services/food/knowledge/meat/lamb/scoring.py:128:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/lamb/scoring.py:129:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/lamb/scoring.py:141:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/lamb/scoring.py:142:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/lamb/scoring.py:244:    parse_result: LambParseResult,
+app/services/food/knowledge/meat/lamb/scoring.py:262:        parse_result,
+app/services/food/knowledge/meat/lamb/scoring.py:266:            "parse_result must be LambParseResult"
+app/services/food/knowledge/meat/lamb/scoring.py:272:        parse_result
+app/services/food/knowledge/meat/lamb/scoring.py:315:def calculate_lamb_final_score(
+app/services/food/knowledge/meat/lamb/scoring.py:370:    "calculate_lamb_final_score",
+app/services/food/knowledge/meat/lamb/cut_registry.py:319:            metadata=metadata,
+app/services/food/knowledge/meat/lamb/__init__.py:42:    calculate_lamb_final_score,
+app/services/food/knowledge/meat/lamb/__init__.py:79:    "calculate_lamb_final_score",
+app/services/food/knowledge/meat/lamb/rules.py:15:    parse_result: LambParseResult,
+app/services/food/knowledge/meat/lamb/rules.py:44:        parse_result,
+app/services/food/knowledge/meat/lamb/rules.py:48:            "parse_result must be LambParseResult"
+app/services/food/knowledge/meat/lamb/rules.py:53:        parse_result.warnings
+app/services/food/knowledge/meat/lamb/rules.py:265:    if not parse_result.is_complete:
+app/services/food/knowledge/meat/lamb/breed_registry.py:303:            metadata=metadata,
+app/services/food/knowledge/meat/lamb/parser.py:179:            metadata=metadata,
+app/services/food/knowledge/meat/lamb/parser.py:198:            warnings=list(result.warnings),
+app/services/food/knowledge/meat/lamb/parser.py:271:            metadata={
+app/services/food/knowledge/meat/lamb/parser.py:291:            warnings=warnings,
+app/services/food/knowledge/meat/beef/grade_registry.py:248:            metadata=metadata,
+app/services/food/knowledge/meat/beef/provider.py:19:    calculate_beef_final_score,
+app/services/food/knowledge/meat/beef/provider.py:152:        parse_result = (
+app/services/food/knowledge/meat/beef/provider.py:160:            parse_result=parse_result,
+app/services/food/knowledge/meat/beef/provider.py:165:            parse_result=parse_result,
+app/services/food/knowledge/meat/beef/provider.py:170:            attributes=attributes,
+app/services/food/knowledge/meat/beef/provider.py:171:            scores=scores,
+app/services/food/knowledge/meat/beef/provider.py:172:            parse_result=parse_result,
+app/services/food/knowledge/meat/beef/provider.py:175:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/beef/provider.py:181:            attributes=attributes,
+app/services/food/knowledge/meat/beef/provider.py:182:            scores=scores,
+app/services/food/knowledge/meat/beef/provider.py:183:            reasons=reasons,
+app/services/food/knowledge/meat/beef/provider.py:184:            warnings=warnings,
+app/services/food/knowledge/meat/beef/provider.py:185:            final_score=(
+app/services/food/knowledge/meat/beef/provider.py:186:                calculate_beef_final_score(
+app/services/food/knowledge/meat/beef/provider.py:190:            confidence=parse_result.confidence,
+app/services/food/knowledge/meat/beef/provider.py:191:            metadata={
+app/services/food/knowledge/meat/beef/provider.py:204:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/beef/provider.py:209:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/beef/provider.py:215:                    parse_result.is_complete
+app/services/food/knowledge/meat/beef/attributes.py:38:    parse_result: BeefParseResult,
+app/services/food/knowledge/meat/beef/attributes.py:61:    country_code = parse_result.metadata.get(
+app/services/food/knowledge/meat/beef/attributes.py:108:    parse_result: BeefParseResult,
+app/services/food/knowledge/meat/beef/attributes.py:114:    country_code = parse_result.metadata.get(
+app/services/food/knowledge/meat/beef/attributes.py:124:            parse_result=parse_result,
+app/services/food/knowledge/meat/beef/attributes.py:127:        "breed": parse_result.breed,
+app/services/food/knowledge/meat/beef/attributes.py:128:        "grade": parse_result.grade,
+app/services/food/knowledge/meat/beef/attributes.py:129:        "cut": parse_result.cut,
+app/services/food/knowledge/meat/beef/attributes.py:136:        "confidence": parse_result.confidence,
+app/services/food/knowledge/meat/beef/attributes.py:138:            parse_result.breed_confidence
+app/services/food/knowledge/meat/beef/attributes.py:141:            parse_result.grade_confidence
+app/services/food/knowledge/meat/beef/attributes.py:144:            parse_result.cut_confidence
+app/services/food/knowledge/meat/beef/attributes.py:147:            parse_result.detected_keywords
+app/services/food/knowledge/meat/beef/attributes.py:149:        "is_complete": parse_result.is_complete,
+app/services/food/knowledge/meat/beef/attributes.py:152:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/beef/attributes.py:153:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/beef/attributes.py:172:    if parse_result.grade_match is not None:
+app/services/food/knowledge/meat/beef/attributes.py:173:        grade = parse_result.grade_match.grade
+app/services/food/knowledge/meat/beef/attributes.py:196:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/beef/attributes.py:197:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/beef/scoring.py:65:    parse_result: BeefParseResult,
+app/services/food/knowledge/meat/beef/scoring.py:85:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/beef/scoring.py:87:            parse_result.breed_match.breed.score
+app/services/food/knowledge/meat/beef/scoring.py:90:    if parse_result.grade_match is not None:
+app/services/food/knowledge/meat/beef/scoring.py:92:            parse_result.grade_match.grade.score
+app/services/food/knowledge/meat/beef/scoring.py:95:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/beef/scoring.py:96:        cut_entry = parse_result.cut_match.cut
+app/services/food/knowledge/meat/beef/scoring.py:193:    parse_result: BeefParseResult,
+app/services/food/knowledge/meat/beef/scoring.py:205:        parse_result
+app/services/food/knowledge/meat/beef/scoring.py:263:def calculate_beef_final_score(
+app/services/food/knowledge/meat/beef/scoring.py:306:    "calculate_beef_final_score",
+app/services/food/knowledge/meat/beef/cut_registry.py:274:            metadata=metadata,
+app/services/food/knowledge/meat/beef/rules.py:15:    parse_result: BeefParseResult,
+app/services/food/knowledge/meat/beef/rules.py:30:        parse_result:
+app/services/food/knowledge/meat/beef/rules.py:38:        parse_result.warnings
+app/services/food/knowledge/meat/beef/breed_registry.py:222:            metadata=metadata,
+app/services/food/knowledge/meat/beef/parser.py:331:            metadata=metadata,
+app/services/food/knowledge/meat/beef/parser.py:350:            warnings=warnings,
+app/services/food/knowledge/meat/beef/parser.py:404:            metadata=metadata,
+app/services/food/knowledge/meat/beef/parser.py:427:            warnings=list(
+app/services/food/knowledge/meat/venison/provider.py:20:    calculate_venison_final_score,
+app/services/food/knowledge/meat/venison/provider.py:173:        parse_result = (
+app/services/food/knowledge/meat/venison/provider.py:181:            parse_result=parse_result,
+app/services/food/knowledge/meat/venison/provider.py:186:            parse_result=parse_result,
+app/services/food/knowledge/meat/venison/provider.py:192:                attributes=attributes,
+app/services/food/knowledge/meat/venison/provider.py:193:                scores=scores,
+app/services/food/knowledge/meat/venison/provider.py:194:                parse_result=parse_result,
+app/services/food/knowledge/meat/venison/provider.py:198:        final_score = (
+app/services/food/knowledge/meat/venison/provider.py:199:            calculate_venison_final_score(
+app/services/food/knowledge/meat/venison/provider.py:204:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/venison/provider.py:208:            attributes=dict(attributes),
+app/services/food/knowledge/meat/venison/provider.py:209:            scores=dict(scores),
+app/services/food/knowledge/meat/venison/provider.py:210:            reasons=list(reasons),
+app/services/food/knowledge/meat/venison/provider.py:211:            warnings=list(warnings),
+app/services/food/knowledge/meat/venison/provider.py:212:            final_score=final_score,
+app/services/food/knowledge/meat/venison/provider.py:213:            confidence=parse_result.confidence,
+app/services/food/knowledge/meat/venison/provider.py:214:            metadata={
+app/services/food/knowledge/meat/venison/provider.py:232:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/venison/provider.py:238:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/venison/provider.py:244:                    parse_result.is_complete
+app/services/food/knowledge/meat/venison/provider.py:247:                    parse_result.is_usable
+app/services/food/knowledge/meat/venison/provider.py:250:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/venison/provider.py:255:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/venison/attributes.py:220:    parse_result: VenisonParseResult,
+app/services/food/knowledge/meat/venison/attributes.py:235:        parse_result,
+app/services/food/knowledge/meat/venison/attributes.py:239:            "parse_result must be VenisonParseResult"
+app/services/food/knowledge/meat/venison/attributes.py:282:            parse_result.venison_type
+app/services/food/knowledge/meat/venison/attributes.py:284:        "breed": parse_result.breed,
+app/services/food/knowledge/meat/venison/attributes.py:285:        "cut": parse_result.cut,
+app/services/food/knowledge/meat/venison/attributes.py:286:        "confidence": parse_result.confidence,
+app/services/food/knowledge/meat/venison/attributes.py:288:            parse_result.venison_type_confidence
+app/services/food/knowledge/meat/venison/attributes.py:291:            parse_result.breed_confidence
+app/services/food/knowledge/meat/venison/attributes.py:294:            parse_result.cut_confidence
+app/services/food/knowledge/meat/venison/attributes.py:297:            parse_result.detected_keywords
+app/services/food/knowledge/meat/venison/attributes.py:300:            parse_result.warnings
+app/services/food/knowledge/meat/venison/attributes.py:303:            parse_result.is_complete
+app/services/food/knowledge/meat/venison/attributes.py:305:        "is_usable": parse_result.is_usable,
+app/services/food/knowledge/meat/venison/attributes.py:309:        parse_result.venison_type_match
+app/services/food/knowledge/meat/venison/attributes.py:313:            parse_result
+app/services/food/knowledge/meat/venison/attributes.py:347:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/venison/attributes.py:348:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/venison/attributes.py:382:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/venison/attributes.py:383:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/venison/scoring.py:102:    parse_result: VenisonParseResult,
+app/services/food/knowledge/meat/venison/scoring.py:110:        parse_result,
+app/services/food/knowledge/meat/venison/scoring.py:114:            "parse_result must be VenisonParseResult"
+app/services/food/knowledge/meat/venison/scoring.py:133:        parse_result.venison_type_match
+app/services/food/knowledge/meat/venison/scoring.py:137:            parse_result
+app/services/food/knowledge/meat/venison/scoring.py:146:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/venison/scoring.py:147:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/venison/scoring.py:167:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/venison/scoring.py:168:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/venison/scoring.py:273:    parse_result: VenisonParseResult,
+app/services/food/knowledge/meat/venison/scoring.py:291:        parse_result,
+app/services/food/knowledge/meat/venison/scoring.py:295:            "parse_result must be VenisonParseResult"
+app/services/food/knowledge/meat/venison/scoring.py:301:        parse_result
+app/services/food/knowledge/meat/venison/scoring.py:360:def calculate_venison_final_score(
+app/services/food/knowledge/meat/venison/scoring.py:412:    "calculate_venison_final_score",
+app/services/food/knowledge/meat/venison/cut_registry.py:101:            metadata=metadata,
+app/services/food/knowledge/meat/venison/__init__.py:97:    calculate_venison_final_score,
+app/services/food/knowledge/meat/venison/__init__.py:109:    "calculate_venison_final_score",
+app/services/food/knowledge/meat/venison/rules.py:15:    parse_result: VenisonParseResult,
+app/services/food/knowledge/meat/venison/rules.py:21:    attributes, scores 또는 parse_result를 변경하지 않는다.
+app/services/food/knowledge/meat/venison/rules.py:34:        parse_result,
+app/services/food/knowledge/meat/venison/rules.py:38:            "parse_result must be VenisonParseResult"
+app/services/food/knowledge/meat/venison/rules.py:43:        parse_result.warnings
+app/services/food/knowledge/meat/venison/rules.py:297:    if not parse_result.is_complete:
+app/services/food/knowledge/meat/venison/type_registry.py:89:            metadata=metadata,
+app/services/food/knowledge/meat/venison/breed_registry.py:100:            metadata=metadata,
+app/services/food/knowledge/meat/venison/parser.py:300:            metadata=metadata,
+app/services/food/knowledge/meat/venison/parser.py:323:            warnings=warnings,
+app/services/food/knowledge/meat/venison/parser.py:423:            metadata={
+app/services/food/knowledge/meat/venison/parser.py:449:            warnings=warnings,
+app/services/food/knowledge/meat/duck/provider.py:20:    calculate_duck_final_score,
+app/services/food/knowledge/meat/duck/provider.py:170:        parse_result = (
+app/services/food/knowledge/meat/duck/provider.py:178:            parse_result=parse_result,
+app/services/food/knowledge/meat/duck/provider.py:183:            parse_result=parse_result,
+app/services/food/knowledge/meat/duck/provider.py:189:                attributes=attributes,
+app/services/food/knowledge/meat/duck/provider.py:190:                scores=scores,
+app/services/food/knowledge/meat/duck/provider.py:191:                parse_result=parse_result,
+app/services/food/knowledge/meat/duck/provider.py:195:        final_score = (
+app/services/food/knowledge/meat/duck/provider.py:196:            calculate_duck_final_score(
+app/services/food/knowledge/meat/duck/provider.py:201:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/duck/provider.py:207:            attributes=attributes,
+app/services/food/knowledge/meat/duck/provider.py:208:            scores=scores,
+app/services/food/knowledge/meat/duck/provider.py:209:            reasons=reasons,
+app/services/food/knowledge/meat/duck/provider.py:210:            warnings=warnings,
+app/services/food/knowledge/meat/duck/provider.py:211:            final_score=final_score,
+app/services/food/knowledge/meat/duck/provider.py:213:                parse_result.confidence
+app/services/food/knowledge/meat/duck/provider.py:215:            metadata={
+app/services/food/knowledge/meat/duck/provider.py:232:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/duck/provider.py:238:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/duck/provider.py:244:                    parse_result.is_complete
+app/services/food/knowledge/meat/duck/provider.py:247:                    parse_result.is_usable
+app/services/food/knowledge/meat/duck/provider.py:250:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/duck/provider.py:255:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/duck/attributes.py:220:    parse_result: DuckParseResult,
+app/services/food/knowledge/meat/duck/attributes.py:235:        parse_result,
+app/services/food/knowledge/meat/duck/attributes.py:239:            "parse_result must be DuckParseResult"
+app/services/food/knowledge/meat/duck/attributes.py:282:            parse_result.duck_type
+app/services/food/knowledge/meat/duck/attributes.py:284:        "breed": parse_result.breed,
+app/services/food/knowledge/meat/duck/attributes.py:285:        "cut": parse_result.cut,
+app/services/food/knowledge/meat/duck/attributes.py:286:        "confidence": parse_result.confidence,
+app/services/food/knowledge/meat/duck/attributes.py:288:            parse_result.duck_type_confidence
+app/services/food/knowledge/meat/duck/attributes.py:291:            parse_result.breed_confidence
+app/services/food/knowledge/meat/duck/attributes.py:294:            parse_result.cut_confidence
+app/services/food/knowledge/meat/duck/attributes.py:297:            parse_result.detected_keywords
+app/services/food/knowledge/meat/duck/attributes.py:300:            parse_result.warnings
+app/services/food/knowledge/meat/duck/attributes.py:303:            parse_result.is_complete
+app/services/food/knowledge/meat/duck/attributes.py:305:        "is_usable": parse_result.is_usable,
+app/services/food/knowledge/meat/duck/attributes.py:309:        parse_result.duck_type_match
+app/services/food/knowledge/meat/duck/attributes.py:313:            parse_result
+app/services/food/knowledge/meat/duck/attributes.py:347:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/duck/attributes.py:348:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/duck/attributes.py:382:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/duck/attributes.py:383:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/duck/scoring.py:102:    parse_result: DuckParseResult,
+app/services/food/knowledge/meat/duck/scoring.py:110:        parse_result,
+app/services/food/knowledge/meat/duck/scoring.py:114:            "parse_result must be DuckParseResult"
+app/services/food/knowledge/meat/duck/scoring.py:133:        parse_result.duck_type_match
+app/services/food/knowledge/meat/duck/scoring.py:137:            parse_result
+app/services/food/knowledge/meat/duck/scoring.py:146:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/duck/scoring.py:147:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/duck/scoring.py:167:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/duck/scoring.py:168:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/duck/scoring.py:273:    parse_result: DuckParseResult,
+app/services/food/knowledge/meat/duck/scoring.py:291:        parse_result,
+app/services/food/knowledge/meat/duck/scoring.py:295:            "parse_result must be DuckParseResult"
+app/services/food/knowledge/meat/duck/scoring.py:301:        parse_result
+app/services/food/knowledge/meat/duck/scoring.py:360:def calculate_duck_final_score(
+app/services/food/knowledge/meat/duck/scoring.py:412:    "calculate_duck_final_score",
+app/services/food/knowledge/meat/duck/cut_registry.py:101:            metadata=metadata,
+app/services/food/knowledge/meat/duck/__init__.py:125:    calculate_duck_final_score,
+app/services/food/knowledge/meat/duck/__init__.py:133:    "calculate_duck_final_score",
+app/services/food/knowledge/meat/duck/rules.py:15:    parse_result: DuckParseResult,
+app/services/food/knowledge/meat/duck/rules.py:43:        parse_result,
+app/services/food/knowledge/meat/duck/rules.py:47:            "parse_result must be DuckParseResult"
+app/services/food/knowledge/meat/duck/rules.py:52:        parse_result.warnings
+app/services/food/knowledge/meat/duck/rules.py:306:    if not parse_result.is_complete:
+app/services/food/knowledge/meat/duck/type_registry.py:89:            metadata=metadata,
+app/services/food/knowledge/meat/duck/breed_registry.py:100:            metadata=metadata,
+app/services/food/knowledge/meat/duck/parser.py:163:            metadata=metadata,
+app/services/food/knowledge/meat/duck/parser.py:184:            warnings=list(result.warnings),
+app/services/food/knowledge/meat/duck/parser.py:257:            metadata={
+app/services/food/knowledge/meat/duck/parser.py:283:            warnings=warnings,
+app/services/food/knowledge/meat/goat/provider.py:20:    calculate_goat_final_score,
+app/services/food/knowledge/meat/goat/provider.py:186:        parse_result = (
+app/services/food/knowledge/meat/goat/provider.py:194:            parse_result=parse_result,
+app/services/food/knowledge/meat/goat/provider.py:199:            parse_result=parse_result,
+app/services/food/knowledge/meat/goat/provider.py:205:                attributes=attributes,
+app/services/food/knowledge/meat/goat/provider.py:206:                scores=scores,
+app/services/food/knowledge/meat/goat/provider.py:207:                parse_result=parse_result,
+app/services/food/knowledge/meat/goat/provider.py:211:        final_score = (
+app/services/food/knowledge/meat/goat/provider.py:212:            calculate_goat_final_score(
+app/services/food/knowledge/meat/goat/provider.py:217:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/goat/provider.py:221:            attributes=dict(attributes),
+app/services/food/knowledge/meat/goat/provider.py:222:            scores=dict(scores),
+app/services/food/knowledge/meat/goat/provider.py:223:            reasons=list(reasons),
+app/services/food/knowledge/meat/goat/provider.py:224:            warnings=list(warnings),
+app/services/food/knowledge/meat/goat/provider.py:225:            final_score=final_score,
+app/services/food/knowledge/meat/goat/provider.py:226:            confidence=parse_result.confidence,
+app/services/food/knowledge/meat/goat/provider.py:227:            metadata={
+app/services/food/knowledge/meat/goat/provider.py:245:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/goat/provider.py:251:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/goat/provider.py:257:                    parse_result.is_complete
+app/services/food/knowledge/meat/goat/provider.py:260:                    parse_result.is_usable
+app/services/food/knowledge/meat/goat/provider.py:263:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/goat/provider.py:268:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/goat/attributes.py:220:    parse_result: GoatParseResult,
+app/services/food/knowledge/meat/goat/attributes.py:235:        parse_result,
+app/services/food/knowledge/meat/goat/attributes.py:239:            "parse_result must be GoatParseResult"
+app/services/food/knowledge/meat/goat/attributes.py:282:            parse_result.goat_type
+app/services/food/knowledge/meat/goat/attributes.py:284:        "breed": parse_result.breed,
+app/services/food/knowledge/meat/goat/attributes.py:285:        "cut": parse_result.cut,
+app/services/food/knowledge/meat/goat/attributes.py:286:        "confidence": parse_result.confidence,
+app/services/food/knowledge/meat/goat/attributes.py:288:            parse_result.goat_type_confidence
+app/services/food/knowledge/meat/goat/attributes.py:291:            parse_result.breed_confidence
+app/services/food/knowledge/meat/goat/attributes.py:294:            parse_result.cut_confidence
+app/services/food/knowledge/meat/goat/attributes.py:297:            parse_result.detected_keywords
+app/services/food/knowledge/meat/goat/attributes.py:300:            parse_result.warnings
+app/services/food/knowledge/meat/goat/attributes.py:303:            parse_result.is_complete
+app/services/food/knowledge/meat/goat/attributes.py:305:        "is_usable": parse_result.is_usable,
+app/services/food/knowledge/meat/goat/attributes.py:309:        parse_result.goat_type_match
+app/services/food/knowledge/meat/goat/attributes.py:313:            parse_result
+app/services/food/knowledge/meat/goat/attributes.py:347:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/goat/attributes.py:348:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/goat/attributes.py:382:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/goat/attributes.py:383:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/goat/scoring.py:102:    parse_result: GoatParseResult,
+app/services/food/knowledge/meat/goat/scoring.py:110:        parse_result,
+app/services/food/knowledge/meat/goat/scoring.py:114:            "parse_result must be GoatParseResult"
+app/services/food/knowledge/meat/goat/scoring.py:133:        parse_result.goat_type_match
+app/services/food/knowledge/meat/goat/scoring.py:137:            parse_result
+app/services/food/knowledge/meat/goat/scoring.py:146:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/goat/scoring.py:147:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/goat/scoring.py:167:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/goat/scoring.py:168:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/goat/scoring.py:273:    parse_result: GoatParseResult,
+app/services/food/knowledge/meat/goat/scoring.py:291:        parse_result,
+app/services/food/knowledge/meat/goat/scoring.py:295:            "parse_result must be GoatParseResult"
+app/services/food/knowledge/meat/goat/scoring.py:301:        parse_result
+app/services/food/knowledge/meat/goat/scoring.py:360:def calculate_goat_final_score(
+app/services/food/knowledge/meat/goat/scoring.py:412:    "calculate_goat_final_score",
+app/services/food/knowledge/meat/goat/cut_registry.py:101:            metadata=metadata,
+app/services/food/knowledge/meat/goat/__init__.py:43:    calculate_goat_final_score,
+app/services/food/knowledge/meat/goat/__init__.py:89:    "calculate_goat_final_score",
+app/services/food/knowledge/meat/goat/rules.py:15:    parse_result: GoatParseResult,
+app/services/food/knowledge/meat/goat/rules.py:20:    Rules는 attributes, scores, parse_result를 변경하지 않는다.
+app/services/food/knowledge/meat/goat/rules.py:34:        parse_result,
+app/services/food/knowledge/meat/goat/rules.py:38:            "parse_result must be GoatParseResult"
+app/services/food/knowledge/meat/goat/rules.py:43:        parse_result.warnings
+app/services/food/knowledge/meat/goat/rules.py:292:    if not parse_result.is_complete:
+app/services/food/knowledge/meat/goat/type_registry.py:89:            metadata=metadata,
+app/services/food/knowledge/meat/goat/breed_registry.py:100:            metadata=metadata,
+app/services/food/knowledge/meat/goat/parser.py:300:            metadata=metadata,
+app/services/food/knowledge/meat/goat/parser.py:323:            warnings=warnings,
+app/services/food/knowledge/meat/goat/parser.py:423:            metadata={
+app/services/food/knowledge/meat/goat/parser.py:449:            warnings=warnings,
+app/services/food/knowledge/meat/chicken/provider.py:20:    calculate_chicken_final_score,
+app/services/food/knowledge/meat/chicken/provider.py:171:        parse_result = (
+app/services/food/knowledge/meat/chicken/provider.py:179:            parse_result=parse_result,
+app/services/food/knowledge/meat/chicken/provider.py:184:            parse_result=parse_result,
+app/services/food/knowledge/meat/chicken/provider.py:190:                attributes=attributes,
+app/services/food/knowledge/meat/chicken/provider.py:191:                scores=scores,
+app/services/food/knowledge/meat/chicken/provider.py:192:                parse_result=parse_result,
+app/services/food/knowledge/meat/chicken/provider.py:196:        final_score = (
+app/services/food/knowledge/meat/chicken/provider.py:197:            calculate_chicken_final_score(
+app/services/food/knowledge/meat/chicken/provider.py:202:        return FoodKnowledgeResult(
+app/services/food/knowledge/meat/chicken/provider.py:208:            attributes=attributes,
+app/services/food/knowledge/meat/chicken/provider.py:209:            scores=scores,
+app/services/food/knowledge/meat/chicken/provider.py:210:            reasons=reasons,
+app/services/food/knowledge/meat/chicken/provider.py:211:            warnings=warnings,
+app/services/food/knowledge/meat/chicken/provider.py:212:            final_score=final_score,
+app/services/food/knowledge/meat/chicken/provider.py:214:                parse_result.confidence
+app/services/food/knowledge/meat/chicken/provider.py:216:            metadata={
+app/services/food/knowledge/meat/chicken/provider.py:233:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/chicken/provider.py:239:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/chicken/provider.py:245:                    parse_result.is_complete
+app/services/food/knowledge/meat/chicken/provider.py:248:                    parse_result.is_usable
+app/services/food/knowledge/meat/chicken/provider.py:251:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/chicken/provider.py:256:                    parse_result.metadata.get(
+app/services/food/knowledge/meat/chicken/attributes.py:220:    parse_result: ChickenParseResult,
+app/services/food/knowledge/meat/chicken/attributes.py:235:        parse_result,
+app/services/food/knowledge/meat/chicken/attributes.py:239:            "parse_result must be ChickenParseResult"
+app/services/food/knowledge/meat/chicken/attributes.py:282:            parse_result.chicken_type
+app/services/food/knowledge/meat/chicken/attributes.py:284:        "breed": parse_result.breed,
+app/services/food/knowledge/meat/chicken/attributes.py:285:        "cut": parse_result.cut,
+app/services/food/knowledge/meat/chicken/attributes.py:286:        "confidence": parse_result.confidence,
+app/services/food/knowledge/meat/chicken/attributes.py:288:            parse_result.chicken_type_confidence
+app/services/food/knowledge/meat/chicken/attributes.py:291:            parse_result.breed_confidence
+app/services/food/knowledge/meat/chicken/attributes.py:294:            parse_result.cut_confidence
+app/services/food/knowledge/meat/chicken/attributes.py:297:            parse_result.detected_keywords
+app/services/food/knowledge/meat/chicken/attributes.py:300:            parse_result.warnings
+app/services/food/knowledge/meat/chicken/attributes.py:303:            parse_result.is_complete
+app/services/food/knowledge/meat/chicken/attributes.py:305:        "is_usable": parse_result.is_usable,
+app/services/food/knowledge/meat/chicken/attributes.py:309:        parse_result.chicken_type_match
+app/services/food/knowledge/meat/chicken/attributes.py:313:            parse_result
+app/services/food/knowledge/meat/chicken/attributes.py:347:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/chicken/attributes.py:348:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/chicken/attributes.py:382:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/chicken/attributes.py:383:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/chicken/scoring.py:102:    parse_result: ChickenParseResult,
+app/services/food/knowledge/meat/chicken/scoring.py:110:        parse_result,
+app/services/food/knowledge/meat/chicken/scoring.py:114:            "parse_result must be ChickenParseResult"
+app/services/food/knowledge/meat/chicken/scoring.py:133:        parse_result.chicken_type_match
+app/services/food/knowledge/meat/chicken/scoring.py:137:            parse_result
+app/services/food/knowledge/meat/chicken/scoring.py:146:    if parse_result.breed_match is not None:
+app/services/food/knowledge/meat/chicken/scoring.py:147:        breed = parse_result.breed_match.breed
+app/services/food/knowledge/meat/chicken/scoring.py:167:    if parse_result.cut_match is not None:
+app/services/food/knowledge/meat/chicken/scoring.py:168:        cut = parse_result.cut_match.cut
+app/services/food/knowledge/meat/chicken/scoring.py:273:    parse_result: ChickenParseResult,
+app/services/food/knowledge/meat/chicken/scoring.py:291:        parse_result,
+app/services/food/knowledge/meat/chicken/scoring.py:295:            "parse_result must be ChickenParseResult"
+app/services/food/knowledge/meat/chicken/scoring.py:301:        parse_result
+app/services/food/knowledge/meat/chicken/scoring.py:362:def calculate_chicken_final_score(
+app/services/food/knowledge/meat/chicken/scoring.py:414:    "calculate_chicken_final_score",
+app/services/food/knowledge/meat/chicken/cut_registry.py:101:            metadata=metadata,
+app/services/food/knowledge/meat/chicken/__init__.py:39:    calculate_chicken_final_score,
+app/services/food/knowledge/meat/chicken/__init__.py:83:    "calculate_chicken_final_score",
+app/services/food/knowledge/meat/chicken/rules.py:15:    parse_result: ChickenParseResult,
+app/services/food/knowledge/meat/chicken/rules.py:43:        parse_result,
+app/services/food/knowledge/meat/chicken/rules.py:47:            "parse_result must be ChickenParseResult"
+app/services/food/knowledge/meat/chicken/rules.py:52:        parse_result.warnings
+app/services/food/knowledge/meat/chicken/rules.py:308:    if not parse_result.is_complete:
+app/services/food/knowledge/meat/chicken/type_registry.py:89:            metadata=metadata,
+app/services/food/knowledge/meat/chicken/breed_registry.py:100:            metadata=metadata,
+app/services/food/knowledge/meat/chicken/parser.py:163:            metadata=metadata,
+app/services/food/knowledge/meat/chicken/parser.py:184:            warnings=list(result.warnings),
+app/services/food/knowledge/meat/chicken/parser.py:257:            metadata={
+app/services/food/knowledge/meat/chicken/parser.py:283:            warnings=warnings,
+app/services/food/knowledge/cheese/provider.py:20:    calculate_cheese_final_score,
+app/services/food/knowledge/cheese/provider.py:180:        parse_result = (
+app/services/food/knowledge/cheese/provider.py:188:            parse_result=parse_result,
+app/services/food/knowledge/cheese/provider.py:193:            parse_result=parse_result,
+app/services/food/knowledge/cheese/provider.py:197:            attributes=attributes,
+app/services/food/knowledge/cheese/provider.py:198:            scores=scores,
+app/services/food/knowledge/cheese/provider.py:199:            parse_result=parse_result,
+app/services/food/knowledge/cheese/provider.py:202:        final_score = (
+app/services/food/knowledge/cheese/provider.py:203:            calculate_cheese_final_score(
+app/services/food/knowledge/cheese/provider.py:208:        return FoodKnowledgeResult(
+app/services/food/knowledge/cheese/provider.py:214:            attributes=attributes,
+app/services/food/knowledge/cheese/provider.py:215:            scores=scores,
+app/services/food/knowledge/cheese/provider.py:216:            reasons=reasons,
+app/services/food/knowledge/cheese/provider.py:217:            warnings=warnings,
+app/services/food/knowledge/cheese/provider.py:218:            final_score=final_score,
+app/services/food/knowledge/cheese/provider.py:219:            confidence=parse_result.confidence,
+app/services/food/knowledge/cheese/provider.py:220:            metadata={
+app/services/food/knowledge/cheese/provider.py:256:                    parse_result
+app/services/food/knowledge/cheese/provider.py:261:                    parse_result.is_complete
+app/services/food/knowledge/cheese/provider.py:264:                    parse_result.is_usable
+app/services/food/knowledge/cheese/attributes.py:30:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/attributes.py:53:    if parse_result.origin_match is None:
+app/services/food/knowledge/cheese/attributes.py:57:        parse_result
+app/services/food/knowledge/cheese/attributes.py:67:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/attributes.py:87:    if parse_result.origin_match is None:
+app/services/food/knowledge/cheese/attributes.py:91:        parse_result
+app/services/food/knowledge/cheese/attributes.py:292:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/attributes.py:310:        parse_result,
+app/services/food/knowledge/cheese/attributes.py:314:            "parse_result must be CheeseParseResult"
+app/services/food/knowledge/cheese/attributes.py:323:        "cheese_type": parse_result.cheese_type,
+app/services/food/knowledge/cheese/attributes.py:324:        "milk_source": parse_result.milk_source,
+app/services/food/knowledge/cheese/attributes.py:325:        "origin": parse_result.origin,
+app/services/food/knowledge/cheese/attributes.py:328:            parse_result=parse_result,
+app/services/food/knowledge/cheese/attributes.py:333:                parse_result=parse_result,
+app/services/food/knowledge/cheese/attributes.py:336:        "texture": parse_result.texture,
+app/services/food/knowledge/cheese/attributes.py:337:        "aging": parse_result.aging,
+app/services/food/knowledge/cheese/attributes.py:369:        "confidence": parse_result.confidence,
+app/services/food/knowledge/cheese/attributes.py:371:            parse_result
+app/services/food/knowledge/cheese/attributes.py:375:            parse_result
+app/services/food/knowledge/cheese/attributes.py:379:            parse_result.origin_confidence
+app/services/food/knowledge/cheese/attributes.py:382:            parse_result.texture_confidence
+app/services/food/knowledge/cheese/attributes.py:385:            parse_result.aging_confidence
+app/services/food/knowledge/cheese/attributes.py:388:            parse_result.detected_keywords
+app/services/food/knowledge/cheese/attributes.py:391:            parse_result.warnings
+app/services/food/knowledge/cheese/attributes.py:394:            parse_result.matched_field_count
+app/services/food/knowledge/cheese/attributes.py:397:            parse_result.is_complete
+app/services/food/knowledge/cheese/attributes.py:399:        "is_usable": parse_result.is_usable,
+app/services/food/knowledge/cheese/attributes.py:403:        parse_result.cheese_type_match
+app/services/food/knowledge/cheese/attributes.py:407:            parse_result
+app/services/food/knowledge/cheese/attributes.py:443:        parse_result.milk_source_match
+app/services/food/knowledge/cheese/attributes.py:447:            parse_result
+app/services/food/knowledge/cheese/attributes.py:479:    if parse_result.origin_match is not None:
+app/services/food/knowledge/cheese/attributes.py:481:            parse_result
+app/services/food/knowledge/cheese/attributes.py:505:    if parse_result.texture_match is not None:
+app/services/food/knowledge/cheese/attributes.py:507:            parse_result
+app/services/food/knowledge/cheese/attributes.py:536:    if parse_result.aging_match is not None:
+app/services/food/knowledge/cheese/attributes.py:538:            parse_result
+app/services/food/knowledge/cheese/texture_registry.py:215:            metadata=metadata,
+app/services/food/knowledge/cheese/origin_registry.py:212:            metadata=metadata,
+app/services/food/knowledge/cheese/scoring.py:134:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/scoring.py:142:        parse_result,
+app/services/food/knowledge/cheese/scoring.py:146:            "parse_result must be CheeseParseResult"
+app/services/food/knowledge/cheese/scoring.py:164:    if parse_result.cheese_type_match is not None:
+app/services/food/knowledge/cheese/scoring.py:166:            parse_result
+app/services/food/knowledge/cheese/scoring.py:181:    if parse_result.milk_source_match is not None:
+app/services/food/knowledge/cheese/scoring.py:183:            parse_result
+app/services/food/knowledge/cheese/scoring.py:198:    if parse_result.origin_match is not None:
+app/services/food/knowledge/cheese/scoring.py:200:            parse_result
+app/services/food/knowledge/cheese/scoring.py:212:    if parse_result.texture_match is not None:
+app/services/food/knowledge/cheese/scoring.py:214:            parse_result
+app/services/food/knowledge/cheese/scoring.py:229:    if parse_result.aging_match is not None:
+app/services/food/knowledge/cheese/scoring.py:231:            parse_result
+app/services/food/knowledge/cheese/scoring.py:265:        scores={
+app/services/food/knowledge/cheese/scoring.py:279:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/scoring.py:296:        parse_result,
+app/services/food/knowledge/cheese/scoring.py:300:            "parse_result must be CheeseParseResult"
+app/services/food/knowledge/cheese/scoring.py:304:        parse_result
+app/services/food/knowledge/cheese/scoring.py:342:def calculate_cheese_final_score(
+app/services/food/knowledge/cheese/scoring.py:400:    "calculate_cheese_final_score",
+app/services/food/knowledge/cheese/__init__.py:105:    calculate_cheese_final_score,
+app/services/food/knowledge/cheese/__init__.py:124:        "calculate_cheese_final_score",
+app/services/food/knowledge/cheese/rules.py:41:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/rules.py:67:        parse_result,
+app/services/food/knowledge/cheese/rules.py:71:            "parse_result must be CheeseParseResult"
+app/services/food/knowledge/cheese/rules.py:76:        parse_result.warnings
+app/services/food/knowledge/cheese/rules.py:243:    if not parse_result.is_usable:
+app/services/food/knowledge/cheese/type_registry.py:218:            metadata=metadata,
+app/services/food/knowledge/cheese/parser.py:242:            metadata={
+app/services/food/knowledge/cheese/parser.py:283:            metadata={
+app/services/food/knowledge/cheese/parser.py:367:            metadata=result_metadata,
+app/services/food/knowledge/cheese/parser.py:424:            warnings=warnings,
+app/services/food/knowledge/cheese/milk_source_registry.py:215:            metadata=metadata,
+app/services/food/knowledge/cheese/aging_registry.py:218:            metadata=metadata,
+app/services/food/knowledge/wine/provider.py:24:    calculate_wine_final_score,
+app/services/food/knowledge/wine/provider.py:179:        parse_result = (
+app/services/food/knowledge/wine/provider.py:187:            parse_result=parse_result,
+app/services/food/knowledge/wine/provider.py:192:            parse_result=parse_result,
+app/services/food/knowledge/wine/provider.py:196:            attributes=attributes,
+app/services/food/knowledge/wine/provider.py:197:            scores=scores,
+app/services/food/knowledge/wine/provider.py:198:            parse_result=parse_result,
+app/services/food/knowledge/wine/provider.py:201:        final_score = (
+app/services/food/knowledge/wine/provider.py:202:            calculate_wine_final_score(
+app/services/food/knowledge/wine/provider.py:207:        return FoodKnowledgeResult(
+app/services/food/knowledge/wine/provider.py:213:            attributes=attributes,
+app/services/food/knowledge/wine/provider.py:214:            scores=scores,
+app/services/food/knowledge/wine/provider.py:215:            reasons=reasons,
+app/services/food/knowledge/wine/provider.py:216:            warnings=warnings,
+app/services/food/knowledge/wine/provider.py:217:            final_score=final_score,
+app/services/food/knowledge/wine/provider.py:218:            confidence=parse_result.confidence,
+app/services/food/knowledge/wine/provider.py:219:            metadata={
+app/services/food/knowledge/wine/provider.py:253:                    parse_result
+app/services/food/knowledge/wine/provider.py:258:                    parse_result.is_complete
+app/services/food/knowledge/wine/provider.py:261:                    parse_result.is_usable
+app/services/food/knowledge/wine/attributes.py:30:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/attributes.py:48:    if parse_result.region_match is None:
+app/services/food/knowledge/wine/attributes.py:52:        parse_result
+app/services/food/knowledge/wine/attributes.py:69:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/attributes.py:88:    if parse_result.region_match is None:
+app/services/food/knowledge/wine/attributes.py:92:        parse_result
+app/services/food/knowledge/wine/attributes.py:328:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/attributes.py:345:        parse_result,
+app/services/food/knowledge/wine/attributes.py:349:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/attributes.py:356:        "wine_type": parse_result.wine_type,
+app/services/food/knowledge/wine/attributes.py:357:        "grape": parse_result.grape,
+app/services/food/knowledge/wine/attributes.py:358:        "region": parse_result.region,
+app/services/food/knowledge/wine/attributes.py:361:            parse_result=parse_result,
+app/services/food/knowledge/wine/attributes.py:365:            parse_result=parse_result,
+app/services/food/knowledge/wine/attributes.py:367:        "sweetness": parse_result.sweetness,
+app/services/food/knowledge/wine/attributes.py:368:        "body": parse_result.body,
+app/services/food/knowledge/wine/attributes.py:369:        "acidity": parse_result.acidity,
+app/services/food/knowledge/wine/attributes.py:370:        "vintage": parse_result.vintage,
+app/services/food/knowledge/wine/attributes.py:372:            parse_result.alcohol_percent
+app/services/food/knowledge/wine/attributes.py:406:            parse_result.matched_field_count
+app/services/food/knowledge/wine/attributes.py:409:            parse_result.is_complete
+app/services/food/knowledge/wine/attributes.py:412:            parse_result.is_usable
+app/services/food/knowledge/wine/attributes.py:415:            parse_result.confidence
+app/services/food/knowledge/wine/attributes.py:420:        attributes=attributes,
+app/services/food/knowledge/wine/attributes.py:421:        parse_result=parse_result,
+app/services/food/knowledge/wine/attributes.py:430:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/attributes.py:432:    if parse_result.wine_type_match is not None:
+app/services/food/knowledge/wine/attributes.py:434:            parse_result
+app/services/food/knowledge/wine/attributes.py:459:    if parse_result.grape_match is not None:
+app/services/food/knowledge/wine/attributes.py:461:            parse_result
+app/services/food/knowledge/wine/attributes.py:477:    if parse_result.region_match is not None:
+app/services/food/knowledge/wine/attributes.py:479:            parse_result
+app/services/food/knowledge/wine/attributes.py:494:        parse_result.sweetness_match
+app/services/food/knowledge/wine/attributes.py:498:            parse_result
+app/services/food/knowledge/wine/attributes.py:520:    if parse_result.body_match is not None:
+app/services/food/knowledge/wine/attributes.py:522:            parse_result
+app/services/food/knowledge/wine/attributes.py:534:    if parse_result.acidity_match is not None:
+app/services/food/knowledge/wine/attributes.py:536:            parse_result
+app/services/food/knowledge/wine/scoring.py:126:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:134:        parse_result,
+app/services/food/knowledge/wine/scoring.py:138:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:150:    if parse_result.wine_type_match is not None:
+app/services/food/knowledge/wine/scoring.py:152:            parse_result
+app/services/food/knowledge/wine/scoring.py:158:    if parse_result.grape_match is not None:
+app/services/food/knowledge/wine/scoring.py:160:            parse_result
+app/services/food/knowledge/wine/scoring.py:166:    if parse_result.region_match is not None:
+app/services/food/knowledge/wine/scoring.py:168:            parse_result
+app/services/food/knowledge/wine/scoring.py:174:    if parse_result.sweetness_match is not None:
+app/services/food/knowledge/wine/scoring.py:176:            parse_result
+app/services/food/knowledge/wine/scoring.py:182:    if parse_result.body_match is not None:
+app/services/food/knowledge/wine/scoring.py:184:            parse_result
+app/services/food/knowledge/wine/scoring.py:190:    if parse_result.acidity_match is not None:
+app/services/food/knowledge/wine/scoring.py:192:            parse_result
+app/services/food/knowledge/wine/scoring.py:221:        scores={
+app/services/food/knowledge/wine/scoring.py:236:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:250:        parse_result,
+app/services/food/knowledge/wine/scoring.py:254:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:267:    if parse_result.vintage is not None:
+app/services/food/knowledge/wine/scoring.py:270:    if parse_result.alcohol_percent is not None:
+app/services/food/knowledge/wine/scoring.py:273:    if parse_result.is_complete:
+app/services/food/knowledge/wine/scoring.py:284:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:295:        parse_result,
+app/services/food/knowledge/wine/scoring.py:299:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:304:            parse_result.confidence * 100.0
+app/services/food/knowledge/wine/scoring.py:379:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:390:        parse_result,
+app/services/food/knowledge/wine/scoring.py:394:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:398:        parse_result
+app/services/food/knowledge/wine/scoring.py:425:        registry_scores=registry_scores,
+app/services/food/knowledge/wine/scoring.py:426:        parse_result=parse_result,
+app/services/food/knowledge/wine/scoring.py:431:        parse_result=parse_result,
+app/services/food/knowledge/wine/scoring.py:476:def calculate_wine_final_score(
+app/services/food/knowledge/wine/scoring.py:491:        scores=scores,
+app/services/food/knowledge/wine/scoring.py:501:    "calculate_wine_final_score",
+app/services/food/knowledge/wine/rules.py:15:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/rules.py:35:        parse_result,
+app/services/food/knowledge/wine/rules.py:39:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/rules.py:44:        parse_result.warnings
+app/services/food/knowledge/wine/rules.py:48:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:49:        parse_result=parse_result,
+app/services/food/knowledge/wine/rules.py:50:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:51:        warnings=warnings,
+app/services/food/knowledge/wine/rules.py:55:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:56:        scores=scores,
+app/services/food/knowledge/wine/rules.py:57:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:58:        warnings=warnings,
+app/services/food/knowledge/wine/rules.py:62:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:63:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:67:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:68:        reasons=reasons,
+app/services/food/knowledge/wine/rules.py:72:        attributes=attributes,
+app/services/food/knowledge/wine/rules.py:73:        warnings=warnings,
+app/services/food/knowledge/wine/rules.py:85:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/rules.py:89:    if parse_result.is_complete:
+app/services/food/knowledge/wine/rules.py:94:    elif parse_result.is_usable:
+app/services/food/knowledge/wine/rules.py:104:    if parse_result.vintage is not None:
+app/services/food/knowledge/wine/rules.py:106:            f"{parse_result.vintage} 빈티지 정보가 "
+app/services/food/knowledge/wine/rules.py:114:    if parse_result.alcohol_percent is not None:
+app/services/food/knowledge/wine/rules.py:116:            f"알코올 도수 {parse_result.alcohol_percent:g}%가 "
+app/services/food/knowledge/wine/parser.py:302:            metadata={
+app/services/food/knowledge/wine/parser.py:350:            metadata={
+app/services/food/knowledge/wine/parser.py:415:            metadata=dict(metadata),
+app/services/food/knowledge/wine/parser.py:461:            warnings=warnings,
+app/services/food/knowledge/tea/attributes.py:28:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/attributes.py:47:    if parse_result.origin_match is None:
+app/services/food/knowledge/tea/attributes.py:51:        parse_result
+app/services/food/knowledge/tea/attributes.py:68:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/attributes.py:88:    if parse_result.origin_match is None:
+app/services/food/knowledge/tea/attributes.py:92:        parse_result
+app/services/food/knowledge/tea/attributes.py:354:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/attributes.py:382:        parse_result,
+app/services/food/knowledge/tea/attributes.py:386:            "parse_result must be TeaParseResult"
+app/services/food/knowledge/tea/attributes.py:393:        "tea_type": parse_result.tea_type,
+app/services/food/knowledge/tea/attributes.py:394:        "origin": parse_result.origin,
+app/services/food/knowledge/tea/attributes.py:395:        "variety": parse_result.variety,
+app/services/food/knowledge/tea/attributes.py:396:        "processing": parse_result.processing,
+app/services/food/knowledge/tea/attributes.py:397:        "oxidation": parse_result.oxidation,
+app/services/food/knowledge/tea/attributes.py:398:        "flavor": parse_result.flavor,
+app/services/food/knowledge/tea/attributes.py:401:            parse_result=parse_result,
+app/services/food/knowledge/tea/attributes.py:405:            parse_result=parse_result,
+app/services/food/knowledge/tea/attributes.py:443:        "confidence": parse_result.confidence,
+app/services/food/knowledge/tea/attributes.py:445:            parse_result.tea_type_confidence
+app/services/food/knowledge/tea/attributes.py:448:            parse_result.origin_confidence
+app/services/food/knowledge/tea/attributes.py:451:            parse_result.variety_confidence
+app/services/food/knowledge/tea/attributes.py:454:            parse_result.processing_confidence
+app/services/food/knowledge/tea/attributes.py:457:            parse_result.oxidation_confidence
+app/services/food/knowledge/tea/attributes.py:460:            parse_result.flavor_confidence
+app/services/food/knowledge/tea/attributes.py:463:            parse_result.detected_keywords
+app/services/food/knowledge/tea/attributes.py:466:            parse_result.warnings
+app/services/food/knowledge/tea/attributes.py:469:            parse_result.matched_field_count
+app/services/food/knowledge/tea/attributes.py:472:            parse_result.is_complete
+app/services/food/knowledge/tea/attributes.py:475:            parse_result.is_usable
+app/services/food/knowledge/tea/attributes.py:480:        attributes=attributes,
+app/services/food/knowledge/tea/attributes.py:481:        parse_result=parse_result,
+app/services/food/knowledge/tea/attributes.py:490:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/attributes.py:493:    if parse_result.tea_type_match is not None:
+app/services/food/knowledge/tea/attributes.py:495:            parse_result
+app/services/food/knowledge/tea/attributes.py:517:    if parse_result.origin_match is not None:
+app/services/food/knowledge/tea/attributes.py:519:            parse_result
+app/services/food/knowledge/tea/attributes.py:550:    if parse_result.variety_match is not None:
+app/services/food/knowledge/tea/attributes.py:552:            parse_result
+app/services/food/knowledge/tea/attributes.py:583:    if parse_result.processing_match is not None:
+app/services/food/knowledge/tea/attributes.py:585:            parse_result
+app/services/food/knowledge/tea/attributes.py:619:    if parse_result.oxidation_match is not None:
+app/services/food/knowledge/tea/attributes.py:621:            parse_result
+app/services/food/knowledge/tea/attributes.py:655:    if parse_result.flavor_match is not None:
+app/services/food/knowledge/tea/attributes.py:657:            parse_result
+app/services/food/knowledge/tea/scoring.py:129:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/scoring.py:137:        parse_result,
+app/services/food/knowledge/tea/scoring.py:141:            "parse_result must be TeaParseResult"
+app/services/food/knowledge/tea/scoring.py:153:    if parse_result.tea_type_match is not None:
+app/services/food/knowledge/tea/scoring.py:155:            parse_result
+app/services/food/knowledge/tea/scoring.py:161:    if parse_result.origin_match is not None:
+app/services/food/knowledge/tea/scoring.py:163:            parse_result
+app/services/food/knowledge/tea/scoring.py:169:    if parse_result.variety_match is not None:
+app/services/food/knowledge/tea/scoring.py:171:            parse_result
+app/services/food/knowledge/tea/scoring.py:177:    if parse_result.processing_match is not None:
+app/services/food/knowledge/tea/scoring.py:179:            parse_result
+app/services/food/knowledge/tea/scoring.py:185:    if parse_result.oxidation_match is not None:
+app/services/food/knowledge/tea/scoring.py:187:            parse_result
+app/services/food/knowledge/tea/scoring.py:193:    if parse_result.flavor_match is not None:
+app/services/food/knowledge/tea/scoring.py:195:            parse_result
+app/services/food/knowledge/tea/scoring.py:224:        scores={
+app/services/food/knowledge/tea/scoring.py:239:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/scoring.py:255:        parse_result,
+app/services/food/knowledge/tea/scoring.py:259:            "parse_result must be TeaParseResult"
+app/services/food/knowledge/tea/scoring.py:263:        parse_result
+app/services/food/knowledge/tea/scoring.py:304:def calculate_tea_final_score(
+app/services/food/knowledge/tea/scoring.py:357:    "calculate_tea_final_score",
+app/services/food/knowledge/tea/__init__.py:25:    "calculate_tea_final_score",
+app/services/food/knowledge/tea/__init__.py:50:    calculate_tea_final_score,
+app/services/food/knowledge/tea/rules.py:40:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/rules.py:53:    - attributes, scores, parse_result 수정
+app/services/food/knowledge/tea/rules.py:72:        parse_result,
+app/services/food/knowledge/tea/rules.py:76:            "parse_result must be TeaParseResult"
+app/services/food/knowledge/tea/rules.py:81:        parse_result.warnings
+app/services/food/knowledge/tea/rules.py:85:        attributes=attributes,
+app/services/food/knowledge/tea/rules.py:86:        parse_result=parse_result,
+app/services/food/knowledge/tea/rules.py:87:        reasons=reasons,
+app/services/food/knowledge/tea/rules.py:88:        warnings=warnings,
+app/services/food/knowledge/tea/rules.py:92:        attributes=attributes,
+app/services/food/knowledge/tea/rules.py:93:        reasons=reasons,
+app/services/food/knowledge/tea/rules.py:97:        attributes=attributes,
+app/services/food/knowledge/tea/rules.py:98:        reasons=reasons,
+app/services/food/knowledge/tea/rules.py:102:        scores=scores,
+app/services/food/knowledge/tea/rules.py:103:        reasons=reasons,
+app/services/food/knowledge/tea/rules.py:104:        warnings=warnings,
+app/services/food/knowledge/tea/rules.py:108:        attributes=attributes,
+app/services/food/knowledge/tea/rules.py:109:        warnings=warnings,
+app/services/food/knowledge/tea/rules.py:121:    parse_result: TeaParseResult,
+app/services/food/knowledge/tea/rules.py:147:    if parse_result.is_complete:
+app/services/food/knowledge/tea/rules.py:152:    elif parse_result.is_usable:
+app/services/food/knowledge/tea/parser.py:224:            metadata={
+app/services/food/knowledge/tea/parser.py:260:            metadata={
+app/services/food/knowledge/tea/parser.py:323:            metadata=result_metadata,
+app/services/food/knowledge/tea/parser.py:361:            warnings=self._build_warnings(
+app/services/food/knowledge/common/base_registry.py:652:                        metadata=copy.deepcopy(
+app/services/food/knowledge/common/base_registry.py:751:            metadata=copy.deepcopy(
+app/services/food/knowledge/common/rules.py:88:        metadata=metadata or {},
+app/services/food/knowledge/coffee/process_registry.py:167:            metadata=extra_metadata(
+app/services/food/knowledge/coffee/provider.py:20:    calculate_coffee_final_score,
+app/services/food/knowledge/coffee/provider.py:172:        parse_result = (
+app/services/food/knowledge/coffee/provider.py:180:            parse_result=parse_result,
+app/services/food/knowledge/coffee/provider.py:185:            parse_result=parse_result,
+app/services/food/knowledge/coffee/provider.py:189:            attributes=attributes,
+app/services/food/knowledge/coffee/provider.py:190:            scores=scores,
+app/services/food/knowledge/coffee/provider.py:191:            parse_result=parse_result,
+app/services/food/knowledge/coffee/provider.py:194:        final_score = (
+app/services/food/knowledge/coffee/provider.py:195:            calculate_coffee_final_score(
+app/services/food/knowledge/coffee/provider.py:200:        return FoodKnowledgeResult(
+app/services/food/knowledge/coffee/provider.py:206:            attributes=attributes,
+app/services/food/knowledge/coffee/provider.py:207:            scores=scores,
+app/services/food/knowledge/coffee/provider.py:208:            reasons=reasons,
+app/services/food/knowledge/coffee/provider.py:209:            warnings=warnings,
+app/services/food/knowledge/coffee/provider.py:210:            final_score=final_score,
+app/services/food/knowledge/coffee/provider.py:211:            confidence=parse_result.confidence,
+app/services/food/knowledge/coffee/provider.py:212:            metadata={
+app/services/food/knowledge/coffee/provider.py:246:                    parse_result
+app/services/food/knowledge/coffee/provider.py:251:                    parse_result.is_complete
+app/services/food/knowledge/coffee/provider.py:254:                    parse_result.is_usable
+app/services/food/knowledge/coffee/attributes.py:30:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/attributes.py:54:    if parse_result.origin_match is None:
+app/services/food/knowledge/coffee/attributes.py:58:        parse_result
+app/services/food/knowledge/coffee/attributes.py:68:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/attributes.py:87:    if parse_result.origin_match is None:
+app/services/food/knowledge/coffee/attributes.py:91:        parse_result
+app/services/food/knowledge/coffee/attributes.py:368:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/attributes.py:392:        parse_result,
+app/services/food/knowledge/coffee/attributes.py:396:            "parse_result must be CoffeeParseResult"
+app/services/food/knowledge/coffee/attributes.py:405:        "bean": parse_result.bean,
+app/services/food/knowledge/coffee/attributes.py:406:        "origin": parse_result.origin,
+app/services/food/knowledge/coffee/attributes.py:409:            parse_result=parse_result,
+app/services/food/knowledge/coffee/attributes.py:414:                parse_result=parse_result,
+app/services/food/knowledge/coffee/attributes.py:417:        "roast": parse_result.roast,
+app/services/food/knowledge/coffee/attributes.py:418:        "process": parse_result.process,
+app/services/food/knowledge/coffee/attributes.py:453:        "confidence": parse_result.confidence,
+app/services/food/knowledge/coffee/attributes.py:455:            parse_result.bean_confidence
+app/services/food/knowledge/coffee/attributes.py:458:            parse_result.origin_confidence
+app/services/food/knowledge/coffee/attributes.py:461:            parse_result.roast_confidence
+app/services/food/knowledge/coffee/attributes.py:464:            parse_result.process_confidence
+app/services/food/knowledge/coffee/attributes.py:467:            parse_result.detected_keywords
+app/services/food/knowledge/coffee/attributes.py:470:            parse_result.warnings
+app/services/food/knowledge/coffee/attributes.py:473:            parse_result.matched_field_count
+app/services/food/knowledge/coffee/attributes.py:476:            parse_result.is_complete
+app/services/food/knowledge/coffee/attributes.py:478:        "is_usable": parse_result.is_usable,
+app/services/food/knowledge/coffee/attributes.py:481:    if parse_result.bean_match is not None:
+app/services/food/knowledge/coffee/attributes.py:483:            parse_result
+app/services/food/knowledge/coffee/attributes.py:514:    if parse_result.origin_match is not None:
+app/services/food/knowledge/coffee/attributes.py:516:            parse_result
+app/services/food/knowledge/coffee/attributes.py:548:    if parse_result.roast_match is not None:
+app/services/food/knowledge/coffee/attributes.py:550:            parse_result
+app/services/food/knowledge/coffee/attributes.py:582:    if parse_result.process_match is not None:
+app/services/food/knowledge/coffee/attributes.py:584:            parse_result
+app/services/food/knowledge/coffee/origin_registry.py:177:            metadata=extra_metadata(
+app/services/food/knowledge/coffee/scoring.py:133:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/scoring.py:141:        parse_result,
+app/services/food/knowledge/coffee/scoring.py:145:            "parse_result must be CoffeeParseResult"
+app/services/food/knowledge/coffee/scoring.py:164:    if parse_result.bean_match is not None:
+app/services/food/knowledge/coffee/scoring.py:166:            parse_result
+app/services/food/knowledge/coffee/scoring.py:191:    if parse_result.origin_match is not None:
+app/services/food/knowledge/coffee/scoring.py:193:            parse_result
+app/services/food/knowledge/coffee/scoring.py:218:    if parse_result.roast_match is not None:
+app/services/food/knowledge/coffee/scoring.py:220:            parse_result
+app/services/food/knowledge/coffee/scoring.py:245:    if parse_result.process_match is not None:
+app/services/food/knowledge/coffee/scoring.py:247:            parse_result
+app/services/food/knowledge/coffee/scoring.py:308:        scores={
+app/services/food/knowledge/coffee/scoring.py:321:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/scoring.py:338:        parse_result,
+app/services/food/knowledge/coffee/scoring.py:342:            "parse_result must be CoffeeParseResult"
+app/services/food/knowledge/coffee/scoring.py:346:        parse_result
+app/services/food/knowledge/coffee/scoring.py:381:def calculate_coffee_final_score(
+app/services/food/knowledge/coffee/scoring.py:439:    "calculate_coffee_final_score",
+app/services/food/knowledge/coffee/__init__.py:91:    calculate_coffee_final_score,
+app/services/food/knowledge/coffee/__init__.py:110:        "calculate_coffee_final_score",
+app/services/food/knowledge/coffee/rules.py:40:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/rules.py:51:    - attributes, scores, parse_result 수정
+app/services/food/knowledge/coffee/rules.py:70:        parse_result,
+app/services/food/knowledge/coffee/rules.py:74:            "parse_result must be CoffeeParseResult"
+app/services/food/knowledge/coffee/rules.py:79:        parse_result.warnings
+app/services/food/knowledge/coffee/rules.py:299:    if not parse_result.is_usable:
+app/services/food/knowledge/coffee/parser.py:211:            metadata={
+app/services/food/knowledge/coffee/parser.py:243:            metadata={
+app/services/food/knowledge/coffee/parser.py:307:            metadata=result_metadata,
+app/services/food/knowledge/coffee/parser.py:349:            warnings=self._build_warnings(
+app/services/food/knowledge/coffee/roast_registry.py:163:            metadata=extra_metadata(
+app/services/food/knowledge/coffee/bean_registry.py:170:            metadata=extra_metadata(
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:10:    calculate_lamb_final_score,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:146:    parse_result = (
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:154:        parse_result=parse_result,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:170:        calculate_lamb_final_score(
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:180:    parse_result = (
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:188:        parse_result=parse_result,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:193:        parse_result=parse_result,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:197:        attributes=attributes,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:198:        scores=scores,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:199:        parse_result=parse_result,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:246:    assert result.final_score == 85.75
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:287:    assert result.final_score == 0.0
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:131:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:139:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:225:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:233:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:249:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:257:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:293:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:299:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:326:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:334:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:377:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:385:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:390:        is not parse_result.detected_keywords
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:394:        is not parse_result.warnings
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:399:    parse_result = VenisonParser().parse(
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:409:            parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:413:def test_build_attributes_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:417:            "parse_result must be "
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:425:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/venison/test_venison_attributes.py:458:def test_parse_result_type_contract() -> None:
+tests/services/food/knowledge/meat/venison/test_venison_provider.py:83:    assert result.final_score == 83.55
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:175:    assert result.final_score == 83.55
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:22:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:28:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:33:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:37:        attributes=attributes,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:38:        scores=scores,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:39:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:216:    parse_result = VenisonParser().parse(
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:221:        attributes={
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:227:        scores={
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:230:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:245:    parse_result = VenisonParser().parse(
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:249:    assert parse_result.warnings
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:252:        attributes={
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:258:        scores={
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:262:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:265:    for warning in parse_result.warnings:
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:275:    parse_result = (
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:281:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:286:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:292:        parse_result.warnings
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:296:        attributes=attributes,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:297:        scores=scores,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:298:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:304:        parse_result.warnings
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:327:    parse_result = VenisonParser().parse(
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:336:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:337:            scores={},
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:338:            parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:343:    parse_result = VenisonParser().parse(
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:352:            attributes={},
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:353:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:354:            parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:358:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:362:            "parse_result must be "
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:367:            attributes={},
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:368:            scores={},
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:369:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:374:    parse_result = VenisonParseResult(
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:380:        attributes={},
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:381:        scores={},
+tests/services/food/knowledge/meat/venison/test_venison_rules.py:382:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:10:    calculate_venison_final_score,
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:71:    parse_result = VenisonParser().parse_product(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:76:        parse_result
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:126:    parse_result = VenisonParser().parse_product(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:132:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:158:    parse_result = VenisonParser().parse_product(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:164:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:173:def test_calculate_venison_final_score(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:176:    parse_result = VenisonParser().parse_product(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:182:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:186:        calculate_venison_final_score(scores)
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:191:def test_final_score_supports_custom_weights() -> None:
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:193:        calculate_venison_final_score(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:215:    parse_result = VenisonParser().parse_product(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:221:        parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:230:    parse_result = VenisonParser().parse(
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:240:            parse_result=parse_result,
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:244:def test_scoring_rejects_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:248:            "parse_result must be "
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:256:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:260:def test_extract_scores_rejects_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:264:            "parse_result must be "
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:273:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/meat/venison/test_venison_scoring.py:278:        calculate_venison_final_score(
+tests/services/food/knowledge/meat/venison/test_venison_parser.py:311:def test_parse_result_confidences() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_parser.py:183:def test_parse_result_exposes_match_confidences() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:10:    calculate_duck_final_score,
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:68:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:73:        parse_result
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:123:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:129:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:154:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:160:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:175:def test_calculate_duck_final_score(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:178:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:184:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:188:        calculate_duck_final_score(scores)
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:193:def test_final_score_supports_custom_weights() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:195:        calculate_duck_final_score(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:217:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:223:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:232:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:242:            parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:246:def test_scoring_rejects_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:250:            "parse_result must be "
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:258:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:262:def test_extract_scores_rejects_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:266:            "parse_result must be "
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:275:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_scoring.py:280:        calculate_duck_final_score(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:81:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:87:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:112:    assert parse_result.duck_type_match is not None
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:113:    assert parse_result.breed_match is not None
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:114:    assert parse_result.cut_match is not None
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:117:        parse_result.duck_type_match.duck_type
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:119:    breed = parse_result.breed_match.breed
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:120:    cut = parse_result.cut_match.cut
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:162:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:168:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:177:    assert parse_result.cut_match is not None
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:181:        == parse_result.cut_match.cut.registry_key
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:201:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:207:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:253:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:259:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:264:        is not parse_result.detected_keywords
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:268:        is not parse_result.warnings
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:272:        parse_result.detected_keywords
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:275:        parse_result.warnings
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:286:        parse_result.detected_keywords
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:290:        parse_result.warnings
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:296:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:306:            parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:310:def test_build_attributes_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:314:            "parse_result must be "
+tests/services/food/knowledge/meat/duck/test_duck_attributes.py:322:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:23:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:28:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:32:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:36:        attributes=attributes,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:37:        scores=scores,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:38:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:162:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:177:        attributes=attributes,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:178:        scores=scores,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:179:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:190:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:197:        attributes={
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:203:        scores={
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:207:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:215:    for warning in parse_result.warnings:
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:220:    parse_result = DuckParser().parse_product(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:242:        attributes=attributes,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:243:        scores=scores,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:244:        parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:269:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:278:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:279:            scores={},
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:280:            parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:285:    parse_result = DuckParser().parse(
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:294:            attributes={},
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:295:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:296:            parse_result=parse_result,
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:300:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:304:            "parse_result must be "
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:309:            attributes={},
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:310:            scores={},
+tests/services/food/knowledge/meat/duck/test_duck_rules.py:311:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:134:    assert result.final_score == 83.3
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:189:    assert result.final_score == 45.0
+tests/services/food/knowledge/meat/duck/test_duck_provider.py:226:    assert result.final_score == 0.0
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:19:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:25:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:30:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:34:        attributes=attributes,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:35:        scores=scores,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:36:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:130:    parse_result = GoatParser().parse(
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:135:        attributes={
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:141:        scores={
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:144:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:162:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:167:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:171:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:177:        parse_result.warnings
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:181:        attributes=attributes,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:182:        scores=scores,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:183:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:189:        parse_result.warnings
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:211:    parse_result = GoatParser().parse(
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:220:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:221:            scores={},
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:222:            parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:230:            attributes={},
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:231:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:232:            parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:238:            "parse_result must be "
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:243:            attributes={},
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:244:            scores={},
+tests/services/food/knowledge/meat/goat/test_goat_rules.py:245:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:8:    calculate_goat_final_score,
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:77:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:82:        parse_result
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:99:    parse_result = GoatParser().parse(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:104:        parse_result
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:117:    parse_result = GoatParser().parse(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:122:        parse_result
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:134:        match="parse_result must be GoatParseResult",
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:175:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:181:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:205:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:211:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:221:    parse_result = GoatParser().parse(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:231:            parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:235:def test_calculate_goat_scores_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:238:        match="parse_result must be GoatParseResult",
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:244:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:248:def test_calculate_goat_final_score() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:249:    final_score = calculate_goat_final_score(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:259:    assert final_score == 87.5
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:262:def test_calculate_goat_final_score_missing_values() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:263:    final_score = calculate_goat_final_score(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:269:    assert final_score == 48.0
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:272:def test_calculate_goat_final_score_custom_weights() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:273:    final_score = calculate_goat_final_score(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:288:    assert final_score == 95.0
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:291:def test_calculate_goat_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:296:        calculate_goat_final_score(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:303:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:309:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_scoring.py:314:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:31:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:37:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:91:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:97:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:115:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:121:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:140:    parse_result = GoatParser().parse_product(
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:146:        parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:153:    parse_result = GoatParser().parse(
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:163:            parse_result=parse_result,
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:167:def test_attributes_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:171:            "parse_result must be "
+tests/services/food/knowledge/meat/goat/test_goat_attributes.py:179:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/goat/test_goat_parser_models.py:8:def test_empty_goat_parse_result() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_parser_models.py:60:def test_complete_goat_parse_result() -> None:
+tests/services/food/knowledge/meat/goat/test_goat_registry_integration.py:171:    assert result.final_score == 87.5
+tests/services/food/knowledge/meat/goat/test_goat_provider.py:125:    assert result.final_score == 87.5
+tests/services/food/knowledge/meat/goat/test_goat_provider.py:190:    assert result.final_score == 48.0
+tests/services/food/knowledge/meat/goat/test_goat_provider.py:225:    assert result.final_score == 0.0
+tests/services/food/knowledge/meat/goat/test_goat_parser.py:294:def test_parse_result_confidences() -> None:
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:10:    calculate_chicken_final_score,
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:65:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:70:        parse_result
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:120:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:126:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:151:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:157:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:170:def test_calculate_chicken_final_score(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:173:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:179:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:183:        calculate_chicken_final_score(scores)
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:188:def test_final_score_supports_custom_weights() -> None:
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:190:        calculate_chicken_final_score(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:212:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:218:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:227:    parse_result = ChickenParser().parse(
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:237:            parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:241:def test_scoring_rejects_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:245:            "parse_result must be "
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:253:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:257:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/meat/chicken/test_chicken_scoring.py:262:        calculate_chicken_final_score(
+tests/services/food/knowledge/meat/chicken/test_chicken_provider.py:134:    assert result.final_score == 83.4
+tests/services/food/knowledge/meat/chicken/test_chicken_provider.py:189:    assert result.final_score == 41.0
+tests/services/food/knowledge/meat/chicken/test_chicken_provider.py:226:    assert result.final_score == 0.0
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:84:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:90:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:168:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:174:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:204:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:210:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:242:    parse_result = ChickenParser().parse(
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:252:            parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:256:def test_build_attributes_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:260:            "parse_result must be "
+tests/services/food/knowledge/meat/chicken/test_chicken_attributes.py:268:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:23:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:28:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:32:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:36:        attributes=attributes,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:37:        scores=scores,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:38:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:152:    parse_result = ChickenParser().parse(
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:167:        attributes=attributes,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:168:        scores=scores,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:169:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:180:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:187:        attributes={
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:193:        scores={
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:197:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:203:    for warning in parse_result.warnings:
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:208:    parse_result = ChickenParser().parse_product(
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:230:        attributes=attributes,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:231:        scores=scores,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:232:        parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:257:    parse_result = ChickenParser().parse(
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:266:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:267:            scores={},
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:268:            parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:273:    parse_result = ChickenParser().parse(
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:282:            attributes={},
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:283:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:284:            parse_result=parse_result,
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:288:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:292:            "parse_result must be "
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:297:            attributes={},
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:298:            scores={},
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py:299:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:13:    calculate_cheese_final_score,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:103:            scores={
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:125:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:134:            scores={},
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:140:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:147:        parse_result
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:166:    parse_result = CheeseParser().parse(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:172:        parse_result
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:187:    parse_result = CheeseParser().parse(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:192:        parse_result
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:205:            "parse_result must be "
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:262:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:270:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:293:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:301:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:311:    parse_result = CheeseParser().parse(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:321:            parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:325:def test_calculate_cheese_scores_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:329:            "parse_result must be "
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:337:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:341:def test_calculate_cheese_final_score() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:342:    final_score = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:343:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:355:    assert final_score == 86.4
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:358:def test_final_score_missing_external_values() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:359:    final_score = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:360:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:367:    assert final_score == 48.2
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:370:def test_final_score_custom_weights() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:371:    final_score = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:372:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:388:    assert final_score == 92.8
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:391:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:396:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:405:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:410:    parse_result_before = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:411:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:416:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:421:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:422:        == parse_result_before
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:429:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:437:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:442:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:43:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:51:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:126:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:134:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:177:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:185:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:209:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:217:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:232:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:240:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:304:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:309:    parse_result_before = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:310:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:315:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:320:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:321:        == parse_result_before
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:328:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:336:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:356:        not in parse_result.detected_keywords
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:361:            parse_result
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:370:    parse_result = CheeseParser().parse(
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:380:            parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:384:def test_attributes_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:388:            "parse_result must be "
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:396:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:403:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:411:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_attributes.py:427:    assert "final_score" not in attributes
+tests/services/food/knowledge/cheese/test_cheese_parser_models.py:8:def test_empty_cheese_parse_result() -> None:
+tests/services/food/knowledge/cheese/test_cheese_parser_models.py:70:def test_complete_cheese_parse_result() -> None:
+tests/services/food/knowledge/cheese/test_cheese_parser_models.py:98:def test_parse_result_clamps_confidence() -> None:
+tests/services/food/knowledge/cheese/test_cheese_parser_models.py:112:def test_parse_result_deduplicates_evidence() -> None:
+tests/services/food/knowledge/cheese/test_cheese_parser_models.py:121:        warnings=[
+tests/services/food/knowledge/cheese/test_cheese_parser_models.py:132:def test_cheese_parse_result_serializes() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:45:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_rules.py:53:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:58:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:62:        attributes=attributes,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:63:        scores=scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:64:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:203:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_rules.py:211:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:216:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:220:        attributes=attributes,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:221:        scores=scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:222:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:225:    for warning in parse_result.warnings:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:242:    parse_result = (
+tests/services/food/knowledge/cheese/test_cheese_rules.py:250:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:255:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:260:    parse_result_before = (
+tests/services/food/knowledge/cheese/test_cheese_rules.py:261:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_rules.py:265:        attributes=attributes,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:266:        scores=scores,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:267:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:273:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_rules.py:274:        == parse_result_before
+tests/services/food/knowledge/cheese/test_cheese_rules.py:315:    parse_result = CheeseParser().parse(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:324:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_rules.py:325:            scores={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:326:            parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:331:    parse_result = CheeseParser().parse(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:340:            attributes={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:341:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_rules.py:342:            parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_rules.py:346:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/cheese/test_cheese_rules.py:350:            "parse_result must be "
+tests/services/food/knowledge/cheese/test_cheese_rules.py:355:            attributes={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:356:            scores={},
+tests/services/food/knowledge/cheese/test_cheese_rules.py:357:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/cheese/test_cheese_rules.py:362:    parse_result = CheeseParser().parse(
+tests/services/food/knowledge/cheese/test_cheese_rules.py:367:        attributes={
+tests/services/food/knowledge/cheese/test_cheese_rules.py:370:        scores={
+tests/services/food/knowledge/cheese/test_cheese_rules.py:373:        parse_result=parse_result,
+tests/services/food/knowledge/cheese/test_cheese_provider.py:183:    assert result.final_score == 86.3
+tests/services/food/knowledge/cheese/test_cheese_provider.py:198:        metadata={
+tests/services/food/knowledge/cheese/test_cheese_provider.py:249:    assert result.final_score == 88.2
+tests/services/food/knowledge/cheese/test_cheese_provider.py:274:    assert result.final_score == 0.0
+tests/services/food/knowledge/cheese/test_cheese_provider.py:339:    assert payload["final_score"] == 86.3
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:232:    assert result.final_score == 86.3
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:257:    assert result.final_score == 88.2
+tests/services/food/knowledge/wine/test_wine_parser_models.py:15:def test_wine_parse_result_extends_base_contract() -> None:
+tests/services/food/knowledge/wine/test_wine_parser_models.py:47:def test_wine_parse_result_clamps_confidence() -> None:
+tests/services/food/knowledge/wine/test_wine_parser_models.py:69:def test_wine_parse_result_rejects_invalid_vintage(
+tests/services/food/knowledge/wine/test_wine_parser_models.py:82:def test_wine_parse_result_preserves_valid_vintage() -> None:
+tests/services/food/knowledge/wine/test_wine_parser_models.py:94:def test_wine_parse_result_clamps_alcohol_percent() -> None:
+tests/services/food/knowledge/wine/test_wine_parser_models.py:113:def test_wine_parse_result_deduplicates_evidence() -> None:
+tests/services/food/knowledge/wine/test_wine_parser_models.py:124:        warnings=[
+tests/services/food/knowledge/wine/test_wine_parser_models.py:139:def test_wine_parse_result_serialization() -> None:
+tests/services/food/knowledge/wine/test_wine_parser_models.py:164:def test_wine_parse_result_is_frozen() -> None:
+tests/services/food/knowledge/wine/test_wine_parser_models.py:176:def test_wine_parse_result_complete_state() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:11:    calculate_wine_final_score,
+tests/services/food/knowledge/wine/test_wine_scoring.py:70:        scores={
+tests/services/food/knowledge/wine/test_wine_scoring.py:88:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_scoring.py:94:            scores={},
+tests/services/food/knowledge/wine/test_wine_scoring.py:100:    parse_result = WineParser().parse(
+tests/services/food/knowledge/wine/test_wine_scoring.py:106:        parse_result
+tests/services/food/knowledge/wine/test_wine_scoring.py:118:    parse_result = WineParser().parse(
+tests/services/food/knowledge/wine/test_wine_scoring.py:123:        parse_result
+tests/services/food/knowledge/wine/test_wine_scoring.py:198:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_scoring.py:204:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_scoring.py:233:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_scoring.py:239:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_scoring.py:248:def test_calculate_wine_final_score() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:249:    score = calculate_wine_final_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:261:def test_calculate_wine_final_score_ignores_missing_scores() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:262:    score = calculate_wine_final_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:290:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_scoring.py:296:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_scoring.py:300:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_scoring.py:305:        calculate_wine_final_score(first)
+tests/services/food/knowledge/wine/test_wine_scoring.py:306:        == calculate_wine_final_score(second)
+tests/services/food/knowledge/wine/test_wine_scoring.py:311:    parse_result = WineParser().parse(
+tests/services/food/knowledge/wine/test_wine_scoring.py:318:            parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_scoring.py:324:            parse_result=None,  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_provider.py:145:    assert result.final_score is not None
+tests/services/food/knowledge/wine/test_wine_provider.py:146:    assert 0.0 <= result.final_score <= 100.0
+tests/services/food/knowledge/wine/test_wine_provider.py:235:    assert result.final_score == 0.0
+tests/services/food/knowledge/wine/test_wine_rules.py:26:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_rules.py:32:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:37:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:43:        parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:60:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:65:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:66:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:67:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:96:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:101:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:102:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:103:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:133:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:138:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:139:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:140:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:163:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:168:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:169:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:170:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:190:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:195:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:196:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:197:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:227:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:232:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:233:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:234:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:258:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:263:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:264:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:265:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:280:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:285:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:286:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:287:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:290:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:291:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:292:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:307:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:315:        attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:316:        scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:317:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:329:    attributes, scores, parse_result = (
+tests/services/food/knowledge/wine/test_wine_rules.py:335:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_rules.py:336:            scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:337:            parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:342:            attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:343:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_rules.py:344:            parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_rules.py:349:            attributes=attributes,
+tests/services/food/knowledge/wine/test_wine_rules.py:350:            scores=scores,
+tests/services/food/knowledge/wine/test_wine_rules.py:351:            parse_result=None,  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_attributes.py:50:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:56:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:94:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:100:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:132:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:138:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:159:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:165:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:196:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:202:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:214:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:220:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:234:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:240:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:248:    parse_result = WineParser().parse(
+tests/services/food/knowledge/wine/test_wine_attributes.py:255:            parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:259:def test_build_wine_attributes_rejects_invalid_parse_result() -> None:
+tests/services/food/knowledge/wine/test_wine_attributes.py:265:            parse_result=None,  # type: ignore[arg-type]
+tests/services/food/knowledge/wine/test_wine_attributes.py:281:    parse_result = WineParser().parse_product(
+tests/services/food/knowledge/wine/test_wine_attributes.py:287:        parse_result=parse_result,
+tests/services/food/knowledge/wine/test_wine_attributes.py:291:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_scoring.py:15:    calculate_tea_final_score,
+tests/services/food/knowledge/tea/test_tea_scoring.py:119:            scores={
+tests/services/food/knowledge/tea/test_tea_scoring.py:141:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/tea/test_tea_scoring.py:150:            scores={},
+tests/services/food/knowledge/tea/test_tea_scoring.py:156:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_scoring.py:161:        parse_result
+tests/services/food/knowledge/tea/test_tea_scoring.py:175:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_scoring.py:180:        parse_result
+tests/services/food/knowledge/tea/test_tea_scoring.py:190:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_scoring.py:195:        parse_result
+tests/services/food/knowledge/tea/test_tea_scoring.py:208:            "parse_result must be "
+tests/services/food/knowledge/tea/test_tea_scoring.py:257:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_scoring.py:263:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_scoring.py:289:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_scoring.py:295:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_scoring.py:305:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_scoring.py:315:            parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_scoring.py:319:def test_calculate_tea_scores_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/tea/test_tea_scoring.py:323:            "parse_result must be "
+tests/services/food/knowledge/tea/test_tea_scoring.py:331:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/tea/test_tea_scoring.py:335:def test_calculate_tea_final_score() -> None:
+tests/services/food/knowledge/tea/test_tea_scoring.py:336:    score = calculate_tea_final_score(
+tests/services/food/knowledge/tea/test_tea_scoring.py:348:def test_final_score_missing_external_values() -> None:
+tests/services/food/knowledge/tea/test_tea_scoring.py:349:    score = calculate_tea_final_score(
+tests/services/food/knowledge/tea/test_tea_scoring.py:358:def test_final_score_custom_weights() -> None:
+tests/services/food/knowledge/tea/test_tea_scoring.py:359:    score = calculate_tea_final_score(
+tests/services/food/knowledge/tea/test_tea_scoring.py:377:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/tea/test_tea_scoring.py:382:        calculate_tea_final_score(
+tests/services/food/knowledge/tea/test_tea_scoring.py:391:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_scoring.py:394:    parse_result_before = (
+tests/services/food/knowledge/tea/test_tea_scoring.py:395:        parse_result.to_dict()
+tests/services/food/knowledge/tea/test_tea_scoring.py:400:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_scoring.py:405:        parse_result.to_dict()
+tests/services/food/knowledge/tea/test_tea_scoring.py:406:        == parse_result_before
+tests/services/food/knowledge/tea/test_tea_scoring.py:413:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_scoring.py:419:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_scoring.py:423:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_parser_models.py:18:def test_empty_tea_parse_result() -> None:
+tests/services/food/knowledge/tea/test_tea_parser_models.py:83:def test_complete_tea_parse_result() -> None:
+tests/services/food/knowledge/tea/test_tea_parser_models.py:131:def test_parse_result_clamps_confidences() -> None:
+tests/services/food/knowledge/tea/test_tea_parser_models.py:153:def test_parse_result_deduplicates_evidence() -> None:
+tests/services/food/knowledge/tea/test_tea_parser_models.py:164:        warnings=[
+tests/services/food/knowledge/tea/test_tea_parser_models.py:181:def test_parse_result_preserves_registry_match() -> None:
+tests/services/food/knowledge/tea/test_tea_parser_models.py:205:def test_tea_parse_result_serializes() -> None:
+tests/services/food/knowledge/tea/test_tea_parser_models.py:225:        warnings=[
+tests/services/food/knowledge/tea/test_tea_parser_models.py:248:def test_tea_parse_result_is_frozen() -> None:
+tests/services/food/knowledge/tea/test_tea_parser_models.py:270:        metadata=metadata,
+tests/services/food/knowledge/tea/test_tea_rules.py:58:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_rules.py:64:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:69:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:73:        attributes=attributes,
+tests/services/food/knowledge/tea/test_tea_rules.py:74:        scores=scores,
+tests/services/food/knowledge/tea/test_tea_rules.py:75:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:263:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:268:        attributes={
+tests/services/food/knowledge/tea/test_tea_rules.py:271:        scores={
+tests/services/food/knowledge/tea/test_tea_rules.py:274:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:285:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:290:        attributes={
+tests/services/food/knowledge/tea/test_tea_rules.py:293:        scores={
+tests/services/food/knowledge/tea/test_tea_rules.py:298:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:312:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:317:        attributes={
+tests/services/food/knowledge/tea/test_tea_rules.py:321:        scores={
+tests/services/food/knowledge/tea/test_tea_rules.py:324:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:335:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:340:        attributes={
+tests/services/food/knowledge/tea/test_tea_rules.py:344:        scores={
+tests/services/food/knowledge/tea/test_tea_rules.py:347:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:358:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:363:        attributes={
+tests/services/food/knowledge/tea/test_tea_rules.py:368:        scores={
+tests/services/food/knowledge/tea/test_tea_rules.py:371:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:386:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_rules.py:392:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:396:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:400:        attributes=attributes,
+tests/services/food/knowledge/tea/test_tea_rules.py:401:        scores=scores,
+tests/services/food/knowledge/tea/test_tea_rules.py:402:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:405:    for warning in parse_result.warnings:
+tests/services/food/knowledge/tea/test_tea_rules.py:423:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_rules.py:428:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:432:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:437:    parse_result_before = parse_result.to_dict()
+tests/services/food/knowledge/tea/test_tea_rules.py:440:        attributes=attributes,
+tests/services/food/knowledge/tea/test_tea_rules.py:441:        scores=scores,
+tests/services/food/knowledge/tea/test_tea_rules.py:442:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:448:        parse_result.to_dict()
+tests/services/food/knowledge/tea/test_tea_rules.py:449:        == parse_result_before
+tests/services/food/knowledge/tea/test_tea_rules.py:490:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:499:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/tea/test_tea_rules.py:500:            scores={},
+tests/services/food/knowledge/tea/test_tea_rules.py:501:            parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:506:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:515:            attributes={},
+tests/services/food/knowledge/tea/test_tea_rules.py:516:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/tea/test_tea_rules.py:517:            parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:521:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/tea/test_tea_rules.py:525:            "parse_result must be "
+tests/services/food/knowledge/tea/test_tea_rules.py:530:            attributes={},
+tests/services/food/knowledge/tea/test_tea_rules.py:531:            scores={},
+tests/services/food/knowledge/tea/test_tea_rules.py:532:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/tea/test_tea_rules.py:537:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:542:        attributes={},
+tests/services/food/knowledge/tea/test_tea_rules.py:543:        scores={},
+tests/services/food/knowledge/tea/test_tea_rules.py:544:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:561:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_rules.py:566:        attributes={
+tests/services/food/knowledge/tea/test_tea_rules.py:569:        scores={
+tests/services/food/knowledge/tea/test_tea_rules.py:572:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:585:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_rules.py:590:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:594:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:598:        attributes=attributes,
+tests/services/food/knowledge/tea/test_tea_rules.py:599:        scores=scores,
+tests/services/food/knowledge/tea/test_tea_rules.py:600:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_rules.py:603:        attributes=attributes,
+tests/services/food/knowledge/tea/test_tea_rules.py:604:        scores=scores,
+tests/services/food/knowledge/tea/test_tea_rules.py:605:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:51:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:57:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:101:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:107:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:201:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:207:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:237:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:243:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:265:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:271:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:286:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:292:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:393:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:396:    parse_result_before = (
+tests/services/food/knowledge/tea/test_tea_attributes.py:397:        parse_result.to_dict()
+tests/services/food/knowledge/tea/test_tea_attributes.py:402:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:407:        parse_result.to_dict()
+tests/services/food/knowledge/tea/test_tea_attributes.py:408:        == parse_result_before
+tests/services/food/knowledge/tea/test_tea_attributes.py:415:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:421:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:442:        not in parse_result.detected_keywords
+tests/services/food/knowledge/tea/test_tea_attributes.py:447:    parse_result = TeaParser().parse(
+tests/services/food/knowledge/tea/test_tea_attributes.py:457:            parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:461:def test_attributes_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/tea/test_tea_attributes.py:465:            "parse_result must be "
+tests/services/food/knowledge/tea/test_tea_attributes.py:473:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/tea/test_tea_attributes.py:480:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:486:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:490:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:499:    parse_result = TeaParser().parse_product(
+tests/services/food/knowledge/tea/test_tea_attributes.py:505:        parse_result=parse_result,
+tests/services/food/knowledge/tea/test_tea_attributes.py:522:    assert "final_score" not in attributes
+tests/services/food/knowledge/test_duck_registry_integration.py:136:    assert result.final_score == 83.3
+tests/services/food/knowledge/test_chicken_registry_integration.py:135:    assert result.final_score == 83.4
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:48:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:56:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:123:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:131:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:159:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:167:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:189:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:197:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:214:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:222:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:316:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:321:    parse_result_before = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:322:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:327:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:332:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:333:        == parse_result_before
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:340:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:348:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:369:        not in parse_result.detected_keywords
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:374:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:384:            parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:388:def test_attributes_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:392:            "parse_result must be "
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:402:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:409:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:417:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_attributes.py:432:    assert "final_score" not in attributes
+tests/services/food/knowledge/coffee/test_coffee_provider.py:159:    assert result.final_score == 86.28
+tests/services/food/knowledge/coffee/test_coffee_provider.py:265:    assert result.final_score == 0.0
+tests/services/food/knowledge/coffee/test_coffee_provider.py:323:    assert payload["final_score"] == 86.28
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:13:    calculate_coffee_final_score,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:101:            scores={
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:123:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:132:            scores={},
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:138:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:145:        parse_result
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:161:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:166:        parse_result
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:182:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:187:        parse_result
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:200:            "parse_result must be "
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:252:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:260:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:282:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:290:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:300:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:310:            parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:314:def test_calculate_coffee_scores_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:318:            "parse_result must be "
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:328:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:332:def test_calculate_coffee_final_score() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:333:    final_score = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:334:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:344:    assert final_score == 86.28
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:347:def test_final_score_missing_external_values() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:348:    final_score = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:349:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:356:    assert final_score == 46.75
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:359:def test_final_score_custom_weights() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:360:    final_score = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:361:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:377:    assert final_score == 92.55
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:380:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:385:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:394:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:399:    parse_result_before = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:400:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:405:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:410:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:411:        == parse_result_before
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:418:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:426:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:431:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:51:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:59:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:64:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:68:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:69:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:70:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:258:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:266:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:271:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:275:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:276:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:277:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:280:    for warning in parse_result.warnings:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:297:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:305:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:310:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:315:    parse_result_before = (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:316:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_rules.py:320:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:321:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:322:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:328:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_rules.py:329:        == parse_result_before
+tests/services/food/knowledge/coffee/test_coffee_rules.py:370:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:379:            attributes=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_rules.py:380:            scores={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:381:            parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:386:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:395:            attributes={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:396:            scores=[],  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_rules.py:397:            parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:401:def test_rules_reject_invalid_parse_result() -> None:
+tests/services/food/knowledge/coffee/test_coffee_rules.py:405:            "parse_result must be "
+tests/services/food/knowledge/coffee/test_coffee_rules.py:410:            attributes={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:411:            scores={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:412:            parse_result=object(),  # type: ignore[arg-type]
+tests/services/food/knowledge/coffee/test_coffee_rules.py:417:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:422:        attributes={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:423:        scores={},
+tests/services/food/knowledge/coffee/test_coffee_rules.py:424:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:442:    parse_result = CoffeeParser().parse(
+tests/services/food/knowledge/coffee/test_coffee_rules.py:447:        attributes={
+tests/services/food/knowledge/coffee/test_coffee_rules.py:450:        scores={
+tests/services/food/knowledge/coffee/test_coffee_rules.py:453:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:471:    parse_result = (
+tests/services/food/knowledge/coffee/test_coffee_rules.py:479:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:484:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:488:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:489:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:490:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:494:        attributes=attributes,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:495:        scores=scores,
+tests/services/food/knowledge/coffee/test_coffee_rules.py:496:        parse_result=parse_result,
+tests/services/food/knowledge/coffee/test_coffee_parser_models.py:8:def test_empty_coffee_parse_result() -> None:
+tests/services/food/knowledge/coffee/test_coffee_parser_models.py:67:def test_complete_parse_result() -> None:
+tests/services/food/knowledge/coffee/test_coffee_parser_models.py:116:        warnings=[
+tests/services/food/knowledge/coffee/test_coffee_parser_models.py:129:def test_parse_result_serializes() -> None:
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:267:    assert result.final_score == 86.28

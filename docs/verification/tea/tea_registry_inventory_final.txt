@@ -1,0 +1,19 @@
+=== Tea Registry Python files ===
+app/services/food/knowledge/tea/_registry_support.py
+app/services/food/knowledge/tea/flavor_registry.py
+app/services/food/knowledge/tea/origin_registry.py
+app/services/food/knowledge/tea/oxidation_registry.py
+app/services/food/knowledge/tea/processing_registry.py
+app/services/food/knowledge/tea/type_registry.py
+app/services/food/knowledge/tea/variety_registry.py
+
+=== Tea Registry YAML files ===
+app/services/food/registry_data/tea/flavors.yaml
+app/services/food/registry_data/tea/origins.yaml
+app/services/food/registry_data/tea/oxidations.yaml
+app/services/food/registry_data/tea/processes.yaml
+app/services/food/registry_data/tea/types.yaml
+app/services/food/registry_data/tea/varieties.yaml
+
+=== Tea Registry tests ===
+tests/services/food/knowledge/tea/test_tea_registry_integration.py

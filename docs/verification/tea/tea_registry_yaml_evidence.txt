@@ -1,0 +1,899 @@
+# Tea Registry YAML Evidence
+
+generated_at=2026-08-04T11:11:41Z
+
+============================================================
+FILE: app/services/food/registry_data/coffee/beans.yaml
+============================================================
+registry_id: coffee.beans
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee bean species and composition registry
+  language: ko
+  status: active
+data:
+  arabica:
+    canonical_name: 아라비카
+    aliases:
+      - 아라비카 원두
+      - arabica
+      - coffea arabica
+      - 100% arabica
+      - 100% 아라비카
+    species: coffea_arabica
+    composition_type: single_species
+    score: 92
+    premium: true
+    acidity_score: 88
+    body_score: 76
+    aroma_score: 92
+    description: 향미의 복합성과 산미가 잘 나타나는 대표적인 커피 종입니다.
+
+  robusta:
+    canonical_name: 로부스타
+    aliases:
+      - 로부스타 원두
+      - robusta
+      - coffea canephora
+      - canephora
+    species: coffea_canephora
+    composition_type: single_species
+    score: 76
+    premium: false
+    acidity_score: 45
+    body_score: 92
+    aroma_score: 68
+    description: 묵직한 바디와 강한 쓴맛이 나타날 수 있는 커피 종입니다.
+
+  liberica:
+    canonical_name: 리베리카
+    aliases:
+      - 리베리카 원두
+      - liberica
+      - coffea liberica
+    species: coffea_liberica
+    composition_type: single_species
+    score: 86
+    premium: true
+    acidity_score: 70
+    body_score: 88
+    aroma_score: 90
+    description: 독특한 향과 묵직한 질감을 가질 수 있는 희소성이 높은 커피 종입니다.
+
+  excelsa:
+    canonical_name: 엑셀사
+    aliases:
+      - 엑셀사 원두
+      - excelsa
+      - coffea excelsa
+    species: coffea_excelsa
+    composition_type: single_species
+    score: 87
+    premium: true
+    acidity_score: 84
+    body_score: 74
+    aroma_score: 89
+    description: 과일 향과 산뜻한 산미가 나타날 수 있는 희소 커피 유형입니다.
+
+  arabica_robusta_blend:
+    canonical_name: 아라비카 로부스타 블렌드
+    aliases:
+      - 아라비카 로부스타 혼합
+      - 아라비카 로부스타 블렌드
+      - arabica robusta blend
+      - arabica and robusta
+      - 아라비카+로부스타
+    species: mixed
+    composition_type: blend
+    score: 82
+    premium: false
+    acidity_score: 68
+    body_score: 88
+    aroma_score: 78
+    description: 아라비카의 향미와 로부스타의 바디를 조합한 블렌드 유형입니다.
+
+============================================================
+FILE: app/services/food/registry_data/coffee/origins.yaml
+============================================================
+registry_id: coffee.origins
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee origin registry
+  language: ko
+  status: active
+data:
+  ethiopia:
+    canonical_name: 에티오피아
+    aliases:
+      - 에티오피아산
+      - ethiopia
+      - ethiopian
+      - 에티오피아 원두
+    country_code: ET
+    score: 96
+    premium: true
+    acidity_score: 94
+    body_score: 72
+    aroma_score: 98
+    description: 꽃과 과일 계열의 복합적인 향미로 잘 알려진 대표적인 커피 생산국입니다.
+
+  colombia:
+    canonical_name: 콜롬비아
+    aliases:
+      - 콜롬비아산
+      - colombia
+      - colombian
+      - 콜롬비아 원두
+    country_code: CO
+    score: 91
+    premium: true
+    acidity_score: 84
+    body_score: 84
+    aroma_score: 88
+    description: 균형 잡힌 산미와 단맛, 바디를 나타내는 커피로 잘 알려진 생산국입니다.
+
+  brazil:
+    canonical_name: 브라질
+    aliases:
+      - 브라질산
+      - brazil
+      - brazilian
+      - 브라질 원두
+    country_code: BR
+    score: 87
+    premium: false
+    acidity_score: 65
+    body_score: 90
+    aroma_score: 82
+    description: 견과류와 초콜릿 계열 풍미 및 안정적인 바디로 잘 알려진 생산국입니다.
+
+  kenya:
+    canonical_name: 케냐
+    aliases:
+      - 케냐산
+      - kenya
+      - kenyan
+      - 케냐 원두
+    country_code: KE
+    score: 95
+    premium: true
+    acidity_score: 98
+    body_score: 82
+    aroma_score: 95
+    description: 선명한 산미와 과일 계열 풍미로 잘 알려진 대표적인 고품질 생산국입니다.
+
+  guatemala:
+    canonical_name: 과테말라
+    aliases:
+      - 과테말라산
+      - guatemala
+      - guatemalan
+      - 과테말라 원두
+    country_code: GT
+    score: 92
+    premium: true
+    acidity_score: 86
+    body_score: 88
+    aroma_score: 90
+    description: 균형 있는 산미와 풍부한 바디, 향신료 및 초콜릿 계열 풍미로 알려져 있습니다.
+
+  costa_rica:
+    canonical_name: 코스타리카
+    aliases:
+      - 코스타리카산
+      - costa rica
+      - costa rican
+      - 코스타리카 원두
+    country_code: CR
+    score: 93
+    premium: true
+    acidity_score: 91
+    body_score: 80
+    aroma_score: 92
+    description: 깨끗한 향미와 밝은 산미가 나타나는 커피 생산지로 잘 알려져 있습니다.
+
+  indonesia:
+    canonical_name: 인도네시아
+    aliases:
+      - 인도네시아산
+      - indonesia
+      - indonesian
+      - 인도네시아 원두
+      - 수마트라
+      - sumatra
+    country_code: ID
+    score: 89
+    premium: true
+    acidity_score: 58
+    body_score: 96
+    aroma_score: 87
+    description: 묵직한 바디와 허브, 향신료 및 흙내음 계열 특성이 나타날 수 있는 생산국입니다.
+
+============================================================
+FILE: app/services/food/registry_data/coffee/processes.yaml
+============================================================
+registry_id: coffee.processes
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee processing method registry
+  language: ko
+  status: active
+data:
+  washed:
+    canonical_name: 워시드
+    aliases:
+      - 수세식
+      - 수세 가공
+      - 워시드 프로세스
+      - washed
+      - washed process
+      - fully washed
+    process_category: washed
+    score: 91
+    premium: true
+    clarity_score: 96
+    sweetness_score: 82
+    body_score: 76
+    description: 과육을 제거하고 물을 이용해 처리하여 깨끗하고 선명한 향미가 나타날 수 있는 방식입니다.
+
+  natural:
+    canonical_name: 내추럴
+    aliases:
+      - 건식
+      - 건식 가공
+      - 내추럴 프로세스
+      - natural
+      - natural process
+      - dry process
+      - dry processed
+    process_category: natural
+    score: 92
+    premium: true
+    clarity_score: 78
+    sweetness_score: 96
+    body_score: 90
+    description: 커피 체리를 건조한 뒤 과육을 제거하여 과일 향과 단맛, 바디가 강조될 수 있는 방식입니다.
+
+  honey:
+    canonical_name: 허니
+    aliases:
+      - 허니 프로세스
+      - 펄프드 내추럴
+      - honey
+      - honey process
+      - pulped natural
+      - semi washed
+      - semi-washed
+    process_category: honey
+    score: 94
+    premium: true
+    clarity_score: 88
+    sweetness_score: 95
+    body_score: 86
+    description: 일부 점액질을 남긴 상태로 건조하여 단맛과 깨끗한 향미의 균형을 추구하는 방식입니다.
+
+  anaerobic:
+    canonical_name: 무산소 발효
+    aliases:
+      - 무산소
+      - 무산소 프로세스
+      - 혐기성 발효
+      - anaerobic
+      - anaerobic process
+      - anaerobic fermentation
+    process_category: anaerobic
+    score: 96
+    premium: true
+    clarity_score: 84
+    sweetness_score: 97
+    body_score: 88
+    description: 산소가 제한된 환경에서 발효하여 강한 향과 독특한 풍미를 형성할 수 있는 방식입니다.
+
+  carbonic_maceration:
+    canonical_name: 탄산 침용
+    aliases:
+      - 탄산침용
+      - 카보닉 마세레이션
+      - carbonic maceration
+      - carbonic process
+      - cm process
+    process_category: carbonic_maceration
+    score: 97
+    premium: true
+    clarity_score: 86
+    sweetness_score: 98
+    body_score: 87
+    description: 이산화탄소 환경에서 발효하여 독특하고 강한 과일 향을 형성할 수 있는 가공 방식입니다.
+
+  wet_hulled:
+    canonical_name: 웻 헐드
+    aliases:
+      - 웻헐드
+      - 습식 탈곡
+      - 길링 바사
+      - giling basah
+      - wet hulled
+      - wet-hulled
+    process_category: wet_hulled
+    score: 87
+    premium: true
+    clarity_score: 68
+    sweetness_score: 78
+    body_score: 96
+    description: 수분이 남은 상태에서 탈곡하여 묵직한 바디와 독특한 향미가 나타날 수 있는 방식입니다.
+
+============================================================
+FILE: app/services/food/registry_data/coffee/roasts.yaml
+============================================================
+registry_id: coffee.roasts
+version: 1.0.0
+metadata:
+  category_id: coffee
+  description: Coffee roast level registry
+  language: ko
+  status: active
+data:
+  light:
+    canonical_name: 라이트 로스트
+    aliases:
+      - 라이트 로스팅
+      - 약배전
+      - 약하게 볶은
+      - light roast
+      - light roasted
+      - blonde roast
+    roast_level: light
+    score: 91
+    premium: true
+    acidity_score: 96
+    body_score: 65
+    aroma_score: 94
+    description: 원두 고유의 산미와 향을 비교적 선명하게 유지하는 약한 배전 단계입니다.
+
+  medium_light:
+    canonical_name: 미디엄 라이트 로스트
+    aliases:
+      - 미디엄 라이트
+      - 중약배전
+      - medium light roast
+      - medium-light roast
+    roast_level: medium_light
+    score: 93
+    premium: true
+    acidity_score: 90
+    body_score: 76
+    aroma_score: 95
+    description: 밝은 산미와 단맛, 바디의 균형을 추구하는 중약배전 단계입니다.
+
+  medium:
+    canonical_name: 미디엄 로스트
+    aliases:
+      - 미디엄 로스팅
+      - 중배전
+      - medium roast
+      - medium roasted
+      - 시티 로스트
+      - city roast
+    roast_level: medium
+    score: 92
+    premium: true
+    acidity_score: 82
+    body_score: 84
+    aroma_score: 92
+    description: 산미와 단맛, 바디의 균형이 비교적 잘 나타나는 중간 배전 단계입니다.
+
+  medium_dark:
+    canonical_name: 미디엄 다크 로스트
+    aliases:
+      - 미디엄 다크
+      - 중강배전
+      - medium dark roast
+      - medium-dark roast
+      - 풀 시티 로스트
+      - full city roast
+    roast_level: medium_dark
+    score: 88
+    premium: false
+    acidity_score: 68
+    body_score: 92
+    aroma_score: 86
+    description: 산미를 낮추고 단맛과 바디, 로스팅 향을 강화한 중강배전 단계입니다.
+
+  dark:
+    canonical_name: 다크 로스트
+    aliases:
+      - 다크 로스팅
+      - 강배전
+      - 강하게 볶은
+      - dark roast
+      - dark roasted
+      - 프렌치 로스트
+      - french roast
+      - 이탈리안 로스트
+      - italian roast
+    roast_level: dark
+    score: 82
+    premium: false
+    acidity_score: 45
+    body_score: 96
+    aroma_score: 78
+    description: 강한 로스팅 향과 쓴맛, 묵직한 바디가 나타나는 강배전 단계입니다.
+
+============================================================
+FILE: app/services/food/registry_data/wine/types.yaml
+============================================================
+red:
+  canonical_name: red
+  aliases:
+    - red wine
+    - 레드 와인
+    - 레드와인
+  type_category: still
+  color_family: red
+  sparkling: false
+  fortified: false
+  score: 85
+  premium: false
+  description: Red still wine
+
+white:
+  canonical_name: white
+  aliases:
+    - white wine
+    - 화이트 와인
+    - 화이트와인
+  type_category: still
+  color_family: white
+  sparkling: false
+  fortified: false
+  score: 85
+  premium: false
+  description: White still wine
+
+sparkling:
+  canonical_name: sparkling
+  aliases:
+    - sparkling wine
+    - 스파클링 와인
+    - 스파클링와인
+  type_category: sparkling
+  color_family: null
+  sparkling: true
+  fortified: false
+  score: 88
+  premium: false
+  description: Sparkling wine
+============================================================
+FILE: app/services/food/registry_data/wine/regions.yaml
+============================================================
+bordeaux:
+  canonical_name: bordeaux
+  aliases:
+    - bordeaux
+    - 보르도
+  country_code: FR
+  country_name: France
+  appellation: Bordeaux
+  score: 92
+  premium: true
+  description: Bordeaux wine region
+
+burgundy:
+  canonical_name: burgundy
+  aliases:
+    - burgundy
+    - bourgogne
+    - 부르고뉴
+  country_code: FR
+  country_name: France
+  appellation: Bourgogne
+  score: 94
+  premium: true
+  description: Burgundy wine region
+
+napa_valley:
+  canonical_name: napa_valley
+  aliases:
+    - napa valley
+    - 나파 밸리
+    - 나파밸리
+  country_code: US
+  country_name: United States
+  appellation: Napa Valley AVA
+  score: 91
+  premium: true
+  description: Napa Valley wine region
+
+champagne:
+  canonical_name: champagne
+  aliases:
+    - champagne
+    - 샴페인
+  country_code: FR
+  country_name: France
+  appellation: Champagne
+  score: 95
+  premium: true
+  description: Champagne wine region
+
+============================================================
+FILE: app/services/food/registry_data/wine/grapes.yaml
+============================================================
+cabernet_sauvignon:
+  canonical_name: cabernet_sauvignon
+  aliases:
+    - cabernet sauvignon
+    - 카베르네 소비뇽
+    - 까베르네 소비뇽
+  color: red
+  species: vitis_vinifera
+  aromatic: false
+  score: 90
+  premium: true
+  description: Cabernet Sauvignon grape
+
+chardonnay:
+  canonical_name: chardonnay
+  aliases:
+    - chardonnay
+    - 샤르도네
+  color: white
+  species: vitis_vinifera
+  aromatic: false
+  score: 89
+  premium: true
+  description: Chardonnay grape
+
+riesling:
+  canonical_name: riesling
+  aliases:
+    - riesling
+    - 리슬링
+  color: white
+  species: vitis_vinifera
+  aromatic: true
+  score: 88
+  premium: true
+  description: Riesling grape
+
+merlot:
+  canonical_name: merlot
+  aliases:
+    - merlot
+    - 메를로
+  color: red
+  species: vitis_vinifera
+  aromatic: false
+  score: 88
+  premium: true
+  description: Merlot grape
+
+pinot_noir:
+  canonical_name: pinot_noir
+  aliases:
+    - pinot noir
+    - 피노 누아
+    - 피노누아
+  color: red
+  species: vitis_vinifera
+  aromatic: false
+  score: 91
+  premium: true
+  description: Pinot Noir grape
+
+============================================================
+FILE: app/services/food/registry_data/wine/sweetness.yaml
+============================================================
+dry:
+  canonical_name: dry
+  aliases:
+    - dry
+    - 드라이
+    - 무감미
+  sweetness_level: 1
+  residual_sugar_min: 0
+  residual_sugar_max: 4
+  score: 85
+  premium: false
+  description: Dry wine
+
+off_dry:
+  canonical_name: off_dry
+  aliases:
+    - off dry
+    - off-dry
+    - 세미 드라이
+  sweetness_level: 2
+  residual_sugar_min: 4
+  residual_sugar_max: 12
+  score: 82
+  premium: false
+  description: Off-dry wine
+
+sweet:
+  canonical_name: sweet
+  aliases:
+    - sweet
+    - 스위트
+    - 달콤한
+  sweetness_level: 4
+  residual_sugar_min: 45
+  residual_sugar_max: null
+  score: 84
+  premium: false
+  description: Sweet wine
+============================================================
+FILE: app/services/food/registry_data/cheese/types.yaml
+============================================================
+registry_id: cheese.types
+version: 1.0.0
+metadata:
+  category_id: cheese
+  description: Cheese type registry
+  language: ko
+  status: active
+data:
+  mozzarella:
+    canonical_name: 모차렐라
+    aliases:
+      - 모짜렐라
+      - mozzarella
+      - fresh mozzarella
+      - 피오르 디 라테
+      - fior di latte
+    type_category: pasta_filata
+    score: 88
+    premium: false
+    flavor_score: 72
+    versatility_score: 95
+    typical_uses:
+      - 피자
+      - 샐러드
+      - 파스타
+    description: 가열하여 늘인 커드를 사용하는 대표적인 파스타 필라타 치즈입니다.
+
+  cheddar:
+    canonical_name: 체다
+    aliases:
+      - 체다치즈
+      - 체다 치즈
+      - cheddar
+      - cheddar cheese
+    type_category: hard
+    score: 86
+    premium: false
+    flavor_score: 85
+    versatility_score: 94
+    typical_uses:
+      - 샌드위치
+      - 버거
+      - 소스
+    description: 숙성 정도에 따라 순한 맛부터 강한 맛까지 나타나는 대표적인 경질 치즈입니다.
+
+  brie:
+    canonical_name: 브리
+    aliases:
+      - 브리치즈
+      - 브리 치즈
+      - brie
+      - brie cheese
+    type_category: soft_ripened
+    score: 92
+    premium: true
+    flavor_score: 88
+    versatility_score: 82
+    typical_uses:
+      - 치즈 플래터
+      - 와인 페어링
+      - 베이킹
+    description: 흰 곰팡이 외피와 부드러운 내부 조직을 가진 연성 숙성 치즈입니다.
+
+  camembert:
+    canonical_name: 카망베르
+    aliases:
+      - 까망베르
+      - 카망베르치즈
+      - 카망베르 치즈
+      - camembert
+      - camembert cheese
+    type_category: soft_ripened
+    score: 92
+    premium: true
+    flavor_score: 90
+    versatility_score: 80
+    typical_uses:
+      - 치즈 플래터
+      - 와인 페어링
+      - 오븐구이
+    description: 흰 곰팡이 외피와 크리미한 질감을 가진 프랑스 계열 연성 숙성 치즈입니다.
+
+  gouda:
+    canonical_name: 고다
+    aliases:
+      - 하우다
+      - 고다치즈
+      - 고다 치즈
+      - gouda
+      - gouda cheese
+    type_category: semi_hard
+    score: 89
+    premium: true
+    flavor_score: 87
+    versatility_score: 90
+    typical_uses:
+      - 샌드위치
+      - 치즈 플래터
+      - 그라탱
+    description: 숙성 기간에 따라 부드러운 맛부터 깊고 농축된 맛까지 나타나는 반경질 치즈입니다.
+
+  parmesan:
+    canonical_name: 파르미자노 레지아노
+    aliases:
+      - 파르미자노
+      - 파마산
+      - 파마산치즈
+      - 파마산 치즈
+      - parmigiano reggiano
+      - parmigiano
+      - parmesan
+      - parmesan cheese
+    type_category: hard
+    score: 96
+    premium: true
+    flavor_score: 96
+    versatility_score: 93
+    typical_uses:
+      - 파스타
+      - 리소토
+      - 샐러드
+    description: 장기간 숙성하여 단단한 질감과 깊은 감칠맛을 형성하는 이탈리아 계열 경질 치즈입니다.
+
+  blue_cheese:
+    canonical_name: 블루치즈
+    aliases:
+      - 블루 치즈
+      - 푸른곰팡이치즈
+      - 푸른 곰팡이 치즈
+      - blue cheese
+      - bleu cheese
+    type_category: blue
+    score: 91
+    premium: true
+    flavor_score: 96
+    versatility_score: 75
+    typical_uses:
+      - 치즈 플래터
+      - 샐러드
+      - 소스
+    description: 푸른곰팡이를 이용해 특유의 강한 풍미를 형성한 치즈 유형입니다.
+
+  cream_cheese:
+    canonical_name: 크림치즈
+    aliases:
+      - 크림 치즈
+      - cream cheese
+    type_category: fresh
+    score: 80
+    premium: false
+    flavor_score: 70
+    versatility_score: 94
+    typical_uses:
+      - 베이글
+      - 베이킹
+      - 디저트
+    description: 숙성을 거의 하지 않고 부드럽게 발라 먹는 신선 치즈 유형입니다.
+
+============================================================
+FILE: app/services/food/registry_data/cheese/origins.yaml
+============================================================
+registry_id: cheese.origins
+version: 1.0.0
+metadata:
+  category_id: cheese
+  description: Cheese origin registry
+  language: ko
+  status: active
+data:
+  italy:
+    canonical_name: 이탈리아
+    aliases:
+      - 이태리
+      - 이탈리아산
+      - italy
+      - italian
+      - made in italy
+    country_code: IT
+    score: 95
+    premium: true
+    tradition_score: 98
+    description: 다양한 경질·연질·파스타 필라타 치즈 전통을 가진 대표적인 치즈 생산국입니다.
+
+  france:
+    canonical_name: 프랑스
+    aliases:
+      - 프랑스산
+      - france
+      - french
+      - made in france
+    country_code: FR
+    score: 96
+    premium: true
+    tradition_score: 99
+    description: 연성 숙성 치즈와 블루치즈를 포함한 다양한 전통 치즈 생산국입니다.
+
+  netherlands:
+    canonical_name: 네덜란드
+    aliases:
+      - 네덜란드산
+      - holland
+      - dutch
+      - netherlands
+      - made in holland
+    country_code: NL
+    score: 92
+    premium: true
+    tradition_score: 94
+    description: 고다와 에담 등 반경질 치즈로 잘 알려진 생산국입니다.
+
+  united_kingdom:
+    canonical_name: 영국
+    aliases:
+      - 영국산
+      - 잉글랜드
+      - uk
+      - united kingdom
+      - british
+      - england
+      - english
+    country_code: GB
+    score: 91
+    premium: true
+    tradition_score: 94
+    description: 체다와 스틸턴 등 전통 치즈를 보유한 생산국입니다.
+
+  switzerland:
+    canonical_name: 스위스
+    aliases:
+      - 스위스산
+      - swiss
+      - switzerland
+      - made in switzerland
+    country_code: CH
+    score: 94
+    premium: true
+    tradition_score: 97
+    description: 알파인 계열의 경질 및 반경질 치즈 전통을 가진 생산국입니다.
+
+  united_states:
+    canonical_name: 미국
+    aliases:
+      - 미국산
+      - usa
+      - united states
+      - american
+      - u.s.
+      - us cheese
+    country_code: US
+    score: 82
+    premium: false
+    tradition_score: 78
+    description: 전통 스타일부터 현대적인 가공 치즈까지 폭넓게 생산하는 국가입니다.
+
+  korea:
+    canonical_name: 대한민국
+    aliases:
+      - 한국
+      - 국내산
+      - 국산
+      - 한국산
+      - korea
+      - korean
+      - south korea
+    country_code: KR
+    score: 82
+    premium: false
+    tradition_score: 72
+    description: 국내 원유와 지역 농가를 기반으로 다양한 치즈를 생산하는 국가입니다.

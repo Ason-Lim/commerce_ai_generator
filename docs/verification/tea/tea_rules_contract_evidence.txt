@@ -1,0 +1,2383 @@
+# Tea Rules Contract Evidence
+
+generated_at=2026-08-05T02:12:58Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+============================================================
+FILE: app/services/food/knowledge/common/rules.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import Any
+
+from app.services.food.knowledge.common.text import (
+    deduplicate_texts,
+)
+from app.services.food.knowledge.models import (
+    FoodRuleResult,
+)
+
+
+WARNING_SEVERITIES = {
+    "warning",
+    "error",
+    "critical",
+}
+
+
+def split_rule_messages(
+    rule_results: Iterable[FoodRuleResult],
+) -> tuple[list[str], list[str]]:
+    reasons: list[str] = []
+    warnings: list[str] = []
+
+    for rule in rule_results:
+        if not rule.matched:
+            continue
+
+        message = str(
+            rule.message or ""
+        ).strip()
+
+        if not message:
+            continue
+
+        severity = str(
+            rule.severity or "info"
+        ).strip().lower()
+
+        if severity in WARNING_SEVERITIES:
+            warnings.append(message)
+        else:
+            reasons.append(message)
+
+    return (
+        deduplicate_texts(reasons),
+        deduplicate_texts(warnings),
+    )
+
+
+def merge_rule_results(
+    *rule_groups: Iterable[FoodRuleResult],
+) -> list[FoodRuleResult]:
+    result: list[FoodRuleResult] = []
+    seen: set[tuple[str, str]] = set()
+
+    for rule_group in rule_groups:
+        for rule in rule_group:
+            key = (
+                str(rule.rule_id),
+                str(rule.message),
+            )
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            result.append(rule)
+
+    return result
+
+
+def create_rule(
+    *,
+    rule_id: str,
+    message: str,
+    severity: str = "info",
+    matched: bool = True,
+    metadata: dict[str, Any] | None = None,
+) -> FoodRuleResult:
+    return FoodRuleResult(
+        rule_id=rule_id,
+        matched=matched,
+        message=message,
+        severity=severity,
+        metadata=metadata or {},
+    )
+
+============================================================
+FILE: app/services/food/knowledge/common/rule_models.py
+============================================================
+MISSING
+
+============================================================
+FILE: app/services/food/knowledge/coffee/rules.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Iterable, Mapping
+from typing import Any
+
+from app.services.food.knowledge.coffee.parser_models import (
+    CoffeeParseResult,
+)
+
+
+def deduplicate_strings(
+    values: Iterable[Any],
+) -> list[str]:
+    """
+    빈 문자열을 제거하고 최초 등장 순서를 유지하면서
+    중복 문자열을 제거한다.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        normalized = str(value).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(normalized)
+
+    return result
+
+
+def apply_coffee_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, Any],
+    parse_result: CoffeeParseResult,
+) -> tuple[list[str], list[str]]:
+    """
+    Coffee Attributes와 Scores를 바탕으로
+    설명 이유와 경고를 생성한다.
+
+    이 함수는 다음 작업을 수행하지 않는다.
+
+    - 상품명 재파싱
+    - Registry 재조회
+    - 점수 재계산
+    - attributes, scores, parse_result 수정
+    """
+    if not isinstance(
+        attributes,
+        Mapping,
+    ):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        CoffeeParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CoffeeParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    bean = _optional_text(
+        attributes.get("bean")
+    )
+    origin = _optional_text(
+        attributes.get("origin")
+    )
+    country = _optional_text(
+        attributes.get("country")
+    )
+    roast = _optional_text(
+        attributes.get("roast")
+    )
+    process = _optional_text(
+        attributes.get("process")
+    )
+    grind_type = _optional_text(
+        attributes.get("grind_type")
+    )
+    product_form = _optional_text(
+        attributes.get("product_form")
+    )
+    weight = _optional_text(
+        attributes.get("weight")
+    )
+    altitude = _optional_text(
+        attributes.get("altitude")
+    )
+    roast_date = _optional_text(
+        attributes.get("roast_date")
+    )
+
+    decaf = attributes.get("decaf")
+
+    certifications = deduplicate_strings(
+        attributes.get("certifications")
+        or []
+    )
+
+    flavor_notes = deduplicate_strings(
+        attributes.get("flavor_notes")
+        or []
+    )
+
+    if bean:
+        reasons.append(
+            f"원두 종류는 {bean}입니다."
+        )
+
+    resolved_origin = country or origin
+
+    if resolved_origin:
+        reasons.append(
+            f"원산지는 {resolved_origin}입니다."
+        )
+
+    if roast:
+        reasons.append(
+            f"로스팅 단계는 {roast}입니다."
+        )
+
+    if process:
+        reasons.append(
+            f"가공 방식은 {process}입니다."
+        )
+
+    if grind_type:
+        reasons.append(
+            f"분쇄 형태는 {grind_type}입니다."
+        )
+
+    if product_form:
+        reasons.append(
+            f"상품 형태는 {product_form}입니다."
+        )
+
+    if weight:
+        reasons.append(
+            f"표시 중량은 {weight}입니다."
+        )
+
+    if altitude:
+        reasons.append(
+            f"재배 고도 표시는 {altitude}입니다."
+        )
+
+    if roast_date:
+        reasons.append(
+            f"로스팅 날짜는 {roast_date}입니다."
+        )
+
+    if decaf is True:
+        reasons.append(
+            "디카페인 상품으로 표시되어 있습니다."
+        )
+    elif decaf is False:
+        reasons.append(
+            "일반 카페인 상품으로 표시되어 있습니다."
+        )
+
+    if certifications:
+        reasons.append(
+            "표시된 인증 정보는 "
+            f"{', '.join(certifications)}입니다."
+        )
+
+    if flavor_notes:
+        reasons.append(
+            "표시된 향미 노트는 "
+            f"{', '.join(flavor_notes)}입니다."
+        )
+
+    premium_fields = _premium_fields(
+        attributes
+    )
+
+    if premium_fields:
+        reasons.append(
+            "Registry에서 프리미엄 속성이 "
+            "확인되었습니다."
+        )
+
+    knowledge_score = _safe_score(
+        scores.get("knowledge")
+    )
+
+    if knowledge_score >= 90.0:
+        reasons.append(
+            "Coffee Knowledge 평가가 "
+            "매우 높은 수준입니다."
+        )
+    elif knowledge_score >= 80.0:
+        reasons.append(
+            "Coffee Knowledge 평가가 "
+            "높은 수준입니다."
+        )
+    elif knowledge_score > 0.0:
+        reasons.append(
+            "Coffee Knowledge 평가가 "
+            "확인되었습니다."
+        )
+
+    acidity_score = _safe_score(
+        scores.get("acidity")
+    )
+
+    if acidity_score >= 90.0:
+        reasons.append(
+            "Registry 기준 산미 특성이 "
+            "뚜렷한 상품입니다."
+        )
+
+    body_score = _safe_score(
+        scores.get("body")
+    )
+
+    if body_score >= 90.0:
+        reasons.append(
+            "Registry 기준 바디감이 "
+            "높은 상품입니다."
+        )
+
+    aroma_score = _safe_score(
+        scores.get("aroma")
+    )
+
+    if aroma_score >= 90.0:
+        reasons.append(
+            "Registry 기준 향미 평가가 "
+            "높은 상품입니다."
+        )
+
+    sweetness_score = _safe_score(
+        scores.get("sweetness")
+    )
+
+    if sweetness_score >= 90.0:
+        reasons.append(
+            "Registry 기준 단맛 특성이 "
+            "높은 가공 방식입니다."
+        )
+
+    clarity_score = _safe_score(
+        scores.get("clarity")
+    )
+
+    if clarity_score >= 90.0:
+        reasons.append(
+            "Registry 기준 향미 선명도가 "
+            "높은 가공 방식입니다."
+        )
+
+    if not bean:
+        warnings.append(
+            "원두 종류 정보가 확인되지 않았습니다."
+        )
+
+    if not resolved_origin:
+        warnings.append(
+            "커피 원산지 정보가 확인되지 않았습니다."
+        )
+
+    if not roast:
+        warnings.append(
+            "로스팅 단계 정보가 확인되지 않았습니다."
+        )
+
+    if not process:
+        warnings.append(
+            "가공 방식 정보가 확인되지 않았습니다."
+        )
+
+    if knowledge_score <= 0.0:
+        warnings.append(
+            "Coffee Registry 기반 평가 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    if not parse_result.is_usable:
+        warnings.append(
+            "Coffee 도메인 분석에 필요한 정보가 "
+            "충분하지 않습니다."
+        )
+
+    return (
+        deduplicate_strings(reasons),
+        deduplicate_strings(warnings),
+    )
+
+
+def _premium_fields(
+    attributes: Mapping[str, Any],
+) -> list[str]:
+    premium_keys = {
+        "bean_premium": "bean",
+        "origin_premium": "origin",
+        "roast_premium": "roast",
+        "process_premium": "process",
+    }
+
+    return [
+        label
+        for key, label in premium_keys.items()
+        if bool(attributes.get(key))
+    ]
+
+
+def _safe_score(
+    value: Any,
+) -> float:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+    return max(
+        0.0,
+        min(
+            100.0,
+            score,
+        ),
+    )
+
+
+def _optional_text(
+    value: Any,
+) -> str | None:
+    if value is None:
+        return None
+
+    normalized = str(value).strip()
+
+    return normalized or None
+
+
+__all__ = [
+    "apply_coffee_rules",
+    "deduplicate_strings",
+]
+
+============================================================
+FILE: app/services/food/knowledge/wine/rules.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.wine.parser_models import (
+    WineParseResult,
+)
+
+
+def apply_wine_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, Any],
+    parse_result: WineParseResult,
+) -> tuple[list[str], list[str]]:
+    """
+    Wine Attributes와 Scores를 기반으로
+    추천 이유와 경고를 생성한다.
+
+    이 함수는 Parser 재실행, Registry 조회,
+    점수 계산을 수행하지 않는다.
+    """
+    if not isinstance(attributes, Mapping):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(scores, Mapping):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        WineParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be WineParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    _apply_information_rules(
+        attributes=attributes,
+        parse_result=parse_result,
+        reasons=reasons,
+        warnings=warnings,
+    )
+
+    _apply_quality_rules(
+        attributes=attributes,
+        scores=scores,
+        reasons=reasons,
+        warnings=warnings,
+    )
+
+    _apply_style_rules(
+        attributes=attributes,
+        reasons=reasons,
+    )
+
+    _apply_certification_rules(
+        attributes=attributes,
+        reasons=reasons,
+    )
+
+    _apply_data_consistency_rules(
+        attributes=attributes,
+        warnings=warnings,
+    )
+
+    return (
+        _deduplicate_strings(reasons),
+        _deduplicate_strings(warnings),
+    )
+
+
+def _apply_information_rules(
+    *,
+    attributes: Mapping[str, Any],
+    parse_result: WineParseResult,
+    reasons: list[str],
+    warnings: list[str],
+) -> None:
+    if parse_result.is_complete:
+        reasons.append(
+            "와인 타입, 품종, 산지, 당도, 바디, "
+            "산도 정보가 모두 확인되었습니다."
+        )
+    elif parse_result.is_usable:
+        reasons.append(
+            "추천에 활용할 수 있는 와인 핵심 정보가 "
+            "확인되었습니다."
+        )
+    else:
+        warnings.append(
+            "추천에 필요한 와인 핵심 정보가 부족합니다."
+        )
+
+    if parse_result.vintage is not None:
+        reasons.append(
+            f"{parse_result.vintage} 빈티지 정보가 "
+            "제공되었습니다."
+        )
+    else:
+        warnings.append(
+            "빈티지 정보가 확인되지 않았습니다."
+        )
+
+    if parse_result.alcohol_percent is not None:
+        reasons.append(
+            f"알코올 도수 {parse_result.alcohol_percent:g}%가 "
+            "확인되었습니다."
+        )
+    else:
+        warnings.append(
+            "알코올 도수 정보가 확인되지 않았습니다."
+        )
+
+    if not attributes.get("producer"):
+        warnings.append(
+            "생산자 또는 와이너리 정보가 확인되지 않았습니다."
+        )
+
+    if not attributes.get("volume"):
+        warnings.append(
+            "상품 용량 정보가 확인되지 않았습니다."
+        )
+
+
+def _apply_quality_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, Any],
+    reasons: list[str],
+    warnings: list[str],
+) -> None:
+    quality_score = _safe_score(
+        scores.get("quality")
+    )
+    trust_score = _safe_score(
+        scores.get("trust")
+    )
+    knowledge_score = _safe_score(
+        scores.get("knowledge")
+    )
+
+    if quality_score >= 90.0:
+        reasons.append(
+            "와인 품질 평가가 매우 우수합니다."
+        )
+    elif quality_score >= 80.0:
+        reasons.append(
+            "와인 품질 평가가 우수합니다."
+        )
+    elif 0.0 < quality_score < 60.0:
+        warnings.append(
+            "와인 품질 평가 점수가 낮습니다."
+        )
+
+    if trust_score >= 80.0:
+        reasons.append(
+            "구조화된 상품 정보와 분석 신뢰도가 "
+            "충분합니다."
+        )
+    elif trust_score < 40.0:
+        warnings.append(
+            "상품 정보가 부족하여 신뢰도 평가가 낮습니다."
+        )
+
+    if knowledge_score >= 90.0:
+        reasons.append(
+            "품종과 산지 등 Wine Knowledge 정보가 "
+            "매우 우수합니다."
+        )
+    elif knowledge_score >= 80.0:
+        reasons.append(
+            "Wine Knowledge 정보가 충분합니다."
+        )
+    elif knowledge_score == 0.0:
+        warnings.append(
+            "Wine Registry 기반 지식 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    if (
+        attributes.get("region_premium") is True
+        or attributes.get("grape_premium") is True
+    ):
+        reasons.append(
+            "프리미엄 산지 또는 품종 정보가 확인되었습니다."
+        )
+
+
+def _apply_style_rules(
+    *,
+    attributes: Mapping[str, Any],
+    reasons: list[str],
+) -> None:
+    if attributes.get(
+        "wine_type_sparkling"
+    ) is True:
+        reasons.append(
+            "스파클링 와인 특성이 확인되었습니다."
+        )
+
+    if attributes.get(
+        "wine_type_fortified"
+    ) is True:
+        reasons.append(
+            "주정 강화 와인 특성이 확인되었습니다."
+        )
+
+    if attributes.get("body") == "full":
+        reasons.append(
+            "풀 바디 와인으로 풍부한 질감이 기대됩니다."
+        )
+
+    if attributes.get("acidity") == "high":
+        reasons.append(
+            "높은 산도로 선명한 산미가 기대됩니다."
+        )
+
+    if attributes.get("sweetness") == "dry":
+        reasons.append(
+            "드라이 스타일의 와인입니다."
+        )
+
+    if attributes.get(
+        "grape_aromatic"
+    ) is True:
+        reasons.append(
+            "아로마틱 품종 특성이 확인되었습니다."
+        )
+
+
+def _apply_certification_rules(
+    *,
+    attributes: Mapping[str, Any],
+    reasons: list[str],
+) -> None:
+    certifications = attributes.get(
+        "certifications"
+    )
+
+    if isinstance(certifications, list):
+        if certifications:
+            reasons.append(
+                "인증 또는 품질 표시 정보가 제공되었습니다."
+            )
+
+    if attributes.get("organic") is True:
+        reasons.append(
+            "유기농 와인 정보가 확인되었습니다."
+        )
+
+    if attributes.get("biodynamic") is True:
+        reasons.append(
+            "바이오다이나믹 와인 정보가 확인되었습니다."
+        )
+
+
+def _apply_data_consistency_rules(
+    *,
+    attributes: Mapping[str, Any],
+    warnings: list[str],
+) -> None:
+    vintage = attributes.get("vintage")
+
+    if vintage is not None:
+        try:
+            vintage_value = int(vintage)
+        except (TypeError, ValueError):
+            warnings.append(
+                "빈티지 값이 올바른 연도 형식이 아닙니다."
+            )
+        else:
+            if (
+                vintage_value < 1800
+                or vintage_value > 2100
+            ):
+                warnings.append(
+                    "빈티지 값이 허용 범위를 벗어났습니다."
+                )
+
+    alcohol_percent = attributes.get(
+        "alcohol_percent"
+    )
+
+    if alcohol_percent is not None:
+        try:
+            alcohol_value = float(
+                alcohol_percent
+            )
+        except (TypeError, ValueError):
+            warnings.append(
+                "알코올 도수 값이 숫자 형식이 아닙니다."
+            )
+        else:
+            if (
+                alcohol_value < 0.0
+                or alcohol_value > 100.0
+            ):
+                warnings.append(
+                    "알코올 도수 값이 허용 범위를 벗어났습니다."
+                )
+
+    if (
+        attributes.get("wine_type_sparkling")
+        is True
+        and attributes.get("wine_type_fortified")
+        is True
+    ):
+        warnings.append(
+            "스파클링 및 주정 강화 속성이 동시에 "
+            "표시되어 확인이 필요합니다."
+        )
+
+
+def _safe_score(
+    value: Any,
+) -> float:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+    return max(
+        0.0,
+        min(
+            100.0,
+            score,
+        ),
+    )
+
+
+def _deduplicate_strings(
+    values: list[str],
+) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+
+        if not text or text in seen:
+            continue
+
+        seen.add(text)
+        result.append(text)
+
+    return result
+
+
+__all__ = [
+    "apply_wine_rules",
+]
+
+============================================================
+FILE: app/services/food/knowledge/cheese/rules.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Iterable, Mapping
+from typing import Any
+
+from app.services.food.knowledge.cheese.parser_models import (
+    CheeseParseResult,
+)
+
+
+def deduplicate_strings(
+    values: Iterable[Any],
+) -> list[str]:
+    """
+    빈 문자열을 제거하고 입력 순서를 유지하며 중복을 제거한다.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        normalized = str(
+            value
+        ).strip()
+
+        if (
+            not normalized
+            or normalized in seen
+        ):
+            continue
+
+        seen.add(normalized)
+        result.append(normalized)
+
+    return result
+
+
+def apply_cheese_rules(
+    *,
+    attributes: Mapping[str, Any],
+    scores: Mapping[str, Any],
+    parse_result: CheeseParseResult,
+) -> tuple[list[str], list[str]]:
+    """
+    Cheese Attributes와 Scores를 바탕으로
+    설명 이유와 경고를 생성한다.
+
+    이 함수는 입력을 수정하지 않으며 Parser 또는 Scoring을
+    다시 실행하지 않는다.
+    """
+    if not isinstance(
+        attributes,
+        Mapping,
+    ):
+        raise TypeError(
+            "attributes must be a Mapping"
+        )
+
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        CheeseParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CheeseParseResult"
+        )
+
+    reasons: list[str] = []
+    warnings: list[str] = list(
+        parse_result.warnings
+    )
+
+    cheese_type = _optional_text(
+        attributes.get("cheese_type")
+    )
+    milk_source = _optional_text(
+        attributes.get("milk_source")
+    )
+    origin = _optional_text(
+        attributes.get("origin")
+    )
+    country = _optional_text(
+        attributes.get("country")
+    )
+    texture = _optional_text(
+        attributes.get("texture")
+    )
+    aging = _optional_text(
+        attributes.get("aging")
+    )
+    storage_type = _optional_text(
+        attributes.get("storage_type")
+    )
+    packaging_type = _optional_text(
+        attributes.get("packaging_type")
+    )
+    pasteurization = _optional_text(
+        attributes.get("pasteurization")
+    )
+    rind_type = _optional_text(
+        attributes.get("rind_type")
+    )
+
+    certifications = deduplicate_strings(
+        attributes.get("certifications")
+        or []
+    )
+
+    typical_uses = deduplicate_strings(
+        attributes.get(
+            "cheese_type_typical_uses"
+        )
+        or []
+    )
+
+    if cheese_type:
+        reasons.append(
+            f"치즈 종류는 {cheese_type}입니다."
+        )
+
+    if milk_source:
+        reasons.append(
+            f"사용 원유는 {milk_source}입니다."
+        )
+
+    resolved_origin = country or origin
+
+    if resolved_origin:
+        reasons.append(
+            f"원산지는 {resolved_origin}입니다."
+        )
+
+    if texture:
+        reasons.append(
+            f"치즈 질감은 {texture}입니다."
+        )
+
+    if aging:
+        reasons.append(
+            f"숙성 유형은 {aging}입니다."
+        )
+
+    if storage_type:
+        reasons.append(
+            f"보관 상태는 {storage_type}입니다."
+        )
+
+    if packaging_type:
+        reasons.append(
+            f"상품 형태는 {packaging_type}입니다."
+        )
+
+    if pasteurization:
+        reasons.append(
+            "원유 처리 표시는 "
+            f"{pasteurization}입니다."
+        )
+
+    if rind_type:
+        reasons.append(
+            f"외피 표시는 {rind_type}입니다."
+        )
+
+    if certifications:
+        reasons.append(
+            "표시된 인증 정보는 "
+            f"{', '.join(certifications)}입니다."
+        )
+
+    if typical_uses:
+        reasons.append(
+            "Registry 기준 대표 활용 방식은 "
+            f"{', '.join(typical_uses)}입니다."
+        )
+
+    premium_fields = _premium_fields(
+        attributes
+    )
+
+    if premium_fields:
+        reasons.append(
+            "Registry에서 프리미엄 속성이 "
+            "확인되었습니다."
+        )
+
+    knowledge_score = _safe_score(
+        scores.get("knowledge")
+    )
+
+    if knowledge_score >= 90.0:
+        reasons.append(
+            "Cheese Knowledge 평가가 "
+            "매우 높은 수준입니다."
+        )
+    elif knowledge_score >= 80.0:
+        reasons.append(
+            "Cheese Knowledge 평가가 "
+            "높은 수준입니다."
+        )
+    elif knowledge_score > 0.0:
+        reasons.append(
+            "Cheese Knowledge 평가가 "
+            "확인되었습니다."
+        )
+
+    if not cheese_type:
+        warnings.append(
+            "치즈 종류 정보가 확인되지 않았습니다."
+        )
+
+    if not milk_source:
+        warnings.append(
+            "원유 종류 정보가 확인되지 않았습니다."
+        )
+
+    if not resolved_origin:
+        warnings.append(
+            "원산지 정보가 확인되지 않았습니다."
+        )
+
+    if not texture:
+        warnings.append(
+            "치즈 질감 정보가 확인되지 않았습니다."
+        )
+
+    if not aging:
+        warnings.append(
+            "치즈 숙성 정보가 확인되지 않았습니다."
+        )
+
+    if knowledge_score <= 0.0:
+        warnings.append(
+            "치즈 Registry 기반 평가 점수를 "
+            "계산할 수 없습니다."
+        )
+
+    if not parse_result.is_usable:
+        warnings.append(
+            "치즈 도메인 분석에 필요한 정보가 "
+            "충분하지 않습니다."
+        )
+
+    return (
+        deduplicate_strings(reasons),
+        deduplicate_strings(warnings),
+    )
+
+
+def _premium_fields(
+    attributes: Mapping[str, Any],
+) -> list[str]:
+    premium_keys = {
+        "cheese_type_premium": "cheese_type",
+        "milk_source_premium": "milk_source",
+        "origin_premium": "origin",
+        "texture_premium": "texture",
+        "aging_premium": "aging",
+    }
+
+    return [
+        label
+        for key, label in premium_keys.items()
+        if bool(attributes.get(key))
+    ]
+
+
+def _safe_score(
+    value: Any,
+) -> float:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+    return max(
+        0.0,
+        min(
+            100.0,
+            score,
+        ),
+    )
+
+
+def _optional_text(
+    value: Any,
+) -> str | None:
+    if value is None:
+        return None
+
+    normalized = str(
+        value
+    ).strip()
+
+    return normalized or None
+
+
+__all__ = [
+    "apply_cheese_rules",
+    "deduplicate_strings",
+]
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_rules.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.coffee import (
+    CoffeeParser,
+    apply_coffee_rules,
+    build_coffee_attributes,
+    calculate_coffee_scores,
+    deduplicate_strings,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "에티오피아 100% 아라비카 "
+            "라이트 로스트 워시드 원두"
+        ),
+        "bean_type": "100% arabica",
+        "origin_country": "Ethiopia",
+        "country_code": "ET",
+        "roast_level": "light roast",
+        "processing_method": "washed process",
+        "weight": "200g",
+        "grind_type": "whole bean",
+        "product_form": "원두",
+        "decaf": False,
+        "certifications": [
+            "Organic",
+            "Fair Trade",
+        ],
+        "flavor_notes": [
+            "자스민",
+            "레몬",
+            "베르가못",
+        ],
+        "altitude": "1,900m",
+        "roast_date": "2026-08-01",
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def _apply(
+    product: dict[str, object],
+) -> tuple[list[str], list[str]]:
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    return apply_coffee_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+
+def test_complete_product_generates_reasons() -> None:
+    reasons, warnings = _apply(
+        _complete_product()
+    )
+
+    assert (
+        "원두 종류는 아라비카입니다."
+        in reasons
+    )
+    assert (
+        "원산지는 Ethiopia입니다."
+        in reasons
+    )
+    assert (
+        "로스팅 단계는 라이트 로스트입니다."
+        in reasons
+    )
+    assert (
+        "가공 방식은 워시드입니다."
+        in reasons
+    )
+    assert (
+        "분쇄 형태는 whole bean입니다."
+        in reasons
+    )
+    assert (
+        "상품 형태는 원두입니다."
+        in reasons
+    )
+    assert (
+        "표시 중량은 200g입니다."
+        in reasons
+    )
+    assert (
+        "재배 고도 표시는 1,900m입니다."
+        in reasons
+    )
+    assert (
+        "로스팅 날짜는 2026-08-01입니다."
+        in reasons
+    )
+    assert (
+        "일반 카페인 상품으로 "
+        "표시되어 있습니다."
+        in reasons
+    )
+    assert (
+        "표시된 인증 정보는 "
+        "Organic, Fair Trade입니다."
+        in reasons
+    )
+    assert (
+        "표시된 향미 노트는 "
+        "자스민, 레몬, 베르가못입니다."
+        in reasons
+    )
+
+    assert warnings == []
+
+
+def test_registry_and_score_guidance_is_included() -> None:
+    reasons, _ = _apply(
+        _complete_product()
+    )
+
+    assert (
+        "Registry에서 프리미엄 속성이 "
+        "확인되었습니다."
+        in reasons
+    )
+
+    assert (
+        "Coffee Knowledge 평가가 "
+        "매우 높은 수준입니다."
+        in reasons
+    )
+
+    assert (
+        "Registry 기준 산미 특성이 "
+        "뚜렷한 상품입니다."
+        in reasons
+    )
+
+    assert (
+        "Registry 기준 향미 평가가 "
+        "높은 상품입니다."
+        in reasons
+    )
+
+    assert (
+        "Registry 기준 향미 선명도가 "
+        "높은 가공 방식입니다."
+        in reasons
+    )
+
+
+def test_partial_product_generates_warnings() -> None:
+    reasons, warnings = _apply(
+        {
+            "product_name": (
+                "에티오피아 워시드 커피"
+            ),
+        }
+    )
+
+    assert (
+        "원산지는 에티오피아입니다."
+        in reasons
+    )
+    assert (
+        "가공 방식은 워시드입니다."
+        in reasons
+    )
+
+    assert (
+        "원두 종류 정보가 "
+        "확인되지 않았습니다."
+        in warnings
+    )
+    assert (
+        "로스팅 단계 정보가 "
+        "확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_unknown_product_generates_warnings() -> None:
+    reasons, warnings = _apply(
+        {
+            "product_name": "일반 식품 상품",
+        }
+    )
+
+    assert reasons == []
+
+    assert (
+        "Coffee Registry 기반 평가 점수를 "
+        "계산할 수 없습니다."
+        in warnings
+    )
+
+    assert (
+        "Coffee 도메인 분석에 필요한 정보가 "
+        "충분하지 않습니다."
+        in warnings
+    )
+
+
+def test_explicit_country_is_used() -> None:
+    reasons, _ = _apply(
+        {
+            "product_name": (
+                "에티오피아 아라비카 원두"
+            ),
+            "country": "Ethiopia",
+        }
+    )
+
+    assert (
+        "원산지는 Ethiopia입니다."
+        in reasons
+    )
+
+
+def test_decaf_reason() -> None:
+    reasons, _ = _apply(
+        {
+            "product_name": "아라비카 원두",
+            "decaf": True,
+        }
+    )
+
+    assert (
+        "디카페인 상품으로 "
+        "표시되어 있습니다."
+        in reasons
+    )
+
+
+def test_rules_preserve_parser_warnings() -> None:
+    product = {
+        "product_name": "아라비카 원두",
+    }
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    _, warnings = apply_coffee_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    for warning in parse_result.warnings:
+        assert warning in warnings
+
+
+def test_rules_do_not_duplicate_warnings() -> None:
+    _, warnings = _apply(
+        {
+            "product_name": "아라비카 원두",
+        }
+    )
+
+    assert len(warnings) == len(set(warnings))
+
+
+def test_rules_do_not_mutate_inputs() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    attributes_before = deepcopy(attributes)
+    scores_before = deepcopy(scores)
+    parse_result_before = (
+        parse_result.to_dict()
+    )
+
+    apply_coffee_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert attributes == attributes_before
+    assert scores == scores_before
+    assert (
+        parse_result.to_dict()
+        == parse_result_before
+    )
+
+
+def test_deduplicate_strings() -> None:
+    assert deduplicate_strings(
+        [
+            "",
+            "첫 번째",
+            "두 번째",
+            "첫 번째",
+            "  세 번째  ",
+            None,
+        ]
+    ) == [
+        "첫 번째",
+        "두 번째",
+        "세 번째",
+        "None",
+    ]
+
+
+def test_deduplicate_strings_accepts_generator() -> None:
+    values = (
+        value
+        for value in [
+            "A",
+            "B",
+            "A",
+        ]
+    )
+
+    assert deduplicate_strings(
+        values
+    ) == [
+        "A",
+        "B",
+    ]
+
+
+def test_rules_reject_invalid_attributes() -> None:
+    parse_result = CoffeeParser().parse(
+        "아라비카 원두"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="attributes must be a Mapping",
+    ):
+        apply_coffee_rules(
+            attributes=[],  # type: ignore[arg-type]
+            scores={},
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_scores() -> None:
+    parse_result = CoffeeParser().parse(
+        "아라비카 원두"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        apply_coffee_rules(
+            attributes={},
+            scores=[],  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CoffeeParseResult"
+        ),
+    ):
+        apply_coffee_rules(
+            attributes={},
+            scores={},
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_rules_return_string_lists() -> None:
+    parse_result = CoffeeParser().parse(
+        "일반 식품 상품"
+    )
+
+    reasons, warnings = apply_coffee_rules(
+        attributes={},
+        scores={},
+        parse_result=parse_result,
+    )
+
+    assert isinstance(reasons, list)
+    assert isinstance(warnings, list)
+
+    assert all(
+        isinstance(item, str)
+        for item in reasons
+    )
+
+    assert all(
+        isinstance(item, str)
+        for item in warnings
+    )
+
+
+def test_rules_do_not_calculate_scores() -> None:
+    parse_result = CoffeeParser().parse(
+        "아라비카 원두"
+    )
+
+    reasons, warnings = apply_coffee_rules(
+        attributes={
+            "bean": "아라비카",
+        },
+        scores={
+            "knowledge": 50.0,
+        },
+        parse_result=parse_result,
+    )
+
+    assert (
+        "원두 종류는 아라비카입니다."
+        in reasons
+    )
+    assert (
+        "Coffee Knowledge 평가가 "
+        "확인되었습니다."
+        in reasons
+    )
+    assert warnings
+
+
+def test_rules_are_deterministic() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    first = apply_coffee_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    second = apply_coffee_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert first == second
+    assert first[0] is not second[0]
+    assert first[1] is not second[1]
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_rules.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.wine.attributes import (
+    build_wine_attributes,
+)
+from app.services.food.knowledge.wine.parser import (
+    WineParser,
+)
+from app.services.food.knowledge.wine.rules import (
+    apply_wine_rules,
+)
+from app.services.food.knowledge.wine.scoring import (
+    calculate_wine_scores,
+)
+
+
+def _build_analysis(
+    product: dict[str, object],
+) -> tuple[
+    dict[str, object],
+    dict[str, float],
+    object,
+]:
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_wine_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    return (
+        attributes,
+        scores,
+        parse_result,
+    )
+
+
+def test_apply_wine_rules_for_complete_product() -> None:
+    product = {
+        "product_name": (
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인 드라이 풀 바디 "
+            "높은 산도 13.5%"
+        ),
+        "producer": "Example Winery",
+        "volume": "750ml",
+        "certifications": ["AOC"],
+        "price_score": 75,
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    reasons, warnings = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert reasons
+    assert (
+        "와인 타입, 품종, 산지, 당도, 바디, "
+        "산도 정보가 모두 확인되었습니다."
+        in reasons
+    )
+    assert (
+        "2020 빈티지 정보가 제공되었습니다."
+        in reasons
+    )
+    assert (
+        "알코올 도수 13.5%가 확인되었습니다."
+        in reasons
+    )
+    assert (
+        "드라이 스타일의 와인입니다."
+        in reasons
+    )
+    assert not warnings
+
+
+def test_apply_wine_rules_warns_for_missing_information() -> None:
+    product = {
+        "product_name": "보르도 레드 와인",
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    reasons, warnings = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert reasons
+    assert (
+        "빈티지 정보가 확인되지 않았습니다."
+        in warnings
+    )
+    assert (
+        "알코올 도수 정보가 확인되지 않았습니다."
+        in warnings
+    )
+    assert (
+        "생산자 또는 와이너리 정보가 "
+        "확인되지 않았습니다."
+        in warnings
+    )
+    assert (
+        "상품 용량 정보가 확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_apply_wine_rules_for_unknown_product() -> None:
+    product = {
+        "product_name": (
+            "등록되지 않은 임의의 상품"
+        ),
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    reasons, warnings = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "추천에 필요한 와인 핵심 정보가 부족합니다."
+        in warnings
+    )
+    assert (
+        "Wine Registry 기반 지식 점수를 "
+        "계산할 수 없습니다."
+        in warnings
+    )
+
+
+def test_apply_wine_rules_detects_premium_registry_data() -> None:
+    product = {
+        "product_name": (
+            "부르고뉴 샤르도네 화이트 와인"
+        ),
+        "producer": "Example Winery",
+        "volume": "750ml",
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    reasons, _ = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "프리미엄 산지 또는 품종 정보가 "
+        "확인되었습니다."
+        in reasons
+    )
+
+
+def test_apply_wine_rules_detects_style_information() -> None:
+    product = {
+        "product_name": (
+            "리슬링 화이트 와인 드라이 "
+            "높은 산도"
+        ),
+        "producer": "Example Winery",
+        "volume": "750ml",
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    reasons, _ = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "드라이 스타일의 와인입니다."
+        in reasons
+    )
+    assert (
+        "높은 산도로 선명한 산미가 기대됩니다."
+        in reasons
+    )
+    assert (
+        "아로마틱 품종 특성이 확인되었습니다."
+        in reasons
+    )
+
+
+def test_apply_wine_rules_detects_certifications() -> None:
+    product = {
+        "product_name": "보르도 레드 와인",
+        "producer": "Example Winery",
+        "volume": "750ml",
+        "certifications": [
+            "AOC",
+            "Organic",
+        ],
+        "organic": True,
+        "biodynamic": True,
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    reasons, _ = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "인증 또는 품질 표시 정보가 제공되었습니다."
+        in reasons
+    )
+    assert (
+        "유기농 와인 정보가 확인되었습니다."
+        in reasons
+    )
+    assert (
+        "바이오다이나믹 와인 정보가 확인되었습니다."
+        in reasons
+    )
+
+
+def test_apply_wine_rules_preserves_parser_warnings() -> None:
+    product = {
+        "product_name": (
+            "등록되지 않은 임의의 상품"
+        ),
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    _, warnings = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert (
+        "Wine Registry에서 일치하는 "
+        "속성을 찾지 못했습니다."
+        in warnings
+    )
+
+
+def test_apply_wine_rules_deduplicates_results() -> None:
+    product = {
+        "product_name": "보르도 레드 와인",
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    first = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+    second = apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert first == second
+    assert len(first[0]) == len(set(first[0]))
+    assert len(first[1]) == len(set(first[1]))
+
+
+def test_apply_wine_rules_does_not_modify_inputs() -> None:
+    product = {
+        "product_name": (
+            "2020 보르도 레드 와인 13%"
+        ),
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    attributes_before = dict(attributes)
+    scores_before = dict(scores)
+
+    apply_wine_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert attributes == attributes_before
+    assert scores == scores_before
+
+
+def test_apply_wine_rules_rejects_invalid_inputs() -> None:
+    product = {
+        "product_name": "보르도 레드 와인",
+    }
+
+    attributes, scores, parse_result = (
+        _build_analysis(product)
+    )
+
+    with pytest.raises(TypeError):
+        apply_wine_rules(
+            attributes=[],  # type: ignore[arg-type]
+            scores=scores,
+            parse_result=parse_result,
+        )
+
+    with pytest.raises(TypeError):
+        apply_wine_rules(
+            attributes=attributes,
+            scores=[],  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+    with pytest.raises(TypeError):
+        apply_wine_rules(
+            attributes=attributes,
+            scores=scores,
+            parse_result=None,  # type: ignore[arg-type]
+        )
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_rules.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.cheese import (
+    CheeseParser,
+    apply_cheese_rules,
+    build_cheese_attributes,
+    calculate_cheese_scores,
+    deduplicate_strings,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "프랑스 산양유 브리 "
+            "소프트 치즈 12개월 숙성"
+        ),
+        "cheese_type": "brie",
+        "milk_source": "goat milk",
+        "country": "프랑스",
+        "country_code": "FR",
+        "texture": "soft cheese",
+        "aging": "12개월 숙성",
+        "storage_type": "냉장",
+        "packaging_type": "wheel",
+        "pasteurized": True,
+        "certifications": [
+            "AOP",
+            "유기농",
+        ],
+        "rind_type": "bloomy rind",
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def _apply(
+    product: dict[str, object],
+) -> tuple[list[str], list[str]]:
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    return apply_cheese_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+
+def test_complete_product_generates_reasons() -> None:
+    reasons, warnings = _apply(
+        _complete_product()
+    )
+
+    assert "치즈 종류는 브리입니다." in reasons
+    assert "사용 원유는 산양유입니다." in reasons
+    assert "원산지는 프랑스입니다." in reasons
+    assert "치즈 질감은 연성입니다." in reasons
+    assert "숙성 유형은 장기숙성입니다." in reasons
+    assert "보관 상태는 냉장입니다." in reasons
+    assert "상품 형태는 wheel입니다." in reasons
+    assert (
+        "원유 처리 표시는 "
+        "pasteurized입니다."
+        in reasons
+    )
+    assert (
+        "외피 표시는 bloomy rind입니다."
+        in reasons
+    )
+    assert (
+        "표시된 인증 정보는 "
+        "AOP, 유기농입니다."
+        in reasons
+    )
+
+    assert warnings == []
+
+
+def test_registry_guidance_is_included() -> None:
+    reasons, _ = _apply(
+        _complete_product()
+    )
+
+    assert any(
+        reason.startswith(
+            "Registry 기준 대표 활용 방식은 "
+        )
+        for reason in reasons
+    )
+
+    assert (
+        "Registry에서 프리미엄 속성이 "
+        "확인되었습니다."
+        in reasons
+    )
+
+
+def test_high_knowledge_generates_reason() -> None:
+    reasons, _ = _apply(
+        _complete_product()
+    )
+
+    assert (
+        "Cheese Knowledge 평가가 "
+        "매우 높은 수준입니다."
+        in reasons
+    )
+
+
+def test_partial_product_generates_warnings() -> None:
+    reasons, warnings = _apply(
+        {
+            "product_name": (
+                "24개월 숙성 "
+                "파르미자노 레지아노"
+            ),
+        }
+    )
+
+    assert (
+        "치즈 종류는 파르미자노 "
+        "레지아노입니다."
+        in reasons
+    )
+    assert (
+        "숙성 유형은 초장기숙성입니다."
+        in reasons
+    )
+
+    assert (
+        "원유 종류 정보가 "
+        "확인되지 않았습니다."
+        in warnings
+    )
+    assert (
+        "원산지 정보가 확인되지 않았습니다."
+        in warnings
+    )
+    assert (
+        "치즈 질감 정보가 "
+        "확인되지 않았습니다."
+        in warnings
+    )
+
+
+def test_unknown_product_generates_zero_score_warning() -> None:
+    reasons, warnings = _apply(
+        {
+            "product_name": "일반 식품 상품",
+        }
+    )
+
+    assert reasons == []
+
+    assert (
+        "치즈 Registry 기반 평가 점수를 "
+        "계산할 수 없습니다."
+        in warnings
+    )
+
+    assert (
+        "치즈 도메인 분석에 필요한 정보가 "
+        "충분하지 않습니다."
+        in warnings
+    )
+
+
+def test_explicit_country_is_used_in_reason() -> None:
+    reasons, _ = _apply(
+        {
+            "product_name": "프랑스 브리 치즈",
+            "country": "France",
+        }
+    )
+
+    assert "원산지는 France입니다." in reasons
+
+
+def test_rules_preserve_parser_warnings() -> None:
+    product = {
+        "product_name": "플레인 크림치즈",
+    }
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    _, warnings = apply_cheese_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    for warning in parse_result.warnings:
+        assert warning in warnings
+
+
+def test_rules_do_not_duplicate_warnings() -> None:
+    _, warnings = _apply(
+        {
+            "product_name": "플레인 크림치즈",
+        }
+    )
+
+    assert len(warnings) == len(set(warnings))
+
+
+def test_rules_do_not_mutate_inputs() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    scores = calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    attributes_before = deepcopy(attributes)
+    scores_before = deepcopy(scores)
+    parse_result_before = (
+        parse_result.to_dict()
+    )
+
+    apply_cheese_rules(
+        attributes=attributes,
+        scores=scores,
+        parse_result=parse_result,
+    )
+
+    assert attributes == attributes_before
+    assert scores == scores_before
+    assert (
+        parse_result.to_dict()
+        == parse_result_before
+    )
+
+
+def test_deduplicate_strings() -> None:
+    assert deduplicate_strings(
+        [
+            "",
+            "첫 번째",
+            "두 번째",
+            "첫 번째",
+            "  세 번째  ",
+            None,
+        ]
+    ) == [
+        "첫 번째",
+        "두 번째",
+        "세 번째",
+        "None",
+    ]
+
+
+def test_deduplicate_strings_accepts_generator() -> None:
+    values = (
+        value
+        for value in [
+            "A",
+            "B",
+            "A",
+        ]
+    )
+
+    assert deduplicate_strings(
+        values
+    ) == [
+        "A",
+        "B",
+    ]
+
+
+def test_rules_reject_invalid_attributes() -> None:
+    parse_result = CheeseParser().parse(
+        "브리 치즈"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="attributes must be a Mapping",
+    ):
+        apply_cheese_rules(
+            attributes=[],  # type: ignore[arg-type]
+            scores={},
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_scores() -> None:
+    parse_result = CheeseParser().parse(
+        "브리 치즈"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        apply_cheese_rules(
+            attributes={},
+            scores=[],  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_rules_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CheeseParseResult"
+        ),
+    ):
+        apply_cheese_rules(
+            attributes={},
+            scores={},
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_rules_do_not_calculate_scores() -> None:
+    parse_result = CheeseParser().parse(
+        "브리 치즈"
+    )
+
+    reasons, warnings = apply_cheese_rules(
+        attributes={
+            "cheese_type": "브리",
+        },
+        scores={
+            "knowledge": 50.0,
+        },
+        parse_result=parse_result,
+    )
+
+    assert reasons
+    assert warnings

@@ -1,0 +1,154 @@
+steamed:
+  canonical_name: steamed
+  aliases:
+    - steamed tea
+    - steam processed
+    - steamed
+    - 증제
+    - 증제차
+    - 찐 차
+  process_category: heat_fixation
+  heat_fixation: true
+  microbial_fermentation: false
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Tea processed using steam heat fixation
+
+pan_fired:
+  canonical_name: pan_fired
+  aliases:
+    - pan fired
+    - pan-fired
+    - pan roasted
+    - 덖음
+    - 덖음차
+    - 솥덖음
+    - 초청
+  process_category: heat_fixation
+  heat_fixation: true
+  microbial_fermentation: false
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Tea processed using dry-heat pan fixation
+
+withered:
+  canonical_name: withered
+  aliases:
+    - withered
+    - withering
+    - 위조
+    - 위조 공정
+    - 시들리기
+  process_category: moisture_reduction
+  heat_fixation: false
+  microbial_fermentation: false
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Tea leaves processed through controlled withering
+
+rolled:
+  canonical_name: rolled
+  aliases:
+    - rolled tea
+    - rolling
+    - rolled
+    - 유념
+    - 유념 공정
+    - 비비기
+  process_category: shaping
+  heat_fixation: false
+  microbial_fermentation: false
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Tea leaves shaped or disrupted through rolling
+
+roasted:
+  canonical_name: roasted
+  aliases:
+    - roasted tea
+    - roasted
+    - roast processed
+    - 배전
+    - 배전차
+    - 볶은 차
+    - 로스팅 티
+  process_category: finishing
+  heat_fixation: true
+  microbial_fermentation: false
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Tea finished or transformed through roasting
+
+sun_dried:
+  canonical_name: sun_dried
+  aliases:
+    - sun dried
+    - sun-dried
+    - solar dried
+    - 일광건조
+    - 햇볕 건조
+    - 천일건조
+  process_category: drying
+  heat_fixation: false
+  microbial_fermentation: false
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Tea dried primarily using sunlight
+
+post_fermented:
+  canonical_name: post_fermented
+  aliases:
+    - post fermented
+    - post-fermented
+    - microbial fermentation
+    - 후발효
+    - 후발효차
+    - 미생물 발효
+  process_category: microbial_fermentation
+  heat_fixation: false
+  microbial_fermentation: true
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Tea processed through post-production microbial fermentation
+
+wet_piled:
+  canonical_name: wet_piled
+  aliases:
+    - wet piled
+    - wet-piled
+    - wet piling
+    - wo dui
+    - wodui
+    - 악퇴
+    - 워두이
+  process_category: microbial_fermentation
+  heat_fixation: false
+  microbial_fermentation: true
+  smoke_applied: false
+  score: 0
+  premium: false
+  description: Accelerated microbial fermentation using wet piling
+
+smoked:
+  canonical_name: smoked
+  aliases:
+    - smoked tea
+    - smoke dried
+    - smoked
+    - 훈연
+    - 훈연차
+    - 스모크드 티
+  process_category: smoking
+  heat_fixation: false
+  microbial_fermentation: false
+  smoke_applied: true
+  score: 0
+  premium: false
+  description: Tea processed or dried with smoke exposure

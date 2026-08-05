@@ -1,0 +1,2578 @@
+# Tea Attributes Contract Evidence
+
+generated_at=2026-08-05T00:32:08Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+============================================================
+FILE: app/services/food/knowledge/common/attribute_models.py
+============================================================
+MISSING
+
+============================================================
+FILE: app/services/food/knowledge/common/attributes.py
+============================================================
+MISSING
+
+============================================================
+FILE: app/services/food/knowledge/coffee/attributes.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.coffee.parser_models import (
+    CoffeeParseResult,
+)
+
+
+def extract_coffee_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_coffee_country_text(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CoffeeParseResult,
+) -> str | None:
+    """
+    구조화된 원산지 값이 있으면 원문을 우선 사용한다.
+
+    명시값이 없으면 Coffee Origin Registry에서
+    탐지한 표준 국가명을 사용한다.
+    """
+    raw_country = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+        or product.get("origin")
+        or product.get("coffee_origin")
+    )
+
+    if raw_country is not None:
+        country_text = str(
+            raw_country
+        ).strip()
+
+        if country_text:
+            return country_text
+
+    if parse_result.origin_match is None:
+        return None
+
+    return (
+        parse_result
+        .origin_match
+        .entry
+        .canonical_name
+    )
+
+
+def extract_coffee_country_code(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CoffeeParseResult,
+) -> str | None:
+    """
+    명시된 국가 코드를 우선 사용하고,
+    없으면 Origin Registry 값을 사용한다.
+    """
+    raw_country_code = (
+        product.get("country_code")
+        or product.get("origin_country_code")
+    )
+
+    if raw_country_code is not None:
+        country_code = str(
+            raw_country_code
+        ).strip().upper()
+
+        if country_code:
+            return country_code
+
+    if parse_result.origin_match is None:
+        return None
+
+    country_code = (
+        parse_result
+        .origin_match
+        .entry
+        .country_code
+    )
+
+    if country_code is None:
+        return None
+
+    normalized = str(
+        country_code
+    ).strip().upper()
+
+    return normalized or None
+
+
+def extract_coffee_weight(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 중량 또는 수량 정보를 추출한다.
+    """
+    return (
+        product.get("weight")
+        or product.get("net_weight")
+        or product.get("weight_text")
+        or product.get("quantity")
+        or product.get("size")
+    )
+
+
+def extract_coffee_grind_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    홀빈·분쇄 등 구조화된 분쇄 형태를 추출한다.
+    """
+    raw_value = (
+        product.get("grind_type")
+        or product.get("grind")
+        or product.get("grinding")
+        or product.get("grind_level")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_coffee_product_form(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    원두·분쇄·드립백·캡슐 등 상품 형태를 추출한다.
+    """
+    raw_value = (
+        product.get("product_form")
+        or product.get("coffee_form")
+        or product.get("format")
+        or product.get("packaging_type")
+        or product.get("package_type")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_coffee_decaf(
+    product: Mapping[str, Any],
+) -> bool | None:
+    """
+    디카페인 여부를 구조화된 값에서 추출한다.
+    """
+    raw_value = None
+
+    for field_name in (
+        "decaf",
+        "is_decaf",
+        "decaffeinated",
+        "caffeine_free",
+    ):
+        if field_name in product:
+            raw_value = product[field_name]
+            break
+
+    if raw_value is None:
+        return None
+
+    if isinstance(raw_value, bool):
+        return raw_value
+
+    normalized = str(
+        raw_value
+    ).strip().casefold()
+
+    if normalized in {
+        "true",
+        "1",
+        "yes",
+        "y",
+        "decaf",
+        "decaffeinated",
+        "디카페인",
+        "카페인 제거",
+    }:
+        return True
+
+    if normalized in {
+        "false",
+        "0",
+        "no",
+        "n",
+        "regular",
+        "일반",
+        "카페인",
+    }:
+        return False
+
+    return None
+
+
+def extract_coffee_certifications(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    인증 및 품질 표시를 중복 없는 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("certifications")
+        or product.get("certification")
+        or product.get("certificates")
+        or product.get("labels")
+        or product.get("quality_labels")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        return (
+            [normalized]
+            if normalized
+            else []
+        )
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return _deduplicate_strings(
+            [
+                str(value).strip()
+                for value in raw_value
+                if str(value).strip()
+            ]
+        )
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return (
+        [normalized]
+        if normalized
+        else []
+    )
+
+
+def extract_coffee_flavor_notes(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    구조화된 Flavor/Tasting Note를 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("flavor_notes")
+        or product.get("tasting_notes")
+        or product.get("flavors")
+        or product.get("flavour_notes")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        if not normalized:
+            return []
+
+        separators = (
+            ",",
+            "/",
+            "|",
+        )
+
+        values = [normalized]
+
+        for separator in separators:
+            split_values: list[str] = []
+
+            for value in values:
+                split_values.extend(
+                    value.split(separator)
+                )
+
+            values = split_values
+
+        return _deduplicate_strings(values)
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return _deduplicate_strings(
+            [
+                str(value).strip()
+                for value in raw_value
+                if str(value).strip()
+            ]
+        )
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return (
+        [normalized]
+        if normalized
+        else []
+    )
+
+
+def extract_coffee_altitude(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    고도 또는 재배고도 정보를 추출한다.
+    """
+    return (
+        product.get("altitude")
+        or product.get("growing_altitude")
+        or product.get("elevation")
+        or product.get("altitude_m")
+    )
+
+
+def extract_coffee_roast_date(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    로스팅 날짜 정보를 추출한다.
+    """
+    return (
+        product.get("roast_date")
+        or product.get("roasted_at")
+        or product.get("roasting_date")
+        or product.get("manufactured_at")
+    )
+
+
+def build_coffee_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CoffeeParseResult,
+) -> dict[str, Any]:
+    """
+    Coffee Parser 결과와 Registry 데이터를
+    FoodKnowledgeResult.attributes용 dict로 변환한다.
+
+    이 함수는 데이터 변환만 수행한다.
+
+    수행하지 않는 책임:
+    - 상품명 재파싱
+    - Registry 재조회
+    - Knowledge Score 계산
+    - Final Score 계산
+    - 추천 이유 및 경고 정책 생성
+    """
+    if not isinstance(
+        product,
+        Mapping,
+    ):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        CoffeeParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CoffeeParseResult"
+        )
+
+    attributes: dict[str, Any] = {
+        "product_name": (
+            extract_coffee_product_name(
+                product
+            )
+        ),
+        "bean": parse_result.bean,
+        "origin": parse_result.origin,
+        "country": extract_coffee_country_text(
+            product=product,
+            parse_result=parse_result,
+        ),
+        "country_code": (
+            extract_coffee_country_code(
+                product=product,
+                parse_result=parse_result,
+            )
+        ),
+        "roast": parse_result.roast,
+        "process": parse_result.process,
+        "weight": extract_coffee_weight(
+            product
+        ),
+        "grind_type": (
+            extract_coffee_grind_type(
+                product
+            )
+        ),
+        "product_form": (
+            extract_coffee_product_form(
+                product
+            )
+        ),
+        "decaf": extract_coffee_decaf(
+            product
+        ),
+        "certifications": (
+            extract_coffee_certifications(
+                product
+            )
+        ),
+        "flavor_notes": (
+            extract_coffee_flavor_notes(
+                product
+            )
+        ),
+        "altitude": extract_coffee_altitude(
+            product
+        ),
+        "roast_date": (
+            extract_coffee_roast_date(
+                product
+            )
+        ),
+        "confidence": parse_result.confidence,
+        "bean_confidence": (
+            parse_result.bean_confidence
+        ),
+        "origin_confidence": (
+            parse_result.origin_confidence
+        ),
+        "roast_confidence": (
+
+============================================================
+FILE: app/services/food/knowledge/wine/attributes.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.wine.parser_models import (
+    WineParseResult,
+)
+
+
+def extract_wine_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_wine_country_text(
+    *,
+    product: Mapping[str, Any],
+    parse_result: WineParseResult,
+) -> str | None:
+    """
+    구조화된 국가 정보가 있으면 우선 사용하고,
+    없으면 Region Registry의 국가명을 사용한다.
+    """
+    raw_value = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+    )
+
+    if raw_value is not None:
+        normalized = str(raw_value).strip()
+
+        if normalized:
+            return normalized
+
+    if parse_result.region_match is None:
+        return None
+
+    country_name = (
+        parse_result
+        .region_match
+        .entry
+        .country_name
+    )
+
+    if country_name is None:
+        return None
+
+    normalized = str(country_name).strip()
+
+    return normalized or None
+
+
+def extract_wine_country_code(
+    *,
+    product: Mapping[str, Any],
+    parse_result: WineParseResult,
+) -> str | None:
+    """
+    구조화된 국가 코드를 우선 사용하고,
+    없으면 Region Registry의 국가 코드를 사용한다.
+    """
+    raw_value = (
+        product.get("country_code")
+        or product.get("origin_country_code")
+    )
+
+    if raw_value is not None:
+        normalized = str(
+            raw_value
+        ).strip().upper()
+
+        if normalized:
+            return normalized
+
+    if parse_result.region_match is None:
+        return None
+
+    country_code = (
+        parse_result
+        .region_match
+        .entry
+        .country_code
+    )
+
+    if country_code is None:
+        return None
+
+    normalized = str(
+        country_code
+    ).strip().upper()
+
+    return normalized or None
+
+
+def extract_wine_volume(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    병 용량 또는 상품 용량을 추출한다.
+    """
+    return (
+        product.get("volume")
+        or product.get("volume_ml")
+        or product.get("bottle_size")
+        or product.get("size")
+        or product.get("capacity")
+        or product.get("quantity")
+    )
+
+
+def extract_wine_packaging_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    병, 캔, 박스 등 포장 형태를 추출한다.
+    """
+    raw_value = (
+        product.get("packaging_type")
+        or product.get("package_type")
+        or product.get("container_type")
+        or product.get("bottle_type")
+        or product.get("format")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_wine_closure_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    코르크, 스크루캡 등 마개 형태를 추출한다.
+    """
+    raw_value = (
+        product.get("closure_type")
+        or product.get("closure")
+        or product.get("cap_type")
+        or product.get("cork_type")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_wine_producer(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    와이너리 또는 생산자 정보를 추출한다.
+    """
+    raw_value = (
+        product.get("producer")
+        or product.get("winery")
+        or product.get("brand")
+        or product.get("estate")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_wine_certifications(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    인증 및 품질 표시를 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("certifications")
+        or product.get("certification")
+        or product.get("certificates")
+        or product.get("labels")
+        or product.get("quality_labels")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        return [normalized] if normalized else []
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return _deduplicate_strings(
+            [
+                str(value).strip()
+                for value in raw_value
+                if str(value).strip()
+            ]
+        )
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return [normalized] if normalized else []
+
+
+def extract_wine_organic_status(
+    product: Mapping[str, Any],
+) -> bool | None:
+    """
+    Organic 여부를 구조화 필드에서 추출한다.
+    """
+    for field_name in (
+        "organic",
+        "is_organic",
+        "organic_status",
+    ):
+        if field_name not in product:
+            continue
+
+        raw_value = product[field_name]
+
+        if isinstance(raw_value, bool):
+            return raw_value
+
+        normalized = str(
+            raw_value
+        ).strip().casefold()
+
+        if normalized in {
+            "true",
+            "yes",
+            "y",
+            "1",
+            "organic",
+            "유기농",
+        }:
+            return True
+
+        if normalized in {
+            "false",
+            "no",
+            "n",
+            "0",
+            "non-organic",
+            "일반",
+        }:
+            return False
+
+    return None
+
+
+def extract_wine_biodynamic_status(
+    product: Mapping[str, Any],
+) -> bool | None:
+    """
+    Biodynamic 여부를 구조화 필드에서 추출한다.
+    """
+    for field_name in (
+        "biodynamic",
+        "is_biodynamic",
+        "biodynamic_status",
+    ):
+        if field_name not in product:
+            continue
+
+        raw_value = product[field_name]
+
+        if isinstance(raw_value, bool):
+            return raw_value
+
+        normalized = str(
+            raw_value
+        ).strip().casefold()
+
+        if normalized in {
+            "true",
+            "yes",
+            "y",
+            "1",
+            "biodynamic",
+            "바이오다이나믹",
+        }:
+            return True
+
+        if normalized in {
+            "false",
+            "no",
+            "n",
+            "0",
+        }:
+            return False
+
+    return None
+
+
+def build_wine_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: WineParseResult,
+) -> dict[str, Any]:
+    """
+    WineParseResult와 구조화 상품 정보를 결합하여
+    Wine Attributes를 구성한다.
+
+    Parser를 다시 실행하거나 점수를 계산하지 않는다.
+    """
+    if not isinstance(
+        product,
+        Mapping,
+    ):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        WineParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be WineParseResult"
+        )
+
+    attributes: dict[str, Any] = {
+        "product_name": extract_wine_product_name(
+            product
+        ),
+        "wine_type": parse_result.wine_type,
+        "grape": parse_result.grape,
+        "region": parse_result.region,
+        "country": extract_wine_country_text(
+            product=product,
+            parse_result=parse_result,
+        ),
+        "country_code": extract_wine_country_code(
+            product=product,
+            parse_result=parse_result,
+        ),
+        "sweetness": parse_result.sweetness,
+        "body": parse_result.body,
+        "acidity": parse_result.acidity,
+        "vintage": parse_result.vintage,
+        "alcohol_percent": (
+            parse_result.alcohol_percent
+        ),
+        "producer": extract_wine_producer(
+            product
+        ),
+        "volume": extract_wine_volume(
+            product
+        ),
+        "packaging_type": (
+            extract_wine_packaging_type(
+                product
+            )
+        ),
+        "closure_type": (
+            extract_wine_closure_type(
+                product
+            )
+        ),
+        "certifications": (
+            extract_wine_certifications(
+                product
+            )
+        ),
+        "organic": (
+            extract_wine_organic_status(
+                product
+            )
+        ),
+        "biodynamic": (
+            extract_wine_biodynamic_status(
+                product
+            )
+        ),
+        "matched_field_count": (
+            parse_result.matched_field_count
+        ),
+        "is_complete": (
+            parse_result.is_complete
+        ),
+        "is_usable": (
+            parse_result.is_usable
+        ),
+        "parse_confidence": (
+            parse_result.confidence
+        ),
+    }
+
+    _add_registry_metadata(
+        attributes=attributes,
+        parse_result=parse_result,
+    )
+
+    return attributes
+
+
+def _add_registry_metadata(
+    *,
+    attributes: dict[str, Any],
+    parse_result: WineParseResult,
+) -> None:
+    if parse_result.wine_type_match is not None:
+        entry = (
+            parse_result
+            .wine_type_match
+            .entry
+        )
+
+        attributes.update(
+            {
+                "wine_type_category": (
+                    entry.type_category
+                ),
+                "wine_type_color_family": (
+                    entry.color_family
+                ),
+                "wine_type_sparkling": (
+                    entry.sparkling
+                ),
+                "wine_type_fortified": (
+                    entry.fortified
+                ),
+                "wine_type_premium": (
+                    entry.premium
+                ),
+            }
+        )
+
+    if parse_result.grape_match is not None:
+        entry = (
+
+============================================================
+FILE: app/services/food/knowledge/cheese/attributes.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.cheese.parser_models import (
+    CheeseParseResult,
+)
+
+
+def extract_cheese_product_name(
+    product: Mapping[str, Any],
+) -> str:
+    """
+    상품 Mapping에서 대표 상품명을 추출한다.
+    """
+    return str(
+        product.get("product_name")
+        or product.get("title")
+        or product.get("name")
+        or product.get("raw_name")
+        or product.get("display_name")
+        or ""
+    ).strip()
+
+
+def extract_cheese_country_text(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CheeseParseResult,
+) -> str | None:
+    """
+    상품에 원산지가 명시되어 있으면 원문을 우선 사용한다.
+
+    구조화된 원산지가 없으면 Cheese Origin Registry에서
+    탐지된 표준 국가명을 사용한다.
+    """
+    raw_country = (
+        product.get("country")
+        or product.get("origin_country")
+        or product.get("country_of_origin")
+        or product.get("origin")
+    )
+
+    if raw_country is not None:
+        country_text = str(
+            raw_country
+        ).strip()
+
+        if country_text:
+            return country_text
+
+    if parse_result.origin_match is None:
+        return None
+
+    return (
+        parse_result
+        .origin_match
+        .entry
+        .canonical_name
+    )
+
+
+def extract_cheese_country_code(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CheeseParseResult,
+) -> str | None:
+    """
+    상품에 명시된 국가 코드를 우선 사용한다.
+
+    명시값이 없으면 Origin Registry의 country_code를 사용한다.
+    """
+    raw_country_code = (
+        product.get("country_code")
+        or product.get("origin_country_code")
+    )
+
+    if raw_country_code is not None:
+        country_code = str(
+            raw_country_code
+        ).strip().upper()
+
+        if country_code:
+            return country_code
+
+    if parse_result.origin_match is None:
+        return None
+
+    country_code = (
+        parse_result
+        .origin_match
+        .entry
+        .country_code
+    )
+
+    if country_code is None:
+        return None
+
+    normalized = str(
+        country_code
+    ).strip().upper()
+
+    return normalized or None
+
+
+def extract_cheese_weight(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    상품 중량 또는 수량 정보를 추출한다.
+    """
+    return (
+        product.get("weight")
+        or product.get("net_weight")
+        or product.get("weight_text")
+        or product.get("quantity")
+        or product.get("size")
+    )
+
+
+def extract_cheese_storage_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    냉장·냉동 등 구조화된 보관 상태를 추출한다.
+    """
+    raw_value = (
+        product.get("storage_type")
+        or product.get("storage")
+        or product.get("temperature_type")
+        or product.get("freshness_type")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_cheese_packaging_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    블록·슬라이스·슈레드 등 포장 또는 가공 형태를 추출한다.
+    """
+    raw_value = (
+        product.get("packaging_type")
+        or product.get("package_type")
+        or product.get("format")
+        or product.get("product_form")
+        or product.get("processing_type")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_cheese_pasteurization(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    살균·비살균 등 원유 처리 정보를 추출한다.
+    """
+    raw_value = None
+
+    for field_name in (
+        "pasteurization",
+        "pasteurized",
+        "milk_treatment",
+        "raw_milk_status",
+    ):
+        if field_name in product:
+            raw_value = product[field_name]
+            break
+
+    if raw_value is None:
+        return None
+
+    if isinstance(raw_value, bool):
+        return (
+            "pasteurized"
+            if raw_value
+            else "unpasteurized"
+        )
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def extract_cheese_certifications(
+    product: Mapping[str, Any],
+) -> list[str]:
+    """
+    인증 및 품질 표시를 문자열 목록으로 변환한다.
+    """
+    raw_value = (
+        product.get("certifications")
+        or product.get("certification")
+        or product.get("certificates")
+        or product.get("labels")
+        or product.get("quality_labels")
+    )
+
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, str):
+        normalized = raw_value.strip()
+
+        return (
+            [normalized]
+            if normalized
+            else []
+        )
+
+    if isinstance(
+        raw_value,
+        (list, tuple, set, frozenset),
+    ):
+        return _deduplicate_strings(
+            [
+                str(value).strip()
+                for value in raw_value
+                if str(value).strip()
+            ]
+        )
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return (
+        [normalized]
+        if normalized
+        else []
+    )
+
+
+def extract_cheese_fat_content(
+    product: Mapping[str, Any],
+) -> Any:
+    """
+    구조화된 지방 함량 정보를 추출한다.
+    """
+    return (
+        product.get("fat_content")
+        or product.get("fat_percentage")
+        or product.get("milk_fat")
+        or product.get("fat")
+    )
+
+
+def extract_cheese_rind_type(
+    product: Mapping[str, Any],
+) -> str | None:
+    """
+    외피 또는 Rind 정보를 추출한다.
+    """
+    raw_value = (
+        product.get("rind_type")
+        or product.get("rind")
+        or product.get("cheese_rind")
+    )
+
+    if raw_value is None:
+        return None
+
+    normalized = str(
+        raw_value
+    ).strip()
+
+    return normalized or None
+
+
+def build_cheese_attributes(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CheeseParseResult,
+) -> dict[str, Any]:
+    """
+    Cheese Parser 결과와 Registry 정보를
+    FoodKnowledgeResult.attributes용 dict로 변환한다.
+
+    이 함수는 데이터 변환만 수행하며 점수, 추천 이유,
+    경고 정책 또는 최종 결과를 계산하지 않는다.
+    """
+    if not isinstance(
+        product,
+        Mapping,
+    ):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        CheeseParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CheeseParseResult"
+        )
+
+    attributes: dict[str, Any] = {
+        "product_name": (
+            extract_cheese_product_name(
+                product
+            )
+        ),
+        "cheese_type": parse_result.cheese_type,
+        "milk_source": parse_result.milk_source,
+        "origin": parse_result.origin,
+        "country": extract_cheese_country_text(
+            product=product,
+            parse_result=parse_result,
+        ),
+        "country_code": (
+            extract_cheese_country_code(
+                product=product,
+                parse_result=parse_result,
+            )
+        ),
+        "texture": parse_result.texture,
+        "aging": parse_result.aging,
+        "weight": extract_cheese_weight(
+            product
+        ),
+        "storage_type": (
+            extract_cheese_storage_type(
+                product
+            )
+        ),
+        "packaging_type": (
+            extract_cheese_packaging_type(
+                product
+            )
+        ),
+        "pasteurization": (
+            extract_cheese_pasteurization(
+                product
+            )
+        ),
+        "certifications": (
+            extract_cheese_certifications(
+                product
+            )
+        ),
+        "fat_content": (
+            extract_cheese_fat_content(
+                product
+            )
+        ),
+        "rind_type": extract_cheese_rind_type(
+            product
+        ),
+        "confidence": parse_result.confidence,
+        "cheese_type_confidence": (
+            parse_result
+            .cheese_type_confidence
+        ),
+        "milk_source_confidence": (
+            parse_result
+            .milk_source_confidence
+        ),
+        "origin_confidence": (
+            parse_result.origin_confidence
+        ),
+        "texture_confidence": (
+            parse_result.texture_confidence
+        ),
+        "aging_confidence": (
+            parse_result.aging_confidence
+        ),
+        "detected_keywords": list(
+            parse_result.detected_keywords
+        ),
+        "parser_warnings": list(
+            parse_result.warnings
+        ),
+        "matched_field_count": (
+            parse_result.matched_field_count
+        ),
+        "is_complete": (
+            parse_result.is_complete
+        ),
+        "is_usable": parse_result.is_usable,
+    }
+
+    if (
+        parse_result.cheese_type_match
+        is not None
+    ):
+        cheese_type = (
+            parse_result
+            .cheese_type_match
+            .entry
+        )
+
+        attributes.update(
+            {
+                "cheese_type_registry_key": (
+                    cheese_type.registry_key
+                ),
+                "cheese_type_category": (
+                    cheese_type.type_category
+                ),
+                "cheese_type_score": (
+                    cheese_type.score
+                ),
+                "cheese_type_premium": (
+                    cheese_type.premium
+                ),
+                "cheese_type_flavor_score": (
+                    cheese_type.flavor_score
+                ),
+                "cheese_type_versatility_score": (
+                    cheese_type
+                    .versatility_score
+                ),
+                "cheese_type_typical_uses": list(
+                    cheese_type.typical_uses
+                ),
+                "cheese_type_description": (
+                    cheese_type.description
+                ),
+            }
+        )
+
+    if (
+        parse_result.milk_source_match
+        is not None
+    ):
+        milk_source = (
+            parse_result
+            .milk_source_match
+            .entry
+        )
+
+        attributes.update(
+            {
+                "milk_source_registry_key": (
+                    milk_source.registry_key
+                ),
+                "milk_source_category": (
+                    milk_source.source_category
+                ),
+                "milk_source_score": (
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_attributes.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.coffee import (
+    CoffeeParser,
+    build_coffee_attributes,
+    extract_coffee_certifications,
+    extract_coffee_decaf,
+    extract_coffee_flavor_notes,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "에티오피아 100% 아라비카 "
+            "라이트 로스트 워시드 원두"
+        ),
+        "bean_type": "100% arabica",
+        "origin_country": "Ethiopia",
+        "country_code": "et",
+        "roast_level": "light roast",
+        "processing_method": "washed process",
+        "weight": "200g",
+        "grind_type": "whole bean",
+        "product_form": "원두",
+        "decaf": False,
+        "certifications": [
+            "Organic",
+            "Fair Trade",
+        ],
+        "flavor_notes": [
+            "자스민",
+            "레몬",
+            "베르가못",
+        ],
+        "altitude": "1,900m",
+        "roast_date": "2026-08-01",
+    }
+
+
+def test_complete_coffee_attributes() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["product_name"] == (
+        product["product_name"]
+    )
+
+    assert attributes["bean"] == "아라비카"
+    assert attributes["origin"] == "에티오피아"
+    assert attributes["country"] == "Ethiopia"
+    assert attributes["country_code"] == "ET"
+    assert attributes["roast"] == (
+        "라이트 로스트"
+    )
+    assert attributes["process"] == "워시드"
+
+    assert attributes["weight"] == "200g"
+    assert attributes["grind_type"] == (
+        "whole bean"
+    )
+    assert attributes["product_form"] == "원두"
+    assert attributes["decaf"] is False
+    assert attributes["certifications"] == [
+        "Organic",
+        "Fair Trade",
+    ]
+    assert attributes["flavor_notes"] == [
+        "자스민",
+        "레몬",
+        "베르가못",
+    ]
+    assert attributes["altitude"] == "1,900m"
+    assert attributes["roast_date"] == (
+        "2026-08-01"
+    )
+
+    assert attributes["bean_registry_key"] == (
+        "arabica"
+    )
+    assert attributes["origin_registry_key"] == (
+        "ethiopia"
+    )
+    assert attributes["roast_registry_key"] == (
+        "light"
+    )
+    assert attributes["process_registry_key"] == (
+        "washed"
+    )
+
+    assert attributes["bean_score"] == 92.0
+    assert attributes["origin_score"] == 96.0
+    assert attributes["roast_score"] == 91.0
+    assert attributes["process_score"] == 91.0
+
+    assert attributes["matched_field_count"] == 4
+    assert attributes["is_complete"] is True
+    assert attributes["is_usable"] is True
+
+
+def test_partial_coffee_attributes() -> None:
+    product = {
+        "product_name": (
+            "에티오피아 워시드 커피 200g"
+        ),
+        "weight": "200g",
+    }
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["bean"] is None
+    assert attributes["origin"] == "에티오피아"
+    assert attributes["process"] == "워시드"
+    assert attributes["roast"] is None
+
+    assert attributes["origin_registry_key"] == (
+        "ethiopia"
+    )
+    assert attributes["process_registry_key"] == (
+        "washed"
+    )
+
+    assert "bean_registry_key" not in attributes
+    assert "roast_registry_key" not in attributes
+
+    assert attributes["matched_field_count"] == 2
+    assert attributes["is_complete"] is False
+    assert attributes["is_usable"] is True
+
+
+def test_unknown_coffee_attributes() -> None:
+    product = {
+        "product_name": "일반 식품 상품",
+    }
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["bean"] is None
+    assert attributes["origin"] is None
+    assert attributes["roast"] is None
+    assert attributes["process"] is None
+
+    assert attributes["matched_field_count"] == 0
+    assert attributes["is_complete"] is False
+    assert attributes["is_usable"] is False
+    assert attributes["confidence"] == 0.0
+    assert attributes["parser_warnings"]
+
+
+def test_country_falls_back_to_origin_registry() -> None:
+    product = {
+        "product_name": (
+            "에티오피아 아라비카 원두"
+        ),
+    }
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["origin"] == "에티오피아"
+    assert attributes["country"] == "에티오피아"
+    assert attributes["country_code"] == "ET"
+
+
+def test_explicit_country_has_priority() -> None:
+    product = {
+        "product_name": (
+            "에티오피아 아라비카 원두"
+        ),
+        "country": "Ethiopia",
+        "country_code": "et",
+    }
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["origin"] == "에티오피아"
+    assert attributes["country"] == "Ethiopia"
+    assert attributes["country_code"] == "ET"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (True, True),
+        (False, False),
+        ("decaf", True),
+        ("디카페인", True),
+        ("regular", False),
+        ("unknown", None),
+        (None, None),
+    ],
+)
+def test_extract_coffee_decaf(
+    value: object,
+    expected: bool | None,
+) -> None:
+    product = {}
+
+    if value is not None:
+        product["decaf"] = value
+
+    assert extract_coffee_decaf(
+        product
+    ) is expected
+
+
+def test_certifications_are_normalized() -> None:
+    assert extract_coffee_certifications(
+        {
+            "certifications": [
+                "Organic",
+                "Organic",
+                " Fair Trade ",
+                "",
+            ]
+        }
+    ) == [
+        "Organic",
+        "Fair Trade",
+    ]
+
+    assert extract_coffee_certifications(
+        {
+            "certification": "Rainforest Alliance",
+        }
+    ) == [
+        "Rainforest Alliance",
+    ]
+
+    assert extract_coffee_certifications({}) == []
+
+
+def test_flavor_notes_are_normalized() -> None:
+    assert extract_coffee_flavor_notes(
+        {
+            "flavor_notes": (
+                "자스민, 레몬 / 베르가못"
+            )
+        }
+    ) == [
+        "자스민",
+        "레몬",
+        "베르가못",
+    ]
+
+    assert extract_coffee_flavor_notes(
+        {
+            "tasting_notes": [
+                "초콜릿",
+                "초콜릿",
+                " 견과류 ",
+                "",
+            ]
+        }
+    ) == [
+        "초콜릿",
+        "견과류",
+    ]
+
+    assert extract_coffee_flavor_notes({}) == []
+
+
+def test_attributes_do_not_mutate_inputs() -> None:
+    product = _complete_product()
+    product_before = deepcopy(product)
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+    parse_result_before = (
+        parse_result.to_dict()
+    )
+
+    build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert product == product_before
+    assert (
+        parse_result.to_dict()
+        == parse_result_before
+    )
+
+
+def test_attribute_lists_are_copies() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    attributes["certifications"].append(
+        "테스트"
+    )
+    attributes["flavor_notes"].append(
+        "테스트"
+    )
+    attributes["detected_keywords"].append(
+        "테스트"
+    )
+
+    assert "테스트" not in product[
+        "certifications"
+    ]
+    assert "테스트" not in product[
+        "flavor_notes"
+    ]
+    assert (
+        "테스트"
+        not in parse_result.detected_keywords
+    )
+
+
+def test_attributes_reject_invalid_product() -> None:
+    parse_result = CoffeeParser().parse(
+        "아라비카 원두"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        build_coffee_attributes(
+            product="아라비카",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_attributes_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CoffeeParseResult"
+        ),
+    ):
+        build_coffee_attributes(
+            product={
+                "product_name": (
+                    "아라비카 원두"
+                ),
+            },
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_attributes_do_not_calculate_scores() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_coffee_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    registry_score_keys = {
+        "bean_score",
+        "origin_score",
+        "roast_score",
+        "process_score",
+    }
+
+    assert registry_score_keys.issubset(
+        attributes.keys()
+    )
+
+    assert "knowledge_score" not in attributes
+    assert "final_score" not in attributes
+    assert "quality_score" not in attributes
+    assert "price_score" not in attributes
+    assert "trust_score" not in attributes
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_attributes.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.wine.attributes import (
+    build_wine_attributes,
+    extract_wine_product_name,
+)
+from app.services.food.knowledge.wine.parser import (
+    WineParser,
+)
+
+
+def test_extract_wine_product_name_priority() -> None:
+    product = {
+        "product_name": "Primary Name",
+        "title": "Secondary Name",
+        "name": "Third Name",
+    }
+
+    assert (
+        extract_wine_product_name(product)
+        == "Primary Name"
+    )
+
+
+def test_extract_wine_product_name_fallback() -> None:
+    product = {
+        "title": "Wine Title",
+    }
+
+    assert (
+        extract_wine_product_name(product)
+        == "Wine Title"
+    )
+
+
+def test_build_wine_attributes_from_parser_result() -> None:
+    product = {
+        "product_name": (
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인 드라이 풀 바디 높은 산도"
+        ),
+        "volume": "750ml",
+        "packaging_type": "bottle",
+        "closure_type": "cork",
+        "producer": "Example Winery",
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["wine_type"] == "red"
+    assert (
+        attributes["grape"]
+        == "cabernet_sauvignon"
+    )
+    assert attributes["region"] == "bordeaux"
+    assert attributes["country"] == "France"
+    assert attributes["country_code"] == "FR"
+    assert attributes["sweetness"] == "dry"
+    assert attributes["body"] == "full"
+    assert attributes["acidity"] == "high"
+    assert attributes["vintage"] == 2020
+    assert attributes["volume"] == "750ml"
+    assert (
+        attributes["packaging_type"]
+        == "bottle"
+    )
+    assert attributes["closure_type"] == "cork"
+    assert (
+        attributes["producer"]
+        == "Example Winery"
+    )
+    assert attributes["is_usable"] is True
+    assert attributes["matched_field_count"] == 6
+
+
+def test_build_wine_attributes_registry_metadata() -> None:
+    product = {
+        "product_name": (
+            "부르고뉴 샤르도네 "
+            "화이트 와인 드라이 "
+            "미디엄 바디 높은 산도"
+        ),
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert (
+        attributes["wine_type_color_family"]
+        == "white"
+    )
+    assert (
+        attributes["wine_type_sparkling"]
+        is False
+    )
+    assert attributes["grape_color"] == "white"
+    assert (
+        attributes["grape_species"]
+        == "vitis_vinifera"
+    )
+    assert (
+        attributes["region_appellation"]
+        == "Bourgogne"
+    )
+    assert attributes["sweetness_level"] == 1
+    assert attributes["body_level"] == 2
+    assert attributes["acidity_level"] == 3
+
+
+def test_structured_country_overrides_registry_country() -> None:
+    product = {
+        "product_name": "보르도 레드 와인",
+        "country": "Custom Country",
+        "country_code": "xy",
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert (
+        attributes["country"]
+        == "Custom Country"
+    )
+    assert attributes["country_code"] == "XY"
+
+
+def test_build_wine_attributes_certifications() -> None:
+    product = {
+        "product_name": "보르도 레드 와인",
+        "certifications": [
+            "Organic",
+            "AOC",
+            "Organic",
+            "",
+        ],
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["certifications"] == [
+        "Organic",
+        "AOC",
+    ]
+
+
+@pytest.mark.parametrize(
+    (
+        "raw_value",
+        "expected",
+    ),
+    [
+        (True, True),
+        (False, False),
+        ("organic", True),
+        ("유기농", True),
+        ("no", False),
+    ],
+)
+def test_build_wine_attributes_organic_status(
+    raw_value: object,
+    expected: bool,
+) -> None:
+    product = {
+        "product_name": "보르도 레드 와인",
+        "organic": raw_value,
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["organic"] is expected
+
+
+def test_build_wine_attributes_biodynamic_status() -> None:
+    product = {
+        "product_name": "부르고뉴 와인",
+        "biodynamic": "바이오다이나믹",
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["biodynamic"] is True
+
+
+def test_build_wine_attributes_preserves_alcohol_percent() -> None:
+    product = {
+        "product_name": (
+            "2021 나파 밸리 "
+            "카베르네 소비뇽 레드 와인 13.5%"
+        ),
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    attributes = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["vintage"] == 2021
+    assert attributes["alcohol_percent"] == 13.5
+
+
+def test_build_wine_attributes_rejects_invalid_product() -> None:
+    parse_result = WineParser().parse(
+        "보르도 레드 와인"
+    )
+
+    with pytest.raises(TypeError):
+        build_wine_attributes(
+            product="invalid",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_build_wine_attributes_rejects_invalid_parse_result() -> None:
+    with pytest.raises(TypeError):
+        build_wine_attributes(
+            product={
+                "product_name": "보르도 와인",
+            },
+            parse_result=None,  # type: ignore[arg-type]
+        )
+
+
+def test_build_wine_attributes_is_deterministic() -> None:
+    product = {
+        "product_name": (
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인 드라이"
+        ),
+        "certifications": [
+            "AOC",
+            "Organic",
+        ],
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    first = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+    second = build_wine_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert first == second
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_attributes.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.cheese import (
+    CheeseParser,
+    build_cheese_attributes,
+    extract_cheese_certifications,
+    extract_cheese_pasteurization,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "프랑스 산양유 브리 "
+            "소프트 치즈 12개월 숙성"
+        ),
+        "cheese_type": "brie",
+        "milk_source": "goat milk",
+        "country": "프랑스",
+        "country_code": "FR",
+        "texture": "soft cheese",
+        "aging": "12개월 숙성",
+        "weight": "200g",
+        "storage_type": "냉장",
+        "packaging_type": "wheel",
+        "pasteurized": True,
+        "certifications": [
+            "AOP",
+            "유기농",
+        ],
+        "fat_content": "45%",
+        "rind_type": "bloomy rind",
+    }
+
+
+def test_complete_cheese_attributes() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["product_name"] == (
+        product["product_name"]
+    )
+
+    assert attributes["cheese_type"] == "브리"
+    assert attributes["milk_source"] == "산양유"
+    assert attributes["origin"] == "프랑스"
+    assert attributes["country"] == "프랑스"
+    assert attributes["country_code"] == "FR"
+    assert attributes["texture"] == "연성"
+    assert attributes["aging"] == "장기숙성"
+
+    assert attributes["weight"] == "200g"
+    assert attributes["storage_type"] == "냉장"
+    assert attributes["packaging_type"] == "wheel"
+    assert attributes["pasteurization"] == (
+        "pasteurized"
+    )
+    assert attributes["certifications"] == [
+        "AOP",
+        "유기농",
+    ]
+    assert attributes["fat_content"] == "45%"
+    assert attributes["rind_type"] == (
+        "bloomy rind"
+    )
+
+    assert (
+        attributes[
+            "cheese_type_registry_key"
+        ]
+        == "brie"
+    )
+    assert (
+        attributes[
+            "milk_source_registry_key"
+        ]
+        == "goat"
+    )
+    assert (
+        attributes["origin_registry_key"]
+        == "france"
+    )
+    assert (
+        attributes["texture_registry_key"]
+        == "soft"
+    )
+    assert (
+        attributes["aging_registry_key"]
+        == "long_aged"
+    )
+
+    assert attributes["cheese_type_score"] == 92.0
+    assert attributes["milk_source_score"] == 91.0
+    assert attributes["origin_score"] == 96.0
+    assert attributes["texture_score"] == 89.0
+    assert attributes["aging_score"] == 94.0
+
+    assert attributes["is_complete"] is True
+    assert attributes["is_usable"] is True
+    assert attributes["matched_field_count"] == 5
+
+
+def test_partial_cheese_attributes() -> None:
+    product = {
+        "product_name": (
+            "24개월 숙성 "
+            "파르미자노 레지아노"
+        ),
+        "weight": "150g",
+    }
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["cheese_type"] == (
+        "파르미자노 레지아노"
+    )
+    assert attributes["aging"] == (
+        "초장기숙성"
+    )
+
+    assert attributes["milk_source"] is None
+    assert attributes["origin"] is None
+    assert attributes["texture"] is None
+
+    assert (
+        attributes[
+            "cheese_type_registry_key"
+        ]
+        == "parmesan"
+    )
+    assert (
+        attributes["aging_registry_key"]
+        == "extra_aged"
+    )
+
+    assert "milk_source_registry_key" not in (
+        attributes
+    )
+    assert "origin_registry_key" not in attributes
+    assert "texture_registry_key" not in (
+        attributes
+    )
+
+    assert attributes["weight"] == "150g"
+    assert attributes["is_complete"] is False
+    assert attributes["is_usable"] is True
+
+
+def test_unknown_cheese_attributes() -> None:
+    product = {
+        "product_name": "일반 식품 상품",
+    }
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["cheese_type"] is None
+    assert attributes["milk_source"] is None
+    assert attributes["origin"] is None
+    assert attributes["texture"] is None
+    assert attributes["aging"] is None
+
+    assert attributes["matched_field_count"] == 0
+    assert attributes["is_complete"] is False
+    assert attributes["is_usable"] is False
+    assert attributes["confidence"] == 0.0
+    assert attributes["parser_warnings"]
+
+
+def test_country_falls_back_to_origin_registry() -> None:
+    product = {
+        "product_name": (
+            "이탈리아 파르미자노 "
+            "레지아노"
+        ),
+    }
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["origin"] == "이탈리아"
+    assert attributes["country"] == "이탈리아"
+    assert attributes["country_code"] == "IT"
+
+
+def test_explicit_country_has_priority() -> None:
+    product = {
+        "product_name": "프랑스 브리 치즈",
+        "country": "France",
+        "country_code": "fr",
+    }
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert attributes["origin"] == "프랑스"
+    assert attributes["country"] == "France"
+    assert attributes["country_code"] == "FR"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (True, "pasteurized"),
+        (False, "unpasteurized"),
+        ("raw milk", "raw milk"),
+        (None, None),
+    ],
+)
+def test_extract_cheese_pasteurization(
+    value: object,
+    expected: str | None,
+) -> None:
+    product = {}
+
+    if value is not None:
+        product["pasteurized"] = value
+
+    assert (
+        extract_cheese_pasteurization(
+            product
+        )
+        == expected
+    )
+
+
+def test_certifications_are_normalized() -> None:
+    assert extract_cheese_certifications(
+        {
+            "certifications": [
+                "AOP",
+                "AOP",
+                " 유기농 ",
+                "",
+            ]
+        }
+    ) == [
+        "AOP",
+        "유기농",
+    ]
+
+    assert extract_cheese_certifications(
+        {
+            "certification": "PDO",
+        }
+    ) == [
+        "PDO",
+    ]
+
+    assert extract_cheese_certifications({}) == []
+
+
+def test_attributes_do_not_mutate_inputs() -> None:
+    product = _complete_product()
+    product_before = deepcopy(product)
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+    parse_result_before = (
+        parse_result.to_dict()
+    )
+
+    build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert product == product_before
+    assert (
+        parse_result.to_dict()
+        == parse_result_before
+    )
+
+
+def test_attribute_lists_are_copies() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    attributes["certifications"].append(
+        "테스트"
+    )
+    attributes["detected_keywords"].append(
+        "테스트"
+    )
+    attributes[
+        "cheese_type_typical_uses"
+    ].append(
+        "테스트"
+    )
+
+    assert "테스트" not in product[
+        "certifications"
+    ]
+    assert (
+        "테스트"
+        not in parse_result.detected_keywords
+    )
+    assert (
+        "테스트"
+        not in (
+            parse_result
+            .cheese_type_match
+            .entry
+            .typical_uses
+        )
+    )
+
+
+def test_attributes_reject_invalid_product() -> None:
+    parse_result = CheeseParser().parse(
+        "브리 치즈"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        build_cheese_attributes(
+            product="브리 치즈",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_attributes_reject_invalid_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CheeseParseResult"
+        ),
+    ):
+        build_cheese_attributes(
+            product={
+                "product_name": "브리 치즈",
+            },
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_attributes_contain_no_scores_calculated_locally() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    attributes = build_cheese_attributes(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    registry_score_keys = {
+        "cheese_type_score",
+        "milk_source_score",
+        "origin_score",
+        "texture_score",
+        "aging_score",
+    }
+
+    assert registry_score_keys.issubset(
+        attributes.keys()
+    )
+
+    assert "knowledge_score" not in attributes
+    assert "final_score" not in attributes
+    assert "quality_score" not in attributes
+    assert "price_score" not in attributes
+    assert "trust_score" not in attributes

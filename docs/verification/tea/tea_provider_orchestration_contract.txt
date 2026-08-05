@@ -1,0 +1,42 @@
+app/services/food/knowledge/coffee/provider.py:10:    build_coffee_attributes,
+app/services/food/knowledge/coffee/provider.py:17:    apply_coffee_rules,
+app/services/food/knowledge/coffee/provider.py:20:    calculate_coffee_final_score,
+app/services/food/knowledge/coffee/provider.py:21:    calculate_coffee_scores,
+app/services/food/knowledge/coffee/provider.py:25:    FoodKnowledgeResult,
+app/services/food/knowledge/coffee/provider.py:41:    - FoodKnowledgeResult 생성
+app/services/food/knowledge/coffee/provider.py:151:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/coffee/provider.py:154:        FoodKnowledgeResult를 반환한다.
+app/services/food/knowledge/coffee/provider.py:173:            self.parser.parse_product(
+app/services/food/knowledge/coffee/provider.py:178:        attributes = build_coffee_attributes(
+app/services/food/knowledge/coffee/provider.py:183:        scores = calculate_coffee_scores(
+app/services/food/knowledge/coffee/provider.py:188:        reasons, warnings = apply_coffee_rules(
+app/services/food/knowledge/coffee/provider.py:195:            calculate_coffee_final_score(
+app/services/food/knowledge/coffee/provider.py:200:        return FoodKnowledgeResult(
+app/services/food/knowledge/wine/provider.py:11:    FoodKnowledgeResult,
+app/services/food/knowledge/wine/provider.py:14:    build_wine_attributes,
+app/services/food/knowledge/wine/provider.py:21:    apply_wine_rules,
+app/services/food/knowledge/wine/provider.py:24:    calculate_wine_final_score,
+app/services/food/knowledge/wine/provider.py:25:    calculate_wine_scores,
+app/services/food/knowledge/wine/provider.py:41:    - FoodKnowledgeResult 생성
+app/services/food/knowledge/wine/provider.py:159:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/wine/provider.py:161:        Wine 상품을 분석해 공통 FoodKnowledgeResult를 반환한다.
+app/services/food/knowledge/wine/provider.py:180:            self.parser.parse_product(
+app/services/food/knowledge/wine/provider.py:185:        attributes = build_wine_attributes(
+app/services/food/knowledge/wine/provider.py:190:        scores = calculate_wine_scores(
+app/services/food/knowledge/wine/provider.py:195:        reasons, warnings = apply_wine_rules(
+app/services/food/knowledge/wine/provider.py:202:            calculate_wine_final_score(
+app/services/food/knowledge/wine/provider.py:207:        return FoodKnowledgeResult(
+app/services/food/knowledge/cheese/provider.py:10:    build_cheese_attributes,
+app/services/food/knowledge/cheese/provider.py:17:    apply_cheese_rules,
+app/services/food/knowledge/cheese/provider.py:20:    calculate_cheese_final_score,
+app/services/food/knowledge/cheese/provider.py:21:    calculate_cheese_scores,
+app/services/food/knowledge/cheese/provider.py:25:    FoodKnowledgeResult,
+app/services/food/knowledge/cheese/provider.py:41:    - FoodKnowledgeResult 생성
+app/services/food/knowledge/cheese/provider.py:160:    ) -> FoodKnowledgeResult:
+app/services/food/knowledge/cheese/provider.py:162:        Cheese 상품을 분석하여 공통 FoodKnowledgeResult를 반환한다.
+app/services/food/knowledge/cheese/provider.py:181:            self.parser.parse_product(
+app/services/food/knowledge/cheese/provider.py:186:        attributes = build_cheese_attributes(
+app/services/food/knowledge/cheese/provider.py:191:        scores = calculate_cheese_scores(
+app/services/food/knowledge/cheese/provider.py:196:        reasons, warnings = apply_cheese_rules(
+app/services/food/knowledge/cheese/provider.py:203:            calculate_cheese_final_score(
+app/services/food/knowledge/cheese/provider.py:208:        return FoodKnowledgeResult(

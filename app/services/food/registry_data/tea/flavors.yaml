@@ -1,0 +1,326 @@
+floral:
+  canonical_name: floral
+  aliases:
+    - floral
+    - floral aroma
+    - floral notes
+    - 꽃향
+    - 꽃 향
+    - 플로럴
+    - 화사한 향
+  flavor_family: floral
+  sensory_dimension: aroma
+  aroma_dominant: true
+  taste_dominant: false
+  score: 0
+  premium: false
+  description: Floral aroma family
+
+jasmine:
+  canonical_name: jasmine
+  aliases:
+    - jasmine
+    - jasmine aroma
+    - jasmine notes
+    - 자스민
+    - 재스민
+    - 자스민 향
+  flavor_family: floral
+  sensory_dimension: aroma
+  aroma_dominant: true
+  taste_dominant: false
+  score: 0
+  premium: false
+  description: Jasmine-like floral aroma
+
+orchid:
+  canonical_name: orchid
+  aliases:
+    - orchid
+    - orchid aroma
+    - orchid notes
+    - 난향
+    - 난초향
+    - 난초 향
+  flavor_family: floral
+  sensory_dimension: aroma
+  aroma_dominant: true
+  taste_dominant: false
+  score: 0
+  premium: false
+  description: Orchid-like floral aroma
+
+grassy:
+  canonical_name: grassy
+  aliases:
+    - grassy
+    - grass notes
+    - grassy aroma
+    - 풀향
+    - 풀 향
+    - 풋내
+    - 잔디향
+  flavor_family: vegetal
+  sensory_dimension: aroma
+  aroma_dominant: true
+  taste_dominant: false
+  score: 0
+  premium: false
+  description: Fresh grassy aroma
+
+vegetal:
+  canonical_name: vegetal
+  aliases:
+    - vegetal
+    - vegetable notes
+    - vegetal notes
+    - 채소향
+    - 채소 향
+    - 야채향
+    - 녹색 채소향
+  flavor_family: vegetal
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Vegetal aroma and taste family
+
+umami:
+  canonical_name: umami
+  aliases:
+    - umami
+    - savory
+    - savory taste
+    - 감칠맛
+    - 우마미
+  flavor_family: savory
+  sensory_dimension: taste
+  aroma_dominant: false
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Savory umami taste
+
+sweet:
+  canonical_name: sweet
+  aliases:
+    - sweet
+    - sweetness
+    - sweet taste
+    - 단맛
+    - 달콤한 맛
+    - 은은한 단맛
+  flavor_family: sweet
+  sensory_dimension: taste
+  aroma_dominant: false
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Sweet taste family
+
+honey:
+  canonical_name: honey
+  aliases:
+    - honey
+    - honey aroma
+    - honey notes
+    - 꿀향
+    - 꿀 향
+    - 벌꿀향
+    - 허니 노트
+  flavor_family: sweet
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Honey-like aroma and taste
+
+malty:
+  canonical_name: malty
+  aliases:
+    - malty
+    - malt aroma
+    - malt notes
+    - 몰티
+    - 맥아향
+    - 맥아 향
+    - 구수한 맥아향
+  flavor_family: grain
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Malt-like aroma and taste
+
+roasted:
+  canonical_name: roasted
+  aliases:
+    - roasted flavor
+    - roasted aroma
+    - toasted notes
+    - 구운 향
+    - 볶은 향
+    - 배전향
+    - 로스티
+  flavor_family: roasted
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Roasted or toasted sensory profile
+
+smoky:
+  canonical_name: smoky
+  aliases:
+    - smoky
+    - smoke aroma
+    - smoky notes
+    - 훈연향
+    - 스모키
+    - 연기향
+  flavor_family: smoky
+  sensory_dimension: aroma
+  aroma_dominant: true
+  taste_dominant: false
+  score: 0
+  premium: false
+  description: Smoky aroma profile
+
+fruity:
+  canonical_name: fruity
+  aliases:
+    - fruity
+    - fruit notes
+    - fruity aroma
+    - 과일향
+    - 과일 향
+    - 프루티
+  flavor_family: fruity
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: General fruit-like aroma and taste
+
+citrus:
+  canonical_name: citrus
+  aliases:
+    - citrus
+    - citrus notes
+    - citrus aroma
+    - 감귤향
+    - 시트러스
+    - 레몬향
+    - 오렌지향
+  flavor_family: fruity
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Citrus-like aroma and taste
+
+stone_fruit:
+  canonical_name: stone_fruit
+  aliases:
+    - stone fruit
+    - stone fruit notes
+    - peach notes
+    - 복숭아향
+    - 살구향
+    - 핵과류 향
+  flavor_family: fruity
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Stone-fruit sensory profile
+
+woody:
+  canonical_name: woody
+  aliases:
+    - woody
+    - wood aroma
+    - woody notes
+    - 나무향
+    - 목질향
+    - 우디
+  flavor_family: woody
+  sensory_dimension: aroma
+  aroma_dominant: true
+  taste_dominant: false
+  score: 0
+  premium: false
+  description: Woody aroma family
+
+earthy:
+  canonical_name: earthy
+  aliases:
+    - earthy
+    - earth notes
+    - earthy aroma
+    - 흙향
+    - 흙내음
+    - 어시
+  flavor_family: earthy
+  sensory_dimension: both
+  aroma_dominant: true
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Earthy aroma and taste family
+
+mineral:
+  canonical_name: mineral
+  aliases:
+    - mineral
+    - mineral notes
+    - mineral taste
+    - 미네랄
+    - 미네랄리티
+    - 광물감
+  flavor_family: mineral
+  sensory_dimension: taste
+  aroma_dominant: false
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Mineral taste and mouthfeel profile
+
+astringent:
+  canonical_name: astringent
+  aliases:
+    - astringent
+    - astringency
+    - 떫은맛
+    - 떫은 맛
+    - 수렴감
+  flavor_family: structural
+  sensory_dimension: taste
+  aroma_dominant: false
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Astringent taste and mouthfeel
+
+bitter:
+  canonical_name: bitter
+  aliases:
+    - bitter
+    - bitterness
+    - bitter taste
+    - 쓴맛
+    - 쓴 맛
+  flavor_family: structural
+  sensory_dimension: taste
+  aroma_dominant: false
+  taste_dominant: true
+  score: 0
+  premium: false
+  description: Bitter taste profile

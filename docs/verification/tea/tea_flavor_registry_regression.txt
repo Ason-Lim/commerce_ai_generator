@@ -1,0 +1,2468 @@
+........................................................................ [ 24%]
+........................................................................ [ 48%]
+........................................................................ [ 72%]
+..........................................................FFFFFFFFFFFFFF [ 96%]
+FFFFFFFFFFFF                                                             [100%]
+=================================== FAILURES ===================================
+_ test_tea_flavor_registry_matches_alias[\uaf43\ud5a5 \uc6b0\ub871\ucc28-floral] _
+
+text = '꽃향 우롱차', expected_key = 'floral'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\uc790\uc2a4\ubbfc \ud5a5 \ub179\ucc28-jasmine] _
+
+text = '자스민 향 녹차', expected_key = 'jasmine'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ub09c\ud5a5 \uc6b0\ub871\ucc28-orchid] _
+
+text = '난향 우롱차', expected_key = 'orchid'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+___ test_tea_flavor_registry_matches_alias[\ud480\ud5a5 \ub179\ucc28-grassy] ___
+
+text = '풀향 녹차', expected_key = 'grassy'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\uac10\uce60\ub9db \ub9d0\ucc28-umami] _
+
+text = '감칠맛 말차', expected_key = 'umami'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+___ test_tea_flavor_registry_matches_alias[\uafc0\ud5a5 \ud64d\ucc28-honey] ____
+
+text = '꿀향 홍차', expected_key = 'honey'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ub9e5\uc544\ud5a5 \uc544\uc0bc \ud64d\ucc28-malty] _
+
+text = '맥아향 아삼 홍차', expected_key = 'malty'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ubc30\uc804\ud5a5 \uc6b0\ub871\ucc28-roasted] _
+
+text = '배전향 우롱차', expected_key = 'roasted'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ud6c8\uc5f0\ud5a5 \ud64d\ucc28-smoky] _
+
+text = '훈연향 홍차', expected_key = 'smoky'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\uc2dc\ud2b8\ub7ec\uc2a4 \ud64d\ucc28-citrus] _
+
+text = '시트러스 홍차', expected_key = 'citrus'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ubcf5\uc22d\uc544\ud5a5 \ubc31\ucc28-stone_fruit] _
+
+text = '복숭아향 백차', expected_key = 'stone_fruit'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ud759\ud5a5 \ubcf4\uc774\ucc28-earthy] _
+
+text = '흙향 보이차', expected_key = 'earthy'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ubbf8\ub124\ub784\ub9ac\ud2f0 \uc6b0\ub871\ucc28-mineral] _
+
+text = '미네랄리티 우롱차', expected_key = 'mineral'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_matches_alias[\ub5ab\uc740\ub9db \ud64d\ucc28-astringent] _
+
+text = '떫은맛 홍차', expected_key = 'astringent'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+___ test_tea_flavor_registry_matches_alias[\uc4f4\ub9db \ub179\ucc28-bitter] ___
+
+text = '쓴맛 녹차', expected_key = 'bitter'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+        ),
+        [
+            ("꽃향 우롱차", "floral"),
+            ("자스민 향 녹차", "jasmine"),
+            ("난향 우롱차", "orchid"),
+            ("풀향 녹차", "grassy"),
+            ("감칠맛 말차", "umami"),
+            ("꿀향 홍차", "honey"),
+            ("맥아향 아삼 홍차", "malty"),
+            ("배전향 우롱차", "roasted"),
+            ("훈연향 홍차", "smoky"),
+            ("시트러스 홍차", "citrus"),
+            ("복숭아향 백차", "stone_fruit"),
+            ("흙향 보이차", "earthy"),
+            ("미네랄리티 우롱차", "mineral"),
+            ("떫은맛 홍차", "astringent"),
+            ("쓴맛 녹차", "bitter"),
+        ],
+    )
+    def test_tea_flavor_registry_matches_alias(
+        text: str,
+        expected_key: str,
+    ) -> None:
+>       match = TeaFlavorRegistry().match(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:612: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_lookup_returns_entry[\uaf43\ud5a5-floral-floral-aroma] _
+
+text = '꽃향', expected_key = 'floral', expected_family = 'floral'
+expected_dimension = 'aroma'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+            "expected_family",
+            "expected_dimension",
+        ),
+        [
+            (
+                "꽃향",
+                "floral",
+                "floral",
+                "aroma",
+            ),
+            (
+                "감칠맛",
+                "umami",
+                "savory",
+                "taste",
+            ),
+            (
+                "꿀향",
+                "honey",
+                "sweet",
+                "both",
+            ),
+            (
+                "맥아향",
+                "malty",
+                "grain",
+                "both",
+            ),
+            (
+                "시트러스",
+                "citrus",
+                "fruity",
+                "both",
+            ),
+            (
+                "흙향",
+                "earthy",
+                "earthy",
+                "both",
+            ),
+            (
+                "떫은맛",
+                "astringent",
+                "structural",
+                "taste",
+            ),
+        ],
+    )
+    def test_tea_flavor_registry_lookup_returns_entry(
+        text: str,
+        expected_key: str,
+        expected_family: str,
+        expected_dimension: str,
+    ) -> None:
+>       entry = TeaFlavorRegistry().lookup(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_lookup_returns_entry[\uac10\uce60\ub9db-umami-savory-taste] _
+
+text = '감칠맛', expected_key = 'umami', expected_family = 'savory'
+expected_dimension = 'taste'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+            "expected_family",
+            "expected_dimension",
+        ),
+        [
+            (
+                "꽃향",
+                "floral",
+                "floral",
+                "aroma",
+            ),
+            (
+                "감칠맛",
+                "umami",
+                "savory",
+                "taste",
+            ),
+            (
+                "꿀향",
+                "honey",
+                "sweet",
+                "both",
+            ),
+            (
+                "맥아향",
+                "malty",
+                "grain",
+                "both",
+            ),
+            (
+                "시트러스",
+                "citrus",
+                "fruity",
+                "both",
+            ),
+            (
+                "흙향",
+                "earthy",
+                "earthy",
+                "both",
+            ),
+            (
+                "떫은맛",
+                "astringent",
+                "structural",
+                "taste",
+            ),
+        ],
+    )
+    def test_tea_flavor_registry_lookup_returns_entry(
+        text: str,
+        expected_key: str,
+        expected_family: str,
+        expected_dimension: str,
+    ) -> None:
+>       entry = TeaFlavorRegistry().lookup(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_lookup_returns_entry[\uafc0\ud5a5-honey-sweet-both] _
+
+text = '꿀향', expected_key = 'honey', expected_family = 'sweet'
+expected_dimension = 'both'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+            "expected_family",
+            "expected_dimension",
+        ),
+        [
+            (
+                "꽃향",
+                "floral",
+                "floral",
+                "aroma",
+            ),
+            (
+                "감칠맛",
+                "umami",
+                "savory",
+                "taste",
+            ),
+            (
+                "꿀향",
+                "honey",
+                "sweet",
+                "both",
+            ),
+            (
+                "맥아향",
+                "malty",
+                "grain",
+                "both",
+            ),
+            (
+                "시트러스",
+                "citrus",
+                "fruity",
+                "both",
+            ),
+            (
+                "흙향",
+                "earthy",
+                "earthy",
+                "both",
+            ),
+            (
+                "떫은맛",
+                "astringent",
+                "structural",
+                "taste",
+            ),
+        ],
+    )
+    def test_tea_flavor_registry_lookup_returns_entry(
+        text: str,
+        expected_key: str,
+        expected_family: str,
+        expected_dimension: str,
+    ) -> None:
+>       entry = TeaFlavorRegistry().lookup(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_lookup_returns_entry[\ub9e5\uc544\ud5a5-malty-grain-both] _
+
+text = '맥아향', expected_key = 'malty', expected_family = 'grain'
+expected_dimension = 'both'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+            "expected_family",
+            "expected_dimension",
+        ),
+        [
+            (
+                "꽃향",
+                "floral",
+                "floral",
+                "aroma",
+            ),
+            (
+                "감칠맛",
+                "umami",
+                "savory",
+                "taste",
+            ),
+            (
+                "꿀향",
+                "honey",
+                "sweet",
+                "both",
+            ),
+            (
+                "맥아향",
+                "malty",
+                "grain",
+                "both",
+            ),
+            (
+                "시트러스",
+                "citrus",
+                "fruity",
+                "both",
+            ),
+            (
+                "흙향",
+                "earthy",
+                "earthy",
+                "both",
+            ),
+            (
+                "떫은맛",
+                "astringent",
+                "structural",
+                "taste",
+            ),
+        ],
+    )
+    def test_tea_flavor_registry_lookup_returns_entry(
+        text: str,
+        expected_key: str,
+        expected_family: str,
+        expected_dimension: str,
+    ) -> None:
+>       entry = TeaFlavorRegistry().lookup(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_lookup_returns_entry[\uc2dc\ud2b8\ub7ec\uc2a4-citrus-fruity-both] _
+
+text = '시트러스', expected_key = 'citrus', expected_family = 'fruity'
+expected_dimension = 'both'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+            "expected_family",
+            "expected_dimension",
+        ),
+        [
+            (
+                "꽃향",
+                "floral",
+                "floral",
+                "aroma",
+            ),
+            (
+                "감칠맛",
+                "umami",
+                "savory",
+                "taste",
+            ),
+            (
+                "꿀향",
+                "honey",
+                "sweet",
+                "both",
+            ),
+            (
+                "맥아향",
+                "malty",
+                "grain",
+                "both",
+            ),
+            (
+                "시트러스",
+                "citrus",
+                "fruity",
+                "both",
+            ),
+            (
+                "흙향",
+                "earthy",
+                "earthy",
+                "both",
+            ),
+            (
+                "떫은맛",
+                "astringent",
+                "structural",
+                "taste",
+            ),
+        ],
+    )
+    def test_tea_flavor_registry_lookup_returns_entry(
+        text: str,
+        expected_key: str,
+        expected_family: str,
+        expected_dimension: str,
+    ) -> None:
+>       entry = TeaFlavorRegistry().lookup(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_lookup_returns_entry[\ud759\ud5a5-earthy-earthy-both] _
+
+text = '흙향', expected_key = 'earthy', expected_family = 'earthy'
+expected_dimension = 'both'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+            "expected_family",
+            "expected_dimension",
+        ),
+        [
+            (
+                "꽃향",
+                "floral",
+                "floral",
+                "aroma",
+            ),
+            (
+                "감칠맛",
+                "umami",
+                "savory",
+                "taste",
+            ),
+            (
+                "꿀향",
+                "honey",
+                "sweet",
+                "both",
+            ),
+            (
+                "맥아향",
+                "malty",
+                "grain",
+                "both",
+            ),
+            (
+                "시트러스",
+                "citrus",
+                "fruity",
+                "both",
+            ),
+            (
+                "흙향",
+                "earthy",
+                "earthy",
+                "both",
+            ),
+            (
+                "떫은맛",
+                "astringent",
+                "structural",
+                "taste",
+            ),
+        ],
+    )
+    def test_tea_flavor_registry_lookup_returns_entry(
+        text: str,
+        expected_key: str,
+        expected_family: str,
+        expected_dimension: str,
+    ) -> None:
+>       entry = TeaFlavorRegistry().lookup(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+_ test_tea_flavor_registry_lookup_returns_entry[\ub5ab\uc740\ub9db-astringent-structural-taste] _
+
+text = '떫은맛', expected_key = 'astringent', expected_family = 'structural'
+expected_dimension = 'taste'
+
+    @pytest.mark.parametrize(
+        (
+            "text",
+            "expected_key",
+            "expected_family",
+            "expected_dimension",
+        ),
+        [
+            (
+                "꽃향",
+                "floral",
+                "floral",
+                "aroma",
+            ),
+            (
+                "감칠맛",
+                "umami",
+                "savory",
+                "taste",
+            ),
+            (
+                "꿀향",
+                "honey",
+                "sweet",
+                "both",
+            ),
+            (
+                "맥아향",
+                "malty",
+                "grain",
+                "both",
+            ),
+            (
+                "시트러스",
+                "citrus",
+                "fruity",
+                "both",
+            ),
+            (
+                "흙향",
+                "earthy",
+                "earthy",
+                "both",
+            ),
+            (
+                "떫은맛",
+                "astringent",
+                "structural",
+                "taste",
+            ),
+        ],
+    )
+    def test_tea_flavor_registry_lookup_returns_entry(
+        text: str,
+        expected_key: str,
+        expected_family: str,
+        expected_dimension: str,
+    ) -> None:
+>       entry = TeaFlavorRegistry().lookup(text)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/services/food/knowledge/tea/test_tea_registries.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+___________________ test_tea_flavor_registry_aroma_metadata ____________________
+
+    def test_tea_flavor_registry_aroma_metadata() -> None:
+>       entry = TeaFlavorRegistry().lookup(
+            "자스민 향"
+        )
+
+tests/services/food/knowledge/tea/test_tea_registries.py:697: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+___________________ test_tea_flavor_registry_taste_metadata ____________________
+
+    def test_tea_flavor_registry_taste_metadata() -> None:
+>       entry = TeaFlavorRegistry().lookup(
+            "감칠맛"
+        )
+
+tests/services/food/knowledge/tea/test_tea_registries.py:710: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+____________________ test_tea_flavor_registry_both_metadata ____________________
+
+    def test_tea_flavor_registry_both_metadata() -> None:
+>       entry = TeaFlavorRegistry().lookup(
+            "꿀향"
+        )
+
+tests/services/food/knowledge/tea/test_tea_registries.py:722: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/common/base_registry.py:431: in lookup
+    match = self.match(query)
+            ^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+____________ test_tea_flavor_registry_returns_none_for_unknown_text ____________
+
+    def test_tea_flavor_registry_returns_none_for_unknown_text() -> None:
+>       match = TeaFlavorRegistry().match(
+            "등록되지 않은 차 향미"
+        )
+
+tests/services/food/knowledge/tea/test_tea_registries.py:734: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/services/food/knowledge/tea/flavor_registry.py:103: in match
+    raw_match = super().match(text)
+                ^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:463: in match
+    for candidate in self.alias_candidates():
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:581: in alias_candidates
+    self._build_alias_index()
+app/services/food/knowledge/common/base_registry.py:589: in _build_alias_index
+    raw_data = self.raw_data()
+               ^^^^^^^^^^^^^^^
+app/services/food/knowledge/common/base_registry.py:254: in raw_data
+    self.loader.load_data(
+app/services/food/knowledge/registry_loader.py:265: in load_data
+    document = self.load(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.food.knowledge.registry_loader.KnowledgeRegistryLoader object at 0x10993b380>
+registry_id = 'tea.flavors', required = True, validate = True
+force_reload = False
+
+    def load(
+        self,
+        registry_id: str,
+        *,
+        required: bool = True,
+        validate: bool = True,
+        force_reload: bool = False,
+    ) -> KnowledgeRegistryDocument | None:
+        """
+        Registry ID로 데이터를 읽는다.
+    
+        예:
+            beef.grades
+            fruit.varieties
+        """
+    
+        source_path = self.resolve_path(
+            registry_id
+        )
+    
+        if source_path is None:
+            if required:
+>               raise (
+                    KnowledgeRegistryFileNotFoundError(
+                        f"Registry file not found: "
+                        f"{registry_id}"
+                    )
+                )
+E               app.services.food.knowledge.registry_loader.KnowledgeRegistryFileNotFoundError: Registry file not found: tea.flavors
+
+app/services/food/knowledge/registry_loader.py:158: KnowledgeRegistryFileNotFoundError
+=========================== short test summary info ============================
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\uaf43\ud5a5 \uc6b0\ub871\ucc28-floral]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\uc790\uc2a4\ubbfc \ud5a5 \ub179\ucc28-jasmine]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ub09c\ud5a5 \uc6b0\ub871\ucc28-orchid]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ud480\ud5a5 \ub179\ucc28-grassy]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\uac10\uce60\ub9db \ub9d0\ucc28-umami]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\uafc0\ud5a5 \ud64d\ucc28-honey]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ub9e5\uc544\ud5a5 \uc544\uc0bc \ud64d\ucc28-malty]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ubc30\uc804\ud5a5 \uc6b0\ub871\ucc28-roasted]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ud6c8\uc5f0\ud5a5 \ud64d\ucc28-smoky]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\uc2dc\ud2b8\ub7ec\uc2a4 \ud64d\ucc28-citrus]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ubcf5\uc22d\uc544\ud5a5 \ubc31\ucc28-stone_fruit]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ud759\ud5a5 \ubcf4\uc774\ucc28-earthy]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ubbf8\ub124\ub784\ub9ac\ud2f0 \uc6b0\ub871\ucc28-mineral]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\ub5ab\uc740\ub9db \ud64d\ucc28-astringent]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_matches_alias[\uc4f4\ub9db \ub179\ucc28-bitter]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_lookup_returns_entry[\uaf43\ud5a5-floral-floral-aroma]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_lookup_returns_entry[\uac10\uce60\ub9db-umami-savory-taste]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_lookup_returns_entry[\uafc0\ud5a5-honey-sweet-both]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_lookup_returns_entry[\ub9e5\uc544\ud5a5-malty-grain-both]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_lookup_returns_entry[\uc2dc\ud2b8\ub7ec\uc2a4-citrus-fruity-both]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_lookup_returns_entry[\ud759\ud5a5-earthy-earthy-both]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_lookup_returns_entry[\ub5ab\uc740\ub9db-astringent-structural-taste]
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_aroma_metadata
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_taste_metadata
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_both_metadata
+FAILED tests/services/food/knowledge/tea/test_tea_registries.py::test_tea_flavor_registry_returns_none_for_unknown_text
+26 failed, 274 passed in 2.08s

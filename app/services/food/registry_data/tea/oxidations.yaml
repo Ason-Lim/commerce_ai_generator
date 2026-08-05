@@ -1,0 +1,84 @@
+unoxidized:
+  canonical_name: unoxidized
+  aliases:
+    - unoxidized
+    - non oxidized
+    - non-oxidized
+    - 비산화
+    - 비산화차
+    - 무산화
+  oxidation_level: 0
+  oxidation_min_percent: 0
+  oxidation_max_percent: 5
+  fully_oxidized: false
+  score: 0
+  premium: false
+  description: Tea described as unoxidized or minimally oxidized
+
+light:
+  canonical_name: light
+  aliases:
+    - lightly oxidized
+    - light oxidation
+    - low oxidation
+    - 약산화
+    - 경산화
+    - 저산화
+  oxidation_level: 1
+  oxidation_min_percent: 5
+  oxidation_max_percent: 25
+  fully_oxidized: false
+  score: 0
+  premium: false
+  description: Tea described as lightly oxidized
+
+medium:
+  canonical_name: medium
+  aliases:
+    - medium oxidized
+    - medium oxidation
+    - moderately oxidized
+    - 중산화
+    - 중간 산화
+    - 부분 산화
+  oxidation_level: 2
+  oxidation_min_percent: 25
+  oxidation_max_percent: 60
+  fully_oxidized: false
+  score: 0
+  premium: false
+  description: Tea described as moderately or partially oxidized
+
+high:
+  canonical_name: high
+  aliases:
+    - highly oxidized
+    - high oxidation
+    - heavily oxidized
+    - 강산화
+    - 고산화
+    - 높은 산화도
+  oxidation_level: 3
+  oxidation_min_percent: 60
+  oxidation_max_percent: 90
+  fully_oxidized: false
+  score: 0
+  premium: false
+  description: Tea described as highly oxidized
+
+full:
+  canonical_name: full
+  aliases:
+    - fully oxidized
+    - full oxidation
+    - complete oxidation
+    - 완전 산화
+    - 완전산화
+    - 전산화
+  oxidation_level: 4
+  oxidation_min_percent: 90
+  oxidation_max_percent: 100
+  fully_oxidized: true
+  score: 0
+  premium: false
+  description: Tea described as fully oxidized

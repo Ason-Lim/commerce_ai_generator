@@ -1,0 +1,115 @@
+sinensis:
+  canonical_name: sinensis
+  aliases:
+    - Camellia sinensis var. sinensis
+    - C. sinensis var. sinensis
+    - sinensis variety
+    - 중국소엽종
+    - 소엽종
+  botanical_name: Camellia sinensis var. sinensis
+  variety_kind: botanical_variety
+  country_code: null
+  score: 0
+  premium: false
+  description: Small-leaf botanical variety of Camellia sinensis
+
+assamica:
+  canonical_name: assamica
+  aliases:
+    - Camellia sinensis var. assamica
+    - C. sinensis var. assamica
+    - assamica variety
+    - 아사미카
+    - 아삼종
+    - 대엽종
+  botanical_name: Camellia sinensis var. assamica
+  variety_kind: botanical_variety
+  country_code: null
+  score: 0
+  premium: false
+  description: Large-leaf botanical variety of Camellia sinensis
+
+yabukita:
+  canonical_name: yabukita
+  aliases:
+    - Yabukita
+    - 야부키타
+    - やぶきた
+  botanical_name: Camellia sinensis
+  variety_kind: cultivar
+  country_code: JP
+  score: 0
+  premium: false
+  description: Japanese Tea cultivar
+
+saemidori:
+  canonical_name: saemidori
+  aliases:
+    - Saemidori
+    - 사에미도리
+    - さえみどり
+  botanical_name: Camellia sinensis
+  variety_kind: cultivar
+  country_code: JP
+  score: 0
+  premium: false
+  description: Japanese Tea cultivar
+
+okumidori:
+  canonical_name: okumidori
+  aliases:
+    - Okumidori
+    - 오쿠미도리
+    - おくみどり
+  botanical_name: Camellia sinensis
+  variety_kind: cultivar
+  country_code: JP
+  score: 0
+  premium: false
+  description: Japanese Tea cultivar
+
+benifuuki:
+  canonical_name: benifuuki
+  aliases:
+    - Benifuuki
+    - Benifuki
+    - 베니후우키
+    - 베니후키
+    - べにふうき
+  botanical_name: Camellia sinensis
+  variety_kind: cultivar
+  country_code: JP
+  score: 0
+  premium: false
+  description: Japanese Tea cultivar
+
+longjing_43:
+  canonical_name: longjing_43
+  aliases:
+    - Longjing 43
+    - Long Jing 43
+    - 롱징 43
+    - 룽징 43
+    - 용정 43호
+  botanical_name: Camellia sinensis
+  variety_kind: cultivar
+  country_code: CN
+  score: 0
+  premium: false
+  description: Chinese Tea cultivar
+
+jinxuan:
+  canonical_name: jinxuan
+  aliases:
+    - Jin Xuan
+    - Jinxuan
+    - 진쉬안
+    - 금훤
+    - 金萱
+    - TTES No. 12
+  botanical_name: Camellia sinensis
+  variety_kind: cultivar
+  country_code: TW
+  score: 0
+  premium: false
+  description: Taiwanese Tea cultivar also known as TTES No. 12

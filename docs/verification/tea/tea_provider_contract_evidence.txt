@@ -1,0 +1,1956 @@
+# Tea Provider Contract Evidence
+
+generated_at=2026-08-05T03:32:03Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+============================================================
+FILE: app/services/food/knowledge/models.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Mapping
+
+
+@dataclass(frozen=True)
+class FoodKnowledgeContext:
+    """
+    Food Knowledge 분석 실행 문맥.
+    """
+
+    query: str | None = None
+    priority: str | None = None
+    user_mode: str | None = None
+    season: str | None = None
+    region: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class FoodAttribute:
+    key: str
+    value: Any
+    label: str | None = None
+    confidence: float = 1.0
+    source: str | None = None
+
+
+@dataclass
+class FoodScore:
+    key: str
+    score: float
+    label: str | None = None
+    reason: str | None = None
+    weight: float = 1.0
+
+
+@dataclass
+class FoodRuleResult:
+    rule_id: str
+    matched: bool
+    message: str | None = None
+    severity: str = "info"
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class FoodKnowledgeResult:
+    category_id: str
+    category_name: str
+    product_name: str | None = None
+
+    attributes: Dict[str, Any] = field(default_factory=dict)
+    attribute_details: List[FoodAttribute] = field(default_factory=list)
+
+    scores: Dict[str, float] = field(default_factory=dict)
+    score_details: List[FoodScore] = field(default_factory=list)
+
+    rules: List[FoodRuleResult] = field(default_factory=list)
+    reasons: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+
+    final_score: float | None = None
+    confidence: float = 1.0
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    raw_product: Dict[str, Any] | None = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+============================================================
+FILE: app/services/food/knowledge/provider.py
+============================================================
+MISSING
+
+============================================================
+FILE: app/services/food/knowledge/base_provider.py
+============================================================
+MISSING
+
+============================================================
+FILE: app/services/food/knowledge/coffee/provider.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.coffee.attributes import (
+    build_coffee_attributes,
+    extract_coffee_product_name,
+)
+from app.services.food.knowledge.coffee.parser import (
+    CoffeeParser,
+)
+from app.services.food.knowledge.coffee.rules import (
+    apply_coffee_rules,
+)
+from app.services.food.knowledge.coffee.scoring import (
+    calculate_coffee_final_score,
+    calculate_coffee_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class CoffeeKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    Coffee Knowledge Provider.
+
+    역할:
+    - CoffeeParser 실행
+    - Coffee attributes 구성
+    - Coffee scoring 실행
+    - Coffee rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - 점수 공식 재구현
+    - 공통 Provider Registry 변경
+    - Category Registry 변경
+    """
+
+    category_id = "coffee"
+    category_name = "커피"
+
+    aliases = (
+        "coffee",
+        "커피",
+        "원두",
+        "커피 원두",
+        "아라비카",
+        "arabica",
+        "로부스타",
+        "robusta",
+        "에스프레소",
+        "espresso",
+        "드립커피",
+        "드립 커피",
+        "핸드드립",
+        "핸드 드립",
+        "콜드브루",
+        "콜드 브루",
+        "cold brew",
+        "디카페인 커피",
+        "decaf coffee",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: CoffeeParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else CoffeeParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Coffee Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            if not normalized_name:
+                return False
+
+            aliases_by_length = sorted(
+                alias_set,
+                key=len,
+                reverse=True,
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in aliases_by_length
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Coffee 상품을 분석하여 공통
+        FoodKnowledgeResult를 반환한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_coffee_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_coffee_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_coffee_scores(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        reasons, warnings = apply_coffee_rules(
+            attributes=attributes,
+            scores=scores,
+            parse_result=parse_result,
+        )
+
+        final_score = (
+            calculate_coffee_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=parse_result.confidence,
+            metadata={
+                "provider_id": self.category_id,
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "query": (
+                    context.query
+                    if context is not None
+                    else None
+                ),
+                "user_mode": (
+                    context.user_mode
+                    if context is not None
+                    else None
+                ),
+                "season": (
+                    context.season
+                    if context is not None
+                    else None
+                ),
+                "region": (
+                    context.region
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result
+                    .matched_field_count
+                ),
+                "expected_field_count": 4,
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "CoffeeKnowledgeProvider",
+]
+
+============================================================
+FILE: app/services/food/knowledge/wine/provider.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+from app.services.food.knowledge.wine.attributes import (
+    build_wine_attributes,
+    extract_wine_product_name,
+)
+from app.services.food.knowledge.wine.parser import (
+    WineParser,
+)
+from app.services.food.knowledge.wine.rules import (
+    apply_wine_rules,
+)
+from app.services.food.knowledge.wine.scoring import (
+    calculate_wine_final_score,
+    calculate_wine_scores,
+)
+
+
+class WineKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    Wine Knowledge Provider.
+
+    역할:
+    - WineParser 실행
+    - Wine attributes 구성
+    - Wine scoring 실행
+    - Wine rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - 점수 공식 구현
+    - Rule 조건 구현
+    - 공통 Provider Registry 변경
+    """
+
+    category_id = "wine"
+    category_name = "와인"
+
+    aliases = (
+        "와인",
+        "wine",
+        "레드 와인",
+        "레드와인",
+        "red wine",
+        "화이트 와인",
+        "화이트와인",
+        "white wine",
+        "스파클링 와인",
+        "스파클링와인",
+        "sparkling wine",
+        "보르도",
+        "bordeaux",
+        "부르고뉴",
+        "burgundy",
+        "bourgogne",
+        "나파 밸리",
+        "나파밸리",
+        "napa valley",
+        "카베르네 소비뇽",
+        "까베르네 소비뇽",
+        "cabernet sauvignon",
+        "샤르도네",
+        "chardonnay",
+        "리슬링",
+        "riesling",
+        "메를로",
+        "merlot",
+        "피노 누아",
+        "피노누아",
+        "pinot noir",
+        "샴페인",
+        "champagne",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: WineParser | None = None,
+    ) -> None:
+        self.parser = (
+            parser
+            if parser is not None
+            else WineParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        현재 공유 Runtime Contract에 따라
+        category alias와 상품명 alias를 지원한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if normalized_category_id in alias_set:
+                return True
+
+        if not product_name:
+            return False
+
+        normalized_name = (
+            str(product_name)
+            .strip()
+            .casefold()
+        )
+
+        if not normalized_name:
+            return False
+
+        aliases_by_length = sorted(
+            alias_set,
+            key=len,
+            reverse=True,
+        )
+
+        return any(
+            alias in normalized_name
+            for alias in aliases_by_length
+        )
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Wine 상품을 분석해 공통 FoodKnowledgeResult를 반환한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_wine_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_wine_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_wine_scores(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        reasons, warnings = apply_wine_rules(
+            attributes=attributes,
+            scores=scores,
+            parse_result=parse_result,
+        )
+
+        final_score = (
+            calculate_wine_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=parse_result.confidence,
+            metadata={
+                "provider_id": self.category_id,
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "query": (
+                    context.query
+                    if context is not None
+                    else None
+                ),
+                "user_mode": (
+                    context.user_mode
+                    if context is not None
+                    else None
+                ),
+                "season": (
+                    context.season
+                    if context is not None
+                    else None
+                ),
+                "region": (
+                    context.region
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result
+                    .matched_field_count
+                ),
+                "expected_field_count": 6,
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "WineKnowledgeProvider",
+]
+
+============================================================
+FILE: app/services/food/knowledge/cheese/provider.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.cheese.attributes import (
+    build_cheese_attributes,
+    extract_cheese_product_name,
+)
+from app.services.food.knowledge.cheese.parser import (
+    CheeseParser,
+)
+from app.services.food.knowledge.cheese.rules import (
+    apply_cheese_rules,
+)
+from app.services.food.knowledge.cheese.scoring import (
+    calculate_cheese_final_score,
+    calculate_cheese_scores,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+class CheeseKnowledgeProvider(
+    FoodKnowledgeProvider
+):
+    """
+    Cheese Knowledge Provider.
+
+    역할:
+    - CheeseParser 실행
+    - Cheese attributes 구성
+    - Cheese scoring 실행
+    - Cheese rules 실행
+    - 최종 점수 계산
+    - FoodKnowledgeResult 생성
+
+    담당하지 않는 역할:
+    - 상품명 직접 파싱
+    - Registry 데이터 관리
+    - Registry 점수 하드코딩
+    - 공통 Provider 등록 정책 변경
+    - Category Registry 변경
+    """
+
+    category_id = "cheese"
+    category_name = "치즈"
+
+    aliases = (
+        "치즈",
+        "cheese",
+        "모차렐라",
+        "모짜렐라",
+        "mozzarella",
+        "체다",
+        "cheddar",
+        "브리",
+        "brie",
+        "카망베르",
+        "까망베르",
+        "camembert",
+        "고다",
+        "하우다",
+        "gouda",
+        "파르미자노",
+        "파마산",
+        "parmigiano",
+        "parmesan",
+        "블루치즈",
+        "블루 치즈",
+        "blue cheese",
+        "크림치즈",
+        "크림 치즈",
+        "cream cheese",
+    )
+
+    def __init__(
+        self,
+        *,
+        parser: CheeseParser | None = None,
+    ) -> None:
+        """
+        Parser 생성자 주입을 지원한다.
+
+        테스트에서는 별도 Registry를 사용하는
+        CheeseParser를 전달할 수 있다.
+        """
+        self.parser = (
+            parser
+            if parser is not None
+            else CheeseParser()
+        )
+
+    def supports(
+        self,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> bool:
+        """
+        category_id 또는 상품명을 기준으로
+        Cheese Provider 지원 여부를 반환한다.
+        """
+        alias_set = {
+            alias.strip().casefold()
+            for alias in self.aliases
+            if alias.strip()
+        }
+
+        if category_id:
+            normalized_category_id = (
+                str(category_id)
+                .strip()
+                .casefold()
+            )
+
+            if (
+                normalized_category_id
+                == self.category_id
+            ):
+                return True
+
+            if (
+                normalized_category_id
+                in alias_set
+            ):
+                return True
+
+        if product_name:
+            normalized_name = (
+                str(product_name)
+                .strip()
+                .casefold()
+            )
+
+            if not normalized_name:
+                return False
+
+            aliases_by_length = sorted(
+                alias_set,
+                key=len,
+                reverse=True,
+            )
+
+            return any(
+                alias in normalized_name
+                for alias in aliases_by_length
+            )
+
+        return False
+
+    def analyze(
+        self,
+        product: Mapping[str, Any],
+        context: FoodKnowledgeContext | None = None,
+    ) -> FoodKnowledgeResult:
+        """
+        Cheese 상품을 분석하여 공통 FoodKnowledgeResult를 반환한다.
+        """
+        if not isinstance(
+            product,
+            Mapping,
+        ):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_data = dict(product)
+
+        product_name = (
+            extract_cheese_product_name(
+                product_data
+            )
+        )
+
+        parse_result = (
+            self.parser.parse_product(
+                product_data
+            )
+        )
+
+        attributes = build_cheese_attributes(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        scores = calculate_cheese_scores(
+            product=product_data,
+            parse_result=parse_result,
+        )
+
+        reasons, warnings = apply_cheese_rules(
+            attributes=attributes,
+            scores=scores,
+            parse_result=parse_result,
+        )
+
+        final_score = (
+            calculate_cheese_final_score(
+                scores
+            )
+        )
+
+        return FoodKnowledgeResult(
+            category_id=self.category_id,
+            category_name=self.category_name,
+            product_name=(
+                product_name or None
+            ),
+            attributes=attributes,
+            scores=scores,
+            reasons=reasons,
+            warnings=warnings,
+            final_score=final_score,
+            confidence=parse_result.confidence,
+            metadata={
+                "provider_id": (
+                    self.category_id
+                ),
+                "provider": (
+                    self.__class__.__name__
+                ),
+                "parser": (
+                    self.parser.__class__.__name__
+                ),
+                "priority": (
+                    context.priority
+                    if context is not None
+                    else None
+                ),
+                "query": (
+                    context.query
+                    if context is not None
+                    else None
+                ),
+                "user_mode": (
+                    context.user_mode
+                    if context is not None
+                    else None
+                ),
+                "season": (
+                    context.season
+                    if context is not None
+                    else None
+                ),
+                "region": (
+                    context.region
+                    if context is not None
+                    else None
+                ),
+                "matched_field_count": (
+                    parse_result
+                    .matched_field_count
+                ),
+                "expected_field_count": 5,
+                "is_complete": (
+                    parse_result.is_complete
+                ),
+                "is_usable": (
+                    parse_result.is_usable
+                ),
+            },
+            raw_product=product_data,
+        )
+
+
+__all__ = [
+    "CheeseKnowledgeProvider",
+]
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_provider.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.coffee import (
+    CoffeeKnowledgeProvider,
+    CoffeeParser,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "에티오피아 100% 아라비카 "
+            "라이트 로스트 워시드 원두"
+        ),
+        "bean_type": "100% arabica",
+        "origin_country": "Ethiopia",
+        "country_code": "ET",
+        "roast_level": "light roast",
+        "processing_method": "washed process",
+        "weight": "200g",
+        "grind_type": "whole bean",
+        "product_form": "원두",
+        "decaf": False,
+        "certifications": [
+            "Organic",
+            "Fair Trade",
+        ],
+        "flavor_notes": [
+            "자스민",
+            "레몬",
+            "베르가못",
+        ],
+        "altitude": "1,900m",
+        "roast_date": "2026-08-01",
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_provider_contract() -> None:
+    provider = CoffeeKnowledgeProvider()
+
+    assert isinstance(
+        provider,
+        FoodKnowledgeProvider,
+    )
+    assert provider.category_id == "coffee"
+    assert provider.category_name == "커피"
+    assert provider.aliases
+
+
+def test_provider_parser_injection() -> None:
+    parser = CoffeeParser()
+
+    provider = CoffeeKnowledgeProvider(
+        parser=parser
+    )
+
+    assert provider.parser is parser
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "coffee",
+        "COFFEE",
+        " coffee ",
+        "커피",
+        "원두",
+        "아라비카",
+        "arabica",
+    ],
+)
+def test_provider_supports_category_id(
+    category_id: str,
+) -> None:
+    assert CoffeeKnowledgeProvider().supports(
+        category_id=category_id
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "에티오피아 아라비카 원두",
+        "프리미엄 커피 200g",
+        "100% Arabica Coffee",
+        "콜드브루 커피",
+        "디카페인 커피 원두",
+    ],
+)
+def test_provider_supports_product_name(
+    product_name: str,
+) -> None:
+    assert CoffeeKnowledgeProvider().supports(
+        product_name=product_name
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "국내산 한우 등심",
+        "프랑스 브리 치즈",
+        "훈제오리 슬라이스",
+        "토종닭 가슴살",
+        "",
+    ],
+)
+def test_provider_rejects_other_products(
+    product_name: str,
+) -> None:
+    assert not CoffeeKnowledgeProvider().supports(
+        product_name=product_name
+    )
+
+
+def test_provider_returns_result() -> None:
+    result = CoffeeKnowledgeProvider().analyze(
+        _complete_product()
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "coffee"
+    assert result.category_name == "커피"
+
+    assert result.attributes["bean"] == (
+        "아라비카"
+    )
+    assert result.attributes["origin"] == (
+        "에티오피아"
+    )
+    assert result.attributes["roast"] == (
+        "라이트 로스트"
+    )
+    assert result.attributes["process"] == (
+        "워시드"
+    )
+
+    assert result.scores["knowledge"] == (
+        92.55
+    )
+    assert result.final_score == 86.28
+    assert result.confidence > 0.0
+    assert result.reasons
+    assert result.warnings == []
+
+
+def test_provider_orchestration_metadata() -> None:
+    result = CoffeeKnowledgeProvider().analyze(
+        _complete_product()
+    )
+
+    assert result.metadata[
+        "provider_id"
+    ] == "coffee"
+
+    assert result.metadata[
+        "provider"
+    ] == "CoffeeKnowledgeProvider"
+
+    assert result.metadata[
+        "parser"
+    ] == "CoffeeParser"
+
+    assert result.metadata[
+        "matched_field_count"
+    ] == 4
+
+    assert result.metadata[
+        "expected_field_count"
+    ] == 4
+
+    assert result.metadata[
+        "is_complete"
+    ] is True
+
+    assert result.metadata[
+        "is_usable"
+    ] is True
+
+
+def test_provider_context_metadata() -> None:
+    context = FoodKnowledgeContext(
+        query="에티오피아 원두 추천",
+        priority="quality",
+        user_mode="expert",
+        season="summer",
+        region="KR",
+    )
+
+    result = CoffeeKnowledgeProvider().analyze(
+        _complete_product(),
+        context=context,
+    )
+
+    assert result.metadata["query"] == (
+        "에티오피아 원두 추천"
+    )
+    assert result.metadata["priority"] == (
+        "quality"
+    )
+    assert result.metadata["user_mode"] == (
+        "expert"
+    )
+    assert result.metadata["season"] == (
+        "summer"
+    )
+    assert result.metadata["region"] == "KR"
+
+
+def test_provider_partial_product() -> None:
+    result = CoffeeKnowledgeProvider().analyze(
+        {
+            "product_name": (
+                "에티오피아 워시드 커피"
+            ),
+        }
+    )
+
+    assert result.attributes["bean"] is None
+    assert result.attributes["origin"] == (
+        "에티오피아"
+    )
+    assert result.attributes["process"] == (
+        "워시드"
+    )
+    assert result.metadata[
+        "matched_field_count"
+    ] == 2
+    assert result.metadata[
+        "is_complete"
+    ] is False
+    assert result.metadata[
+        "is_usable"
+    ] is True
+    assert result.warnings
+
+
+def test_provider_unknown_product() -> None:
+    result = CoffeeKnowledgeProvider().analyze(
+        {
+            "product_name": "일반 식품 상품",
+        }
+    )
+
+    assert result.attributes["bean"] is None
+    assert result.scores["knowledge"] == 0.0
+    assert result.final_score == 0.0
+    assert result.metadata["is_usable"] is False
+    assert result.reasons == []
+    assert result.warnings
+
+
+def test_provider_uses_title_as_product_name() -> None:
+    result = CoffeeKnowledgeProvider().analyze(
+        {
+            "title": "에티오피아 아라비카 원두",
+        }
+    )
+
+    assert result.product_name == (
+        "에티오피아 아라비카 원두"
+    )
+    assert result.attributes["bean"] == (
+        "아라비카"
+    )
+
+
+def test_provider_preserves_raw_product_copy() -> None:
+    product = _complete_product()
+
+    result = CoffeeKnowledgeProvider().analyze(
+        product
+    )
+
+    assert result.raw_product == product
+    assert result.raw_product is not product
+
+
+def test_provider_does_not_mutate_product() -> None:
+    product = _complete_product()
+    product_before = deepcopy(product)
+
+    CoffeeKnowledgeProvider().analyze(
+        product
+    )
+
+    assert product == product_before
+
+
+def test_provider_result_is_serializable() -> None:
+    result = CoffeeKnowledgeProvider().analyze(
+        _complete_product()
+    )
+
+    payload = result.to_dict()
+
+    assert payload["category_id"] == "coffee"
+    assert payload["category_name"] == "커피"
+    assert payload["attributes"]["bean"] == (
+        "아라비카"
+    )
+    assert payload["scores"]["knowledge"] == (
+        92.55
+    )
+    assert payload["final_score"] == 86.28
+
+
+def test_provider_is_deterministic() -> None:
+    provider = CoffeeKnowledgeProvider()
+    product = _complete_product()
+
+    first = provider.analyze(product)
+    second = provider.analyze(product)
+
+    assert first.to_dict() == second.to_dict()
+    assert first is not second
+
+    assert first.attributes is not second.attributes
+    assert first.scores is not second.scores
+    assert first.reasons is not second.reasons
+    assert first.warnings is not second.warnings
+
+
+def test_provider_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        CoffeeKnowledgeProvider().analyze(
+            "아라비카 원두"  # type: ignore[arg-type]
+        )
+
+
+def test_provider_rejects_empty_mapping() -> None:
+    with pytest.raises(
+        ValueError,
+        match="product must not be empty",
+    ):
+        CoffeeKnowledgeProvider().analyze({})
+
+
+def test_provider_rejects_mapping_without_usable_text() -> None:
+    with pytest.raises(
+        ValueError,
+        match="usable text field",
+    ):
+        CoffeeKnowledgeProvider().analyze(
+            {
+                "price": 10000,
+                "review_count": 10,
+            }
+        )
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_provider.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+from app.services.food.knowledge.wine.parser import (
+    WineParser,
+)
+from app.services.food.knowledge.wine.provider import (
+    WineKnowledgeProvider,
+)
+
+
+def test_wine_provider_contract() -> None:
+    provider = WineKnowledgeProvider()
+
+    assert isinstance(
+        provider,
+        FoodKnowledgeProvider,
+    )
+    assert provider.category_id == "wine"
+    assert provider.category_name == "와인"
+    assert provider.aliases
+    assert isinstance(
+        provider.parser,
+        WineParser,
+    )
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "wine",
+        "WINE",
+        " wine ",
+        "와인",
+        "보르도",
+        "chardonnay",
+    ],
+)
+def test_wine_provider_supports_category_id(
+    category_id: str,
+) -> None:
+    provider = WineKnowledgeProvider()
+
+    assert provider.supports(
+        category_id=category_id
+    ) is True
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "2020 보르도 레드 와인",
+        "부르고뉴 샤르도네 화이트와인",
+        "Napa Valley Cabernet Sauvignon Wine",
+        "리슬링 스파클링 와인",
+    ],
+)
+def test_wine_provider_supports_product_name(
+    product_name: str,
+) -> None:
+    provider = WineKnowledgeProvider()
+
+    assert provider.supports(
+        product_name=product_name
+    ) is True
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "국산 사과 5kg",
+        "한우 등심 1++",
+        "모차렐라 치즈 200g",
+        "",
+    ],
+)
+def test_wine_provider_rejects_unrelated_product(
+    product_name: str,
+) -> None:
+    provider = WineKnowledgeProvider()
+
+    assert provider.supports(
+        product_name=product_name
+    ) is False
+
+
+def test_wine_provider_rejects_empty_inputs() -> None:
+    provider = WineKnowledgeProvider()
+
+    assert provider.supports() is False
+
+
+def test_wine_provider_analyze_full_pipeline() -> None:
+    provider = WineKnowledgeProvider()
+
+    product = {
+        "product_name": (
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인 드라이 풀 바디 "
+            "높은 산도 13.5%"
+        ),
+        "producer": "Example Winery",
+        "country": "France",
+        "volume": "750ml",
+        "closure_type": "cork",
+        "certifications": ["AOC"],
+        "price_score": 75,
+    }
+
+    result = provider.analyze(product)
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+    assert result.category_id == "wine"
+    assert result.category_name == "와인"
+    assert (
+        result.product_name
+        == product["product_name"]
+    )
+
+    assert result.attributes["wine_type"] == "red"
+    assert (
+        result.attributes["grape"]
+        == "cabernet_sauvignon"
+    )
+    assert result.attributes["region"] == "bordeaux"
+    assert result.attributes["vintage"] == 2020
+    assert (
+        result.attributes["alcohol_percent"]
+        == 13.5
+    )
+
+    assert result.scores["price"] == 75.0
+    assert result.scores["knowledge"] == 88.5
+    assert result.final_score is not None
+    assert 0.0 <= result.final_score <= 100.0
+    assert result.confidence > 0.0
+    assert result.reasons
+    assert result.warnings == []
+    assert result.raw_product == product
+
+
+def test_wine_provider_metadata() -> None:
+    provider = WineKnowledgeProvider()
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "2020 보르도 카베르네 소비뇽 "
+                "레드 와인 드라이 풀 바디 "
+                "높은 산도 13.5%"
+            ),
+            "producer": "Example Winery",
+            "volume": "750ml",
+        }
+    )
+
+    assert (
+        result.metadata["provider_id"]
+        == "wine"
+    )
+    assert (
+        result.metadata["provider"]
+        == "WineKnowledgeProvider"
+    )
+    assert (
+        result.metadata["parser"]
+        == "WineParser"
+    )
+    assert (
+        result.metadata["matched_field_count"]
+        == 6
+    )
+    assert (
+        result.metadata["expected_field_count"]
+        == 6
+    )
+    assert result.metadata["is_complete"] is True
+    assert result.metadata["is_usable"] is True
+
+
+def test_wine_provider_context_metadata() -> None:
+    provider = WineKnowledgeProvider()
+
+    context = FoodKnowledgeContext(
+        query="보르도 와인 추천",
+        priority="quality",
+        user_mode="expert",
+        season="winter",
+        region="Seoul",
+    )
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "보르도 카베르네 소비뇽 "
+                "레드 와인"
+            ),
+        },
+        context=context,
+    )
+
+    assert result.metadata["query"] == (
+        "보르도 와인 추천"
+    )
+    assert result.metadata["priority"] == "quality"
+    assert result.metadata["user_mode"] == "expert"
+    assert result.metadata["season"] == "winter"
+    assert result.metadata["region"] == "Seoul"
+
+
+def test_wine_provider_unknown_product() -> None:
+    provider = WineKnowledgeProvider()
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "등록되지 않은 임의의 상품"
+            ),
+        }
+    )
+
+    assert result.category_id == "wine"
+    assert result.confidence == 0.0
+    assert result.final_score == 0.0
+    assert result.attributes["is_usable"] is False
+    assert result.warnings
+
+
+def test_wine_provider_rejects_non_mapping() -> None:
+    provider = WineKnowledgeProvider()
+
+    with pytest.raises(TypeError):
+        provider.analyze(  # type: ignore[arg-type]
+            "invalid"
+        )
+
+
+def test_wine_provider_rejects_empty_mapping() -> None:
+    provider = WineKnowledgeProvider()
+
+    with pytest.raises(ValueError):
+        provider.analyze({})
+
+
+def test_wine_provider_is_deterministic() -> None:
+    provider = WineKnowledgeProvider()
+
+    product = {
+        "product_name": (
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인 드라이 13.5%"
+        ),
+        "price_score": 70,
+    }
+
+    first = provider.analyze(product)
+    second = provider.analyze(product)
+
+    assert first.to_dict() == second.to_dict()
+
+
+def test_wine_provider_supports_parser_injection() -> None:
+    parser = WineParser()
+    provider = WineKnowledgeProvider(
+        parser=parser
+    )
+
+    assert provider.parser is parser
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_provider.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.cheese import (
+    CheeseKnowledgeProvider,
+    CheeseParser,
+)
+from app.services.food.knowledge.models import (
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "프랑스 산양유 브리 "
+            "소프트 치즈 12개월 숙성"
+        ),
+        "cheese_type": "brie",
+        "milk_source": "goat milk",
+        "country": "프랑스",
+        "country_code": "FR",
+        "texture": "soft cheese",
+        "aging": "12개월 숙성",
+        "weight": "200g",
+        "storage_type": "냉장",
+        "packaging_type": "wheel",
+        "pasteurized": True,
+        "certifications": [
+            "AOP",
+            "유기농",
+        ],
+        "fat_content": "45%",
+        "rind_type": "bloomy rind",
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_provider_contract() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    assert isinstance(
+        provider,
+        FoodKnowledgeProvider,
+    )
+    assert provider.category_id == "cheese"
+    assert provider.category_name == "치즈"
+    assert provider.aliases
+
+
+def test_provider_parser_injection() -> None:
+    parser = CheeseParser()
+
+    provider = CheeseKnowledgeProvider(
+        parser=parser
+    )
+
+    assert provider.parser is parser
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "cheese",
+        "CHEESE",
+        " cheese ",
+        "치즈",
+        "모차렐라",
+        "parmesan",
+    ],
+)
+def test_provider_supports_category_id(
+    category_id: str,
+) -> None:
+    provider = CheeseKnowledgeProvider()
+
+    assert provider.supports(
+        category_id=category_id
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "프랑스 브리 치즈 200g",
+        "이탈리아 모짜렐라",
+        "숙성 체다치즈",
+        "파르미자노 레지아노",
+        "blue cheese 150g",
+        "plain cream cheese",
+    ],
+)
+def test_provider_supports_product_name(
+    product_name: str,
+) -> None:
+    provider = CheeseKnowledgeProvider()
+
+    assert provider.supports(
+        product_name=product_name
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "국내산 한우 등심",
+        "양고기 프렌치랙",
+        "훈제오리 슬라이스",
+        "닭가슴살 1kg",
+        "사슴 안심 스테이크",
+        "보어 염소 갈비",
+        "",
+    ],
+)
+def test_provider_rejects_non_cheese_product_name(
+    product_name: str,
+) -> None:
+    provider = CheeseKnowledgeProvider()
+
+    assert (
+        provider.supports(
+            product_name=product_name
+        )
+        is False
+    )
+
+
+def test_provider_supports_returns_false_without_input() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    assert provider.supports() is False
+
+
+def test_provider_analyzes_complete_product() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    result = provider.analyze(
+        _complete_product()
+    )
+
+    assert isinstance(
+        result,
+        FoodKnowledgeResult,
+    )
+
+    assert result.category_id == "cheese"
+    assert result.category_name == "치즈"
+    assert result.product_name == (
+        "프랑스 산양유 브리 "
+        "소프트 치즈 12개월 숙성"
+    )
+
+    assert result.attributes["cheese_type"] == (
+        "브리"
+    )
+    assert result.attributes["milk_source"] == (
+        "산양유"
+    )
+    assert result.attributes["origin"] == (
+        "프랑스"
+    )
+    assert result.attributes["texture"] == (
+        "연성"
+    )
+    assert result.attributes["aging"] == (
+        "장기숙성"
+    )
+
+    assert result.scores["quality"] == 80.0
+    assert result.scores["price"] == 70.0
+    assert result.scores["trust"] == 90.0
+    assert result.scores["knowledge"] == 92.6
+
+    assert result.final_score == 86.3
+    assert 0.0 <= result.confidence <= 1.0
+    assert result.reasons
+    assert result.warnings == []
+
+
+def test_provider_result_metadata() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    context = FoodKnowledgeContext(
+        query="프랑스 브리 치즈",
+        priority="quality",
+        user_mode="expert",
+        season="summer",
+        region="seoul",
+        metadata={
+            "request_id": "test-request",
+        },
+    )
+
+    result = provider.analyze(
+        _complete_product(),
+        context=context,
+    )
+
+    assert result.metadata == {
+        "provider_id": "cheese",
+        "provider": (
+            "CheeseKnowledgeProvider"
+        ),
+        "parser": "CheeseParser",
+        "priority": "quality",
+        "query": "프랑스 브리 치즈",
+        "user_mode": "expert",
+        "season": "summer",
+        "region": "seoul",
+        "matched_field_count": 5,
+        "expected_field_count": 5,
+        "is_complete": True,
+        "is_usable": True,
+    }
+
+
+def test_provider_analyzes_partial_product() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "24개월 숙성 "
+                "파르미자노 레지아노"
+            ),
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        }
+    )
+
+    assert result.attributes["cheese_type"] == (
+        "파르미자노 레지아노"
+    )
+    assert result.attributes["aging"] == (
+        "초장기숙성"
+    )
+
+    assert result.scores["knowledge"] == 96.4
+    assert result.final_score == 88.2
+
+    assert result.metadata[
+        "matched_field_count"
+    ] == 2
+    assert result.metadata["is_complete"] is False
+    assert result.metadata["is_usable"] is True
+
+    assert result.reasons
+    assert result.warnings
+
+
+def test_provider_analyzes_unknown_product() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    result = provider.analyze(
+        {
+            "product_name": "일반 식품 상품",
+        }
+    )
+
+    assert result.attributes["cheese_type"] is None
+    assert result.attributes["is_usable"] is False
+
+    assert result.scores["knowledge"] == 0.0
+    assert result.final_score == 0.0
+    assert result.confidence == 0.0
+
+    assert result.metadata[
+        "matched_field_count"
+    ] == 0
+    assert result.metadata["is_complete"] is False
+    assert result.metadata["is_usable"] is False
+
+    assert result.reasons == []
+    assert result.warnings
+
+
+def test_provider_uses_title_as_product_name() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    result = provider.analyze(
+        {
+            "title": "프랑스 브리 치즈",
+        }
+    )
+
+    assert result.product_name == (
+        "프랑스 브리 치즈"
+    )
+    assert result.attributes["cheese_type"] == (
+        "브리"
+    )
+
+
+def test_provider_preserves_raw_product_copy() -> None:
+    provider = CheeseKnowledgeProvider()
+    product = _complete_product()
+
+    result = provider.analyze(product)
+
+    assert result.raw_product == product
+    assert result.raw_product is not product
+
+
+def test_provider_does_not_mutate_product() -> None:
+    provider = CheeseKnowledgeProvider()
+    product = _complete_product()
+    product_before = deepcopy(product)
+
+    provider.analyze(product)
+
+    assert product == product_before
+
+
+def test_provider_result_is_serializable() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    result = provider.analyze(
+        _complete_product()
+    )
+
+    payload = result.to_dict()
+
+    assert payload["category_id"] == "cheese"
+    assert payload["category_name"] == "치즈"
+    assert payload["attributes"]["cheese_type"] == (
+        "브리"
+    )
+    assert payload["scores"]["knowledge"] == 92.6
+    assert payload["final_score"] == 86.3
+
+
+def test_provider_is_deterministic() -> None:
+    provider = CheeseKnowledgeProvider()
+    product = _complete_product()
+
+    first = provider.analyze(product)
+    second = provider.analyze(product)
+
+    assert first.to_dict() == second.to_dict()
+    assert first is not second
+
+
+def test_provider_rejects_non_mapping() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        provider.analyze(
+            "브리 치즈"  # type: ignore[arg-type]
+        )
+
+
+def test_provider_rejects_empty_mapping() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    with pytest.raises(
+        ValueError,
+        match="product must not be empty",
+    ):
+        provider.analyze({})
+
+
+def test_provider_rejects_mapping_without_usable_text() -> None:
+    provider = CheeseKnowledgeProvider()
+
+    with pytest.raises(
+        ValueError,
+        match="usable text field",
+    ):
+        provider.analyze(
+            {
+                "price": 10000,
+                "review_count": 10,
+            }
+        )

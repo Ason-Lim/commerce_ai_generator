@@ -1,0 +1,11 @@
+app/services/food/knowledge/cheese/rules.py
+app/services/food/knowledge/coffee/rules.py
+app/services/food/knowledge/common/rules.py
+app/services/food/knowledge/fruit/rules.py
+app/services/food/knowledge/meat/beef/rules.py
+app/services/food/knowledge/meat/chicken/rules.py
+app/services/food/knowledge/meat/duck/rules.py
+app/services/food/knowledge/meat/goat/rules.py
+app/services/food/knowledge/meat/lamb/rules.py
+app/services/food/knowledge/meat/venison/rules.py
+app/services/food/knowledge/wine/rules.py

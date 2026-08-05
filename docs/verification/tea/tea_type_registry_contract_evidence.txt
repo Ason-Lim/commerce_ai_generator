@@ -1,0 +1,878 @@
+
+============================================================
+FILE: app/services/food/knowledge/coffee/_registry_support.py
+============================================================
+from __future__ import annotations
+
+import copy
+from typing import Any, Mapping, TypeVar
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+    BaseAliasRegistry,
+    normalize_string_list,
+)
+
+
+EntryT = TypeVar(
+    "EntryT",
+    bound=RegistryEntry,
+)
+
+
+def build_aliases(
+    canonical_name: str,
+    raw_aliases: Any,
+) -> tuple[str, ...]:
+    values = (
+        canonical_name,
+        *normalize_string_list(raw_aliases),
+    )
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+
+    return tuple(result)
+
+
+def optional_text(
+    value: Any,
+) -> str | None:
+    if value is None:
+        return None
+
+    text = str(value).strip()
+    return text or None
+
+
+def optional_score(
+    value: Any,
+) -> float | None:
+    if value is None:
+        return None
+
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    return max(0.0, min(100.0, score))
+
+
+def required_score(
+    value: Any,
+) -> float:
+    score = optional_score(value)
+
+    if score is None:
+        return 0.0
+
+    return score
+
+
+def extra_metadata(
+    raw_entry: Mapping[str, Any],
+    known_fields: set[str],
+) -> dict[str, Any]:
+    return {
+        key: copy.deepcopy(value)
+        for key, value in raw_entry.items()
+        if key not in known_fields
+    }
+
+
+def convert_match(
+    raw_match: AliasMatch[EntryT],
+    match_type: type[RegistryMatch[EntryT]],
+) -> RegistryMatch[EntryT]:
+    return match_type(
+        entry=raw_match.entry,
+        matched_alias=raw_match.matched_alias,
+        normalized_alias=(
+            raw_match.normalized_alias
+        ),
+        match_start=raw_match.match_start,
+        match_end=raw_match.match_end,
+        confidence=raw_match.confidence,
+        exact_match=raw_match.exact_match,
+    )
+
+
+class CoffeeAliasRegistry(
+    BaseAliasRegistry[EntryT]
+):
+    def typed_entries(
+        self,
+        entry_type: type[EntryT],
+        *,
+        premium_only: bool = False,
+    ) -> list[EntryT]:
+        entries = [
+            entry
+            for entry in super().list()
+            if isinstance(entry, entry_type)
+        ]
+
+        if premium_only:
+            entries = [
+                entry
+                for entry in entries
+                if bool(
+                    getattr(
+                        entry,
+                        "premium",
+                        False,
+                    )
+                )
+            ]
+
+        return sorted(
+            entries,
+            key=lambda entry: (
+                -float(
+                    getattr(
+                        entry,
+                        "score",
+                        0.0,
+                    )
+                ),
+                str(
+                    getattr(
+                        entry,
+                        "canonical_name",
+                        "",
+                    )
+                ),
+            ),
+        )
+
+
+__all__ = [
+    "CoffeeAliasRegistry",
+    "build_aliases",
+    "convert_match",
+    "extra_metadata",
+    "optional_score",
+    "optional_text",
+    "required_score",
+]
+
+============================================================
+FILE: app/services/food/knowledge/wine/_registry_support.py
+============================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Generic, Mapping, TypeVar
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+    BaseAliasRegistry,
+    normalize_string_list,
+    optional_string,
+    safe_float,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+def build_aliases(
+    canonical_name: str,
+    raw_aliases: Any,
+) -> tuple[str, ...]:
+    values = [
+        canonical_name,
+        *normalize_string_list(raw_aliases),
+    ]
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+
+        if not text or key in seen:
+            continue
+
+        seen.add(key)
+        result.append(text)
+
+    return tuple(result)
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class WineRegistryEntry(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    score: float
+    premium: bool
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+
+        object.__setattr__(
+            self,
+            "aliases",
+            build_aliases(
+                canonical_name,
+                self.aliases,
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "score",
+            max(
+                0.0,
+                min(
+                    100.0,
+                    float(self.score),
+                ),
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+
+EntryT = TypeVar(
+    "EntryT",
+    bound=WineRegistryEntry,
+)
+
+
+class WineAliasRegistry(
+    BaseAliasRegistry[EntryT],
+    Generic[EntryT],
+):
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    entry_class: type[EntryT]
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def common_fields(
+        self,
+        *,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+        known_fields: set[str],
+    ) -> dict[str, Any]:
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        metadata = {
+            key: copy.deepcopy(value)
+            for key, value in raw_entry.items()
+            if key not in known_fields
+        }
+
+        return {
+            "registry_key": registry_key,
+            "canonical_name": (
+                canonical_name or registry_key
+            ),
+            "aliases": build_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            "score": safe_float(
+                raw_entry.get("score"),
+                default=0.0,
+            ),
+            "premium": bool(
+                raw_entry.get("premium", False)
+            ),
+            "description": optional_string(
+                raw_entry.get("description")
+            ),
+            "metadata": metadata,
+        }
+
+    def convert_match(
+        self,
+        raw_match: AliasMatch[EntryT],
+        match_class: type[RegistryMatch[EntryT]],
+    ) -> RegistryMatch[EntryT]:
+        return match_class(
+            entry=raw_match.entry,
+            matched_alias=raw_match.matched_alias,
+            normalized_alias=raw_match.normalized_alias,
+            confidence=raw_match.confidence,
+            match_start=raw_match.match_start,
+            match_end=raw_match.match_end,
+            exact_match=raw_match.exact_match,
+        )
+
+============================================================
+FILE: app/services/food/knowledge/wine/type_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    optional_string,
+)
+from app.services.food.knowledge.wine._registry_support import (
+    WineAliasRegistry,
+    WineRegistryEntry,
+)
+
+
+WINE_TYPE_REGISTRY_ID = "wine.types"
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class WineType(WineRegistryEntry):
+    type_category: str | None = None
+    color_family: str | None = None
+    sparkling: bool = False
+    fortified: bool = False
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class WineTypeMatch(
+    RegistryMatch[WineType]
+):
+    @property
+    def wine_type(self) -> WineType:
+        return self.entry
+
+
+class WineTypeRegistry(
+    WineAliasRegistry[WineType]
+):
+    registry_id = WINE_TYPE_REGISTRY_ID
+    entry_class = WineType
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> WineType:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "score",
+            "premium",
+            "description",
+            "type_category",
+            "color_family",
+            "sparkling",
+            "fortified",
+        }
+
+        return WineType(
+            **self.common_fields(
+                registry_key=registry_key,
+                raw_entry=raw_entry,
+                known_fields=known_fields,
+            ),
+            type_category=optional_string(
+                raw_entry.get("type_category")
+            ),
+            color_family=optional_string(
+                raw_entry.get("color_family")
+            ),
+            sparkling=bool(
+                raw_entry.get("sparkling", False)
+            ),
+            fortified=bool(
+                raw_entry.get("fortified", False)
+            ),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> WineTypeMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self.convert_match(
+            raw_match,
+            WineTypeMatch,
+        )  # type: ignore[return-value]
+============================================================
+FILE: app/services/food/registry_data/wine/types.yaml
+============================================================
+red:
+  canonical_name: red
+  aliases:
+    - red wine
+    - 레드 와인
+    - 레드와인
+  type_category: still
+  color_family: red
+  sparkling: false
+  fortified: false
+  score: 85
+  premium: false
+  description: Red still wine
+
+white:
+  canonical_name: white
+  aliases:
+    - white wine
+    - 화이트 와인
+    - 화이트와인
+  type_category: still
+  color_family: white
+  sparkling: false
+  fortified: false
+  score: 85
+  premium: false
+  description: White still wine
+
+sparkling:
+  canonical_name: sparkling
+  aliases:
+    - sparkling wine
+    - 스파클링 와인
+    - 스파클링와인
+  type_category: sparkling
+  color_family: null
+  sparkling: true
+  fortified: false
+  score: 88
+  premium: false
+  description: Sparkling wine
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_registries.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.wine.acidity_registry import (
+    WineAcidityRegistry,
+)
+from app.services.food.knowledge.wine.body_registry import (
+    WineBodyRegistry,
+)
+from app.services.food.knowledge.wine.grape_registry import (
+    WineGrapeRegistry,
+)
+from app.services.food.knowledge.wine.region_registry import (
+    WineRegionRegistry,
+)
+from app.services.food.knowledge.wine.sweetness_registry import (
+    WineSweetnessRegistry,
+)
+from app.services.food.knowledge.wine.type_registry import (
+    WineTypeRegistry,
+)
+
+
+@pytest.mark.parametrize(
+    (
+        "registry",
+        "text",
+        "expected_key",
+    ),
+    [
+        (
+            WineTypeRegistry(),
+            "레드 와인",
+            "red",
+        ),
+        (
+            WineGrapeRegistry(),
+            "카베르네 소비뇽",
+            "cabernet_sauvignon",
+        ),
+        (
+            WineRegionRegistry(),
+            "보르도",
+            "bordeaux",
+        ),
+        (
+            WineSweetnessRegistry(),
+            "드라이",
+            "dry",
+        ),
+        (
+            WineBodyRegistry(),
+            "풀 바디",
+            "full",
+        ),
+        (
+            WineAcidityRegistry(),
+            "높은 산도",
+            "high",
+        ),
+    ],
+)
+def test_wine_registry_matches_alias(
+    registry: object,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = registry.match(text)  # type: ignore[attr-defined]
+
+    assert match is not None
+    assert match.entry.registry_key == expected_key
+    assert match.matched_alias
+    assert match.normalized_alias
+    assert 0.0 <= match.confidence <= 1.0
+    assert match.match_start >= 0
+    assert match.match_end > match.match_start
+    assert match.exact_match is True
+
+
+@pytest.mark.parametrize(
+    (
+        "registry",
+        "text",
+    ),
+    [
+        (
+            WineTypeRegistry(),
+            "레드 와인",
+        ),
+        (
+            WineGrapeRegistry(),
+            "샤르도네",
+        ),
+        (
+            WineRegionRegistry(),
+            "나파 밸리",
+        ),
+        (
+            WineSweetnessRegistry(),
+            "세미 드라이",
+        ),
+        (
+            WineBodyRegistry(),
+            "미디엄 바디",
+        ),
+        (
+            WineAcidityRegistry(),
+            "낮은 산도",
+        ),
+    ],
+)
+def test_wine_registry_lookup_returns_entry(
+    registry: object,
+    text: str,
+) -> None:
+    entry = registry.lookup(text)  # type: ignore[attr-defined]
+
+    assert entry is not None
+    assert entry.registry_key
+    assert entry.canonical_name
+    assert entry.aliases
+    assert 0.0 <= entry.score <= 100.0
+
+
+@pytest.mark.parametrize(
+    "registry",
+    [
+        WineTypeRegistry(),
+        WineGrapeRegistry(),
+        WineRegionRegistry(),
+        WineSweetnessRegistry(),
+        WineBodyRegistry(),
+        WineAcidityRegistry(),
+    ],
+)
+def test_wine_registry_returns_none_for_unknown_text(
+    registry: object,
+) -> None:
+    match = registry.match(  # type: ignore[attr-defined]
+        "등록되지 않은 임의의 문자열"
+    )
+
+    assert match is None
+
+
+def test_wine_type_registry_metadata() -> None:
+    entry = WineTypeRegistry().lookup(
+        "스파클링 와인"
+    )
+
+    assert entry is not None
+    assert entry.registry_key == "sparkling"
+    assert entry.sparkling is True
+    assert entry.fortified is False
+
+
+def test_wine_grape_registry_metadata() -> None:
+    entry = WineGrapeRegistry().lookup(
+        "리슬링"
+    )
+
+    assert entry is not None
+    assert entry.registry_key == "riesling"
+    assert entry.color == "white"
+    assert entry.aromatic is True
+
+
+def test_wine_region_registry_metadata() -> None:
+    entry = WineRegionRegistry().lookup(
+        "부르고뉴"
+    )
+
+    assert entry is not None
+    assert entry.registry_key == "burgundy"
+    assert entry.country_code == "FR"
+    assert entry.appellation == "Bourgogne"
+
+
+def test_wine_sweetness_registry_metadata() -> None:
+    entry = WineSweetnessRegistry().lookup(
+        "드라이"
+    )
+
+    assert entry is not None
+    assert entry.sweetness_level == 1
+    assert entry.residual_sugar_min == 0.0
+    assert entry.residual_sugar_max == 4.0
+
+
+def test_wine_body_registry_metadata() -> None:
+    entry = WineBodyRegistry().lookup(
+        "풀 바디"
+    )
+
+    assert entry is not None
+    assert entry.body_level == 3
+    assert entry.premium is True
+
+
+def test_wine_acidity_registry_metadata() -> None:
+    entry = WineAcidityRegistry().lookup(
+        "높은 산도"
+    )
+
+    assert entry is not None
+    assert entry.acidity_level == 3
+    assert entry.premium is True
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_registry_integration.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.registry import (
+    FOOD_KNOWLEDGE_REGISTRY,
+    get_food_provider,
+    list_food_providers,
+    require_food_provider,
+    resolve_food_provider,
+)
+from app.services.food.knowledge.wine.provider import (
+    WineKnowledgeProvider,
+)
+
+
+def test_wine_provider_is_registered() -> None:
+    provider = get_food_provider("wine")
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+def test_wine_provider_is_required() -> None:
+    provider = require_food_provider(
+        "wine"
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+def test_wine_category_is_listed() -> None:
+    assert (
+        "wine"
+        in FOOD_KNOWLEDGE_REGISTRY.list_category_ids()
+    )
+
+
+def test_wine_provider_is_in_provider_list() -> None:
+    providers = list_food_providers()
+
+    assert any(
+        isinstance(
+            provider,
+            WineKnowledgeProvider,
+        )
+        for provider in providers
+    )
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "wine",
+        "WINE",
+        " wine ",
+        "와인",
+        "보르도",
+        "chardonnay",
+    ],
+)
+def test_resolve_wine_provider_by_category(
+    category_id: str,
+) -> None:
+    provider = resolve_food_provider(
+        category_id=category_id
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "2020 보르도 레드 와인",
+        "부르고뉴 샤르도네 화이트와인",
+        "Napa Valley Cabernet Sauvignon Wine",
+        "리슬링 스파클링 와인",
+        "Merlot",
+        "Pinot Noir",
+        "Champagne Brut",
+    ],
+)
+def test_resolve_wine_provider_by_product_name(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "국산 사과 5kg",
+        "한우 등심 1++",
+        "모차렐라 치즈 200g",
+    ],
+)
+def test_wine_provider_does_not_capture_other_domains(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert not isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+def test_resolved_wine_provider_runs_analysis() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인"
+        )
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "2020 보르도 카베르네 소비뇽 "
+                "레드 와인 드라이 13.5%"
+            ),
+            "producer": "Example Winery",
+            "volume": "750ml",
+        }
+    )
+
+    assert result.category_id == "wine"
+    assert result.attributes["region"] == "bordeaux"
+    assert (
+        result.attributes["grape"]
+        == "cabernet_sauvignon"
+    )

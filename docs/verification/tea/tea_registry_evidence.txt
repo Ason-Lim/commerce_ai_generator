@@ -1,0 +1,68 @@
+RIV-2026-013-TEA
+Tea Registry Inventory Verification Evidence
+Overall Status: FAIL
+
+[RIV-1] Registry file composition
+STATUS: PENDING
+EVIDENCE:
+  - Tea domain directory exists: False
+  - Tea Python files: 0
+  - Registry-related Python files: 0
+VIOLATIONS:
+  - Tea domain directory is missing: app/services/food/knowledge/tea
+
+[RIV-2] Registry declarative data composition
+STATUS: PENDING
+EVIDENCE:
+  - Tea registry data directory exists: False
+  - Declarative data files: 0
+VIOLATIONS:
+  - No Tea YAML/JSON/TOML/CSV Registry data files were found.
+
+[RIV-3] Registry support layer
+STATUS: PENDING
+EVIDENCE:
+  - Registry support files: 0
+VIOLATIONS:
+  - No identifiable Registry support or loader file found.
+
+[RIV-4] Registry contract compliance
+STATUS: PENDING
+EVIDENCE:
+VIOLATIONS:
+  - No Registry implementation was available for AST inspection.
+
+[RIV-5] Registry implementation scope compliance
+STATUS: FAIL
+EVIDENCE:
+  - git status exit code: 0
+  - M docs/verification/cheese/provider-registration.json
+ M docs/verification/cheese/provider-registration.txt
+ M tools/verification/__init__.py
+?? "docs/architecture/tools/Integration Verification Tool v1.0.md"
+?? docs/verification/cheese/cross-domain-regression.txt
+?? docs/verification/cheese/integration-verification-suite.json
+?? docs/verification/cheese/provider-selection.txt
+?? docs/verification/cheese/result-contract.txt
+?? docs/verification/cheese/runtime-routing.txt
+?? docs/verification/tea/tea_registry_evidence.py
+?? tests/tools/verification/integration/test_integration_verifier.py
+?? tools/verification/integration/__init__.py
+?? tools/verification/integration/cli.py
+?? tools/verification/integration/integration_verifier.py
+?? tools/verification/integration/profiles.py
+VIOLATIONS:
+  - Outside Tea authorized scope: ocs/verification/cheese/provider-registration.json
+  - Outside Tea authorized scope: docs/verification/cheese/provider-registration.txt
+  - Outside Tea authorized scope: tools/verification/__init__.py
+  - Outside Tea authorized scope: "docs/architecture/tools/Integration Verification Tool v1.0.md"
+  - Outside Tea authorized scope: docs/verification/cheese/cross-domain-regression.txt
+  - Outside Tea authorized scope: docs/verification/cheese/integration-verification-suite.json
+  - Outside Tea authorized scope: docs/verification/cheese/provider-selection.txt
+  - Outside Tea authorized scope: docs/verification/cheese/result-contract.txt
+  - Outside Tea authorized scope: docs/verification/cheese/runtime-routing.txt
+  - Outside Tea authorized scope: tests/tools/verification/integration/test_integration_verifier.py
+  - Outside Tea authorized scope: tools/verification/integration/__init__.py
+  - Outside Tea authorized scope: tools/verification/integration/cli.py
+  - Outside Tea authorized scope: tools/verification/integration/integration_verifier.py
+  - Outside Tea authorized scope: tools/verification/integration/profiles.py

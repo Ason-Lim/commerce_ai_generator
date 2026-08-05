@@ -1,0 +1,13 @@
+app/services/food/knowledge/coffee/rules.py:49:    - Registry 재조회
+app/services/food/knowledge/coffee/rules.py:199:            "Registry에서 프리미엄 속성이 "
+app/services/food/knowledge/coffee/rules.py:229:            "Registry 기준 산미 특성이 "
+app/services/food/knowledge/coffee/rules.py:239:            "Registry 기준 바디감이 "
+app/services/food/knowledge/coffee/rules.py:249:            "Registry 기준 향미 평가가 "
+app/services/food/knowledge/coffee/rules.py:259:            "Registry 기준 단맛 특성이 "
+app/services/food/knowledge/coffee/rules.py:269:            "Registry 기준 향미 선명도가 "
+app/services/food/knowledge/coffee/rules.py:295:            "Coffee Registry 기반 평가 점수를 "
+app/services/food/knowledge/wine/rules.py:21:    이 함수는 Parser 재실행, Registry 조회,
+app/services/food/knowledge/wine/rules.py:186:            "Wine Registry 기반 지식 점수를 "
+app/services/food/knowledge/cheese/rules.py:178:            "Registry 기준 대표 활용 방식은 "
+app/services/food/knowledge/cheese/rules.py:188:            "Registry에서 프리미엄 속성이 "
+app/services/food/knowledge/cheese/rules.py:239:            "치즈 Registry 기반 평가 점수를 "

@@ -1,0 +1,205 @@
+app/services/food/knowledge/coffee/scoring.py:11:COFFEE_KNOWLEDGE_WEIGHTS: dict[str, float] = {
+app/services/food/knowledge/coffee/scoring.py:18:COFFEE_FINAL_SCORE_WEIGHTS: dict[str, float] = {
+app/services/food/knowledge/coffee/scoring.py:28:    default: float = 0.0,
+app/services/food/knowledge/coffee/scoring.py:46:    점수를 0.0~100.0 범위로 제한한다.
+app/services/food/knowledge/coffee/scoring.py:48:    return max(
+app/services/food/knowledge/coffee/scoring.py:49:        0.0,
+app/services/food/knowledge/coffee/scoring.py:50:        min(
+app/services/food/knowledge/coffee/scoring.py:51:            100.0,
+app/services/food/knowledge/coffee/scoring.py:57:def calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:66:        if clamp_score(value) > 0.0
+app/services/food/knowledge/coffee/scoring.py:70:        return 0.0
+app/services/food/knowledge/coffee/scoring.py:73:        sum(available) / len(available),
+app/services/food/knowledge/coffee/scoring.py:78:def calculate_available_weighted_score(
+app/services/food/knowledge/coffee/scoring.py:81:    weights: Mapping[str, Any],
+app/services/food/knowledge/coffee/scoring.py:98:        weights,
+app/services/food/knowledge/coffee/scoring.py:102:            "weights must be a Mapping"
+app/services/food/knowledge/coffee/scoring.py:105:    weighted_sum = 0.0
+app/services/food/knowledge/coffee/scoring.py:106:    available_weight = 0.0
+app/services/food/knowledge/coffee/scoring.py:108:    for key, raw_weight in weights.items():
+app/services/food/knowledge/coffee/scoring.py:112:        weight = max(
+app/services/food/knowledge/coffee/scoring.py:113:            0.0,
+app/services/food/knowledge/coffee/scoring.py:114:            safe_float(raw_weight),
+app/services/food/knowledge/coffee/scoring.py:117:        if score <= 0.0 or weight <= 0.0:
+app/services/food/knowledge/coffee/scoring.py:120:        weighted_sum += score * weight
+app/services/food/knowledge/coffee/scoring.py:121:        available_weight += weight
+app/services/food/knowledge/coffee/scoring.py:123:    if available_weight <= 0.0:
+app/services/food/knowledge/coffee/scoring.py:124:        return 0.0
+app/services/food/knowledge/coffee/scoring.py:127:        weighted_sum / available_weight,
+app/services/food/knowledge/coffee/scoring.py:149:        "bean": 0.0,
+app/services/food/knowledge/coffee/scoring.py:150:        "origin": 0.0,
+app/services/food/knowledge/coffee/scoring.py:151:        "roast": 0.0,
+app/services/food/knowledge/coffee/scoring.py:152:        "process": 0.0,
+app/services/food/knowledge/coffee/scoring.py:153:        "acidity": 0.0,
+app/services/food/knowledge/coffee/scoring.py:154:        "body": 0.0,
+app/services/food/knowledge/coffee/scoring.py:155:        "aroma": 0.0,
+app/services/food/knowledge/coffee/scoring.py:156:        "clarity": 0.0,
+app/services/food/knowledge/coffee/scoring.py:157:        "sweetness": 0.0,
+app/services/food/knowledge/coffee/scoring.py:269:        calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:274:        calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:279:        calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:289:    bean_score: Any = 0.0,
+app/services/food/knowledge/coffee/scoring.py:290:    origin_score: Any = 0.0,
+app/services/food/knowledge/coffee/scoring.py:291:    roast_score: Any = 0.0,
+app/services/food/knowledge/coffee/scoring.py:292:    process_score: Any = 0.0,
+app/services/food/knowledge/coffee/scoring.py:293:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/coffee/scoring.py:299:    effective_weights = (
+app/services/food/knowledge/coffee/scoring.py:300:        dict(weights)
+app/services/food/knowledge/coffee/scoring.py:301:        if weights is not None
+app/services/food/knowledge/coffee/scoring.py:303:            COFFEE_KNOWLEDGE_WEIGHTS
+app/services/food/knowledge/coffee/scoring.py:307:    return calculate_available_weighted_score(
+app/services/food/knowledge/coffee/scoring.py:314:        weights=effective_weights,
+app/services/food/knowledge/coffee/scoring.py:384:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/coffee/scoring.py:400:    effective_weights = (
+app/services/food/knowledge/coffee/scoring.py:401:        dict(weights)
+app/services/food/knowledge/coffee/scoring.py:402:        if weights is not None
+app/services/food/knowledge/coffee/scoring.py:404:            COFFEE_FINAL_SCORE_WEIGHTS
+app/services/food/knowledge/coffee/scoring.py:408:    total = 0.0
+app/services/food/knowledge/coffee/scoring.py:410:    for key, raw_weight in (
+app/services/food/knowledge/coffee/scoring.py:411:        effective_weights.items()
+app/services/food/knowledge/coffee/scoring.py:416:        weight = max(
+app/services/food/knowledge/coffee/scoring.py:417:            0.0,
+app/services/food/knowledge/coffee/scoring.py:418:            safe_float(raw_weight),
+app/services/food/knowledge/coffee/scoring.py:421:        total += score * weight
+app/services/food/knowledge/coffee/scoring.py:430:    "COFFEE_KNOWLEDGE_WEIGHTS",
+app/services/food/knowledge/coffee/scoring.py:431:    "COFFEE_FINAL_SCORE_WEIGHTS",
+app/services/food/knowledge/coffee/scoring.py:434:    "calculate_available_average",
+app/services/food/knowledge/coffee/scoring.py:435:    "calculate_available_weighted_score",
+app/services/food/knowledge/wine/scoring.py:11:WINE_KNOWLEDGE_WEIGHTS: dict[str, float] = {
+app/services/food/knowledge/wine/scoring.py:20:WINE_FINAL_SCORE_WEIGHTS: dict[str, float] = {
+app/services/food/knowledge/wine/scoring.py:30:    default: float = 0.0,
+app/services/food/knowledge/wine/scoring.py:48:    점수를 0.0~100.0 범위로 제한한다.
+app/services/food/knowledge/wine/scoring.py:50:    return max(
+app/services/food/knowledge/wine/scoring.py:51:        0.0,
+app/services/food/knowledge/wine/scoring.py:52:        min(
+app/services/food/knowledge/wine/scoring.py:53:            100.0,
+app/services/food/knowledge/wine/scoring.py:59:def calculate_available_average(
+app/services/food/knowledge/wine/scoring.py:68:        if clamp_score(value) > 0.0
+app/services/food/knowledge/wine/scoring.py:72:        return 0.0
+app/services/food/knowledge/wine/scoring.py:75:        sum(available) / len(available),
+app/services/food/knowledge/wine/scoring.py:80:def calculate_available_weighted_score(
+app/services/food/knowledge/wine/scoring.py:83:    weights: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:93:    if not isinstance(weights, Mapping):
+app/services/food/knowledge/wine/scoring.py:95:            "weights must be a Mapping"
+app/services/food/knowledge/wine/scoring.py:98:    weighted_sum = 0.0
+app/services/food/knowledge/wine/scoring.py:99:    available_weight = 0.0
+app/services/food/knowledge/wine/scoring.py:101:    for key, raw_weight in weights.items():
+app/services/food/knowledge/wine/scoring.py:105:        weight = max(
+app/services/food/knowledge/wine/scoring.py:106:            0.0,
+app/services/food/knowledge/wine/scoring.py:107:            safe_float(raw_weight),
+app/services/food/knowledge/wine/scoring.py:110:        if score <= 0.0 or weight <= 0.0:
+app/services/food/knowledge/wine/scoring.py:113:        weighted_sum += score * weight
+app/services/food/knowledge/wine/scoring.py:114:        available_weight += weight
+app/services/food/knowledge/wine/scoring.py:116:    if available_weight <= 0.0:
+app/services/food/knowledge/wine/scoring.py:117:        return 0.0
+app/services/food/knowledge/wine/scoring.py:120:        weighted_sum / available_weight,
+app/services/food/knowledge/wine/scoring.py:142:        "wine_type": 0.0,
+app/services/food/knowledge/wine/scoring.py:143:        "grape": 0.0,
+app/services/food/knowledge/wine/scoring.py:144:        "region": 0.0,
+app/services/food/knowledge/wine/scoring.py:145:        "sweetness": 0.0,
+app/services/food/knowledge/wine/scoring.py:146:        "body": 0.0,
+app/services/food/knowledge/wine/scoring.py:147:        "acidity": 0.0,
+app/services/food/knowledge/wine/scoring.py:203:    wine_type_score: Any = 0.0,
+app/services/food/knowledge/wine/scoring.py:204:    grape_score: Any = 0.0,
+app/services/food/knowledge/wine/scoring.py:205:    region_score: Any = 0.0,
+app/services/food/knowledge/wine/scoring.py:206:    sweetness_score: Any = 0.0,
+app/services/food/knowledge/wine/scoring.py:207:    body_score: Any = 0.0,
+app/services/food/knowledge/wine/scoring.py:208:    acidity_score: Any = 0.0,
+app/services/food/knowledge/wine/scoring.py:209:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/wine/scoring.py:214:    effective_weights = (
+app/services/food/knowledge/wine/scoring.py:215:        dict(weights)
+app/services/food/knowledge/wine/scoring.py:216:        if weights is not None
+app/services/food/knowledge/wine/scoring.py:217:        else dict(WINE_KNOWLEDGE_WEIGHTS)
+app/services/food/knowledge/wine/scoring.py:220:    return calculate_available_weighted_score(
+app/services/food/knowledge/wine/scoring.py:229:        weights=effective_weights,
+app/services/food/knowledge/wine/scoring.py:257:    base_score = calculate_available_average(
+app/services/food/knowledge/wine/scoring.py:265:    completeness_bonus = 0.0
+app/services/food/knowledge/wine/scoring.py:268:        completeness_bonus += 2.0
+app/services/food/knowledge/wine/scoring.py:271:        completeness_bonus += 2.0
+app/services/food/knowledge/wine/scoring.py:274:        completeness_bonus += 3.0
+app/services/food/knowledge/wine/scoring.py:277:        base_score + completeness_bonus
+app/services/food/knowledge/wine/scoring.py:304:            parse_result.confidence * 100.0
+app/services/food/knowledge/wine/scoring.py:323:    evidence_count = sum(
+app/services/food/knowledge/wine/scoring.py:333:    score += min(
+app/services/food/knowledge/wine/scoring.py:334:        40.0,
+app/services/food/knowledge/wine/scoring.py:351:    생성하지 않고 0.0을 반환한다.
+app/services/food/knowledge/wine/scoring.py:373:    return 0.0
+app/services/food/knowledge/wine/scoring.py:479:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/wine/scoring.py:484:    effective_weights = (
+app/services/food/knowledge/wine/scoring.py:485:        dict(weights)
+app/services/food/knowledge/wine/scoring.py:486:        if weights is not None
+app/services/food/knowledge/wine/scoring.py:487:        else dict(WINE_FINAL_SCORE_WEIGHTS)
+app/services/food/knowledge/wine/scoring.py:490:    return calculate_available_weighted_score(
+app/services/food/knowledge/wine/scoring.py:492:        weights=effective_weights,
+app/services/food/knowledge/wine/scoring.py:497:    "WINE_FINAL_SCORE_WEIGHTS",
+app/services/food/knowledge/wine/scoring.py:498:    "WINE_KNOWLEDGE_WEIGHTS",
+app/services/food/knowledge/wine/scoring.py:499:    "calculate_available_average",
+app/services/food/knowledge/wine/scoring.py:500:    "calculate_available_weighted_score",
+app/services/food/knowledge/cheese/scoring.py:11:CHEESE_KNOWLEDGE_WEIGHTS: dict[str, float] = {
+app/services/food/knowledge/cheese/scoring.py:19:CHEESE_FINAL_SCORE_WEIGHTS: dict[str, float] = {
+app/services/food/knowledge/cheese/scoring.py:29:    default: float = 0.0,
+app/services/food/knowledge/cheese/scoring.py:47:    점수를 0.0~100.0 범위로 제한한다.
+app/services/food/knowledge/cheese/scoring.py:49:    return max(
+app/services/food/knowledge/cheese/scoring.py:50:        0.0,
+app/services/food/knowledge/cheese/scoring.py:51:        min(
+app/services/food/knowledge/cheese/scoring.py:52:            100.0,
+app/services/food/knowledge/cheese/scoring.py:58:def calculate_available_average(
+app/services/food/knowledge/cheese/scoring.py:67:        if clamp_score(value) > 0.0
+app/services/food/knowledge/cheese/scoring.py:71:        return 0.0
+app/services/food/knowledge/cheese/scoring.py:74:        sum(available) / len(available),
+app/services/food/knowledge/cheese/scoring.py:79:def calculate_available_weighted_score(
+app/services/food/knowledge/cheese/scoring.py:82:    weights: Mapping[str, Any],
+app/services/food/knowledge/cheese/scoring.py:99:        weights,
+app/services/food/knowledge/cheese/scoring.py:103:            "weights must be a Mapping"
+app/services/food/knowledge/cheese/scoring.py:106:    weighted_sum = 0.0
+app/services/food/knowledge/cheese/scoring.py:107:    available_weight = 0.0
+app/services/food/knowledge/cheese/scoring.py:109:    for key, raw_weight in weights.items():
+app/services/food/knowledge/cheese/scoring.py:113:        weight = max(
+app/services/food/knowledge/cheese/scoring.py:114:            0.0,
+app/services/food/knowledge/cheese/scoring.py:115:            safe_float(raw_weight),
+app/services/food/knowledge/cheese/scoring.py:118:        if score <= 0.0 or weight <= 0.0:
+app/services/food/knowledge/cheese/scoring.py:121:        weighted_sum += score * weight
+app/services/food/knowledge/cheese/scoring.py:122:        available_weight += weight
+app/services/food/knowledge/cheese/scoring.py:124:    if available_weight <= 0.0:
+app/services/food/knowledge/cheese/scoring.py:125:        return 0.0
+app/services/food/knowledge/cheese/scoring.py:128:        weighted_sum / available_weight,
+app/services/food/knowledge/cheese/scoring.py:150:        "cheese_type": 0.0,
+app/services/food/knowledge/cheese/scoring.py:151:        "milk_source": 0.0,
+app/services/food/knowledge/cheese/scoring.py:152:        "origin": 0.0,
+app/services/food/knowledge/cheese/scoring.py:153:        "texture": 0.0,
+app/services/food/knowledge/cheese/scoring.py:154:        "aging": 0.0,
+app/services/food/knowledge/cheese/scoring.py:155:        "flavor": 0.0,
+app/services/food/knowledge/cheese/scoring.py:156:        "versatility": 0.0,
+app/services/food/knowledge/cheese/scoring.py:157:        "richness": 0.0,
+app/services/food/knowledge/cheese/scoring.py:158:        "availability": 0.0,
+app/services/food/knowledge/cheese/scoring.py:159:        "tradition": 0.0,
+app/services/food/knowledge/cheese/scoring.py:160:        "firmness": 0.0,
+app/services/food/knowledge/cheese/scoring.py:161:        "moisture": 0.0,
+app/services/food/knowledge/cheese/scoring.py:245:    cheese_type_score: Any = 0.0,
+app/services/food/knowledge/cheese/scoring.py:246:    milk_source_score: Any = 0.0,
+app/services/food/knowledge/cheese/scoring.py:247:    origin_score: Any = 0.0,
+app/services/food/knowledge/cheese/scoring.py:248:    texture_score: Any = 0.0,
+app/services/food/knowledge/cheese/scoring.py:249:    aging_score: Any = 0.0,
+app/services/food/knowledge/cheese/scoring.py:250:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/cheese/scoring.py:256:    effective_weights = (
+app/services/food/knowledge/cheese/scoring.py:257:        dict(weights)
+app/services/food/knowledge/cheese/scoring.py:258:        if weights is not None
+app/services/food/knowledge/cheese/scoring.py:260:            CHEESE_KNOWLEDGE_WEIGHTS
+app/services/food/knowledge/cheese/scoring.py:264:    return calculate_available_weighted_score(
+app/services/food/knowledge/cheese/scoring.py:272:        weights=effective_weights,
+app/services/food/knowledge/cheese/scoring.py:345:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/cheese/scoring.py:361:    effective_weights = (
+app/services/food/knowledge/cheese/scoring.py:362:        dict(weights)
+app/services/food/knowledge/cheese/scoring.py:363:        if weights is not None
+app/services/food/knowledge/cheese/scoring.py:365:            CHEESE_FINAL_SCORE_WEIGHTS
+app/services/food/knowledge/cheese/scoring.py:369:    total = 0.0
+app/services/food/knowledge/cheese/scoring.py:371:    for key, raw_weight in (
+app/services/food/knowledge/cheese/scoring.py:372:        effective_weights.items()
+app/services/food/knowledge/cheese/scoring.py:377:        weight = max(
+app/services/food/knowledge/cheese/scoring.py:378:            0.0,
+app/services/food/knowledge/cheese/scoring.py:379:            safe_float(raw_weight),
+app/services/food/knowledge/cheese/scoring.py:382:        total += score * weight
+app/services/food/knowledge/cheese/scoring.py:391:    "CHEESE_KNOWLEDGE_WEIGHTS",
+app/services/food/knowledge/cheese/scoring.py:392:    "CHEESE_FINAL_SCORE_WEIGHTS",
+app/services/food/knowledge/cheese/scoring.py:395:    "calculate_available_average",
+app/services/food/knowledge/cheese/scoring.py:396:    "calculate_available_weighted_score",

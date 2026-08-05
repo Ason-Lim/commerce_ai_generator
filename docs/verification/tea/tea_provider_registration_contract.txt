@@ -1,0 +1,243 @@
+# Tea Provider Registration Contract
+
+generated_at=2026-08-05T03:49:25Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+=== Food knowledge package files ===
+app/services/food/knowledge/__init__.py
+app/services/food/knowledge/base.py
+app/services/food/knowledge/cheese/__init__.py
+app/services/food/knowledge/cheese/aging_registry.py
+app/services/food/knowledge/cheese/attributes.py
+app/services/food/knowledge/cheese/milk_source_registry.py
+app/services/food/knowledge/cheese/origin_registry.py
+app/services/food/knowledge/cheese/parser_models.py
+app/services/food/knowledge/cheese/parser.py
+app/services/food/knowledge/cheese/provider.py
+app/services/food/knowledge/cheese/rules.py
+app/services/food/knowledge/cheese/scoring.py
+app/services/food/knowledge/cheese/texture_registry.py
+app/services/food/knowledge/cheese/type_registry.py
+app/services/food/knowledge/coffee/__init__.py
+app/services/food/knowledge/coffee/_registry_support.py
+app/services/food/knowledge/coffee/attributes.py
+app/services/food/knowledge/coffee/bean_registry.py
+app/services/food/knowledge/coffee/origin_registry.py
+app/services/food/knowledge/coffee/parser_models.py
+app/services/food/knowledge/coffee/parser.py
+app/services/food/knowledge/coffee/process_registry.py
+app/services/food/knowledge/coffee/provider.py
+app/services/food/knowledge/coffee/roast_registry.py
+app/services/food/knowledge/coffee/rules.py
+app/services/food/knowledge/coffee/scoring.py
+app/services/food/knowledge/common/__init__.py
+app/services/food/knowledge/common/base_model.py
+app/services/food/knowledge/common/base_registry.py
+app/services/food/knowledge/common/confidence.py
+app/services/food/knowledge/common/constants.py
+app/services/food/knowledge/common/normalizer.py
+app/services/food/knowledge/common/parser_base.py
+app/services/food/knowledge/common/parser_models.py
+app/services/food/knowledge/common/parser_utils.py
+app/services/food/knowledge/common/parser.py
+app/services/food/knowledge/common/rules.py
+app/services/food/knowledge/common/scoring.py
+app/services/food/knowledge/common/text.py
+app/services/food/knowledge/fruit/__init__.py
+app/services/food/knowledge/fruit/parser.py
+app/services/food/knowledge/fruit/provider.py
+app/services/food/knowledge/fruit/rules.py
+app/services/food/knowledge/fruit/scoring.py
+app/services/food/knowledge/meat/__init__.py
+app/services/food/knowledge/meat/common.py
+app/services/food/knowledge/models.py
+app/services/food/knowledge/registry_loader.py
+app/services/food/knowledge/registry.py
+app/services/food/knowledge/tea/__init__.py
+app/services/food/knowledge/tea/_registry_support.py
+app/services/food/knowledge/tea/attributes.py
+app/services/food/knowledge/tea/flavor_registry.py
+app/services/food/knowledge/tea/origin_registry.py
+app/services/food/knowledge/tea/oxidation_registry.py
+app/services/food/knowledge/tea/parser_models.py
+app/services/food/knowledge/tea/parser.py
+app/services/food/knowledge/tea/processing_registry.py
+app/services/food/knowledge/tea/provider.py
+app/services/food/knowledge/tea/rules.py
+app/services/food/knowledge/tea/scoring.py
+app/services/food/knowledge/tea/type_registry.py
+app/services/food/knowledge/tea/variety_registry.py
+app/services/food/knowledge/wine/__init__.py
+app/services/food/knowledge/wine/_registry_support.py
+app/services/food/knowledge/wine/acidity_registry.py
+app/services/food/knowledge/wine/attributes.py
+app/services/food/knowledge/wine/body_registry.py
+app/services/food/knowledge/wine/grape_registry.py
+app/services/food/knowledge/wine/parser_models.py
+app/services/food/knowledge/wine/parser.py
+app/services/food/knowledge/wine/provider.py
+app/services/food/knowledge/wine/region_registry.py
+app/services/food/knowledge/wine/rules.py
+app/services/food/knowledge/wine/scoring.py
+app/services/food/knowledge/wine/sweetness_registry.py
+app/services/food/knowledge/wine/type_registry.py
+
+=== Provider registration references ===
+app/services/food/__init__.py:31:    resolve_food_provider,
+app/services/food/__init__.py:37:    resolve_knowledge_provider,
+app/services/food/__init__.py:62:    "resolve_food_provider",
+app/services/food/__init__.py:66:    "resolve_knowledge_provider",
+app/services/food/knowledge/registry.py:11:    CheeseKnowledgeProvider,
+app/services/food/knowledge/registry.py:14:    CoffeeKnowledgeProvider,
+app/services/food/knowledge/registry.py:17:    WineKnowledgeProvider,
+app/services/food/knowledge/registry.py:167:    CheeseKnowledgeProvider()
+app/services/food/knowledge/registry.py:170:    CoffeeKnowledgeProvider()
+app/services/food/knowledge/registry.py:173:    WineKnowledgeProvider()
+app/services/food/knowledge/registry.py:223:def resolve_food_provider(
+app/services/food/knowledge/cheese/provider.py:29:class CheeseKnowledgeProvider(
+app/services/food/knowledge/cheese/provider.py:272:    "CheeseKnowledgeProvider",
+app/services/food/knowledge/cheese/__init__.py:141:    CheeseKnowledgeProvider,
+app/services/food/knowledge/cheese/__init__.py:146:        "CheeseKnowledgeProvider",
+app/services/food/knowledge/__init__.py:18:    resolve_food_provider,
+app/services/food/knowledge/__init__.py:47:    "resolve_food_provider",
+app/services/food/knowledge/wine/provider.py:29:class WineKnowledgeProvider(
+app/services/food/knowledge/wine/provider.py:269:    "WineKnowledgeProvider",
+app/services/food/knowledge/coffee/provider.py:29:class CoffeeKnowledgeProvider(
+app/services/food/knowledge/coffee/provider.py:262:    "CoffeeKnowledgeProvider",
+app/services/food/knowledge/coffee/__init__.py:127:    CoffeeKnowledgeProvider,
+app/services/food/knowledge/coffee/__init__.py:132:        "CoffeeKnowledgeProvider",
+app/services/food/resolver.py:15:    resolve_food_provider,
+app/services/food/resolver.py:43:def resolve_knowledge_provider(
+app/services/food/resolver.py:74:    return resolve_food_provider(
+app/services/food/resolver.py:87:    provider = resolve_knowledge_provider(
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:19:    resolve_food_provider,
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py:58:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:9:    resolve_food_provider,
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:89:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:111:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_registry_integration.py:122:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:6:    resolve_food_provider,
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:36:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:62:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:87:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py:112:        provider = resolve_food_provider(
+tests/services/food/knowledge/meat/goat/test_goat_registry_integration.py:10:    resolve_food_provider,
+tests/services/food/knowledge/meat/goat/test_goat_registry_integration.py:60:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/goat/test_goat_registry_integration.py:85:    provider = resolve_food_provider(
+tests/services/food/knowledge/meat/goat/test_goat_registry_integration.py:132:    provider = resolve_food_provider(
+tests/services/food/knowledge/cheese/test_cheese_provider.py:11:    CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_provider.py:49:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:63:    provider = CheeseKnowledgeProvider(
+tests/services/food/knowledge/cheese/test_cheese_provider.py:84:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:105:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:127:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:138:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:144:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:190:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:211:            "CheeseKnowledgeProvider"
+tests/services/food/knowledge/cheese/test_cheese_provider.py:227:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:262:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:288:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:305:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:315:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:325:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:343:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:354:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:366:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_provider.py:376:    provider = CheeseKnowledgeProvider()
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:6:    CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:13:    resolve_food_provider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:18:    resolve_knowledge_provider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:27:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:75:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:86:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:101:    provider = resolve_food_provider(
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:107:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:122:    provider = resolve_food_provider(
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:128:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:146:    provider = resolve_food_provider(
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:152:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:172:    provider = resolve_food_provider(
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:184:    provider = resolve_knowledge_provider(
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:193:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:198:    provider = resolve_knowledge_provider(
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:208:        CheeseKnowledgeProvider,
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:261:    provider = resolve_food_provider(
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:278:            CheeseKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:16:    WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_provider.py:21:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:50:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:69:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:88:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:96:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:102:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:154:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:174:        == "WineKnowledgeProvider"
+tests/services/food/knowledge/wine/test_wine_provider.py:193:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:223:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:241:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:250:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:257:    provider = WineKnowledgeProvider()
+tests/services/food/knowledge/wine/test_wine_provider.py:275:    provider = WineKnowledgeProvider(
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:10:    resolve_food_provider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:13:    WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:22:        WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:33:        WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:50:            WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:70:    provider = resolve_food_provider(
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:76:        WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:95:    provider = resolve_food_provider(
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:101:        WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:116:    provider = resolve_food_provider(
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:122:        WineKnowledgeProvider,
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:127:    provider = resolve_food_provider(
+tests/services/food/knowledge/wine/test_wine_registry_integration.py:136:        WineKnowledgeProvider,
+tests/services/food/knowledge/test_duck_registry_integration.py:19:    resolve_food_provider,
+tests/services/food/knowledge/test_duck_registry_integration.py:62:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_duck_registry_integration.py:73:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_chicken_registry_integration.py:19:    resolve_food_provider,
+tests/services/food/knowledge/test_chicken_registry_integration.py:62:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_chicken_registry_integration.py:73:    provider = resolve_food_provider(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:11:    CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_provider.py:53:    provider = CoffeeKnowledgeProvider()
+tests/services/food/knowledge/coffee/test_coffee_provider.py:67:    provider = CoffeeKnowledgeProvider(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:89:    assert CoffeeKnowledgeProvider().supports(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:107:    assert CoffeeKnowledgeProvider().supports(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:125:    assert not CoffeeKnowledgeProvider().supports(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:131:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:166:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:176:    ] == "CoffeeKnowledgeProvider"
+tests/services/food/knowledge/coffee/test_coffee_provider.py:208:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:229:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:257:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:272:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:289:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:301:    CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:309:    result = CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:327:    provider = CoffeeKnowledgeProvider()
+tests/services/food/knowledge/coffee/test_coffee_provider.py:347:        CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:357:        CoffeeKnowledgeProvider().analyze({})
+tests/services/food/knowledge/coffee/test_coffee_provider.py:365:        CoffeeKnowledgeProvider().analyze(
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:10:    CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:17:    resolve_food_provider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:22:    resolve_knowledge_provider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:31:        CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:82:        CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:101:    provider = resolve_food_provider(
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:107:        CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:125:    provider = resolve_food_provider(
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:131:        CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:152:    provider = resolve_food_provider(
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:207:    provider = resolve_knowledge_provider(
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:216:        CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:221:    provider = resolve_knowledge_provider(
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:231:        CoffeeKnowledgeProvider,
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:292:    provider = resolve_food_provider(
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:320:            CoffeeKnowledgeProvider()
+tests/services/food/knowledge/test_food_knowledge_registry.py:6:    resolve_food_provider,
+tests/services/food/knowledge/test_food_knowledge_registry.py:45:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_food_knowledge_registry.py:56:    provider = resolve_food_provider(
+tests/services/food/knowledge/test_food_knowledge_registry.py:67:    provider = resolve_food_provider(
+
+=== Provider list construction ===

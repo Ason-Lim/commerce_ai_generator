@@ -1,0 +1,53 @@
+
+========================================================================
+FILE: app/services/food/knowledge/common/scoring.py
+========================================================================
+{'function': 'clamp_score', 'signature': 'def clamp_score(value: Any, *, minimum: float=MIN_SCORE, maximum: float=MAX_SCORE) -> float:', 'line': 15}
+{'function': 'normalize_range_score', 'signature': 'def normalize_range_score(value: Any, *, minimum_value: float, maximum_value: float, minimum_score: float=MIN_SCORE, maximum_score: float=MAX_SCORE) -> float:', 'line': 38}
+{'function': 'weighted_average', 'signature': 'def weighted_average(scores: Mapping[str, Any], weights: Mapping[str, float], *, normalize_weights: bool=True) -> float:', 'line': 81}
+{'function': 'first_numeric_score', 'signature': 'def first_numeric_score(product: Mapping[str, Any], keys: tuple[str, ...], *, default: float=0.0) -> float:', 'line': 118}
+{'function': 'apply_score_boost', 'signature': 'def apply_score_boost(score: Any, boost: Any) -> float:', 'line': 138}
+
+========================================================================
+FILE: app/services/food/knowledge/common/scoring_models.py
+========================================================================
+MISSING
+
+========================================================================
+FILE: app/services/food/knowledge/coffee/scoring.py
+========================================================================
+{'function': 'safe_float', 'signature': 'def safe_float(value: Any, default: float=0.0) -> float:', 'line': 26}
+{'function': 'clamp_score', 'signature': 'def clamp_score(value: Any) -> float:', 'line': 42}
+{'function': 'calculate_available_average', 'signature': 'def calculate_available_average(*values: Any) -> float:', 'line': 57}
+{'function': 'calculate_available_weighted_score', 'signature': 'def calculate_available_weighted_score(*, scores: Mapping[str, Any], weights: Mapping[str, Any]) -> float:', 'line': 78}
+{'function': 'extract_registry_scores', 'signature': 'def extract_registry_scores(parse_result: CoffeeParseResult) -> dict[str, float]:', 'line': 132}
+{'function': 'calculate_coffee_knowledge_score', 'signature': 'def calculate_coffee_knowledge_score(*, bean_score: Any=0.0, origin_score: Any=0.0, roast_score: Any=0.0, process_score: Any=0.0, weights: Mapping[str, Any] | None=None) -> float:', 'line': 287}
+{'function': 'calculate_coffee_scores', 'signature': 'def calculate_coffee_scores(*, product: Mapping[str, Any], parse_result: CoffeeParseResult) -> dict[str, float]:', 'line': 318}
+{'function': 'calculate_coffee_final_score', 'signature': 'def calculate_coffee_final_score(scores: Mapping[str, Any], *, weights: Mapping[str, Any] | None=None) -> float:', 'line': 381}
+
+========================================================================
+FILE: app/services/food/knowledge/wine/scoring.py
+========================================================================
+{'function': 'safe_float', 'signature': 'def safe_float(value: Any, default: float=0.0) -> float:', 'line': 28}
+{'function': 'clamp_score', 'signature': 'def clamp_score(value: Any) -> float:', 'line': 44}
+{'function': 'calculate_available_average', 'signature': 'def calculate_available_average(*values: Any) -> float:', 'line': 59}
+{'function': 'calculate_available_weighted_score', 'signature': 'def calculate_available_weighted_score(*, scores: Mapping[str, Any], weights: Mapping[str, Any]) -> float:', 'line': 80}
+{'function': 'extract_registry_scores', 'signature': 'def extract_registry_scores(parse_result: WineParseResult) -> dict[str, float]:', 'line': 125}
+{'function': 'calculate_wine_knowledge_score', 'signature': 'def calculate_wine_knowledge_score(*, wine_type_score: Any=0.0, grape_score: Any=0.0, region_score: Any=0.0, sweetness_score: Any=0.0, body_score: Any=0.0, acidity_score: Any=0.0, weights: Mapping[str, Any] | None=None) -> float:', 'line': 201}
+{'function': 'calculate_wine_quality_score', 'signature': 'def calculate_wine_quality_score(*, registry_scores: Mapping[str, Any], parse_result: WineParseResult) -> float:', 'line': 233}
+{'function': 'calculate_wine_trust_score', 'signature': 'def calculate_wine_trust_score(*, product: Mapping[str, Any], parse_result: WineParseResult) -> float:', 'line': 281}
+{'function': 'calculate_wine_price_score', 'signature': 'def calculate_wine_price_score(product: Mapping[str, Any]) -> float:', 'line': 344}
+{'function': 'calculate_wine_scores', 'signature': 'def calculate_wine_scores(*, product: Mapping[str, Any], parse_result: WineParseResult) -> dict[str, float]:', 'line': 376}
+{'function': 'calculate_wine_final_score', 'signature': 'def calculate_wine_final_score(scores: Mapping[str, Any], *, weights: Mapping[str, Any] | None=None) -> float:', 'line': 476}
+
+========================================================================
+FILE: app/services/food/knowledge/cheese/scoring.py
+========================================================================
+{'function': 'safe_float', 'signature': 'def safe_float(value: Any, default: float=0.0) -> float:', 'line': 27}
+{'function': 'clamp_score', 'signature': 'def clamp_score(value: Any) -> float:', 'line': 43}
+{'function': 'calculate_available_average', 'signature': 'def calculate_available_average(*values: Any) -> float:', 'line': 58}
+{'function': 'calculate_available_weighted_score', 'signature': 'def calculate_available_weighted_score(*, scores: Mapping[str, Any], weights: Mapping[str, Any]) -> float:', 'line': 79}
+{'function': 'extract_registry_scores', 'signature': 'def extract_registry_scores(parse_result: CheeseParseResult) -> dict[str, float]:', 'line': 133}
+{'function': 'calculate_cheese_knowledge_score', 'signature': 'def calculate_cheese_knowledge_score(*, cheese_type_score: Any=0.0, milk_source_score: Any=0.0, origin_score: Any=0.0, texture_score: Any=0.0, aging_score: Any=0.0, weights: Mapping[str, Any] | None=None) -> float:', 'line': 243}
+{'function': 'calculate_cheese_scores', 'signature': 'def calculate_cheese_scores(*, product: Mapping[str, Any], parse_result: CheeseParseResult) -> dict[str, float]:', 'line': 276}
+{'function': 'calculate_cheese_final_score', 'signature': 'def calculate_cheese_final_score(scores: Mapping[str, Any], *, weights: Mapping[str, Any] | None=None) -> float:', 'line': 342}

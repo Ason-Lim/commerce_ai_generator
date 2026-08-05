@@ -1,0 +1,95 @@
+........................................................................ [ 52%]
+...............................................................FF        [100%]
+=================================== FAILURES ===================================
+_ test_provider_alias_matching_respects_token_boundaries[Steak Seasoning-False] _
+
+product_name = 'Steak Seasoning', expected = False
+
+    @pytest.mark.parametrize(
+        (
+            "product_name",
+            "expected",
+        ),
+        [
+            (
+                "Japanese Green Tea",
+                True,
+            ),
+            (
+                "Premium Black Tea",
+                True,
+            ),
+            (
+                "에티오피아 아라비카 원두",
+                False,
+            ),
+            (
+                "Steak Seasoning",
+                False,
+            ),
+            (
+                "Teak Wood Table",
+                False,
+            ),
+        ],
+    )
+    def test_provider_alias_matching_respects_token_boundaries(
+        product_name: str,
+        expected: bool,
+    ) -> None:
+        observed = TeaKnowledgeProvider().supports(
+            product_name=product_name
+        )
+    
+>       assert observed is expected
+E       assert True is False
+
+tests/services/food/knowledge/tea/test_tea_provider.py:440: AssertionError
+_ test_provider_alias_matching_respects_token_boundaries[Teak Wood Table-False] _
+
+product_name = 'Teak Wood Table', expected = False
+
+    @pytest.mark.parametrize(
+        (
+            "product_name",
+            "expected",
+        ),
+        [
+            (
+                "Japanese Green Tea",
+                True,
+            ),
+            (
+                "Premium Black Tea",
+                True,
+            ),
+            (
+                "에티오피아 아라비카 원두",
+                False,
+            ),
+            (
+                "Steak Seasoning",
+                False,
+            ),
+            (
+                "Teak Wood Table",
+                False,
+            ),
+        ],
+    )
+    def test_provider_alias_matching_respects_token_boundaries(
+        product_name: str,
+        expected: bool,
+    ) -> None:
+        observed = TeaKnowledgeProvider().supports(
+            product_name=product_name
+        )
+    
+>       assert observed is expected
+E       assert True is False
+
+tests/services/food/knowledge/tea/test_tea_provider.py:440: AssertionError
+=========================== short test summary info ============================
+FAILED tests/services/food/knowledge/tea/test_tea_provider.py::test_provider_alias_matching_respects_token_boundaries[Steak Seasoning-False]
+FAILED tests/services/food/knowledge/tea/test_tea_provider.py::test_provider_alias_matching_respects_token_boundaries[Teak Wood Table-False]
+2 failed, 135 passed in 0.71s

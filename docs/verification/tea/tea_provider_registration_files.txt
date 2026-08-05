@@ -1,0 +1,587 @@
+
+============================================================
+FILE: app/services/food/knowledge/registry.py
+============================================================
+from __future__ import annotations
+
+from collections import OrderedDict
+from typing import Iterable, List
+
+from app.services.food.knowledge.base import FoodKnowledgeProvider
+from app.services.food.knowledge.fruit.provider import (
+    FruitKnowledgeProvider,
+)
+from app.services.food.knowledge.cheese.provider import (
+    CheeseKnowledgeProvider,
+)
+from app.services.food.knowledge.coffee.provider import (
+    CoffeeKnowledgeProvider,
+)
+from app.services.food.knowledge.wine.provider import (
+    WineKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.beef.provider import (
+    BeefKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.lamb.provider import (
+    LambKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.chicken.provider import (
+    ChickenKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.duck.provider import (
+    DuckKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.venison.provider import (
+    VenisonKnowledgeProvider,
+)
+from app.services.food.knowledge.meat.goat.provider import (
+    GoatKnowledgeProvider,
+)
+
+class FoodKnowledgeRegistry:
+    """
+    Food Knowledge Provider Registry.
+
+    Provider 등록 순서가 상품명 자동 판별 우선순위가 된다.
+    """
+
+    def __init__(self) -> None:
+        self._providers: OrderedDict[
+            str,
+            FoodKnowledgeProvider,
+        ] = OrderedDict()
+
+    def register(
+        self,
+        provider: FoodKnowledgeProvider,
+        *,
+        replace: bool = False,
+    ) -> None:
+        category_id = self._normalize_category_id(
+            provider.category_id
+        )
+
+        if (
+            category_id in self._providers
+            and not replace
+        ):
+            raise ValueError(
+                f"이미 등록된 Food Provider입니다: {category_id}"
+            )
+
+        self._providers[category_id] = provider
+
+    def unregister(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.pop(
+            self._normalize_category_id(category_id),
+            None,
+        )
+
+    def get(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider | None:
+        return self._providers.get(
+            self._normalize_category_id(category_id)
+        )
+
+    def require(
+        self,
+        category_id: str,
+    ) -> FoodKnowledgeProvider:
+        provider = self.get(category_id)
+
+        if provider is None:
+            raise KeyError(
+                f"등록되지 않은 Food Provider입니다: {category_id}"
+            )
+
+        return provider
+
+    def resolve(
+        self,
+        *,
+        category_id: str | None = None,
+        product_name: str | None = None,
+    ) -> FoodKnowledgeProvider | None:
+        if category_id:
+            direct_provider = self.get(category_id)
+
+            if direct_provider is not None:
+                return direct_provider
+
+        for provider in self._providers.values():
+            if provider.supports(
+                category_id=category_id,
+                product_name=product_name,
+            ):
+                return provider
+
+        return None
+
+    def list_providers(
+        self,
+    ) -> List[FoodKnowledgeProvider]:
+        return list(self._providers.values())
+
+    def list_category_ids(self) -> List[str]:
+        return list(self._providers.keys())
+
+    def __contains__(
+        self,
+        category_id: object,
+    ) -> bool:
+        if not isinstance(category_id, str):
+            return False
+
+        return (
+            self._normalize_category_id(category_id)
+            in self._providers
+        )
+
+    def __iter__(
+        self,
+    ) -> Iterable[FoodKnowledgeProvider]:
+        return iter(self._providers.values())
+
+    @staticmethod
+    def _normalize_category_id(
+        category_id: str,
+    ) -> str:
+        normalized = str(category_id).strip().lower()
+
+        if not normalized:
+            raise ValueError(
+                "category_id가 비어 있습니다."
+            )
+
+        return normalized
+
+
+FOOD_KNOWLEDGE_REGISTRY = FoodKnowledgeRegistry()
+
+FOOD_KNOWLEDGE_REGISTRY.register(
+    FruitKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    CheeseKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    CoffeeKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    WineKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    VenisonKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    GoatKnowledgeProvider()
+)
+
+FOOD_KNOWLEDGE_REGISTRY.register(
+    BeefKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    LambKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    ChickenKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    DuckKnowledgeProvider()
+)
+
+
+def register_food_provider(
+    provider: FoodKnowledgeProvider,
+    *,
+    replace: bool = False,
+) -> None:
+    FOOD_KNOWLEDGE_REGISTRY.register(
+        provider,
+        replace=replace,
+    )
+
+
+def get_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.get(
+        category_id
+    )
+
+
+def require_food_provider(
+    category_id: str,
+) -> FoodKnowledgeProvider:
+    return FOOD_KNOWLEDGE_REGISTRY.require(
+        category_id
+    )
+
+
+def resolve_food_provider(
+    *,
+    category_id: str | None = None,
+    product_name: str | None = None,
+) -> FoodKnowledgeProvider | None:
+    return FOOD_KNOWLEDGE_REGISTRY.resolve(
+        category_id=category_id,
+        product_name=product_name,
+    )
+
+
+def list_food_providers() -> List[FoodKnowledgeProvider]:
+    return FOOD_KNOWLEDGE_REGISTRY.list_providers()
+
+============================================================
+FILE: app/services/food/knowledge/__init__.py
+============================================================
+from app.services.food.knowledge.base import (
+    FoodKnowledgeProvider,
+)
+from app.services.food.knowledge.models import (
+    FoodAttribute,
+    FoodKnowledgeContext,
+    FoodKnowledgeResult,
+    FoodRuleResult,
+    FoodScore,
+)
+from app.services.food.knowledge.registry import (
+    FOOD_KNOWLEDGE_REGISTRY,
+    FoodKnowledgeRegistry,
+    get_food_provider,
+    list_food_providers,
+    register_food_provider,
+    require_food_provider,
+    resolve_food_provider,
+)
+
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryDocument,
+    KnowledgeRegistryError,
+    KnowledgeRegistryFileNotFoundError,
+    KnowledgeRegistryFormatError,
+    KnowledgeRegistryLoader,
+    KnowledgeRegistryValidationError,
+    get_knowledge_registry_entry,
+    get_knowledge_registry_loader,
+    list_knowledge_registries,
+    load_knowledge_registry,
+    load_knowledge_registry_data,
+)
+
+__all__ = [
+    "FoodKnowledgeProvider",
+    "FoodKnowledgeRegistry",
+    "FoodKnowledgeContext",
+    "FoodKnowledgeResult",
+    "FoodAttribute",
+    "FoodScore",
+    "FoodRuleResult",
+    "FOOD_KNOWLEDGE_REGISTRY",
+    "register_food_provider",
+    "get_food_provider",
+    "require_food_provider",
+    "resolve_food_provider",
+    "list_food_providers",
+]
+
+============================================================
+FILE: app/services/food/category_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterable, List, Sequence
+
+
+@dataclass(frozen=True)
+class FoodCategoryConfig:
+    category_id: str
+    display_name: str
+
+    parent_category_id: str | None = None
+    aliases: Sequence[str] = field(default_factory=tuple)
+    provider_id: str | None = None
+    enabled: bool = True
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+FOOD_CATEGORY_REGISTRY: Dict[str, FoodCategoryConfig] = {
+    "fruit": FoodCategoryConfig(
+        category_id="fruit",
+        display_name="과일",
+        aliases=(
+            "과일",
+            "fruit",
+            "사과",
+            "배",
+            "감귤",
+            "귤",
+            "오렌지",
+            "포도",
+            "복숭아",
+            "수박",
+            "참외",
+            "딸기",
+            "블루베리",
+            "바나나",
+            "망고",
+            "키위",
+        ),
+        provider_id="fruit",
+    ),
+    "coffee": FoodCategoryConfig(
+        category_id="coffee",
+        display_name="커피",
+        aliases=(
+            "커피",
+            "coffee",
+            "원두",
+            "커피 원두",
+            "아라비카",
+            "arabica",
+            "로부스타",
+            "robusta",
+            "에스프레소",
+            "espresso",
+            "드립커피",
+            "드립 커피",
+            "핸드드립",
+            "핸드 드립",
+            "콜드브루",
+            "콜드 브루",
+            "cold brew",
+            "디카페인 커피",
+            "decaf coffee",
+        ),
+        provider_id="coffee",
+    ),
+    "wine": FoodCategoryConfig(
+        category_id="wine",
+        display_name="와인",
+        aliases=(
+            "와인",
+            "wine",
+            "레드 와인",
+            "레드와인",
+            "red wine",
+            "화이트 와인",
+            "화이트와인",
+            "white wine",
+            "스파클링 와인",
+            "스파클링와인",
+            "sparkling wine",
+        ),
+        provider_id="wine",
+    ),
+    "meat": FoodCategoryConfig(
+        category_id="meat",
+        display_name="축산·육류",
+        aliases=(
+            "고기",
+            "육류",
+            "축산",
+            "meat",
+        ),
+        provider_id=None,
+    ),
+    "beef": FoodCategoryConfig(
+        category_id="beef",
+        display_name="소고기",
+        parent_category_id="meat",
+        aliases=(
+            "소고기",
+            "쇠고기",
+            "한우",
+            "육우",
+            "와규",
+            "beef",
+            "우육",
+            "등심",
+            "안심",
+            "채끝",
+            "갈비",
+            "부채살",
+            "살치살",
+            "토시살",
+            "우삼겹",
+        ),
+        provider_id="beef",
+    ),
+}
+
+
+def get_food_category(
+    category_id: str,
+) -> FoodCategoryConfig | None:
+    normalized = str(category_id).strip().lower()
+
+    if not normalized:
+        return None
+
+    return FOOD_CATEGORY_REGISTRY.get(
+        normalized
+    )
+
+
+def require_food_category(
+    category_id: str,
+) -> FoodCategoryConfig:
+    config = get_food_category(category_id)
+
+    if config is None:
+        raise KeyError(
+            f"등록되지 않은 식품 카테고리입니다: {category_id}"
+        )
+
+    return config
+
+
+def list_food_categories(
+    *,
+    enabled_only: bool = True,
+) -> List[FoodCategoryConfig]:
+    categories = list(
+        FOOD_CATEGORY_REGISTRY.values()
+    )
+
+    if not enabled_only:
+        return categories
+
+    return [
+        category
+        for category in categories
+        if category.enabled
+    ]
+
+
+def register_food_category(
+    config: FoodCategoryConfig,
+    *,
+    replace: bool = False,
+) -> None:
+    category_id = str(
+        config.category_id
+    ).strip().lower()
+
+    if not category_id:
+        raise ValueError(
+            "category_id가 비어 있습니다."
+        )
+
+    if (
+        category_id in FOOD_CATEGORY_REGISTRY
+        and not replace
+    ):
+        raise ValueError(
+            f"이미 등록된 식품 카테고리입니다: {category_id}"
+        )
+
+    FOOD_CATEGORY_REGISTRY[category_id] = config
+
+
+def resolve_food_category(
+    *,
+    category_id: str | None = None,
+    product_name: str | None = None,
+) -> FoodCategoryConfig | None:
+    if category_id:
+        normalized_category_id = (
+            category_id.strip().lower()
+        )
+
+        direct_match = get_food_category(
+            normalized_category_id
+        )
+
+        if direct_match is not None:
+            return direct_match
+
+        for config in FOOD_CATEGORY_REGISTRY.values():
+            aliases = {
+                alias.strip().lower()
+                for alias in config.aliases
+            }
+
+            if normalized_category_id in aliases:
+                return config
+
+    if product_name:
+        normalized_name = (
+            product_name.strip().lower()
+        )
+
+        candidates = sorted(
+            FOOD_CATEGORY_REGISTRY.values(),
+            key=lambda config: (
+                config.parent_category_id is None,
+                -max(
+                    (
+                        len(alias)
+                        for alias in config.aliases
+                    ),
+                    default=0,
+                ),
+            ),
+        )
+
+        for config in candidates:
+            if not config.enabled:
+                continue
+
+            aliases = sorted(
+                (
+                    alias.strip().lower()
+                    for alias in config.aliases
+                    if alias.strip()
+                ),
+                key=len,
+                reverse=True,
+            )
+
+            if any(
+                alias in normalized_name
+                for alias in aliases
+            ):
+                return config
+
+    return None
+
+
+def get_child_categories(
+    parent_category_id: str,
+) -> List[FoodCategoryConfig]:
+    normalized_parent_id = (
+        parent_category_id.strip().lower()
+    )
+
+    return [
+        config
+        for config in FOOD_CATEGORY_REGISTRY.values()
+        if (
+            config.parent_category_id
+            == normalized_parent_id
+        )
+    ]
+
+
+def iter_food_categories() -> Iterable[FoodCategoryConfig]:
+    return iter(
+        FOOD_CATEGORY_REGISTRY.values()
+    )
+
+============================================================
+FILE: app/services/food/knowledge/resolver.py
+============================================================
+MISSING
+
+============================================================
+FILE: app/services/food/knowledge/service.py
+============================================================
+MISSING

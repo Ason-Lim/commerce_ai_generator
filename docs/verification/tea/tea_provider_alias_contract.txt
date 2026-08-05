@@ -1,0 +1,109 @@
+app/services/food/knowledge/coffee/provider.py:51:    category_id = "coffee"
+app/services/food/knowledge/coffee/provider.py:54:    aliases = (
+app/services/food/knowledge/coffee/provider.py:90:    def supports(
+app/services/food/knowledge/coffee/provider.py:92:        category_id: str | None = None,
+app/services/food/knowledge/coffee/provider.py:96:        category_id 또는 상품명을 기준으로
+app/services/food/knowledge/coffee/provider.py:99:        alias_set = {
+app/services/food/knowledge/coffee/provider.py:100:            alias.strip().casefold()
+app/services/food/knowledge/coffee/provider.py:101:            for alias in self.aliases
+app/services/food/knowledge/coffee/provider.py:102:            if alias.strip()
+app/services/food/knowledge/coffee/provider.py:105:        if category_id:
+app/services/food/knowledge/coffee/provider.py:106:            normalized_category_id = (
+app/services/food/knowledge/coffee/provider.py:107:                str(category_id)
+app/services/food/knowledge/coffee/provider.py:113:                normalized_category_id
+app/services/food/knowledge/coffee/provider.py:114:                == self.category_id
+app/services/food/knowledge/coffee/provider.py:119:                normalized_category_id
+app/services/food/knowledge/coffee/provider.py:120:                in alias_set
+app/services/food/knowledge/coffee/provider.py:134:            aliases_by_length = sorted(
+app/services/food/knowledge/coffee/provider.py:135:                alias_set,
+app/services/food/knowledge/coffee/provider.py:141:                alias in normalized_name
+app/services/food/knowledge/coffee/provider.py:142:                for alias in aliases_by_length
+app/services/food/knowledge/coffee/provider.py:201:            category_id=self.category_id,
+app/services/food/knowledge/coffee/provider.py:213:                "provider_id": self.category_id,
+app/services/food/knowledge/wine/provider.py:51:    category_id = "wine"
+app/services/food/knowledge/wine/provider.py:54:    aliases = (
+app/services/food/knowledge/wine/provider.py:101:    def supports(
+app/services/food/knowledge/wine/provider.py:103:        category_id: str | None = None,
+app/services/food/knowledge/wine/provider.py:108:        category alias와 상품명 alias를 지원한다.
+app/services/food/knowledge/wine/provider.py:110:        alias_set = {
+app/services/food/knowledge/wine/provider.py:111:            alias.strip().casefold()
+app/services/food/knowledge/wine/provider.py:112:            for alias in self.aliases
+app/services/food/knowledge/wine/provider.py:113:            if alias.strip()
+app/services/food/knowledge/wine/provider.py:116:        if category_id:
+app/services/food/knowledge/wine/provider.py:117:            normalized_category_id = (
+app/services/food/knowledge/wine/provider.py:118:                str(category_id)
+app/services/food/knowledge/wine/provider.py:124:                normalized_category_id
+app/services/food/knowledge/wine/provider.py:125:                == self.category_id
+app/services/food/knowledge/wine/provider.py:129:            if normalized_category_id in alias_set:
+app/services/food/knowledge/wine/provider.py:144:        aliases_by_length = sorted(
+app/services/food/knowledge/wine/provider.py:145:            alias_set,
+app/services/food/knowledge/wine/provider.py:151:            alias in normalized_name
+app/services/food/knowledge/wine/provider.py:152:            for alias in aliases_by_length
+app/services/food/knowledge/wine/provider.py:208:            category_id=self.category_id,
+app/services/food/knowledge/wine/provider.py:220:                "provider_id": self.category_id,
+app/services/food/knowledge/cheese/provider.py:51:    category_id = "cheese"
+app/services/food/knowledge/cheese/provider.py:54:    aliases = (
+app/services/food/knowledge/cheese/provider.py:99:    def supports(
+app/services/food/knowledge/cheese/provider.py:101:        category_id: str | None = None,
+app/services/food/knowledge/cheese/provider.py:105:        category_id 또는 상품명을 기준으로
+app/services/food/knowledge/cheese/provider.py:108:        alias_set = {
+app/services/food/knowledge/cheese/provider.py:109:            alias.strip().casefold()
+app/services/food/knowledge/cheese/provider.py:110:            for alias in self.aliases
+app/services/food/knowledge/cheese/provider.py:111:            if alias.strip()
+app/services/food/knowledge/cheese/provider.py:114:        if category_id:
+app/services/food/knowledge/cheese/provider.py:115:            normalized_category_id = (
+app/services/food/knowledge/cheese/provider.py:116:                str(category_id)
+app/services/food/knowledge/cheese/provider.py:122:                normalized_category_id
+app/services/food/knowledge/cheese/provider.py:123:                == self.category_id
+app/services/food/knowledge/cheese/provider.py:128:                normalized_category_id
+app/services/food/knowledge/cheese/provider.py:129:                in alias_set
+app/services/food/knowledge/cheese/provider.py:143:            aliases_by_length = sorted(
+app/services/food/knowledge/cheese/provider.py:144:                alias_set,
+app/services/food/knowledge/cheese/provider.py:150:                alias in normalized_name
+app/services/food/knowledge/cheese/provider.py:151:                for alias in aliases_by_length
+app/services/food/knowledge/cheese/provider.py:209:            category_id=self.category_id,
+app/services/food/knowledge/cheese/provider.py:221:                "provider_id": (
+app/services/food/knowledge/cheese/provider.py:222:                    self.category_id
+tests/services/food/knowledge/coffee/test_coffee_provider.py:59:    assert provider.category_id == "coffee"
+tests/services/food/knowledge/coffee/test_coffee_provider.py:61:    assert provider.aliases
+tests/services/food/knowledge/coffee/test_coffee_provider.py:75:    "category_id",
+tests/services/food/knowledge/coffee/test_coffee_provider.py:86:def test_provider_supports_category_id(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:87:    category_id: str,
+tests/services/food/knowledge/coffee/test_coffee_provider.py:89:    assert CoffeeKnowledgeProvider().supports(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:90:        category_id=category_id
+tests/services/food/knowledge/coffee/test_coffee_provider.py:104:def test_provider_supports_product_name(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:107:    assert CoffeeKnowledgeProvider().supports(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:125:    assert not CoffeeKnowledgeProvider().supports(
+tests/services/food/knowledge/coffee/test_coffee_provider.py:140:    assert result.category_id == "coffee"
+tests/services/food/knowledge/coffee/test_coffee_provider.py:171:        "provider_id"
+tests/services/food/knowledge/coffee/test_coffee_provider.py:315:    assert payload["category_id"] == "coffee"
+tests/services/food/knowledge/wine/test_wine_provider.py:27:    assert provider.category_id == "wine"
+tests/services/food/knowledge/wine/test_wine_provider.py:29:    assert provider.aliases
+tests/services/food/knowledge/wine/test_wine_provider.py:37:    "category_id",
+tests/services/food/knowledge/wine/test_wine_provider.py:47:def test_wine_provider_supports_category_id(
+tests/services/food/knowledge/wine/test_wine_provider.py:48:    category_id: str,
+tests/services/food/knowledge/wine/test_wine_provider.py:52:    assert provider.supports(
+tests/services/food/knowledge/wine/test_wine_provider.py:53:        category_id=category_id
+tests/services/food/knowledge/wine/test_wine_provider.py:66:def test_wine_provider_supports_product_name(
+tests/services/food/knowledge/wine/test_wine_provider.py:71:    assert provider.supports(
+tests/services/food/knowledge/wine/test_wine_provider.py:90:    assert provider.supports(
+tests/services/food/knowledge/wine/test_wine_provider.py:98:    assert provider.supports() is False
+tests/services/food/knowledge/wine/test_wine_provider.py:124:    assert result.category_id == "wine"
+tests/services/food/knowledge/wine/test_wine_provider.py:169:        result.metadata["provider_id"]
+tests/services/food/knowledge/wine/test_wine_provider.py:233:    assert result.category_id == "wine"
+tests/services/food/knowledge/wine/test_wine_provider.py:273:def test_wine_provider_supports_parser_injection() -> None:
+tests/services/food/knowledge/cheese/test_cheese_provider.py:55:    assert provider.category_id == "cheese"
+tests/services/food/knowledge/cheese/test_cheese_provider.py:57:    assert provider.aliases
+tests/services/food/knowledge/cheese/test_cheese_provider.py:71:    "category_id",
+tests/services/food/knowledge/cheese/test_cheese_provider.py:81:def test_provider_supports_category_id(
+tests/services/food/knowledge/cheese/test_cheese_provider.py:82:    category_id: str,
+tests/services/food/knowledge/cheese/test_cheese_provider.py:86:    assert provider.supports(
+tests/services/food/knowledge/cheese/test_cheese_provider.py:87:        category_id=category_id
+tests/services/food/knowledge/cheese/test_cheese_provider.py:102:def test_provider_supports_product_name(
+tests/services/food/knowledge/cheese/test_cheese_provider.py:107:    assert provider.supports(
+tests/services/food/knowledge/cheese/test_cheese_provider.py:130:        provider.supports(
+tests/services/food/knowledge/cheese/test_cheese_provider.py:137:def test_provider_supports_returns_false_without_input() -> None:
+tests/services/food/knowledge/cheese/test_cheese_provider.py:140:    assert provider.supports() is False
+tests/services/food/knowledge/cheese/test_cheese_provider.py:155:    assert result.category_id == "cheese"
+tests/services/food/knowledge/cheese/test_cheese_provider.py:209:        "provider_id": "cheese",
+tests/services/food/knowledge/cheese/test_cheese_provider.py:333:    assert payload["category_id"] == "cheese"

@@ -1,0 +1,392 @@
+app/services/food/knowledge/coffee/scoring.py:3:from collections.abc import Mapping
+app/services/food/knowledge/coffee/scoring.py:7:    CoffeeParseResult,
+app/services/food/knowledge/coffee/scoring.py:42:def clamp_score(
+app/services/food/knowledge/coffee/scoring.py:57:def calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:64:        clamp_score(value)
+app/services/food/knowledge/coffee/scoring.py:66:        if clamp_score(value) > 0.0
+app/services/food/knowledge/coffee/scoring.py:72:    return round(
+app/services/food/knowledge/coffee/scoring.py:78:def calculate_available_weighted_score(
+app/services/food/knowledge/coffee/scoring.py:80:    scores: Mapping[str, Any],
+app/services/food/knowledge/coffee/scoring.py:81:    weights: Mapping[str, Any],
+app/services/food/knowledge/coffee/scoring.py:91:        Mapping,
+app/services/food/knowledge/coffee/scoring.py:94:            "scores must be a Mapping"
+app/services/food/knowledge/coffee/scoring.py:99:        Mapping,
+app/services/food/knowledge/coffee/scoring.py:102:            "weights must be a Mapping"
+app/services/food/knowledge/coffee/scoring.py:109:        score = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:126:    return round(
+app/services/food/knowledge/coffee/scoring.py:133:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/scoring.py:136:    CoffeeParseResult에 보존된 Registry Entry 점수를 추출한다.
+app/services/food/knowledge/coffee/scoring.py:142:        CoffeeParseResult,
+app/services/food/knowledge/coffee/scoring.py:145:            "parse_result must be CoffeeParseResult"
+app/services/food/knowledge/coffee/scoring.py:171:        scores["bean"] = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:176:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:181:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:186:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:198:        scores["origin"] = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:203:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:208:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:213:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:225:        scores["roast"] = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:230:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:235:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:240:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:252:        scores["process"] = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:255:        scores["clarity"] = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:258:        scores["sweetness"] = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:263:            clamp_score(
+app/services/food/knowledge/coffee/scoring.py:269:        calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:274:        calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:279:        calculate_available_average(
+app/services/food/knowledge/coffee/scoring.py:287:def calculate_coffee_knowledge_score(
+app/services/food/knowledge/coffee/scoring.py:293:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/coffee/scoring.py:307:    return calculate_available_weighted_score(
+app/services/food/knowledge/coffee/scoring.py:318:def calculate_coffee_scores(
+app/services/food/knowledge/coffee/scoring.py:320:    product: Mapping[str, Any],
+app/services/food/knowledge/coffee/scoring.py:321:    parse_result: CoffeeParseResult,
+app/services/food/knowledge/coffee/scoring.py:331:        Mapping,
+app/services/food/knowledge/coffee/scoring.py:334:            "product must be a Mapping"
+app/services/food/knowledge/coffee/scoring.py:339:        CoffeeParseResult,
+app/services/food/knowledge/coffee/scoring.py:342:            "parse_result must be CoffeeParseResult"
+app/services/food/knowledge/coffee/scoring.py:349:    knowledge_score = (
+app/services/food/knowledge/coffee/scoring.py:350:        calculate_coffee_knowledge_score(
+app/services/food/knowledge/coffee/scoring.py:367:        "quality": clamp_score(
+app/services/food/knowledge/coffee/scoring.py:368:            product.get("quality_score")
+app/services/food/knowledge/coffee/scoring.py:370:        "price": clamp_score(
+app/services/food/knowledge/coffee/scoring.py:371:            product.get("price_score")
+app/services/food/knowledge/coffee/scoring.py:373:        "trust": clamp_score(
+app/services/food/knowledge/coffee/scoring.py:374:            product.get("trust_score")
+app/services/food/knowledge/coffee/scoring.py:376:        "knowledge": knowledge_score,
+app/services/food/knowledge/coffee/scoring.py:381:def calculate_coffee_final_score(
+app/services/food/knowledge/coffee/scoring.py:382:    scores: Mapping[str, Any],
+app/services/food/knowledge/coffee/scoring.py:384:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/coffee/scoring.py:394:        Mapping,
+app/services/food/knowledge/coffee/scoring.py:397:            "scores must be a Mapping"
+app/services/food/knowledge/coffee/scoring.py:413:        score = clamp_score(
+app/services/food/knowledge/coffee/scoring.py:423:    return round(
+app/services/food/knowledge/coffee/scoring.py:424:        clamp_score(total),
+app/services/food/knowledge/coffee/scoring.py:433:    "clamp_score",
+app/services/food/knowledge/coffee/scoring.py:434:    "calculate_available_average",
+app/services/food/knowledge/coffee/scoring.py:435:    "calculate_available_weighted_score",
+app/services/food/knowledge/coffee/scoring.py:437:    "calculate_coffee_knowledge_score",
+app/services/food/knowledge/coffee/scoring.py:438:    "calculate_coffee_scores",
+app/services/food/knowledge/coffee/scoring.py:439:    "calculate_coffee_final_score",
+app/services/food/knowledge/wine/scoring.py:3:from collections.abc import Mapping
+app/services/food/knowledge/wine/scoring.py:7:    WineParseResult,
+app/services/food/knowledge/wine/scoring.py:44:def clamp_score(
+app/services/food/knowledge/wine/scoring.py:59:def calculate_available_average(
+app/services/food/knowledge/wine/scoring.py:66:        clamp_score(value)
+app/services/food/knowledge/wine/scoring.py:68:        if clamp_score(value) > 0.0
+app/services/food/knowledge/wine/scoring.py:74:    return round(
+app/services/food/knowledge/wine/scoring.py:80:def calculate_available_weighted_score(
+app/services/food/knowledge/wine/scoring.py:82:    scores: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:83:    weights: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:88:    if not isinstance(scores, Mapping):
+app/services/food/knowledge/wine/scoring.py:90:            "scores must be a Mapping"
+app/services/food/knowledge/wine/scoring.py:93:    if not isinstance(weights, Mapping):
+app/services/food/knowledge/wine/scoring.py:95:            "weights must be a Mapping"
+app/services/food/knowledge/wine/scoring.py:102:        score = clamp_score(
+app/services/food/knowledge/wine/scoring.py:119:    return round(
+app/services/food/knowledge/wine/scoring.py:126:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:129:    WineParseResult에 보존된 Registry Entry 점수를 추출한다.
+app/services/food/knowledge/wine/scoring.py:135:        WineParseResult,
+app/services/food/knowledge/wine/scoring.py:138:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:151:        scores["wine_type"] = clamp_score(
+app/services/food/knowledge/wine/scoring.py:159:        scores["grape"] = clamp_score(
+app/services/food/knowledge/wine/scoring.py:167:        scores["region"] = clamp_score(
+app/services/food/knowledge/wine/scoring.py:175:        scores["sweetness"] = clamp_score(
+app/services/food/knowledge/wine/scoring.py:183:        scores["body"] = clamp_score(
+app/services/food/knowledge/wine/scoring.py:191:        scores["acidity"] = clamp_score(
+app/services/food/knowledge/wine/scoring.py:201:def calculate_wine_knowledge_score(
+app/services/food/knowledge/wine/scoring.py:209:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/wine/scoring.py:220:    return calculate_available_weighted_score(
+app/services/food/knowledge/wine/scoring.py:233:def calculate_wine_quality_score(
+app/services/food/knowledge/wine/scoring.py:235:    registry_scores: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:236:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:243:        Mapping,
+app/services/food/knowledge/wine/scoring.py:246:            "registry_scores must be a Mapping"
+app/services/food/knowledge/wine/scoring.py:251:        WineParseResult,
+app/services/food/knowledge/wine/scoring.py:254:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:257:    base_score = calculate_available_average(
+app/services/food/knowledge/wine/scoring.py:276:    return clamp_score(
+app/services/food/knowledge/wine/scoring.py:281:def calculate_wine_trust_score(
+app/services/food/knowledge/wine/scoring.py:283:    product: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:284:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:289:    if not isinstance(product, Mapping):
+app/services/food/knowledge/wine/scoring.py:291:            "product must be a Mapping"
+app/services/food/knowledge/wine/scoring.py:296:        WineParseResult,
+app/services/food/knowledge/wine/scoring.py:299:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:303:        clamp_score(
+app/services/food/knowledge/wine/scoring.py:304:            parse_result.confidence * 100.0
+app/services/food/knowledge/wine/scoring.py:338:    return round(
+app/services/food/knowledge/wine/scoring.py:339:        clamp_score(score),
+app/services/food/knowledge/wine/scoring.py:344:def calculate_wine_price_score(
+app/services/food/knowledge/wine/scoring.py:345:    product: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:353:    if not isinstance(product, Mapping):
+app/services/food/knowledge/wine/scoring.py:355:            "product must be a Mapping"
+app/services/food/knowledge/wine/scoring.py:359:        "price_score",
+app/services/food/knowledge/wine/scoring.py:361:        "market_price_score",
+app/services/food/knowledge/wine/scoring.py:366:        return round(
+app/services/food/knowledge/wine/scoring.py:367:            clamp_score(
+app/services/food/knowledge/wine/scoring.py:376:def calculate_wine_scores(
+app/services/food/knowledge/wine/scoring.py:378:    product: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:379:    parse_result: WineParseResult,
+app/services/food/knowledge/wine/scoring.py:384:    if not isinstance(product, Mapping):
+app/services/food/knowledge/wine/scoring.py:386:            "product must be a Mapping"
+app/services/food/knowledge/wine/scoring.py:391:        WineParseResult,
+app/services/food/knowledge/wine/scoring.py:394:            "parse_result must be WineParseResult"
+app/services/food/knowledge/wine/scoring.py:401:    knowledge_score = (
+app/services/food/knowledge/wine/scoring.py:402:        calculate_wine_knowledge_score(
+app/services/food/knowledge/wine/scoring.py:424:    quality_score = calculate_wine_quality_score(
+app/services/food/knowledge/wine/scoring.py:429:    trust_score = calculate_wine_trust_score(
+app/services/food/knowledge/wine/scoring.py:434:    price_score = calculate_wine_price_score(
+app/services/food/knowledge/wine/scoring.py:439:        "quality": round(
+app/services/food/knowledge/wine/scoring.py:440:            quality_score,
+app/services/food/knowledge/wine/scoring.py:443:        "price": round(
+app/services/food/knowledge/wine/scoring.py:444:            price_score,
+app/services/food/knowledge/wine/scoring.py:447:        "trust": round(
+app/services/food/knowledge/wine/scoring.py:448:            trust_score,
+app/services/food/knowledge/wine/scoring.py:451:        "knowledge": round(
+app/services/food/knowledge/wine/scoring.py:452:            knowledge_score,
+app/services/food/knowledge/wine/scoring.py:476:def calculate_wine_final_score(
+app/services/food/knowledge/wine/scoring.py:477:    scores: Mapping[str, Any],
+app/services/food/knowledge/wine/scoring.py:479:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/wine/scoring.py:490:    return calculate_available_weighted_score(
+app/services/food/knowledge/wine/scoring.py:499:    "calculate_available_average",
+app/services/food/knowledge/wine/scoring.py:500:    "calculate_available_weighted_score",
+app/services/food/knowledge/wine/scoring.py:501:    "calculate_wine_final_score",
+app/services/food/knowledge/wine/scoring.py:502:    "calculate_wine_knowledge_score",
+app/services/food/knowledge/wine/scoring.py:503:    "calculate_wine_price_score",
+app/services/food/knowledge/wine/scoring.py:504:    "calculate_wine_quality_score",
+app/services/food/knowledge/wine/scoring.py:505:    "calculate_wine_scores",
+app/services/food/knowledge/wine/scoring.py:506:    "calculate_wine_trust_score",
+app/services/food/knowledge/wine/scoring.py:507:    "clamp_score",
+app/services/food/knowledge/cheese/scoring.py:3:from collections.abc import Mapping
+app/services/food/knowledge/cheese/scoring.py:7:    CheeseParseResult,
+app/services/food/knowledge/cheese/scoring.py:43:def clamp_score(
+app/services/food/knowledge/cheese/scoring.py:58:def calculate_available_average(
+app/services/food/knowledge/cheese/scoring.py:65:        clamp_score(value)
+app/services/food/knowledge/cheese/scoring.py:67:        if clamp_score(value) > 0.0
+app/services/food/knowledge/cheese/scoring.py:73:    return round(
+app/services/food/knowledge/cheese/scoring.py:79:def calculate_available_weighted_score(
+app/services/food/knowledge/cheese/scoring.py:81:    scores: Mapping[str, Any],
+app/services/food/knowledge/cheese/scoring.py:82:    weights: Mapping[str, Any],
+app/services/food/knowledge/cheese/scoring.py:92:        Mapping,
+app/services/food/knowledge/cheese/scoring.py:95:            "scores must be a Mapping"
+app/services/food/knowledge/cheese/scoring.py:100:        Mapping,
+app/services/food/knowledge/cheese/scoring.py:103:            "weights must be a Mapping"
+app/services/food/knowledge/cheese/scoring.py:110:        score = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:127:    return round(
+app/services/food/knowledge/cheese/scoring.py:134:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/scoring.py:137:    CheeseParseResult에 보존된 Registry Entry 점수를 추출한다.
+app/services/food/knowledge/cheese/scoring.py:143:        CheeseParseResult,
+app/services/food/knowledge/cheese/scoring.py:146:            "parse_result must be CheeseParseResult"
+app/services/food/knowledge/cheese/scoring.py:171:        scores["cheese_type"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:174:        scores["flavor"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:177:        scores["versatility"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:188:        scores["milk_source"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:191:        scores["richness"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:194:        scores["availability"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:205:        scores["origin"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:208:        scores["tradition"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:219:        scores["texture"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:222:        scores["firmness"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:225:        scores["moisture"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:236:        scores["aging"] = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:243:def calculate_cheese_knowledge_score(
+app/services/food/knowledge/cheese/scoring.py:250:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/cheese/scoring.py:264:    return calculate_available_weighted_score(
+app/services/food/knowledge/cheese/scoring.py:276:def calculate_cheese_scores(
+app/services/food/knowledge/cheese/scoring.py:278:    product: Mapping[str, Any],
+app/services/food/knowledge/cheese/scoring.py:279:    parse_result: CheeseParseResult,
+app/services/food/knowledge/cheese/scoring.py:289:        Mapping,
+app/services/food/knowledge/cheese/scoring.py:292:            "product must be a Mapping"
+app/services/food/knowledge/cheese/scoring.py:297:        CheeseParseResult,
+app/services/food/knowledge/cheese/scoring.py:300:            "parse_result must be CheeseParseResult"
+app/services/food/knowledge/cheese/scoring.py:307:    knowledge_score = (
+app/services/food/knowledge/cheese/scoring.py:308:        calculate_cheese_knowledge_score(
+app/services/food/knowledge/cheese/scoring.py:328:        "quality": clamp_score(
+app/services/food/knowledge/cheese/scoring.py:329:            product.get("quality_score")
+app/services/food/knowledge/cheese/scoring.py:331:        "price": clamp_score(
+app/services/food/knowledge/cheese/scoring.py:332:            product.get("price_score")
+app/services/food/knowledge/cheese/scoring.py:334:        "trust": clamp_score(
+app/services/food/knowledge/cheese/scoring.py:335:            product.get("trust_score")
+app/services/food/knowledge/cheese/scoring.py:337:        "knowledge": knowledge_score,
+app/services/food/knowledge/cheese/scoring.py:342:def calculate_cheese_final_score(
+app/services/food/knowledge/cheese/scoring.py:343:    scores: Mapping[str, Any],
+app/services/food/knowledge/cheese/scoring.py:345:    weights: Mapping[str, Any] | None = None,
+app/services/food/knowledge/cheese/scoring.py:355:        Mapping,
+app/services/food/knowledge/cheese/scoring.py:358:            "scores must be a Mapping"
+app/services/food/knowledge/cheese/scoring.py:374:        score = clamp_score(
+app/services/food/knowledge/cheese/scoring.py:384:    return round(
+app/services/food/knowledge/cheese/scoring.py:385:        clamp_score(total),
+app/services/food/knowledge/cheese/scoring.py:394:    "clamp_score",
+app/services/food/knowledge/cheese/scoring.py:395:    "calculate_available_average",
+app/services/food/knowledge/cheese/scoring.py:396:    "calculate_available_weighted_score",
+app/services/food/knowledge/cheese/scoring.py:398:    "calculate_cheese_knowledge_score",
+app/services/food/knowledge/cheese/scoring.py:399:    "calculate_cheese_scores",
+app/services/food/knowledge/cheese/scoring.py:400:    "calculate_cheese_final_score",
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:11:    calculate_available_average,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:12:    calculate_available_weighted_score,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:13:    calculate_coffee_final_score,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:14:    calculate_coffee_knowledge_score,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:15:    calculate_coffee_scores,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:16:    clamp_score,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:32:        "quality_score": 80,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:33:        "price_score": 70,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:34:        "trust_score": 90,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:76:def test_clamp_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:80:    assert clamp_score(value) == expected
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:83:def test_calculate_available_average() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:84:    assert calculate_available_average(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:91:    assert calculate_available_average(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:98:def test_calculate_available_weighted_score() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:100:        calculate_available_weighted_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:120:        match="scores must be a Mapping",
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:122:        calculate_available_weighted_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:129:        match="weights must be a Mapping",
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:131:        calculate_available_weighted_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:201:            "CoffeeParseResult"
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:209:def test_calculate_complete_knowledge_score() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:210:    score = calculate_coffee_knowledge_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:220:def test_knowledge_score_uses_available_fields() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:221:    score = calculate_coffee_knowledge_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:228:    assert calculate_coffee_knowledge_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:236:def test_knowledge_score_custom_weights() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:237:    score = calculate_coffee_knowledge_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:249:def test_calculate_coffee_scores() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:258:    scores = calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:274:def test_calculate_coffee_scores_clamps_external_scores() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:277:        "quality_score": 150,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:278:        "price_score": -20,
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:279:        "trust_score": "85",
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:288:    scores = calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:299:def test_calculate_coffee_scores_rejects_invalid_product() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:306:        match="product must be a Mapping",
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:308:        calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:314:def test_calculate_coffee_scores_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:319:            "CoffeeParseResult"
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:322:        calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:332:def test_calculate_coffee_final_score() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:333:    final_score = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:334:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:344:    assert final_score == 86.28
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:347:def test_final_score_missing_external_values() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:348:    final_score = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:349:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:356:    assert final_score == 46.75
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:359:def test_final_score_custom_weights() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:360:    final_score = (
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:361:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:377:    assert final_score == 92.55
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:380:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:383:        match="scores must be a Mapping",
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:385:        calculate_coffee_final_score(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:400:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:403:    calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:410:        parse_result.to_dict()
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:424:    first = calculate_coffee_scores(
+tests/services/food/knowledge/coffee/test_coffee_scoring.py:429:    second = calculate_coffee_scores(
+tests/services/food/knowledge/wine/test_wine_scoring.py:9:    calculate_available_average,
+tests/services/food/knowledge/wine/test_wine_scoring.py:10:    calculate_available_weighted_score,
+tests/services/food/knowledge/wine/test_wine_scoring.py:11:    calculate_wine_final_score,
+tests/services/food/knowledge/wine/test_wine_scoring.py:12:    calculate_wine_knowledge_score,
+tests/services/food/knowledge/wine/test_wine_scoring.py:13:    calculate_wine_price_score,
+tests/services/food/knowledge/wine/test_wine_scoring.py:14:    calculate_wine_scores,
+tests/services/food/knowledge/wine/test_wine_scoring.py:15:    clamp_score,
+tests/services/food/knowledge/wine/test_wine_scoring.py:41:def test_clamp_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:45:    assert clamp_score(value) == expected
+tests/services/food/knowledge/wine/test_wine_scoring.py:48:def test_calculate_available_average() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:50:        calculate_available_average(
+tests/services/food/knowledge/wine/test_wine_scoring.py:60:        calculate_available_average(
+tests/services/food/knowledge/wine/test_wine_scoring.py:68:def test_calculate_available_weighted_score() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:69:    result = calculate_available_weighted_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:85:def test_calculate_available_weighted_score_rejects_invalid_input() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:87:        calculate_available_weighted_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:93:        calculate_available_weighted_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:136:def test_calculate_wine_knowledge_score() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:137:    score = calculate_wine_knowledge_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:150:def test_calculate_wine_knowledge_score_renormalizes_missing_values() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:151:    score = calculate_wine_knowledge_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:156:    expected = round(
+tests/services/food/knowledge/wine/test_wine_scoring.py:168:def test_calculate_wine_price_score() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:170:        calculate_wine_price_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:172:                "price_score": 77.5,
+tests/services/food/knowledge/wine/test_wine_scoring.py:179:        calculate_wine_price_score({})
+tests/services/food/knowledge/wine/test_wine_scoring.py:184:def test_calculate_wine_scores() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:195:        "price_score": 75,
+tests/services/food/knowledge/wine/test_wine_scoring.py:202:    scores = calculate_wine_scores(
+tests/services/food/knowledge/wine/test_wine_scoring.py:226:def test_calculate_wine_scores_without_registry_match() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:237:    scores = calculate_wine_scores(
+tests/services/food/knowledge/wine/test_wine_scoring.py:248:def test_calculate_wine_final_score() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:249:    score = calculate_wine_final_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:261:def test_calculate_wine_final_score_ignores_missing_scores() -> None:
+tests/services/food/knowledge/wine/test_wine_scoring.py:262:    score = calculate_wine_final_score(
+tests/services/food/knowledge/wine/test_wine_scoring.py:269:    expected = round(
+tests/services/food/knowledge/wine/test_wine_scoring.py:287:        "price_score": 70,
+tests/services/food/knowledge/wine/test_wine_scoring.py:294:    first = calculate_wine_scores(
+tests/services/food/knowledge/wine/test_wine_scoring.py:298:    second = calculate_wine_scores(
+tests/services/food/knowledge/wine/test_wine_scoring.py:305:        calculate_wine_final_score(first)
+tests/services/food/knowledge/wine/test_wine_scoring.py:306:        == calculate_wine_final_score(second)
+tests/services/food/knowledge/wine/test_wine_scoring.py:316:        calculate_wine_scores(
+tests/services/food/knowledge/wine/test_wine_scoring.py:322:        calculate_wine_scores(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:11:    calculate_available_average,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:12:    calculate_available_weighted_score,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:13:    calculate_cheese_final_score,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:14:    calculate_cheese_knowledge_score,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:15:    calculate_cheese_scores,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:16:    clamp_score,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:33:        "quality_score": 80,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:34:        "price_score": 70,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:35:        "trust_score": 90,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:78:def test_clamp_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:82:    assert clamp_score(value) == expected
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:85:def test_calculate_available_average() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:86:    assert calculate_available_average(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:93:    assert calculate_available_average(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:100:def test_calculate_available_weighted_score() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:102:        calculate_available_weighted_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:122:        match="scores must be a Mapping",
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:124:        calculate_available_weighted_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:131:        match="weights must be a Mapping",
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:133:        calculate_available_weighted_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:206:            "CheeseParseResult"
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:214:def test_calculate_complete_knowledge_score() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:215:    score = calculate_cheese_knowledge_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:228:def test_knowledge_score_uses_available_fields() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:229:    score = calculate_cheese_knowledge_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:237:    assert calculate_cheese_knowledge_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:246:def test_knowledge_score_custom_weights() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:247:    score = calculate_cheese_knowledge_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:259:def test_calculate_cheese_scores() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:268:    scores = calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:285:def test_calculate_cheese_scores_clamps_external_scores() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:288:        "quality_score": 150,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:289:        "price_score": -20,
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:290:        "trust_score": "85",
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:299:    scores = calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:310:def test_calculate_cheese_scores_rejects_invalid_product() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:317:        match="product must be a Mapping",
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:319:        calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:325:def test_calculate_cheese_scores_rejects_wrong_parse_result() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:330:            "CheeseParseResult"
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:333:        calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:341:def test_calculate_cheese_final_score() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:342:    final_score = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:343:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:355:    assert final_score == 86.4
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:358:def test_final_score_missing_external_values() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:359:    final_score = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:360:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:367:    assert final_score == 48.2
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:370:def test_final_score_custom_weights() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:371:    final_score = (
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:372:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:388:    assert final_score == 92.8
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:391:def test_final_score_rejects_non_mapping() -> None:
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:394:        match="scores must be a Mapping",
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:396:        calculate_cheese_final_score(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:411:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:414:    calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:421:        parse_result.to_dict()
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:435:    first = calculate_cheese_scores(
+tests/services/food/knowledge/cheese/test_cheese_scoring.py:440:    second = calculate_cheese_scores(

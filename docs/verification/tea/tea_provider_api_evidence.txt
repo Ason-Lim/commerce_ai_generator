@@ -1,0 +1,79 @@
+
+========================================================================
+FILE: app/services/food/knowledge/models.py
+========================================================================
+{'class': 'FoodKnowledgeContext', 'bases': [], 'line': 8}
+{'field': 'query', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'priority', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'user_mode', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'season', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'region', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'metadata', 'annotation': 'Mapping[str, Any]', 'default': 'field(default_factory=dict)'}
+{'class': 'FoodAttribute', 'bases': [], 'line': 22}
+{'field': 'key', 'annotation': 'str', 'default': None}
+{'field': 'value', 'annotation': 'Any', 'default': None}
+{'field': 'label', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'confidence', 'annotation': 'float', 'default': '1.0'}
+{'field': 'source', 'annotation': 'str | None', 'default': 'None'}
+{'class': 'FoodScore', 'bases': [], 'line': 31}
+{'field': 'key', 'annotation': 'str', 'default': None}
+{'field': 'score', 'annotation': 'float', 'default': None}
+{'field': 'label', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'reason', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'weight', 'annotation': 'float', 'default': '1.0'}
+{'class': 'FoodRuleResult', 'bases': [], 'line': 40}
+{'field': 'rule_id', 'annotation': 'str', 'default': None}
+{'field': 'matched', 'annotation': 'bool', 'default': None}
+{'field': 'message', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'severity', 'annotation': 'str', 'default': "'info'"}
+{'field': 'metadata', 'annotation': 'Dict[str, Any]', 'default': 'field(default_factory=dict)'}
+{'class': 'FoodKnowledgeResult', 'bases': [], 'line': 49}
+{'field': 'category_id', 'annotation': 'str', 'default': None}
+{'field': 'category_name', 'annotation': 'str', 'default': None}
+{'field': 'product_name', 'annotation': 'str | None', 'default': 'None'}
+{'field': 'attributes', 'annotation': 'Dict[str, Any]', 'default': 'field(default_factory=dict)'}
+{'field': 'attribute_details', 'annotation': 'List[FoodAttribute]', 'default': 'field(default_factory=list)'}
+{'field': 'scores', 'annotation': 'Dict[str, float]', 'default': 'field(default_factory=dict)'}
+{'field': 'score_details', 'annotation': 'List[FoodScore]', 'default': 'field(default_factory=list)'}
+{'field': 'rules', 'annotation': 'List[FoodRuleResult]', 'default': 'field(default_factory=list)'}
+{'field': 'reasons', 'annotation': 'List[str]', 'default': 'field(default_factory=list)'}
+{'field': 'warnings', 'annotation': 'List[str]', 'default': 'field(default_factory=list)'}
+{'field': 'final_score', 'annotation': 'float | None', 'default': 'None'}
+{'field': 'confidence', 'annotation': 'float', 'default': '1.0'}
+{'field': 'metadata', 'annotation': 'Dict[str, Any]', 'default': 'field(default_factory=dict)'}
+{'field': 'raw_product', 'annotation': 'Dict[str, Any] | None', 'default': 'None'}
+{'method': 'to_dict', 'signature': 'def to_dict(self) -> Dict[str, Any]:', 'line': 70}
+
+========================================================================
+FILE: app/services/food/knowledge/provider.py
+========================================================================
+MISSING
+
+========================================================================
+FILE: app/services/food/knowledge/base_provider.py
+========================================================================
+MISSING
+
+========================================================================
+FILE: app/services/food/knowledge/coffee/provider.py
+========================================================================
+{'class': 'CoffeeKnowledgeProvider', 'bases': ['FoodKnowledgeProvider'], 'line': 29}
+{'method': '__init__', 'signature': 'def __init__(self, *, parser: CoffeeParser | None=None) -> None:', 'line': 76}
+{'method': 'supports', 'signature': 'def supports(self, category_id: str | None=None, product_name: str | None=None) -> bool:', 'line': 90}
+{'method': 'analyze', 'signature': 'def analyze(self, product: Mapping[str, Any], context: FoodKnowledgeContext | None=None) -> FoodKnowledgeResult:', 'line': 147}
+
+========================================================================
+FILE: app/services/food/knowledge/wine/provider.py
+========================================================================
+{'class': 'WineKnowledgeProvider', 'bases': ['FoodKnowledgeProvider'], 'line': 29}
+{'method': '__init__', 'signature': 'def __init__(self, *, parser: WineParser | None=None) -> None:', 'line': 90}
+{'method': 'supports', 'signature': 'def supports(self, category_id: str | None=None, product_name: str | None=None) -> bool:', 'line': 101}
+{'method': 'analyze', 'signature': 'def analyze(self, product: Mapping[str, Any], context: FoodKnowledgeContext | None=None) -> FoodKnowledgeResult:', 'line': 155}
+
+========================================================================
+FILE: app/services/food/knowledge/cheese/provider.py
+========================================================================
+{'class': 'CheeseKnowledgeProvider', 'bases': ['FoodKnowledgeProvider'], 'line': 29}
+{'method': '__init__', 'signature': 'def __init__(self, *, parser: CheeseParser | None=None) -> None:', 'line': 82}
+{'method': 'supports', 'signature': 'def supports(self, category_id: str | None=None, product_name: str | None=None) -> bool:', 'line': 99}
+{'method': 'analyze', 'signature': 'def analyze(self, product: Mapping[str, Any], context: FoodKnowledgeContext | None=None) -> FoodKnowledgeResult:', 'line': 156}

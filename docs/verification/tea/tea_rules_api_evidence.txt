@@ -1,0 +1,42 @@
+
+========================================================================
+FILE: app/services/food/knowledge/common/rules.py
+========================================================================
+{'function': 'split_rule_messages', 'signature': 'def split_rule_messages(rule_results: Iterable[FoodRuleResult]) -> tuple[list[str], list[str]]:', 'line': 21}
+{'function': 'merge_rule_results', 'signature': 'def merge_rule_results(*rule_groups: Iterable[FoodRuleResult]) -> list[FoodRuleResult]:', 'line': 53}
+{'function': 'create_rule', 'signature': "def create_rule(*, rule_id: str, message: str, severity: str='info', matched: bool=True, metadata: dict[str, Any] | None=None) -> FoodRuleResult:", 'line': 75}
+
+========================================================================
+FILE: app/services/food/knowledge/common/rule_models.py
+========================================================================
+MISSING
+
+========================================================================
+FILE: app/services/food/knowledge/coffee/rules.py
+========================================================================
+{'function': 'deduplicate_strings', 'signature': 'def deduplicate_strings(values: Iterable[Any]) -> list[str]:', 'line': 11}
+{'function': 'apply_coffee_rules', 'signature': 'def apply_coffee_rules(*, attributes: Mapping[str, Any], scores: Mapping[str, Any], parse_result: CoffeeParseResult) -> tuple[list[str], list[str]]:', 'line': 36}
+{'function': '_premium_fields', 'signature': 'def _premium_fields(attributes: Mapping[str, Any]) -> list[str]:', 'line': 311}
+{'function': '_safe_score', 'signature': 'def _safe_score(value: Any) -> float:', 'line': 328}
+{'function': '_optional_text', 'signature': 'def _optional_text(value: Any) -> str | None:', 'line': 345}
+
+========================================================================
+FILE: app/services/food/knowledge/wine/rules.py
+========================================================================
+{'function': 'apply_wine_rules', 'signature': 'def apply_wine_rules(*, attributes: Mapping[str, Any], scores: Mapping[str, Any], parse_result: WineParseResult) -> tuple[list[str], list[str]]:', 'line': 11}
+{'function': '_apply_information_rules', 'signature': 'def _apply_information_rules(*, attributes: Mapping[str, Any], parse_result: WineParseResult, reasons: list[str], warnings: list[str]) -> None:', 'line': 82}
+{'function': '_apply_quality_rules', 'signature': 'def _apply_quality_rules(*, attributes: Mapping[str, Any], scores: Mapping[str, Any], reasons: list[str], warnings: list[str]) -> None:', 'line': 135}
+{'function': '_apply_style_rules', 'signature': 'def _apply_style_rules(*, attributes: Mapping[str, Any], reasons: list[str]) -> None:', 'line': 199}
+{'function': '_apply_certification_rules', 'signature': 'def _apply_certification_rules(*, attributes: Mapping[str, Any], reasons: list[str]) -> None:', 'line': 241}
+{'function': '_apply_data_consistency_rules', 'signature': 'def _apply_data_consistency_rules(*, attributes: Mapping[str, Any], warnings: list[str]) -> None:', 'line': 267}
+{'function': '_safe_score', 'signature': 'def _safe_score(value: Any) -> float:', 'line': 324}
+{'function': '_deduplicate_strings', 'signature': 'def _deduplicate_strings(values: list[str]) -> list[str]:', 'line': 341}
+
+========================================================================
+FILE: app/services/food/knowledge/cheese/rules.py
+========================================================================
+{'function': 'deduplicate_strings', 'signature': 'def deduplicate_strings(values: Iterable[Any]) -> list[str]:', 'line': 11}
+{'function': 'apply_cheese_rules', 'signature': 'def apply_cheese_rules(*, attributes: Mapping[str, Any], scores: Mapping[str, Any], parse_result: CheeseParseResult) -> tuple[list[str], list[str]]:', 'line': 37}
+{'function': '_premium_fields', 'signature': 'def _premium_fields(attributes: Mapping[str, Any]) -> list[str]:', 'line': 255}
+{'function': '_safe_score', 'signature': 'def _safe_score(value: Any) -> float:', 'line': 273}
+{'function': '_optional_text', 'signature': 'def _optional_text(value: Any) -> str | None:', 'line': 290}

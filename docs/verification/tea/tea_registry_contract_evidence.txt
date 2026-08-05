@@ -1,0 +1,2175 @@
+# Tea Registry Contract Evidence
+
+generated_at=2026-08-04T11:11:30Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+============================================================
+FILE: app/services/food/knowledge/coffee/_registry_support.py
+============================================================
+from __future__ import annotations
+
+import copy
+from typing import Any, Mapping, TypeVar
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+    BaseAliasRegistry,
+    normalize_string_list,
+)
+
+
+EntryT = TypeVar(
+    "EntryT",
+    bound=RegistryEntry,
+)
+
+
+def build_aliases(
+    canonical_name: str,
+    raw_aliases: Any,
+) -> tuple[str, ...]:
+    values = (
+        canonical_name,
+        *normalize_string_list(raw_aliases),
+    )
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+
+    return tuple(result)
+
+
+def optional_text(
+    value: Any,
+) -> str | None:
+    if value is None:
+        return None
+
+    text = str(value).strip()
+    return text or None
+
+
+def optional_score(
+    value: Any,
+) -> float | None:
+    if value is None:
+        return None
+
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    return max(0.0, min(100.0, score))
+
+
+def required_score(
+    value: Any,
+) -> float:
+    score = optional_score(value)
+
+    if score is None:
+        return 0.0
+
+    return score
+
+
+def extra_metadata(
+    raw_entry: Mapping[str, Any],
+    known_fields: set[str],
+) -> dict[str, Any]:
+    return {
+        key: copy.deepcopy(value)
+        for key, value in raw_entry.items()
+        if key not in known_fields
+    }
+
+
+def convert_match(
+    raw_match: AliasMatch[EntryT],
+    match_type: type[RegistryMatch[EntryT]],
+) -> RegistryMatch[EntryT]:
+    return match_type(
+        entry=raw_match.entry,
+        matched_alias=raw_match.matched_alias,
+        normalized_alias=(
+            raw_match.normalized_alias
+        ),
+        match_start=raw_match.match_start,
+        match_end=raw_match.match_end,
+        confidence=raw_match.confidence,
+        exact_match=raw_match.exact_match,
+    )
+
+
+class CoffeeAliasRegistry(
+    BaseAliasRegistry[EntryT]
+):
+    def typed_entries(
+        self,
+        entry_type: type[EntryT],
+        *,
+        premium_only: bool = False,
+    ) -> list[EntryT]:
+        entries = [
+            entry
+            for entry in super().list()
+            if isinstance(entry, entry_type)
+        ]
+
+        if premium_only:
+            entries = [
+                entry
+                for entry in entries
+                if bool(
+                    getattr(
+                        entry,
+                        "premium",
+                        False,
+                    )
+                )
+            ]
+
+        return sorted(
+            entries,
+            key=lambda entry: (
+                -float(
+                    getattr(
+                        entry,
+                        "score",
+                        0.0,
+                    )
+                ),
+                str(
+                    getattr(
+                        entry,
+                        "canonical_name",
+                        "",
+                    )
+                ),
+            ),
+        )
+
+
+__all__ = [
+    "CoffeeAliasRegistry",
+    "build_aliases",
+    "convert_match",
+    "extra_metadata",
+    "optional_score",
+    "optional_text",
+    "required_score",
+]
+
+============================================================
+FILE: app/services/food/knowledge/coffee/bean_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.coffee._registry_support import (
+    CoffeeAliasRegistry,
+    build_aliases,
+    convert_match,
+    extra_metadata,
+    optional_score,
+    optional_text,
+    required_score,
+)
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+COFFEE_BEAN_REGISTRY_ID = "coffee.beans"
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeBean(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    species: str | None
+    composition_type: str | None
+    score: float
+    premium: bool
+    acidity_score: float | None
+    body_score: float | None
+    aroma_score: float | None
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+        object.__setattr__(
+            self,
+            "aliases",
+            tuple(self.aliases),
+        )
+        object.__setattr__(
+            self,
+            "score",
+            required_score(self.score),
+        )
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeBeanMatch(
+    RegistryMatch[CoffeeBean]
+):
+    @property
+    def bean(self) -> CoffeeBean:
+        return self.entry
+
+
+class CoffeeBeanRegistry(
+    CoffeeAliasRegistry[CoffeeBean]
+):
+    registry_id = COFFEE_BEAN_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> CoffeeBean:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "species",
+            "composition_type",
+            "score",
+            "premium",
+            "acidity_score",
+            "body_score",
+            "aroma_score",
+            "description",
+        }
+
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        return CoffeeBean(
+            registry_key=registry_key,
+            canonical_name=(
+                canonical_name or registry_key
+            ),
+            aliases=build_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            species=optional_text(
+                raw_entry.get("species")
+            ),
+            composition_type=optional_text(
+                raw_entry.get(
+                    "composition_type"
+                )
+            ),
+            score=required_score(
+                raw_entry.get("score")
+            ),
+            premium=bool(
+                raw_entry.get(
+                    "premium",
+                    False,
+                )
+            ),
+            acidity_score=optional_score(
+                raw_entry.get(
+                    "acidity_score"
+                )
+            ),
+            body_score=optional_score(
+                raw_entry.get("body_score")
+            ),
+            aroma_score=optional_score(
+                raw_entry.get("aroma_score")
+            ),
+            description=optional_text(
+                raw_entry.get("description")
+            ),
+            metadata=extra_metadata(
+                raw_entry,
+                known_fields,
+            ),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> CoffeeBeanMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self._convert(raw_match)
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[CoffeeBeanMatch]:
+        return [
+            self._convert(match)
+            for match in super().find_all(text)
+        ]
+
+    def list(
+        self,
+        *,
+        premium_only: bool = False,
+    ) -> list[CoffeeBean]:
+        return self.typed_entries(
+            CoffeeBean,
+            premium_only=premium_only,
+        )
+
+    @staticmethod
+    def _convert(
+        raw_match: AliasMatch[CoffeeBean],
+    ) -> CoffeeBeanMatch:
+        return convert_match(
+            raw_match,
+            CoffeeBeanMatch,
+        )  # type: ignore[return-value]
+
+
+__all__ = [
+    "COFFEE_BEAN_REGISTRY_ID",
+    "CoffeeBean",
+    "CoffeeBeanMatch",
+    "CoffeeBeanRegistry",
+]
+
+============================================================
+FILE: app/services/food/knowledge/coffee/origin_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.coffee._registry_support import (
+    CoffeeAliasRegistry,
+    build_aliases,
+    convert_match,
+    extra_metadata,
+    optional_score,
+    optional_text,
+    required_score,
+)
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+COFFEE_ORIGIN_REGISTRY_ID = "coffee.origins"
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeOrigin(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    country_code: str | None
+    score: float
+    premium: bool
+    acidity_score: float | None
+    body_score: float | None
+    aroma_score: float | None
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+        object.__setattr__(
+            self,
+            "aliases",
+            tuple(self.aliases),
+        )
+        object.__setattr__(
+            self,
+            "score",
+            required_score(self.score),
+        )
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+        country_code = optional_text(
+            self.country_code
+        )
+
+        object.__setattr__(
+            self,
+            "country_code",
+            (
+                country_code.upper()
+                if country_code
+                else None
+            ),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeOriginMatch(
+    RegistryMatch[CoffeeOrigin]
+):
+    @property
+    def origin(self) -> CoffeeOrigin:
+        return self.entry
+
+
+class CoffeeOriginRegistry(
+    CoffeeAliasRegistry[CoffeeOrigin]
+):
+    registry_id = COFFEE_ORIGIN_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> CoffeeOrigin:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "country_code",
+            "score",
+            "premium",
+            "acidity_score",
+            "body_score",
+            "aroma_score",
+            "description",
+        }
+
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        return CoffeeOrigin(
+            registry_key=registry_key,
+            canonical_name=(
+                canonical_name or registry_key
+            ),
+            aliases=build_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            country_code=optional_text(
+                raw_entry.get("country_code")
+            ),
+            score=required_score(
+                raw_entry.get("score")
+            ),
+            premium=bool(
+                raw_entry.get(
+                    "premium",
+                    False,
+                )
+            ),
+            acidity_score=optional_score(
+                raw_entry.get(
+                    "acidity_score"
+                )
+            ),
+            body_score=optional_score(
+                raw_entry.get("body_score")
+            ),
+            aroma_score=optional_score(
+                raw_entry.get("aroma_score")
+            ),
+            description=optional_text(
+                raw_entry.get("description")
+            ),
+            metadata=extra_metadata(
+                raw_entry,
+                known_fields,
+            ),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> CoffeeOriginMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self._convert(raw_match)
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[CoffeeOriginMatch]:
+        return [
+            self._convert(match)
+            for match in super().find_all(text)
+        ]
+
+    def list(
+        self,
+        *,
+        premium_only: bool = False,
+    ) -> list[CoffeeOrigin]:
+        return self.typed_entries(
+            CoffeeOrigin,
+            premium_only=premium_only,
+        )
+
+    @staticmethod
+    def _convert(
+        raw_match: AliasMatch[CoffeeOrigin],
+    ) -> CoffeeOriginMatch:
+        return convert_match(
+            raw_match,
+            CoffeeOriginMatch,
+        )  # type: ignore[return-value]
+
+
+__all__ = [
+    "COFFEE_ORIGIN_REGISTRY_ID",
+    "CoffeeOrigin",
+    "CoffeeOriginMatch",
+    "CoffeeOriginRegistry",
+]
+
+============================================================
+FILE: app/services/food/knowledge/coffee/process_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.coffee._registry_support import (
+    CoffeeAliasRegistry,
+    build_aliases,
+    convert_match,
+    extra_metadata,
+    optional_score,
+    optional_text,
+    required_score,
+)
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+COFFEE_PROCESS_REGISTRY_ID = "coffee.processes"
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeProcess(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    process_category: str | None
+    score: float
+    premium: bool
+    clarity_score: float | None
+    sweetness_score: float | None
+    body_score: float | None
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+        object.__setattr__(
+            self,
+            "aliases",
+            tuple(self.aliases),
+        )
+        object.__setattr__(
+            self,
+            "score",
+            required_score(self.score),
+        )
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeProcessMatch(
+    RegistryMatch[CoffeeProcess]
+):
+    @property
+    def process(self) -> CoffeeProcess:
+        return self.entry
+
+
+class CoffeeProcessRegistry(
+    CoffeeAliasRegistry[CoffeeProcess]
+):
+    registry_id = COFFEE_PROCESS_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> CoffeeProcess:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "process_category",
+            "score",
+            "premium",
+            "clarity_score",
+            "sweetness_score",
+            "body_score",
+            "description",
+        }
+
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        return CoffeeProcess(
+            registry_key=registry_key,
+            canonical_name=(
+                canonical_name or registry_key
+            ),
+            aliases=build_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            process_category=optional_text(
+                raw_entry.get(
+                    "process_category"
+                )
+            ),
+            score=required_score(
+                raw_entry.get("score")
+            ),
+            premium=bool(
+                raw_entry.get(
+                    "premium",
+                    False,
+                )
+            ),
+            clarity_score=optional_score(
+                raw_entry.get(
+                    "clarity_score"
+                )
+            ),
+            sweetness_score=optional_score(
+                raw_entry.get(
+                    "sweetness_score"
+                )
+            ),
+            body_score=optional_score(
+                raw_entry.get("body_score")
+            ),
+            description=optional_text(
+                raw_entry.get("description")
+            ),
+            metadata=extra_metadata(
+                raw_entry,
+                known_fields,
+            ),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> CoffeeProcessMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self._convert(raw_match)
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[CoffeeProcessMatch]:
+        return [
+            self._convert(match)
+            for match in super().find_all(text)
+        ]
+
+    def list(
+        self,
+        *,
+        premium_only: bool = False,
+    ) -> list[CoffeeProcess]:
+        return self.typed_entries(
+            CoffeeProcess,
+            premium_only=premium_only,
+        )
+
+    @staticmethod
+    def _convert(
+        raw_match: AliasMatch[CoffeeProcess],
+    ) -> CoffeeProcessMatch:
+        return convert_match(
+            raw_match,
+            CoffeeProcessMatch,
+        )  # type: ignore[return-value]
+
+
+__all__ = [
+    "COFFEE_PROCESS_REGISTRY_ID",
+    "CoffeeProcess",
+    "CoffeeProcessMatch",
+    "CoffeeProcessRegistry",
+]
+
+============================================================
+FILE: app/services/food/knowledge/coffee/roast_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.coffee._registry_support import (
+    CoffeeAliasRegistry,
+    build_aliases,
+    convert_match,
+    extra_metadata,
+    optional_score,
+    optional_text,
+    required_score,
+)
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+COFFEE_ROAST_REGISTRY_ID = "coffee.roasts"
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeRoast(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    roast_level: str | None
+    score: float
+    premium: bool
+    acidity_score: float | None
+    body_score: float | None
+    aroma_score: float | None
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+        object.__setattr__(
+            self,
+            "aliases",
+            tuple(self.aliases),
+        )
+        object.__setattr__(
+            self,
+            "score",
+            required_score(self.score),
+        )
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoffeeRoastMatch(
+    RegistryMatch[CoffeeRoast]
+):
+    @property
+    def roast(self) -> CoffeeRoast:
+        return self.entry
+
+
+class CoffeeRoastRegistry(
+    CoffeeAliasRegistry[CoffeeRoast]
+):
+    registry_id = COFFEE_ROAST_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> CoffeeRoast:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "roast_level",
+            "score",
+            "premium",
+            "acidity_score",
+            "body_score",
+            "aroma_score",
+            "description",
+        }
+
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        return CoffeeRoast(
+            registry_key=registry_key,
+            canonical_name=(
+                canonical_name or registry_key
+            ),
+            aliases=build_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            roast_level=optional_text(
+                raw_entry.get("roast_level")
+            ),
+            score=required_score(
+                raw_entry.get("score")
+            ),
+            premium=bool(
+                raw_entry.get(
+                    "premium",
+                    False,
+                )
+            ),
+            acidity_score=optional_score(
+                raw_entry.get(
+                    "acidity_score"
+                )
+            ),
+            body_score=optional_score(
+                raw_entry.get("body_score")
+            ),
+            aroma_score=optional_score(
+                raw_entry.get("aroma_score")
+            ),
+            description=optional_text(
+                raw_entry.get("description")
+            ),
+            metadata=extra_metadata(
+                raw_entry,
+                known_fields,
+            ),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> CoffeeRoastMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self._convert(raw_match)
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[CoffeeRoastMatch]:
+        return [
+            self._convert(match)
+            for match in super().find_all(text)
+        ]
+
+    def list(
+        self,
+        *,
+        premium_only: bool = False,
+    ) -> list[CoffeeRoast]:
+        return self.typed_entries(
+            CoffeeRoast,
+            premium_only=premium_only,
+        )
+
+    @staticmethod
+    def _convert(
+        raw_match: AliasMatch[CoffeeRoast],
+    ) -> CoffeeRoastMatch:
+        return convert_match(
+            raw_match,
+            CoffeeRoastMatch,
+        )  # type: ignore[return-value]
+
+
+__all__ = [
+    "COFFEE_ROAST_REGISTRY_ID",
+    "CoffeeRoast",
+    "CoffeeRoastMatch",
+    "CoffeeRoastRegistry",
+]
+
+============================================================
+FILE: app/services/food/knowledge/wine/_registry_support.py
+============================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Generic, Mapping, TypeVar
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+    BaseAliasRegistry,
+    normalize_string_list,
+    optional_string,
+    safe_float,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+def build_aliases(
+    canonical_name: str,
+    raw_aliases: Any,
+) -> tuple[str, ...]:
+    values = [
+        canonical_name,
+        *normalize_string_list(raw_aliases),
+    ]
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+
+        if not text or key in seen:
+            continue
+
+        seen.add(key)
+        result.append(text)
+
+    return tuple(result)
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class WineRegistryEntry(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    score: float
+    premium: bool
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+
+        object.__setattr__(
+            self,
+            "aliases",
+            build_aliases(
+                canonical_name,
+                self.aliases,
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "score",
+            max(
+                0.0,
+                min(
+                    100.0,
+                    float(self.score),
+                ),
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+
+EntryT = TypeVar(
+    "EntryT",
+    bound=WineRegistryEntry,
+)
+
+
+class WineAliasRegistry(
+    BaseAliasRegistry[EntryT],
+    Generic[EntryT],
+):
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    entry_class: type[EntryT]
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def common_fields(
+        self,
+        *,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+        known_fields: set[str],
+    ) -> dict[str, Any]:
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        metadata = {
+            key: copy.deepcopy(value)
+            for key, value in raw_entry.items()
+            if key not in known_fields
+        }
+
+        return {
+            "registry_key": registry_key,
+            "canonical_name": (
+                canonical_name or registry_key
+            ),
+            "aliases": build_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            "score": safe_float(
+                raw_entry.get("score"),
+                default=0.0,
+            ),
+            "premium": bool(
+                raw_entry.get("premium", False)
+            ),
+            "description": optional_string(
+                raw_entry.get("description")
+            ),
+            "metadata": metadata,
+        }
+
+    def convert_match(
+        self,
+        raw_match: AliasMatch[EntryT],
+        match_class: type[RegistryMatch[EntryT]],
+    ) -> RegistryMatch[EntryT]:
+        return match_class(
+            entry=raw_match.entry,
+            matched_alias=raw_match.matched_alias,
+            normalized_alias=raw_match.normalized_alias,
+            confidence=raw_match.confidence,
+            match_start=raw_match.match_start,
+            match_end=raw_match.match_end,
+            exact_match=raw_match.exact_match,
+        )
+
+============================================================
+FILE: app/services/food/knowledge/wine/type_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    optional_string,
+)
+from app.services.food.knowledge.wine._registry_support import (
+    WineAliasRegistry,
+    WineRegistryEntry,
+)
+
+
+WINE_TYPE_REGISTRY_ID = "wine.types"
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class WineType(WineRegistryEntry):
+    type_category: str | None = None
+    color_family: str | None = None
+    sparkling: bool = False
+    fortified: bool = False
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class WineTypeMatch(
+    RegistryMatch[WineType]
+):
+    @property
+    def wine_type(self) -> WineType:
+        return self.entry
+
+
+class WineTypeRegistry(
+    WineAliasRegistry[WineType]
+):
+    registry_id = WINE_TYPE_REGISTRY_ID
+    entry_class = WineType
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> WineType:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "score",
+            "premium",
+            "description",
+            "type_category",
+            "color_family",
+            "sparkling",
+            "fortified",
+        }
+
+        return WineType(
+            **self.common_fields(
+                registry_key=registry_key,
+                raw_entry=raw_entry,
+                known_fields=known_fields,
+            ),
+            type_category=optional_string(
+                raw_entry.get("type_category")
+            ),
+            color_family=optional_string(
+                raw_entry.get("color_family")
+            ),
+            sparkling=bool(
+                raw_entry.get("sparkling", False)
+            ),
+            fortified=bool(
+                raw_entry.get("fortified", False)
+            ),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> WineTypeMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self.convert_match(
+            raw_match,
+            WineTypeMatch,
+        )  # type: ignore[return-value]
+============================================================
+FILE: app/services/food/knowledge/wine/region_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryMatch
+from app.services.food.knowledge.common.base_registry import optional_string
+from app.services.food.knowledge.wine._registry_support import (
+    WineAliasRegistry,
+    WineRegistryEntry,
+)
+
+REGISTRY_ID = "wine.regions"
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@dataclass(frozen=True, kw_only=True)
+class WineRegion(WineRegistryEntry):
+    country_code: str | None = None
+    country_name: str | None = None
+    appellation: str | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class WineRegionMatch(RegistryMatch[WineRegion]):
+    @property
+    def value(self) -> WineRegion:
+        return self.entry
+
+
+class WineRegionRegistry(WineAliasRegistry[WineRegion]):
+    registry_id = REGISTRY_ID
+    entry_class = WineRegion
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> WineRegion:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "score",
+            "premium",
+            "description",
+            "country_code", "country_name", "appellation",
+        }
+
+        return WineRegion(
+            **self.common_fields(
+                registry_key=registry_key,
+                raw_entry=raw_entry,
+                known_fields=known_fields,
+            ),
+
+            country_code=optional_string(raw_entry.get("country_code")),
+            country_name=optional_string(raw_entry.get("country_name")),
+            appellation=optional_string(raw_entry.get("appellation")),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> WineRegionMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self.convert_match(
+            raw_match,
+            WineRegionMatch,
+        )  # type: ignore[return-value]
+
+============================================================
+FILE: app/services/food/knowledge/wine/grape_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryMatch
+from app.services.food.knowledge.common.base_registry import optional_string
+from app.services.food.knowledge.wine._registry_support import (
+    WineAliasRegistry,
+    WineRegistryEntry,
+)
+
+REGISTRY_ID = "wine.grapes"
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@dataclass(frozen=True, kw_only=True)
+class WineGrape(WineRegistryEntry):
+    color: str | None = None
+    species: str | None = None
+    aromatic: bool = False
+
+
+@dataclass(frozen=True, kw_only=True)
+class WineGrapeMatch(RegistryMatch[WineGrape]):
+    @property
+    def value(self) -> WineGrape:
+        return self.entry
+
+
+class WineGrapeRegistry(WineAliasRegistry[WineGrape]):
+    registry_id = REGISTRY_ID
+    entry_class = WineGrape
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> WineGrape:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "score",
+            "premium",
+            "description",
+            "color", "species", "aromatic",
+        }
+
+        return WineGrape(
+            **self.common_fields(
+                registry_key=registry_key,
+                raw_entry=raw_entry,
+                known_fields=known_fields,
+            ),
+
+            color=optional_string(raw_entry.get("color")),
+            species=optional_string(raw_entry.get("species")),
+            aromatic=bool(raw_entry.get("aromatic", False)),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> WineGrapeMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self.convert_match(
+            raw_match,
+            WineGrapeMatch,
+        )  # type: ignore[return-value]
+
+============================================================
+FILE: app/services/food/knowledge/wine/sweetness_registry.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import RegistryMatch
+from app.services.food.knowledge.common.base_registry import optional_string
+from app.services.food.knowledge.wine._registry_support import (
+    WineAliasRegistry,
+    WineRegistryEntry,
+)
+
+REGISTRY_ID = "wine.sweetness"
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@dataclass(frozen=True, kw_only=True)
+class WineSweetness(WineRegistryEntry):
+    sweetness_level: int | None = None
+    residual_sugar_min: float | None = None
+    residual_sugar_max: float | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class WineSweetnessMatch(RegistryMatch[WineSweetness]):
+    @property
+    def value(self) -> WineSweetness:
+        return self.entry
+
+
+class WineSweetnessRegistry(WineAliasRegistry[WineSweetness]):
+    registry_id = REGISTRY_ID
+    entry_class = WineSweetness
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> WineSweetness:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "score",
+            "premium",
+            "description",
+            "sweetness_level", "residual_sugar_min", "residual_sugar_max",
+        }
+
+        return WineSweetness(
+            **self.common_fields(
+                registry_key=registry_key,
+                raw_entry=raw_entry,
+                known_fields=known_fields,
+            ),
+
+            sweetness_level=_optional_int(raw_entry.get("sweetness_level")),
+            residual_sugar_min=_optional_float(raw_entry.get("residual_sugar_min")),
+            residual_sugar_max=_optional_float(raw_entry.get("residual_sugar_max")),
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> WineSweetnessMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self.convert_match(
+            raw_match,
+            WineSweetnessMatch,
+        )  # type: ignore[return-value]
+
+============================================================
+FILE: app/services/food/knowledge/cheese/type_registry.py
+============================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+    BaseAliasRegistry,
+    normalize_string_list,
+    optional_string,
+    safe_float,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+CHEESE_TYPE_REGISTRY_ID = "cheese.types"
+
+
+def _aliases(
+    canonical_name: str,
+    raw_aliases: Any,
+) -> tuple[str, ...]:
+    values = [
+        canonical_name,
+        *normalize_string_list(raw_aliases),
+    ]
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+
+    return tuple(result)
+
+
+def _optional_score(
+    value: Any,
+) -> float | None:
+    if value is None:
+        return None
+
+    return max(
+        0.0,
+        min(
+            100.0,
+            safe_float(value, default=0.0),
+        ),
+    )
+
+
+def _optional_int(
+    value: Any,
+) -> int | None:
+    if value is None:
+        return None
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class CheeseType(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    type_category: str | None
+    score: float
+    premium: bool
+    flavor_score: float | None
+    versatility_score: float | None
+    typical_uses: tuple[str, ...]
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+
+        object.__setattr__(
+            self,
+            "aliases",
+            tuple(
+                str(value).strip()
+                for value in self.aliases
+                if str(value).strip()
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "score",
+            max(
+                0.0,
+                min(
+                    100.0,
+                    float(self.score),
+                ),
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class CheeseTypeMatch(
+    RegistryMatch[CheeseType]
+):
+    @property
+    def cheese_type(
+        self,
+    ) -> CheeseType:
+        return self.entry
+
+
+class CheeseTypeRegistry(
+    BaseAliasRegistry[CheeseType]
+):
+    registry_id = CHEESE_TYPE_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> CheeseType:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "type_category",
+            "score",
+            "premium",
+            "flavor_score",
+            "versatility_score",
+            "typical_uses",
+            "description",
+        }
+
+        metadata = {
+            key: copy.deepcopy(value)
+            for key, value in raw_entry.items()
+            if key not in known_fields
+        }
+
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        return CheeseType(
+            registry_key=registry_key,
+            canonical_name=(
+                canonical_name
+                or registry_key
+            ),
+            aliases=_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            type_category=optional_string(raw_entry.get("type_category")),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            flavor_score=_optional_score(raw_entry.get("flavor_score")),
+            versatility_score=_optional_score(raw_entry.get("versatility_score")),
+            typical_uses=normalize_string_list(raw_entry.get("typical_uses")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> CheeseTypeMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self._convert_match(
+            raw_match
+        )
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[CheeseTypeMatch]:
+        return [
+            self._convert_match(match)
+            for match in super().find_all(text)
+        ]
+
+    def lookup(
+        self,
+        text: str,
+    ) -> CheeseType | None:
+        match = self.match(text)
+
+        if match is None:
+            return None
+
+        return match.entry
+
+    def list(
+        self,
+        *,
+        premium_only: bool = False,
+    ) -> list[CheeseType]:
+        entries = [
+            entry
+
+============================================================
+FILE: app/services/food/knowledge/cheese/origin_registry.py
+============================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from app.services.food.knowledge.common.base_model import (
+    RegistryEntry,
+    RegistryMatch,
+)
+from app.services.food.knowledge.common.base_registry import (
+    AliasMatch,
+    BaseAliasRegistry,
+    normalize_string_list,
+    optional_string,
+    safe_float,
+)
+from app.services.food.knowledge.registry_loader import (
+    KnowledgeRegistryLoader,
+    get_knowledge_registry_loader,
+)
+
+
+CHEESE_ORIGIN_REGISTRY_ID = "cheese.origins"
+
+
+def _aliases(
+    canonical_name: str,
+    raw_aliases: Any,
+) -> tuple[str, ...]:
+    values = [
+        canonical_name,
+        *normalize_string_list(raw_aliases),
+    ]
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        text = str(value).strip()
+        key = text.casefold()
+
+        if text and key not in seen:
+            seen.add(key)
+            result.append(text)
+
+    return tuple(result)
+
+
+def _optional_score(
+    value: Any,
+) -> float | None:
+    if value is None:
+        return None
+
+    return max(
+        0.0,
+        min(
+            100.0,
+            safe_float(value, default=0.0),
+        ),
+    )
+
+
+def _optional_int(
+    value: Any,
+) -> int | None:
+    if value is None:
+        return None
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class CheeseOrigin(RegistryEntry):
+    canonical_name: str
+    aliases: tuple[str, ...]
+    country_code: str | None
+    score: float
+    premium: bool
+    tradition_score: float | None
+    description: str | None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        canonical_name = str(
+            self.canonical_name
+        ).strip()
+
+        if not canonical_name:
+            raise ValueError(
+                "canonical_name must not be empty"
+            )
+
+        object.__setattr__(
+            self,
+            "canonical_name",
+            canonical_name,
+        )
+
+        object.__setattr__(
+            self,
+            "aliases",
+            tuple(
+                str(value).strip()
+                for value in self.aliases
+                if str(value).strip()
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "score",
+            max(
+                0.0,
+                min(
+                    100.0,
+                    float(self.score),
+                ),
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "premium",
+            bool(self.premium),
+        )
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class CheeseOriginMatch(
+    RegistryMatch[CheeseOrigin]
+):
+    @property
+    def origin(
+        self,
+    ) -> CheeseOrigin:
+        return self.entry
+
+
+class CheeseOriginRegistry(
+    BaseAliasRegistry[CheeseOrigin]
+):
+    registry_id = CHEESE_ORIGIN_REGISTRY_ID
+    canonical_name_field = "canonical_name"
+    aliases_field = "aliases"
+
+    def __init__(
+        self,
+        loader: KnowledgeRegistryLoader | None = None,
+    ) -> None:
+        super().__init__(
+            loader=(
+                loader
+                or get_knowledge_registry_loader()
+            )
+        )
+
+    def build_entry(
+        self,
+        registry_key: str,
+        raw_entry: Mapping[str, Any],
+    ) -> CheeseOrigin:
+        known_fields = {
+            "canonical_name",
+            "aliases",
+            "country_code",
+            "score",
+            "premium",
+            "tradition_score",
+            "description",
+        }
+
+        metadata = {
+            key: copy.deepcopy(value)
+            for key, value in raw_entry.items()
+            if key not in known_fields
+        }
+
+        canonical_name = str(
+            raw_entry.get(
+                "canonical_name",
+                registry_key,
+            )
+        ).strip()
+
+        return CheeseOrigin(
+            registry_key=registry_key,
+            canonical_name=(
+                canonical_name
+                or registry_key
+            ),
+            aliases=_aliases(
+                canonical_name,
+                raw_entry.get("aliases"),
+            ),
+            country_code=optional_string(raw_entry.get("country_code")),
+            score=safe_float(raw_entry.get("score"), default=0.0),
+            premium=bool(raw_entry.get("premium", False)),
+            tradition_score=_optional_score(raw_entry.get("tradition_score")),
+            description=optional_string(raw_entry.get("description")),
+            metadata=metadata,
+        )
+
+    def match(
+        self,
+        text: str,
+    ) -> CheeseOriginMatch | None:
+        raw_match = super().match(text)
+
+        if raw_match is None:
+            return None
+
+        return self._convert_match(
+            raw_match
+        )
+
+    def find_all(
+        self,
+        text: str,
+    ) -> list[CheeseOriginMatch]:
+        return [
+            self._convert_match(match)
+            for match in super().find_all(text)
+        ]
+
+    def lookup(
+        self,
+        text: str,
+    ) -> CheeseOrigin | None:
+        match = self.match(text)
+
+        if match is None:
+            return None
+
+        return match.entry
+
+    def list(
+        self,
+        *,
+        premium_only: bool = False,
+    ) -> list[CheeseOrigin]:
+        entries = [
+            entry
+            for entry in super().list()
+            if isinstance(
+                entry,
+                CheeseOrigin,
+            )
+        ]

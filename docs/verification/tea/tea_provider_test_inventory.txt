@@ -1,0 +1,9 @@
+tests/services/food/knowledge/cheese/test_cheese_provider.py
+tests/services/food/knowledge/coffee/test_coffee_provider.py
+tests/services/food/knowledge/meat/chicken/test_chicken_provider.py
+tests/services/food/knowledge/meat/duck/test_duck_provider.py
+tests/services/food/knowledge/meat/goat/test_goat_provider.py
+tests/services/food/knowledge/meat/lamb/test_lamb_provider.py
+tests/services/food/knowledge/meat/venison/test_venison_provider_priority.py
+tests/services/food/knowledge/meat/venison/test_venison_provider.py
+tests/services/food/knowledge/wine/test_wine_provider.py

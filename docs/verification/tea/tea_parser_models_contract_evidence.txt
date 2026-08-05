@@ -1,0 +1,1363 @@
+# Tea Parser Model Contract Evidence
+
+generated_at=2026-08-04T13:51:50Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+============================================================
+FILE: app/services/food/knowledge/common/parser_models.py
+============================================================
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass, field
+from typing import Any, Mapping
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class BaseParseResult:
+    """
+    모든 Food Knowledge Parser 결과의 공통 기반 모델.
+
+    하위 도메인 예:
+        FruitParseResult
+        BeefParseResult
+        CheeseParseResult
+        TeaParseResult
+    """
+
+    original_text: str
+    normalized_text: str
+    confidence: float = 0.0
+    metadata: Mapping[str, Any] = field(
+        default_factory=dict
+    )
+
+    def __post_init__(self) -> None:
+        original_text = str(
+            self.original_text
+        ).strip()
+
+        normalized_text = str(
+            self.normalized_text
+        ).strip()
+
+        confidence = max(
+            0.0,
+            min(
+                1.0,
+                float(self.confidence),
+            ),
+        )
+
+        metadata = copy.deepcopy(
+            dict(self.metadata)
+        )
+
+        object.__setattr__(
+            self,
+            "original_text",
+            original_text,
+        )
+        object.__setattr__(
+            self,
+            "normalized_text",
+            normalized_text,
+        )
+        object.__setattr__(
+            self,
+            "confidence",
+            confidence,
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            metadata,
+        )
+
+    @property
+    def has_match(self) -> bool:
+        """
+        Parser가 하나 이상의 의미 있는 속성을 감지했는지 나타낸다.
+
+        도메인 ParseResult에서 필요하면 재정의한다.
+        """
+        return self.confidence > 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        API·로그·테스트에서 사용할 JSON 친화적 표현.
+        """
+        return {
+            "original_text": self.original_text,
+            "normalized_text": (
+                self.normalized_text
+            ),
+            "confidence": self.confidence,
+            "has_match": self.has_match,
+            "metadata": self._serialize_value(
+                self.metadata
+            ),
+        }
+
+    @classmethod
+    def _serialize_value(
+        cls,
+        value: Any,
+    ) -> Any:
+        if value is None:
+            return None
+
+        if hasattr(value, "to_dict"):
+            return value.to_dict()
+
+        if isinstance(value, Mapping):
+            return {
+                str(key): cls._serialize_value(
+                    item
+                )
+                for key, item in value.items()
+            }
+
+        if isinstance(
+            value,
+            (list, tuple, set, frozenset),
+        ):
+            return [
+                cls._serialize_value(item)
+                for item in value
+            ]
+
+        if isinstance(
+            value,
+            (
+                str,
+                int,
+                float,
+                bool,
+            ),
+        ):
+            return value
+
+        return copy.deepcopy(value)
+
+
+__all__ = [
+    "BaseParseResult",
+]
+
+============================================================
+FILE: app/services/food/knowledge/coffee/parser_models.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from app.services.food.knowledge.coffee.bean_registry import (
+    CoffeeBeanMatch,
+)
+from app.services.food.knowledge.coffee.origin_registry import (
+    CoffeeOriginMatch,
+)
+from app.services.food.knowledge.coffee.process_registry import (
+    CoffeeProcessMatch,
+)
+from app.services.food.knowledge.coffee.roast_registry import (
+    CoffeeRoastMatch,
+)
+from app.services.food.knowledge.common.parser_models import (
+    BaseParseResult,
+)
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class CoffeeParseResult(BaseParseResult):
+    """
+    Coffee Parser 결과.
+
+    Coffee Registry에서 탐지한 표준값, confidence,
+    RegistryMatch 및 파싱 증거를 보존한다.
+    """
+
+    # Parsed values
+    bean: str | None = None
+    origin: str | None = None
+    roast: str | None = None
+    process: str | None = None
+
+    # Field confidence
+    bean_confidence: float = 0.0
+    origin_confidence: float = 0.0
+    roast_confidence: float = 0.0
+    process_confidence: float = 0.0
+
+    # Registry matches
+    bean_match: CoffeeBeanMatch | None = None
+    origin_match: CoffeeOriginMatch | None = None
+    roast_match: CoffeeRoastMatch | None = None
+    process_match: CoffeeProcessMatch | None = None
+
+    # Parsing evidence
+    detected_keywords: list[str] = field(
+        default_factory=list
+    )
+    warnings: list[str] = field(
+        default_factory=list
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        for field_name in (
+            "bean_confidence",
+            "origin_confidence",
+            "roast_confidence",
+            "process_confidence",
+        ):
+            confidence = max(
+                0.0,
+                min(
+                    1.0,
+                    float(
+                        getattr(self, field_name)
+                    ),
+                ),
+            )
+
+            object.__setattr__(
+                self,
+                field_name,
+                confidence,
+            )
+
+        object.__setattr__(
+            self,
+            "detected_keywords",
+            self._deduplicate_strings(
+                self.detected_keywords
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "warnings",
+            self._deduplicate_strings(
+                self.warnings
+            ),
+        )
+
+    @property
+    def has_bean(self) -> bool:
+        return self.bean is not None
+
+    @property
+    def has_origin(self) -> bool:
+        return self.origin is not None
+
+    @property
+    def has_roast(self) -> bool:
+        return self.roast is not None
+
+    @property
+    def has_process(self) -> bool:
+        return self.process is not None
+
+    @property
+    def matched_field_count(self) -> int:
+        return sum(
+            (
+                self.has_bean,
+                self.has_origin,
+                self.has_roast,
+                self.has_process,
+            )
+        )
+
+    @property
+    def is_complete(self) -> bool:
+        return self.matched_field_count == 4
+
+    @property
+    def is_usable(self) -> bool:
+        """
+        원두 종이 확인되거나 독립적인 Coffee 속성이
+        둘 이상 확인되면 Coffee 분석에 사용할 수 있다.
+
+        국가명이나 로스팅 단어 하나만 탐지된 경우에는
+        Coffee 도메인 결과로 확정하지 않는다.
+        """
+        return (
+            self.has_bean
+            or self.matched_field_count >= 2
+        )
+
+    @property
+    def has_match(self) -> bool:
+        return self.matched_field_count > 0
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = super().to_dict()
+
+        payload.update(
+            {
+                "bean": self.bean,
+                "origin": self.origin,
+                "roast": self.roast,
+                "process": self.process,
+                "bean_confidence": (
+                    self.bean_confidence
+                ),
+                "origin_confidence": (
+                    self.origin_confidence
+                ),
+                "roast_confidence": (
+                    self.roast_confidence
+                ),
+                "process_confidence": (
+                    self.process_confidence
+                ),
+                "bean_match": self._serialize_value(
+                    self.bean_match
+                ),
+                "origin_match": (
+                    self._serialize_value(
+                        self.origin_match
+                    )
+                ),
+                "roast_match": (
+                    self._serialize_value(
+                        self.roast_match
+                    )
+                ),
+                "process_match": (
+                    self._serialize_value(
+                        self.process_match
+                    )
+                ),
+                "detected_keywords": list(
+                    self.detected_keywords
+                ),
+                "warnings": list(
+                    self.warnings
+                ),
+                "matched_field_count": (
+                    self.matched_field_count
+                ),
+                "is_complete": self.is_complete,
+                "is_usable": self.is_usable,
+            }
+        )
+
+        return payload
+
+    @staticmethod
+    def _deduplicate_strings(
+        values: list[str],
+    ) -> list[str]:
+        result: list[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            normalized = str(value).strip()
+
+            if (
+                not normalized
+                or normalized in seen
+            ):
+                continue
+
+            seen.add(normalized)
+            result.append(normalized)
+
+        return result
+
+
+__all__ = [
+    "CoffeeParseResult",
+]
+
+============================================================
+FILE: app/services/food/knowledge/wine/parser_models.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from app.services.food.knowledge.common.parser_models import (
+    BaseParseResult,
+)
+from app.services.food.knowledge.wine.acidity_registry import (
+    WineAcidityMatch,
+)
+from app.services.food.knowledge.wine.body_registry import (
+    WineBodyMatch,
+)
+from app.services.food.knowledge.wine.grape_registry import (
+    WineGrapeMatch,
+)
+from app.services.food.knowledge.wine.region_registry import (
+    WineRegionMatch,
+)
+from app.services.food.knowledge.wine.sweetness_registry import (
+    WineSweetnessMatch,
+)
+from app.services.food.knowledge.wine.type_registry import (
+    WineTypeMatch,
+)
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class WineParseResult(BaseParseResult):
+    wine_type: str | None = None
+    grape: str | None = None
+    region: str | None = None
+    sweetness: str | None = None
+    body: str | None = None
+    acidity: str | None = None
+
+    vintage: int | None = None
+    alcohol_percent: float | None = None
+
+    wine_type_confidence: float = 0.0
+    grape_confidence: float = 0.0
+    region_confidence: float = 0.0
+    sweetness_confidence: float = 0.0
+    body_confidence: float = 0.0
+    acidity_confidence: float = 0.0
+
+    wine_type_match: WineTypeMatch | None = None
+    grape_match: WineGrapeMatch | None = None
+    region_match: WineRegionMatch | None = None
+    sweetness_match: WineSweetnessMatch | None = None
+    body_match: WineBodyMatch | None = None
+    acidity_match: WineAcidityMatch | None = None
+
+    detected_keywords: list[str] = field(
+        default_factory=list
+    )
+    warnings: list[str] = field(
+        default_factory=list
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        for field_name in (
+            "wine_type_confidence",
+            "grape_confidence",
+            "region_confidence",
+            "sweetness_confidence",
+            "body_confidence",
+            "acidity_confidence",
+        ):
+            value = max(
+                0.0,
+                min(
+                    1.0,
+                    float(getattr(self, field_name)),
+                ),
+            )
+
+            object.__setattr__(
+                self,
+                field_name,
+                value,
+            )
+
+        if self.vintage is not None:
+            vintage = int(self.vintage)
+
+            if vintage < 1800 or vintage > 2100:
+                object.__setattr__(
+                    self,
+                    "vintage",
+                    None,
+                )
+
+        if self.alcohol_percent is not None:
+            alcohol = max(
+                0.0,
+                min(
+                    100.0,
+                    float(self.alcohol_percent),
+                ),
+            )
+            object.__setattr__(
+                self,
+                "alcohol_percent",
+                alcohol,
+            )
+
+        object.__setattr__(
+            self,
+            "detected_keywords",
+            self._deduplicate_strings(
+                self.detected_keywords
+            ),
+        )
+        object.__setattr__(
+            self,
+            "warnings",
+            self._deduplicate_strings(
+                self.warnings
+            ),
+        )
+
+    @property
+    def matched_field_count(self) -> int:
+        return sum(
+            value is not None
+            for value in (
+                self.wine_type,
+                self.grape,
+                self.region,
+                self.sweetness,
+                self.body,
+                self.acidity,
+            )
+        )
+
+    @property
+    def is_complete(self) -> bool:
+        return self.matched_field_count == 6
+
+    @property
+    def is_usable(self) -> bool:
+        return (
+            self.wine_type is not None
+            or self.grape is not None
+            or self.region is not None
+            or self.matched_field_count >= 2
+        )
+
+    @property
+    def has_match(self) -> bool:
+        return self.matched_field_count > 0
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = super().to_dict()
+
+        payload.update(
+            {
+                "wine_type": self.wine_type,
+                "grape": self.grape,
+                "region": self.region,
+                "sweetness": self.sweetness,
+                "body": self.body,
+                "acidity": self.acidity,
+                "vintage": self.vintage,
+                "alcohol_percent": self.alcohol_percent,
+                "wine_type_confidence": (
+                    self.wine_type_confidence
+                ),
+                "grape_confidence": (
+                    self.grape_confidence
+                ),
+                "region_confidence": (
+                    self.region_confidence
+                ),
+                "sweetness_confidence": (
+                    self.sweetness_confidence
+                ),
+                "body_confidence": (
+                    self.body_confidence
+                ),
+                "acidity_confidence": (
+                    self.acidity_confidence
+                ),
+                "detected_keywords": list(
+                    self.detected_keywords
+                ),
+                "warnings": list(
+                    self.warnings
+                ),
+                "matched_field_count": (
+                    self.matched_field_count
+                ),
+                "is_complete": self.is_complete,
+                "is_usable": self.is_usable,
+            }
+        )
+
+        return payload
+
+    @staticmethod
+    def _deduplicate_strings(
+        values: list[str],
+    ) -> list[str]:
+        result: list[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            text = str(value).strip()
+
+            if not text or text in seen:
+                continue
+
+            seen.add(text)
+            result.append(text)
+
+        return result
+============================================================
+FILE: app/services/food/knowledge/cheese/parser_models.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from app.services.food.knowledge.cheese.aging_registry import (
+    CheeseAgingMatch,
+)
+from app.services.food.knowledge.cheese.milk_source_registry import (
+    CheeseMilkSourceMatch,
+)
+from app.services.food.knowledge.cheese.origin_registry import (
+    CheeseOriginMatch,
+)
+from app.services.food.knowledge.cheese.texture_registry import (
+    CheeseTextureMatch,
+)
+from app.services.food.knowledge.cheese.type_registry import (
+    CheeseTypeMatch,
+)
+from app.services.food.knowledge.common.parser_models import (
+    BaseParseResult,
+)
+
+
+@dataclass(
+    frozen=True,
+    kw_only=True,
+)
+class CheeseParseResult(BaseParseResult):
+    """
+    Cheese Parser 결과.
+
+    각 Registry에서 탐지된 표준값과 RegistryMatch를 함께 보존한다.
+    """
+
+    # Parsed values
+    cheese_type: str | None = None
+    milk_source: str | None = None
+    origin: str | None = None
+    texture: str | None = None
+    aging: str | None = None
+
+    # Field confidence
+    cheese_type_confidence: float = 0.0
+    milk_source_confidence: float = 0.0
+    origin_confidence: float = 0.0
+    texture_confidence: float = 0.0
+    aging_confidence: float = 0.0
+
+    # Registry matches
+    cheese_type_match: CheeseTypeMatch | None = None
+    milk_source_match: CheeseMilkSourceMatch | None = None
+    origin_match: CheeseOriginMatch | None = None
+    texture_match: CheeseTextureMatch | None = None
+    aging_match: CheeseAgingMatch | None = None
+
+    # Parsing evidence
+    detected_keywords: list[str] = field(
+        default_factory=list
+    )
+    warnings: list[str] = field(
+        default_factory=list
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        for field_name in (
+            "cheese_type_confidence",
+            "milk_source_confidence",
+            "origin_confidence",
+            "texture_confidence",
+            "aging_confidence",
+        ):
+            value = max(
+                0.0,
+                min(
+                    1.0,
+                    float(
+                        getattr(self, field_name)
+                    ),
+                ),
+            )
+
+            object.__setattr__(
+                self,
+                field_name,
+                value,
+            )
+
+        object.__setattr__(
+            self,
+            "detected_keywords",
+            self._deduplicate_strings(
+                self.detected_keywords
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "warnings",
+            self._deduplicate_strings(
+                self.warnings
+            ),
+        )
+
+    @property
+    def has_cheese_type(self) -> bool:
+        return self.cheese_type is not None
+
+    @property
+    def has_milk_source(self) -> bool:
+        return self.milk_source is not None
+
+    @property
+    def has_origin(self) -> bool:
+        return self.origin is not None
+
+    @property
+    def has_texture(self) -> bool:
+        return self.texture is not None
+
+    @property
+    def has_aging(self) -> bool:
+        return self.aging is not None
+
+    @property
+    def matched_field_count(self) -> int:
+        return sum(
+            (
+                self.has_cheese_type,
+                self.has_milk_source,
+                self.has_origin,
+                self.has_texture,
+                self.has_aging,
+            )
+        )
+
+    @property
+    def is_complete(self) -> bool:
+        return self.matched_field_count == 5
+
+    @property
+    def is_usable(self) -> bool:
+        """
+        치즈 종류가 확인되거나,
+        종류 이외의 독립 속성이 둘 이상 확인되면 사용 가능하다.
+
+        원유 하나만 탐지된 일반 유제품 문자열은 Cheese 결과로
+        확정하지 않는다.
+        """
+        return (
+            self.has_cheese_type
+            or self.matched_field_count >= 2
+        )
+
+    @property
+    def has_match(self) -> bool:
+        return self.matched_field_count > 0
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = super().to_dict()
+
+        payload.update(
+            {
+                "cheese_type": self.cheese_type,
+                "milk_source": self.milk_source,
+                "origin": self.origin,
+                "texture": self.texture,
+                "aging": self.aging,
+                "cheese_type_confidence": (
+                    self.cheese_type_confidence
+                ),
+                "milk_source_confidence": (
+                    self.milk_source_confidence
+                ),
+                "origin_confidence": (
+                    self.origin_confidence
+                ),
+                "texture_confidence": (
+                    self.texture_confidence
+                ),
+                "aging_confidence": (
+                    self.aging_confidence
+                ),
+                "cheese_type_match": (
+                    self._serialize_value(
+                        self.cheese_type_match
+                    )
+                ),
+                "milk_source_match": (
+                    self._serialize_value(
+                        self.milk_source_match
+                    )
+                ),
+                "origin_match": (
+                    self._serialize_value(
+                        self.origin_match
+                    )
+                ),
+                "texture_match": (
+                    self._serialize_value(
+                        self.texture_match
+                    )
+                ),
+                "aging_match": (
+                    self._serialize_value(
+                        self.aging_match
+                    )
+                ),
+                "detected_keywords": list(
+                    self.detected_keywords
+                ),
+                "warnings": list(
+                    self.warnings
+                ),
+                "matched_field_count": (
+                    self.matched_field_count
+                ),
+                "is_complete": self.is_complete,
+                "is_usable": self.is_usable,
+            }
+        )
+
+        return payload
+
+    @staticmethod
+    def _deduplicate_strings(
+        values: list[str],
+    ) -> list[str]:
+        result: list[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            normalized = str(value).strip()
+
+            if (
+                not normalized
+                or normalized in seen
+            ):
+                continue
+
+            seen.add(normalized)
+            result.append(normalized)
+
+        return result
+
+
+__all__ = [
+    "CheeseParseResult",
+]
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_parser_models.py
+============================================================
+from __future__ import annotations
+
+from app.services.food.knowledge.coffee import (
+    CoffeeParseResult,
+)
+
+
+def test_empty_coffee_parse_result() -> None:
+    result = CoffeeParseResult(
+        original_text="일반 상품",
+        normalized_text="일반 상품",
+    )
+
+    assert result.bean is None
+    assert result.origin is None
+    assert result.roast is None
+    assert result.process is None
+
+    assert result.matched_field_count == 0
+    assert result.has_match is False
+    assert result.is_complete is False
+    assert result.is_usable is False
+
+
+def test_bean_only_is_usable() -> None:
+    result = CoffeeParseResult(
+        original_text="아라비카",
+        normalized_text="아라비카",
+        confidence=1.0,
+        bean="아라비카",
+        bean_confidence=1.0,
+    )
+
+    assert result.has_bean is True
+    assert result.matched_field_count == 1
+    assert result.is_usable is True
+
+
+def test_origin_only_is_not_usable() -> None:
+    result = CoffeeParseResult(
+        original_text="에티오피아",
+        normalized_text="에티오피아",
+        confidence=1.0,
+        origin="에티오피아",
+        origin_confidence=1.0,
+    )
+
+    assert result.has_origin is True
+    assert result.matched_field_count == 1
+    assert result.is_usable is False
+
+
+def test_two_supporting_fields_are_usable() -> None:
+    result = CoffeeParseResult(
+        original_text="에티오피아 워시드",
+        normalized_text="에티오피아 워시드",
+        origin="에티오피아",
+        process="워시드",
+        origin_confidence=1.0,
+        process_confidence=1.0,
+    )
+
+    assert result.matched_field_count == 2
+    assert result.is_usable is True
+
+
+def test_complete_parse_result() -> None:
+    result = CoffeeParseResult(
+        original_text=(
+            "에티오피아 아라비카 "
+            "라이트 로스트 워시드"
+        ),
+        normalized_text=(
+            "에티오피아 아라비카 "
+            "라이트 로스트 워시드"
+        ),
+        confidence=1.0,
+        bean="아라비카",
+        origin="에티오피아",
+        roast="라이트 로스트",
+        process="워시드",
+        bean_confidence=1.0,
+        origin_confidence=1.0,
+        roast_confidence=1.0,
+        process_confidence=1.0,
+    )
+
+    assert result.matched_field_count == 4
+    assert result.is_complete is True
+    assert result.is_usable is True
+
+
+def test_confidences_are_clamped() -> None:
+    result = CoffeeParseResult(
+        original_text="아라비카",
+        normalized_text="아라비카",
+        confidence=2.0,
+        bean_confidence=-1.0,
+        origin_confidence=3.0,
+    )
+
+    assert result.confidence == 1.0
+    assert result.bean_confidence == 0.0
+    assert result.origin_confidence == 1.0
+
+
+def test_evidence_is_deduplicated() -> None:
+    result = CoffeeParseResult(
+        original_text="아라비카",
+        normalized_text="아라비카",
+        detected_keywords=[
+            "아라비카",
+            "아라비카",
+            "",
+        ],
+        warnings=[
+            "경고",
+            "경고",
+            " ",
+        ],
+    )
+
+    assert result.detected_keywords == [
+        "아라비카",
+    ]
+    assert result.warnings == ["경고"]
+
+
+def test_parse_result_serializes() -> None:
+    result = CoffeeParseResult(
+        original_text="아라비카 원두",
+        normalized_text="아라비카 원두",
+        confidence=0.9,
+        bean="아라비카",
+        bean_confidence=0.9,
+        detected_keywords=["아라비카"],
+    )
+
+    payload = result.to_dict()
+
+    assert payload["bean"] == "아라비카"
+    assert payload["matched_field_count"] == 1
+    assert payload["is_complete"] is False
+    assert payload["is_usable"] is True
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_parser_models.py
+============================================================
+from __future__ import annotations
+
+from dataclasses import FrozenInstanceError
+
+import pytest
+
+from app.services.food.knowledge.common.parser_models import (
+    BaseParseResult,
+)
+from app.services.food.knowledge.wine.parser_models import (
+    WineParseResult,
+)
+
+
+def test_wine_parse_result_extends_base_contract() -> None:
+    result = WineParseResult(
+        original_text=(
+            "보르도 카베르네 소비뇽 "
+            "레드 와인 2020"
+        ),
+        normalized_text=(
+            "보르도 카베르네 소비뇽 "
+            "레드 와인 2020"
+        ),
+        confidence=0.92,
+        wine_type="red",
+        grape="cabernet_sauvignon",
+        region="bordeaux",
+        vintage=2020,
+    )
+
+    assert isinstance(
+        result,
+        BaseParseResult,
+    )
+    assert result.wine_type == "red"
+    assert (
+        result.grape
+        == "cabernet_sauvignon"
+    )
+    assert result.region == "bordeaux"
+    assert result.vintage == 2020
+    assert result.matched_field_count == 3
+    assert result.is_usable is True
+
+
+def test_wine_parse_result_clamps_confidence() -> None:
+    result = WineParseResult(
+        original_text="레드 와인",
+        normalized_text="레드 와인",
+        confidence=5.0,
+        wine_type="red",
+        wine_type_confidence=3.0,
+        grape_confidence=-1.0,
+    )
+
+    assert result.confidence == 1.0
+    assert result.wine_type_confidence == 1.0
+    assert result.grape_confidence == 0.0
+
+
+@pytest.mark.parametrize(
+    "vintage",
+    [
+        1700,
+        2200,
+    ],
+)
+def test_wine_parse_result_rejects_invalid_vintage(
+    vintage: int,
+) -> None:
+    result = WineParseResult(
+        original_text="와인",
+        normalized_text="와인",
+        confidence=0.5,
+        vintage=vintage,
+    )
+
+    assert result.vintage is None
+
+
+def test_wine_parse_result_preserves_valid_vintage() -> None:
+    result = WineParseResult(
+        original_text="2019 보르도 와인",
+        normalized_text="2019 보르도 와인",
+        confidence=0.8,
+        region="bordeaux",
+        vintage=2019,
+    )
+
+    assert result.vintage == 2019
+
+
+def test_wine_parse_result_clamps_alcohol_percent() -> None:
+    high_result = WineParseResult(
+        original_text="와인",
+        normalized_text="와인",
+        confidence=0.5,
+        alcohol_percent=120.0,
+    )
+
+    low_result = WineParseResult(
+        original_text="와인",
+        normalized_text="와인",
+        confidence=0.5,
+        alcohol_percent=-10.0,
+    )
+
+    assert high_result.alcohol_percent == 100.0
+    assert low_result.alcohol_percent == 0.0
+
+
+def test_wine_parse_result_deduplicates_evidence() -> None:
+    result = WineParseResult(
+        original_text="보르도 와인",
+        normalized_text="보르도 와인",
+        confidence=0.8,
+        region="bordeaux",
+        detected_keywords=[
+            "보르도",
+            "보르도",
+            "",
+        ],
+        warnings=[
+            "warning",
+            "warning",
+            "",
+        ],
+    )
+
+    assert result.detected_keywords == [
+        "보르도",
+    ]
+    assert result.warnings == [
+        "warning",
+    ]
+
+
+def test_wine_parse_result_serialization() -> None:
+    result = WineParseResult(
+        original_text="샤르도네 화이트 와인",
+        normalized_text="샤르도네 화이트 와인",
+        confidence=0.9,
+        wine_type="white",
+        grape="chardonnay",
+        detected_keywords=[
+            "샤르도네",
+            "화이트 와인",
+        ],
+    )
+
+    payload = result.to_dict()
+
+    assert payload["wine_type"] == "white"
+    assert payload["grape"] == "chardonnay"
+    assert payload["matched_field_count"] == 2
+    assert payload["is_usable"] is True
+    assert payload["detected_keywords"] == [
+        "샤르도네",
+        "화이트 와인",
+    ]
+
+
+def test_wine_parse_result_is_frozen() -> None:
+    result = WineParseResult(
+        original_text="레드 와인",
+        normalized_text="레드 와인",
+        confidence=0.8,
+        wine_type="red",
+    )
+
+    with pytest.raises(FrozenInstanceError):
+        result.wine_type = "white"  # type: ignore[misc]
+
+
+def test_wine_parse_result_complete_state() -> None:
+    result = WineParseResult(
+        original_text="완전한 와인 데이터",
+        normalized_text="완전한 와인 데이터",
+        confidence=1.0,
+        wine_type="red",
+        grape="cabernet_sauvignon",
+        region="bordeaux",
+        sweetness="dry",
+        body="full",
+        acidity="high",
+    )
+
+    assert result.matched_field_count == 6
+    assert result.is_complete is True
+    assert result.is_usable is True
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_parser_models.py
+============================================================
+from __future__ import annotations
+
+from app.services.food.knowledge.cheese import (
+    CheeseParseResult,
+)
+
+
+def test_empty_cheese_parse_result() -> None:
+    result = CheeseParseResult(
+        original_text="일반 상품",
+        normalized_text="일반 상품",
+    )
+
+    assert result.cheese_type is None
+    assert result.milk_source is None
+    assert result.origin is None
+    assert result.texture is None
+    assert result.aging is None
+
+    assert result.matched_field_count == 0
+    assert result.has_match is False
+    assert result.is_complete is False
+    assert result.is_usable is False
+
+
+def test_cheese_type_only_is_usable() -> None:
+    result = CheeseParseResult(
+        original_text="체다치즈",
+        normalized_text="체다치즈",
+        confidence=1.0,
+        cheese_type="체다",
+        cheese_type_confidence=1.0,
+    )
+
+    assert result.has_cheese_type is True
+    assert result.matched_field_count == 1
+    assert result.is_complete is False
+    assert result.is_usable is True
+
+
+def test_milk_source_only_is_not_usable() -> None:
+    result = CheeseParseResult(
+        original_text="산양유",
+        normalized_text="산양유",
+        confidence=1.0,
+        milk_source="산양유",
+        milk_source_confidence=1.0,
+    )
+
+    assert result.has_milk_source is True
+    assert result.matched_field_count == 1
+    assert result.is_usable is False
+
+
+def test_two_supporting_fields_are_usable() -> None:
+    result = CheeseParseResult(
+        original_text="프랑스 장기숙성",
+        normalized_text="프랑스 장기숙성",
+        confidence=1.0,
+        origin="프랑스",
+        aging="장기숙성",
+        origin_confidence=1.0,
+        aging_confidence=1.0,
+    )
+
+    assert result.matched_field_count == 2
+    assert result.is_usable is True
+
+
+def test_complete_cheese_parse_result() -> None:
+    result = CheeseParseResult(
+        original_text=(
+            "프랑스 산양유 브리 "
+            "연성 장기숙성"
+        ),
+        normalized_text=(
+            "프랑스 산양유 브리 "
+            "연성 장기숙성"
+        ),
+        confidence=1.0,
+        cheese_type="브리",
+        milk_source="산양유",
+        origin="프랑스",
+        texture="연성",
+        aging="장기숙성",
+        cheese_type_confidence=1.0,
+        milk_source_confidence=1.0,
+        origin_confidence=1.0,
+        texture_confidence=1.0,
+        aging_confidence=1.0,
+    )
+
+    assert result.matched_field_count == 5
+    assert result.is_complete is True
+    assert result.is_usable is True
+
+
+def test_parse_result_clamps_confidence() -> None:
+    result = CheeseParseResult(
+        original_text="체다",
+        normalized_text="체다",
+        confidence=2.0,
+        cheese_type_confidence=-1.0,
+        origin_confidence=3.0,
+    )
+
+    assert result.confidence == 1.0
+    assert result.cheese_type_confidence == 0.0
+    assert result.origin_confidence == 1.0
+
+
+def test_parse_result_deduplicates_evidence() -> None:
+    result = CheeseParseResult(
+        original_text="체다",
+        normalized_text="체다",
+        detected_keywords=[
+            "체다",
+            "체다",
+            "",
+        ],
+        warnings=[
+            "경고",
+            "경고",
+            " ",
+        ],
+    )
+
+    assert result.detected_keywords == ["체다"]
+    assert result.warnings == ["경고"]
+
+
+def test_cheese_parse_result_serializes() -> None:
+    result = CheeseParseResult(
+        original_text="체다치즈",
+        normalized_text="체다치즈",
+        confidence=0.9,
+        cheese_type="체다",
+        cheese_type_confidence=0.9,
+        detected_keywords=["체다치즈"],
+    )
+
+    payload = result.to_dict()
+
+    assert payload["cheese_type"] == "체다"
+    assert payload["matched_field_count"] == 1
+    assert payload["is_complete"] is False
+    assert payload["is_usable"] is True
+    assert payload["detected_keywords"] == [
+        "체다치즈",
+    ]

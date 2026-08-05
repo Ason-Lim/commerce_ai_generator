@@ -1,0 +1,7 @@
+tests/services/food/knowledge/cheese/test_cheese_rules.py
+tests/services/food/knowledge/coffee/test_coffee_rules.py
+tests/services/food/knowledge/meat/chicken/test_chicken_rules.py
+tests/services/food/knowledge/meat/duck/test_duck_rules.py
+tests/services/food/knowledge/meat/goat/test_goat_rules.py
+tests/services/food/knowledge/meat/venison/test_venison_rules.py
+tests/services/food/knowledge/wine/test_wine_rules.py

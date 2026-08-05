@@ -1,0 +1,52 @@
+app/services/food/knowledge/coffee/attributes.py:372:    FoodKnowledgeResult.attributes용 dict로 변환한다.
+app/services/food/knowledge/coffee/attributes.py:497:                "bean_score": bean.score,
+app/services/food/knowledge/coffee/attributes.py:499:                "bean_acidity_score": (
+app/services/food/knowledge/coffee/attributes.py:500:                    bean.acidity_score
+app/services/food/knowledge/coffee/attributes.py:502:                "bean_body_score": (
+app/services/food/knowledge/coffee/attributes.py:503:                    bean.body_score
+app/services/food/knowledge/coffee/attributes.py:505:                "bean_aroma_score": (
+app/services/food/knowledge/coffee/attributes.py:506:                    bean.aroma_score
+app/services/food/knowledge/coffee/attributes.py:529:                "origin_score": origin.score,
+app/services/food/knowledge/coffee/attributes.py:533:                "origin_acidity_score": (
+app/services/food/knowledge/coffee/attributes.py:534:                    origin.acidity_score
+app/services/food/knowledge/coffee/attributes.py:536:                "origin_body_score": (
+app/services/food/knowledge/coffee/attributes.py:537:                    origin.body_score
+app/services/food/knowledge/coffee/attributes.py:539:                "origin_aroma_score": (
+app/services/food/knowledge/coffee/attributes.py:540:                    origin.aroma_score
+app/services/food/knowledge/coffee/attributes.py:563:                "roast_score": roast.score,
+app/services/food/knowledge/coffee/attributes.py:567:                "roast_acidity_score": (
+app/services/food/knowledge/coffee/attributes.py:568:                    roast.acidity_score
+app/services/food/knowledge/coffee/attributes.py:570:                "roast_body_score": (
+app/services/food/knowledge/coffee/attributes.py:571:                    roast.body_score
+app/services/food/knowledge/coffee/attributes.py:573:                "roast_aroma_score": (
+app/services/food/knowledge/coffee/attributes.py:574:                    roast.aroma_score
+app/services/food/knowledge/coffee/attributes.py:597:                "process_score": (
+app/services/food/knowledge/coffee/attributes.py:598:                    process.score
+app/services/food/knowledge/coffee/attributes.py:603:                "process_clarity_score": (
+app/services/food/knowledge/coffee/attributes.py:604:                    process.clarity_score
+app/services/food/knowledge/coffee/attributes.py:606:                "process_sweetness_score": (
+app/services/food/knowledge/coffee/attributes.py:607:                    process.sweetness_score
+app/services/food/knowledge/coffee/attributes.py:609:                "process_body_score": (
+app/services/food/knowledge/coffee/attributes.py:610:                    process.body_score
+app/services/food/knowledge/cheese/attributes.py:296:    FoodKnowledgeResult.attributes용 dict로 변환한다.
+app/services/food/knowledge/cheese/attributes.py:420:                "cheese_type_score": (
+app/services/food/knowledge/cheese/attributes.py:421:                    cheese_type.score
+app/services/food/knowledge/cheese/attributes.py:426:                "cheese_type_flavor_score": (
+app/services/food/knowledge/cheese/attributes.py:427:                    cheese_type.flavor_score
+app/services/food/knowledge/cheese/attributes.py:429:                "cheese_type_versatility_score": (
+app/services/food/knowledge/cheese/attributes.py:431:                    .versatility_score
+app/services/food/knowledge/cheese/attributes.py:460:                "milk_source_score": (
+app/services/food/knowledge/cheese/attributes.py:461:                    milk_source.score
+app/services/food/knowledge/cheese/attributes.py:466:                "milk_source_richness_score": (
+app/services/food/knowledge/cheese/attributes.py:467:                    milk_source.richness_score
+app/services/food/knowledge/cheese/attributes.py:469:                "milk_source_availability_score": (
+app/services/food/knowledge/cheese/attributes.py:471:                    .availability_score
+app/services/food/knowledge/cheese/attributes.py:494:                "origin_score": origin.score,
+app/services/food/knowledge/cheese/attributes.py:496:                "origin_tradition_score": (
+app/services/food/knowledge/cheese/attributes.py:497:                    origin.tradition_score
+app/services/food/knowledge/cheese/attributes.py:520:                "texture_score": texture.score,
+app/services/food/knowledge/cheese/attributes.py:524:                "texture_firmness_score": (
+app/services/food/knowledge/cheese/attributes.py:525:                    texture.firmness_score
+app/services/food/knowledge/cheese/attributes.py:527:                "texture_moisture_score": (
+app/services/food/knowledge/cheese/attributes.py:528:                    texture.moisture_score
+app/services/food/knowledge/cheese/attributes.py:551:                "aging_score": aging.score,

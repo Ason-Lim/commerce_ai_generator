@@ -1,0 +1,1513 @@
+# Tea Registry Test Contract Evidence
+
+generated_at=2026-08-04T11:11:51Z
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_registries.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.coffee import (
+    COFFEE_BEAN_REGISTRY_ID,
+    COFFEE_ORIGIN_REGISTRY_ID,
+    COFFEE_PROCESS_REGISTRY_ID,
+    COFFEE_ROAST_REGISTRY_ID,
+    CoffeeBeanMatch,
+    CoffeeBeanRegistry,
+    CoffeeOriginMatch,
+    CoffeeOriginRegistry,
+    CoffeeProcessMatch,
+    CoffeeProcessRegistry,
+    CoffeeRoastMatch,
+    CoffeeRoastRegistry,
+)
+from app.services.food.knowledge.registry_loader import (
+    list_knowledge_registries,
+)
+
+
+def test_coffee_registry_ids() -> None:
+    assert COFFEE_BEAN_REGISTRY_ID == (
+        "coffee.beans"
+    )
+    assert COFFEE_ORIGIN_REGISTRY_ID == (
+        "coffee.origins"
+    )
+    assert COFFEE_ROAST_REGISTRY_ID == (
+        "coffee.roasts"
+    )
+    assert COFFEE_PROCESS_REGISTRY_ID == (
+        "coffee.processes"
+    )
+
+
+def test_coffee_registry_files_are_discovered() -> None:
+    registry_ids = set(
+        list_knowledge_registries()
+    )
+
+    assert {
+        "coffee.beans",
+        "coffee.origins",
+        "coffee.roasts",
+        "coffee.processes",
+    }.issubset(registry_ids)
+
+
+def test_coffee_registry_entry_counts() -> None:
+    assert len(CoffeeBeanRegistry().list()) == 5
+    assert len(CoffeeOriginRegistry().list()) == 7
+    assert len(CoffeeRoastRegistry().list()) == 5
+    assert len(CoffeeProcessRegistry().list()) == 6
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("100% 아라비카 원두", "arabica"),
+        ("로부스타 커피", "robusta"),
+        ("리베리카 원두", "liberica"),
+        ("엑셀사 커피", "excelsa"),
+        (
+            "아라비카 로부스타 블렌드",
+            "arabica_robusta_blend",
+        ),
+    ],
+)
+def test_coffee_bean_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CoffeeBeanRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CoffeeBeanMatch,
+    )
+    assert match.entry.registry_key == expected_key
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("에티오피아 원두", "ethiopia"),
+        ("콜롬비아산 커피", "colombia"),
+        ("브라질 원두", "brazil"),
+        ("케냐 AA 커피", "kenya"),
+        ("과테말라 커피", "guatemala"),
+        ("코스타리카 원두", "costa_rica"),
+        ("수마트라 만델링", "indonesia"),
+    ],
+)
+def test_coffee_origin_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CoffeeOriginRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CoffeeOriginMatch,
+    )
+    assert match.entry.registry_key == expected_key
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("라이트 로스트 원두", "light"),
+        (
+            "미디엄 라이트 로스트",
+            "medium_light",
+        ),
+        ("미디엄 로스트 커피", "medium"),
+        (
+            "미디엄 다크 로스트",
+            "medium_dark",
+        ),
+        ("프렌치 로스트 원두", "dark"),
+    ],
+)
+def test_coffee_roast_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CoffeeRoastRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CoffeeRoastMatch,
+    )
+    assert match.entry.registry_key == expected_key
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("워시드 에티오피아", "washed"),
+        ("내추럴 프로세스", "natural"),
+        ("허니 프로세스 원두", "honey"),
+        ("무산소 발효 커피", "anaerobic"),
+        (
+            "카보닉 마세레이션",
+            "carbonic_maceration",
+        ),
+        ("길링 바사 수마트라", "wet_hulled"),
+    ],
+)
+def test_coffee_process_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CoffeeProcessRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CoffeeProcessMatch,
+    )
+    assert match.entry.registry_key == expected_key
+
+
+def test_unknown_registry_text_returns_none() -> None:
+    text = "분류할 수 없는 일반 상품"
+
+    assert CoffeeBeanRegistry().match(text) is None
+    assert CoffeeOriginRegistry().match(text) is None
+    assert CoffeeRoastRegistry().match(text) is None
+    assert CoffeeProcessRegistry().match(text) is None
+
+
+def test_registry_lists_are_sorted_by_score() -> None:
+    registries = [
+        CoffeeBeanRegistry(),
+        CoffeeOriginRegistry(),
+        CoffeeRoastRegistry(),
+        CoffeeProcessRegistry(),
+    ]
+
+    for registry in registries:
+        scores = [
+            entry.score
+            for entry in registry.list()
+        ]
+
+        assert scores == sorted(
+            scores,
+            reverse=True,
+        )
+
+
+def test_registry_keys_are_unique() -> None:
+    registries = [
+        CoffeeBeanRegistry(),
+        CoffeeOriginRegistry(),
+        CoffeeRoastRegistry(),
+        CoffeeProcessRegistry(),
+    ]
+
+    for registry in registries:
+        keys = [
+            entry.registry_key
+            for entry in registry.list()
+        ]
+
+        assert len(keys) == len(set(keys))
+
+
+def test_premium_filter() -> None:
+    premium_beans = CoffeeBeanRegistry().list(
+        premium_only=True
+    )
+
+    assert premium_beans
+    assert all(
+        entry.premium
+        for entry in premium_beans
+    )
+
+
+def test_registry_match_serializes() -> None:
+    match = CoffeeOriginRegistry().match(
+        "에티오피아 원두"
+    )
+
+    assert match is not None
+
+    payload = match.to_dict()
+
+    assert payload["registry_key"] == "ethiopia"
+    assert payload["canonical_name"] == (
+        "에티오피아"
+    )
+    assert payload["country_code"] == "ET"
+    assert payload["matched_alias"]
+    assert 0.0 <= payload["confidence"] <= 1.0
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_registry_integration.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.category_registry import (
+    get_food_category,
+    resolve_food_category,
+)
+from app.services.food.knowledge.coffee import (
+    CoffeeKnowledgeProvider,
+)
+from app.services.food.knowledge.registry import (
+    FOOD_KNOWLEDGE_REGISTRY,
+    get_food_provider,
+    list_food_providers,
+    require_food_provider,
+    resolve_food_provider,
+)
+from app.services.food.resolver import (
+    analyze_food_product,
+    resolve_food_knowledge,
+    resolve_knowledge_provider,
+)
+
+
+def test_coffee_provider_is_registered() -> None:
+    provider = get_food_provider("coffee")
+
+    assert isinstance(
+        provider,
+        CoffeeKnowledgeProvider,
+    )
+    assert provider.category_id == "coffee"
+
+
+def test_coffee_provider_is_registered_once() -> None:
+    providers = [
+        provider
+        for provider in list_food_providers()
+        if provider.category_id == "coffee"
+    ]
+
+    assert len(providers) == 1
+
+
+def test_coffee_provider_is_in_registry() -> None:
+    assert "coffee" in FOOD_KNOWLEDGE_REGISTRY
+
+    assert "coffee" in (
+        FOOD_KNOWLEDGE_REGISTRY
+        .list_category_ids()
+    )
+
+
+def test_provider_registration_order() -> None:
+    category_ids = (
+        FOOD_KNOWLEDGE_REGISTRY
+        .list_category_ids()
+    )
+
+    assert category_ids == [
+        "fruit",
+        "cheese",
+        "coffee",
+        "wine",
+        "venison",
+        "goat",
+        "beef",
+        "lamb",
+        "chicken",
+        "duck",
+    ]
+
+
+def test_require_coffee_provider() -> None:
+    provider = require_food_provider(
+        "coffee"
+    )
+
+    assert isinstance(
+        provider,
+        CoffeeKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "coffee",
+        "COFFEE",
+        " coffee ",
+        "커피",
+        "원두",
+        "아라비카",
+        "arabica",
+    ],
+)
+def test_resolve_provider_by_category(
+    category_id: str,
+) -> None:
+    provider = resolve_food_provider(
+        category_id=category_id
+    )
+
+    assert isinstance(
+        provider,
+        CoffeeKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "에티오피아 아라비카 원두 200g",
+        "프리미엄 커피 500g",
+        "100% Arabica Coffee",
+        "콜드브루 커피",
+        "디카페인 커피 원두",
+        "에스프레소 블렌드",
+    ],
+)
+def test_resolve_provider_by_product_name(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert isinstance(
+        provider,
+        CoffeeKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    ("product_name", "expected_category_id"),
+    [
+        ("프랑스 브리 치즈 200g", "cheese"),
+        ("국내산 한우 1++ 등심", "beef"),
+        ("프리미엄 도퍼 어린양 프렌치랙", "lamb"),
+        ("보어 어린 염소 갈비", "goat"),
+        ("훈제오리 슬라이스", "duck"),
+        ("토종닭 가슴살", "chicken"),
+        ("사슴 안심 스테이크", "venison"),
+        ("고당도 사과", "fruit"),
+    ],
+)
+def test_coffee_registration_preserves_existing_routing(
+    product_name: str,
+    expected_category_id: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert provider is not None
+    assert (
+        provider.category_id
+        == expected_category_id
+    )
+
+
+def test_coffee_category_is_registered() -> None:
+    category = get_food_category(
+        "coffee"
+    )
+
+    assert category is not None
+    assert category.category_id == "coffee"
+    assert category.display_name == "커피"
+    assert category.provider_id == "coffee"
+    assert category.parent_category_id is None
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "coffee",
+        "COFFEE",
+        "커피",
+        "원두",
+    ],
+)
+def test_resolve_coffee_category_by_id_or_alias(
+    category_id: str,
+) -> None:
+    category = resolve_food_category(
+        category_id=category_id
+    )
+
+    assert category is not None
+    assert category.category_id == "coffee"
+
+
+def test_resolve_coffee_category_by_product_name() -> None:
+    category = resolve_food_category(
+        product_name=(
+            "에티오피아 아라비카 원두 200g"
+        )
+    )
+
+    assert category is not None
+    assert category.category_id == "coffee"
+
+
+def test_resolver_selects_coffee_by_explicit_category() -> None:
+    provider = resolve_knowledge_provider(
+        {
+            "product_name": "프리미엄 식품",
+        },
+        category_id="coffee",
+    )
+
+    assert isinstance(
+        provider,
+        CoffeeKnowledgeProvider,
+    )
+
+
+def test_resolver_selects_coffee_by_product_name() -> None:
+    provider = resolve_knowledge_provider(
+        {
+            "product_name": (
+                "에티오피아 아라비카 원두 200g"
+            ),
+        }
+    )
+
+    assert isinstance(
+        provider,
+        CoffeeKnowledgeProvider,
+    )
+
+
+def test_analyze_food_product_with_coffee_category() -> None:
+    result = analyze_food_product(
+        {
+            "product_name": (
+                "에티오피아 100% 아라비카 "
+                "라이트 로스트 워시드 원두"
+            ),
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        },
+        category_id="coffee",
+        strict=True,
+    )
+
+    assert result is not None
+    assert result.category_id == "coffee"
+    assert result.attributes["bean"] == (
+        "아라비카"
+    )
+    assert result.attributes["origin"] == (
+        "에티오피아"
+    )
+    assert result.attributes["roast"] == (
+        "라이트 로스트"
+    )
+    assert result.attributes["process"] == (
+        "워시드"
+    )
+    assert result.scores["knowledge"] == (
+        92.55
+    )
+    assert result.final_score == 86.28
+
+
+def test_resolve_food_knowledge_auto_selects_coffee() -> None:
+    result = resolve_food_knowledge(
+        {
+            "product_name": (
+                "에티오피아 100% 아라비카 "
+                "라이트 로스트 워시드 원두"
+            ),
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        },
+        strict=True,
+    )
+
+    assert result is not None
+    assert result.category_id == "coffee"
+    assert result.metadata[
+        "provider_id"
+    ] == "coffee"
+
+
+def test_unknown_product_still_returns_none() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "분류할 수 없는 일반 상품"
+        )
+    )
+
+    assert provider is None
+
+
+def test_provider_ids_remain_unique() -> None:
+    category_ids = [
+        provider.category_id
+        for provider in list_food_providers()
+    ]
+
+    assert len(category_ids) == len(
+        set(category_ids)
+    )
+
+
+def test_duplicate_coffee_registration_is_rejected() -> None:
+    with pytest.raises(
+        ValueError,
+        match=(
+            "이미 등록된 Food Provider"
+        ),
+    ):
+        FOOD_KNOWLEDGE_REGISTRY.register(
+            CoffeeKnowledgeProvider()
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_registries.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.wine.acidity_registry import (
+    WineAcidityRegistry,
+)
+from app.services.food.knowledge.wine.body_registry import (
+    WineBodyRegistry,
+)
+from app.services.food.knowledge.wine.grape_registry import (
+    WineGrapeRegistry,
+)
+from app.services.food.knowledge.wine.region_registry import (
+    WineRegionRegistry,
+)
+from app.services.food.knowledge.wine.sweetness_registry import (
+    WineSweetnessRegistry,
+)
+from app.services.food.knowledge.wine.type_registry import (
+    WineTypeRegistry,
+)
+
+
+@pytest.mark.parametrize(
+    (
+        "registry",
+        "text",
+        "expected_key",
+    ),
+    [
+        (
+            WineTypeRegistry(),
+            "레드 와인",
+            "red",
+        ),
+        (
+            WineGrapeRegistry(),
+            "카베르네 소비뇽",
+            "cabernet_sauvignon",
+        ),
+        (
+            WineRegionRegistry(),
+            "보르도",
+            "bordeaux",
+        ),
+        (
+            WineSweetnessRegistry(),
+            "드라이",
+            "dry",
+        ),
+        (
+            WineBodyRegistry(),
+            "풀 바디",
+            "full",
+        ),
+        (
+            WineAcidityRegistry(),
+            "높은 산도",
+            "high",
+        ),
+    ],
+)
+def test_wine_registry_matches_alias(
+    registry: object,
+    text: str,
+    expected_key: str,
+) -> None:
+    match = registry.match(text)  # type: ignore[attr-defined]
+
+    assert match is not None
+    assert match.entry.registry_key == expected_key
+    assert match.matched_alias
+    assert match.normalized_alias
+    assert 0.0 <= match.confidence <= 1.0
+    assert match.match_start >= 0
+    assert match.match_end > match.match_start
+    assert match.exact_match is True
+
+
+@pytest.mark.parametrize(
+    (
+        "registry",
+        "text",
+    ),
+    [
+        (
+            WineTypeRegistry(),
+            "레드 와인",
+        ),
+        (
+            WineGrapeRegistry(),
+            "샤르도네",
+        ),
+        (
+            WineRegionRegistry(),
+            "나파 밸리",
+        ),
+        (
+            WineSweetnessRegistry(),
+            "세미 드라이",
+        ),
+        (
+            WineBodyRegistry(),
+            "미디엄 바디",
+        ),
+        (
+            WineAcidityRegistry(),
+            "낮은 산도",
+        ),
+    ],
+)
+def test_wine_registry_lookup_returns_entry(
+    registry: object,
+    text: str,
+) -> None:
+    entry = registry.lookup(text)  # type: ignore[attr-defined]
+
+    assert entry is not None
+    assert entry.registry_key
+    assert entry.canonical_name
+    assert entry.aliases
+    assert 0.0 <= entry.score <= 100.0
+
+
+@pytest.mark.parametrize(
+    "registry",
+    [
+        WineTypeRegistry(),
+        WineGrapeRegistry(),
+        WineRegionRegistry(),
+        WineSweetnessRegistry(),
+        WineBodyRegistry(),
+        WineAcidityRegistry(),
+    ],
+)
+def test_wine_registry_returns_none_for_unknown_text(
+    registry: object,
+) -> None:
+    match = registry.match(  # type: ignore[attr-defined]
+        "등록되지 않은 임의의 문자열"
+    )
+
+    assert match is None
+
+
+def test_wine_type_registry_metadata() -> None:
+    entry = WineTypeRegistry().lookup(
+        "스파클링 와인"
+    )
+
+    assert entry is not None
+    assert entry.registry_key == "sparkling"
+    assert entry.sparkling is True
+    assert entry.fortified is False
+
+
+def test_wine_grape_registry_metadata() -> None:
+    entry = WineGrapeRegistry().lookup(
+        "리슬링"
+    )
+
+    assert entry is not None
+    assert entry.registry_key == "riesling"
+    assert entry.color == "white"
+    assert entry.aromatic is True
+
+
+def test_wine_region_registry_metadata() -> None:
+    entry = WineRegionRegistry().lookup(
+        "부르고뉴"
+    )
+
+    assert entry is not None
+    assert entry.registry_key == "burgundy"
+    assert entry.country_code == "FR"
+    assert entry.appellation == "Bourgogne"
+
+
+def test_wine_sweetness_registry_metadata() -> None:
+    entry = WineSweetnessRegistry().lookup(
+        "드라이"
+    )
+
+    assert entry is not None
+    assert entry.sweetness_level == 1
+    assert entry.residual_sugar_min == 0.0
+    assert entry.residual_sugar_max == 4.0
+
+
+def test_wine_body_registry_metadata() -> None:
+    entry = WineBodyRegistry().lookup(
+        "풀 바디"
+    )
+
+    assert entry is not None
+    assert entry.body_level == 3
+    assert entry.premium is True
+
+
+def test_wine_acidity_registry_metadata() -> None:
+    entry = WineAcidityRegistry().lookup(
+        "높은 산도"
+    )
+
+    assert entry is not None
+    assert entry.acidity_level == 3
+    assert entry.premium is True
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_registry_integration.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.registry import (
+    FOOD_KNOWLEDGE_REGISTRY,
+    get_food_provider,
+    list_food_providers,
+    require_food_provider,
+    resolve_food_provider,
+)
+from app.services.food.knowledge.wine.provider import (
+    WineKnowledgeProvider,
+)
+
+
+def test_wine_provider_is_registered() -> None:
+    provider = get_food_provider("wine")
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+def test_wine_provider_is_required() -> None:
+    provider = require_food_provider(
+        "wine"
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+def test_wine_category_is_listed() -> None:
+    assert (
+        "wine"
+        in FOOD_KNOWLEDGE_REGISTRY.list_category_ids()
+    )
+
+
+def test_wine_provider_is_in_provider_list() -> None:
+    providers = list_food_providers()
+
+    assert any(
+        isinstance(
+            provider,
+            WineKnowledgeProvider,
+        )
+        for provider in providers
+    )
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "wine",
+        "WINE",
+        " wine ",
+        "와인",
+        "보르도",
+        "chardonnay",
+    ],
+)
+def test_resolve_wine_provider_by_category(
+    category_id: str,
+) -> None:
+    provider = resolve_food_provider(
+        category_id=category_id
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "2020 보르도 레드 와인",
+        "부르고뉴 샤르도네 화이트와인",
+        "Napa Valley Cabernet Sauvignon Wine",
+        "리슬링 스파클링 와인",
+        "Merlot",
+        "Pinot Noir",
+        "Champagne Brut",
+    ],
+)
+def test_resolve_wine_provider_by_product_name(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "국산 사과 5kg",
+        "한우 등심 1++",
+        "모차렐라 치즈 200g",
+    ],
+)
+def test_wine_provider_does_not_capture_other_domains(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert not isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+
+def test_resolved_wine_provider_runs_analysis() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인"
+        )
+    )
+
+    assert isinstance(
+        provider,
+        WineKnowledgeProvider,
+    )
+
+    result = provider.analyze(
+        {
+            "product_name": (
+                "2020 보르도 카베르네 소비뇽 "
+                "레드 와인 드라이 13.5%"
+            ),
+            "producer": "Example Winery",
+            "volume": "750ml",
+        }
+    )
+
+    assert result.category_id == "wine"
+    assert result.attributes["region"] == "bordeaux"
+    assert (
+        result.attributes["grape"]
+        == "cabernet_sauvignon"
+    )
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_registries.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.cheese import (
+    CHEESE_AGING_REGISTRY_ID,
+    CHEESE_MILK_SOURCE_REGISTRY_ID,
+    CHEESE_ORIGIN_REGISTRY_ID,
+    CHEESE_TEXTURE_REGISTRY_ID,
+    CHEESE_TYPE_REGISTRY_ID,
+    CheeseAgingMatch,
+    CheeseAgingRegistry,
+    CheeseMilkSourceMatch,
+    CheeseMilkSourceRegistry,
+    CheeseOriginMatch,
+    CheeseOriginRegistry,
+    CheeseTextureMatch,
+    CheeseTextureRegistry,
+    CheeseTypeMatch,
+    CheeseTypeRegistry,
+)
+from app.services.food.knowledge.registry_loader import (
+    list_knowledge_registries,
+)
+
+
+def test_cheese_registry_ids() -> None:
+    assert CHEESE_TYPE_REGISTRY_ID == (
+        "cheese.types"
+    )
+    assert CHEESE_MILK_SOURCE_REGISTRY_ID == (
+        "cheese.milk_sources"
+    )
+    assert CHEESE_ORIGIN_REGISTRY_ID == (
+        "cheese.origins"
+    )
+    assert CHEESE_TEXTURE_REGISTRY_ID == (
+        "cheese.textures"
+    )
+    assert CHEESE_AGING_REGISTRY_ID == (
+        "cheese.aging"
+    )
+
+
+def test_cheese_registry_files_are_discovered() -> None:
+    registry_ids = set(
+        list_knowledge_registries()
+    )
+
+    assert {
+        "cheese.types",
+        "cheese.milk_sources",
+        "cheese.origins",
+        "cheese.textures",
+        "cheese.aging",
+    }.issubset(registry_ids)
+
+
+def test_cheese_registry_entry_counts() -> None:
+    assert len(CheeseTypeRegistry().list()) == 8
+    assert len(
+        CheeseMilkSourceRegistry().list()
+    ) == 5
+    assert len(CheeseOriginRegistry().list()) == 7
+    assert len(CheeseTextureRegistry().list()) == 7
+    assert len(CheeseAgingRegistry().list()) == 5
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("이탈리아 모차렐라 치즈", "mozzarella"),
+        ("숙성 체다치즈", "cheddar"),
+        ("프랑스 브리 치즈", "brie"),
+        ("까망베르 치즈", "camembert"),
+        ("네덜란드 고다치즈", "gouda"),
+        (
+            "파르미자노 레지아노",
+            "parmesan",
+        ),
+        ("블루 치즈", "blue_cheese"),
+        ("플레인 크림치즈", "cream_cheese"),
+    ],
+)
+def test_cheese_type_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CheeseTypeRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CheeseTypeMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("우유로 만든 체다", "cow"),
+        ("산양유 치즈", "goat"),
+        ("양유 페코리노", "sheep"),
+        ("물소 우유 모차렐라", "buffalo"),
+        ("혼합 원유 치즈", "mixed"),
+    ],
+)
+def test_cheese_milk_source_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CheeseMilkSourceRegistry().match(
+        text
+    )
+
+    assert isinstance(
+        match,
+        CheeseMilkSourceMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("이탈리아산 파르미자노", "italy"),
+        ("프랑스 브리", "france"),
+        ("네덜란드 고다", "netherlands"),
+        ("영국 체다", "united_kingdom"),
+        ("스위스 치즈", "switzerland"),
+        ("미국산 체다", "united_states"),
+        ("국내산 자연치즈", "korea"),
+    ],
+)
+def test_cheese_origin_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CheeseOriginRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CheeseOriginMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("프레시 생치즈", "fresh"),
+        ("부드러운 소프트 치즈", "soft"),
+        ("세미소프트 치즈", "semi_soft"),
+        ("세미 하드 치즈", "semi_hard"),
+        ("단단한 하드치즈", "hard"),
+        ("크럼블리 치즈", "crumbly"),
+        ("발라 먹는 치즈", "spreadable"),
+    ],
+)
+def test_cheese_texture_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CheeseTextureRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CheeseTextureMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_key"),
+    [
+        ("무숙성 프레시 치즈", "fresh"),
+        ("단기 숙성 치즈", "short_aged"),
+        ("중기 숙성 치즈", "medium_aged"),
+        ("12개월 숙성 치즈", "long_aged"),
+        ("24개월 숙성 치즈", "extra_aged"),
+    ],
+)
+def test_cheese_aging_matching(
+    text: str,
+    expected_key: str,
+) -> None:
+    match = CheeseAgingRegistry().match(text)
+
+    assert isinstance(
+        match,
+        CheeseAgingMatch,
+    )
+    assert (
+        match.entry.registry_key
+        == expected_key
+    )
+
+
+def test_unknown_cheese_registry_text_returns_none() -> None:
+    text = "상품 정보가 없는 일반 문자열"
+
+    assert CheeseTypeRegistry().match(text) is None
+    assert (
+        CheeseMilkSourceRegistry().match(text)
+        is None
+    )
+    assert (
+        CheeseOriginRegistry().match(text)
+        is None
+    )
+    assert (
+        CheeseTextureRegistry().match(text)
+        is None
+    )
+    assert CheeseAgingRegistry().match(text) is None
+
+
+def test_cheese_registry_lists_are_sorted_by_score() -> None:
+    registries = [
+        CheeseTypeRegistry(),
+        CheeseMilkSourceRegistry(),
+        CheeseOriginRegistry(),
+        CheeseTextureRegistry(),
+        CheeseAgingRegistry(),
+    ]
+
+    for registry in registries:
+        scores = [
+            entry.score
+            for entry in registry.list()
+        ]
+
+        assert scores == sorted(
+            scores,
+            reverse=True,
+        )
+
+
+def test_cheese_registry_keys_are_unique() -> None:
+    registries = [
+        CheeseTypeRegistry(),
+        CheeseMilkSourceRegistry(),
+        CheeseOriginRegistry(),
+        CheeseTextureRegistry(),
+        CheeseAgingRegistry(),
+    ]
+
+    for registry in registries:
+        keys = [
+            entry.registry_key
+            for entry in registry.list()
+        ]
+
+        assert len(keys) == len(set(keys))
+
+
+def test_cheese_registry_match_serializes() -> None:
+    match = CheeseTypeRegistry().match(
+        "이탈리아 모차렐라 치즈"
+    )
+
+    assert match is not None
+
+    payload = match.to_dict()
+
+    assert payload["registry_key"] == (
+        "mozzarella"
+    )
+    assert payload["canonical_name"] == (
+        "모차렐라"
+    )
+    assert payload["matched_alias"]
+    assert 0.0 <= payload["confidence"] <= 1.0
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_registry_integration.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.cheese import (
+    CheeseKnowledgeProvider,
+)
+from app.services.food.knowledge.registry import (
+    FOOD_KNOWLEDGE_REGISTRY,
+    get_food_provider,
+    list_food_providers,
+    require_food_provider,
+    resolve_food_provider,
+)
+from app.services.food.resolver import (
+    analyze_food_product,
+    resolve_food_knowledge,
+    resolve_knowledge_provider,
+)
+
+
+def test_cheese_provider_is_registered() -> None:
+    provider = get_food_provider("cheese")
+
+    assert isinstance(
+        provider,
+        CheeseKnowledgeProvider,
+    )
+    assert provider.category_id == "cheese"
+
+
+def test_cheese_provider_is_in_registry() -> None:
+    assert "cheese" in FOOD_KNOWLEDGE_REGISTRY
+
+    category_ids = (
+        FOOD_KNOWLEDGE_REGISTRY
+        .list_category_ids()
+    )
+
+    assert "cheese" in category_ids
+
+
+def test_cheese_provider_registration_order() -> None:
+    category_ids = (
+        FOOD_KNOWLEDGE_REGISTRY
+        .list_category_ids()
+    )
+
+    assert category_ids == [
+        "fruit",
+        "cheese",
+        "coffee",
+        "wine",
+        "venison",
+        "goat",
+        "beef",
+        "lamb",
+        "chicken",
+        "duck",
+    ]
+
+
+def test_list_food_providers_contains_cheese() -> None:
+    providers = list_food_providers()
+
+    cheese_providers = [
+        provider
+        for provider in providers
+        if provider.category_id == "cheese"
+    ]
+
+    assert len(cheese_providers) == 1
+    assert isinstance(
+        cheese_providers[0],
+        CheeseKnowledgeProvider,
+    )
+
+
+def test_require_cheese_provider() -> None:
+    provider = require_food_provider(
+        "cheese"
+    )
+
+    assert isinstance(
+        provider,
+        CheeseKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "cheese",
+        "CHEESE",
+        " cheese ",
+    ],
+)
+def test_resolve_provider_by_category_id(
+    category_id: str,
+) -> None:
+    provider = resolve_food_provider(
+        category_id=category_id
+    )
+
+    assert isinstance(
+        provider,
+        CheeseKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "category_id",
+    [
+        "치즈",
+        "모차렐라",
+        "parmesan",
+    ],
+)
+def test_resolve_provider_by_category_alias(
+    category_id: str,
+) -> None:
+    provider = resolve_food_provider(
+        category_id=category_id
+    )
+
+    assert isinstance(
+        provider,
+        CheeseKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    "product_name",
+    [
+        "프랑스 브리 치즈 200g",
+        "이탈리아 모짜렐라 치즈",
+        "숙성 체다치즈",
+        "24개월 숙성 파르미자노 레지아노",
+        "blue cheese 150g",
+        "plain cream cheese",
+    ],
+)
+def test_resolve_provider_by_product_name(
+    product_name: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert isinstance(
+        provider,
+        CheeseKnowledgeProvider,
+    )
+
+
+@pytest.mark.parametrize(
+    ("product_name", "expected_category_id"),
+    [
+        ("국내산 한우 1++ 등심", "beef"),
+        ("프리미엄 도퍼 어린양 프렌치랙", "lamb"),
+        ("보어 어린 염소 갈비", "goat"),
+        ("훈제오리 슬라이스", "duck"),
+        ("토종닭 가슴살", "chicken"),
+        ("사슴 안심 스테이크", "venison"),
+        ("고당도 사과", "fruit"),
+    ],
+)
+def test_cheese_registration_preserves_existing_routing(
+    product_name: str,
+    expected_category_id: str,
+) -> None:
+    provider = resolve_food_provider(
+        product_name=product_name
+    )
+
+    assert provider is not None
+    assert (
+        provider.category_id
+        == expected_category_id
+    )
+
+
+def test_resolver_selects_cheese_by_explicit_category() -> None:
+    provider = resolve_knowledge_provider(
+        {
+            "product_name": "프리미엄 유제품",
+        },
+        category_id="cheese",
+    )
+
+    assert isinstance(
+        provider,
+        CheeseKnowledgeProvider,
+    )
+
+
+def test_resolver_selects_cheese_by_product_name() -> None:
+    provider = resolve_knowledge_provider(
+        {
+            "product_name": (
+                "프랑스 브리 치즈 200g"
+            ),
+        }
+    )
+
+    assert isinstance(
+        provider,
+        CheeseKnowledgeProvider,
+    )
+
+
+def test_analyze_food_product_with_cheese_category() -> None:
+    result = analyze_food_product(
+        {
+            "product_name": (
+                "프랑스 산양유 브리 "
+                "소프트 치즈 12개월 숙성"
+            ),
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        },
+        category_id="cheese",
+        strict=True,
+    )
+
+    assert result is not None
+    assert result.category_id == "cheese"
+    assert result.attributes[
+        "cheese_type"
+    ] == "브리"
+    assert result.final_score == 86.3
+
+
+def test_resolve_food_knowledge_auto_selects_cheese() -> None:
+    result = resolve_food_knowledge(
+        {
+            "product_name": (
+                "24개월 숙성 "
+                "파르미자노 레지아노"
+            ),
+            "quality_score": 80,
+            "price_score": 70,
+            "trust_score": 90,
+        },
+        strict=True,
+    )
+
+    assert result is not None
+    assert result.category_id == "cheese"
+    assert result.attributes[
+        "cheese_type"
+    ] == "파르미자노 레지아노"
+    assert result.attributes[
+        "aging"
+    ] == "초장기숙성"
+    assert result.final_score == 88.2
+
+
+def test_unknown_product_still_returns_none() -> None:
+    provider = resolve_food_provider(
+        product_name=(
+            "분류할 수 없는 일반 상품"
+        )
+    )
+
+    assert provider is None
+
+
+def test_duplicate_cheese_registration_is_rejected() -> None:
+    with pytest.raises(
+        ValueError,
+        match=(
+            "이미 등록된 Food Provider"
+        ),
+    ):
+        FOOD_KNOWLEDGE_REGISTRY.register(
+            CheeseKnowledgeProvider()
+        )

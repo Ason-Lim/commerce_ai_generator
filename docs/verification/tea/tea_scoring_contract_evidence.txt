@@ -1,0 +1,2749 @@
+# Tea Scoring Contract Evidence
+
+generated_at=2026-08-05T02:00:31Z
+branch=main
+commit=b4c74968073d0329ec5df8d2ea28c3935f4a7ca2
+
+============================================================
+FILE: app/services/food/knowledge/common/scoring.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.common.constants import (
+    MAX_SCORE,
+    MIN_SCORE,
+)
+from app.services.food.knowledge.common.normalizer import (
+    safe_float,
+)
+
+
+def clamp_score(
+    value: Any,
+    *,
+    minimum: float = MIN_SCORE,
+    maximum: float = MAX_SCORE,
+) -> float:
+    parsed = safe_float(
+        value,
+        default=minimum,
+    )
+
+    if parsed is None:
+        parsed = minimum
+
+    return round(
+        max(
+            minimum,
+            min(maximum, parsed),
+        ),
+        2,
+    )
+
+
+def normalize_range_score(
+    value: Any,
+    *,
+    minimum_value: float,
+    maximum_value: float,
+    minimum_score: float = MIN_SCORE,
+    maximum_score: float = MAX_SCORE,
+) -> float:
+    parsed = safe_float(
+        value,
+        default=None,
+    )
+
+    if parsed is None:
+        return minimum_score
+
+    if maximum_value <= minimum_value:
+        raise ValueError(
+            "maximum_value must be greater than minimum_value"
+        )
+
+    ratio = (
+        parsed - minimum_value
+    ) / (
+        maximum_value - minimum_value
+    )
+
+    score = (
+        minimum_score
+        + ratio
+        * (
+            maximum_score
+            - minimum_score
+        )
+    )
+
+    return clamp_score(
+        score,
+        minimum=minimum_score,
+        maximum=maximum_score,
+    )
+
+
+def weighted_average(
+    scores: Mapping[str, Any],
+    weights: Mapping[str, float],
+    *,
+    normalize_weights: bool = True,
+) -> float:
+    weighted_sum = 0.0
+    total_weight = 0.0
+
+    for key, weight in weights.items():
+        parsed_weight = safe_float(
+            weight,
+            default=0.0,
+        )
+
+        if parsed_weight is None:
+            continue
+
+        if parsed_weight <= 0:
+            continue
+
+        score = clamp_score(
+            scores.get(key, 0.0)
+        )
+
+        weighted_sum += score * parsed_weight
+        total_weight += parsed_weight
+
+    if total_weight <= 0:
+        return 0.0
+
+    if normalize_weights:
+        weighted_sum /= total_weight
+
+    return clamp_score(weighted_sum)
+
+
+def first_numeric_score(
+    product: Mapping[str, Any],
+    keys: tuple[str, ...],
+    *,
+    default: float = 0.0,
+) -> float:
+    for key in keys:
+        value = product.get(key)
+
+        parsed = safe_float(
+            value,
+            default=None,
+        )
+
+        if parsed is not None:
+            return clamp_score(parsed)
+
+    return clamp_score(default)
+
+
+def apply_score_boost(
+    score: Any,
+    boost: Any,
+) -> float:
+    parsed_score = clamp_score(score)
+
+    parsed_boost = safe_float(
+        boost,
+        default=0.0,
+    )
+
+    if parsed_boost is None:
+        parsed_boost = 0.0
+
+    return clamp_score(
+        parsed_score + parsed_boost
+    )
+
+============================================================
+FILE: app/services/food/knowledge/common/scoring_models.py
+============================================================
+MISSING
+
+============================================================
+FILE: app/services/food/knowledge/coffee/scoring.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.coffee.parser_models import (
+    CoffeeParseResult,
+)
+
+
+COFFEE_KNOWLEDGE_WEIGHTS: dict[str, float] = {
+    "bean": 0.30,
+    "origin": 0.25,
+    "roast": 0.20,
+    "process": 0.25,
+}
+
+COFFEE_FINAL_SCORE_WEIGHTS: dict[str, float] = {
+    "quality": 0.20,
+    "price": 0.15,
+    "trust": 0.15,
+    "knowledge": 0.50,
+}
+
+
+def safe_float(
+    value: Any,
+    default: float = 0.0,
+) -> float:
+    """
+    숫자로 변환할 수 없는 값은 default로 반환한다.
+    """
+    if value is None:
+        return float(default)
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def clamp_score(
+    value: Any,
+) -> float:
+    """
+    점수를 0.0~100.0 범위로 제한한다.
+    """
+    return max(
+        0.0,
+        min(
+            100.0,
+            safe_float(value),
+        ),
+    )
+
+
+def calculate_available_average(
+    *values: Any,
+) -> float:
+    """
+    0보다 큰 유효 점수만 이용해 평균을 계산한다.
+    """
+    available = [
+        clamp_score(value)
+        for value in values
+        if clamp_score(value) > 0.0
+    ]
+
+    if not available:
+        return 0.0
+
+    return round(
+        sum(available) / len(available),
+        2,
+    )
+
+
+def calculate_available_weighted_score(
+    *,
+    scores: Mapping[str, Any],
+    weights: Mapping[str, Any],
+) -> float:
+    """
+    존재하는 양수 점수의 가중치만 재정규화하여 계산한다.
+
+    누락된 Coffee Registry 필드가 확인된 점수를
+    불필요하게 낮추지 않도록 한다.
+    """
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        weights,
+        Mapping,
+    ):
+        raise TypeError(
+            "weights must be a Mapping"
+        )
+
+    weighted_sum = 0.0
+    available_weight = 0.0
+
+    for key, raw_weight in weights.items():
+        score = clamp_score(
+            scores.get(key)
+        )
+        weight = max(
+            0.0,
+            safe_float(raw_weight),
+        )
+
+        if score <= 0.0 or weight <= 0.0:
+            continue
+
+        weighted_sum += score * weight
+        available_weight += weight
+
+    if available_weight <= 0.0:
+        return 0.0
+
+    return round(
+        weighted_sum / available_weight,
+        2,
+    )
+
+
+def extract_registry_scores(
+    parse_result: CoffeeParseResult,
+) -> dict[str, float]:
+    """
+    CoffeeParseResult에 보존된 Registry Entry 점수를 추출한다.
+
+    상품명 재파싱이나 Registry 재조회는 수행하지 않는다.
+    """
+    if not isinstance(
+        parse_result,
+        CoffeeParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CoffeeParseResult"
+        )
+
+    scores: dict[str, float] = {
+        "bean": 0.0,
+        "origin": 0.0,
+        "roast": 0.0,
+        "process": 0.0,
+        "acidity": 0.0,
+        "body": 0.0,
+        "aroma": 0.0,
+        "clarity": 0.0,
+        "sweetness": 0.0,
+    }
+
+    acidity_scores: list[float] = []
+    body_scores: list[float] = []
+    aroma_scores: list[float] = []
+
+    if parse_result.bean_match is not None:
+        entry = (
+            parse_result
+            .bean_match
+            .entry
+        )
+
+        scores["bean"] = clamp_score(
+            entry.score
+        )
+
+        acidity_scores.append(
+            clamp_score(
+                entry.acidity_score
+            )
+        )
+        body_scores.append(
+            clamp_score(
+                entry.body_score
+            )
+        )
+        aroma_scores.append(
+            clamp_score(
+                entry.aroma_score
+            )
+        )
+
+    if parse_result.origin_match is not None:
+        entry = (
+            parse_result
+            .origin_match
+            .entry
+        )
+
+        scores["origin"] = clamp_score(
+            entry.score
+        )
+
+        acidity_scores.append(
+            clamp_score(
+                entry.acidity_score
+            )
+        )
+        body_scores.append(
+            clamp_score(
+                entry.body_score
+            )
+        )
+        aroma_scores.append(
+            clamp_score(
+                entry.aroma_score
+            )
+        )
+
+    if parse_result.roast_match is not None:
+        entry = (
+            parse_result
+            .roast_match
+            .entry
+        )
+
+        scores["roast"] = clamp_score(
+            entry.score
+        )
+
+        acidity_scores.append(
+            clamp_score(
+                entry.acidity_score
+            )
+        )
+        body_scores.append(
+            clamp_score(
+                entry.body_score
+            )
+        )
+        aroma_scores.append(
+            clamp_score(
+                entry.aroma_score
+            )
+        )
+
+    if parse_result.process_match is not None:
+        entry = (
+            parse_result
+            .process_match
+            .entry
+        )
+
+        scores["process"] = clamp_score(
+            entry.score
+        )
+        scores["clarity"] = clamp_score(
+            entry.clarity_score
+        )
+        scores["sweetness"] = clamp_score(
+            entry.sweetness_score
+        )
+
+        body_scores.append(
+            clamp_score(
+                entry.body_score
+            )
+        )
+
+    scores["acidity"] = (
+        calculate_available_average(
+            *acidity_scores
+        )
+    )
+    scores["body"] = (
+        calculate_available_average(
+            *body_scores
+        )
+    )
+    scores["aroma"] = (
+        calculate_available_average(
+            *aroma_scores
+        )
+    )
+
+    return scores
+
+
+def calculate_coffee_knowledge_score(
+    *,
+    bean_score: Any = 0.0,
+    origin_score: Any = 0.0,
+    roast_score: Any = 0.0,
+    process_score: Any = 0.0,
+    weights: Mapping[str, Any] | None = None,
+) -> float:
+    """
+    Coffee Registry 핵심 4개 점수를 이용해
+    Knowledge Score를 계산한다.
+    """
+    effective_weights = (
+        dict(weights)
+        if weights is not None
+        else dict(
+            COFFEE_KNOWLEDGE_WEIGHTS
+        )
+    )
+
+    return calculate_available_weighted_score(
+        scores={
+            "bean": bean_score,
+            "origin": origin_score,
+            "roast": roast_score,
+            "process": process_score,
+        },
+        weights=effective_weights,
+    )
+
+
+def calculate_coffee_scores(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CoffeeParseResult,
+) -> dict[str, float]:
+    """
+    외부 상품 점수와 Coffee Registry 점수를 조합한
+    Scoring 결과를 반환한다.
+
+    이 함수는 최종 점수를 계산하지 않는다.
+    """
+    if not isinstance(
+        product,
+        Mapping,
+    ):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        CoffeeParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CoffeeParseResult"
+        )
+
+    registry_scores = extract_registry_scores(
+        parse_result
+    )
+
+    knowledge_score = (
+        calculate_coffee_knowledge_score(
+            bean_score=(
+                registry_scores["bean"]
+            ),
+            origin_score=(
+                registry_scores["origin"]
+            ),
+            roast_score=(
+                registry_scores["roast"]
+            ),
+            process_score=(
+                registry_scores["process"]
+            ),
+        )
+    )
+
+    return {
+        "quality": clamp_score(
+            product.get("quality_score")
+        ),
+        "price": clamp_score(
+            product.get("price_score")
+        ),
+        "trust": clamp_score(
+            product.get("trust_score")
+        ),
+        "knowledge": knowledge_score,
+        **registry_scores,
+    }
+
+
+def calculate_coffee_final_score(
+    scores: Mapping[str, Any],
+    *,
+    weights: Mapping[str, Any] | None = None,
+) -> float:
+    """
+    외부 평가 점수와 Coffee Knowledge Score를 합산한다.
+
+    최종 점수는 누락 점수를 재정규화하지 않고
+    정의된 전체 가중치에 따라 계산한다.
+    """
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    effective_weights = (
+        dict(weights)
+        if weights is not None
+        else dict(
+            COFFEE_FINAL_SCORE_WEIGHTS
+        )
+    )
+
+    total = 0.0
+
+    for key, raw_weight in (
+        effective_weights.items()
+    ):
+        score = clamp_score(
+            scores.get(key)
+        )
+        weight = max(
+            0.0,
+            safe_float(raw_weight),
+        )
+
+        total += score * weight
+
+    return round(
+        clamp_score(total),
+        2,
+    )
+
+
+__all__ = [
+    "COFFEE_KNOWLEDGE_WEIGHTS",
+    "COFFEE_FINAL_SCORE_WEIGHTS",
+    "safe_float",
+    "clamp_score",
+    "calculate_available_average",
+    "calculate_available_weighted_score",
+    "extract_registry_scores",
+    "calculate_coffee_knowledge_score",
+    "calculate_coffee_scores",
+    "calculate_coffee_final_score",
+]
+
+============================================================
+FILE: app/services/food/knowledge/wine/scoring.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.wine.parser_models import (
+    WineParseResult,
+)
+
+
+WINE_KNOWLEDGE_WEIGHTS: dict[str, float] = {
+    "wine_type": 0.15,
+    "grape": 0.20,
+    "region": 0.25,
+    "sweetness": 0.10,
+    "body": 0.15,
+    "acidity": 0.15,
+}
+
+WINE_FINAL_SCORE_WEIGHTS: dict[str, float] = {
+    "quality": 0.25,
+    "price": 0.10,
+    "trust": 0.20,
+    "knowledge": 0.45,
+}
+
+
+def safe_float(
+    value: Any,
+    default: float = 0.0,
+) -> float:
+    """
+    숫자로 변환할 수 없는 값은 default로 반환한다.
+    """
+    if value is None:
+        return float(default)
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def clamp_score(
+    value: Any,
+) -> float:
+    """
+    점수를 0.0~100.0 범위로 제한한다.
+    """
+    return max(
+        0.0,
+        min(
+            100.0,
+            safe_float(value),
+        ),
+    )
+
+
+def calculate_available_average(
+    *values: Any,
+) -> float:
+    """
+    0보다 큰 유효 점수만으로 평균을 계산한다.
+    """
+    available = [
+        clamp_score(value)
+        for value in values
+        if clamp_score(value) > 0.0
+    ]
+
+    if not available:
+        return 0.0
+
+    return round(
+        sum(available) / len(available),
+        2,
+    )
+
+
+def calculate_available_weighted_score(
+    *,
+    scores: Mapping[str, Any],
+    weights: Mapping[str, Any],
+) -> float:
+    """
+    존재하는 양수 점수의 가중치만 다시 정규화해 계산한다.
+    """
+    if not isinstance(scores, Mapping):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(weights, Mapping):
+        raise TypeError(
+            "weights must be a Mapping"
+        )
+
+    weighted_sum = 0.0
+    available_weight = 0.0
+
+    for key, raw_weight in weights.items():
+        score = clamp_score(
+            scores.get(key)
+        )
+        weight = max(
+            0.0,
+            safe_float(raw_weight),
+        )
+
+        if score <= 0.0 or weight <= 0.0:
+            continue
+
+        weighted_sum += score * weight
+        available_weight += weight
+
+    if available_weight <= 0.0:
+        return 0.0
+
+    return round(
+        weighted_sum / available_weight,
+        2,
+    )
+
+
+def extract_registry_scores(
+    parse_result: WineParseResult,
+) -> dict[str, float]:
+    """
+    WineParseResult에 보존된 Registry Entry 점수를 추출한다.
+
+    상품명 재파싱이나 Registry 재조회는 수행하지 않는다.
+    """
+    if not isinstance(
+        parse_result,
+        WineParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be WineParseResult"
+        )
+
+    scores: dict[str, float] = {
+        "wine_type": 0.0,
+        "grape": 0.0,
+        "region": 0.0,
+        "sweetness": 0.0,
+        "body": 0.0,
+        "acidity": 0.0,
+    }
+
+    if parse_result.wine_type_match is not None:
+        scores["wine_type"] = clamp_score(
+            parse_result
+            .wine_type_match
+            .entry
+            .score
+        )
+
+    if parse_result.grape_match is not None:
+        scores["grape"] = clamp_score(
+            parse_result
+            .grape_match
+            .entry
+            .score
+        )
+
+    if parse_result.region_match is not None:
+        scores["region"] = clamp_score(
+            parse_result
+            .region_match
+            .entry
+            .score
+        )
+
+    if parse_result.sweetness_match is not None:
+        scores["sweetness"] = clamp_score(
+            parse_result
+            .sweetness_match
+            .entry
+            .score
+        )
+
+    if parse_result.body_match is not None:
+        scores["body"] = clamp_score(
+            parse_result
+            .body_match
+            .entry
+            .score
+        )
+
+    if parse_result.acidity_match is not None:
+        scores["acidity"] = clamp_score(
+            parse_result
+            .acidity_match
+            .entry
+            .score
+        )
+
+    return scores
+
+
+def calculate_wine_knowledge_score(
+    *,
+    wine_type_score: Any = 0.0,
+    grape_score: Any = 0.0,
+    region_score: Any = 0.0,
+    sweetness_score: Any = 0.0,
+    body_score: Any = 0.0,
+    acidity_score: Any = 0.0,
+    weights: Mapping[str, Any] | None = None,
+) -> float:
+    """
+    Wine Registry 핵심 점수로 Knowledge Score를 계산한다.
+    """
+    effective_weights = (
+        dict(weights)
+        if weights is not None
+        else dict(WINE_KNOWLEDGE_WEIGHTS)
+    )
+
+    return calculate_available_weighted_score(
+        scores={
+            "wine_type": wine_type_score,
+            "grape": grape_score,
+            "region": region_score,
+            "sweetness": sweetness_score,
+            "body": body_score,
+            "acidity": acidity_score,
+        },
+        weights=effective_weights,
+    )
+
+
+def calculate_wine_quality_score(
+    *,
+    registry_scores: Mapping[str, Any],
+    parse_result: WineParseResult,
+) -> float:
+    """
+    Registry 품질 점수와 빈티지·도수 정보 완전성을 반영한다.
+    """
+    if not isinstance(
+        registry_scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "registry_scores must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        WineParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be WineParseResult"
+        )
+
+    base_score = calculate_available_average(
+        registry_scores.get("grape"),
+        registry_scores.get("region"),
+        registry_scores.get("wine_type"),
+        registry_scores.get("body"),
+        registry_scores.get("acidity"),
+    )
+
+    completeness_bonus = 0.0
+
+    if parse_result.vintage is not None:
+        completeness_bonus += 2.0
+
+    if parse_result.alcohol_percent is not None:
+        completeness_bonus += 2.0
+
+    if parse_result.is_complete:
+        completeness_bonus += 3.0
+
+    return clamp_score(
+        base_score + completeness_bonus
+    )
+
+
+def calculate_wine_trust_score(
+    *,
+    product: Mapping[str, Any],
+    parse_result: WineParseResult,
+) -> float:
+    """
+    구조화 정보와 Parser 신뢰도를 기반으로 Trust Score를 계산한다.
+    """
+    if not isinstance(product, Mapping):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        WineParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be WineParseResult"
+        )
+
+    score = (
+        clamp_score(
+            parse_result.confidence * 100.0
+        )
+        * 0.60
+    )
+
+    evidence_fields = (
+        "producer",
+        "winery",
+        "country",
+        "country_code",
+        "origin_country",
+        "certifications",
+        "certification",
+        "vintage",
+        "alcohol_percent",
+        "volume",
+        "volume_ml",
+    )
+
+    evidence_count = sum(
+        1
+        for field_name in evidence_fields
+        if (
+            field_name in product
+            and product[field_name] is not None
+            and str(product[field_name]).strip()
+        )
+    )
+
+    score += min(
+        40.0,
+        evidence_count * 5.0,
+    )
+
+    return round(
+        clamp_score(score),
+        2,
+    )
+
+
+def calculate_wine_price_score(
+    product: Mapping[str, Any],
+) -> float:
+    """
+    공통 입력 가격 점수가 있으면 사용한다.
+
+    가격 정보가 없으면 Wine Scoring 계층이 임의의 가격 평가를
+    생성하지 않고 0.0을 반환한다.
+    """
+    if not isinstance(product, Mapping):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    for field_name in (
+        "price_score",
+        "value_score",
+        "market_price_score",
+    ):
+        if field_name not in product:
+            continue
+
+        return round(
+            clamp_score(
+                product[field_name]
+            ),
+            2,
+        )
+
+    return 0.0
+
+
+def calculate_wine_scores(
+    *,
+    product: Mapping[str, Any],
+    parse_result: WineParseResult,
+) -> dict[str, float]:
+    """
+    Wine 도메인의 표준 점수 집합을 계산한다.
+    """
+    if not isinstance(product, Mapping):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        WineParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be WineParseResult"
+        )
+
+    registry_scores = extract_registry_scores(
+        parse_result
+    )
+
+    knowledge_score = (
+        calculate_wine_knowledge_score(
+            wine_type_score=(
+                registry_scores["wine_type"]
+            ),
+            grape_score=(
+                registry_scores["grape"]
+            ),
+            region_score=(
+                registry_scores["region"]
+            ),
+            sweetness_score=(
+                registry_scores["sweetness"]
+            ),
+            body_score=(
+                registry_scores["body"]
+            ),
+            acidity_score=(
+                registry_scores["acidity"]
+            ),
+        )
+    )
+
+    quality_score = calculate_wine_quality_score(
+        registry_scores=registry_scores,
+        parse_result=parse_result,
+    )
+
+    trust_score = calculate_wine_trust_score(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    price_score = calculate_wine_price_score(
+        product
+    )
+
+    return {
+        "quality": round(
+            quality_score,
+            2,
+        ),
+        "price": round(
+            price_score,
+            2,
+        ),
+        "trust": round(
+            trust_score,
+            2,
+        ),
+        "knowledge": round(
+            knowledge_score,
+            2,
+        ),
+        "wine_type": registry_scores[
+            "wine_type"
+        ],
+        "grape": registry_scores[
+            "grape"
+        ],
+        "region": registry_scores[
+            "region"
+        ],
+        "sweetness": registry_scores[
+            "sweetness"
+        ],
+        "body": registry_scores[
+            "body"
+        ],
+        "acidity": registry_scores[
+            "acidity"
+        ],
+    }
+
+
+def calculate_wine_final_score(
+    scores: Mapping[str, Any],
+    *,
+    weights: Mapping[str, Any] | None = None,
+) -> float:
+    """
+    Wine 최종 점수를 계산한다.
+    """
+    effective_weights = (
+        dict(weights)
+        if weights is not None
+        else dict(WINE_FINAL_SCORE_WEIGHTS)
+    )
+
+    return calculate_available_weighted_score(
+        scores=scores,
+        weights=effective_weights,
+    )
+
+
+__all__ = [
+    "WINE_FINAL_SCORE_WEIGHTS",
+    "WINE_KNOWLEDGE_WEIGHTS",
+    "calculate_available_average",
+    "calculate_available_weighted_score",
+    "calculate_wine_final_score",
+    "calculate_wine_knowledge_score",
+    "calculate_wine_price_score",
+    "calculate_wine_quality_score",
+    "calculate_wine_scores",
+    "calculate_wine_trust_score",
+    "clamp_score",
+    "extract_registry_scores",
+    "safe_float",
+]
+
+============================================================
+FILE: app/services/food/knowledge/cheese/scoring.py
+============================================================
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from app.services.food.knowledge.cheese.parser_models import (
+    CheeseParseResult,
+)
+
+
+CHEESE_KNOWLEDGE_WEIGHTS: dict[str, float] = {
+    "cheese_type": 0.30,
+    "milk_source": 0.15,
+    "origin": 0.20,
+    "texture": 0.15,
+    "aging": 0.20,
+}
+
+CHEESE_FINAL_SCORE_WEIGHTS: dict[str, float] = {
+    "quality": 0.20,
+    "price": 0.15,
+    "trust": 0.15,
+    "knowledge": 0.50,
+}
+
+
+def safe_float(
+    value: Any,
+    default: float = 0.0,
+) -> float:
+    """
+    숫자로 변환할 수 없는 값은 default로 반환한다.
+    """
+    if value is None:
+        return float(default)
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def clamp_score(
+    value: Any,
+) -> float:
+    """
+    점수를 0.0~100.0 범위로 제한한다.
+    """
+    return max(
+        0.0,
+        min(
+            100.0,
+            safe_float(value),
+        ),
+    )
+
+
+def calculate_available_average(
+    *values: Any,
+) -> float:
+    """
+    0보다 큰 유효 점수만으로 단순 평균을 계산한다.
+    """
+    available = [
+        clamp_score(value)
+        for value in values
+        if clamp_score(value) > 0.0
+    ]
+
+    if not available:
+        return 0.0
+
+    return round(
+        sum(available) / len(available),
+        2,
+    )
+
+
+def calculate_available_weighted_score(
+    *,
+    scores: Mapping[str, Any],
+    weights: Mapping[str, Any],
+) -> float:
+    """
+    존재하는 양수 점수의 가중치만 다시 정규화하여 계산한다.
+
+    누락된 Registry 정보 때문에 확인된 점수가 부당하게
+    낮아지지 않도록 한다.
+    """
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    if not isinstance(
+        weights,
+        Mapping,
+    ):
+        raise TypeError(
+            "weights must be a Mapping"
+        )
+
+    weighted_sum = 0.0
+    available_weight = 0.0
+
+    for key, raw_weight in weights.items():
+        score = clamp_score(
+            scores.get(key)
+        )
+        weight = max(
+            0.0,
+            safe_float(raw_weight),
+        )
+
+        if score <= 0.0 or weight <= 0.0:
+            continue
+
+        weighted_sum += score * weight
+        available_weight += weight
+
+    if available_weight <= 0.0:
+        return 0.0
+
+    return round(
+        weighted_sum / available_weight,
+        2,
+    )
+
+
+def extract_registry_scores(
+    parse_result: CheeseParseResult,
+) -> dict[str, float]:
+    """
+    CheeseParseResult에 보존된 Registry Entry 점수를 추출한다.
+
+    상품명 재파싱이나 Registry 재조회는 수행하지 않는다.
+    """
+    if not isinstance(
+        parse_result,
+        CheeseParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CheeseParseResult"
+        )
+
+    scores: dict[str, float] = {
+        "cheese_type": 0.0,
+        "milk_source": 0.0,
+        "origin": 0.0,
+        "texture": 0.0,
+        "aging": 0.0,
+        "flavor": 0.0,
+        "versatility": 0.0,
+        "richness": 0.0,
+        "availability": 0.0,
+        "tradition": 0.0,
+        "firmness": 0.0,
+        "moisture": 0.0,
+    }
+
+    if parse_result.cheese_type_match is not None:
+        entry = (
+            parse_result
+            .cheese_type_match
+            .entry
+        )
+
+        scores["cheese_type"] = clamp_score(
+            entry.score
+        )
+        scores["flavor"] = clamp_score(
+            entry.flavor_score
+        )
+        scores["versatility"] = clamp_score(
+            entry.versatility_score
+        )
+
+    if parse_result.milk_source_match is not None:
+        entry = (
+            parse_result
+            .milk_source_match
+            .entry
+        )
+
+        scores["milk_source"] = clamp_score(
+            entry.score
+        )
+        scores["richness"] = clamp_score(
+            entry.richness_score
+        )
+        scores["availability"] = clamp_score(
+            entry.availability_score
+        )
+
+    if parse_result.origin_match is not None:
+        entry = (
+            parse_result
+            .origin_match
+            .entry
+        )
+
+        scores["origin"] = clamp_score(
+            entry.score
+        )
+        scores["tradition"] = clamp_score(
+            entry.tradition_score
+        )
+
+    if parse_result.texture_match is not None:
+        entry = (
+            parse_result
+            .texture_match
+            .entry
+        )
+
+        scores["texture"] = clamp_score(
+            entry.score
+        )
+        scores["firmness"] = clamp_score(
+            entry.firmness_score
+        )
+        scores["moisture"] = clamp_score(
+            entry.moisture_score
+        )
+
+    if parse_result.aging_match is not None:
+        entry = (
+            parse_result
+            .aging_match
+            .entry
+        )
+
+        scores["aging"] = clamp_score(
+            entry.score
+        )
+
+    return scores
+
+
+def calculate_cheese_knowledge_score(
+    *,
+    cheese_type_score: Any = 0.0,
+    milk_source_score: Any = 0.0,
+    origin_score: Any = 0.0,
+    texture_score: Any = 0.0,
+    aging_score: Any = 0.0,
+    weights: Mapping[str, Any] | None = None,
+) -> float:
+    """
+    Cheese Registry의 핵심 5개 점수를 이용해
+    Knowledge Score를 계산한다.
+    """
+    effective_weights = (
+        dict(weights)
+        if weights is not None
+        else dict(
+            CHEESE_KNOWLEDGE_WEIGHTS
+        )
+    )
+
+    return calculate_available_weighted_score(
+        scores={
+            "cheese_type": cheese_type_score,
+            "milk_source": milk_source_score,
+            "origin": origin_score,
+            "texture": texture_score,
+            "aging": aging_score,
+        },
+        weights=effective_weights,
+    )
+
+
+def calculate_cheese_scores(
+    *,
+    product: Mapping[str, Any],
+    parse_result: CheeseParseResult,
+) -> dict[str, float]:
+    """
+    외부 상품 점수와 Cheese Registry 점수를 조합한
+    Scoring 결과를 반환한다.
+
+    이 함수는 최종 점수를 계산하지 않는다.
+    """
+    if not isinstance(
+        product,
+        Mapping,
+    ):
+        raise TypeError(
+            "product must be a Mapping"
+        )
+
+    if not isinstance(
+        parse_result,
+        CheeseParseResult,
+    ):
+        raise TypeError(
+            "parse_result must be CheeseParseResult"
+        )
+
+    registry_scores = extract_registry_scores(
+        parse_result
+    )
+
+    knowledge_score = (
+        calculate_cheese_knowledge_score(
+            cheese_type_score=(
+                registry_scores["cheese_type"]
+            ),
+            milk_source_score=(
+                registry_scores["milk_source"]
+            ),
+            origin_score=(
+                registry_scores["origin"]
+            ),
+            texture_score=(
+                registry_scores["texture"]
+            ),
+            aging_score=(
+                registry_scores["aging"]
+            ),
+        )
+    )
+
+    return {
+        "quality": clamp_score(
+            product.get("quality_score")
+        ),
+        "price": clamp_score(
+            product.get("price_score")
+        ),
+        "trust": clamp_score(
+            product.get("trust_score")
+        ),
+        "knowledge": knowledge_score,
+        **registry_scores,
+    }
+
+
+def calculate_cheese_final_score(
+    scores: Mapping[str, Any],
+    *,
+    weights: Mapping[str, Any] | None = None,
+) -> float:
+    """
+    외부 평가 점수와 Cheese Knowledge Score를 합산한다.
+
+    최종 점수는 누락 점수를 재정규화하지 않고,
+    정의된 전체 가중치에 따라 계산한다.
+    """
+    if not isinstance(
+        scores,
+        Mapping,
+    ):
+        raise TypeError(
+            "scores must be a Mapping"
+        )
+
+    effective_weights = (
+        dict(weights)
+        if weights is not None
+        else dict(
+            CHEESE_FINAL_SCORE_WEIGHTS
+        )
+    )
+
+    total = 0.0
+
+    for key, raw_weight in (
+        effective_weights.items()
+    ):
+        score = clamp_score(
+            scores.get(key)
+        )
+        weight = max(
+            0.0,
+            safe_float(raw_weight),
+        )
+
+        total += score * weight
+
+    return round(
+        clamp_score(total),
+        2,
+    )
+
+
+__all__ = [
+    "CHEESE_KNOWLEDGE_WEIGHTS",
+    "CHEESE_FINAL_SCORE_WEIGHTS",
+    "safe_float",
+    "clamp_score",
+    "calculate_available_average",
+    "calculate_available_weighted_score",
+    "extract_registry_scores",
+    "calculate_cheese_knowledge_score",
+    "calculate_cheese_scores",
+    "calculate_cheese_final_score",
+]
+
+============================================================
+FILE: tests/services/food/knowledge/coffee/test_coffee_scoring.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.coffee import (
+    COFFEE_FINAL_SCORE_WEIGHTS,
+    COFFEE_KNOWLEDGE_WEIGHTS,
+    CoffeeParser,
+    calculate_available_average,
+    calculate_available_weighted_score,
+    calculate_coffee_final_score,
+    calculate_coffee_knowledge_score,
+    calculate_coffee_scores,
+    clamp_score,
+    extract_registry_scores,
+    safe_float,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "에티오피아 100% 아라비카 "
+            "라이트 로스트 워시드 원두"
+        ),
+        "bean_type": "100% arabica",
+        "origin_country": "Ethiopia",
+        "roast_level": "light roast",
+        "processing_method": "washed process",
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_default_scoring_weights() -> None:
+    assert COFFEE_KNOWLEDGE_WEIGHTS == {
+        "bean": 0.30,
+        "origin": 0.25,
+        "roast": 0.20,
+        "process": 0.25,
+    }
+
+    assert COFFEE_FINAL_SCORE_WEIGHTS == {
+        "quality": 0.20,
+        "price": 0.15,
+        "trust": 0.15,
+        "knowledge": 0.50,
+    }
+
+
+def test_safe_float() -> None:
+    assert safe_float("12.5") == 12.5
+    assert safe_float(10) == 10.0
+    assert safe_float(None) == 0.0
+    assert safe_float(
+        "invalid",
+        7.0,
+    ) == 7.0
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (-10, 0.0),
+        (0, 0.0),
+        (50, 50.0),
+        (100, 100.0),
+        (120, 100.0),
+        ("75.5", 75.5),
+        (None, 0.0),
+    ],
+)
+def test_clamp_score(
+    value: object,
+    expected: float,
+) -> None:
+    assert clamp_score(value) == expected
+
+
+def test_calculate_available_average() -> None:
+    assert calculate_available_average(
+        80,
+        90,
+        0,
+        None,
+    ) == 85.0
+
+    assert calculate_available_average(
+        0,
+        None,
+        "invalid",
+    ) == 0.0
+
+
+def test_calculate_available_weighted_score() -> None:
+    result = (
+        calculate_available_weighted_score(
+            scores={
+                "a": 80,
+                "b": 100,
+                "c": 0,
+            },
+            weights={
+                "a": 0.25,
+                "b": 0.75,
+                "c": 1.0,
+            },
+        )
+    )
+
+    assert result == 95.0
+
+
+def test_available_weighted_score_rejects_invalid_inputs() -> None:
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        calculate_available_weighted_score(
+            scores=[],  # type: ignore[arg-type]
+            weights={},
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="weights must be a Mapping",
+    ):
+        calculate_available_weighted_score(
+            scores={},
+            weights=[],  # type: ignore[arg-type]
+        )
+
+
+def test_extract_complete_registry_scores() -> None:
+    parse_result = (
+        CoffeeParser().parse_product(
+            _complete_product()
+        )
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert scores["bean"] == 92.0
+    assert scores["origin"] == 96.0
+    assert scores["roast"] == 91.0
+    assert scores["process"] == 91.0
+
+    assert scores["acidity"] == 92.67
+    assert scores["body"] == 72.25
+    assert scores["aroma"] == 94.67
+    assert scores["clarity"] == 96.0
+    assert scores["sweetness"] == 82.0
+
+
+def test_extract_partial_registry_scores() -> None:
+    parse_result = CoffeeParser().parse(
+        "에티오피아 워시드 커피"
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert scores["bean"] == 0.0
+    assert scores["origin"] == 96.0
+    assert scores["roast"] == 0.0
+    assert scores["process"] == 91.0
+
+    assert scores["acidity"] == 94.0
+    assert scores["body"] == 74.0
+    assert scores["aroma"] == 98.0
+    assert scores["clarity"] == 96.0
+    assert scores["sweetness"] == 82.0
+
+
+def test_extract_unknown_registry_scores() -> None:
+    parse_result = CoffeeParser().parse(
+        "상품 정보가 없는 일반 문자열"
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert all(
+        score == 0.0
+        for score in scores.values()
+    )
+
+
+def test_extract_registry_scores_rejects_wrong_type() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CoffeeParseResult"
+        ),
+    ):
+        extract_registry_scores(
+            object()  # type: ignore[arg-type]
+        )
+
+
+def test_calculate_complete_knowledge_score() -> None:
+    score = calculate_coffee_knowledge_score(
+        bean_score=92,
+        origin_score=96,
+        roast_score=91,
+        process_score=91,
+    )
+
+    assert score == 92.55
+
+
+def test_knowledge_score_uses_available_fields() -> None:
+    score = calculate_coffee_knowledge_score(
+        origin_score=96,
+        process_score=91,
+    )
+
+    assert score == 93.5
+
+    assert calculate_coffee_knowledge_score(
+        bean_score=0,
+        origin_score=0,
+        roast_score=0,
+        process_score=0,
+    ) == 0.0
+
+
+def test_knowledge_score_custom_weights() -> None:
+    score = calculate_coffee_knowledge_score(
+        bean_score=80,
+        process_score=100,
+        weights={
+            "bean": 0.0,
+            "process": 1.0,
+        },
+    )
+
+    assert score == 100.0
+
+
+def test_calculate_coffee_scores() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    scores = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert scores["quality"] == 80.0
+    assert scores["price"] == 70.0
+    assert scores["trust"] == 90.0
+    assert scores["knowledge"] == 92.55
+
+    assert scores["bean"] == 92.0
+    assert scores["origin"] == 96.0
+    assert scores["roast"] == 91.0
+    assert scores["process"] == 91.0
+
+
+def test_calculate_coffee_scores_clamps_external_scores() -> None:
+    product = {
+        "product_name": "아라비카 원두",
+        "quality_score": 150,
+        "price_score": -20,
+        "trust_score": "85",
+    }
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    scores = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert scores["quality"] == 100.0
+    assert scores["price"] == 0.0
+    assert scores["trust"] == 85.0
+    assert scores["knowledge"] == 92.0
+
+
+def test_calculate_coffee_scores_rejects_invalid_product() -> None:
+    parse_result = CoffeeParser().parse(
+        "아라비카 원두"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        calculate_coffee_scores(
+            product="아라비카",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_calculate_coffee_scores_rejects_wrong_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CoffeeParseResult"
+        ),
+    ):
+        calculate_coffee_scores(
+            product={
+                "product_name": (
+                    "아라비카 원두"
+                ),
+            },
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_calculate_coffee_final_score() -> None:
+    final_score = (
+        calculate_coffee_final_score(
+            {
+                "quality": 80,
+                "price": 70,
+                "trust": 90,
+                "knowledge": 92.55,
+            }
+        )
+    )
+
+    assert final_score == 86.28
+
+
+def test_final_score_missing_external_values() -> None:
+    final_score = (
+        calculate_coffee_final_score(
+            {
+                "knowledge": 93.5,
+            }
+        )
+    )
+
+    assert final_score == 46.75
+
+
+def test_final_score_custom_weights() -> None:
+    final_score = (
+        calculate_coffee_final_score(
+            {
+                "quality": 80,
+                "price": 70,
+                "trust": 90,
+                "knowledge": 92.55,
+            },
+            weights={
+                "quality": 0.0,
+                "price": 0.0,
+                "trust": 0.0,
+                "knowledge": 1.0,
+            },
+        )
+    )
+
+    assert final_score == 92.55
+
+
+def test_final_score_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        calculate_coffee_final_score(
+            [80, 70, 90]  # type: ignore[arg-type]
+        )
+
+
+def test_scoring_does_not_mutate_inputs() -> None:
+    product = _complete_product()
+    product_before = deepcopy(product)
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+    parse_result_before = (
+        parse_result.to_dict()
+    )
+
+    calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert product == product_before
+    assert (
+        parse_result.to_dict()
+        == parse_result_before
+    )
+
+
+def test_scoring_is_deterministic() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CoffeeParser().parse_product(
+            product
+        )
+    )
+
+    first = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    second = calculate_coffee_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert first == second
+    assert first is not second
+
+============================================================
+FILE: tests/services/food/knowledge/wine/test_wine_scoring.py
+============================================================
+from __future__ import annotations
+
+import pytest
+
+from app.services.food.knowledge.wine.parser import (
+    WineParser,
+)
+from app.services.food.knowledge.wine.scoring import (
+    calculate_available_average,
+    calculate_available_weighted_score,
+    calculate_wine_final_score,
+    calculate_wine_knowledge_score,
+    calculate_wine_price_score,
+    calculate_wine_scores,
+    clamp_score,
+    extract_registry_scores,
+    safe_float,
+)
+
+
+def test_safe_float() -> None:
+    assert safe_float("12.5") == 12.5
+    assert safe_float(None) == 0.0
+    assert safe_float("invalid", 3.0) == 3.0
+
+
+@pytest.mark.parametrize(
+    (
+        "value",
+        "expected",
+    ),
+    [
+        (-10, 0.0),
+        (0, 0.0),
+        (50, 50.0),
+        (100, 100.0),
+        (120, 100.0),
+        ("85.5", 85.5),
+    ],
+)
+def test_clamp_score(
+    value: object,
+    expected: float,
+) -> None:
+    assert clamp_score(value) == expected
+
+
+def test_calculate_available_average() -> None:
+    assert (
+        calculate_available_average(
+            80,
+            90,
+            0,
+            None,
+        )
+        == 85.0
+    )
+
+    assert (
+        calculate_available_average(
+            0,
+            None,
+        )
+        == 0.0
+    )
+
+
+def test_calculate_available_weighted_score() -> None:
+    result = calculate_available_weighted_score(
+        scores={
+            "a": 80,
+            "b": 100,
+            "c": 0,
+        },
+        weights={
+            "a": 0.25,
+            "b": 0.75,
+            "c": 1.0,
+        },
+    )
+
+    assert result == 95.0
+
+
+def test_calculate_available_weighted_score_rejects_invalid_input() -> None:
+    with pytest.raises(TypeError):
+        calculate_available_weighted_score(
+            scores=[],  # type: ignore[arg-type]
+            weights={},
+        )
+
+    with pytest.raises(TypeError):
+        calculate_available_weighted_score(
+            scores={},
+            weights=[],  # type: ignore[arg-type]
+        )
+
+
+def test_extract_registry_scores() -> None:
+    parse_result = WineParser().parse(
+        "보르도 카베르네 소비뇽 "
+        "레드 와인 드라이 풀 바디 높은 산도"
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert scores["wine_type"] == 85.0
+    assert scores["grape"] == 90.0
+    assert scores["region"] == 92.0
+    assert scores["sweetness"] == 85.0
+    assert scores["body"] == 88.0
+    assert scores["acidity"] == 87.0
+
+
+def test_extract_registry_scores_for_empty_result() -> None:
+    parse_result = WineParser().parse(
+        "등록되지 않은 상품"
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert scores == {
+        "wine_type": 0.0,
+        "grape": 0.0,
+        "region": 0.0,
+        "sweetness": 0.0,
+        "body": 0.0,
+        "acidity": 0.0,
+    }
+
+
+def test_calculate_wine_knowledge_score() -> None:
+    score = calculate_wine_knowledge_score(
+        wine_type_score=85,
+        grape_score=90,
+        region_score=92,
+        sweetness_score=85,
+        body_score=88,
+        acidity_score=87,
+    )
+
+    assert 0.0 <= score <= 100.0
+    assert score == 88.5
+
+
+def test_calculate_wine_knowledge_score_renormalizes_missing_values() -> None:
+    score = calculate_wine_knowledge_score(
+        grape_score=90,
+        region_score=80,
+    )
+
+    expected = round(
+        (
+            (90 * 0.20)
+            + (80 * 0.25)
+        )
+        / (0.20 + 0.25),
+        2,
+    )
+
+    assert score == expected
+
+
+def test_calculate_wine_price_score() -> None:
+    assert (
+        calculate_wine_price_score(
+            {
+                "price_score": 77.5,
+            }
+        )
+        == 77.5
+    )
+
+    assert (
+        calculate_wine_price_score({})
+        == 0.0
+    )
+
+
+def test_calculate_wine_scores() -> None:
+    product = {
+        "product_name": (
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인 드라이 풀 바디 "
+            "높은 산도 13.5%"
+        ),
+        "producer": "Example Winery",
+        "country": "France",
+        "certifications": ["AOC"],
+        "volume": "750ml",
+        "price_score": 75,
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    scores = calculate_wine_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert set(scores) == {
+        "quality",
+        "price",
+        "trust",
+        "knowledge",
+        "wine_type",
+        "grape",
+        "region",
+        "sweetness",
+        "body",
+        "acidity",
+    }
+
+    assert scores["price"] == 75.0
+    assert scores["knowledge"] == 88.5
+    assert 0.0 <= scores["quality"] <= 100.0
+    assert 0.0 <= scores["trust"] <= 100.0
+
+
+def test_calculate_wine_scores_without_registry_match() -> None:
+    product = {
+        "product_name": (
+            "등록되지 않은 임의의 상품"
+        ),
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    scores = calculate_wine_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert scores["knowledge"] == 0.0
+    assert scores["quality"] == 0.0
+    assert scores["trust"] == 0.0
+    assert scores["price"] == 0.0
+
+
+def test_calculate_wine_final_score() -> None:
+    score = calculate_wine_final_score(
+        {
+            "quality": 90,
+            "price": 70,
+            "trust": 80,
+            "knowledge": 88,
+        }
+    )
+
+    assert score == 85.1
+
+
+def test_calculate_wine_final_score_ignores_missing_scores() -> None:
+    score = calculate_wine_final_score(
+        {
+            "quality": 90,
+            "knowledge": 80,
+        }
+    )
+
+    expected = round(
+        (
+            (90 * 0.25)
+            + (80 * 0.45)
+        )
+        / (0.25 + 0.45),
+        2,
+    )
+
+    assert score == expected
+
+
+def test_wine_scoring_is_deterministic() -> None:
+    product = {
+        "product_name": (
+            "2020 보르도 카베르네 소비뇽 "
+            "레드 와인 드라이"
+        ),
+        "price_score": 70,
+    }
+
+    parse_result = WineParser().parse_product(
+        product
+    )
+
+    first = calculate_wine_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+    second = calculate_wine_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert first == second
+    assert (
+        calculate_wine_final_score(first)
+        == calculate_wine_final_score(second)
+    )
+
+
+def test_wine_scoring_rejects_invalid_inputs() -> None:
+    parse_result = WineParser().parse(
+        "보르도 레드 와인"
+    )
+
+    with pytest.raises(TypeError):
+        calculate_wine_scores(
+            product="invalid",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+    with pytest.raises(TypeError):
+        calculate_wine_scores(
+            product={},
+            parse_result=None,  # type: ignore[arg-type]
+        )
+
+============================================================
+FILE: tests/services/food/knowledge/cheese/test_cheese_scoring.py
+============================================================
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from app.services.food.knowledge.cheese import (
+    CHEESE_FINAL_SCORE_WEIGHTS,
+    CHEESE_KNOWLEDGE_WEIGHTS,
+    CheeseParser,
+    calculate_available_average,
+    calculate_available_weighted_score,
+    calculate_cheese_final_score,
+    calculate_cheese_knowledge_score,
+    calculate_cheese_scores,
+    clamp_score,
+    extract_registry_scores,
+    safe_float,
+)
+
+
+def _complete_product() -> dict[str, object]:
+    return {
+        "product_name": (
+            "프랑스 산양유 브리 "
+            "소프트 치즈 12개월 숙성"
+        ),
+        "cheese_type": "brie",
+        "milk_source": "goat milk",
+        "country": "프랑스",
+        "texture": "soft cheese",
+        "aging": "12개월 숙성",
+        "quality_score": 80,
+        "price_score": 70,
+        "trust_score": 90,
+    }
+
+
+def test_default_scoring_weights() -> None:
+    assert CHEESE_KNOWLEDGE_WEIGHTS == {
+        "cheese_type": 0.30,
+        "milk_source": 0.15,
+        "origin": 0.20,
+        "texture": 0.15,
+        "aging": 0.20,
+    }
+
+    assert CHEESE_FINAL_SCORE_WEIGHTS == {
+        "quality": 0.20,
+        "price": 0.15,
+        "trust": 0.15,
+        "knowledge": 0.50,
+    }
+
+
+def test_safe_float() -> None:
+    assert safe_float("12.5") == 12.5
+    assert safe_float(10) == 10.0
+    assert safe_float(None) == 0.0
+    assert safe_float(
+        "invalid",
+        7.0,
+    ) == 7.0
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (-10, 0.0),
+        (0, 0.0),
+        (50, 50.0),
+        (100, 100.0),
+        (120, 100.0),
+        ("75.5", 75.5),
+        (None, 0.0),
+    ],
+)
+def test_clamp_score(
+    value: object,
+    expected: float,
+) -> None:
+    assert clamp_score(value) == expected
+
+
+def test_calculate_available_average() -> None:
+    assert calculate_available_average(
+        80,
+        90,
+        0,
+        None,
+    ) == 85.0
+
+    assert calculate_available_average(
+        0,
+        None,
+        "invalid",
+    ) == 0.0
+
+
+def test_calculate_available_weighted_score() -> None:
+    result = (
+        calculate_available_weighted_score(
+            scores={
+                "a": 80,
+                "b": 100,
+                "c": 0,
+            },
+            weights={
+                "a": 0.25,
+                "b": 0.75,
+                "c": 1.0,
+            },
+        )
+    )
+
+    assert result == 95.0
+
+
+def test_available_weighted_score_rejects_invalid_inputs() -> None:
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        calculate_available_weighted_score(
+            scores=[],  # type: ignore[arg-type]
+            weights={},
+        )
+
+    with pytest.raises(
+        TypeError,
+        match="weights must be a Mapping",
+    ):
+        calculate_available_weighted_score(
+            scores={},
+            weights=[],  # type: ignore[arg-type]
+        )
+
+
+def test_extract_complete_registry_scores() -> None:
+    parse_result = (
+        CheeseParser().parse_product(
+            _complete_product()
+        )
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert scores["cheese_type"] == 92.0
+    assert scores["milk_source"] == 91.0
+    assert scores["origin"] == 96.0
+    assert scores["texture"] == 89.0
+    assert scores["aging"] == 94.0
+
+    assert scores["flavor"] == 88.0
+    assert scores["versatility"] == 82.0
+    assert scores["richness"] == 87.0
+    assert scores["availability"] == 68.0
+    assert scores["tradition"] == 99.0
+    assert scores["firmness"] == 30.0
+    assert scores["moisture"] == 82.0
+
+
+def test_extract_partial_registry_scores() -> None:
+    parse_result = CheeseParser().parse(
+        "24개월 숙성 "
+        "파르미자노 레지아노"
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert scores["cheese_type"] == 96.0
+    assert scores["aging"] == 97.0
+
+    assert scores["milk_source"] == 0.0
+    assert scores["origin"] == 0.0
+    assert scores["texture"] == 0.0
+
+    assert scores["flavor"] == 96.0
+    assert scores["versatility"] == 93.0
+
+
+def test_extract_unknown_registry_scores() -> None:
+    parse_result = CheeseParser().parse(
+        "상품 정보가 없는 일반 문자열"
+    )
+
+    scores = extract_registry_scores(
+        parse_result
+    )
+
+    assert all(
+        score == 0.0
+        for score in scores.values()
+    )
+
+
+def test_extract_registry_scores_rejects_wrong_type() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CheeseParseResult"
+        ),
+    ):
+        extract_registry_scores(
+            object()  # type: ignore[arg-type]
+        )
+
+
+def test_calculate_complete_knowledge_score() -> None:
+    score = calculate_cheese_knowledge_score(
+        cheese_type_score=92,
+        milk_source_score=91,
+        origin_score=96,
+        texture_score=89,
+        aging_score=94,
+    )
+
+    # 92×0.30 + 91×0.15 + 96×0.20
+    # + 89×0.15 + 94×0.20
+    assert score == 92.6
+
+
+def test_knowledge_score_uses_available_fields() -> None:
+    score = calculate_cheese_knowledge_score(
+        cheese_type_score=96,
+        aging_score=97,
+    )
+
+    # (96×0.30 + 97×0.20) / 0.50
+    assert score == 96.4
+
+    assert calculate_cheese_knowledge_score(
+        cheese_type_score=0,
+        milk_source_score=0,
+        origin_score=0,
+        texture_score=0,
+        aging_score=0,
+    ) == 0.0
+
+
+def test_knowledge_score_custom_weights() -> None:
+    score = calculate_cheese_knowledge_score(
+        cheese_type_score=80,
+        aging_score=100,
+        weights={
+            "cheese_type": 0.0,
+            "aging": 1.0,
+        },
+    )
+
+    assert score == 100.0
+
+
+def test_calculate_cheese_scores() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    scores = calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert scores["quality"] == 80.0
+    assert scores["price"] == 70.0
+    assert scores["trust"] == 90.0
+    assert scores["knowledge"] == 92.6
+
+    assert scores["cheese_type"] == 92.0
+    assert scores["milk_source"] == 91.0
+    assert scores["origin"] == 96.0
+    assert scores["texture"] == 89.0
+    assert scores["aging"] == 94.0
+
+
+def test_calculate_cheese_scores_clamps_external_scores() -> None:
+    product = {
+        "product_name": "브리 치즈",
+        "quality_score": 150,
+        "price_score": -20,
+        "trust_score": "85",
+    }
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    scores = calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert scores["quality"] == 100.0
+    assert scores["price"] == 0.0
+    assert scores["trust"] == 85.0
+    assert scores["knowledge"] == 92.0
+
+
+def test_calculate_cheese_scores_rejects_invalid_product() -> None:
+    parse_result = CheeseParser().parse(
+        "브리 치즈"
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="product must be a Mapping",
+    ):
+        calculate_cheese_scores(
+            product="브리 치즈",  # type: ignore[arg-type]
+            parse_result=parse_result,
+        )
+
+
+def test_calculate_cheese_scores_rejects_wrong_parse_result() -> None:
+    with pytest.raises(
+        TypeError,
+        match=(
+            "parse_result must be "
+            "CheeseParseResult"
+        ),
+    ):
+        calculate_cheese_scores(
+            product={
+                "product_name": "브리 치즈",
+            },
+            parse_result=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_calculate_cheese_final_score() -> None:
+    final_score = (
+        calculate_cheese_final_score(
+            {
+                "quality": 80,
+                "price": 70,
+                "trust": 90,
+                "knowledge": 92.8,
+            }
+        )
+    )
+
+    # 80×0.20 + 70×0.15
+    # + 90×0.15 + 92.8×0.50
+    assert final_score == 86.4
+
+
+def test_final_score_missing_external_values() -> None:
+    final_score = (
+        calculate_cheese_final_score(
+            {
+                "knowledge": 96.4,
+            }
+        )
+    )
+
+    assert final_score == 48.2
+
+
+def test_final_score_custom_weights() -> None:
+    final_score = (
+        calculate_cheese_final_score(
+            {
+                "quality": 80,
+                "price": 70,
+                "trust": 90,
+                "knowledge": 92.8,
+            },
+            weights={
+                "quality": 0.0,
+                "price": 0.0,
+                "trust": 0.0,
+                "knowledge": 1.0,
+            },
+        )
+    )
+
+    assert final_score == 92.8
+
+
+def test_final_score_rejects_non_mapping() -> None:
+    with pytest.raises(
+        TypeError,
+        match="scores must be a Mapping",
+    ):
+        calculate_cheese_final_score(
+            [80, 70, 90]  # type: ignore[arg-type]
+        )
+
+
+def test_scoring_does_not_mutate_inputs() -> None:
+    product = _complete_product()
+    product_before = deepcopy(product)
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+    parse_result_before = (
+        parse_result.to_dict()
+    )
+
+    calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert product == product_before
+    assert (
+        parse_result.to_dict()
+        == parse_result_before
+    )
+
+
+def test_scoring_is_deterministic() -> None:
+    product = _complete_product()
+
+    parse_result = (
+        CheeseParser().parse_product(
+            product
+        )
+    )
+
+    first = calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    second = calculate_cheese_scores(
+        product=product,
+        parse_result=parse_result,
+    )
+
+    assert first == second
+    assert first is not second

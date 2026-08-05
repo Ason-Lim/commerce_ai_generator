@@ -1,0 +1,11 @@
+app/services/food/knowledge/cheese/provider.py
+app/services/food/knowledge/coffee/provider.py
+app/services/food/knowledge/fruit/provider.py
+app/services/food/knowledge/meat/beef/provider.py
+app/services/food/knowledge/meat/chicken/provider.py
+app/services/food/knowledge/meat/duck/provider.py
+app/services/food/knowledge/meat/goat/provider.py
+app/services/food/knowledge/meat/lamb/provider.py
+app/services/food/knowledge/meat/venison/provider.py
+app/services/food/knowledge/models.py
+app/services/food/knowledge/wine/provider.py

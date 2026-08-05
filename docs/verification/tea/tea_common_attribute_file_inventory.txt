@@ -1,0 +1,2 @@
+app/services/food/knowledge/common/base_model.py
+app/services/food/knowledge/common/parser_models.py

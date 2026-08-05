@@ -1,0 +1,11 @@
+app/services/food/knowledge/cheese/scoring.py
+app/services/food/knowledge/coffee/scoring.py
+app/services/food/knowledge/common/scoring.py
+app/services/food/knowledge/fruit/scoring.py
+app/services/food/knowledge/meat/beef/scoring.py
+app/services/food/knowledge/meat/chicken/scoring.py
+app/services/food/knowledge/meat/duck/scoring.py
+app/services/food/knowledge/meat/goat/scoring.py
+app/services/food/knowledge/meat/lamb/scoring.py
+app/services/food/knowledge/meat/venison/scoring.py
+app/services/food/knowledge/wine/scoring.py

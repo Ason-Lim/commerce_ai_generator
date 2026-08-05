@@ -1,0 +1,60 @@
+
+========================================================================
+FILE: app/services/food/knowledge/common/attribute_models.py
+========================================================================
+MISSING
+
+========================================================================
+FILE: app/services/food/knowledge/common/attributes.py
+========================================================================
+MISSING
+
+========================================================================
+FILE: app/services/food/knowledge/coffee/attributes.py
+========================================================================
+{'function': 'extract_coffee_product_name', 'line': 11}
+{'function': 'extract_coffee_country_text', 'line': 27}
+{'function': 'extract_coffee_country_code', 'line': 65}
+{'function': 'extract_coffee_weight', 'line': 107}
+{'function': 'extract_coffee_grind_type', 'line': 122}
+{'function': 'extract_coffee_product_form', 'line': 145}
+{'function': 'extract_coffee_decaf', 'line': 169}
+{'function': 'extract_coffee_certifications', 'line': 223}
+{'function': 'extract_coffee_flavor_notes', 'line': 272}
+{'function': 'extract_coffee_altitude', 'line': 337}
+{'function': 'extract_coffee_roast_date', 'line': 351}
+{'function': 'build_coffee_attributes', 'line': 365}
+{'function': '_deduplicate_strings', 'line': 621}
+
+========================================================================
+FILE: app/services/food/knowledge/wine/attributes.py
+========================================================================
+{'function': 'extract_wine_product_name', 'line': 11}
+{'function': 'extract_wine_country_text', 'line': 27}
+{'function': 'extract_wine_country_code', 'line': 66}
+{'function': 'extract_wine_volume', 'line': 108}
+{'function': 'extract_wine_packaging_type', 'line': 124}
+{'function': 'extract_wine_closure_type', 'line': 148}
+{'function': 'extract_wine_producer', 'line': 171}
+{'function': 'extract_wine_certifications', 'line': 194}
+{'function': 'extract_wine_organic_status', 'line': 235}
+{'function': 'extract_wine_biodynamic_status', 'line': 281}
+{'function': 'build_wine_attributes', 'line': 325}
+{'function': '_add_registry_metadata', 'line': 427}
+{'function': '_deduplicate_strings', 'line': 553}
+
+========================================================================
+FILE: app/services/food/knowledge/cheese/attributes.py
+========================================================================
+{'function': 'extract_cheese_product_name', 'line': 11}
+{'function': 'extract_cheese_country_text', 'line': 27}
+{'function': 'extract_cheese_country_code', 'line': 64}
+{'function': 'extract_cheese_weight', 'line': 107}
+{'function': 'extract_cheese_storage_type', 'line': 122}
+{'function': 'extract_cheese_packaging_type', 'line': 145}
+{'function': 'extract_cheese_pasteurization', 'line': 169}
+{'function': 'extract_cheese_certifications', 'line': 204}
+{'function': 'extract_cheese_fat_content', 'line': 253}
+{'function': 'extract_cheese_rind_type', 'line': 267}
+{'function': 'build_cheese_attributes', 'line': 289}
+{'function': '_deduplicate_strings', 'line': 571}

@@ -1,0 +1,68 @@
+green:
+  canonical_name: green
+  aliases:
+    - green tea
+    - 녹차
+  score: 0
+  premium: false
+  description: Green tea
+
+black:
+  canonical_name: black
+  aliases:
+    - black tea
+    - 홍차
+  score: 0
+  premium: false
+  description: Black tea
+
+oolong:
+  canonical_name: oolong
+  aliases:
+    - oolong tea
+    - 우롱차
+    - 우롱
+  score: 0
+  premium: false
+  description: Oolong tea
+
+white:
+  canonical_name: white
+  aliases:
+    - white tea
+    - 백차
+  score: 0
+  premium: false
+  description: White tea
+
+yellow:
+  canonical_name: yellow
+  aliases:
+    - yellow tea
+    - 황차
+  score: 0
+  premium: false
+  description: Yellow tea
+
+puerh:
+  canonical_name: puerh
+  aliases:
+    - pu-erh
+    - pu erh
+    - pu-erh tea
+    - puerh tea
+    - 보이차
+  score: 0
+  premium: false
+  description: Pu-erh tea
+
+herbal:
+  canonical_name: herbal
+  aliases:
+    - herbal tea
+    - herbal infusion
+    - 허브티
+    - 허브 차
+  score: 0
+  premium: false
+  description: Herbal infusion

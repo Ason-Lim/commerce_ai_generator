@@ -1,0 +1,39 @@
+=== Verification timestamp ===
+2026-08-04T10:33:29Z
+
+=== Python compileall ===
+compile_exit_code=0
+
+=== Git branch and commit ===
+main
+42f3eb6cc4601e189fa9bb5a0cac1874373d22cf
+
+=== Git status ===
+ M docs/verification/cheese/provider-registration.json
+ M docs/verification/cheese/provider-registration.txt
+ M tools/verification/__init__.py
+?? "docs/architecture/tools/Integration Verification Tool v1.0.md"
+?? docs/verification/cheese/cross-domain-regression.txt
+?? docs/verification/cheese/integration-verification-suite.json
+?? docs/verification/cheese/provider-selection.txt
+?? docs/verification/cheese/result-contract.txt
+?? docs/verification/cheese/runtime-routing.txt
+?? docs/verification/tea/tea_file_inventory.txt
+?? docs/verification/tea/tea_registry_evidence.json
+?? docs/verification/tea/tea_registry_evidence.py
+?? docs/verification/tea/tea_registry_evidence.txt
+?? docs/verification/tea/tea_registry_test_results.txt
+?? docs/verification/tea/tea_repository_evidence.txt
+?? docs/verification/tea/tea_test_results.txt
+?? tests/tools/verification/integration/test_integration_verifier.py
+?? tools/verification/integration/__init__.py
+?? tools/verification/integration/cli.py
+?? tools/verification/integration/integration_verifier.py
+?? tools/verification/integration/profiles.py
+
+=== Changed files ===
+docs/verification/cheese/provider-registration.json
+docs/verification/cheese/provider-registration.txt
+tools/verification/__init__.py
+
+=== Tea diff statistics ===
