@@ -33,3 +33,12 @@ from tools.verification.boundary import (
 __all__.append(
     "ArchitectureBoundaryVerifier"
 )
+
+
+from tools.verification.integration import (
+    IntegrationVerificationTool,
+)
+
+__all__.append(
+    "IntegrationVerificationTool"
+)
