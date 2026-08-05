@@ -222,9 +222,9 @@ class TeaKnowledgeProvider(
             alias,
         ):
             pattern = (
-                r"(?<!\\w)"
+                r"(?<!\w)"
                 + re.escape(alias)
-                + r"(?!\\w)"
+                + r"(?!\w)"
             )
             return (
                 re.search(

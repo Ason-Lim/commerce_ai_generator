@@ -63,6 +63,7 @@ def test_provider_registration_order() -> None:
         "cheese",
         "coffee",
         "wine",
+        "tea",
         "venison",
         "goat",
         "beef",
