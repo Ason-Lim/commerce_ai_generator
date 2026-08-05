@@ -1,50 +1,114 @@
 {
-  "report_id": "IPR-CHEESE-2026-001",
-  "project": "Commerce AI Generator",
-  "domain": "10_Cheese",
-  "verification_type": "Provider Registration Verification",
-  "status": "FAIL",
-  "provider": {
-    "class": "CheeseKnowledgeProvider",
+  "verifier_id": "integration.project",
+  "verifier_name": "Project Integration Verification Tool",
+  "target": "app/services/food/knowledge/cheese",
+  "status": "PASS",
+  "summary": "Project integration verification passed.",
+  "checks": [
+    {
+      "check_id": "integration.registration.registry_contains",
+      "title": "Registry membership",
+      "status": "PASS",
+      "summary": "Provider category is present in the shared Registry.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.provider_retrieval",
+      "title": "Provider retrieval",
+      "status": "PASS",
+      "summary": "get_food_provider returned the expected Provider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.required_retrieval",
+      "title": "Required Provider retrieval",
+      "status": "PASS",
+      "summary": "require_food_provider returned the expected Provider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.provider_contract",
+      "title": "Provider base contract",
+      "status": "PASS",
+      "summary": "Provider satisfies FoodKnowledgeProvider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.provider_identity",
+      "title": "Provider identity",
+      "status": "PASS",
+      "summary": "Provider category identity matches the profile.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.single_registration",
+      "title": "Single registration",
+      "status": "PASS",
+      "summary": "Provider is registered exactly once.",
+      "details": [
+        "Observed count: 1"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.category_uniqueness",
+      "title": "Category uniqueness",
+      "status": "PASS",
+      "summary": "Provider category identifiers are unique.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "integration-registration-cheese",
+      "kind": "registry",
+      "title": "치즈 Provider registration",
+      "location": null,
+      "summary": "Current shared Registry registration snapshot.",
+      "metadata": {
+        "provider_class": "CheeseKnowledgeProvider",
+        "category_id": "cheese",
+        "category_name": "치즈",
+        "registration_count": 1,
+        "registry_order_snapshot": [
+          "fruit",
+          "cheese",
+          "coffee",
+          "wine",
+          "venison",
+          "goat",
+          "beef",
+          "lamb",
+          "chicken",
+          "duck"
+        ]
+      }
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "metadata": {
+    "verifier_version": "1.0.0",
+    "profile_id": "cheese",
+    "domain_id": "10_Cheese",
+    "architecture_id": "MA-2026-012",
     "category_id": "cheese",
-    "category_name": "치즈"
-  },
-  "expected_registry_order": [
-    "fruit",
-    "cheese",
-    "venison",
-    "goat",
-    "beef",
-    "lamb",
-    "chicken",
-    "duck"
-  ],
-  "actual_registry_order": [
-    "fruit",
-    "cheese",
-    "coffee",
-    "wine",
-    "venison",
-    "goat",
-    "beef",
-    "lamb",
-    "chicken",
-    "duck"
-  ],
-  "provider_count": 1,
-  "checks": {
-    "registry_contains_cheese": true,
-    "provider_retrieval": true,
-    "required_provider_retrieval": true,
-    "provider_contract": true,
-    "category_id": true,
-    "category_name": true,
-    "provider_class": true,
-    "registered_exactly_once": true,
-    "registry_order": false,
-    "category_ids_unique": true
-  },
-  "failed_checks": [
-    "registry_order"
-  ]
+    "phase": "registration",
+    "executed_phases": [
+      "registration"
+    ]
+  }
 }

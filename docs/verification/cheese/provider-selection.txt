@@ -1,0 +1,21 @@
+Project Integration Verification
+
+Status: PASS
+Summary: Project integration verification passed.
+Profile: cheese
+Phase: selection
+
+Checks:
+- [PASS] Explicit Provider selection: Explicit category selection returned the expected Provider.
+- [PASS] Automatic Provider selection #1: Automatic selection returned the expected Provider.
+    Product: 프랑스 브리 치즈 200g
+    Expected: cheese
+    Actual: cheese
+- [PASS] Automatic Provider selection #2: Automatic selection returned the expected Provider.
+    Product: 24개월 숙성 파르미자노 레지아노
+    Expected: cheese
+    Actual: cheese
+- [PASS] Automatic Provider selection #3: Automatic selection returned the expected Provider.
+    Product: plain cream cheese
+    Expected: cheese
+    Actual: cheese

@@ -1,0 +1,44 @@
+Project Integration Verification
+
+Status: PASS
+Summary: Project integration verification passed.
+Profile: cheese
+Phase: routing
+
+Checks:
+- [PASS] Runtime routing #1: Runtime routing returned the expected Provider.
+    Product: 프랑스 브리 치즈 200g
+    Expected: cheese
+    Actual: cheese
+- [PASS] Runtime routing #2: Runtime routing returned the expected Provider.
+    Product: 24개월 숙성 파르미자노 레지아노
+    Expected: cheese
+    Actual: cheese
+- [PASS] Runtime routing #3: Runtime routing returned the expected Provider.
+    Product: plain cream cheese
+    Expected: cheese
+    Actual: cheese
+- [PASS] Runtime routing #4: Runtime routing returned the expected Provider.
+    Product: 고당도 사과
+    Expected: fruit
+    Actual: fruit
+- [PASS] Runtime routing #5: Runtime routing returned the expected Provider.
+    Product: 에티오피아 예가체프 커피
+    Expected: coffee
+    Actual: coffee
+- [PASS] Runtime routing #6: Runtime routing returned the expected Provider.
+    Product: 프랑스 레드 와인
+    Expected: wine
+    Actual: wine
+- [PASS] Runtime routing #7: Runtime routing returned the expected Provider.
+    Product: 국내산 한우 등심
+    Expected: beef
+    Actual: beef
+- [PASS] Runtime routing #8: Runtime routing returned the expected Provider.
+    Product: 프리미엄 도퍼 어린양 프렌치랙
+    Expected: lamb
+    Actual: lamb
+- [PASS] Runtime routing #9: Runtime routing returned the expected Provider.
+    Product: 훈제오리 슬라이스
+    Expected: duck
+    Actual: duck

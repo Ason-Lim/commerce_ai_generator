@@ -1,32 +1,16 @@
-PROVIDER REGISTRATION VERIFICATION
+Project Integration Verification
 
-Provider Class: CheeseKnowledgeProvider
-Category ID: cheese
-Category Name: 치즈
-Provider Count: 1
-
-Registry Order:
-1. fruit
-2. cheese
-3. coffee
-4. wine
-5. venison
-6. goat
-7. beef
-8. lamb
-9. chicken
-10. duck
+Status: PASS
+Summary: Project integration verification passed.
+Profile: cheese
+Phase: registration
 
 Checks:
-- registry_contains_cheese: PASS
-- provider_retrieval: PASS
-- required_provider_retrieval: PASS
-- provider_contract: PASS
-- category_id: PASS
-- category_name: PASS
-- provider_class: PASS
-- registered_exactly_once: PASS
-- registry_order: FAIL
-- category_ids_unique: PASS
-
-Final Status: FAIL
+- [PASS] Registry membership: Provider category is present in the shared Registry.
+- [PASS] Provider retrieval: get_food_provider returned the expected Provider.
+- [PASS] Required Provider retrieval: require_food_provider returned the expected Provider.
+- [PASS] Provider base contract: Provider satisfies FoodKnowledgeProvider.
+- [PASS] Provider identity: Provider category identity matches the profile.
+- [PASS] Single registration: Provider is registered exactly once.
+    Observed count: 1
+- [PASS] Category uniqueness: Provider category identifiers are unique.

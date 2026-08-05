@@ -1,0 +1,41 @@
+Project Integration Verification
+
+Status: PASS
+Summary: Project integration verification passed.
+Profile: cheese
+Phase: contract
+
+Checks:
+- [PASS] Result type: Runtime returned FoodKnowledgeResult.
+- [PASS] Result category identity: Result category identity matches the profile.
+- [PASS] Result serialization: Result satisfies the serialization contract.
+- [PASS] Result attribute: cheese_type: Attribute matches the expected contract value.
+    Expected: 브리
+    Actual: 브리
+- [PASS] Result attribute: milk_source: Attribute matches the expected contract value.
+    Expected: 산양유
+    Actual: 산양유
+- [PASS] Result attribute: origin: Attribute matches the expected contract value.
+    Expected: 프랑스
+    Actual: 프랑스
+- [PASS] Result attribute: texture: Attribute matches the expected contract value.
+    Expected: 연성
+    Actual: 연성
+- [PASS] Result attribute: aging: Attribute matches the expected contract value.
+    Expected: 장기숙성
+    Actual: 장기숙성
+- [PASS] Result score: quality: Score matches the expected contract value.
+    Expected: 80.0
+    Actual: 80.0
+- [PASS] Result score: price: Score matches the expected contract value.
+    Expected: 70.0
+    Actual: 70.0
+- [PASS] Result score: trust: Score matches the expected contract value.
+    Expected: 90.0
+    Actual: 90.0
+- [PASS] Result score: knowledge: Score matches the expected contract value.
+    Expected: 92.6
+    Actual: 92.6
+- [PASS] Result final score: Final score matches the expected contract value.
+    Expected: 86.3
+    Actual: 86.3

@@ -1,0 +1,684 @@
+{
+  "verifier_id": "integration.project",
+  "verifier_name": "Project Integration Verification Tool",
+  "target": "app/services/food/knowledge/cheese",
+  "status": "PASS",
+  "summary": "Project integration verification passed.",
+  "checks": [
+    {
+      "check_id": "integration.registration.registry_contains",
+      "title": "Registry membership",
+      "status": "PASS",
+      "summary": "Provider category is present in the shared Registry.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.provider_retrieval",
+      "title": "Provider retrieval",
+      "status": "PASS",
+      "summary": "get_food_provider returned the expected Provider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.required_retrieval",
+      "title": "Required Provider retrieval",
+      "status": "PASS",
+      "summary": "require_food_provider returned the expected Provider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.provider_contract",
+      "title": "Provider base contract",
+      "status": "PASS",
+      "summary": "Provider satisfies FoodKnowledgeProvider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.provider_identity",
+      "title": "Provider identity",
+      "status": "PASS",
+      "summary": "Provider category identity matches the profile.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.single_registration",
+      "title": "Single registration",
+      "status": "PASS",
+      "summary": "Provider is registered exactly once.",
+      "details": [
+        "Observed count: 1"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.registration.category_uniqueness",
+      "title": "Category uniqueness",
+      "status": "PASS",
+      "summary": "Provider category identifiers are unique.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.selection.explicit",
+      "title": "Explicit Provider selection",
+      "status": "PASS",
+      "summary": "Explicit category selection returned the expected Provider.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.selection.automatic.1",
+      "title": "Automatic Provider selection #1",
+      "status": "PASS",
+      "summary": "Automatic selection returned the expected Provider.",
+      "details": [
+        "Product: 프랑스 브리 치즈 200g",
+        "Expected: cheese",
+        "Actual: cheese"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.selection.automatic.2",
+      "title": "Automatic Provider selection #2",
+      "status": "PASS",
+      "summary": "Automatic selection returned the expected Provider.",
+      "details": [
+        "Product: 24개월 숙성 파르미자노 레지아노",
+        "Expected: cheese",
+        "Actual: cheese"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.selection.automatic.3",
+      "title": "Automatic Provider selection #3",
+      "status": "PASS",
+      "summary": "Automatic selection returned the expected Provider.",
+      "details": [
+        "Product: plain cream cheese",
+        "Expected: cheese",
+        "Actual: cheese"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.result_type",
+      "title": "Result type",
+      "status": "PASS",
+      "summary": "Runtime returned FoodKnowledgeResult.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.category_identity",
+      "title": "Result category identity",
+      "status": "PASS",
+      "summary": "Result category identity matches the profile.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.serialization",
+      "title": "Result serialization",
+      "status": "PASS",
+      "summary": "Result satisfies the serialization contract.",
+      "details": [],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.attribute.cheese_type",
+      "title": "Result attribute: cheese_type",
+      "status": "PASS",
+      "summary": "Attribute matches the expected contract value.",
+      "details": [
+        "Expected: 브리",
+        "Actual: 브리"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.attribute.milk_source",
+      "title": "Result attribute: milk_source",
+      "status": "PASS",
+      "summary": "Attribute matches the expected contract value.",
+      "details": [
+        "Expected: 산양유",
+        "Actual: 산양유"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.attribute.origin",
+      "title": "Result attribute: origin",
+      "status": "PASS",
+      "summary": "Attribute matches the expected contract value.",
+      "details": [
+        "Expected: 프랑스",
+        "Actual: 프랑스"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.attribute.texture",
+      "title": "Result attribute: texture",
+      "status": "PASS",
+      "summary": "Attribute matches the expected contract value.",
+      "details": [
+        "Expected: 연성",
+        "Actual: 연성"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.attribute.aging",
+      "title": "Result attribute: aging",
+      "status": "PASS",
+      "summary": "Attribute matches the expected contract value.",
+      "details": [
+        "Expected: 장기숙성",
+        "Actual: 장기숙성"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.score.quality",
+      "title": "Result score: quality",
+      "status": "PASS",
+      "summary": "Score matches the expected contract value.",
+      "details": [
+        "Expected: 80.0",
+        "Actual: 80.0"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.score.price",
+      "title": "Result score: price",
+      "status": "PASS",
+      "summary": "Score matches the expected contract value.",
+      "details": [
+        "Expected: 70.0",
+        "Actual: 70.0"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.score.trust",
+      "title": "Result score: trust",
+      "status": "PASS",
+      "summary": "Score matches the expected contract value.",
+      "details": [
+        "Expected: 90.0",
+        "Actual: 90.0"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.score.knowledge",
+      "title": "Result score: knowledge",
+      "status": "PASS",
+      "summary": "Score matches the expected contract value.",
+      "details": [
+        "Expected: 92.6",
+        "Actual: 92.6"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.contract.final_score",
+      "title": "Result final score",
+      "status": "PASS",
+      "summary": "Final score matches the expected contract value.",
+      "details": [
+        "Expected: 86.3",
+        "Actual: 86.3"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.1",
+      "title": "Runtime routing #1",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 프랑스 브리 치즈 200g",
+        "Expected: cheese",
+        "Actual: cheese"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.2",
+      "title": "Runtime routing #2",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 24개월 숙성 파르미자노 레지아노",
+        "Expected: cheese",
+        "Actual: cheese"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.3",
+      "title": "Runtime routing #3",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: plain cream cheese",
+        "Expected: cheese",
+        "Actual: cheese"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.4",
+      "title": "Runtime routing #4",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 고당도 사과",
+        "Expected: fruit",
+        "Actual: fruit"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.5",
+      "title": "Runtime routing #5",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 에티오피아 예가체프 커피",
+        "Expected: coffee",
+        "Actual: coffee"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.6",
+      "title": "Runtime routing #6",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 프랑스 레드 와인",
+        "Expected: wine",
+        "Actual: wine"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.7",
+      "title": "Runtime routing #7",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 국내산 한우 등심",
+        "Expected: beef",
+        "Actual: beef"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.8",
+      "title": "Runtime routing #8",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 프리미엄 도퍼 어린양 프렌치랙",
+        "Expected: lamb",
+        "Actual: lamb"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.routing.case.9",
+      "title": "Runtime routing #9",
+      "status": "PASS",
+      "summary": "Runtime routing returned the expected Provider.",
+      "details": [
+        "Product: 훈제오리 슬라이스",
+        "Expected: duck",
+        "Actual: duck"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    },
+    {
+      "check_id": "integration.regression.food_knowledge",
+      "title": "Cross-domain regression",
+      "status": "PASS",
+      "summary": "Food Knowledge regression completed successfully.",
+      "details": [
+        "Exit code: 0",
+        "........................................................................ [  7%]\n........................................................................ [ 14%]\n........................................................................ [ 21%]\n........................................................................ [ 28%]\n........................................................................ [ 36%]\n........................................................................ [ 43%]\n........................................................................ [ 50%]\n........................................................................ [ 57%]\n........................................................................ [ 65%]\n........................................................................ [ 72%]\n........................................................................ [ 79%]\n........................................................................ [ 86%]\n........................................................................ [ 94%]\n...........................................................              [100%]\n995 passed in 2.55s"
+      ],
+      "evidence_ids": [],
+      "metadata": {}
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "integration-registration-cheese",
+      "kind": "registry",
+      "title": "치즈 Provider registration",
+      "location": null,
+      "summary": "Current shared Registry registration snapshot.",
+      "metadata": {
+        "provider_class": "CheeseKnowledgeProvider",
+        "category_id": "cheese",
+        "category_name": "치즈",
+        "registration_count": 1,
+        "registry_order_snapshot": [
+          "fruit",
+          "cheese",
+          "coffee",
+          "wine",
+          "venison",
+          "goat",
+          "beef",
+          "lamb",
+          "chicken",
+          "duck"
+        ]
+      }
+    },
+    {
+      "evidence_id": "integration-selection-cheese",
+      "kind": "integration",
+      "title": "치즈 Provider selection",
+      "location": null,
+      "summary": "Explicit and automatic selection evidence.",
+      "metadata": {
+        "explicit_category": "cheese",
+        "automatic_cases": [
+          {
+            "product_name": "프랑스 브리 치즈 200g",
+            "expected": "cheese",
+            "actual": "cheese"
+          },
+          {
+            "product_name": "24개월 숙성 파르미자노 레지아노",
+            "expected": "cheese",
+            "actual": "cheese"
+          },
+          {
+            "product_name": "plain cream cheese",
+            "expected": "cheese",
+            "actual": "cheese"
+          }
+        ]
+      }
+    },
+    {
+      "evidence_id": "integration-contract-cheese",
+      "kind": "contract",
+      "title": "치즈 Result contract",
+      "location": null,
+      "summary": "FoodKnowledgeResult contract verification evidence.",
+      "metadata": {
+        "category_id": "cheese",
+        "category_name": "치즈",
+        "product_name": "프랑스 산양유 브리 소프트 치즈 12개월 숙성",
+        "attributes": {
+          "product_name": "프랑스 산양유 브리 소프트 치즈 12개월 숙성",
+          "cheese_type": "브리",
+          "milk_source": "산양유",
+          "origin": "프랑스",
+          "country": "프랑스",
+          "country_code": "FR",
+          "texture": "연성",
+          "aging": "장기숙성",
+          "weight": null,
+          "storage_type": null,
+          "packaging_type": null,
+          "pasteurization": null,
+          "certifications": [],
+          "fat_content": null,
+          "rind_type": null,
+          "confidence": 0.784,
+          "cheese_type_confidence": 0.77,
+          "milk_source_confidence": 0.78,
+          "origin_confidence": 0.79,
+          "texture_confidence": 0.78,
+          "aging_confidence": 0.8,
+          "detected_keywords": [
+            "브리",
+            "산양유",
+            "프랑스산",
+            "소프트",
+            "12개월 숙성"
+          ],
+          "parser_warnings": [],
+          "matched_field_count": 5,
+          "is_complete": true,
+          "is_usable": true,
+          "cheese_type_registry_key": "brie",
+          "cheese_type_category": "soft_ripened",
+          "cheese_type_score": 92.0,
+          "cheese_type_premium": true,
+          "cheese_type_flavor_score": 88.0,
+          "cheese_type_versatility_score": 82.0,
+          "cheese_type_typical_uses": [
+            "치즈 플래터",
+            "와인 페어링",
+            "베이킹"
+          ],
+          "cheese_type_description": "흰 곰팡이 외피와 부드러운 내부 조직을 가진 연성 숙성 치즈입니다.",
+          "milk_source_registry_key": "goat",
+          "milk_source_category": "goat",
+          "milk_source_score": 91.0,
+          "milk_source_premium": true,
+          "milk_source_richness_score": 87.0,
+          "milk_source_availability_score": 68.0,
+          "milk_source_description": "산뜻한 산미와 고유한 향을 나타낼 수 있는 염소 원유입니다.",
+          "origin_registry_key": "france",
+          "origin_country_code": "FR",
+          "origin_score": 96.0,
+          "origin_premium": true,
+          "origin_tradition_score": 99.0,
+          "origin_description": "연성 숙성 치즈와 블루치즈를 포함한 다양한 전통 치즈 생산국입니다.",
+          "texture_registry_key": "soft",
+          "texture_category": "soft",
+          "texture_score": 89.0,
+          "texture_premium": true,
+          "texture_firmness_score": 30.0,
+          "texture_moisture_score": 82.0,
+          "texture_description": "눌렀을 때 쉽게 변형되고 크리미한 특성을 보이는 질감입니다.",
+          "aging_registry_key": "long_aged",
+          "aging_category": "long_aged",
+          "aging_score": 94.0,
+          "aging_premium": true,
+          "aging_minimum_months": 12,
+          "aging_maximum_months": 23,
+          "aging_flavor_intensity": "strong",
+          "aging_description": "12개월 이상 숙성하여 풍미가 깊고 조직이 단단해지는 유형입니다."
+        },
+        "attribute_details": [],
+        "scores": {
+          "quality": 80.0,
+          "price": 70.0,
+          "trust": 90.0,
+          "knowledge": 92.6,
+          "cheese_type": 92.0,
+          "milk_source": 91.0,
+          "origin": 96.0,
+          "texture": 89.0,
+          "aging": 94.0,
+          "flavor": 88.0,
+          "versatility": 82.0,
+          "richness": 87.0,
+          "availability": 68.0,
+          "tradition": 99.0,
+          "firmness": 30.0,
+          "moisture": 82.0
+        },
+        "score_details": [],
+        "rules": [],
+        "reasons": [
+          "치즈 종류는 브리입니다.",
+          "사용 원유는 산양유입니다.",
+          "원산지는 프랑스입니다.",
+          "치즈 질감은 연성입니다.",
+          "숙성 유형은 장기숙성입니다.",
+          "Registry 기준 대표 활용 방식은 치즈 플래터, 와인 페어링, 베이킹입니다.",
+          "Registry에서 프리미엄 속성이 확인되었습니다.",
+          "Cheese Knowledge 평가가 매우 높은 수준입니다."
+        ],
+        "warnings": [],
+        "final_score": 86.3,
+        "confidence": 0.784,
+        "metadata": {
+          "provider_id": "cheese",
+          "provider": "CheeseKnowledgeProvider",
+          "parser": "CheeseParser",
+          "priority": null,
+          "query": null,
+          "user_mode": null,
+          "season": null,
+          "region": null,
+          "matched_field_count": 5,
+          "expected_field_count": 5,
+          "is_complete": true,
+          "is_usable": true
+        },
+        "raw_product": {
+          "product_name": "프랑스 산양유 브리 소프트 치즈 12개월 숙성",
+          "quality_score": 80,
+          "price_score": 70,
+          "trust_score": 90
+        }
+      }
+    },
+    {
+      "evidence_id": "integration-routing-cheese",
+      "kind": "integration",
+      "title": "치즈 runtime routing",
+      "location": null,
+      "summary": "Target and cross-domain runtime routing evidence.",
+      "metadata": {
+        "routing_cases": [
+          {
+            "product_name": "프랑스 브리 치즈 200g",
+            "expected": "cheese",
+            "actual": "cheese"
+          },
+          {
+            "product_name": "24개월 숙성 파르미자노 레지아노",
+            "expected": "cheese",
+            "actual": "cheese"
+          },
+          {
+            "product_name": "plain cream cheese",
+            "expected": "cheese",
+            "actual": "cheese"
+          },
+          {
+            "product_name": "고당도 사과",
+            "expected": "fruit",
+            "actual": "fruit"
+          },
+          {
+            "product_name": "에티오피아 예가체프 커피",
+            "expected": "coffee",
+            "actual": "coffee"
+          },
+          {
+            "product_name": "프랑스 레드 와인",
+            "expected": "wine",
+            "actual": "wine"
+          },
+          {
+            "product_name": "국내산 한우 등심",
+            "expected": "beef",
+            "actual": "beef"
+          },
+          {
+            "product_name": "프리미엄 도퍼 어린양 프렌치랙",
+            "expected": "lamb",
+            "actual": "lamb"
+          },
+          {
+            "product_name": "훈제오리 슬라이스",
+            "expected": "duck",
+            "actual": "duck"
+          }
+        ]
+      }
+    },
+    {
+      "evidence_id": "integration-regression-cheese",
+      "kind": "regression",
+      "title": "Food Knowledge regression",
+      "location": null,
+      "summary": "Project-level cross-domain regression execution.",
+      "metadata": {
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/services/food/knowledge",
+          "--disable-warnings"
+        ],
+        "exit_code": 0,
+        "output": "........................................................................ [  7%]\n........................................................................ [ 14%]\n........................................................................ [ 21%]\n........................................................................ [ 28%]\n........................................................................ [ 36%]\n........................................................................ [ 43%]\n........................................................................ [ 50%]\n........................................................................ [ 57%]\n........................................................................ [ 65%]\n........................................................................ [ 72%]\n........................................................................ [ 79%]\n........................................................................ [ 86%]\n........................................................................ [ 94%]\n...........................................................              [100%]\n995 passed in 2.55s"
+      }
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "metadata": {
+    "verifier_version": "1.0.0",
+    "profile_id": "cheese",
+    "domain_id": "10_Cheese",
+    "architecture_id": "MA-2026-012",
+    "category_id": "cheese",
+    "phase": "all",
+    "executed_phases": [
+      "registration",
+      "selection",
+      "contract",
+      "routing",
+      "regression"
+    ]
+  }
+}
