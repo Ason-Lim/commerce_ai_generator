@@ -1,0 +1,55 @@
+arbequina:
+  canonical_name: arbequina
+  aliases:
+    - arbequina
+    - 아르베키나
+  cultivar_origin: Spain
+  flavor_profile: mild fruity
+  score: 0
+  premium: false
+  description: Arbequina olive cultivar
+
+picual:
+  canonical_name: picual
+  aliases:
+    - picual
+    - 피쿠알
+  cultivar_origin: Spain
+  flavor_profile: robust bitter pungent
+  score: 0
+  premium: false
+  description: Picual olive cultivar
+
+koroneiki:
+  canonical_name: koroneiki
+  aliases:
+    - koroneiki
+    - 코로네이키
+  cultivar_origin: Greece
+  flavor_profile: fruity herbal pungent
+  score: 0
+  premium: true
+  description: Koroneiki olive cultivar
+
+hojiblanca:
+  canonical_name: hojiblanca
+  aliases:
+    - hojiblanca
+    - 오히블랑카
+    - 호히블랑카
+  cultivar_origin: Spain
+  flavor_profile: balanced fruity
+  score: 0
+  premium: false
+  description: Hojiblanca olive cultivar
+
+frantoio:
+  canonical_name: frantoio
+  aliases:
+    - frantoio
+    - 프란토이오
+  cultivar_origin: Italy
+  flavor_profile: aromatic fruity
+  score: 0
+  premium: true
+  description: Frantoio olive cultivar

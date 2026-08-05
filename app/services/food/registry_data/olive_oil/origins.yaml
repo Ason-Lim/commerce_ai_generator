@@ -1,0 +1,66 @@
+spain:
+  canonical_name: spain
+  aliases:
+    - Spain
+    - Spanish
+    - 스페인
+    - 스페인산
+  country_code: ES
+  region: null
+  score: 0
+  premium: false
+  description: Olive oil produced in Spain
+
+italy:
+  canonical_name: italy
+  aliases:
+    - Italy
+    - Italian
+    - 이탈리아
+    - 이탈리아산
+  country_code: IT
+  region: null
+  score: 0
+  premium: false
+  description: Olive oil produced in Italy
+
+greece:
+  canonical_name: greece
+  aliases:
+    - Greece
+    - Greek
+    - 그리스
+    - 그리스산
+  country_code: GR
+  region: null
+  score: 0
+  premium: false
+  description: Olive oil produced in Greece
+
+portugal:
+  canonical_name: portugal
+  aliases:
+    - Portugal
+    - Portuguese
+    - 포르투갈
+    - 포르투갈산
+  country_code: PT
+  region: null
+  score: 0
+  premium: false
+  description: Olive oil produced in Portugal
+
+turkey:
+  canonical_name: turkey
+  aliases:
+    - Turkey
+    - Turkish
+    - 튀르키예
+    - 터키
+    - 튀르키예산
+    - 터키산
+  country_code: TR
+  region: null
+  score: 0
+  premium: false
+  description: Olive oil produced in Türkiye

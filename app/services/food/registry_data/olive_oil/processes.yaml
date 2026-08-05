@@ -1,0 +1,76 @@
+cold_extracted:
+  canonical_name: cold_extracted
+  aliases:
+    - cold extracted
+    - cold extraction
+    - 냉추출
+    - 저온 추출
+  process_category: mechanical_extraction
+  mechanical_only: true
+  cold_extracted: true
+  refined: false
+  score: 0
+  premium: true
+  description: Olive oil produced through low-temperature mechanical extraction
+
+cold_pressed:
+  canonical_name: cold_pressed
+  aliases:
+    - cold pressed
+    - first cold pressed
+    - cold press
+    - 냉압착
+    - 저온 압착
+  process_category: mechanical_pressing
+  mechanical_only: true
+  cold_extracted: true
+  refined: false
+  score: 0
+  premium: true
+  description: Olive oil marketed as cold pressed
+
+mechanical_extraction:
+  canonical_name: mechanical_extraction
+  aliases:
+    - mechanically extracted
+    - mechanical extraction
+    - 기계적 추출
+    - 물리적 추출
+  process_category: mechanical_extraction
+  mechanical_only: true
+  cold_extracted: false
+  refined: false
+  score: 0
+  premium: false
+  description: Olive oil obtained through mechanical processing
+
+refined:
+  canonical_name: refined
+  aliases:
+    - refined olive oil
+    - refined
+    - 정제 올리브유
+    - 정제 올리브오일
+  process_category: refining
+  mechanical_only: false
+  cold_extracted: false
+  refined: true
+  score: 0
+  premium: false
+  description: Olive oil processed through refining
+
+unfiltered:
+  canonical_name: unfiltered
+  aliases:
+    - unfiltered
+    - non filtered
+    - non-filtered
+    - 무여과
+    - 비여과
+  process_category: filtration
+  mechanical_only: false
+  cold_extracted: false
+  refined: false
+  score: 0
+  premium: false
+  description: Olive oil sold without final filtration

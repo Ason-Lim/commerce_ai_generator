@@ -1,0 +1,43 @@
+single_varietal:
+  canonical_name: single_varietal
+  aliases:
+    - single varietal
+    - monovarietal
+    - 단일 품종
+    - 단일품종 올리브오일
+  score: 0
+  premium: true
+  description: Olive oil produced from one identified cultivar
+
+flavored_olive_oil:
+  canonical_name: flavored_olive_oil
+  aliases:
+    - flavored olive oil
+    - infused olive oil
+    - 향미 올리브오일
+    - 인퓨즈드 올리브오일
+  score: 0
+  premium: false
+  description: Olive oil infused or flavored with additional ingredients
+
+blend:
+  canonical_name: blend
+  aliases:
+    - olive oil blend
+    - blended olive oil
+    - 블렌드 올리브오일
+    - 혼합 올리브유
+  score: 0
+  premium: false
+  description: Olive oil produced from multiple cultivars
+
+olive_oil:
+  canonical_name: olive_oil
+  aliases:
+    - olive oil
+    - 올리브 오일
+    - 올리브오일
+    - 올리브유
+  score: 0
+  premium: false
+  description: General olive oil product

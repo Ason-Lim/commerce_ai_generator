@@ -1,0 +1,77 @@
+extra_virgin:
+  canonical_name: extra_virgin
+  aliases:
+    - extra virgin olive oil
+    - extra virgin
+    - evoo
+    - 엑스트라 버진 올리브오일
+    - 엑스트라버진
+    - 엑스트라 버진
+  grade_class: extra_virgin
+  virgin: true
+  refined: false
+  pomace: false
+  score: 95
+  premium: true
+  description: Extra virgin olive oil
+
+virgin:
+  canonical_name: virgin
+  aliases:
+    - virgin olive oil
+    - virgin
+    - 버진 올리브오일
+    - 버진 올리브유
+  grade_class: virgin
+  virgin: true
+  refined: false
+  pomace: false
+  score: 85
+  premium: false
+  description: Virgin olive oil
+
+refined:
+  canonical_name: refined
+  aliases:
+    - refined olive oil
+    - refined
+    - 정제 올리브오일
+    - 정제 올리브유
+  grade_class: refined
+  virgin: false
+  refined: true
+  pomace: false
+  score: 65
+  premium: false
+  description: Refined olive oil
+
+olive_oil:
+  canonical_name: olive_oil
+  aliases:
+    - olive oil
+    - pure olive oil
+    - 퓨어 올리브오일
+    - 일반 올리브유
+  grade_class: blended_refined
+  virgin: false
+  refined: true
+  pomace: false
+  score: 70
+  premium: false
+  description: Commercial olive oil generally blending refined and virgin oils
+
+pomace:
+  canonical_name: pomace
+  aliases:
+    - olive pomace oil
+    - pomace olive oil
+    - pomace oil
+    - 포마스 올리브유
+    - 올리브 포마스 오일
+  grade_class: pomace
+  virgin: false
+  refined: true
+  pomace: true
+  score: 55
+  premium: false
+  description: Olive pomace oil
