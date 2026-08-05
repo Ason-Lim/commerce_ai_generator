@@ -84,6 +84,20 @@ FOOD_CATEGORY_REGISTRY: Dict[str, FoodCategoryConfig] = {
         ),
         provider_id="wine",
     ),
+    "olive_oil": FoodCategoryConfig(
+        category_id="olive_oil",
+        display_name="올리브 오일",
+        aliases=(
+            "올리브 오일",
+            "올리브오일",
+            "olive oil",
+            "olive_oil",
+            "extra virgin olive oil",
+            "엑스트라 버진 올리브 오일",
+            "엑스트라버진 올리브오일",
+        ),
+        provider_id="olive_oil",
+    ),
     "meat": FoodCategoryConfig(
         category_id="meat",
         display_name="축산·육류",
