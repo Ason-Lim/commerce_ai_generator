@@ -3,7 +3,7 @@
 ## IPS-MA-2026-015-OLIVE-OIL
 
 | Item | Value |
-|---|---|
+| --- | --- |
 | Document ID | IPS-MA-2026-015-OLIVE-OIL |
 | Title | Olive Oil Knowledge Domain Provider Selection Verification Request |
 | Project | Commerce AI Generator |
@@ -81,7 +81,7 @@ OliveOilKnowledgeProvider
 The following examples shall continue routing to their respective Domains.
 
 | Product | Expected Provider |
-|---|---|
+| --- | --- |
 | 브리 치즈 | CheeseKnowledgeProvider |
 | 카베르네 소비뇽 | WineKnowledgeProvider |
 | 제주 녹차 | TeaKnowledgeProvider |
@@ -127,9 +127,3 @@ PROVIDER SELECTION VERIFICATION
 14_Olive Oil Domain
 
 Commerce AI Generator
-:EOF
-
-:PY
-:py
-[A[A[A[D
-cat
