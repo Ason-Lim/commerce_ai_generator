@@ -482,7 +482,7 @@ The following naming rules are adopted.
 * Spaces should be avoided in new filenames.
 * Existing approved filenames containing spaces may remain until controlled migration.
 * `docs/Architecture/` shall not be recreated.
-* `docs/handoff/` shall not be used for new Domain Handoff records.
+* `docs/architecture/handoff/` shall not be used for new Domain Handoff records.
 * The canonical handoff root is `docs/architecture/handoff/`.
 
 Examples:

@@ -415,7 +415,7 @@ The following ownership model is proposed.
 | ARN / MAN                       | `docs/architecture/notices/`      | 00_1 Master Architecture     |
 | IVR–IVC                         | `docs/integration/<domain>/`      | 99_Integration               |
 | Reproducible technical evidence | `docs/verification/<domain>/`     | Verification Authority       |
-| DHN                             | `docs/handoff/<domain>/`          | Domain / Receiving Authority |
+| DHN                             | `docs/architecture/handoff/<domain>/`          | Domain / Receiving Authority |
 | ICP–ICR                         | `docs/integration/sprint3/`       | 99_Integration               |
 
 Document location shall reflect authority and evidence purpose.
