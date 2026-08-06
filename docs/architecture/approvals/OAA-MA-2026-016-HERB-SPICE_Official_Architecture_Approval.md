@@ -1,114 +1,133 @@
 # 00_1 Master Architecture
 
-# Official Architecture Approval
+# Official Architecture Review Decision
 
-## OAA-MA-2026-016-HERB-SPICE
+## OARD-MA-2026-016-HERB-SPICE
 
 **Title**
-
-Official Architecture Approval for Integration Verification Completion — Herb & Spice Knowledge Domain
+Review Decision for OAA-MA-2026-016-HERB-SPICE
 
 ---
 
-# Document Identity
+## Document Identity
 
-| Item | Value |
-| ------ | ------- |
-| Document ID | OAA-MA-2026-016-HERB-SPICE |
-| Authority | 00_1 Master Architecture |
-| Project | Commerce AI Generator |
-| Domain | 15_Herb & Spice |
-| Status | OFFICIAL ARCHITECTURE APPROVAL |
-| Approval Date | 2026-08-06 |
-| Review Result | APPROVED |
+| Item               | Value                                 |
+| ------------------ | ------------------------------------- |
+| Review Document ID | OARD-MA-2026-016-HERB-SPICE           |
+| Reviewed Document  | OAA-MA-2026-016-HERB-SPICE            |
+| Authority          | 00_1 Master Architecture              |
+| Project            | Commerce AI Generator                 |
+| Domain             | 15_Herb & Spice                       |
+| Status             | OFFICIAL ARCHITECTURE REVIEW DECISION |
+| Review Date        | 2026-08-06                            |
+| Review Result      | APPROVED                              |
 
 ---
 
 # 1. Purpose
 
-This document records the official architectural approval of the completed Integration Verification lifecycle for the Herb & Spice Knowledge Domain.
+This document records the official review decision of 00_1 Master Architecture regarding:
 
-The review confirms that the submitted Integration Verification Completion Report (IVC-HERB-SPICE-2026-001) accurately reflects the independently verified evidence collected during Sprint 3.
+```text
+OAA-MA-2026-016-HERB-SPICE
+```
 
-This approval is limited to the verified scope of Domain-level Integration Verification and does not constitute Project-level Integration Completion.
-
----
-
-# 2. Governing References
-
-- IVC-HERB-SPICE-2026-001
-- IRG-HERB-SPICE-2026-001
-- IRR-HERB-SPICE-2026-001
-- IRC-HERB-SPICE-2026-001
-- IPS-HERB-SPICE-2026-001
-- IPR-HERB-SPICE-2026-001
-- IVR-HERB-SPICE-2026-001
-- ADA-MA-2026-016-HERB-SPICE
-- APR-MA-2026-001 Revision 1
-- AAR-MA-2026-001
-- MAN-2026-003
-- ARN-MA-2026-001 Revision 1
-- SED-2026-001 Sprint 3 Domain Completion Directive
-- Evidence First Principle
-- Progressive Maturity Model
+The review determines whether the proposed Official Architecture Approval accurately represents the submitted Sprint 3 Integration Verification evidence and preserves the approved Architecture Review Governance model.
 
 ---
 
-# 3. Architecture Assessment
+# 2. Review Basis
 
-00_1 Master Architecture confirms that the submitted Integration Verification Completion Report:
+The review is based on the submitted governance and verification records, including:
 
-- accurately reflects the independently verified evidence;
-- preserves the approved Sprint 3 Evidence Chain;
-- distinguishes Domain-level completion from Project-level completion;
-- maintains Role-based Governance;
-- preserves Architecture Observation independently from implementation defects.
+* IVR-HERB-SPICE-2026-001
+* IPR-HERB-SPICE-2026-001
+* IPS-HERB-SPICE-2026-001
+* IRC-HERB-SPICE-2026-001
+* IRR-HERB-SPICE-2026-001
+* IRG-HERB-SPICE-2026-001
+* IVC-HERB-SPICE-2026-001
+* ADA-MA-2026-016-HERB-SPICE
+* APR-MA-2026-001 Revision 1
+* AAR-MA-2026-001
+* MAN-2026-003
+* ARN-MA-2026-001 Revision 1
+* SED-2026-001
 
-No architectural inconsistency has been identified.
-
----
-
-# 4. Verified Integration Scope
-
-The following Integration Verification activities have been independently completed.
-
-- Provider Registration Verification
-- Provider Selection Verification
-- Result Contract Verification
-- Runtime Routing Verification
-- Cross-domain Regression Verification
-
-Supporting evidence additionally confirms:
-
-- Import Safety
-- Compilation Safety
-- Full Food Knowledge Regression
+This review accepts the submitted evidence as reported and does not represent independent re-execution of the underlying tests by 00_1 Master Architecture.
 
 ---
 
-# 5. Architecture Observation
+# 3. Governance Conformance Assessment
 
-The following Architecture Observation is acknowledged.
+The reviewed document correctly preserves the separation among:
+
+* Domain implementation
+* Independent Integration Verification
+* Official Architecture Approval
+* Architecture Verification Completion Review
+* Master Architecture Completion Review
+* Domain Handoff
+* Project-level Integration Completion
+
+The document does not improperly treat implementation evidence or Domain IVC as Project-level Integration Completion.
+
+**Result**
+
+```text
+PASS
+```
+
+---
+
+# 4. Evidence Interpretation
+
+Based on the submitted records, the following Integration Verification areas are reported as completed:
+
+| Verification Area         | Reported Result |
+| ------------------------- | --------------- |
+| Provider Registration     | PASS            |
+| Provider Selection        | PASS            |
+| Result Contract           | PASS            |
+| Runtime Routing           | PASS            |
+| Cross-domain Regression   | PASS            |
+| Import Safety             | PASS            |
+| Compilation Safety        | PASS            |
+| Food Knowledge Regression | PASS            |
+
+The evidence supports progression to the Architecture Verification Completion Review stage.
+
+---
+
+# 5. Architecture Observation Review
+
+The following observation is acknowledged:
 
 ```text
 AO-MA-2026-016-HERB-SPICE-001
 
 PRE-EXISTING
-
 NOT ATTRIBUTABLE TO HERB & SPICE
-
 NON-BLOCKING
 ```
 
-The observation was reproduced against the pre-Herb & Spice baseline and therefore is not classified as an implementation defect introduced by the Herb & Spice Knowledge Domain.
+Based on the submitted baseline comparison, the observation is classified as:
 
-Future architectural evaluation remains subject to independent review.
+| Classification                       | Decision |
+| ------------------------------------ | -------- |
+| Herb & Spice implementation defect   | NO       |
+| Newly introduced regression          | NO       |
+| Shared architecture observation      | YES      |
+| Sprint 3 completion blocker          | NO       |
+| Future architecture review candidate | YES      |
+
+The observation shall remain traceable and may be evaluated through a separately authorized post-Sprint 3 architecture activity.
 
 ---
 
-# 6. Approved Integration Status
+# 6. Approved Status Language
 
-The following expression is officially approved.
+The following Domain-level status is approved:
 
 ```text
 HERB & SPICE
@@ -118,7 +137,7 @@ DOMAIN INTEGRATION
 COMPLETED
 ```
 
-The following equivalent expression is also approved.
+The following equivalent status is also approved:
 
 ```text
 HERB & SPICE
@@ -130,32 +149,51 @@ INTEGRATION VERIFICATION
 COMPLETED
 ```
 
-Both expressions accurately describe the verified scope without implying completion of the entire Sprint 3 Integration Program.
+Neither expression shall be interpreted as completion of the full Sprint 3 Integration Program.
 
 ---
 
-# 7. Governance Conformance
+# 7. Architecture Approval Decision
 
-This approval confirms conformance with the following principles.
+00_1 Master Architecture confirms that OAA-MA-2026-016-HERB-SPICE:
 
-- Evidence First Principle
-- Progressive Maturity Model
-- Independent Verification
-- Role-based Governance
-- Architecture Promotion by Evidence
-- Responsibility Separation
-- Architecture Observation Management
+* accurately limits its conclusion to Domain-level Integration Verification;
+* preserves the approved Sprint 3 Evidence Chain;
+* correctly records the Architecture Observation;
+* maintains the responsibility boundary between 00_1 Master Architecture and 99_Integration;
+* provides sufficient governance basis to proceed to AVCR.
 
 ---
 
-# 8. Approved Progression
-
-The approved Domain Completion sequence remains:
+# 8. Official Decision
 
 ```text
-IVC
-        │
-        ▼
+OAA-MA-2026-016-HERB-SPICE
+
+APPROVED
+```
+
+```text
+HERB & SPICE
+
+DOMAIN INTEGRATION
+
+OFFICIALLY VERIFIED
+```
+
+```text
+NEXT GOVERNANCE STAGE
+
+AVCR
+```
+
+---
+
+# 9. Authorized Progression
+
+The Herb & Spice Knowledge Domain is authorized to proceed through:
+
+```text
 OAA
         │
         ▼
@@ -166,49 +204,24 @@ MACR
         │
         ▼
 DHN
+        │
+        ▼
+99_Integration Project Governance
 ```
 
-Project-level Integration Governance shall continue independently under the authority of **99_Integration Verification Authority**.
+AVCR and MACR remain independent review gates and are not automatically approved by this decision.
 
 ---
 
-# 9. Official Decision
+# 10. Final Statement
 
-## Review Result
+00_1 Master Architecture officially approves OAA-MA-2026-016-HERB-SPICE.
 
-```text
-APPROVED
-```
+The Herb & Spice Knowledge Domain has completed the reported Domain Integration Verification lifecycle and is eligible to proceed to the Architecture Verification Completion Review stage.
 
-## Architecture Status
-
-```text
-DOMAIN INTEGRATION
-
-OFFICIALLY VERIFIED
-```
-
-## Governance Status
-
-```text
-READY FOR
-
-ARCHITECTURE VERIFICATION
-COMPLETION REVIEW (AVCR)
-```
+Project-level Cross-domain Validation and Sprint 3 Integration Completion remain pending and shall be determined only through the approved 99_Integration governance lifecycle.
 
 ---
 
-# Official Statement
-
-00_1 Master Architecture officially approves the Integration Verification Completion Report for the Herb & Spice Knowledge Domain.
-
-The completed Integration Verification lifecycle faithfully represents the independently verified evidence collected during Sprint 3 and conforms to the approved governance architecture established by the Evidence First Principle, Progressive Maturity Model, and Role-based Governance.
-
-The Herb & Spice Knowledge Domain is therefore authorized to proceed to the Architecture Verification Completion Review (AVCR) stage.
-
----
-
-**Approved By**
-
-**00_1 Master Architecture**
+**Reviewed and Approved By**
+00_1 Master Architecture
