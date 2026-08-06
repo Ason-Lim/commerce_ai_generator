@@ -1,0 +1,144 @@
+roasting:
+  canonical_name: roasting
+  aliases:
+    - roasting
+    - roast seasoning
+    - 로스팅용
+    - 구이용
+    - 오븐 구이
+  usage_category: dry_heat
+  dry_heat: true
+  wet_cooking: false
+  finishing: false
+  beverage: false
+  score: 0
+  premium: false
+  description: Intended for roasting or dry-heat cooking
+
+grilling:
+  canonical_name: grilling
+  aliases:
+    - grilling
+    - grill seasoning
+    - barbecue seasoning
+    - bbq seasoning
+    - 그릴용
+    - 바비큐용
+    - bbq용
+  usage_category: dry_heat
+  dry_heat: true
+  wet_cooking: false
+  finishing: false
+  beverage: false
+  score: 0
+  premium: false
+  description: Intended for grilling or barbecue
+
+stew:
+  canonical_name: stew
+  aliases:
+    - stew
+    - stew seasoning
+    - soup seasoning
+    - 스튜용
+    - 국물용
+    - 탕용
+    - 찌개용
+  usage_category: wet_cooking
+  dry_heat: false
+  wet_cooking: true
+  finishing: false
+  beverage: false
+  score: 0
+  premium: false
+  description: Intended for soups, stews, or wet cooking
+
+marinade:
+  canonical_name: marinade
+  aliases:
+    - marinade
+    - marinating
+    - marinade seasoning
+    - 마리네이드
+    - 재움용
+    - 밑간용
+  usage_category: preparation
+  dry_heat: false
+  wet_cooking: false
+  finishing: false
+  beverage: false
+  score: 0
+  premium: false
+  description: Intended for marinating or pre-seasoning
+
+finishing:
+  canonical_name: finishing
+  aliases:
+    - finishing herb
+    - finishing spice
+    - garnish
+    - garnish herb
+    - 마무리용
+    - 가니시
+    - 토핑용
+  usage_category: finishing
+  dry_heat: false
+  wet_cooking: false
+  finishing: true
+  beverage: false
+  score: 0
+  premium: false
+  description: Intended for finishing or garnish
+
+salad:
+  canonical_name: salad
+  aliases:
+    - salad herb
+    - salad seasoning
+    - salad use
+    - 샐러드용
+    - 샐러드 허브
+  usage_category: finishing
+  dry_heat: false
+  wet_cooking: false
+  finishing: true
+  beverage: false
+  score: 0
+  premium: false
+  description: Intended for salads or uncooked dishes
+
+tea_infusion:
+  canonical_name: tea_infusion
+  aliases:
+    - herbal infusion
+    - herb tea ingredient
+    - tea infusion
+    - 허브티용
+    - 차용 허브
+    - 우림용
+  usage_category: beverage
+  dry_heat: false
+  wet_cooking: false
+  finishing: false
+  beverage: true
+  score: 0
+  premium: false
+  description: Intended for herbal infusion or beverage use
+
+baking:
+  canonical_name: baking
+  aliases:
+    - baking spice
+    - baking herb
+    - baking use
+    - 베이킹용
+    - 제과용
+    - 제빵용
+  usage_category: baking
+  dry_heat: true
+  wet_cooking: false
+  finishing: false
+  beverage: false
+  score: 0
+  premium: false
+  description: Intended for baking or pastry use

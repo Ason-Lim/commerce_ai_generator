@@ -1,0 +1,125 @@
+rosemary:
+  canonical_name: rosemary
+  aliases:
+    - rosemary herb
+    - 로즈마리
+    - 로즈메리
+  botanical_name: Salvia rosmarinus
+  plant_part: leaf
+  flavor_profile: piney aromatic
+  fresh_available: true
+  dried_available: true
+  score: 0
+  premium: false
+  description: Aromatic Mediterranean culinary herb
+
+thyme:
+  canonical_name: thyme
+  aliases:
+    - thyme herb
+    - 타임
+    - 백리향
+  botanical_name: Thymus vulgaris
+  plant_part: leaf
+  flavor_profile: earthy herbal
+  fresh_available: true
+  dried_available: true
+  score: 0
+  premium: false
+  description: Earthy and aromatic culinary herb
+
+basil:
+  canonical_name: basil
+  aliases:
+    - basil herb
+    - 바질
+    - 스위트 바질
+    - sweet basil
+  botanical_name: Ocimum basilicum
+  plant_part: leaf
+  flavor_profile: sweet aromatic
+  fresh_available: true
+  dried_available: true
+  score: 0
+  premium: false
+  description: Sweet aromatic culinary herb
+
+parsley:
+  canonical_name: parsley
+  aliases:
+    - parsley herb
+    - 파슬리
+    - 이탈리안 파슬리
+    - italian parsley
+  botanical_name: Petroselinum crispum
+  plant_part: leaf
+  flavor_profile: fresh grassy
+  fresh_available: true
+  dried_available: true
+  score: 0
+  premium: false
+  description: Fresh green culinary herb
+
+oregano:
+  canonical_name: oregano
+  aliases:
+    - oregano herb
+    - 오레가노
+  botanical_name: Origanum vulgare
+  plant_part: leaf
+  flavor_profile: warm peppery
+  fresh_available: true
+  dried_available: true
+  score: 0
+  premium: false
+  description: Warm and robust Mediterranean herb
+
+dill:
+  canonical_name: dill
+  aliases:
+    - dill herb
+    - 딜
+    - 딜 위드
+    - dill weed
+  botanical_name: Anethum graveolens
+  plant_part: leaf
+  flavor_profile: fresh anise-like
+  fresh_available: true
+  dried_available: true
+  score: 0
+  premium: false
+  description: Fresh herb with anise-like character
+
+mint:
+  canonical_name: mint
+  aliases:
+    - mint herb
+    - 민트
+    - 박하
+    - 페퍼민트 잎
+    - peppermint leaf
+  botanical_name: Mentha
+  plant_part: leaf
+  flavor_profile: cooling fresh
+  fresh_available: true
+  dried_available: true
+  score: 0
+  premium: false
+  description: Cooling aromatic herb
+
+cilantro:
+  canonical_name: cilantro
+  aliases:
+    - cilantro leaf
+    - coriander leaf
+    - fresh coriander
+    - 고수잎
+    - 생고수
+  botanical_name: Coriandrum sativum
+  plant_part: leaf
+  flavor_profile: citrus herbal
+  fresh_available: true
+  dried_available: false
+  score: 0
+  premium: false
+  description: Fresh leaves of Coriandrum sativum

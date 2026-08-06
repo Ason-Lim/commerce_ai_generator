@@ -1,0 +1,164 @@
+black_pepper:
+  canonical_name: black_pepper
+  aliases:
+    - black pepper
+    - black peppercorn
+    - 후추
+    - 흑후추
+    - 통후추
+  botanical_name: Piper nigrum
+  plant_part: fruit
+  flavor_profile: pungent woody
+  heat_level: 3
+  pungent: true
+  score: 0
+  premium: false
+  description: Dried fruit of Piper nigrum
+
+cumin:
+  canonical_name: cumin
+  aliases:
+    - cumin seed
+    - 큐민
+    - 커민
+    - 쯔란
+  botanical_name: Cuminum cyminum
+  plant_part: seed
+  flavor_profile: earthy warm
+  heat_level: 1
+  pungent: false
+  score: 0
+  premium: false
+  description: Warm earthy seed spice
+
+cinnamon:
+  canonical_name: cinnamon
+  aliases:
+    - cinnamon bark
+    - 계피
+    - 시나몬
+    - 통계피
+  botanical_name: Cinnamomum
+  plant_part: bark
+  flavor_profile: sweet woody
+  heat_level: 0
+  pungent: false
+  score: 0
+  premium: false
+  description: Aromatic bark spice
+
+turmeric:
+  canonical_name: turmeric
+  aliases:
+    - turmeric root
+    - 강황
+    - 울금
+  botanical_name: Curcuma longa
+  plant_part: rhizome
+  flavor_profile: earthy bitter
+  heat_level: 0
+  pungent: false
+  score: 0
+  premium: false
+  description: Yellow rhizome spice
+
+ginger:
+  canonical_name: ginger
+  aliases:
+    - ginger root
+    - 생강
+    - 건생강
+    - 생강가루
+  botanical_name: Zingiber officinale
+  plant_part: rhizome
+  flavor_profile: warm citrus
+  heat_level: 2
+  pungent: true
+  score: 0
+  premium: false
+  description: Warm pungent rhizome spice
+
+paprika:
+  canonical_name: paprika
+  aliases:
+    - paprika powder
+    - 파프리카 파우더
+    - 파프리카 가루
+  botanical_name: Capsicum annuum
+  plant_part: fruit
+  flavor_profile: sweet pepper
+  heat_level: 1
+  pungent: false
+  score: 0
+  premium: false
+  description: Ground dried Capsicum spice
+
+chili_pepper:
+  canonical_name: chili_pepper
+  aliases:
+    - chili pepper
+    - chilli pepper
+    - chili powder
+    - red pepper powder
+    - 고추
+    - 고춧가루
+    - 칠리 파우더
+  botanical_name: Capsicum
+  plant_part: fruit
+  flavor_profile: hot fruity
+  heat_level: 7
+  pungent: true
+  score: 0
+  premium: false
+  description: Hot Capsicum fruit spice
+
+coriander_seed:
+  canonical_name: coriander_seed
+  aliases:
+    - coriander seed
+    - coriander seeds
+    - 코리앤더 씨드
+    - 고수씨
+    - 고수 씨앗
+  botanical_name: Coriandrum sativum
+  plant_part: seed
+  flavor_profile: citrus warm
+  heat_level: 0
+  pungent: false
+  score: 0
+  premium: false
+  description: Dried seed of Coriandrum sativum
+
+cardamom:
+  canonical_name: cardamom
+  aliases:
+    - green cardamom
+    - cardamom pod
+    - 카다멈
+    - 카르다몸
+  botanical_name: Elettaria cardamomum
+  plant_part: seed
+  flavor_profile: floral citrus
+  heat_level: 1
+  pungent: false
+  score: 0
+  premium: true
+  description: Aromatic seed pod spice
+
+wasabi:
+  canonical_name: wasabi
+  aliases:
+    - wasabi root
+    - wasabi powder
+    - 와사비
+    - 생와사비
+    - 와사비 뿌리
+    - 와사비 분말
+  botanical_name: Eutrema japonicum
+  plant_part: rhizome
+  flavor_profile: sharp pungent
+  heat_level: 8
+  pungent: true
+  score: 0
+  premium: true
+  description: Wasabi root or dried wasabi powder

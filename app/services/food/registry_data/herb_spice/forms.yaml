@@ -1,0 +1,136 @@
+fresh:
+  canonical_name: fresh
+  aliases:
+    - fresh herb
+    - fresh herbs
+    - fresh spice
+    - 생허브
+    - 생 허브
+    - 생향신료
+    - 생와사비
+    - 생고수
+  form_category: fresh
+  dried: false
+  ground: false
+  whole: false
+  fresh: true
+  score: 0
+  premium: false
+  description: Fresh, un-dried herb or spice form
+
+dried:
+  canonical_name: dried
+  aliases:
+    - dried
+    - dry
+    - dried herb
+    - dried herbs
+    - dried spice
+    - 건조
+    - 건조 허브
+    - 건조허브
+    - 말린 허브
+    - 건조 향신료
+    - 건향신료
+  form_category: dried
+  dried: true
+  ground: false
+  whole: false
+  fresh: false
+  score: 0
+  premium: false
+  description: Dried herb or spice form
+
+powder:
+  canonical_name: powder
+  aliases:
+    - powder
+    - powdered
+    - ground powder
+    - 파우더
+    - 분말
+    - 가루
+    - 향신료 가루
+    - 와사비 분말
+  form_category: ground
+  dried: true
+  ground: true
+  whole: false
+  fresh: false
+  score: 0
+  premium: false
+  description: Finely ground herb or spice powder
+
+ground:
+  canonical_name: ground
+  aliases:
+    - ground spice
+    - ground herb
+    - ground
+    - 분쇄
+    - 분쇄형
+    - 갈은 향신료
+  form_category: ground
+  dried: true
+  ground: true
+  whole: false
+  fresh: false
+  score: 0
+  premium: false
+  description: Ground herb or spice form
+
+whole:
+  canonical_name: whole
+  aliases:
+    - whole spice
+    - whole spices
+    - whole herb
+    - whole seed
+    - 통향신료
+    - 통 향신료
+    - 홀 스파이스
+    - 통후추
+    - 통계피
+  form_category: whole
+  dried: true
+  ground: false
+  whole: true
+  fresh: false
+  score: 0
+  premium: false
+  description: Whole, unground herb or spice form
+
+flakes:
+  canonical_name: flakes
+  aliases:
+    - flakes
+    - herb flakes
+    - chili flakes
+    - 플레이크
+    - 플레이크형
+    - 고추 플레이크
+  form_category: flakes
+  dried: true
+  ground: false
+  whole: false
+  fresh: false
+  score: 0
+  premium: false
+  description: Dried flake-form herb or spice
+
+crushed:
+  canonical_name: crushed
+  aliases:
+    - crushed
+    - crushed spice
+    - crushed herb
+    - 굵게 분쇄
+    - 크러시드
+  form_category: crushed
+  dried: true
+  ground: false
+  whole: false
+  fresh: false
+  score: 0
+  premium: false
+  description: Coarsely crushed herb or spice

@@ -1,0 +1,145 @@
+south_korea:
+  canonical_name: south_korea
+  aliases:
+    - Korea
+    - Korean
+    - South Korea
+    - 대한민국
+    - 한국
+    - 국내산
+    - 한국산
+  country_code: KR
+  country_name: South Korea
+  region_name:
+  score: 0
+  premium: false
+  description: Herbs or spices produced in South Korea
+
+india:
+  canonical_name: india
+  aliases:
+    - India
+    - Indian
+    - 인도
+    - 인도산
+  country_code: IN
+  country_name: India
+  region_name:
+  score: 0
+  premium: false
+  description: Major herb and spice producing country
+
+france:
+  canonical_name: france
+  aliases:
+    - France
+    - French
+    - 프랑스
+    - 프랑스산
+  country_code: FR
+  country_name: France
+  region_name:
+  score: 0
+  premium: false
+  description: Herb and spice origin in France
+
+italy:
+  canonical_name: italy
+  aliases:
+    - Italy
+    - Italian
+    - 이탈리아
+    - 이탈리아산
+  country_code: IT
+  country_name: Italy
+  region_name:
+  score: 0
+  premium: false
+  description: Mediterranean herb and spice origin
+
+spain:
+  canonical_name: spain
+  aliases:
+    - Spain
+    - Spanish
+    - 스페인
+    - 스페인산
+  country_code: ES
+  country_name: Spain
+  region_name:
+  score: 0
+  premium: false
+  description: Herb and spice origin in Spain
+
+turkey:
+  canonical_name: turkey
+  aliases:
+    - Turkey
+    - Turkish
+    - Türkiye
+    - 튀르키예
+    - 튀르키예산
+    - 터키
+    - 터키산
+  country_code: TR
+  country_name: Türkiye
+  region_name:
+  score: 0
+  premium: false
+  description: Herb and spice producing country
+
+china:
+  canonical_name: china
+  aliases:
+    - China
+    - Chinese
+    - 중국
+    - 중국산
+  country_code: CN
+  country_name: China
+  region_name:
+  score: 0
+  premium: false
+  description: Herb and spice producing country
+
+vietnam:
+  canonical_name: vietnam
+  aliases:
+    - Vietnam
+    - Vietnamese
+    - 베트남
+    - 베트남산
+  country_code: VN
+  country_name: Vietnam
+  region_name:
+  score: 0
+  premium: false
+  description: Herb and spice producing country
+
+indonesia:
+  canonical_name: indonesia
+  aliases:
+    - Indonesia
+    - Indonesian
+    - 인도네시아
+    - 인도네시아산
+  country_code: ID
+  country_name: Indonesia
+  region_name:
+  score: 0
+  premium: false
+  description: Herb and spice producing country
+
+japan:
+  canonical_name: japan
+  aliases:
+    - Japan
+    - Japanese
+    - 일본
+    - 일본산
+  country_code: JP
+  country_name: Japan
+  region_name:
+  score: 0
+  premium: false
+  description: Herb and spice producing country

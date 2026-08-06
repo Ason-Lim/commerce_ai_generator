@@ -65,6 +65,7 @@ def test_provider_registration_order() -> None:
         "wine",
         "tea",
         "olive_oil",
+        "herb_spice",
         "venison",
         "goat",
         "beef",

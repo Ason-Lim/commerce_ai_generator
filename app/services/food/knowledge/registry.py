@@ -22,6 +22,9 @@ from app.services.food.knowledge.tea.provider import (
 from app.services.food.knowledge.olive_oil.provider import (
     OliveOilKnowledgeProvider,
 )
+from app.services.food.knowledge.herb_spice.provider import (
+    HerbSpiceKnowledgeProvider,
+)
 from app.services.food.knowledge.meat.beef.provider import (
     BeefKnowledgeProvider,
 )
@@ -183,6 +186,9 @@ FOOD_KNOWLEDGE_REGISTRY.register(
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     OliveOilKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    HerbSpiceKnowledgeProvider()
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     VenisonKnowledgeProvider()
