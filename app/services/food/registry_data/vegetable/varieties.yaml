@@ -1,0 +1,116 @@
+registry_id: vegetable.varieties
+version: "1.0.0"
+
+metadata:
+  title: 채소 품목 및 품종 Registry
+  domain: vegetable
+  schema_version: "1"
+
+data:
+  LETTUCE:
+    category: leafy
+    canonical_name: 상추
+    aliases:
+      - 상추
+      - lettuce
+
+  PERILLA_LEAF:
+    category: leafy
+    canonical_name: 깻잎
+    aliases:
+      - 깻잎
+      - 들깻잎
+      - perilla leaf
+
+  SPINACH:
+    category: leafy
+    canonical_name: 시금치
+    aliases:
+      - 시금치
+      - spinach
+
+  NAPA_CABBAGE:
+    category: leafy
+    canonical_name: 배추
+    aliases:
+      - 배추
+      - 김장배추
+      - napa cabbage
+
+  CABBAGE:
+    category: leafy
+    canonical_name: 양배추
+    aliases:
+      - 양배추
+      - cabbage
+
+  CARROT:
+    category: root
+    canonical_name: 당근
+    aliases:
+      - 당근
+      - carrot
+
+  POTATO:
+    category: root
+    canonical_name: 감자
+    aliases:
+      - 감자
+      - potato
+
+  SWEET_POTATO:
+    category: root
+    canonical_name: 고구마
+    aliases:
+      - 고구마
+      - sweet potato
+
+  ONION:
+    category: bulb
+    canonical_name: 양파
+    aliases:
+      - 양파
+      - onion
+
+  GARLIC:
+    category: bulb
+    canonical_name: 마늘
+    aliases:
+      - 마늘
+      - garlic
+
+  CUCUMBER:
+    category: fruit_vegetable
+    canonical_name: 오이
+    aliases:
+      - 오이
+      - cucumber
+
+  ZUCCHINI:
+    category: fruit_vegetable
+    canonical_name: 애호박
+    aliases:
+      - 애호박
+      - 호박
+      - zucchini
+
+  TOMATO:
+    category: fruit_vegetable
+    canonical_name: 토마토
+    aliases:
+      - 토마토
+      - tomato
+
+  PAPRIKA:
+    category: fruit_vegetable
+    canonical_name: 파프리카
+    aliases:
+      - 파프리카
+      - paprika
+
+  BROCCOLI:
+    category: flower
+    canonical_name: 브로콜리
+    aliases:
+      - 브로콜리
+      - broccoli

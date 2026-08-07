@@ -40,6 +40,16 @@ FOOD_CATEGORY_REGISTRY: Dict[str, FoodCategoryConfig] = {
         ),
         provider_id="fruit",
     ),
+    "vegetable": FoodCategoryConfig(
+        category_id="vegetable",
+        display_name="채소",
+        aliases=(
+            "채소",
+            "야채",
+            "vegetable",
+        ),
+        provider_id="vegetable",
+    ),
     "coffee": FoodCategoryConfig(
         category_id="coffee",
         display_name="커피",

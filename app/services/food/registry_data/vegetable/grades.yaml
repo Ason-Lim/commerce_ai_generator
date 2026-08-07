@@ -1,0 +1,35 @@
+registry_id: vegetable.grades
+version: "1.0.0"
+
+metadata:
+  title: 채소 표시 등급 Registry
+  domain: vegetable
+  schema_version: "1"
+
+data:
+  PREMIUM:
+    canonical_name: 특
+    aliases:
+      - 특
+      - 특품
+      - 프리미엄
+
+  HIGH:
+    canonical_name: 상
+    aliases:
+      - 상
+      - 상품
+
+  STANDARD:
+    canonical_name: 보통
+    aliases:
+      - 보통
+      - 중
+      - 일반
+
+  HOME:
+    canonical_name: 가정용
+    aliases:
+      - 가정용
+      - 못난이
+      - 실속형
