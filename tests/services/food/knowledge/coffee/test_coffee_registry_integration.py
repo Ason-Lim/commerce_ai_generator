@@ -60,6 +60,7 @@ def test_provider_registration_order() -> None:
 
     assert category_ids == [
         "fruit",
+        "vegetable",
         "cheese",
         "coffee",
         "wine",

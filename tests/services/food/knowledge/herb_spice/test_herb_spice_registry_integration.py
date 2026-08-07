@@ -40,6 +40,7 @@ def test_default_provider_order() -> None:
         .list_category_ids()
     ) == [
         "fruit",
+        "vegetable",
         "cheese",
         "coffee",
         "wine",
