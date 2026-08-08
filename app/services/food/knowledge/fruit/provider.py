@@ -5,9 +5,12 @@ from typing import Any, Mapping
 from app.services.food.knowledge.base import (
     FoodKnowledgeProvider,
 )
+from app.services.food.knowledge.fruit.attributes import (
+    build_fruit_attributes,
+    extract_fruit_product_name,
+)
 from app.services.food.knowledge.fruit.parser import (
-    extract_product_name,
-    parse_fruit_product,
+    parse_fruit,
 )
 from app.services.food.knowledge.fruit.rules import (
     build_fruit_rules,
@@ -76,10 +79,17 @@ class FruitKnowledgeProvider(
                 product_name.strip().lower()
             )
 
-            return any(
-                alias in normalized_name
-                for alias in alias_set
-            )
+            for alias in alias_set:
+                if alias == "배":
+                    if alias in normalized_name.split():
+                        return True
+
+                    continue
+
+                if alias in normalized_name:
+                    return True
+
+            return False
 
         return False
 
@@ -90,8 +100,13 @@ class FruitKnowledgeProvider(
     ) -> FoodKnowledgeResult:
         product_data = dict(product)
 
-        attributes = parse_fruit_product(
+        parse_result = parse_fruit(
             product_data
+        )
+
+        attributes = build_fruit_attributes(
+            product=product_data,
+            parse_result=parse_result,
         )
 
         scores = calculate_fruit_scores(
@@ -119,10 +134,12 @@ class FruitKnowledgeProvider(
         return FoodKnowledgeResult(
             category_id=self.category_id,
             category_name=self.category_name,
-            product_name=extract_product_name(
-                product_data
-            )
-            or None,
+            product_name=(
+                extract_fruit_product_name(
+                    product_data
+                )
+                or None
+            ),
             attributes=attributes,
             scores=scores,
             rules=rule_results,
@@ -130,16 +147,13 @@ class FruitKnowledgeProvider(
             warnings=warnings,
             final_score=final_score,
             confidence=float(
-                attributes.get(
-                    "confidence",
-                    1.0,
-                )
+                parse_result.confidence
             ),
             metadata={
                 "provider": (
                     self.__class__.__name__
                 ),
-                "provider_version": "2.1",
+                "provider_version": "2.2",
                 "priority": (
                     context.priority
                     if context
