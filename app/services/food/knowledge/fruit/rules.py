@@ -13,6 +13,12 @@ from app.services.food.knowledge.models import (
 )
 
 
+BRIX_PATTERNS = (
+    r"(?P<value>\d+(?:\.\d+)?)\s*(?:브릭스|brix)",
+    r"(?:당도)\s*(?P<value>\d+(?:\.\d+)?)",
+)
+
+
 def evaluate_fruit_rules(
     attributes: Mapping[str, Any],
     scores: Mapping[str, float],

@@ -1,9 +1,11 @@
 from app.services.food.knowledge.fruit.parser import (
+    FruitParser,
     calculate_parse_confidence,
     detect_fruit_keywords,
     extract_brix,
     extract_product_name,
     extract_weight_grams,
+    parse_fruit,
     parse_fruit_product,
 )
 from app.services.food.knowledge.fruit.provider import (
@@ -26,6 +28,8 @@ from app.services.food.knowledge.fruit.scoring import (
 
 __all__ = [
     "FruitKnowledgeProvider",
+    "FruitParser",
+    "parse_fruit",
     "parse_fruit_product",
     "extract_product_name",
     "extract_brix",

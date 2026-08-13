@@ -13,6 +13,15 @@ from app.services.food.knowledge.common import (
     normalize_text,
     safe_float,
 )
+from app.services.food.knowledge.fruit.parser_models import (
+    FruitParseResult,
+)
+from app.services.food.knowledge.fruit.registries import (
+    FRUIT_KEYWORDS,
+)
+from app.services.food.knowledge.fruit.rules import (
+    BRIX_PATTERNS,
+)
 
 
 _ORIGIN_KEYS = (
@@ -48,52 +57,124 @@ _BRIX_KEYS = (
     "sweetness_brix",
 )
 
-_FRUIT_KEYWORDS = (
-    "고당도",
-    "산지직송",
-    "당일수확",
-    "가정용",
-    "선물용",
-    "특품",
-    "정품",
-    "못난이",
-    "유기농",
-    "무농약",
-    "친환경",
-    "저탄소",
-    "GAP",
-)
+class FruitParser:
+    """
+    Fruit 도메인의 canonical parser.
+
+    책임:
+    - 상품 입력에서 Fruit 속성 추출
+    - 값 정규화
+    - Parse confidence 계산
+    - FruitParseResult 생성
+
+    점수 계산, Rule 평가, Provider orchestration은 수행하지 않는다.
+    """
+
+    def parse(
+        self,
+        product: Mapping[str, Any],
+    ) -> FruitParseResult:
+        if not isinstance(product, Mapping):
+            raise TypeError(
+                "product must be a Mapping"
+            )
+
+        product_name = extract_product_name(
+            product
+        )
+
+        origin = _normalize_optional_text(
+            first_non_empty(
+                product,
+                _ORIGIN_KEYS,
+            )
+        )
+
+        variety = _normalize_optional_text(
+            first_non_empty(
+                product,
+                _VARIETY_KEYS,
+            )
+        )
+
+        grade = _normalize_optional_text(
+            first_non_empty(
+                product,
+                _GRADE_KEYS,
+            )
+        )
+
+        weight = _normalize_optional_text(
+            first_non_empty(
+                product,
+                _WEIGHT_KEYS,
+            )
+        )
+
+        brix = extract_brix(product)
+
+        weight_grams = extract_weight_grams(
+            product
+        )
+
+        detected_keywords = (
+            detect_fruit_keywords(
+                product_name
+            )
+        )
+
+        confidence = (
+            calculate_parse_confidence(
+                product_name=product_name,
+                origin=origin,
+                grade=grade,
+                brix=brix,
+                weight=weight,
+            )
+        )
+
+        return FruitParseResult(
+            original_text=product_name,
+            normalized_text=normalize_text(
+                product_name
+            ),
+            confidence=confidence,
+            origin=origin,
+            variety=variety,
+            grade=grade,
+            brix=brix,
+            weight_grams=weight_grams,
+            detected_keywords=(
+                detected_keywords
+            ),
+        )
+
+
+_DEFAULT_FRUIT_PARSER = FruitParser()
+
+
+def parse_fruit(
+    product: Mapping[str, Any],
+) -> FruitParseResult:
+    """
+    FruitParseResult를 반환하는 canonical 함수 API.
+    """
+    return _DEFAULT_FRUIT_PARSER.parse(
+        product
+    )
 
 
 def parse_fruit_product(
     product: Mapping[str, Any],
 ) -> dict[str, Any]:
     """
-    과일 상품 원본 데이터를 표준 분석 속성으로 변환한다.
+    기존 Fruit 공개 API와의 하위 호환 adapter.
+
+    기존 호출자가 기대하는 dict 구조를 그대로 반환한다.
+    신규 코드는 parse_fruit() 또는 FruitParser.parse() 사용을 권장한다.
     """
 
-    product_name = extract_product_name(product)
-
-    origin = _normalize_optional_text(
-        first_non_empty(
-            product,
-            _ORIGIN_KEYS,
-        )
-    )
-
-    variety = _normalize_optional_text(
-        first_non_empty(
-            product,
-            _VARIETY_KEYS,
-        )
-    )
-
-    grade = _normalize_optional_text(
-        first_non_empty(
-            product,
-            _GRADE_KEYS,
-        )
-    )
+    parsed = parse_fruit(product)
 
     weight = _normalize_optional_text(
         first_non_empty(
@@ -102,41 +183,29 @@ def parse_fruit_product(
         )
     )
 
-    brix = extract_brix(product)
-
-    weight_grams = extract_weight_grams(
-        product
-    )
-
-    detected_keywords = detect_fruit_keywords(
-        product_name
-    )
-
-    confidence = calculate_parse_confidence(
-        product_name=product_name,
-        origin=origin,
-        grade=grade,
-        brix=brix,
-        weight=weight,
-    )
-
     return {
-        "product_name": product_name,
-        "origin": origin,
-        "variety": variety,
-        "grade": grade,
-        "brix": brix,
+        "product_name": parsed.original_text,
+        "origin": parsed.origin,
+        "variety": parsed.variety,
+        "grade": parsed.grade,
+        "brix": parsed.brix,
         "weight": weight,
-        "weight_grams": weight_grams,
-        "detected_keywords": detected_keywords,
-        "confidence": confidence,
+        "weight_grams": (
+            parsed.weight_grams
+        ),
+        "detected_keywords": list(
+            parsed.detected_keywords
+        ),
+        "confidence": parsed.confidence,
     }
 
 
 def extract_product_name(
     product: Mapping[str, Any],
 ) -> str:
-    return extract_common_product_name(product)
+    return extract_common_product_name(
+        product
+    )
 
 
 def extract_brix(
@@ -170,12 +239,7 @@ def extract_brix(
         product
     )
 
-    patterns = (
-        r"(?P<value>\d+(?:\.\d+)?)\s*(?:브릭스|brix)",
-        r"(?:당도)\s*(?P<value>\d+(?:\.\d+)?)",
-    )
-
-    for pattern in patterns:
+    for pattern in BRIX_PATTERNS:
         matched = re.search(
             pattern,
             product_name,
@@ -227,7 +291,7 @@ def detect_fruit_keywords(
 ) -> list[str]:
     return detect_keywords(
         product_name,
-        _FRUIT_KEYWORDS,
+        FRUIT_KEYWORDS,
         case_sensitive=False,
     )
 
@@ -261,6 +325,23 @@ def calculate_parse_confidence(
 def _normalize_optional_text(
     value: Any,
 ) -> str | None:
-    normalized = normalize_text(value)
+    if value is None:
+        return None
+
+    normalized = normalize_text(
+        str(value)
+    )
 
     return normalized or None
+
+
+__all__ = [
+    "FruitParser",
+    "parse_fruit",
+    "parse_fruit_product",
+    "extract_product_name",
+    "extract_brix",
+    "extract_weight_grams",
+    "detect_fruit_keywords",
+    "calculate_parse_confidence",
+]
