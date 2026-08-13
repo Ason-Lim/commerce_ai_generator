@@ -1,110 +1,70 @@
-# Provider Selection Verification Request
+# IPS-SEAFOOD-2026-001
 
-## IPS-SEAFOOD-2026-001
+## Independent Provider Selection Verification Request
 
-**Title**
-
-Independent Provider Selection Verification Request for the Seafood Knowledge Domain
-
----
-
-# Document Identity
-
-| Item | Value |
-|---|---|
-| Document ID | IPS-SEAFOOD-2026-001 |
-| Requesting Authority | Seafood Domain Development |
-| Receiving Authority | 99_Integration Verification Authority |
-| Project | Commerce AI Generator |
-| Domain | 20_Seafood |
-| Verification Phase | Sprint 3 |
-| Verification Type | Provider Selection Verification |
-| Status | OFFICIAL REQUEST |
+**Document ID:** IPS-SEAFOOD-2026-001  
+**Domain:** Seafood  
+**Authority:** 99_Integration Verification Authority  
+**Verification Type:** Independent Provider Selection Verification  
+**Sprint:** Sprint 3  
+**Status:** VERIFICATION REQUESTED  
+**Date:** 2026-08-13
 
 ---
 
 # 1. Purpose
 
-This document officially requests independent Provider Selection Verification for the Seafood Knowledge Domain.
+This document formally requests independent verification of provider
+selection behavior for the Seafood Domain.
 
-The preceding Provider Registration Verification has completed under:
+The objective is to verify that the Seafood provider is selected
+correctly through the canonical Food Knowledge runtime resolution paths
+without disturbing provider selection behavior of existing domains.
 
-~~~text
-IPR-SEAFOOD-2026-001
-~~~
+This verification follows completion of:
 
-with the official decision:
+- ADA-MA-2026-019-SEAFOOD
+- IVR-SEAFOOD-2026-001
+- IPR-SEAFOOD-2026-001
 
-~~~text
-PASS WITH ARCHITECTURE OBSERVATION
-~~~
-
-The recognized non-blocking observation is:
-
-~~~text
-AO-SEAFOOD-2026-001
-Historical Provider Membership Expectation Drift
-~~~
-
-The purpose of this IPS phase is to independently determine whether the shared Food Knowledge runtime selects the Seafood provider correctly for supported Seafood product names while preserving provider selection behavior for existing domains.
-
-This request does not assert the outcome of the IPS verification.
+The requested verification is limited to provider selection behavior.
 
 ---
 
-# 2. Governing Evidence
+# 2. Verification Principle
 
-The requested verification follows the current Sprint 3 evidence chain:
+The verification SHALL be evidence-based.
 
-~~~text
-ADA-MA-2026-019-SEAFOOD
-        ↓
-Seafood Domain Implementation
-        ↓
-IVR-SEAFOOD-2026-001
-        ↓
-IPR-SEAFOOD-2026-001
-        ↓
-Provider Registration Verification
-PASS WITH ARCHITECTURE OBSERVATION
-        ↓
-IPS-SEAFOOD-2026-001
-~~~
+The existence of a registered Seafood provider does not by itself prove
+correct provider selection.
 
-Relevant principles include:
+Independent verification SHALL confirm that:
 
-- Evidence First Principle
-- Progressive Maturity Model
-- Sprint 3 Domain Completion Governance
-- Shared Food Knowledge Registry Contract
-- Provider Selection Preservation
-- Independent Integration Verification
+1. declared Seafood products resolve to the Seafood provider;
+2. canonical provider resolution paths agree;
+3. representative legacy-domain routing remains preserved;
+4. undeclared Seafood aliases are not implicitly introduced;
+5. provider selection remains deterministic and bounded by the
+   implemented runtime contract.
+
+No expansion of the Seafood alias contract is requested by this
+document.
 
 ---
 
 # 3. Verification Scope
 
-The independent IPS verification is requested to cover:
+99_Integration is requested to independently verify the following.
 
-1. Seafood provider selection
-2. Direct Food Knowledge Registry resolution
-3. Shared resolver selection
-4. Agreement between direct and shared provider resolution
-5. Supported Seafood alias selection
-6. Representative legacy-domain selection preservation
-7. Undeclared Seafood alias boundary preservation
-8. Seafood domain regression safety
-9. Compilation safety
+## 3.1 Seafood Positive Selection
 
-The verification is specifically concerned with provider selection behavior.
+Representative declared Seafood products SHALL resolve to:
 
-Result Contract Verification and later integration phases remain outside the decision scope of this request.
+~~~text
+category_id = seafood
+~~~
 
----
-
-# 4. Seafood Positive Selection Cases
-
-The following representative product names are requested as positive Seafood provider-selection cases:
+Verification cases:
 
 ~~~text
 노르웨이 연어
@@ -116,65 +76,88 @@ The following representative product names are requested as positive Seafood pro
 오징어
 ~~~
 
-For each case, independent verification should evaluate both:
+---
+
+## 3.2 Canonical Resolution Path Agreement
+
+Provider selection SHALL be verified through both:
 
 ~~~text
-resolve_food_provider(...)
+app.services.food.knowledge.registry.resolve_food_provider
 ~~~
 
 and:
 
 ~~~text
-resolve_knowledge_provider(...)
+app.services.food.resolver.resolve_knowledge_provider
 ~~~
 
-Expected provider:
+For each representative Seafood case, both resolution paths SHALL
+select:
 
 ~~~text
 seafood
 ~~~
 
-The direct registry resolver and shared resolver should agree on the selected provider.
-
 ---
 
-# 5. Legacy Provider Selection Preservation
+## 3.3 Legacy Provider Selection Preservation
 
-Provider selection for representative pre-existing domains must remain unchanged.
+Representative existing-domain products SHALL continue to resolve to
+their established providers.
 
-Requested representative cases include:
-
-| Product | Expected Provider |
-|---|---|
-| 고당도 사과 | fruit |
-| 양배추 | vegetable |
-| 브리 치즈 | cheese |
-| 예가체프 원두 | coffee |
-| 프랑스 레드 와인 | wine |
-| 제주 녹차 | tea |
-| 엑스트라 버진 올리브 오일 | olive_oil |
-| 바질 | herb_spice |
-| 한우 등심 | beef |
-| 프리미엄 도퍼 어린양 프렌치랙 | lamb |
-| 토종닭 | chicken |
-| 훈제오리 | duck |
-
-For each representative product, the direct provider resolver and shared resolver should select the same expected pre-existing provider.
-
-Seafood registration must not capture unrelated products belonging to existing domains.
-
----
-
-# 6. Undeclared Seafood Alias Boundary
-
-The preceding IPR verification established that the following names are not currently declared positive aliases of `SeafoodKnowledgeProvider`:
+Expected evidence:
 
 ~~~text
-광어
-넙치
+고당도 사과
+fruit
+
+양배추
+vegetable
+
+브리 치즈
+cheese
+
+예가체프 원두
+coffee
+
+프랑스 레드 와인
+wine
+
+제주 녹차
+tea
+
+엑스트라 버진 올리브 오일
+olive_oil
+
+바질
+herb_spice
+
+한우 등심
+beef
+
+프리미엄 도퍼 어린양 프렌치랙
+lamb
+
+토종닭
+chicken
+
+훈제오리
+duck
 ~~~
 
-Related examples include:
+The introduction of Seafood SHALL NOT alter these representative
+provider selections.
+
+---
+
+# 4. Seafood Alias Boundary Verification
+
+Provider selection SHALL remain bounded by the aliases explicitly
+declared by the Seafood provider.
+
+The current verification evidence establishes that the following names
+are not declared Seafood provider aliases:
 
 ~~~text
 광어
@@ -184,218 +167,268 @@ Related examples include:
 국산 넙치
 ~~~
 
-These cases must not be treated as positive Seafood assertions during the current IPS verification.
-
-The requested boundary assertion is:
+The expected runtime result for this IPS verification is:
 
 ~~~text
-Seafood provider must not be selected
-solely on the assumption that these
-undeclared aliases belong to the current
-Seafood provider contract.
+Seafood provider is NOT selected.
 ~~~
 
-This boundary requirement preserves the actual runtime contract verified during IPR.
+A `None` result is acceptable where no other provider legitimately
+claims the product.
 
-Failure to select Seafood for these undeclared aliases must not, by itself, be classified as a Seafood implementation defect.
+This requirement verifies current runtime behavior only.
 
-Expansion of the Seafood alias contract remains outside this IPS verification scope.
+It SHALL NOT be interpreted as a statement that 광어 or 넙치 are
+conceptually outside the seafood domain.
+
+Their absence from the current alias contract is an implementation
+boundary, not a domain-taxonomy conclusion.
 
 ---
 
-# 7. Direct and Shared Resolver Agreement
+# 5. Existing Execution Evidence
 
-For every positive Seafood case and representative legacy case, verification should compare:
+The submitting authority provides the following execution evidence for
+independent reproduction.
 
-~~~text
-Direct Resolver
-resolve_food_provider(...)
+## 5.1 Seafood Provider Selection
 
-Shared Resolver
-resolve_knowledge_provider(...)
-~~~
-
-The requested invariant is:
+Observed:
 
 ~~~text
-DIRECT PROVIDER
-==
-SHARED PROVIDER
-==
-EXPECTED PROVIDER
+'노르웨이 연어'
+EXPECTED= seafood
+DIRECT= seafood
+SHARED= seafood
+PASS= True
+
+'고등어'
+EXPECTED= seafood
+DIRECT= seafood
+SHARED= seafood
+PASS= True
+
+'참치'
+EXPECTED= seafood
+DIRECT= seafood
+SHARED= seafood
+PASS= True
+
+'새우'
+EXPECTED= seafood
+DIRECT= seafood
+SHARED= seafood
+PASS= True
+
+'꽃게'
+EXPECTED= seafood
+DIRECT= seafood
+SHARED= seafood
+PASS= True
+
+'전복'
+EXPECTED= seafood
+DIRECT= seafood
+SHARED= seafood
+PASS= True
+
+'오징어'
+EXPECTED= seafood
+DIRECT= seafood
+SHARED= seafood
+PASS= True
 ~~~
 
-Any disagreement must be independently investigated before an IPS PASS decision is issued.
+Observed aggregate result:
+
+~~~text
+IPS_PROVIDER_SELECTION_PASS= True
+~~~
 
 ---
 
-# 8. Compilation and Domain Safety
+# 6. Legacy Selection Evidence
 
-The IPS verification should also confirm that provider-selection behavior is not accompanied by compilation or Seafood-domain regression failures.
-
-Requested safety checks:
+Representative legacy-domain selection was observed as follows:
 
 ~~~text
-python -m compileall -q app
+고당도 사과                    -> fruit
+양배추                         -> vegetable
+브리 치즈                      -> cheese
+예가체프 원두                  -> coffee
+프랑스 레드 와인              -> wine
+제주 녹차                      -> tea
+엑스트라 버진 올리브 오일     -> olive_oil
+바질                           -> herb_spice
+한우 등심                      -> beef
+프리미엄 도퍼 어린양 프렌치랙 -> lamb
+토종닭                         -> chicken
+훈제오리                       -> duck
 ~~~
 
-and:
+Both canonical resolution paths returned the expected provider for
+every representative case.
+
+Observed aggregate result:
 
 ~~~text
-pytest tests/services/food/knowledge/seafood -q
+IPS_PROVIDER_SELECTION_PASS= True
 ~~~
-
-These checks provide supporting evidence only.
-
-The final IPS decision remains the responsibility of 99_Integration Verification Authority.
 
 ---
 
-# 9. Architecture Observation Preservation
+# 7. Undeclared Alias Boundary Evidence
 
-The existing Architecture Observation remains:
-
-~~~text
-AO-SEAFOOD-2026-001
-Historical Provider Membership Expectation Drift
-~~~
-
-Its IPR classification is:
+Observed:
 
 ~~~text
-NON-BLOCKING
+'광어'
+DIRECT= None
+SHARED= None
+SEAFOOD_NOT_SELECTED= True
+
+'국산 광어'
+DIRECT= None
+SHARED= None
+SEAFOOD_NOT_SELECTED= True
+
+'광어회'
+DIRECT= None
+SHARED= None
+SEAFOOD_NOT_SELECTED= True
+
+'넙치'
+DIRECT= None
+SHARED= None
+SEAFOOD_NOT_SELECTED= True
+
+'국산 넙치'
+DIRECT= None
+SHARED= None
+SEAFOOD_NOT_SELECTED= True
 ~~~
 
-The IPS verification should not automatically propagate historical provider-membership expectation failures into a provider-selection failure.
+Observed aggregate result:
 
-If new provider-selection defects are observed, they must be separately identified and attributed based on runtime evidence.
+~~~text
+SEAFOOD_UNDECLARED_ALIAS_BOUNDARY_PASS= True
+~~~
 
 ---
 
-# 10. Requested Verification Matrix
+# 8. Compilation and Domain Regression Evidence
 
-99_Integration Verification Authority is requested to independently determine the following:
-
-| Verification Item | Requested Verification |
-|---|---|
-| Supported Seafood Provider Selection | VERIFY |
-| Direct Resolver Selection | VERIFY |
-| Shared Resolver Selection | VERIFY |
-| Direct / Shared Agreement | VERIFY |
-| Legacy Provider Selection Preservation | VERIFY |
-| Undeclared Alias Boundary | VERIFY |
-| Seafood Domain Regression Safety | VERIFY |
-| Compilation Safety | VERIFY |
-| New Blocking Selection Defect | DETERMINE |
-
-No PASS result is asserted by this request document.
-
----
-
-# 11. Requested Evidence
-
-The IPS verification report should record independently reproduced evidence sufficient to determine:
+Observed compilation result:
 
 ~~~text
-SUPPORTED SEAFOOD SELECTION
-PASS / FAIL
-
-DIRECT / SHARED RESOLVER AGREEMENT
-PASS / FAIL
-
-LEGACY SELECTION PRESERVATION
-PASS / FAIL
-
-UNDECLARED ALIAS BOUNDARY
-PASS / FAIL
-
-COMPILATION
-PASS / FAIL
-
-SEAFOOD DOMAIN REGRESSION
-PASS / FAIL
-
-BLOCKING PROVIDER SELECTION DEFECT
-YES / NO
+compile_exit_code=0
 ~~~
 
-Any unexpected behavior should be attributed before the final decision.
+Observed Seafood domain regression:
+
+~~~text
+63 passed
+~~~
+
+These results establish that the provider-selection verification
+evidence was obtained from a compilable runtime with the Seafood domain
+test suite passing.
 
 ---
 
-# 12. Requested Decision
+# 9. Requested Independent Verification
 
-99_Integration Verification Authority is requested to issue one of the following evidence-based decisions:
+99_Integration is requested to independently reproduce and determine:
+
+1. whether declared Seafood products select the Seafood provider;
+2. whether direct and shared resolution paths agree;
+3. whether representative legacy provider selections remain preserved;
+4. whether undeclared aliases remain outside the current Seafood
+   provider-selection contract;
+5. whether Seafood provider selection introduces any unintended
+   cross-domain routing collision;
+6. whether the observed provider-selection behavior is suitable for
+   advancement to Result Contract Verification.
+
+---
+
+# 10. Requested Result
+
+If all required verification evidence is reproduced successfully, the
+requested result is:
+
+~~~text
+PROVIDER SELECTION VERIFIED
+~~~
+
+with:
+
+~~~text
+IPS-SEAFOOD-2026-001
+PASS
+~~~
+
+If the implementation is functionally correct but an architecture or
+governance observation remains, 99_Integration MAY return:
+
+~~~text
+PASS WITH OBSERVATION
+~~~
+
+If provider selection cannot be reproduced or a material routing
+regression is identified, the result SHALL NOT be PASS.
+
+---
+
+# 11. Requested Decision
+
+99_Integration Verification Authority is requested to issue one of:
 
 ~~~text
 PASS
-
-PASS WITH ARCHITECTURE OBSERVATION
-
+PASS WITH OBSERVATION
 REQUIRES REMEDIATION
-
 FAIL
 ~~~
 
-The decision must be based on independently reproduced provider-selection evidence.
+The decision SHALL distinguish verified runtime facts from architecture
+observations.
 
-This request itself does not predetermine the decision.
+---
+
+# 12. Authority Boundary
+
+This document does not authorize implementation changes.
+
+99_Integration is responsible for independent verification and
+verification attribution.
+
+Seafood Domain Development remains responsible for implementation.
+
+00_1 Master Architecture remains responsible for architecture-level
+interpretation and final architecture completion decisions.
 
 ---
 
 # 13. Next Stage
 
-If Provider Selection Verification succeeds, the Seafood Domain may proceed to:
+Upon successful completion of IPS-SEAFOOD-2026-001, the Seafood
+Evidence Chain SHALL advance to:
 
 ~~~text
 IRC-SEAFOOD-2026-001
-Result Contract Verification
+Independent Result Contract Verification
 ~~~
 
-The expected Sprint 3 Integration Verification sequence remains:
-
-~~~text
-IPR
-↓
-IPS
-↓
-IRC
-↓
-IRR
-↓
-IRG
-↓
-IVC
-~~~
-
-Advancement to IRC requires an official IPS decision from 99_Integration Verification Authority.
+The next stage SHALL NOT be treated as verified until its own evidence
+has been independently reproduced.
 
 ---
 
-# 14. Official Request
-
-The Seafood Domain formally requests independent execution of:
+# 14. Submission Status
 
 ~~~text
 IPS-SEAFOOD-2026-001
-Provider Selection Verification
-~~~
-
-The request is limited to verification of provider-selection behavior and associated preservation requirements.
-
-No claim of Result Contract Verification, Runtime Routing Verification, Cross-domain Regression Completion, Integration Verification Completion, or Master Architecture approval is made by this document.
-
----
-
-**Requested By**
-
-**Seafood Domain Development**
-
-Commerce AI Generator
-
-~~~text
 INDEPENDENT PROVIDER SELECTION
 VERIFICATION REQUESTED
-
-IPS-SEAFOOD-2026-001
 ~~~
