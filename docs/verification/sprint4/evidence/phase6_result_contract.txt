@@ -1,0 +1,11 @@
+'나주 배' provider= fruit result= fruit missing= [] PASS
+'국산 양배추' provider= vegetable result= vegetable missing= [] PASS
+'체다 치즈' provider= cheese result= cheese missing= [] PASS
+'에티오피아 예가체프 커피' provider= coffee result= coffee missing= [] PASS
+'Napa Valley Cabernet Sauvignon Wine' provider= wine result= wine missing= [] PASS
+'제주 녹차' provider= tea result= tea missing= [] PASS
+'엑스트라 버진 올리브 오일' provider= olive_oil result= olive_oil missing= [] PASS
+'로즈마리 허브' provider= herb_spice result= herb_spice missing= [] PASS
+'노르웨이 연어' provider= seafood result= seafood missing= [] PASS
+
+result_contract_pass = True

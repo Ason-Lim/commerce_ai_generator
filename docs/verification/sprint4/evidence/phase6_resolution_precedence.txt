@@ -1,0 +1,24 @@
+=== DIRECT CANONICAL ===
+'coffee' coffee coffee PASS
+'tea' tea tea PASS
+'seafood' seafood seafood PASS
+
+=== ALIAS RESOLUTION ===
+'커피' coffee coffee PASS
+'야채' vegetable vegetable PASS
+'연어' seafood seafood PASS
+'올리브오일' olive_oil olive_oil PASS
+'허브 향신료' herb_spice herb_spice PASS
+
+=== SUPPORTS FALLBACK ===
+'나주 배' fruit fruit PASS
+'국산 양배추' vegetable vegetable PASS
+'체다 치즈' cheese cheese PASS
+'에티오피아 예가체프 커피' coffee coffee PASS
+'Napa Valley Cabernet Sauvignon Wine' wine wine PASS
+'제주 녹차' tea tea PASS
+'엑스트라 버진 올리브 오일' olive_oil olive_oil PASS
+'로즈마리 허브' herb_spice herb_spice PASS
+'노르웨이 연어' seafood seafood PASS
+
+resolution_precedence_pass = True

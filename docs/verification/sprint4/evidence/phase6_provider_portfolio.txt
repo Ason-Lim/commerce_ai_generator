@@ -1,0 +1,6 @@
+provider_count = 15
+provider_ids = ['fruit', 'vegetable', 'cheese', 'coffee', 'wine', 'tea', 'olive_oil', 'herb_spice', 'venison', 'goat', 'beef', 'lamb', 'chicken', 'duck', 'seafood']
+provider_ids_unique = True
+provider_portfolio_matches = True
+alias_registry_size = 435
+all_provider_aliases_resolve = True
