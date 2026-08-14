@@ -1,0 +1,61 @@
+........................................................................ [  3%]
+......................................................F................. [  7%]
+........................................................................ [ 11%]
+........................................................................ [ 15%]
+.....................................F.................................. [ 19%]
+........................................................................ [ 23%]
+........................................................................ [ 27%]
+........................................................................ [ 31%]
+........................F............................................... [ 35%]
+........................................................................ [ 39%]
+........................................................................ [ 43%]
+........................................................................ [ 47%]
+........................................................................ [ 51%]
+........................................................................ [ 55%]
+........................................................................ [ 59%]
+........................................................................ [ 63%]
+........................................................................ [ 67%]
+........................................................................ [ 71%]
+........................................................................ [ 75%]
+........................................................................ [ 79%]
+........................................................................ [ 83%]
+........................................................................ [ 87%]
+........................................................................ [ 91%]
+.......F................................................................ [ 95%]
+........................................................................ [ 99%]
+.................                                                        [100%]
+=================================== FAILURES ===================================
+___________________ test_cheese_provider_registration_order ____________________
+tests/services/food/knowledge/cheese/test_cheese_registry_integration.py:49: in test_cheese_provider_registration_order
+    assert category_ids == [
+E   AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]
+E     
+E     Left contains one more item: 'seafood'
+E     Use -v to get more diff
+_______________________ test_provider_registration_order _______________________
+tests/services/food/knowledge/coffee/test_coffee_registry_integration.py:61: in test_provider_registration_order
+    assert category_ids == [
+E   AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]
+E     
+E     Left contains one more item: 'seafood'
+E     Use -v to get more diff
+_________________________ test_default_provider_order __________________________
+tests/services/food/knowledge/herb_spice/test_herb_spice_registry_integration.py:38: in test_default_provider_order
+    assert (
+E   AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]
+E     
+E     Left contains one more item: 'seafood'
+E     Use -v to get more diff
+_________ test_vegetable_registration_preserves_legacy_provider_order __________
+tests/services/food/knowledge/vegetable/test_vegetable_registry_integration.py:93: in test_vegetable_registration_preserves_legacy_provider_order
+    assert legacy_ids == [
+E   AssertionError: assert ['fruit', 'ch...ive_oil', ...] == ['fruit', 'ch...ive_oil', ...]
+E     
+E     Left contains one more item: 'seafood'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/services/food/knowledge/cheese/test_cheese_registry_integration.py::test_cheese_provider_registration_order
+FAILED tests/services/food/knowledge/coffee/test_coffee_registry_integration.py::test_provider_registration_order
+FAILED tests/services/food/knowledge/herb_spice/test_herb_spice_registry_integration.py::test_default_provider_order
+FAILED tests/services/food/knowledge/vegetable/test_vegetable_registry_integration.py::test_vegetable_registration_preserves_legacy_provider_order
+4 failed, 1813 passed in 5.34s
