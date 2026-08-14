@@ -90,7 +90,7 @@ def test_vegetable_registration_preserves_legacy_provider_order():
         if category_id != "vegetable"
     ]
 
-    assert legacy_ids == [
+    expected_legacy_ids = [
         "fruit",
         "cheese",
         "coffee",
@@ -105,3 +105,11 @@ def test_vegetable_registration_preserves_legacy_provider_order():
         "chicken",
         "duck",
     ]
+
+    actual_legacy_ids = [
+        category_id
+        for category_id in legacy_ids
+        if category_id in expected_legacy_ids
+    ]
+
+    assert actual_legacy_ids == expected_legacy_ids

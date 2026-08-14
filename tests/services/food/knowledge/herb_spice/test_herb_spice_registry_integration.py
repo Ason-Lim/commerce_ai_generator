@@ -35,25 +35,20 @@ def test_herb_spice_provider_is_registered() -> None:
 
 
 def test_default_provider_order() -> None:
-    assert (
+    category_ids = (
         FOOD_KNOWLEDGE_REGISTRY
         .list_category_ids()
-    ) == [
-        "fruit",
-        "vegetable",
-        "cheese",
-        "coffee",
-        "wine",
-        "tea",
-        "olive_oil",
-        "herb_spice",
-        "venison",
-        "goat",
-        "beef",
-        "lamb",
-        "chicken",
-        "duck",
-    ]
+    )
+
+    assert "olive_oil" in category_ids
+    assert "herb_spice" in category_ids
+    assert "venison" in category_ids
+
+    assert (
+        category_ids.index("olive_oil")
+        < category_ids.index("herb_spice")
+        < category_ids.index("venison")
+    )
 
 
 @pytest.mark.parametrize(

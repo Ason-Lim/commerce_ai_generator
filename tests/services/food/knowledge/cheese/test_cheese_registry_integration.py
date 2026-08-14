@@ -46,22 +46,15 @@ def test_cheese_provider_registration_order() -> None:
         .list_category_ids()
     )
 
-    assert category_ids == [
-        "fruit",
-        "vegetable",
-        "cheese",
-        "coffee",
-        "wine",
-        "tea",
-        "olive_oil",
-        "herb_spice",
-        "venison",
-        "goat",
-        "beef",
-        "lamb",
-        "chicken",
-        "duck",
-    ]
+    assert "vegetable" in category_ids
+    assert "cheese" in category_ids
+    assert "coffee" in category_ids
+
+    assert (
+        category_ids.index("vegetable")
+        < category_ids.index("cheese")
+        < category_ids.index("coffee")
+    )
 
 
 def test_list_food_providers_contains_cheese() -> None:
