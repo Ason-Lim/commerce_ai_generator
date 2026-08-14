@@ -3,6 +3,9 @@ from __future__ import annotations
 from collections import OrderedDict
 from typing import Iterable, List
 
+from app.services.food.knowledge.alias_resolution.bootstrap import (
+    build_provider_alias_resolver,
+)
 from app.services.food.knowledge.base import FoodKnowledgeProvider
 from app.services.food.knowledge.fruit.provider import (
     FruitKnowledgeProvider,
@@ -62,6 +65,9 @@ class FoodKnowledgeRegistry:
             str,
             FoodKnowledgeProvider,
         ] = OrderedDict()
+        self._alias_resolver = (
+            build_provider_alias_resolver(())
+        )
 
     def register(
         self,
@@ -82,15 +88,21 @@ class FoodKnowledgeRegistry:
             )
 
         self._providers[category_id] = provider
+        self._rebuild_alias_resolver()
 
     def unregister(
         self,
         category_id: str,
     ) -> FoodKnowledgeProvider | None:
-        return self._providers.pop(
+        provider = self._providers.pop(
             self._normalize_category_id(category_id),
             None,
         )
+
+        if provider is not None:
+            self._rebuild_alias_resolver()
+
+        return provider
 
     def get(
         self,
@@ -125,6 +137,21 @@ class FoodKnowledgeRegistry:
             if direct_provider is not None:
                 return direct_provider
 
+            resolved_category_id = (
+                self._alias_resolver.resolve(
+                    category_id,
+                    canonical_ids=self._providers.keys(),
+                )
+            )
+
+            if resolved_category_id is not None:
+                alias_provider = self.get(
+                    resolved_category_id
+                )
+
+                if alias_provider is not None:
+                    return alias_provider
+
         for provider in self._providers.values():
             if provider.supports(
                 category_id=category_id,
@@ -158,6 +185,13 @@ class FoodKnowledgeRegistry:
         self,
     ) -> Iterable[FoodKnowledgeProvider]:
         return iter(self._providers.values())
+
+    def _rebuild_alias_resolver(self) -> None:
+        self._alias_resolver = (
+            build_provider_alias_resolver(
+                self._providers.values()
+            )
+        )
 
     @staticmethod
     def _normalize_category_id(
