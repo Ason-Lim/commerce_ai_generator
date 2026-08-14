@@ -87,20 +87,56 @@ class FoodKnowledgeRegistry:
                 f"이미 등록된 Food Provider입니다: {category_id}"
             )
 
-        self._providers[category_id] = provider
-        self._rebuild_alias_resolver()
+        candidate_providers = OrderedDict(
+            self._providers
+        )
+        candidate_providers[category_id] = provider
+
+        candidate_alias_resolver = (
+            build_provider_alias_resolver(
+                candidate_providers.values()
+            )
+        )
+
+        self._providers = candidate_providers
+        self._alias_resolver = (
+            candidate_alias_resolver
+        )
 
     def unregister(
         self,
         category_id: str,
     ) -> FoodKnowledgeProvider | None:
-        provider = self._providers.pop(
-            self._normalize_category_id(category_id),
-            None,
+        normalized_category_id = (
+            self._normalize_category_id(
+                category_id
+            )
         )
 
-        if provider is not None:
-            self._rebuild_alias_resolver()
+        provider = self._providers.get(
+            normalized_category_id
+        )
+
+        if provider is None:
+            return None
+
+        candidate_providers = OrderedDict(
+            self._providers
+        )
+        candidate_providers.pop(
+            normalized_category_id
+        )
+
+        candidate_alias_resolver = (
+            build_provider_alias_resolver(
+                candidate_providers.values()
+            )
+        )
+
+        self._providers = candidate_providers
+        self._alias_resolver = (
+            candidate_alias_resolver
+        )
 
         return provider
 
