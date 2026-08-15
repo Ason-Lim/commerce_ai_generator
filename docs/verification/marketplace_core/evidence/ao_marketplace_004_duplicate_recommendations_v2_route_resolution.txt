@@ -1,0 +1,101 @@
+MARKETPLACE CORE
+AO-MARKETPLACE-004
+DUPLICATE RECOMMENDATIONS V2 ROUTE RESOLUTION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Marketplace Core Baseline:
+e3b2caa
+
+Prior Remediation Baseline:
+b9a673c
+
+Architecture Observation:
+AO-MARKETPLACE-004
+Duplicate Recommendations V2 Route
+
+Affected File:
+app/main.py
+
+Pre-Remediation Source State:
+GET /recommendations/v2 registrations = 2
+
+Pre-Remediation Runtime State:
+FastAPI /recommendations/v2 route objects = 2
+
+Inspection Result:
+Both route definitions were structurally identical.
+
+Both used:
+- GET /recommendations/v2
+- handler name recommendations_v2
+- q: str
+- priority: str = ranking
+- session_id: str | None = None
+- run_recommendation_pipeline(...)
+- limit = 10
+
+Remediation:
+Removed only the second redundant route definition.
+
+Post-Remediation Source State:
+GET /recommendations/v2 registrations = 1
+
+Post-Remediation Runtime State:
+FastAPI /recommendations/v2 route objects = 1
+
+Route Method:
+GET
+
+Handler:
+recommendations_v2
+
+Marketplace Core Contract Tests:
+11 PASSED
+
+Route Contract Tests:
+PASS
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+git diff --check:
+PASS
+
+Recommendation Pipeline Contract Change:
+NONE
+
+Public API Path Change:
+NONE
+
+HTTP Method Change:
+NONE
+
+Handler Contract Change:
+NONE
+
+Marketplace Core Boundary Change:
+NONE
+
+Market Intelligence Boundary Change:
+NONE
+
+Recommendation Engine Boundary Change:
+NONE
+
+Behavioral Regression:
+NONE IDENTIFIED
+
+Resolution Result:
+PASS
+
+Final Disposition:
+AO-MARKETPLACE-004
+RESOLVED

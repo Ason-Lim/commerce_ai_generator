@@ -283,18 +283,6 @@ def recommendations_v2(
     )
 
 
-@app.get("/recommendations/v2")
-def recommendations_v2(
-    q: str,
-    priority: str = "ranking",
-    session_id: str | None = None,
-):
-    return run_recommendation_pipeline(
-        q=q,
-        priority=priority,
-        session_id=session_id,
-        limit=10,
-    )
 
 
 @app.get("/recommendations/nl")
