@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-from app.services.market_aggregator import collect_market_products
+from app.services.market.collector import collect_market_products
 from app.services.ai_ranking_engine_v8 import rank_market_items_v8
 from app.services.deduplication_engine_v83 import deduplicate_market_items
 from app.services.food_intelligence.food_intelligence_engine import enrich_items_with_food_intelligence

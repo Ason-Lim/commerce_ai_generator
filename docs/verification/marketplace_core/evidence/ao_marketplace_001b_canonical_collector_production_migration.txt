@@ -1,0 +1,113 @@
+MARKETPLACE CORE
+AO-MARKETPLACE-001B
+CANONICAL COLLECTOR PRODUCTION MIGRATION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Marketplace Core Baseline:
+e3b2caa
+
+Collection Boundary Contract:
+2fb2a13
+
+Canonical Collector Extraction:
+b41a5a5
+
+Architecture Observation:
+AO-MARKETPLACE-001
+Dual Aggregator Architecture
+
+Phase:
+AO-MARKETPLACE-001B
+
+Purpose:
+Migrate the active recommendation pipeline from the
+legacy marketplace collection implementation to the
+canonical Marketplace Core collector.
+
+Canonical Collector:
+app/services/market/collector.py
+
+Production Caller:
+app/services/recommendation_pipeline.py
+
+Pre-Migration Production Import:
+app.services.market_aggregator.collect_market_products
+
+Post-Migration Production Import:
+app.services.market.collector.collect_market_products
+
+Collector Equivalence Tests:
+2 PASSED
+
+Equivalence Cases:
+- combined Naver and Coupang source results
+- empty source result contract
+
+Full Marketplace Core Tests:
+18 PASSED
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+git diff --check:
+PASS
+
+Legacy Production Import:
+REMOVED FROM RECOMMENDATION PIPELINE
+
+Canonical Production Import:
+ACTIVE
+
+Source Acquisition Behavior Change:
+NONE IDENTIFIED
+
+Recommendation Pipeline Contract Change:
+NONE IDENTIFIED
+
+Ranking Contract Change:
+NONE
+
+Marketplace Normalization Contract Change:
+NONE
+
+Marketplace Deduplication Contract Change:
+NONE
+
+Marketplace Aggregation Contract Change:
+NONE
+
+Market Intelligence Boundary Change:
+NONE
+
+Recommendation Engine Boundary Change:
+NONE
+
+Legacy market_aggregator Module:
+PRESERVED
+
+Legacy Compatibility:
+PRESERVED FOR DISPOSITION REVIEW
+
+Production Caller Migration:
+COMPLETE
+
+Behavioral Regression:
+NONE IDENTIFIED
+
+Phase AO-MARKETPLACE-001B Result:
+PASS
+
+AO-MARKETPLACE-001 Overall Disposition:
+IN PROGRESS
+
+Next Phase:
+AO-MARKETPLACE-001C
+Legacy market_aggregator Disposition
