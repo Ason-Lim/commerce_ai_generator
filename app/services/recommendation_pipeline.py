@@ -171,7 +171,7 @@ def run_recommendation_pipeline(
         }
 
     market_items = collect_market_products(cleaned_query, limit=limit)
-    
+
     if not market_items:
         return {
             "summary": f"'{q}' 기준으로 추천 가능한 상품을 찾지 못했습니다.",
@@ -184,9 +184,7 @@ def run_recommendation_pipeline(
 
     market_items = enrich_items_with_food_intelligence(market_items)
 
-    ranked_items = rank_market_items_v8(market_items)
-    ranked_items = apply_priority_sort(ranked_items, priority)
-    
+
     if not market_items:
         return {
             "summary": f"'{q}' 기준으로 추천 가능한 상품을 찾지 못했습니다.",

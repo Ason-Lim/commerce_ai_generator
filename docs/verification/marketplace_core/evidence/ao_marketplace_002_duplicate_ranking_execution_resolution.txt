@@ -1,0 +1,93 @@
+MARKETPLACE CORE
+AO-MARKETPLACE-002
+DUPLICATE RANKING EXECUTION RESOLUTION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Marketplace Core Baseline:
+e3b2caa
+
+Prior Remediation Baseline:
+59e5ae9
+
+Architecture Observation:
+AO-MARKETPLACE-002
+Duplicate Ranking Execution
+
+Affected File:
+app/services/recommendation_pipeline.py
+
+Pre-Remediation State:
+rank_market_items_v8 executions = 2
+apply_priority_sort executions = 2
+
+Inspection Result:
+The two ranking/sort executions used the same
+market_items input.
+
+No mutation of market_items occurred between
+the first and second ranking executions.
+
+The only intervening operation was an empty
+market_items guard.
+
+Classification:
+DUPLICATE EXECUTION CONFIRMED
+
+Remediation:
+Removed the first redundant ranking/sort block.
+
+Retained Execution:
+Ranking occurs once after the post-enrichment
+empty-result guard.
+
+Post-Remediation State:
+rank_market_items_v8 executions = 1
+apply_priority_sort executions = 1
+
+Execution Contract Test:
+PASS
+
+Marketplace Core Contract Tests:
+12 PASSED
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+git diff --check:
+PASS
+
+Recommendation Output Contract Change:
+NONE IDENTIFIED
+
+Ranking Algorithm Change:
+NONE
+
+Priority Sorting Algorithm Change:
+NONE
+
+Marketplace Core Boundary Change:
+NONE
+
+Market Intelligence Boundary Change:
+NONE
+
+Recommendation Engine Responsibility Change:
+NONE
+
+Behavioral Regression:
+NONE IDENTIFIED
+
+Resolution Result:
+PASS
+
+Final Disposition:
+AO-MARKETPLACE-002
+RESOLVED
