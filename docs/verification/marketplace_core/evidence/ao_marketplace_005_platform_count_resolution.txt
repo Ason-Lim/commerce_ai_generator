@@ -1,0 +1,119 @@
+AO-MARKETPLACE-005
+Deduplication Group platform_count Semantics
+Resolution Evidence
+
+Date: 2026-08-15
+Status: RESOLVED
+
+1. Classification
+
+AO-MARKETPLACE-005 was classified as a CONTRACT DEFECT.
+
+The previous deduplication implementation defined:
+
+platform_count = len(grouped_items)
+
+This caused multiple offers from the same platform to be
+incorrectly interpreted as multiple platforms.
+
+2. Corrected Contract
+
+The canonical deduplication group contract is:
+
+platform_count
+    Number of distinct non-empty platforms represented
+    in the deduplication group.
+
+item_count
+    Number of offers/items contained in the
+    deduplication group.
+
+items
+    Complete grouped offer collection.
+
+3. Runtime Remediation
+
+app/services/market/deduplicator.py
+
+platform_count now counts distinct non-empty platform
+identifiers.
+
+item_count was introduced to preserve explicit grouped
+offer cardinality.
+
+4. Contract Verification
+
+Dedicated contract:
+
+tests/services/market/
+test_marketplace_deduplication_platform_contract.py
+
+Verification scenarios:
+
+same platform / 2 offers
+    platform_count = 1
+    item_count = 2
+
+two platforms / 2 offers
+    platform_count = 2
+    item_count = 2
+
+repeated platforms / 3 offers
+    platform_count = 2
+    item_count = 3
+
+Result:
+
+3 passed
+
+5. Baseline Migration
+
+The Marketplace Core baseline was migrated from the
+historical item-count interpretation of platform_count
+to the corrected canonical contract.
+
+Result:
+
+9 passed
+
+6. Aggregator Compatibility
+
+Marketplace aggregator iterable contract:
+
+2 passed
+
+The aggregator-level platform_count remains independently
+defined from the raw marketplace item population and is
+compatible with the corrected deduplication-group contract.
+
+7. Full Marketplace Core Regression
+
+Result:
+
+21 passed
+
+8. Static Verification
+
+python -m compileall -q app
+
+Result:
+
+PASS
+
+git diff --check
+
+Result:
+
+PASS
+
+9. Resolution
+
+AO-MARKETPLACE-005 is RESOLVED.
+
+The Marketplace Core now explicitly distinguishes:
+
+- distinct platform cardinality
+- grouped offer cardinality
+
+No known Marketplace Core regression remains from this
+contract remediation.

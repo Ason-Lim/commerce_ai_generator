@@ -233,14 +233,13 @@ def test_marketplace_deduplication_baseline() -> None:
     assert group["lowest_price"] == 30000
     assert len(group["items"]) == 2
 
-    # Baseline preservation only.
+    # AO-MARKETPLACE-005 canonical contract:
     #
-    # Current runtime reports 2 here even though both
-    # items originate from the same platform.
-    # AO-MARKETPLACE-005 will determine whether this
-    # represents intended item-count semantics or a
-    # platform-count contract defect.
-    assert group["platform_count"] == 2
+    # platform_count represents the number of distinct
+    # non-empty platforms in the deduplication group.
+    # item_count preserves the number of grouped offers.
+    assert group["platform_count"] == 1
+    assert group["item_count"] == 2
 
 
 def test_marketplace_aggregation_baseline() -> None:

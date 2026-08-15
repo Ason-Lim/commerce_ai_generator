@@ -116,7 +116,14 @@ def deduplicate_market_items(
                 "category_name": representative.get(
                     "category_name"
                 ),
-                "platform_count": len(grouped_items),
+                "platform_count": len(
+                    {
+                        item.get("platform")
+                        for item in grouped_items
+                        if item.get("platform")
+                    }
+                ),
+                "item_count": len(grouped_items),
                 "lowest_price": representative.get(
                     "price"
                 ),
