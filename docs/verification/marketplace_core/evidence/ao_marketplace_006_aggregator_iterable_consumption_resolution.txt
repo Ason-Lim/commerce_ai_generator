@@ -1,0 +1,125 @@
+MARKETPLACE CORE
+AO-MARKETPLACE-006
+AGGREGATOR ITERABLE CONSUMPTION RESOLUTION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Marketplace Core Baseline:
+e3b2caa
+
+AO-MARKETPLACE-001 Resolution:
+16f192a
+
+Architecture Observation:
+AO-MARKETPLACE-006
+Aggregator Iterable Consumption Semantics
+
+Affected File:
+app/services/market/aggregator.py
+
+Affected Function:
+aggregate_market_items()
+
+Pre-Remediation Behavior:
+
+List Input:
+raw_item_count = 2
+normalized_item_count = 2
+
+Generator Input:
+raw_item_count = 0
+normalized_item_count = 2
+
+Inspection Result:
+normalize_market_items() consumed the input iterable
+before raw_item_count was calculated.
+
+The statistics calculation subsequently executed:
+
+len(list(raw_items))
+
+against an already-consumed generator.
+
+Classification:
+ITERABLE CONSUMPTION CONTRACT DEFECT
+
+Root Cause:
+The same potentially single-pass iterable was consumed
+at different stages without first establishing a stable
+materialized input snapshot.
+
+Remediation:
+Materialize raw_items exactly once at function entry.
+
+Canonical Input Snapshot:
+raw_items = list(raw_items)
+
+The same materialized list is then used for:
+- normalization
+- raw item count calculation
+
+Post-Remediation Generator Behavior:
+raw_item_count = 2
+normalized_item_count = 2
+group_count = 2
+platform_count = 2
+
+Platform Distribution:
+naver = 1
+coupang = 1
+
+Iterable Contract Tests:
+2 PASSED
+
+Full Marketplace Core Tests:
+18 PASSED
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+git diff --check:
+PASS
+
+List Input Contract:
+PRESERVED
+
+Generator Input Contract:
+CORRECTED
+
+Normalization Contract Change:
+NONE
+
+Deduplication Contract Change:
+NONE
+
+Aggregation Grouping Contract Change:
+NONE
+
+Platform Distribution Contract Change:
+NONE
+
+Marketplace Core Boundary Change:
+NONE
+
+Market Intelligence Boundary Change:
+NONE
+
+Recommendation Engine Boundary Change:
+NONE
+
+Behavioral Regression:
+NONE IDENTIFIED
+
+Resolution Result:
+PASS
+
+Final Disposition:
+AO-MARKETPLACE-006
+RESOLVED

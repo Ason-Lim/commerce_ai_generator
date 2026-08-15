@@ -27,6 +27,8 @@ def aggregate_market_items(
     Statistics
     """
 
+    raw_items = list(raw_items)
+
     normalized_items = normalize_market_items(
         raw_items,
         platform_hint=platform_hint,
@@ -44,9 +46,7 @@ def aggregate_market_items(
     )
 
     statistics = {
-        "raw_item_count": len(list(raw_items))
-        if not isinstance(raw_items, list)
-        else len(raw_items),
+        "raw_item_count": len(raw_items),
 
         "normalized_item_count": len(
             normalized_items
