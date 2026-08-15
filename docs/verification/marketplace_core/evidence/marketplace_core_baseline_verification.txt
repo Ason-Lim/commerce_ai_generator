@@ -1,0 +1,98 @@
+MARKETPLACE CORE
+BASELINE CONTRACT VERIFICATION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Target:
+30 Marketplace Core
+
+Development Model:
+Existing Runtime Formalization
+Controlled Consolidation
+
+Baseline Components:
+- Platform Registry
+- Platform Identification
+- Market Item Normalization
+- Partner Marketplace Adaptation
+- Delivery Policy
+- Marketplace Deduplication
+- Marketplace Aggregation
+
+Baseline Contract Test:
+9 PASSED
+
+Full Marketplace Core Test Directory:
+9 PASSED
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+Production Runtime Changes:
+NONE
+
+Platform Registry:
+8 platforms
+
+Enabled Platforms:
+- naver
+- coupang
+- ssg
+- oasis
+
+Platform Alias Matching:
+PASS
+
+Platform URL Matching:
+PASS
+
+Unknown Platform Fallback:
+PASS
+
+Market Item Normalization:
+PASS
+
+Partner Marketplace Adaptation:
+PASS
+
+Delivery Policy:
+PASS
+
+Marketplace Deduplication:
+PASS
+
+Marketplace Aggregation:
+PASS
+
+Architecture Observation Preserved:
+AO-MARKETPLACE-005
+Deduplication Group platform_count Semantics
+
+Current observed behavior:
+Two duplicate items from the same platform produce:
+group_count = 1
+platform_count = 2
+
+Disposition:
+BASELINE PRESERVED
+SEMANTIC REVIEW DEFERRED
+
+Architecture Observations Pending:
+- AO-MARKETPLACE-001 Dual Aggregator Architecture
+- AO-MARKETPLACE-002 Duplicate Ranking Execution
+- AO-MARKETPLACE-003 Duplicate URL Detection Definition
+- AO-MARKETPLACE-004 Duplicate Recommendations V2 Route
+- AO-MARKETPLACE-005 Deduplication Group platform_count Semantics
+
+Baseline Result:
+PASS
+
+Marketplace Core Remediation Readiness:
+READY
