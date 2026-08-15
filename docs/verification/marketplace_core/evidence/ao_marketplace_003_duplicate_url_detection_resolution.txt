@@ -1,0 +1,81 @@
+MARKETPLACE CORE
+AO-MARKETPLACE-003
+DUPLICATE URL DETECTION DEFINITION RESOLUTION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Marketplace Core Baseline:
+e3b2caa
+
+Baseline Tag:
+marketplace-core-baseline-v1
+
+Architecture Observation:
+AO-MARKETPLACE-003
+Duplicate URL Detection Definition
+
+Affected File:
+app/services/market/platform_matcher.py
+
+Pre-Remediation State:
+_detect_platform_from_url definitions = 2
+
+Inspection Result:
+The first definition was incomplete and shadowed by the
+second definition at Python module load time.
+
+External Direct Private Helper Usage:
+NONE IDENTIFIED
+
+Actual Runtime Caller:
+detect_platform_from_item()
+
+Remediation:
+Removed only the shadowed incomplete duplicate definition.
+
+Retained Runtime Implementation:
+Registry-driven domain-marker URL detection
+
+Post-Remediation State:
+_detect_platform_from_url definitions = 1
+
+Marketplace Core Baseline Tests:
+9 PASSED
+
+Full Marketplace Core Test Directory:
+9 PASSED
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+git diff --check:
+PASS
+
+Behavioral Regression:
+NONE IDENTIFIED
+
+Public Matcher Contract Change:
+NONE
+
+Marketplace Core Boundary Change:
+NONE
+
+Market Intelligence Boundary Change:
+NONE
+
+Recommendation Engine Boundary Change:
+NONE
+
+Resolution Result:
+PASS
+
+Final Disposition:
+AO-MARKETPLACE-003
+RESOLVED

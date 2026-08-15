@@ -110,28 +110,6 @@ def _extract_url_host(
 def _detect_platform_from_url(
     url: str | None,
 ) -> Optional[str]:
-    """상품 URL의 도메인으로 플랫폼을 판별합니다."""
-
-    normalized_url = str(url or "").strip().lower()
-
-    if not normalized_url:
-        return None
-
-    host = _extract_url_host(normalized_url)
-
-    # URL 스킴이 없는 값도 보조적으로 판별합니다.
-    url_text = " ".join(
-        value
-        for value in [
-            host,
-            normalized_url,
-        ]
-        if value
-    )
-
-def _detect_platform_from_url(
-    url: str | None,
-) -> Optional[str]:
     """Registry에 등록된 도메인 정보로 플랫폼을 판별합니다."""
 
     normalized_url = str(
