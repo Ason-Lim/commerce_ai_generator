@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from app.services.market_aggregator import (
+from app.services.market.collector import (
     collect_market_products,
 )
 
@@ -24,16 +24,16 @@ def test_marketplace_collection_combines_sources() -> None:
 
     with (
         patch(
-            "app.services.market_aggregator."
+            "app.services.market.collector."
             "collect_naver_products"
         ) as naver_collect_mock,
         patch(
-            "app.services.market_aggregator."
+            "app.services.market.collector."
             "fetch_naver_products_from_db",
             return_value=naver_items,
         ) as naver_db_mock,
         patch(
-            "app.services.market_aggregator."
+            "app.services.market.collector."
             "search_coupang_products",
             return_value=coupang_items,
         ) as coupang_mock,
@@ -74,16 +74,16 @@ def test_marketplace_collection_preserves_source_failure_isolation() -> None:
 
     with (
         patch(
-            "app.services.market_aggregator."
+            "app.services.market.collector."
             "collect_naver_products"
         ),
         patch(
-            "app.services.market_aggregator."
+            "app.services.market.collector."
             "fetch_naver_products_from_db",
             return_value=naver_items,
         ),
         patch(
-            "app.services.market_aggregator."
+            "app.services.market.collector."
             "search_coupang_products",
             side_effect=RuntimeError(
                 "test coupang failure"

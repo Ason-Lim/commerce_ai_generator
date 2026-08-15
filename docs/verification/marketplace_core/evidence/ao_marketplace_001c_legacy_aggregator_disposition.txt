@@ -1,0 +1,100 @@
+MARKETPLACE CORE
+AO-MARKETPLACE-001C
+LEGACY MARKET AGGREGATOR DISPOSITION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Marketplace Core Baseline:
+e3b2caa
+
+Collection Boundary Contract:
+2fb2a13
+
+Canonical Collector Extraction:
+b41a5a5
+
+Canonical Production Migration:
+918ff3b
+
+Architecture Observation:
+AO-MARKETPLACE-001
+Dual Aggregator Architecture
+
+Phase:
+AO-MARKETPLACE-001C
+
+Disposition Subject:
+app/services/market_aggregator.py
+
+Pre-Disposition State:
+Legacy collection implementation existed alongside
+the canonical Marketplace Core collector.
+
+Production Legacy Importers:
+0
+
+Test Legacy Importers:
+2 test artifacts prior to disposition
+
+Disposition Actions:
+- migrated collection contract test to canonical collector
+- removed migration-only collector equivalence test
+- removed legacy app/services/market_aggregator.py
+
+Canonical Collector:
+app/services/market/collector.py
+
+Canonical Production Caller:
+app/services/recommendation_pipeline.py
+
+Post-Disposition Production Legacy References:
+0
+
+Post-Disposition Test Legacy References:
+0
+
+Collection Contract:
+2 PASSED
+
+Core Collector Contract:
+2 PASSED
+
+Full Marketplace Core Tests:
+16 PASSED
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+git diff --check:
+PASS
+
+Legacy Compatibility Requirement:
+NONE IDENTIFIED
+
+Production Runtime Regression:
+NONE IDENTIFIED
+
+Recommendation Pipeline Contract Change:
+NONE IDENTIFIED
+
+Marketplace Collection Responsibility:
+CANONICALIZED
+
+Marketplace Aggregation Responsibility:
+PRESERVED IN app/services/market/aggregator.py
+
+Collection / Aggregation Responsibility Separation:
+VERIFIED
+
+Phase AO-MARKETPLACE-001C Result:
+PASS
+
+AO-MARKETPLACE-001 Final Disposition:
+RESOLVED
