@@ -1,0 +1,94 @@
+MARKETPLACE CORE
+AO-MARKETPLACE-001A
+CANONICAL COLLECTOR EXTRACTION
+
+Governing Authorization:
+ADA-MA-2026-026-MARKETPLACE-CORE
+
+Authorization Commit:
+4d3890f
+
+Marketplace Core Baseline:
+e3b2caa
+
+Collection Boundary Contract:
+2fb2a13
+
+Architecture Observation:
+AO-MARKETPLACE-001
+Dual Aggregator Architecture
+
+Architecture Classification:
+DIFFERENT LIFECYCLE RESPONSIBILITIES
+WITH NAMING / BOUNDARY AMBIGUITY
+
+Phase:
+AO-MARKETPLACE-001A
+
+Purpose:
+Establish a canonical Marketplace Core source-acquisition
+implementation without changing the active production caller.
+
+Canonical Collector:
+app/services/market/collector.py
+
+Canonical Responsibilities:
+- marketplace source acquisition
+- Naver collection trigger
+- Naver snapshot retrieval
+- Coupang source collection
+- source failure isolation
+
+Responsibilities Explicitly Excluded:
+- marketplace normalization
+- marketplace deduplication
+- marketplace aggregation/statistics
+- ranking
+- recommendation
+- market intelligence
+
+Core Collector Tests:
+2 PASSED
+
+Full Marketplace Core Tests:
+16 PASSED
+
+Compilation:
+PASS
+
+compile_exit_code:
+0
+
+git diff --check:
+PASS
+
+Legacy Recommendation Pipeline Import:
+PRESERVED
+
+Current Active Import:
+app.services.market_aggregator.collect_market_products
+
+Production Caller Migration:
+PENDING
+
+Legacy Compatibility:
+PRESERVED
+
+Production Runtime Contract Change:
+NONE
+
+Marketplace Aggregator Contract Change:
+NONE
+
+Recommendation Engine Contract Change:
+NONE
+
+AO-MARKETPLACE-001 Overall Disposition:
+IN PROGRESS
+
+Phase AO-MARKETPLACE-001A Result:
+PASS
+
+Next Phase:
+AO-MARKETPLACE-001B
+Canonical Collector Production Migration

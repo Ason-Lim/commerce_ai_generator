@@ -1,3 +1,8 @@
+from app.services.market.collector import (
+    collect_market_products,
+    fetch_naver_products_from_db,
+)
+
 from app.services.market.delivery_policy import (
     build_platform_delivery_policy,
     calculate_delivery_score,
