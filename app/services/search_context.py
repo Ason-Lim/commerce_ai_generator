@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from app.services.recommendation.market_engine import (
+from app.services.market_intelligence import (
     build_market_intelligence,
     normalize_market_intelligence,
 )
