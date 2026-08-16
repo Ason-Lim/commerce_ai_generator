@@ -17,16 +17,6 @@ from .compare_engine import (
     build_info_chips,
 )
 
-from .market_engine import (
-    build_market_intelligence,
-    normalize_market_intelligence,
-    normalize_trend_direction,
-    calculate_market_score,
-    classify_market_stage,
-    build_market_signal,
-    build_buy_timing,
-)
-
 
 __all__ = [
     "calculate_mode_score",
@@ -39,13 +29,6 @@ __all__ = [
     "build_reason_list",
     "build_compare_message",
     "build_info_chips",
-    "build_market_intelligence",
-    "normalize_market_intelligence",
-    "normalize_trend_direction",
-    "calculate_market_score",
-    "classify_market_stage",
-    "build_market_signal",
-    "build_buy_timing",
     "safe_number",
     "first_positive_number",
     "has_coupon_text_signal",
