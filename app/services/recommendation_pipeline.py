@@ -7,6 +7,14 @@ from app.services.ai_ranking_engine_v8 import rank_market_items_v8
 from app.services.deduplication_engine_v83 import deduplicate_market_items
 from app.services.food_intelligence.food_intelligence_engine import enrich_items_with_food_intelligence
 from app.services.platform_normalizer_v84 import normalize_platform_items
+from app.services.recommendation.models import (
+    RecommendationContext,
+    RecommendationPriority,
+    RecommendationResult,
+)
+from app.services.recommendation.provider import (
+    RecommendationProvider,
+)
 
 load_dotenv(".env")
 
@@ -17,6 +25,65 @@ DB_URL = (
 )
 
 engine = create_engine(DB_URL)
+
+
+def resolve_canonical_priority(
+    priority: str,
+) -> tuple[RecommendationPriority, bool]:
+    """
+    Resolve the legacy/API priority vocabulary at the compatibility
+    boundary without extending the canonical priority contract.
+    """
+    raw = priority or "ranking"
+    adaptive = raw.endswith("_adaptive")
+    base = raw.removesuffix("_adaptive")
+
+    aliases = {
+        "ranking": RecommendationPriority.MIX,
+        "balanced": RecommendationPriority.MIX,
+        "mix": RecommendationPriority.MIX,
+        "value": RecommendationPriority.PRICE,
+        "price": RecommendationPriority.PRICE,
+        "quality": RecommendationPriority.QUALITY,
+        "trust": RecommendationPriority.TRUST,
+        "exploration": RecommendationPriority.EXPLORATION,
+        "discovery": RecommendationPriority.DISCOVERY,
+        "revisit": RecommendationPriority.REVISIT,
+    }
+
+    return (
+        aliases.get(
+            base,
+            RecommendationPriority.MIX,
+        ),
+        adaptive,
+    )
+
+
+def build_canonical_context(
+    *,
+    q: str,
+    priority: str,
+    session_id: str | None,
+    limit: int,
+) -> RecommendationContext:
+    canonical_priority, adaptive = (
+        resolve_canonical_priority(
+            priority
+        )
+    )
+
+    return RecommendationContext(
+        query=clean_query(q),
+        priority=canonical_priority,
+        session_id=session_id,
+        limit=limit,
+        adaptive=adaptive,
+        metadata={
+            "requested_query": q,
+            "requested_priority": priority,
+        },
+    )
 
 
 def clean_query(q: str) -> str:
@@ -156,56 +223,77 @@ def enrich_response_compatibility(item: dict, query: str, priority: str) -> dict
     return result
 
 
+def canonical_result_to_compatibility_response(
+    result: RecommendationResult,
+    *,
+    q: str,
+    priority: str,
+) -> dict:
+    """
+    Convert the canonical RecommendationResult into the existing
+    public/API compatibility response without moving compatibility
+    concerns into RecommendationProvider.
+    """
+    items = []
+
+    for candidate in result.candidates:
+        item = dict(candidate.item)
+
+        item["rank"] = candidate.rank
+        item["v7_rank"] = candidate.rank
+
+        item = enrich_response_compatibility(
+            item,
+            result.context.query or q,
+            priority,
+        )
+
+        # Compatibility enrichment must not replace the canonical rank.
+        item["rank"] = candidate.rank
+        item["v7_rank"] = candidate.rank
+
+        items.append(item)
+
+    response = {
+        "summary": result.summary,
+        "items": items,
+        "engine_version": "recommendation_provider_canonical",
+        "market_sources": ["naver", "coupang"],
+    }
+
+    if result.warnings:
+        response["warnings"] = list(
+            result.warnings
+        )
+
+    return response
+
+
 def run_recommendation_pipeline(
     q: str,
     priority: str = "ranking",
     session_id: str | None = None,
     limit: int = 10,
 ) -> dict:
-    cleaned_query = clean_query(q)
+    """
+    Public/API compatibility facade for the canonical
+    RecommendationProvider production composition.
+    """
+    context = build_canonical_context(
+        q=q,
+        priority=priority,
+        session_id=session_id,
+        limit=limit,
+    )
 
-    if not cleaned_query:
-        return {
-            "summary": "검색어를 입력해 주세요.",
-            "items": [],
-        }
+    provider = RecommendationProvider()
 
-    market_items = collect_market_products(cleaned_query, limit=limit)
+    result = provider.recommend(
+        context
+    )
 
-    if not market_items:
-        return {
-            "summary": f"'{q}' 기준으로 추천 가능한 상품을 찾지 못했습니다.",
-            "items": [],
-        }
-
-    market_items = deduplicate_market_items(market_items)
-
-    market_items = normalize_platform_items(market_items)
-
-    market_items = enrich_items_with_food_intelligence(market_items)
-
-
-    if not market_items:
-        return {
-            "summary": f"'{q}' 기준으로 추천 가능한 상품을 찾지 못했습니다.",
-            "items": [],
-        }
-
-    ranked_items = rank_market_items_v8(market_items)
-    ranked_items = apply_priority_sort(ranked_items, priority)
-
-    items = [
-        enrich_response_compatibility(item, cleaned_query, priority)
-        for item in ranked_items
-    ]
-
-    for idx, item in enumerate(items, start=1):
-        item["rank"] = idx
-        item["v7_rank"] = idx
-
-    return {
-        "summary": f"'{q}' 기준으로 네이버와 쿠팡 상품을 함께 비교해 추천했습니다.",
-        "items": items,
-        "engine_version": "recommendation_pipeline_v8",
-        "market_sources": ["naver", "coupang"],
-    }
+    return canonical_result_to_compatibility_response(
+        result,
+        q=q,
+        priority=priority,
+    )
