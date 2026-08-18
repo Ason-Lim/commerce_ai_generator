@@ -809,5 +809,5 @@ ARCHITECTURE INSPECTION
 
 ---
 
-**00_1 Master Architecture**  
+**00_1 Master Architecture**
 Commerce AI Generator
