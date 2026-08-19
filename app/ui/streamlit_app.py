@@ -29,7 +29,7 @@ from app.ui.hero_renderer_v3 import render_hero_v3
 from app.services.recommendation_story_engine_v61 import build_recommendation_story_v61
 from app.services.recommendation_compare_engine_v62 import build_hero_compare_v62
 
-from app.services.preference_service import (
+from app.services.preference import (
     update_user_preference,
     get_user_preference,
     decide_adaptive_priority,
