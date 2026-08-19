@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import create_engine, text
-from app.services.preference_service import update_user_preference
+from app.services.preference import update_user_preference
 from app.services.session_context_service import update_session_context
 
 DB_URL = os.getenv(
