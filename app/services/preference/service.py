@@ -24,8 +24,8 @@ def update_user_preference(
     """
     Canonical preference mutation service.
 
-    Preserves the public calling semantics of the
-    legacy preference_service implementation.
+    Preserves the established Preference public
+    calling semantics.
     """
     update_preference(
         conn,
