@@ -2,14 +2,14 @@
 
 ## Architecture Boundary Authorization
 
-**Project:** Commerce AI Generator  
-**Architecture Program:** MA-2026-033  
-**Architecture Domain:** Experience Architecture  
-**Phase:** 2C  
-**Boundary:** Revisit Adapter  
-**Authority:** 00_1 Master Architecture  
-**Status:** AUTHORIZED  
-**Authorization Type:** Selective Boundary Implementation  
+**Project:** Commerce AI Generator
+**Architecture Program:** MA-2026-033
+**Architecture Domain:** Experience Architecture
+**Phase:** 2C
+**Boundary:** Revisit Adapter
+**Authority:** 00_1 Master Architecture
+**Status:** AUTHORIZED
+**Authorization Type:** Selective Boundary Implementation
 **Implementation Scope:** Minimal Revisit Transport Abstraction
 
 ---
