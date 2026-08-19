@@ -13,6 +13,9 @@ import uuid
 import hashlib
 
 from urllib.parse import quote_plus, urlencode
+from app.services.experience.revisit import (
+    load_revisit_recommendations as load_revisit_recommendations_from_experience,
+)
 from app.services.analytics_logger import log_search, log_product_click, engine
 from app.services.intent_analyzer import analyze_user_query, build_related_keywords
 from app.services.context_logger import log_user_context
@@ -4079,24 +4082,10 @@ def build_cta_text(priority, section="main"):
 
 def load_revisit_recommendations(session_id: str) -> dict:
     """최근 관심 과일 기반 재방문 추천 조회"""
-    try:
-        response = requests.get(
-            "http://127.0.0.1:8000/recommendations/revisit",
-            params={
-                "session_id": session_id,
-            },
-            timeout=10,
-        )
 
-        response.raise_for_status()
-        return response.json()
-
-    except Exception:
-        return {
-            "summary": "",
-            "fruit_name": "",
-            "items": [],
-        }
+    return load_revisit_recommendations_from_experience(
+        session_id
+    )
 
 
 def build_ai_insight_message():
