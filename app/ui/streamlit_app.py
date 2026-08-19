@@ -12,7 +12,10 @@ import streamlit.components.v1 as components
 import uuid
 import hashlib
 
-from urllib.parse import quote_plus, urlencode
+from urllib.parse import quote_plus
+from app.services.experience.tracking import (
+    build_tracking_url as build_tracking_url_from_experience,
+)
 from app.services.experience.revisit import (
     load_revisit_recommendations as load_revisit_recommendations_from_experience,
 )
@@ -3938,27 +3941,28 @@ def build_safe_product_url(
     return raw_url
     
 
-def build_tracking_url(product_url, item, section="main", priority="trust"):
-    """클릭 로그 저장 후 실제 상품 URL로 이동하는 추적 URL 생성"""
+def build_tracking_url(
+    product_url,
+    item,
+    section="main",
+    priority="trust",
+):
+    """클릭 추적 URL 생성을 Experience boundary에 위임합니다."""
 
-    if not product_url:
-        return ""
-
-    params = {
-        "session_id": st.session_state.get("session_id", ""),
-        "query": st.session_state.get("last_query", ""),
-        "product_name": item.get("product_name") or item.get("name") or "",
-        "seller_name": item.get("seller_name") or "",
-        "product_url": product_url,
-        "selected_priority": priority,
-        "selected_section": section,
-        "recommendation_mode": item.get("recommendation_mode") or "ranking",
-        "fruit_name": item.get("fruit_name") or "",
-    }
-
-    return "http://127.0.0.1:8000/track-click?" + urlencode(params)
-
-
+    return build_tracking_url_from_experience(
+        product_url=product_url,
+        item=item,
+        session_id=st.session_state.get(
+            "session_id",
+            "",
+        ),
+        query=st.session_state.get(
+            "last_query",
+            "",
+        ),
+        section=section,
+        priority=priority,
+    )
 
 
 def enrich_item_for_explainability_v6(item, display=None, hero_score_pct=None, hero_scores=None):
