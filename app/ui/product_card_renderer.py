@@ -36,6 +36,10 @@ from app.services.recommendation.compare_snapshot_engine import (
     build_compare_snapshot,
 )
 
+from app.services.experience import (
+    transition_comparison_selection,
+)
+
 from app.services.recommendation.compare_identity_engine import (
     build_compare_widget_key,
     get_compare_identity,
@@ -326,10 +330,7 @@ def sync_compare_selection(
     item,
     display,
 ):
-    """비교 체크박스를 사용자가 변경한 경우에만 세션을 갱신합니다."""
-
-    if "compare_items" not in st.session_state:
-        st.session_state["compare_items"] = []
+    """비교 체크박스 변경을 Experience transition으로 위임합니다."""
 
     current_items = list(
         st.session_state.get(
@@ -338,35 +339,6 @@ def sync_compare_selection(
         )
     )
 
-    # 기존 세션 중복 정리
-    normalized_items = []
-    existing_identities = set()
-
-    for existing_item in current_items:
-        existing_identity = str(
-            existing_item.get("_compare_identity")
-            or get_compare_identity(existing_item)
-            or ""
-        ).strip()
-
-        if not existing_identity:
-            continue
-
-        if existing_identity in existing_identities:
-            continue
-
-        existing_item["_compare_identity"] = (
-            existing_identity
-        )
-
-        existing_identities.add(
-            existing_identity
-        )
-
-        normalized_items.append(
-            existing_item
-        )
-
     selected = bool(
         st.session_state.get(
             checkbox_key,
@@ -374,195 +346,22 @@ def sync_compare_selection(
         )
     )
 
-    if selected:
-        if compare_identity not in existing_identities:
-            if len(normalized_items) >= 3:
-                st.warning(
-                    "상품 비교는 최대 3개까지 선택할 수 있습니다."
-                )
-
-                st.session_state[checkbox_key] = False
-                st.session_state["compare_items"] = (
-                    normalized_items[:3]
-                )
-                return
-            
-            print(
-                "[COMPARE_SOURCE]",
-                {
-                    "name": (
-                        item.get("product_name")
-                        or item.get("title")
-                        or display.get("name")
-                    ),
-
-                    "platform": (
-                        item.get("platform_name")
-                        or item.get("platform")
-                        or item.get("mall_name")
-                        or display.get("platform_name")
-                    ),
-
-                    "price": item.get("price"),
-                    "sale_price": item.get("sale_price"),
-                    "final_price": item.get("final_price"),
-                    "lprice": item.get("lprice"),
-
-                    "display_price": display.get("price"),
-                    "member_price": display.get("member_price"),
-                    "coupon_applied_price": display.get(
-                        "coupon_applied_price"
-                    ),
-
-                    "weight_text": item.get("weight_text"),
-                    "weight": item.get("weight"),
-                    "product_weight": item.get("product_weight"),
-                    "option_weight": item.get("option_weight"),
-                    "selected_weight": item.get("selected_weight"),
-                    "option_name": item.get("option_name"),
-                    "selected_option": item.get("selected_option"),
-                    "display_weight_text": display.get(
-                        "weight_text"
-                    ),
-
-                    "price_per_100g": item.get(
-                        "price_per_100g"
-                    ),
-                    "unit_price_100g": item.get(
-                        "unit_price_100g"
-                    ),
-                    "unit_price_per_100g": item.get(
-                        "unit_price_per_100g"
-                    ),
-                    "price_100g": item.get("price_100g"),
-                    "display_price_per_100g": display.get(
-                        "price_per_100g"
-                    ),
-
-                    "discount_rate": item.get(
-                        "discount_rate"
-                    ),
-                    "display_discount_rate": display.get(
-                        "discount_rate"
-                    ),
-
-                    "coupon_amount": item.get(
-                        "coupon_amount"
-                    ),
-                    "has_coupon": item.get("has_coupon"),
-
-                    "brix": item.get("brix"),
-                    "fruit_brix": item.get("fruit_brix"),
-                    "brix_value": item.get("brix_value"),
-                    "is_high_brix": item.get(
-                        "is_high_brix"
-                    ),
-
-                    "food_certification_labels": item.get(
-                        "food_certification_labels"
-                    ),
-                    "certification_labels": item.get(
-                        "certification_labels"
-                    ),
-                    "certifications": item.get(
-                        "certifications"
-                    ),
-                    "original_price": item.get(
-                        "original_price"
-                    ),
-                    "regular_price": item.get(
-                        "regular_price"
-                    ),
-                    "list_price": item.get(
-                        "list_price"
-                    ),
-                    "retail_price": item.get(
-                        "retail_price"
-                    ),
-                    "base_price": item.get(
-                        "base_price"
-                    ),
-                    "market_price": item.get(
-                        "market_price"
-                    ),
-
-                    "display_original_price": display.get(
-                        "original_price"
-                    ),
-                    "display_regular_price": display.get(
-                        "regular_price"
-                    ),
-                    "display_discount_rate": display.get(
-                        "discount_rate"
-                    ),
-                },
-            )
-            
-
-            compare_snapshot = build_compare_snapshot(
-                item,
-                display=display,
-            )
-            
-            print(
-                "[COMPARE_SNAPSHOT]",
-                {
-                    "name": compare_snapshot.get(
-                        "product_name"
-                    ),
-                    "price": compare_snapshot.get("price"),
-                    "sale_price": compare_snapshot.get(
-                        "sale_price"
-                    ),
-                    "weight_text": compare_snapshot.get(
-                        "weight_text"
-                    ),
-                    "price_per_100g": compare_snapshot.get(
-                        "price_per_100g"
-                    ),
-                    "discount_rate": compare_snapshot.get(
-                        "discount_rate"
-                    ),
-                    "coupon_amount": compare_snapshot.get(
-                        "coupon_amount"
-                    ),
-                    "has_coupon": compare_snapshot.get(
-                        "has_coupon"
-                    ),
-                    "brix": compare_snapshot.get("brix"),
-                    "fruit_brix": compare_snapshot.get(
-                        "fruit_brix"
-                    ),
-                    "certifications": compare_snapshot.get(
-                        "food_certification_labels"
-                    ),
-                },
-            )
-            
-
-            compare_snapshot["_compare_identity"] = (
-                compare_identity
-            )
-
-            normalized_items.append(
-                compare_snapshot
-            )
-
-    else:
-        normalized_items = [
-            existing_item
-            for existing_item in normalized_items
-            if str(
-                existing_item.get("_compare_identity")
-                or get_compare_identity(existing_item)
-                or ""
-            ).strip()
-            != compare_identity
-        ]
-
-    st.session_state["compare_items"] = (
-        normalized_items[:3]
+    result = transition_comparison_selection(
+        current_items=current_items,
+        selected=selected,
+        item=item,
+        display=display,
     )
+
+    st.session_state["compare_items"] = list(
+        result.items
+    )
+
+    if result.limit_reached:
+        st.warning(
+            "상품 비교는 최대 3개까지 선택할 수 있습니다."
+        )
+        st.session_state[checkbox_key] = False
 
 
 def render_compare_selector(
