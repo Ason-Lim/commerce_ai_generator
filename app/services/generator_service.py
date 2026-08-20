@@ -7,6 +7,15 @@ from app.services.brix_analyzer import build_brix_info
 from app.services.strategy_engine import build_b2b_strategy
 from app.services.coupang_review_matcher import apply_coupang_review_signal
 from app.services.intent_analyzer import analyze_user_query
+from app.services.generator_compatibility import (
+    build_legacy_response_components,
+)
+from app.services.recommendation_pipeline import (
+    build_canonical_context,
+)
+from app.services.recommendation.provider import (
+    RecommendationProvider,
+)
 
 def build_platform_label(raw):
     base = raw.get("platform")
@@ -294,52 +303,32 @@ def generate_product_strategy(request):
 
     search_keyword = intent["normalized_keyword"]
 
-    raw_products = fetch_products_from_db(search_keyword)
+    context = build_canonical_context(
+        q=request.context,
+        priority=request.priority,
+        limit=10,
+        session_id=getattr(
+            request,
+            "session_id",
+            None,
+        ),
+    )
 
-    products = [normalize_product(p) for p in raw_products]
+    provider = RecommendationProvider()
+    result = provider.recommend(context)
 
-    products = deduplicate_products(products)
+    compatibility = build_legacy_response_components(
+        result,
+        mode=request.mode,
+        quantity=request.quantity,
+        strategy_builder=build_b2b_strategy,
+    )
 
-    for p in products:
-        # 가격 데이터 검증 및 수정
-        p["price_per_100g"] = safe_price_per_100g(
-            p.get("price"),
-            p.get("weight_g")
-        )
-        p["trust_score"] = calculate_trust_score(p)
-        p["score"] = calculate_final_score(p, request.priority)
-    
-    products = sorted(products, key=lambda x: x["score"], reverse=True)
-
-    medals = ["🥇 1순위 강력 추천", "🥈 2순위 대안 추천", "🥉 3순위 가성비 후보"]
-
-    for idx, p in enumerate(products[:3]):
-        p["rank_label"] = medals[idx]
-        p["recommendation"] = build_recommendation_reasons(p, medals[idx])
-
-        if request.mode == "B2B":
-            p["b2b_strategy"] = build_b2b_strategy(p, request.quantity)
-
-    best_price = find_best_price_product(products)
-    best_quality = find_best_quality_product(products)
-
-    if best_price:
-        best_price["compare_label"] = "💰 최저가 후보"
-        best_price["recommendation"] = build_recommendation_reasons(best_price, "💰 최저가 후보")
-
-    if best_quality:
-        best_quality["compare_label"] = "🍬 최고품질 후보"
-        best_quality["recommendation"] = build_recommendation_reasons(best_quality, "🍬 최고품질 후보")
-
-        return {
+    return {
         "query": request.context,
         "search_keyword": search_keyword,
         "intent": intent,
         "mode": request.mode,
         "priority": request.priority,
-        "summary": "문장형 요청을 분석해 맞춤 검색어로 변환하고 추천했습니다.",
-        "top3": products[:3],
-        "best_price": best_price,
-        "best_quality": best_quality,
-        "products": products,
+        **compatibility,
     }

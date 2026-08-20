@@ -1,213 +1,286 @@
+from __future__ import annotations
+
 from types import SimpleNamespace
 
 import app.services.generator_service as generator
+from app.services.recommendation.models import (
+    RecommendationCandidate,
+    RecommendationContext,
+    RecommendationPriority,
+    RecommendationResult,
+    RecommendationScoreComponents,
+    RecommendationScoreResult,
+)
+
+
+EXPECTED_RESPONSE_KEYS = {
+    "query",
+    "search_keyword",
+    "intent",
+    "mode",
+    "priority",
+    "summary",
+    "top3",
+    "best_price",
+    "best_quality",
+    "products",
+}
 
 
 def make_request(
     *,
-    context="가성비 좋은 사과 추천",
-    mode="B2C",
-    priority="price",
+    context: str = "가성비 좋은 사과 추천",
+    mode: str = "B2C",
+    priority: str = "price",
     quantity=None,
+    session_id=None,
 ):
     return SimpleNamespace(
         context=context,
         mode=mode,
         priority=priority,
         quantity=quantity,
+        session_id=session_id,
     )
 
 
-def raw_product(
+def candidate(
     *,
-    name,
-    price,
-    weight_g=1000,
-    platform="네이버",
-    mall_name=None,
-    rating=4.5,
-    review_count=100,
-    brix_value=None,
-    premium_flag=False,
-    gift_flag=False,
+    product_id: str,
+    product_name: str,
+    price: int,
+    quality: float,
+    final_score: float,
+    rank: int,
 ):
-    return {
-        "name": name,
-        "price": price,
-        "original_price": price,
-        "weight_g": weight_g,
-        "platform": platform,
-        "mall_name": mall_name,
-        "rating": rating,
-        "review_count": review_count,
-        "brix_value": brix_value,
-        "premium_flag": premium_flag,
-        "gift_flag": gift_flag,
-        "description": "",
-    }
-
-
-def patch_runtime(
-    monkeypatch,
-    products,
-    *,
-    normalized_keyword="사과",
-):
-    monkeypatch.setattr(
-        generator,
-        "analyze_user_query",
-        lambda context: {
-            "normalized_keyword": normalized_keyword,
-            "raw_query": context,
+    return RecommendationCandidate(
+        item={
+            "product_id": product_id,
+            "product_name": product_name,
+            "price": price,
         },
+        score=RecommendationScoreResult(
+            final_score=final_score,
+            priority=RecommendationPriority.PRICE,
+            components=RecommendationScoreComponents(
+                quality=quality,
+                price=0.0,
+                trust=0.0,
+                popularity=0.0,
+                market=0.0,
+                identity=0.0,
+            ),
+        ),
+        rank=rank,
     )
+
+
+def canonical_result(
+    *,
+    candidates=(),
+    summary="canonical summary",
+):
+    return RecommendationResult(
+        context=RecommendationContext(
+            query="사과",
+            priority=RecommendationPriority.PRICE,
+            limit=10,
+        ),
+        candidates=tuple(candidates),
+        summary=summary,
+    )
+
+
+class StubProvider:
+    result = None
+    received_context = None
+
+    def recommend(self, context):
+        type(self).received_context = context
+        return type(self).result
+
+
+def patch_canonical_runtime(
+    monkeypatch,
+    result,
+):
+    StubProvider.result = result
+    StubProvider.received_context = None
 
     monkeypatch.setattr(
         generator,
-        "fetch_products_from_db",
-        lambda keyword: products,
+        "RecommendationProvider",
+        StubProvider,
     )
 
 
 def test_generate_product_strategy_preserves_response_contract(
     monkeypatch,
 ):
-    products = [
-        raw_product(
-            name="프리미엄 사과 1kg",
-            price=12000,
-            brix_value=14,
-            premium_flag=True,
-            review_count=500,
+    patch_canonical_runtime(
+        monkeypatch,
+        canonical_result(
+            candidates=(
+                candidate(
+                    product_id="A",
+                    product_name="사과 A",
+                    price=12000,
+                    quality=90.0,
+                    final_score=91.0,
+                    rank=1,
+                ),
+                candidate(
+                    product_id="B",
+                    product_name="사과 B",
+                    price=9000,
+                    quality=80.0,
+                    final_score=85.0,
+                    rank=2,
+                ),
+                candidate(
+                    product_id="C",
+                    product_name="사과 C",
+                    price=15000,
+                    quality=95.0,
+                    final_score=82.0,
+                    rank=3,
+                ),
+            ),
         ),
-        raw_product(
-            name="실속 사과 1kg",
-            price=8000,
-            brix_value=11,
-            review_count=200,
-        ),
-        raw_product(
-            name="가정용 사과 1kg",
-            price=9000,
-            brix_value=12,
-            review_count=100,
-        ),
-    ]
-
-    patch_runtime(monkeypatch, products)
+    )
 
     result = generator.generate_product_strategy(
         make_request()
     )
 
     assert result is not None
-
-    assert set(result) == {
-        "query",
-        "search_keyword",
-        "intent",
-        "mode",
-        "priority",
-        "summary",
-        "top3",
-        "best_price",
-        "best_quality",
-        "products",
-    }
-
+    assert set(result) == EXPECTED_RESPONSE_KEYS
     assert result["query"] == "가성비 좋은 사과 추천"
     assert result["search_keyword"] == "사과"
     assert result["mode"] == "B2C"
     assert result["priority"] == "price"
-
     assert len(result["top3"]) == 3
     assert len(result["products"]) == 3
 
-    assert result["best_price"] is not None
-    assert result["best_quality"] is not None
 
-
-def test_generate_product_strategy_ranks_by_legacy_score(
+def test_generate_product_strategy_uses_canonical_provider_order(
     monkeypatch,
 ):
-    products = [
-        raw_product(
-            name="비싼 사과",
-            price=20000,
-            brix_value=12,
+    patch_canonical_runtime(
+        monkeypatch,
+        canonical_result(
+            candidates=(
+                candidate(
+                    product_id="HIGH",
+                    product_name="Canonical First",
+                    price=20000,
+                    quality=80.0,
+                    final_score=99.0,
+                    rank=1,
+                ),
+                candidate(
+                    product_id="LOW",
+                    product_name="Canonical Second",
+                    price=5000,
+                    quality=90.0,
+                    final_score=70.0,
+                    rank=2,
+                ),
+            ),
         ),
-        raw_product(
-            name="저렴한 사과",
-            price=5000,
-            brix_value=12,
-        ),
-    ]
-
-    patch_runtime(monkeypatch, products)
-
-    result = generator.generate_product_strategy(
-        make_request(priority="price")
     )
-
-    assert result is not None
-
-    scores = [
-        product["score"]
-        for product in result["products"]
-    ]
-
-    assert scores == sorted(
-        scores,
-        reverse=True,
-    )
-
-    assert result["products"][0]["name"] == "저렴한 사과"
-
-
-def test_generate_product_strategy_deduplicates_name_and_price(
-    monkeypatch,
-):
-    duplicate = raw_product(
-        name="중복 사과",
-        price=10000,
-        brix_value=12,
-    )
-
-    products = [
-        duplicate,
-        dict(duplicate),
-        raw_product(
-            name="다른 사과",
-            price=11000,
-            brix_value=13,
-        ),
-    ]
-
-    patch_runtime(monkeypatch, products)
 
     result = generator.generate_product_strategy(
         make_request()
     )
 
-    assert result is not None
-    assert len(result["products"]) == 2
-
-
-def test_generate_product_strategy_adds_b2b_strategy_to_top3(
-    monkeypatch,
-):
-    products = [
-        raw_product(
-            name="B2B 사과 A",
-            price=10000,
-        ),
-        raw_product(
-            name="B2B 사과 B",
-            price=11000,
-        ),
+    assert [
+        item["product_id"]
+        for item in result["products"]
+    ] == [
+        "HIGH",
+        "LOW",
     ]
 
-    patch_runtime(monkeypatch, products)
+
+def test_generate_product_strategy_passes_session_id_to_context(
+    monkeypatch,
+):
+    patch_canonical_runtime(
+        monkeypatch,
+        canonical_result(),
+    )
+
+    generator.generate_product_strategy(
+        make_request(
+            session_id="session-123",
+        )
+    )
+
+    context = StubProvider.received_context
+
+    assert context is not None
+    assert context.session_id == "session-123"
+
+
+def test_generate_product_strategy_supports_legacy_request_without_session_id(
+    monkeypatch,
+):
+    request = SimpleNamespace(
+        context="사과 추천",
+        mode="B2C",
+        priority="price",
+        quantity=None,
+    )
+
+    patch_canonical_runtime(
+        monkeypatch,
+        canonical_result(),
+    )
+
+    result = generator.generate_product_strategy(
+        request
+    )
+
+    assert result is not None
+    assert StubProvider.received_context.session_id is None
+
+
+def test_generate_product_strategy_preserves_b2b_compatibility(
+    monkeypatch,
+):
+    patch_canonical_runtime(
+        monkeypatch,
+        canonical_result(
+            candidates=(
+                candidate(
+                    product_id="A",
+                    product_name="B2B 사과 A",
+                    price=10000,
+                    quality=90.0,
+                    final_score=95.0,
+                    rank=1,
+                ),
+                candidate(
+                    product_id="B",
+                    product_name="B2B 사과 B",
+                    price=11000,
+                    quality=80.0,
+                    final_score=85.0,
+                    rank=2,
+                ),
+            ),
+        ),
+    )
+
+    monkeypatch.setattr(
+        generator,
+        "build_b2b_strategy",
+        lambda item, quantity: {
+            "quantity": quantity,
+            "product_id": item["product_id"],
+        },
+    )
 
     result = generator.generate_product_strategy(
         make_request(
@@ -216,120 +289,66 @@ def test_generate_product_strategy_adds_b2b_strategy_to_top3(
         )
     )
 
-    assert result is not None
-
-    for product in result["top3"]:
-        assert "b2b_strategy" in product
-        assert (
-            product["b2b_strategy"]["quantity"]
-            == 100
-        )
+    assert result["top3"][0]["b2b_strategy"] == {
+        "quantity": 100,
+        "product_id": "A",
+    }
 
 
-def test_generate_product_strategy_empty_products_returns_none(
+def test_generate_product_strategy_empty_canonical_result_preserves_shape(
     monkeypatch,
 ):
-    patch_runtime(
+    patch_canonical_runtime(
         monkeypatch,
-        [],
+        canonical_result(),
     )
 
     result = generator.generate_product_strategy(
         make_request()
     )
 
-    # Characterization:
-    # The legacy implementation currently places its
-    # response return inside `if best_quality:`.
-    #
-    # Therefore an empty product set produces an
-    # implicit None return.
-    #
-    # This test intentionally freezes the existing
-    # behavior. It is NOT an endorsement of the
-    # behavior as the future canonical contract.
-    assert result is None
+    assert result is not None
+    assert set(result) == EXPECTED_RESPONSE_KEYS
+    assert result["top3"] == []
+    assert result["products"] == []
+    assert result["best_price"] is None
+    assert result["best_quality"] is None
 
 
-def test_best_price_falls_back_to_raw_price():
-    products = [
-        {
-            "name": "A",
-            "price": 12000,
-            "price_per_100g": None,
-        },
-        {
-            "name": "B",
-            "price": 9000,
-            "price_per_100g": None,
-        },
-    ]
-
-    result = generator.find_best_price_product(
-        products
+def test_generate_product_strategy_preserves_canonical_summary(
+    monkeypatch,
+):
+    patch_canonical_runtime(
+        monkeypatch,
+        canonical_result(
+            summary="canonical summary",
+        ),
     )
 
-    assert result["name"] == "B"
-
-
-def test_best_quality_uses_review_count_as_tiebreaker():
-    products = [
-        {
-            "name": "A",
-            "quality_score": 80,
-            "review_count": 100,
-        },
-        {
-            "name": "B",
-            "quality_score": 80,
-            "review_count": 500,
-        },
-    ]
-
-    result = generator.find_best_quality_product(
-        products
+    result = generator.generate_product_strategy(
+        make_request()
     )
 
-    assert result["name"] == "B"
+    assert result["summary"] == "canonical summary"
 
 
-def test_safe_price_per_100g_preserves_legacy_guardrails():
-    assert (
-        generator.safe_price_per_100g(
-            10000,
-            1000,
-        )
-        == 1000
+def test_generate_product_strategy_no_longer_owns_legacy_execution():
+    source = (
+        generator.generate_product_strategy
+        .__code__
+        .co_names
     )
 
-    assert (
-        generator.safe_price_per_100g(
-            10000,
-            None,
-        )
-        is None
-    )
+    retired_names = {
+        "fetch_products_from_db",
+        "normalize_product",
+        "deduplicate_products",
+        "calculate_trust_score",
+        "calculate_final_score",
+        "find_best_price_product",
+        "find_best_quality_product",
+    }
 
-    assert (
-        generator.safe_price_per_100g(
-            10000,
-            0,
-        )
-        is None
-    )
-
-    assert (
-        generator.safe_price_per_100g(
-            10000,
-            5,
-        )
-        is None
-    )
-
-    assert (
-        generator.safe_price_per_100g(
-            "invalid",
-            1000,
-        )
-        is None
+    assert retired_names.isdisjoint(
+        set(source)
     )
