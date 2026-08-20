@@ -1,4 +1,19 @@
-from sqlalchemy import text
+"""
+Legacy Session Context compatibility adapter.
+
+The canonical Session Context implementation lives under:
+
+    app.services.session_context
+
+This module preserves the existing public import path and
+calling contract during consumer migration.
+"""
+
+from __future__ import annotations
+
+from app.services.session_context import (
+    update_session_context as _update_session_context,
+)
 
 
 def update_session_context(
@@ -11,46 +26,19 @@ def update_session_context(
     event_type: str = "search",
 ):
     """
-    사용자의 최근 탐색 흐름을 저장합니다.
-    - 검색 시: last_query, last_priority, last_fruit 저장
-    - 클릭 시: last_clicked_product 저장
+    Legacy-compatible Session Context mutation adapter.
     """
-
-    conn.execute(
-        text("""
-            INSERT INTO user_session_context (
-                session_id,
-                last_query,
-                last_priority,
-                last_fruit,
-                last_clicked_product,
-                last_event_type,
-                updated_at
-            )
-            VALUES (
-                :session_id,
-                :last_query,
-                :last_priority,
-                :last_fruit,
-                :last_clicked_product,
-                :last_event_type,
-                now()
-            )
-            ON CONFLICT (session_id)
-            DO UPDATE SET
-                last_query = COALESCE(NULLIF(EXCLUDED.last_query, ''), user_session_context.last_query),
-                last_priority = COALESCE(NULLIF(EXCLUDED.last_priority, ''), user_session_context.last_priority),
-                last_fruit = COALESCE(NULLIF(EXCLUDED.last_fruit, ''), user_session_context.last_fruit),
-                last_clicked_product = COALESCE(NULLIF(EXCLUDED.last_clicked_product, ''), user_session_context.last_clicked_product),
-                last_event_type = EXCLUDED.last_event_type,
-                updated_at = now()
-        """),
-        {
-            "session_id": session_id,
-            "last_query": query or "",
-            "last_priority": priority or "",
-            "last_fruit": fruit_name or "",
-            "last_clicked_product": clicked_product or "",
-            "last_event_type": event_type or "",
-        },
+    return _update_session_context(
+        conn=conn,
+        session_id=session_id,
+        query=query,
+        priority=priority,
+        fruit_name=fruit_name,
+        clicked_product=clicked_product,
+        event_type=event_type,
     )
+
+
+__all__ = [
+    "update_session_context",
+]
