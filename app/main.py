@@ -7,7 +7,10 @@ from fastapi import FastAPI, Query
 from fastapi.responses import RedirectResponse
 from app.services.analytics_logger import log_product_click
 from app.services.recommendation_pipeline import run_recommendation_pipeline
-from app.services.session_context import get_session_context
+from app.services.session_context import (
+    calculate_session_context_boost,
+    get_session_context,
+)
 
 app = FastAPI()
 DB_URL = os.getenv(
@@ -650,36 +653,11 @@ def natural_language_recommendations(
 
             personal_boost = min(personal_boost, 10)
             
-        session_context_boost = 0
-            
-        if session_context:
-
-            last_fruit = session_context.last_fruit
-
-            last_clicked_product = session_context.last_clicked_product
-
-            last_priority = session_context.last_priority
-
-            # 최근 본 과일과 동일
-            if (
-                last_fruit
-                and last_fruit == item.get("fruit_name")
-            ):
-                session_context_boost += 2
-
-            # 최근 클릭 상품과 동일
-            if (
-                last_clicked_product
-                and last_clicked_product == item.get("product_name")
-            ):
-                session_context_boost += 5
-
-            # 최근 선호 추천 방식과 동일
-            if (
-                last_priority
-                and last_priority == base_priority
-            ):
-                session_context_boost += 1    
+        session_context_boost = calculate_session_context_boost(
+            session_context,
+            item,
+            base_priority,
+        )
             
 
         item["context_boost"] = context_boost

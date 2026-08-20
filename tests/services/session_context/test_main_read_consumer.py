@@ -16,10 +16,10 @@ def test_main_imports_canonical_session_context_read() -> None:
     source = _source()
 
     assert (
-        "from app.services.session_context import "
-        "get_session_context"
+        "from app.services.session_context import ("
         in source
     )
+    assert "get_session_context," in source
 
 
 def test_main_has_no_direct_session_context_table_read() -> None:
@@ -40,25 +40,17 @@ def test_main_uses_canonical_session_context_read() -> None:
     )
 
 
-def test_main_preserves_session_context_boost_policy() -> None:
+def test_main_preserves_session_context_object_flow() -> None:
     source = _source()
 
-    assert "session_context_boost += 2" in source
-    assert "session_context_boost += 5" in source
-    assert "session_context_boost += 1" in source
-
-
-def test_main_uses_canonical_session_context_fields() -> None:
-    source = _source()
-
-    expected = [
-        "session_context.last_fruit",
-        "session_context.last_clicked_product",
-        "session_context.last_priority",
-    ]
-
-    for item in expected:
-        assert item in source
+    assert (
+        "session_context = None"
+        in source
+    )
+    assert (
+        "session_context,"
+        in source
+    )
 
 
 def test_main_has_no_mapping_access_for_session_context() -> None:
@@ -76,3 +68,14 @@ def test_main_has_no_mapping_access_for_session_context() -> None:
         'session_context.get("last_priority")'
         not in source
     )
+
+
+def test_main_does_not_own_session_context_policy_fields() -> None:
+    source = _source()
+
+    assert "session_context.last_fruit" not in source
+    assert (
+        "session_context.last_clicked_product"
+        not in source
+    )
+    assert "session_context.last_priority" not in source
