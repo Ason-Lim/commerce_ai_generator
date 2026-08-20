@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
-from app.services.deduplication_engine_v83 import (
+from app.services.recommendation.deduplication import (
     deduplicate_market_items,
 )
 from app.services.food_intelligence.food_intelligence_engine import (
