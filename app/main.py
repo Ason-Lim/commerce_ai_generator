@@ -7,6 +7,7 @@ from fastapi import FastAPI, Query
 from fastapi.responses import RedirectResponse
 from app.services.analytics_logger import log_product_click
 from app.services.recommendation_pipeline import run_recommendation_pipeline
+from app.services.session_context import get_session_context
 
 app = FastAPI()
 DB_URL = os.getenv(
@@ -375,21 +376,12 @@ def natural_language_recommendations(
 
     if session_id:
         with engine.connect() as conn:
-            session_context = conn.execute(
-                text("""
-                    SELECT
-                        last_query,
-                        last_priority,
-                        last_fruit,
-                        last_clicked_product,
-                        last_event_type
-                    FROM user_session_context
-                    WHERE session_id = :session_id
-                """),
-                {"session_id": session_id},
-            ).mappings().first()
+            session_context = get_session_context(
+                conn,
+                session_id,
+            )
 
-    
+
     if use_adaptive_sort:
         order_by_clause = """
             ORDER BY
@@ -662,17 +654,11 @@ def natural_language_recommendations(
             
         if session_context:
 
-            last_fruit = (
-                session_context.get("last_fruit") or ""
-            )
+            last_fruit = session_context.last_fruit
 
-            last_clicked_product = (
-                session_context.get("last_clicked_product") or ""
-            )
+            last_clicked_product = session_context.last_clicked_product
 
-            last_priority = (
-                session_context.get("last_priority") or ""
-            )
+            last_priority = session_context.last_priority
 
             # 최근 본 과일과 동일
             if (
