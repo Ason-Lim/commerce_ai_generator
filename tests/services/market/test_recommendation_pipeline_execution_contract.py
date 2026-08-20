@@ -90,27 +90,32 @@ def test_canonical_provider_executes_once_per_pipeline_request():
     assert result["items"][0]["v7_rank"] == 1
 
 
-def test_pipeline_no_longer_executes_legacy_v8_ranking():
-    canonical_result = _canonical_result()
+def test_pipeline_has_no_legacy_v8_ranking_dependency():
+    import app.services.recommendation_pipeline as pipeline
 
-    with (
-        patch(
-            "app.services.recommendation_pipeline."
-            "RecommendationProvider"
-        ) as provider_cls,
-        patch(
-            "app.services.recommendation_pipeline."
-            "rank_market_items_v8"
-        ) as legacy_rank,
-    ):
-        provider_cls.return_value.recommend.return_value = (
-            canonical_result
-        )
+    assert not hasattr(
+        pipeline,
+        "rank_market_items_v8",
+    )
 
-        run_recommendation_pipeline(
-            q="테스트 사과",
-            priority="ranking",
-            limit=10,
-        )
 
-    legacy_rank.assert_not_called()
+def test_pipeline_source_has_no_legacy_execution_imports():
+    from pathlib import Path
+
+    source = Path(
+        "app/services/recommendation_pipeline.py"
+    ).read_text(
+        encoding="utf-8"
+    )
+
+    retired_dependencies = (
+        "ai_ranking_engine_v8",
+        "rank_market_items_v8",
+        "deduplication_engine_v83",
+        "platform_normalizer_v84",
+        "collect_market_products",
+        "enrich_items_with_food_intelligence",
+    )
+
+    for dependency in retired_dependencies:
+        assert dependency not in source
