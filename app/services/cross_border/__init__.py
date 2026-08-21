@@ -35,6 +35,12 @@ from app.services.cross_border.identity import (
     ProductIdentityRelationship,
     ProductRelationship,
 )
+from app.services.cross_border.landed_cost_aggregation import (
+    LandedCostAggregation,
+    LandedCostAggregationQuality,
+    LandedCostAggregationState,
+    aggregate_landed_cost_components,
+)
 from app.services.cross_border.landed_cost_readiness import (
     LandedCostAggregationReadiness,
     LandedCostAggregationReadinessState,
@@ -84,6 +90,9 @@ from app.services.cross_border.shipping import (
 )
 
 __all__ = [
+    "LandedCostAggregation",
+    "LandedCostAggregationQuality",
+    "LandedCostAggregationState",
     "LandedCostAggregationReadiness",
     "LandedCostAggregationReadinessState",
     "LandedCostComponentEvidence",
@@ -121,6 +130,7 @@ __all__ = [
     "evaluate_shipping_route",
     "evaluate_shipping_comparison_readiness",
     "evaluate_landed_cost_aggregation_readiness",
+    "aggregate_landed_cost_components",
     "compare_shipping_candidates",
     "evaluate_evidence_freshness",
     "has_usable_evidence",
