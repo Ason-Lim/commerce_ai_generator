@@ -41,6 +41,11 @@ from app.services.cross_border.landed_cost_aggregation import (
     LandedCostAggregationState,
     aggregate_landed_cost_components,
 )
+from app.services.cross_border.landed_cost_comparison import (
+    LandedCostComparisonReadiness,
+    LandedCostComparisonReadinessState,
+    evaluate_landed_cost_comparison_readiness,
+)
 from app.services.cross_border.landed_cost_readiness import (
     LandedCostAggregationReadiness,
     LandedCostAggregationReadinessState,
@@ -95,6 +100,8 @@ __all__ = [
     "LandedCostAggregationState",
     "LandedCostAggregationReadiness",
     "LandedCostAggregationReadinessState",
+    "LandedCostComparisonReadiness",
+    "LandedCostComparisonReadinessState",
     "LandedCostComponentEvidence",
     "LandedCostComponentState",
     "ShippingAvailabilityState",
@@ -130,6 +137,7 @@ __all__ = [
     "evaluate_shipping_route",
     "evaluate_shipping_comparison_readiness",
     "evaluate_landed_cost_aggregation_readiness",
+    "evaluate_landed_cost_comparison_readiness",
     "aggregate_landed_cost_components",
     "compare_shipping_candidates",
     "evaluate_evidence_freshness",
