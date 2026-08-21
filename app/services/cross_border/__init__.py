@@ -39,6 +39,11 @@ from app.services.cross_border.models import (
     CrossBorderEvidence,
     EvidenceState,
 )
+from app.services.cross_border.regulatory_applicability import (
+    RegulatoryApplicability,
+    RegulatoryApplicabilityState,
+    evaluate_regulatory_applicability,
+)
 from app.services.cross_border.regulatory import (
     RegulatoryEvidence,
 )
@@ -47,6 +52,8 @@ from app.services.cross_border.provenance import (
 )
 
 __all__ = [
+    "RegulatoryApplicability",
+    "RegulatoryApplicabilityState",
     "RegulatoryEvidence",
 
     "CrossBorderEvaluationContext",
@@ -63,6 +70,7 @@ __all__ = [
     "EvidenceState",
     "EvidenceProvenance",
     "evaluate_currency_compatibility",
+    "evaluate_regulatory_applicability",
     "evaluate_evidence_freshness",
     "has_usable_evidence",
     "is_unknown",
