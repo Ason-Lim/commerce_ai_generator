@@ -39,11 +39,16 @@ from app.services.cross_border.models import (
     CrossBorderEvidence,
     EvidenceState,
 )
+from app.services.cross_border.regulatory import (
+    RegulatoryEvidence,
+)
 from app.services.cross_border.provenance import (
     EvidenceProvenance,
 )
 
 __all__ = [
+    "RegulatoryEvidence",
+
     "CrossBorderEvaluationContext",
     "ProductIdentityEvidenceBinding",
     "ProductIdentityRelationship",
