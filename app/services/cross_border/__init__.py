@@ -10,6 +10,11 @@ shipment booking, and financial settlement are out of scope.
 from app.services.cross_border.context import (
     CrossBorderEvaluationContext,
 )
+from app.services.cross_border.currency_compatibility import (
+    CurrencyCompatibility,
+    CurrencyCompatibilityState,
+    evaluate_currency_compatibility,
+)
 from app.services.cross_border.currency import (
     CurrencyPair,
     CurrencyRateEvidence,
@@ -44,12 +49,15 @@ __all__ = [
     "ProductIdentityRelationship",
     "ProductRelationship",
     "CrossBorderEvidence",
+    "CurrencyCompatibility",
+    "CurrencyCompatibilityState",
     "CurrencyPair",
     "CurrencyRateEvidence",
     "EvidenceFreshness",
     "EvidenceFreshnessState",
     "EvidenceState",
     "EvidenceProvenance",
+    "evaluate_currency_compatibility",
     "evaluate_evidence_freshness",
     "has_usable_evidence",
     "is_unknown",
