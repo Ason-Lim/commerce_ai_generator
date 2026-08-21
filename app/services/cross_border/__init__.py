@@ -35,6 +35,10 @@ from app.services.cross_border.identity import (
     ProductIdentityRelationship,
     ProductRelationship,
 )
+from app.services.cross_border.landed_cost import (
+    LandedCostComponentEvidence,
+    LandedCostComponentState,
+)
 from app.services.cross_border.models import (
     CrossBorderEvidence,
     EvidenceState,
@@ -75,6 +79,8 @@ from app.services.cross_border.shipping import (
 )
 
 __all__ = [
+    "LandedCostComponentEvidence",
+    "LandedCostComponentState",
     "ShippingAvailabilityState",
     "ShippingCandidateComparison",
     "ShippingCandidateComparisonState",
