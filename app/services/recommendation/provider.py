@@ -12,7 +12,7 @@ from app.services.food_intelligence.food_intelligence_engine import (
 from app.services.market.collector import (
     collect_market_products,
 )
-from app.services.platform_normalizer_v84 import (
+from app.services.recommendation.platform_normalization import (
     normalize_platform_items,
 )
 
