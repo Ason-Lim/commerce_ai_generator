@@ -51,7 +51,16 @@ from app.services.cross_border.provenance import (
     EvidenceProvenance,
 )
 
+from app.services.cross_border.shipping import (
+    ShippingAvailabilityState,
+    ShippingRouteEvidence,
+    ShippingRouteType,
+)
+
 __all__ = [
+    "ShippingAvailabilityState",
+    "ShippingRouteEvidence",
+    "ShippingRouteType",
     "RegulatoryApplicability",
     "RegulatoryApplicabilityState",
     "RegulatoryEvidence",
