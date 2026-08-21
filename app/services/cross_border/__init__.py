@@ -19,6 +19,10 @@ from app.services.cross_border.freshness import (
     EvidenceFreshnessState,
     evaluate_evidence_freshness,
 )
+from app.services.cross_border.identity import (
+    ProductIdentityRelationship,
+    ProductRelationship,
+)
 from app.services.cross_border.models import (
     CrossBorderEvidence,
     EvidenceState,
@@ -29,6 +33,8 @@ from app.services.cross_border.provenance import (
 
 __all__ = [
     "CrossBorderEvaluationContext",
+    "ProductIdentityRelationship",
+    "ProductRelationship",
     "CrossBorderEvidence",
     "EvidenceFreshness",
     "EvidenceFreshnessState",
