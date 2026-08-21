@@ -51,6 +51,11 @@ from app.services.cross_border.provenance import (
     EvidenceProvenance,
 )
 
+from app.services.cross_border.shipping_evaluation import (
+    ShippingRouteEvaluation,
+    ShippingRouteEvaluationState,
+    evaluate_shipping_route,
+)
 from app.services.cross_border.shipping import (
     ShippingAvailabilityState,
     ShippingRouteEvidence,
@@ -59,6 +64,8 @@ from app.services.cross_border.shipping import (
 
 __all__ = [
     "ShippingAvailabilityState",
+    "ShippingRouteEvaluation",
+    "ShippingRouteEvaluationState",
     "ShippingRouteEvidence",
     "ShippingRouteType",
     "RegulatoryApplicability",
@@ -80,6 +87,7 @@ __all__ = [
     "EvidenceProvenance",
     "evaluate_currency_compatibility",
     "evaluate_regulatory_applicability",
+    "evaluate_shipping_route",
     "evaluate_evidence_freshness",
     "has_usable_evidence",
     "is_unknown",
