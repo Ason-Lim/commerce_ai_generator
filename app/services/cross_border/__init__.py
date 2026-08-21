@@ -47,6 +47,11 @@ from app.services.cross_border.landed_cost_candidate_comparison import (
     LandedCostCandidateRelation,
     compare_landed_cost_candidates,
 )
+from app.services.cross_border.landed_cost_comparison_binding import (
+    BoundLandedCostComparison,
+    LandedCostCandidateRef,
+    bind_landed_cost_comparison_candidates,
+)
 from app.services.cross_border.landed_cost_comparison import (
     LandedCostComparisonReadiness,
     LandedCostComparisonReadinessState,
@@ -106,6 +111,8 @@ __all__ = [
     "LandedCostAggregationState",
     "LandedCostAggregationReadiness",
     "LandedCostAggregationReadinessState",
+    "BoundLandedCostComparison",
+    "LandedCostCandidateRef",
     "LandedCostCandidateComparison",
     "LandedCostCandidateComparisonState",
     "LandedCostCandidateRelation",
@@ -148,6 +155,7 @@ __all__ = [
     "evaluate_landed_cost_aggregation_readiness",
     "evaluate_landed_cost_comparison_readiness",
     "compare_landed_cost_candidates",
+    "bind_landed_cost_comparison_candidates",
     "aggregate_landed_cost_components",
     "compare_shipping_candidates",
     "evaluate_evidence_freshness",
