@@ -18,11 +18,15 @@ from app.services.cross_border.models import (
     CrossBorderEvidence,
     EvidenceState,
 )
+from app.services.cross_border.provenance import (
+    EvidenceProvenance,
+)
 
 __all__ = [
     "CrossBorderEvaluationContext",
     "CrossBorderEvidence",
     "EvidenceState",
+    "EvidenceProvenance",
     "has_usable_evidence",
     "is_unknown",
 ]
