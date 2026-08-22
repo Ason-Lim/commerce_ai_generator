@@ -115,7 +115,19 @@ from app.services.cross_border.recommendation_handoff import (
     build_recommendation_handoff_evidence,
 )
 
+from app.services.cross_border.recommendation_handoff_contract import (
+    RECOMMENDATION_HANDOFF_SCHEMA_ID,
+    RECOMMENDATION_HANDOFF_SCHEMA_VERSION,
+    RecommendationHandoffContractIdentity,
+    VersionedRecommendationHandoff,
+    version_recommendation_handoff,
+)
+
 __all__ = [
+    "RECOMMENDATION_HANDOFF_SCHEMA_ID",
+    "RECOMMENDATION_HANDOFF_SCHEMA_VERSION",
+    "RecommendationHandoffContractIdentity",
+    "VersionedRecommendationHandoff",
     "RecommendationHandoffEvidence",
     "LandedCostAggregation",
     "LandedCostAggregationQuality",
@@ -171,6 +183,7 @@ __all__ = [
     "bind_landed_cost_comparison_candidates",
     "evaluate_bound_landed_cost_readiness",
     "build_recommendation_handoff_evidence",
+    "version_recommendation_handoff",
     "aggregate_landed_cost_components",
     "compare_shipping_candidates",
     "evaluate_evidence_freshness",
