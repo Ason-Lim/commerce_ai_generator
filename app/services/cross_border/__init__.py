@@ -110,7 +110,13 @@ from app.services.cross_border.shipping import (
     ShippingRouteType,
 )
 
+from app.services.cross_border.recommendation_handoff import (
+    RecommendationHandoffEvidence,
+    build_recommendation_handoff_evidence,
+)
+
 __all__ = [
+    "RecommendationHandoffEvidence",
     "LandedCostAggregation",
     "LandedCostAggregationQuality",
     "LandedCostAggregationState",
@@ -164,6 +170,7 @@ __all__ = [
     "compare_landed_cost_candidates",
     "bind_landed_cost_comparison_candidates",
     "evaluate_bound_landed_cost_readiness",
+    "build_recommendation_handoff_evidence",
     "aggregate_landed_cost_components",
     "compare_shipping_candidates",
     "evaluate_evidence_freshness",
