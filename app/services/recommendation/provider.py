@@ -465,6 +465,7 @@ class RecommendationProvider:
         market_preparer: MarketPreparer = prepare_market_evidence,
         identity_preparer: IdentityPreparer = prepare_identity_evidence,
         component_builder: ComponentBuilder = build_score_components,
+        scorer: Scorer = calculate_recommendation_score,
     ) -> None:
         self.collector = collector
         self.deduplicator = deduplicator
@@ -476,6 +477,7 @@ class RecommendationProvider:
         self.market_preparer = market_preparer
         self.identity_preparer = identity_preparer
         self.component_builder = component_builder
+        self.scorer = scorer
 
     def recommend(
         self,
@@ -602,11 +604,9 @@ class RecommendationProvider:
                 item
             )
 
-            score_result = (
-                calculate_recommendation_score(
-                    components,
-                    context.priority,
-                )
+            score_result = self.scorer(
+                components,
+                context.priority,
             )
 
             scored.append(
