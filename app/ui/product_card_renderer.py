@@ -39,6 +39,9 @@ from app.services.recommendation.compare_snapshot_engine import (
 from app.services.experience import (
     transition_comparison_selection,
 )
+from app.services.experience.cross_border_estimate_disclosure import (
+    build_cross_border_estimate_disclosure,
+)
 
 from app.services.recommendation.compare_identity_engine import (
     build_compare_widget_key,
@@ -122,6 +125,42 @@ def render_product_cta_button(
         text=cta_text,
         css_class="product-link-button",
     )
+
+def render_cross_border_estimate_disclosure(
+    item,
+):
+    """
+    Render customer-facing Cross-Border estimate disclosure.
+
+    This UI boundary consumes the sealed Experience presentation model
+    only. It does not calculate landed cost, FX, or payment/card fees.
+    """
+
+    cross_border = item.get("cross_border")
+
+    disclosure = build_cross_border_estimate_disclosure(
+        cross_border
+    )
+
+    if not disclosure:
+        return
+
+    title = disclosure.get("title")
+    exchange_rate_text = disclosure.get(
+        "exchange_rate_text"
+    )
+    notices = disclosure.get("notices") or ()
+
+    if title:
+        st.markdown(f"**{title}**")
+
+    if exchange_rate_text:
+        st.caption(exchange_rate_text)
+
+    for notice in notices:
+        if notice:
+            st.caption(str(notice))
+
 
 def render_price_meta_card(
     display_price,
@@ -551,6 +590,9 @@ def render_product_card(
             render_price_meta_card(
                 display_price,
                 price_meta_text,
+            )
+            render_cross_border_estimate_disclosure(
+                item
             )
                 
         render_compare_selector(
