@@ -10,8 +10,8 @@ from app.services.generator_compatibility import (
 from app.services.recommendation_pipeline import (
     build_canonical_context,
 )
-from app.services.recommendation.provider import (
-    RecommendationProvider,
+from app.services.recommendation.cross_border_production_provider_composition import (
+    compose_production_recommendation_provider,
 )
 
 
@@ -31,7 +31,7 @@ def generate_product_strategy(request):
         ),
     )
 
-    provider = RecommendationProvider()
+    provider = compose_production_recommendation_provider()
     result = provider.recommend(context)
 
     compatibility = build_legacy_response_components(

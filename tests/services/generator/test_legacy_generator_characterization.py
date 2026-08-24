@@ -109,8 +109,8 @@ def patch_canonical_runtime(
 
     monkeypatch.setattr(
         generator,
-        "RecommendationProvider",
-        StubProvider,
+        "compose_production_recommendation_provider",
+        lambda: StubProvider(),
     )
 
 

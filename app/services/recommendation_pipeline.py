@@ -7,8 +7,8 @@ from app.services.recommendation.models import (
     RecommendationPriority,
     RecommendationResult,
 )
-from app.services.recommendation.provider import (
-    RecommendationProvider,
+from app.services.recommendation.cross_border_production_provider_composition import (
+    compose_production_recommendation_provider,
 )
 
 load_dotenv(".env")
@@ -281,7 +281,7 @@ def run_recommendation_pipeline(
         limit=limit,
     )
 
-    provider = RecommendationProvider()
+    provider = compose_production_recommendation_provider()
 
     result = provider.recommend(
         context

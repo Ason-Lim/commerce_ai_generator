@@ -57,9 +57,9 @@ def test_canonical_provider_executes_once_per_pipeline_request():
 
     with patch(
         "app.services.recommendation_pipeline."
-        "RecommendationProvider"
-    ) as provider_cls:
-        provider = provider_cls.return_value
+        "compose_production_recommendation_provider"
+    ) as compose_provider:
+        provider = compose_provider.return_value
         provider.recommend.return_value = (
             canonical_result
         )
@@ -70,7 +70,7 @@ def test_canonical_provider_executes_once_per_pipeline_request():
             limit=10,
         )
 
-    assert provider_cls.call_count == 1
+    assert compose_provider.call_count == 1
     assert provider.recommend.call_count == 1
 
     context = provider.recommend.call_args.args[0]
