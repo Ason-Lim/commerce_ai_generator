@@ -173,3 +173,67 @@ def test_normalization_has_no_provider_schema_mapping_surface():
     }
 
     assert forbidden.isdisjoint(public_names)
+
+
+def test_normalization_preserves_estimate_reason():
+    result = normalize_landed_cost_component_evidence(
+        component="duty",
+        state=LandedCostComponentState.ESTIMATED,
+        amount="17.40",
+        currency="usd",
+        provenance=_provenance(),
+        estimate_reason="HS classification provisional",
+        canonical_required=True,
+    )
+
+    assert (
+        result.estimate_reason
+        == "HS classification provisional"
+    )
+
+
+def test_normalization_trims_estimate_reason_via_canonical_contract():
+    result = normalize_landed_cost_component_evidence(
+        component="tax",
+        state=LandedCostComponentState.ESTIMATED,
+        amount="8.20",
+        currency="USD",
+        estimate_reason="  customs valuation provisional  ",
+        canonical_required=True,
+    )
+
+    assert (
+        result.estimate_reason
+        == "customs valuation provisional"
+    )
+
+
+def test_normalization_does_not_interpret_estimate_reason():
+    reason = "provider-specific tariff assumption"
+
+    result = normalize_landed_cost_component_evidence(
+        component="duty",
+        state=LandedCostComponentState.ESTIMATED,
+        amount="5.00",
+        currency="USD",
+        estimate_reason=reason,
+        canonical_required=True,
+    )
+
+    assert result.estimate_reason == reason
+
+
+def test_normalization_does_not_add_confidence_or_range():
+    result = normalize_landed_cost_component_evidence(
+        component="insurance",
+        state=LandedCostComponentState.ESTIMATED,
+        amount="3.00",
+        currency="USD",
+        estimate_reason="final insured value pending",
+        canonical_required=True,
+    )
+
+    assert not hasattr(result, "confidence")
+    assert not hasattr(result, "confidence_score")
+    assert not hasattr(result, "minimum")
+    assert not hasattr(result, "maximum")

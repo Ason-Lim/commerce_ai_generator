@@ -370,3 +370,75 @@ def test_provider_specific_component_is_not_canonical_but_remains_valid():
     )
 
     assert evidence.component == component
+
+
+def test_estimated_component_can_preserve_estimate_reason():
+    evidence = LandedCostComponentEvidence(
+        component="duty",
+        state=LandedCostComponentState.ESTIMATED,
+        amount=Decimal("17.40"),
+        currency="USD",
+        estimate_reason="HS classification provisional",
+    )
+
+    assert (
+        evidence.estimate_reason
+        == "HS classification provisional"
+    )
+
+
+def test_estimate_reason_is_trimmed():
+    evidence = LandedCostComponentEvidence(
+        component="tax",
+        state=LandedCostComponentState.ESTIMATED,
+        amount=Decimal("8.20"),
+        currency="USD",
+        estimate_reason="  provider supplied estimate  ",
+    )
+
+    assert (
+        evidence.estimate_reason
+        == "provider supplied estimate"
+    )
+
+
+def test_blank_estimate_reason_normalizes_to_none():
+    evidence = LandedCostComponentEvidence(
+        component="shipping",
+        state=LandedCostComponentState.KNOWN,
+        amount=Decimal("20.00"),
+        currency="USD",
+        estimate_reason="   ",
+    )
+
+    assert evidence.estimate_reason is None
+
+
+def test_estimate_reason_does_not_change_component_state():
+    evidence = LandedCostComponentEvidence(
+        component="insurance",
+        state=LandedCostComponentState.ESTIMATED,
+        amount=Decimal("3.00"),
+        currency="USD",
+        estimate_reason="provider quote subject to final shipment value",
+    )
+
+    assert (
+        evidence.state
+        is LandedCostComponentState.ESTIMATED
+    )
+
+
+def test_estimate_reason_is_explanation_not_confidence_contract():
+    evidence = LandedCostComponentEvidence(
+        component="duty",
+        state=LandedCostComponentState.ESTIMATED,
+        amount=Decimal("11.00"),
+        currency="USD",
+        estimate_reason="origin eligibility not independently verified",
+    )
+
+    assert not hasattr(evidence, "confidence")
+    assert not hasattr(evidence, "confidence_score")
+    assert not hasattr(evidence, "lower_bound")
+    assert not hasattr(evidence, "upper_bound")

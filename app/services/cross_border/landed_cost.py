@@ -96,6 +96,7 @@ class LandedCostComponentEvidence:
 
     provenance: EvidenceProvenance | None = None
     context: CrossBorderEvaluationContext | None = None
+    estimate_reason: str | None = None
 
     def __post_init__(self) -> None:
         component = self.component.strip()
@@ -124,6 +125,21 @@ class LandedCostComponentEvidence:
             self,
             "currency",
             currency,
+        )
+
+        estimate_reason = (
+            self.estimate_reason.strip()
+            if self.estimate_reason is not None
+            else None
+        )
+
+        if estimate_reason == "":
+            estimate_reason = None
+
+        object.__setattr__(
+            self,
+            "estimate_reason",
+            estimate_reason,
         )
 
         evidence_bearing_states = {

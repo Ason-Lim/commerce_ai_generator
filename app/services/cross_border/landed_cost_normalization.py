@@ -51,6 +51,7 @@ def normalize_landed_cost_component_evidence(
     currency: str | None = None,
     provenance: EvidenceProvenance | None = None,
     context: CrossBorderEvaluationContext | None = None,
+    estimate_reason: str | None = None,
     canonical_required: bool = False,
 ) -> LandedCostComponentEvidence:
     """
@@ -103,4 +104,5 @@ def normalize_landed_cost_component_evidence(
         currency=normalized_currency,
         provenance=provenance,
         context=context,
+        estimate_reason=estimate_reason,
     )
