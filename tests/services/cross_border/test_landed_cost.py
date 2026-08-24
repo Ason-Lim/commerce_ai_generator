@@ -299,3 +299,74 @@ def test_contract_has_no_calculation_authority():
     assert forbidden.isdisjoint(
         public_names
     )
+
+
+def test_canonical_landed_cost_component_vocabulary_is_explicit():
+    from app.services.cross_border.landed_cost import (
+        CANONICAL_LANDED_COST_COMPONENTS,
+    )
+
+    assert CANONICAL_LANDED_COST_COMPONENTS == frozenset(
+        {
+            "item_price",
+            "origin_shipping",
+            "international_shipping",
+            "shipping",
+            "forwarding",
+            "consolidation",
+            "insurance",
+            "duty",
+            "tax",
+            "customs_fee",
+            "service_fee",
+            "payment_fee",
+            "payment_fx_fee",
+            "discount",
+            "surcharge",
+        }
+    )
+
+
+def test_canonical_component_helper_normalizes_outer_whitespace():
+    from app.services.cross_border.landed_cost import (
+        is_canonical_landed_cost_component,
+    )
+
+    assert is_canonical_landed_cost_component(
+        "  insurance  "
+    )
+
+
+def test_open_component_contract_allows_provider_specific_component():
+    evidence = LandedCostComponentEvidence(
+        component="provider_remote_area_fee",
+        state=LandedCostComponentState.KNOWN,
+        amount=Decimal("12.50"),
+        currency="USD",
+    )
+
+    assert (
+        evidence.component
+        == "provider_remote_area_fee"
+    )
+
+
+def test_provider_specific_component_is_not_canonical_but_remains_valid():
+    from app.services.cross_border.landed_cost import (
+        is_canonical_landed_cost_component,
+    )
+
+    component = "provider_remote_area_fee"
+
+    assert not is_canonical_landed_cost_component(
+        component
+    )
+
+    evidence = LandedCostComponentEvidence(
+        component=component,
+        state=LandedCostComponentState.ESTIMATED,
+        amount=Decimal("8.25"),
+        currency="USD",
+    )
+
+    assert evidence.component == component

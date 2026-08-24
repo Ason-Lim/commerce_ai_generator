@@ -12,6 +12,44 @@ from app.services.cross_border.provenance import (
 )
 
 
+CANONICAL_LANDED_COST_COMPONENTS = frozenset(
+    {
+        "item_price",
+        "origin_shipping",
+        "international_shipping",
+        "shipping",
+        "forwarding",
+        "consolidation",
+        "insurance",
+        "duty",
+        "tax",
+        "customs_fee",
+        "service_fee",
+        "payment_fee",
+        "payment_fx_fee",
+        "discount",
+        "surcharge",
+    }
+)
+
+
+def is_canonical_landed_cost_component(
+    component: str,
+) -> bool:
+    """
+    Return whether a component name belongs to the canonical
+    landed-cost vocabulary.
+
+    The vocabulary is intentionally open. A False result does not
+    make a component invalid: provider-specific or future component
+    names remain permitted by LandedCostComponentEvidence.
+    """
+    return (
+        component.strip()
+        in CANONICAL_LANDED_COST_COMPONENTS
+    )
+
+
 class LandedCostComponentState(str, Enum):
     """
     Canonical evidence state for one landed-cost component.
