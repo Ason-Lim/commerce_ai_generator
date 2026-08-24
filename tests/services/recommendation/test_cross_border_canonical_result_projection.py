@@ -188,3 +188,119 @@ def test_empty_candidate_sequence_is_valid():
     assert result.context is context
     assert result.candidates == ()
     assert result.metadata["candidate_count"] == 0
+
+
+def test_projection_preserves_candidate_disclosure_metadata_unchanged():
+    candidate = RecommendationCandidate(
+        item={
+            "product_id": "DISCLOSURE-A",
+            "product_name": "Disclosure Product A",
+        },
+        score=_score(91.0),
+        rank=1,
+        metadata={
+            "source": "cross_border",
+            "cross_border": {
+                "candidate_ref": "candidate:first",
+                "candidate_position": 1,
+                "landed_cost": 78.0,
+                "estimate_disclosure": {
+                    "total": "78.00",
+                    "currency": "USD",
+                    "fx_base_currency": "USD",
+                    "fx_quote_currency": "KRW",
+                    "fx_rate": "1390",
+                    "temporal_state": "evaluable",
+                },
+            },
+        },
+    )
+
+    disclosure_before = (
+        candidate.metadata["cross_border"]["estimate_disclosure"]
+    )
+
+    result = project_cross_border_canonical_result(
+        context=_context(),
+        candidates=(candidate,),
+    )
+
+    projected = result.candidates[0]
+
+    assert projected is candidate
+    assert (
+        projected.metadata["cross_border"]["estimate_disclosure"]
+        is disclosure_before
+    )
+    assert (
+        projected.metadata["cross_border"]["estimate_disclosure"]
+        == disclosure_before
+    )
+
+
+def test_projection_preserves_independent_candidate_disclosures():
+    first = RecommendationCandidate(
+        item={"product_id": "A"},
+        score=_score(90.0),
+        rank=1,
+        metadata={
+            "cross_border": {
+                "candidate_ref": "candidate:first",
+                "candidate_position": 1,
+                "landed_cost": 78.0,
+                "estimate_disclosure": {
+                    "total": "78.00",
+                    "currency": "USD",
+                    "fx_rate": "1390",
+                },
+            },
+        },
+    )
+
+    second = RecommendationCandidate(
+        item={"product_id": "B"},
+        score=_score(80.0),
+        rank=2,
+        metadata={
+            "cross_border": {
+                "candidate_ref": "candidate:second",
+                "candidate_position": 2,
+                "landed_cost": 95.0,
+                "estimate_disclosure": {
+                    "total": "95.00",
+                    "currency": "USD",
+                    "fx_rate": "1401",
+                },
+            },
+        },
+    )
+
+    first_disclosure = (
+        first.metadata["cross_border"]["estimate_disclosure"]
+    )
+    second_disclosure = (
+        second.metadata["cross_border"]["estimate_disclosure"]
+    )
+
+    result = project_cross_border_canonical_result(
+        context=_context(),
+        candidates=(first, second),
+    )
+
+    assert result.candidates[0] is first
+    assert result.candidates[1] is second
+
+    assert (
+        result.candidates[0]
+        .metadata["cross_border"]["estimate_disclosure"]
+        is first_disclosure
+    )
+    assert (
+        result.candidates[1]
+        .metadata["cross_border"]["estimate_disclosure"]
+        is second_disclosure
+    )
+
+    assert first_disclosure is not second_disclosure
+    assert first_disclosure["total"] == "78.00"
+    assert second_disclosure["total"] == "95.00"
