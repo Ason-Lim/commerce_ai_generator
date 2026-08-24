@@ -240,3 +240,101 @@ def test_empty_result_preserves_empty_items_contract():
         response["summary"]
         == "추천 가능한 상품을 찾지 못했습니다."
     )
+
+
+def test_adapter_preserves_cross_border_disclosure_additively():
+    context = RecommendationContext(
+        query="해외 사과",
+        priority=RecommendationPriority.MIX,
+    )
+    candidate = RecommendationCandidate(
+        item={
+            "product_name": "테스트 해외 사과",
+            "seller_name": "테스트 해외몰",
+            "price": 10000,
+            "v7_final_score": 88.0,
+        },
+        score=_score_result(),
+        rank=1,
+        metadata={
+            "cross_border": {
+                "candidate_ref": "candidate-001",
+                "candidate_position": 0,
+                "landed_cost": {
+                    "amount": 15000,
+                    "currency": "KRW",
+                },
+                "estimate_disclosure": {
+                    "estimate_status": "estimated",
+                    "warning": "test-warning",
+                },
+            },
+        },
+    )
+    result = RecommendationResult(
+        context=context,
+        candidates=(candidate,),
+        summary="cross-border summary",
+    )
+
+    response = canonical_result_to_compatibility_response(
+        result,
+        q="해외 사과",
+        priority="ranking",
+    )
+
+    item = response["items"][0]
+
+    assert item["product_name"] == "테스트 해외 사과"
+    assert item["rank"] == 1
+    assert item["v7_rank"] == 1
+
+    assert item["cross_border"] == {
+        "candidate_ref": "candidate-001",
+        "candidate_position": 0,
+        "landed_cost": {
+            "amount": 15000,
+            "currency": "KRW",
+        },
+        "estimate_disclosure": {
+            "estimate_status": "estimated",
+            "warning": "test-warning",
+        },
+    }
+
+    assert "metadata" not in item
+
+
+def test_adapter_does_not_add_cross_border_for_standard_candidate():
+    candidate = RecommendationCandidate(
+        item={
+            "product_name": "일반 상품",
+            "v7_final_score": 88.0,
+        },
+        score=_score_result(),
+        rank=1,
+        metadata={
+            "internal_only": {
+                "source": "test",
+            },
+        },
+    )
+    result = RecommendationResult(
+        context=RecommendationContext(
+            query="일반 상품",
+        ),
+        candidates=(candidate,),
+        summary="summary",
+    )
+
+    response = canonical_result_to_compatibility_response(
+        result,
+        q="일반 상품",
+        priority="ranking",
+    )
+
+    item = response["items"][0]
+
+    assert "cross_border" not in item
+    assert "metadata" not in item
+    assert "internal_only" not in item

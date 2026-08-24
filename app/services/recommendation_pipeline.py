@@ -243,6 +243,10 @@ def canonical_result_to_compatibility_response(
             priority,
         )
 
+        cross_border = candidate.metadata.get("cross_border")
+        if cross_border:
+            item["cross_border"] = dict(cross_border)
+
         # Compatibility enrichment must not replace the canonical rank.
         item["rank"] = candidate.rank
         item["v7_rank"] = candidate.rank
