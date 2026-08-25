@@ -70,6 +70,7 @@ They do not create canonical provider identities or registry entries.
 |---|---|---|---|
 | `candidate:currency:ecb-data-api` | ECB Data Portal API documentation | `subject_supplied` | https://data.ecb.europa.eu/help/api/data |
 | `candidate:currency:frankfurter-v2` | Frankfurter v2 documentation | `subject_supplied` | https://frankfurter.dev/ |
+| `candidate:currency:frankfurter-v2` | Frankfurter v2 OpenAPI specification | `subject_supplied` | https://api.frankfurter.dev/v2/openapi.json |
 
 ### Shipping-route evidence
 
