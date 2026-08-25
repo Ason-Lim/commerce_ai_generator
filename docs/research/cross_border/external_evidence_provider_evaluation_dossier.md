@@ -81,6 +81,8 @@ They do not create canonical provider identities or registry entries.
 | subject_ref | Evidence source | Source relationship | Official source reference |
 |---|---|---|---|
 | `candidate:shipping:shippo-api` | Shippo API documentation | `subject_supplied` | https://docs.goshippo.com/api-reference/overview |
+| `candidate:shipping:shippo-api` | Shippo shipment API reference | `subject_supplied` | https://docs.goshippo.com/api-reference/shipments/create-a-new-shipment |
+| `candidate:shipping:shippo-api` | Shippo rate API reference | `subject_supplied` | https://docs.goshippo.com/api-reference/rates/retrieve-a-rate |
 | `candidate:shipping:easypost-api` | EasyPost API documentation | `subject_supplied` | https://www.easypost.com/guides/getting-started |
 | `candidate:shipping-landed-cost:mydhl-api` | DHL Express MyDHL API documentation | `subject_supplied` | https://developer.dhl.com/api-reference/dhl-express-mydhl-api |
 
