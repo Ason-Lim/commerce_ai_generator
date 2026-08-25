@@ -83,6 +83,12 @@ They do not create canonical provider identities or registry entries.
 | `candidate:shipping:shippo-api` | Shippo API documentation | `subject_supplied` | https://docs.goshippo.com/api-reference/overview |
 | `candidate:shipping:shippo-api` | Shippo shipment API reference | `subject_supplied` | https://docs.goshippo.com/api-reference/shipments/create-a-new-shipment |
 | `candidate:shipping:shippo-api` | Shippo rate API reference | `subject_supplied` | https://docs.goshippo.com/api-reference/rates/retrieve-a-rate |
+| `candidate:shipping:shipstation-api` | ShipStation API surface overview | `subject_supplied` | https://docs.shipstation.com/api-overview |
+| `candidate:shipping:shipstation-api` | ShipStation platform API v2 getting-started documentation | `subject_supplied` | https://docs.shipstation.com/getting-started |
+| `candidate:shipping:shipstation-api` | ShipStation platform API v2 authentication documentation | `subject_supplied` | https://docs.shipstation.com/authentication |
+| `candidate:shipping:shipstation-api` | ShipStation platform API v2 rate-shopping guide | `subject_supplied` | https://docs.shipstation.com/rate-shopping |
+| `candidate:shipping:shipstation-api` | ShipStation platform API v2 rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/rates/calculate_rates |
+| `candidate:shipping:shipstation-api` | ShipStation platform API v2 shipment-rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/shipments/list_shipment_rates |
 | `candidate:shipping:easypost-api` | EasyPost API documentation | `subject_supplied` | https://www.easypost.com/guides/getting-started |
 | `candidate:shipping-landed-cost:mydhl-api` | DHL Express MyDHL API documentation | `subject_supplied` | https://developer.dhl.com/api-reference/dhl-express-mydhl-api |
 
