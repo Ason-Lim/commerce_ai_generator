@@ -69,6 +69,10 @@ They do not create canonical provider identities or registry entries.
 | subject_ref | Evidence source | Source relationship | Official source reference |
 |---|---|---|---|
 | `candidate:currency:ecb-data-api` | ECB Data Portal API documentation | `subject_supplied` | https://data.ecb.europa.eu/help/api/data |
+| `candidate:currency:ecb-data-api` | ECB Exchange Rates dataflow structure | `subject_supplied` | https://data.ecb.europa.eu/data/datasets/EXR/structure |
+| `candidate:currency:ecb-data-api` | ECB Data Portal API data examples | `subject_supplied` | https://data.ecb.europa.eu/help/api/data-examples |
+| `candidate:currency:ecb-data-api` | ECB Data Portal API content negotiation | `subject_supplied` | https://data.ecb.europa.eu/help/api/content-negotiation |
+| `candidate:currency:ecb-data-api` | ECB Data Portal API overview | `subject_supplied` | https://data.ecb.europa.eu/help/api/overview |
 | `candidate:currency:frankfurter-v2` | Frankfurter v2 documentation | `subject_supplied` | https://frankfurter.dev/ |
 | `candidate:currency:frankfurter-v2` | Frankfurter v2 OpenAPI specification | `subject_supplied` | https://api.frankfurter.dev/v2/openapi.json |
 
