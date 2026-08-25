@@ -221,6 +221,33 @@ geographic coverage set, commercial contract, or universal temporal and
 estimate-status contract across every carrier, account, service, and
 route. Those dimensions therefore remain unknown.
 
+### `candidate:shipping:shipstation-api`
+
+| record_id | dimension | state | observation value | source_id | source_type | source_reference |
+|---|---|---|---|---|---|---|
+| `cb-ea3b1-shipstation-001` | `evidence_kind_coverage` | `observed` | ShipStation platform API v2 documents shipment creation and management, carrier and service rate comparison, rate estimates, labels, customs forms, manifests, and pickups. | `shipstation-v2-getting-started` | `official_documentation` | [https://docs.shipstation.com/getting-started](https://docs.shipstation.com/getting-started) |
+| `cb-ea3b1-shipstation-002` | `geographic_coverage` | `unknown` | `None` | `shipstation-v2-api-overview` | `official_documentation` | [https://docs.shipstation.com/api-overview](https://docs.shipstation.com/api-overview) |
+| `cb-ea3b1-shipstation-003` | `provenance_traceability` | `observed` | ShipStation platform API v2 rate requests identify one or more carrier IDs and may filter by service codes and package types; returned quotes remain associated with the supplied shipment or shipment ID and rate options. | `shipstation-v2-rate-shopping` | `official_documentation` | [https://docs.shipstation.com/rate-shopping](https://docs.shipstation.com/rate-shopping) |
+| `cb-ea3b1-shipstation-004` | `temporal_evidence` | `observed` | The documented v2 rate model includes an estimated number of delivery days when that information is available for the returned rate. | `shipstation-v2-rate-reference` | `official_documentation` | [https://docs.shipstation.com/apis/openapi/rates/calculate_rates](https://docs.shipstation.com/apis/openapi/rates/calculate_rates) |
+| `cb-ea3b1-shipstation-005` | `estimate_status_disclosure` | `observed` | ShipStation distinguishes rate quotes from rate estimates and documents that the estimate endpoint accepts only a subset of label-creation information and has stated filtering and multi-package limitations. | `shipstation-v2-rate-shopping` | `official_documentation` | [https://docs.shipstation.com/rate-shopping](https://docs.shipstation.com/rate-shopping) |
+| `cb-ea3b1-shipstation-006` | `canonical_projection_compatibility` | `unknown` | `None` | `commerce-ai-evaluation` | `internal_research_boundary` | `CB-EA3B-1` |
+| `cb-ea3b1-shipstation-007` | `operational_constraints` | `observed` | Rate retrieval requires configured carrier IDs and shipment details or a shipment ID; ShipStation platform API v2 has no sandbox environment, so platform API operations occur in production. | `shipstation-v2-rate-and-auth-docs` | `official_documentation` | [https://docs.shipstation.com/rate-shopping](https://docs.shipstation.com/rate-shopping); [https://docs.shipstation.com/authentication](https://docs.shipstation.com/authentication) |
+| `cb-ea3b1-shipstation-008` | `access_security_requirements` | `observed` | ShipStation platform API v2 requires HTTPS with TLS 1.2 or higher and an API key supplied in the `API-Key` request header. | `shipstation-v2-authentication` | `official_documentation` | [https://docs.shipstation.com/authentication](https://docs.shipstation.com/authentication) |
+| `cb-ea3b1-shipstation-009` | `commercial_constraints` | `observed` | ShipStation documents that its platform API v2 has no sandbox environment and that API operations occur in production and may incur real costs; complete commercial terms remain account- and plan-dependent. | `shipstation-v2-authentication` | `official_documentation` | [https://docs.shipstation.com/authentication](https://docs.shipstation.com/authentication) |
+
+The evaluation subject is limited to ShipStation platform API v2 at
+`https://api.shipstation.com/v2`. The standalone ShipStation API,
+formerly ShipEngine, and the legacy ShipStation API V1 surface at
+`https://ssapi.shipstation.com/` are not included in this subject.
+Tracking endpoints and post-purchase tracking-event history are outside
+the evaluated `shipping_route_evidence` target family.
+
+The inspected documentation does not establish one unconditional
+geographic coverage set across every connected carrier, account,
+service, and route. Canonical projection compatibility also remains
+unknown until a separate internal observation is authorized and
+performed. No record has `verified` state.
+
 ### `candidate:shipping:easypost-api`
 
 | record_id | dimension | state | observation value | source_id | source_type | source_reference |
