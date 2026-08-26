@@ -90,6 +90,14 @@ They do not create canonical provider identities or registry entries.
 | `candidate:shipping:shipstation-api` | ShipStation platform API v2 rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/rates/calculate_rates |
 | `candidate:shipping:shipstation-api` | ShipStation platform API v2 shipment-rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/shipments/list_shipment_rates |
 | `candidate:shipping:easypost-api` | EasyPost API documentation | `subject_supplied` | https://www.easypost.com/guides/getting-started |
+| `candidate:fulfillment-aggregator:fassto-fms` | Fassto official FMS Open API integration guide | `subject_supplied` | https://guide-kr.fassto.ai/linkage/open_api |
+| `candidate:fulfillment-aggregator:fassto-fms` | Fassto FMS OpenAPI V1 Swagger | `subject_supplied` | https://fmsapi.fassto.ai/swagger-ui.html |
+| `candidate:fulfillment-aggregator:fassto-fms` | Fassto official FMS update publication | `subject_supplied` | https://guide-kr.fassto.ai/fms_update |
+| `candidate:shipping-aggregator:delivered-korea` | Delivered Partners complete developer-documentation index | `subject_supplied` | https://developers-partners.delivered.co.kr/llms.txt |
+| `candidate:shipping-aggregator:delivered-korea` | Delivered Partners Global Ship order-registration API | `subject_supplied` | https://developers-partners.delivered.co.kr/reference/global-ship/api/create-orders |
+| `candidate:shipping-aggregator:delivered-korea` | Delivered Partners Global Checkout order-query API | `subject_supplied` | https://developers-partners.delivered.co.kr/reference/global-checkout/api/orders |
+| `candidate:shipping-aggregator:delivered-korea` | Delivered Korea Global Tracking surface | `subject_supplied` | https://tracking.delivered.co.kr/ |
+| `candidate:shipping-aggregator:delivered-korea` | Delivered Korea official API-integrated shipping-partner directory | `subject_supplied` | https://www.delivered.co.kr/en/integration |
 | `candidate:shipping-aggregator:tracx-smartship` | TracX Logis official platform and developer-capability publication | `subject_supplied` | https://www.tracxlogis.com/ |
 | `candidate:shipping-aggregator:tracx-smartship` | TracX Logis TxAPI developer guide | `subject_supplied` | https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx |
 | `candidate:shipping-aggregator:tracx-smartship` | SmartShip official delivery-status guide | `subject_supplied` | https://qxguide.oopy.io/93efdaca-fa02-4264-a1db-ddc29178c72d |
@@ -272,6 +280,60 @@ The EasyPost records do not establish unconditional geographic,
 carrier, service, or negotiated-price availability. Those properties
 remain dependent on the applicable carrier integration, account,
 credentials, shipment data, and production mode.
+
+### `candidate:fulfillment-aggregator:fassto-fms`
+
+| record_id | dimension | state | observation value | source_id | source_type | source_reference |
+|---|---|---|---|---|---|---|
+| `cb-ea4r9-fassto-fms-001` | `evidence_kind_coverage` | `observed` | Fassto publishes FMS OpenAPI V1 operations for warehouse outbound registration, query, modification, parcel-shipment lookup, overseas-shipment registration, returns, inventory, goods, suppliers, and warehousing. The public delivery responses are current operational snapshots and do not expose an observed carrier-event-history array. | `fassto-fms-openapi` | `official_documentation` | [https://fmsapi.fassto.ai/swagger-ui.html](https://fmsapi.fassto.ai/swagger-ui.html) |
+| `cb-ea4r9-fassto-fms-002` | `geographic_coverage` | `observed` | Fassto publishes overseas fulfillment and overseas-shipment capabilities, but the OpenAPI guide states that overseas-shipping product information requires additional entry in FMS. The inspected sources do not establish unconditional service availability for every origin, destination, carrier, or product. | `fassto-openapi-guide` | `official_documentation` | [https://guide-kr.fassto.ai/linkage/open_api](https://guide-kr.fassto.ai/linkage/open_api) |
+| `cb-ea4r9-fassto-fms-003` | `provenance_traceability` | `observed` | Public delivery schemas expose correlation and provider fields including `invoiceNo`, `ordNo`, `slipNo`, `parcelCd`, and `parcelNm`. Fassto separately states that detailed FMS tracking was expanded through SweetTracker. The OpenAPI schema does not establish the original carrier or SweetTracker as event-level source for each returned status. | `fassto-fms-schema-and-update` | `official_documentation` | [https://fmsapi.fassto.ai/swagger-ui.html](https://fmsapi.fassto.ai/swagger-ui.html); [https://guide-kr.fassto.ai/fms_update](https://guide-kr.fassto.ai/fms_update) |
+| `cb-ea4r9-fassto-fms-004` | `temporal_evidence` | `observed` | Outbound snapshot schemas contain fields such as `ordDt`, `packDt`, and `updTime`. Their presence does not establish an occurred carrier-event timestamp, timezone, UTC offset, provider recording time, response observation time, or a chronologically ordered event history. | `fassto-fms-openapi` | `official_documentation` | [https://fmsapi.fassto.ai/swagger-ui.html](https://fmsapi.fassto.ai/swagger-ui.html) |
+| `cb-ea4r9-fassto-fms-005` | `estimate_status_disclosure` | `unknown` | `None` | `fassto-fms-openapi` | `official_documentation` | [https://fmsapi.fassto.ai/swagger-ui.html](https://fmsapi.fassto.ai/swagger-ui.html) |
+| `cb-ea4r9-fassto-fms-006` | `canonical_projection_compatibility` | `unknown` | `None` | `commerce-ai-evaluation` | `internal_research_boundary` | `CB-EA4R-9` |
+| `cb-ea4r9-fassto-fms-007` | `operational_constraints` | `observed` | FMS OpenAPI supports outbound work-state snapshots including `ORDER`, `WORKING`, `DONE`, `PARTDONE`, `CANCEL`, and `SHORTAGE`. These are fulfillment and warehouse-operation states, not automatically carrier route events. Overseas delivery completion can also be submitted into FMS and must not be treated as independently observed carrier evidence. | `fassto-fms-openapi` | `official_documentation` | [https://fmsapi.fassto.ai/swagger-ui.html](https://fmsapi.fassto.ai/swagger-ui.html) |
+| `cb-ea4r9-fassto-fms-008` | `access_security_requirements` | `observed` | The Swagger schema is publicly readable, while operational calls require a Fassto contract, fixed-IP registration, firewall permission, `api_cd`, `api_key`, and an access token obtained through `auth/connect`. Exact production entitlement and credential-rotation policy remain unresolved. | `fassto-openapi-guide` | `official_documentation` | [https://guide-kr.fassto.ai/linkage/open_api](https://guide-kr.fassto.ai/linkage/open_api) |
+| `cb-ea4r9-fassto-fms-009` | `commercial_constraints` | `unknown` | `None` | `fassto-openapi-guide` | `official_documentation` | [https://guide-kr.fassto.ai/linkage/open_api](https://guide-kr.fassto.ai/linkage/open_api) |
+
+The Fassto FMS subject is admitted only as a fulfillment and shipment-
+snapshot evidence candidate. Its warehouse work states, parcel fields,
+and overseas-completion operation do not establish an observed carrier-
+event history or `ShippingRouteType`.
+
+The public OpenAPI snapshot, FMS user-interface tracking, SweetTracker
+normalization, and original carrier observations remain distinct source
+and observation units. Carrier identity or event semantics from one
+surface must not be copied onto another without an explicit source
+relationship.
+
+### `candidate:shipping-aggregator:delivered-korea`
+
+| record_id | dimension | state | observation value | source_id | source_type | source_reference |
+|---|---|---|---|---|---|---|
+| `cb-ea4r9-delivered-korea-001` | `evidence_kind_coverage` | `observed` | Delivered Partners publishes Open APIs for Global Checkout order queries and Global Ship order validation and registration. A separate Global Tracking surface accepts a Shipment Reference ID or PKG ID. The complete public documentation index does not expose a tracking-event endpoint, event-history array, or shipment-status webhook. | `delivered-developer-index` | `official_documentation` | [https://developers-partners.delivered.co.kr/llms.txt](https://developers-partners.delivered.co.kr/llms.txt); [https://tracking.delivered.co.kr/](https://tracking.delivered.co.kr/) |
+| `cb-ea4r9-delivered-korea-002` | `geographic_coverage` | `observed` | Delivered Korea publishes international shipping and API-integrated relationships with multiple postal and private carriers. This establishes multi-carrier cross-border capability but not unconditional origin, destination, carrier, service, or shipment availability. | `delivered-shipping-partners` | `official_documentation` | [https://www.delivered.co.kr/en/integration](https://www.delivered.co.kr/en/integration) |
+| `cb-ea4r9-delivered-korea-003` | `provenance_traceability` | `observed` | Global Ship order registration provides `orderId`, `mallOrderNumber`, requested `carrier`, and `domesticShippingNumber`. Global Tracking uses a Shipment Reference ID or PKG ID. These establish provider correlation surfaces but do not establish event-level carrier identity, original event actor, or normalized-event provenance. | `delivered-global-ship-and-tracking` | `official_documentation` | [https://developers-partners.delivered.co.kr/reference/global-ship/api/create-orders](https://developers-partners.delivered.co.kr/reference/global-ship/api/create-orders); [https://tracking.delivered.co.kr/](https://tracking.delivered.co.kr/) |
+| `cb-ea4r9-delivered-korea-004` | `temporal_evidence` | `observed` | Global Checkout order queries expose `createdAt` and payment `paidAt`. They do not establish shipment-event occurrence time, carrier recording time, observation time, timezone handling for carrier events, or an ordered tracking history. | `delivered-global-checkout-orders` | `official_documentation` | [https://developers-partners.delivered.co.kr/reference/global-checkout/api/orders](https://developers-partners.delivered.co.kr/reference/global-checkout/api/orders) |
+| `cb-ea4r9-delivered-korea-005` | `estimate_status_disclosure` | `unknown` | `None` | `delivered-developer-index` | `official_documentation` | [https://developers-partners.delivered.co.kr/llms.txt](https://developers-partners.delivered.co.kr/llms.txt) |
+| `cb-ea4r9-delivered-korea-006` | `canonical_projection_compatibility` | `unknown` | `None` | `commerce-ai-evaluation` | `internal_research_boundary` | `CB-EA4R-9` |
+| `cb-ea4r9-delivered-korea-007` | `operational_constraints` | `observed` | Global Checkout provides order-level states including `CREATED`, `PAID`, `ORDER_PROCESSING`, `SHIPPED`, `DELIVERED`, and `PARTIAL_DELIVERED`. These are current order states and must not be interpreted as a carrier-event sequence. Public tracking UI capability does not establish a reusable API response contract. | `delivered-global-checkout-orders` | `official_documentation` | [https://developers-partners.delivered.co.kr/reference/global-checkout/api/orders](https://developers-partners.delivered.co.kr/reference/global-checkout/api/orders); [https://tracking.delivered.co.kr/](https://tracking.delivered.co.kr/) |
+| `cb-ea4r9-delivered-korea-008` | `access_security_requirements` | `observed` | Delivered Partners documents JSON OpenAPI requests with an Authorization API key. API keys are currently issued manually through administrator contact, with separate production and staging environments. Exact tracking entitlement and tracking API credentials are not established because no public tracking API contract was observed. | `delivered-api-access` | `official_documentation` | [https://developers-partners.delivered.co.kr/reference/using-api/api-keys](https://developers-partners.delivered.co.kr/reference/using-api/api-keys); [https://developers-partners.delivered.co.kr/reference/using-api/environment](https://developers-partners.delivered.co.kr/reference/using-api/environment) |
+| `cb-ea4r9-delivered-korea-009` | `commercial_constraints` | `unknown` | `None` | `delivered-developer-index` | `official_documentation` | [https://developers-partners.delivered.co.kr/llms.txt](https://developers-partners.delivered.co.kr/llms.txt) |
+
+The Delivered Korea subject is admitted only as an order and shipment-
+correlation evidence candidate. The existence of `SHIPPED`,
+`DELIVERED`, or `PARTIAL_DELIVERED` order states does not establish an
+observed carrier-event history or `ShippingRouteType`.
+
+Delivered Korea, an API-integrated shipping partner, the original event
+actor, and a downstream local carrier remain distinct provenance roles.
+A partner-directory relationship must not be treated as event-level
+attribution, payload compatibility, freshness, or completeness.
+
+The Global Tracking user interface and the public Delivered Partners
+OpenAPI remain distinct observation surfaces. Tracking capability must
+not be promoted into a reusable API contract unless an official
+tracking schema or authorized sample response is obtained.
 
 ### `candidate:shipping-aggregator:tracx-smartship`
 
