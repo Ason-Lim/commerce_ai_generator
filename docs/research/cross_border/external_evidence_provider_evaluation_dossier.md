@@ -90,6 +90,9 @@ They do not create canonical provider identities or registry entries.
 | `candidate:shipping:shipstation-api` | ShipStation platform API v2 rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/rates/calculate_rates |
 | `candidate:shipping:shipstation-api` | ShipStation platform API v2 shipment-rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/shipments/list_shipment_rates |
 | `candidate:shipping:easypost-api` | EasyPost API documentation | `subject_supplied` | https://www.easypost.com/guides/getting-started |
+| `candidate:shipping-aggregator:tracx-smartship` | TracX Logis official platform and developer-capability publication | `subject_supplied` | https://www.tracxlogis.com/ |
+| `candidate:shipping-aggregator:tracx-smartship` | TracX Logis TxAPI developer guide | `subject_supplied` | https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx |
+| `candidate:shipping-aggregator:tracx-smartship` | SmartShip official delivery-status guide | `subject_supplied` | https://qxguide.oopy.io/93efdaca-fa02-4264-a1db-ddc29178c72d |
 | `candidate:shipping:korea-post-ems` | Korea Post contract-customer Open API introduction | `subject_supplied` | https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL |
 | `candidate:shipping:korea-post-ems` | Korea Post EMS internet tracking service | `subject_supplied` | https://ems.epost.go.kr/front.Tracking01.postal |
 | `candidate:shipping:korea-post-ems` | Korea Post official EMS service-region and rate publication | `subject_supplied` | https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125 |
@@ -269,6 +272,51 @@ The EasyPost records do not establish unconditional geographic,
 carrier, service, or negotiated-price availability. Those properties
 remain dependent on the applicable carrier integration, account,
 credentials, shipment data, and production mode.
+
+### `candidate:shipping-aggregator:tracx-smartship`
+
+| record_id | dimension | state | observation value | source_id | source_type | source_reference |
+|---|---|---|---|---|---|---|
+| `cb-ea4r6-tracx-smartship-001` | `evidence_kind_coverage` | `observed` | The official TxAPI guide exposes `SmartShipService.Tracking`, `MultiTracking`, and a `Delivery WebHook`. The Tracking response contains `tracking_history` entries with status, status code, date, location, details, reason fields, tracking-specific codes, and proof-of-delivery references. | `tracx-txapi-guide` | `official_documentation` | [https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx](https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx) |
+| `cb-ea4r6-tracx-smartship-002` | `geographic_coverage` | `observed` | TracX Logis states that its logistics network supports more than 76 countries. The SmartShip status guide also distinguishes departure country, destination country, delivery company, intermediate DPC processing, and handoff to a local delivery company. These publications do not establish unconditional availability for every origin, destination, service, or shipment. | `tracx-official-platform` | `official_documentation` | [https://www.tracxlogis.com/](https://www.tracxlogis.com/); [https://qxguide.oopy.io/93efdaca-fa02-4264-a1db-ddc29178c72d](https://qxguide.oopy.io/93efdaca-fa02-4264-a1db-ddc29178c72d) |
+| `cb-ea4r6-tracx-smartship-003` | `provenance_traceability` | `observed` | The Tracking response provides shipment-correlation fields including `shipping_no`, `ref_no`, and `qs_no`. The Delivery WebHook separately provides `PackingNo`, `TrackingNo`, `RefOrderNo`, `DeliveryCompanyCode`, and `DeliveryCompanyName`. Event-level carrier identity is therefore directly available in the webhook contract but is not established for each polling `tracking_history` entry. | `tracx-txapi-guide` | `official_documentation` | [https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx](https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx) |
+| `cb-ea4r6-tracx-smartship-004` | `temporal_evidence` | `observed` | Each Tracking history entry contains `date`, described as the history-change date. The Delivery WebHook contains required `Date` in `yyyy-MM-dd HH:mm:ss` form and describes it as the changed date. Neither contract establishes a timezone or offset, distinguishes occurrence time from provider-recording time, or supplies a response observation timestamp. | `tracx-txapi-guide` | `official_documentation` | [https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx](https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx) |
+| `cb-ea4r6-tracx-smartship-005` | `estimate_status_disclosure` | `unknown` | `None` | `tracx-txapi-guide` | `official_documentation` | [https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx](https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx) |
+| `cb-ea4r6-tracx-smartship-006` | `canonical_projection_compatibility` | `unknown` | `None` | `commerce-ai-evaluation` | `internal_research_boundary` | `CB-EA4R-6` |
+| `cb-ea4r6-tracx-smartship-007` | `operational_constraints` | `observed` | The official guide documents API-key or OAuth-key access, a single Tracking operation, MultiTracking, and delivery-status push. It does not establish tracking-history ordering, completeness, pagination, duplicate semantics, retention, update latency, rate limits, or whether a webhook delivery is retried. | `tracx-txapi-guide` | `official_documentation` | [https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx](https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx) |
+| `cb-ea4r6-tracx-smartship-008` | `access_security_requirements` | `observed` | The TxAPI guide states that a user account must be created and an API key must be issued and verified. Request samples pass an API or OAuth key. Exact entitlement scope, key rotation, production approval, webhook authentication, signature verification, and IP restrictions remain unresolved. | `tracx-txapi-guide` | `official_documentation` | [https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx](https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx) |
+| `cb-ea4r6-tracx-smartship-009` | `commercial_constraints` | `unknown` | `None` | `tracx-txapi-guide` | `official_documentation` | [https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx](https://api.tracxlogis.com/GMKT.INC.GLPS.OpenApiService/Document/QAPIGuideIndex.aspx) |
+
+The TracX SmartShip subject is a cross-border shipping-aggregator
+candidate. The former Qxpress hostname redirects to the TracX Logis
+platform, while the inspected TxAPI guide identifies TracX Logis as the
+API publisher. This observation does not authorize silent attribution
+of third-party carrier events to TracX Logis.
+
+The polling Tracking contract and the Delivery WebHook contract remain
+distinct observation surfaces. Polling returns a `tracking_history`
+array; the webhook pushes one delivery-status change with delivery-
+company identity. Webhook carrier provenance must not be copied onto
+polling history entries unless the source payload establishes the same
+relationship.
+
+The provider's `date` and `Date` fields are preserved as source temporal
+values. A timezone, UTC offset, occurrence-time meaning, provider-
+recording time, observation time, chronological ordering, completeness,
+or duplicate policy must not be inferred where the official contract
+does not establish it.
+
+The published status codes represent observed logistics states and
+exceptions. This evidence does not establish `ShippingRouteType`, planned route
+topology, unconditional route availability, or a canonical route
+structure. Tracking identifiers remain provider correlation references
+and must not be treated as globally unique canonical shipment identity
+without a separate identity contract.
+
+Although direct event-history and webhook schemas are observed,
+canonical projection compatibility remains `unknown` and projection
+remains `None` because Commerce AI does not yet possess an authorized
+canonical `observed_route_event_history` contract.
 
 ### `candidate:shipping:korea-post-ems`
 
