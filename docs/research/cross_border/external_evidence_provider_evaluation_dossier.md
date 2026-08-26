@@ -90,6 +90,9 @@ They do not create canonical provider identities or registry entries.
 | `candidate:shipping:shipstation-api` | ShipStation platform API v2 rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/rates/calculate_rates |
 | `candidate:shipping:shipstation-api` | ShipStation platform API v2 shipment-rate API reference | `subject_supplied` | https://docs.shipstation.com/apis/openapi/shipments/list_shipment_rates |
 | `candidate:shipping:easypost-api` | EasyPost API documentation | `subject_supplied` | https://www.easypost.com/guides/getting-started |
+| `candidate:shipping:korea-post-ems` | Korea Post contract-customer Open API introduction | `subject_supplied` | https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL |
+| `candidate:shipping:korea-post-ems` | Korea Post EMS internet tracking service | `subject_supplied` | https://ems.epost.go.kr/front.Tracking01.postal |
+| `candidate:shipping:korea-post-ems` | Korea Post official EMS service-region and rate publication | `subject_supplied` | https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125 |
 | `candidate:shipping-landed-cost:mydhl-api` | DHL Express MyDHL API documentation | `subject_supplied` | https://developer.dhl.com/api-reference/dhl-express-mydhl-api |
 
 ### Regulatory evidence
@@ -266,6 +269,44 @@ The EasyPost records do not establish unconditional geographic,
 carrier, service, or negotiated-price availability. Those properties
 remain dependent on the applicable carrier integration, account,
 credentials, shipment data, and production mode.
+
+### `candidate:shipping:korea-post-ems`
+
+| record_id | dimension | state | observation value | source_id | source_type | source_reference |
+|---|---|---|---|---|---|---|
+| `cb-ea4r2b-korea-post-ems-001` | `evidence_kind_coverage` | `observed` | Korea Post's contract-customer system states that it provides Open APIs for domestic and international postal-item tracking and for EMS and K-Packet applications. The official EMS service also publishes internet tracking, service-region, and rate information through separate official surfaces. | `korea-post-contract-open-api` | `official_documentation` | [https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL](https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL); [https://ems.epost.go.kr/front.Tracking01.postal](https://ems.epost.go.kr/front.Tracking01.postal); [https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125](https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125) |
+| `cb-ea4r2b-korea-post-ems-002` | `geographic_coverage` | `observed` | Korea Post publishes EMS service regions and destination groupings, while warning that acceptance or dispatch may be suspended for some regions according to circumstances; the publication therefore does not establish unconditional route availability. | `korea-post-ems-service-rates` | `official_documentation` | [https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125](https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125) |
+| `cb-ea4r2b-korea-post-ems-003` | `provenance_traceability` | `observed` | The official EMS internet-tracking service correlates a query to a 13-character postal-item number and shows `EE123456789KR` as an example. This establishes an official item-reference surface but does not establish event-level source identity or cross-postal-operator provenance. | `korea-post-ems-tracking` | `official_documentation` | [https://ems.epost.go.kr/front.Tracking01.postal](https://ems.epost.go.kr/front.Tracking01.postal) |
+| `cb-ea4r2b-korea-post-ems-004` | `temporal_evidence` | `unknown` | `None` | `korea-post-contract-open-api` | `official_documentation` | [https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL](https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL) |
+| `cb-ea4r2b-korea-post-ems-005` | `estimate_status_disclosure` | `unknown` | `None` | `korea-post-ems-service-rates` | `official_documentation` | [https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125](https://jodal.koreapost.go.kr/kpost/subIndex/239.do?pSiteIdx=125) |
+| `cb-ea4r2b-korea-post-ems-006` | `canonical_projection_compatibility` | `unknown` | `None` | `commerce-ai-evaluation` | `internal_research_boundary` | `CB-EA4R-2B` |
+| `cb-ea4r2b-korea-post-ems-007` | `operational_constraints` | `observed` | The inspected official surfaces separate contract-customer Open API access, EMS application, internet tracking, rate publication, and service availability. Internet tracking requires a 13-character postal-item number. Exact international-tracking endpoint schemas, quotas, test behavior, and production operating conditions remain unresolved. | `korea-post-ems-official-surfaces` | `official_documentation` | [https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL](https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL); [https://ems.epost.go.kr/front.Tracking01.postal](https://ems.epost.go.kr/front.Tracking01.postal) |
+| `cb-ea4r2b-korea-post-ems-008` | `access_security_requirements` | `observed` | The Open API introduction is presented through Korea Post's contract-customer system. Exact service-key issuance, approval, credential scope, production entitlement, and whether each international-tracking operation requires a contract remain unresolved. | `korea-post-contract-open-api` | `official_documentation` | [https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL](https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL) |
+| `cb-ea4r2b-korea-post-ems-009` | `commercial_constraints` | `unknown` | `None` | `korea-post-contract-open-api` | `official_documentation` | [https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL](https://biz.epost.go.kr/ui/index.jsp?menuId=PORTAL_2_1&sysType=PORTAL) |
+
+The Korea Post EMS subject is a Korea-origin public postal-service
+candidate. Its contract-customer tracking API, EMS application API,
+official internet-tracking surface, rate publication, and service-
+availability publication remain distinct source and observation units.
+
+The inspected sources establish that official EMS application,
+tracking, service-region, and rate surfaces exist. They do not establish
+event-level schema sufficiency, unconditional destination availability,
+production credentials, quotas, storage or redistribution permission,
+service levels, quote finality, canonical projection compatibility, or
+suitability for Commerce AI acquisition.
+
+The 13-character postal-item number is preserved only as an official
+query and correlation reference. It is not treated as a globally unique
+canonical shipment identity. Events originating from destination postal
+operators, customs authorities, or other network participants must not
+be attributed to Korea Post without explicit event-level provenance.
+
+EMS application evidence, rate evidence, service-availability evidence,
+and observed tracking-event history must not be merged into one
+canonical projection target. In particular, the existence of an EMS
+tracking service does not establish `ShippingRouteType`, and a published
+rate does not establish an occurred shipment event.
 
 ### `candidate:shipping-landed-cost:mydhl-api`
 
