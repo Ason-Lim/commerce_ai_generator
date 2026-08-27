@@ -86,6 +86,18 @@ from app.services.cross_border.regulatory import (
 from app.services.cross_border.provenance import (
     EvidenceProvenance,
 )
+from app.services.cross_border.observed_route_event_history import (
+    ObservedRouteEvent,
+    ObservedRouteEventActor,
+    ObservedRouteEventActorRole,
+    ObservedRouteEventHistory,
+    ObservedRouteEventHistoryCompleteness,
+    ObservedRouteEventHistoryOrdering,
+    ObservedRouteEventLocation,
+    ObservedRouteEventRelationship,
+    ObservedRouteEventRelationshipType,
+    ObservedRouteEventScope,
+)
 
 from app.services.cross_border.shipping_candidate_comparison import (
     ShippingCandidateComparison,
@@ -182,6 +194,16 @@ __all__ = [
     "EvidenceFreshness",
     "EvidenceFreshnessState",
     "EvidenceState",
+    "ObservedRouteEventHistoryCompleteness",
+    "ObservedRouteEventHistoryOrdering",
+    "ObservedRouteEventScope",
+    "ObservedRouteEventActorRole",
+    "ObservedRouteEventRelationshipType",
+    "ObservedRouteEventLocation",
+    "ObservedRouteEventActor",
+    "ObservedRouteEventRelationship",
+    "ObservedRouteEvent",
+    "ObservedRouteEventHistory",
     "EvidenceProvenance",
     "evaluate_currency_compatibility",
     "evaluate_regulatory_applicability",
