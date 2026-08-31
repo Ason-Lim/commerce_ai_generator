@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from app.db.protocols import BorrowedExecutionConnection
+
 
 from app.services.session_context.models import (
     SessionContext,
@@ -12,7 +13,7 @@ from app.services.session_context.store import (
 
 
 def update_session_context(
-    conn: Any,
+    conn: BorrowedExecutionConnection,
     session_id: str,
     query: str = "",
     priority: str = "",
@@ -38,7 +39,7 @@ def update_session_context(
 
 
 def get_session_context(
-    conn: Any,
+    conn: BorrowedExecutionConnection,
     session_id: str,
 ) -> SessionContext | None:
     """

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from app.db.protocols import BorrowedExecutionConnection
+
 
 from sqlalchemy import text
 
@@ -10,7 +11,7 @@ from app.services.preference.models import (
 
 
 def update_preference(
-    conn: Any,
+    conn: BorrowedExecutionConnection,
     *,
     session_id: str,
     query: str | None = None,
@@ -121,7 +122,7 @@ def update_preference(
 
 
 def get_preference(
-    conn: Any,
+    conn: BorrowedExecutionConnection,
     *,
     session_id: str,
 ) -> PreferenceProfile | None:

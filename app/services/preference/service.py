@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.db.protocols import BorrowedExecutionConnection
+
 from typing import Any
 
 from app.services.preference.models import (
@@ -15,7 +17,7 @@ from app.services.preference.store import (
 
 
 def update_user_preference(
-    conn: Any,
+    conn: BorrowedExecutionConnection,
     session_id: str,
     query: str | None = None,
     priority: str | None = None,
@@ -37,7 +39,7 @@ def update_user_preference(
 
 
 def get_user_preference(
-    conn: Any,
+    conn: BorrowedExecutionConnection,
     session_id: str,
 ) -> dict[str, Any] | None:
     """
@@ -61,7 +63,7 @@ def get_user_preference(
 
 
 def get_preference_profile(
-    conn: Any,
+    conn: BorrowedExecutionConnection,
     session_id: str,
 ) -> PreferenceProfile | None:
     """
