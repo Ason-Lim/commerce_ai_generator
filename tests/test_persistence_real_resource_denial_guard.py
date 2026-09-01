@@ -38,13 +38,17 @@ def test_application_database_module_import_cannot_create_real_engine() -> None:
 
 def test_analytics_logger_import_remains_non_networking() -> None:
     sys.modules.pop("app.services.analytics_logger", None)
-
     module = importlib.import_module("app.services.analytics_logger")
 
-    assert module.engine.__class__.__name__ == "_DeniedPersistenceEngine"
+    assert not hasattr(module, "engine")
 
-    with pytest.raises(RuntimeError, match=_DENIAL_MATCH):
-        module.engine.begin()
+    from app.db import engine_provider
+
+    engine_provider.unbind_engine()
+    assert engine_provider.is_bound() is False
+
+    with pytest.raises(engine_provider.EngineProviderUnboundError):
+        engine_provider.get_engine()
 
 
 def test_denied_engine_dispose_is_local_noop() -> None:

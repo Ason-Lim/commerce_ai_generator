@@ -1,17 +1,9 @@
-import os
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from app.services.preference import update_user_preference
 from app.services.session_context import update_session_context
 
-DB_URL = os.getenv(
-    "COMMERCE_DB_URL",
-    os.getenv(
-        "FRUIT_DB_URL",
-        "postgresql+psycopg2://mom@localhost:5432/dashboard_db",
-    ),
-)
+from app.db.engine_provider import get_engine
 
-engine = create_engine(DB_URL)
 
 
 def log_search(session_id: str, query: str, priority: str, result_count: int, top_product=None):
@@ -28,7 +20,7 @@ def log_search(session_id: str, query: str, priority: str, result_count: int, to
         or top_product.get("trust_first_score")
     )
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(
             text("""
                 INSERT INTO search_log (
@@ -105,7 +97,7 @@ def log_product_click(session_id: str, query: str, product: dict):
         "price": product.get("price"),
     }
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(
             text("""
                 INSERT INTO product_click_log (

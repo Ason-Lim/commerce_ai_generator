@@ -1,16 +1,8 @@
-import os
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 
-DB_URL = os.getenv(
-    "COMMERCE_DB_URL",
-    os.getenv(
-        "FRUIT_DB_URL",
-        "postgresql+psycopg2://mom@localhost:5432/dashboard_db",
-    ),
-)
+from app.db.engine_provider import get_engine
 
-engine = create_engine(DB_URL)
 
 
 def log_recommendation_impressions(
@@ -22,7 +14,7 @@ def log_recommendation_impressions(
     if not items:
         return
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         for item in items:
             conn.execute(
                 text("""

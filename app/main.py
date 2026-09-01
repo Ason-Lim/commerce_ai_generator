@@ -6,6 +6,7 @@ from app.services.generator_service import generate_product_strategy
 from app.services.naver_shopping_api_collector import collect_naver_products
 from fastapi import FastAPI, Query
 from app.db.lifecycle import EngineLifecycle
+from app.db.engine_provider import bind_engine, unbind_engine
 from fastapi.responses import RedirectResponse
 from app.services.analytics_logger import log_product_click
 from app.services.recommendation_pipeline import run_recommendation_pipeline
@@ -33,9 +34,11 @@ def _get_canonical_engine():
 async def _lifespan(app: FastAPI):
     app.state.engine_lifecycle = engine_lifecycle
     engine_lifecycle.initialize()
+    bind_engine(engine_lifecycle.engine)
     try:
         yield
     finally:
+        unbind_engine(engine_lifecycle.engine)
         engine_lifecycle.dispose()
 
 

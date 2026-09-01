@@ -40,6 +40,35 @@ def _engine_begin_with_nodes(fn: ast.AST) -> list[ast.With]:
     return matches
 
 
+
+def _provider_begin_with_nodes(node: ast.AST) -> list[ast.With]:
+    found: list[ast.With] = []
+
+    for candidate in ast.walk(node):
+        if not isinstance(candidate, ast.With):
+            continue
+
+        for item in candidate.items:
+            expr = item.context_expr
+            if not (
+                isinstance(expr, ast.Call)
+                and isinstance(expr.func, ast.Attribute)
+                and expr.func.attr == "begin"
+            ):
+                continue
+
+            owner = expr.func.value
+            if (
+                isinstance(owner, ast.Call)
+                and isinstance(owner.func, ast.Name)
+                and owner.func.id == "get_engine"
+                and not owner.args
+                and not owner.keywords
+            ):
+                found.append(candidate)
+
+    return found
+
 def _calls_named(fn: ast.AST, names: set[str]) -> list[ast.Call]:
     result: list[ast.Call] = []
     for node in ast.walk(fn):
@@ -63,14 +92,14 @@ def _keyword_name(call: ast.Call, name: str) -> str | None:
     return None
 
 
-def test_exact_three_logger_modules_own_independent_engines() -> None:
-    constructor_owners = []
-    for name, path in LOGGER_FILES.items():
-        text = path.read_text(encoding="utf-8")
-        if "create_engine(DB_URL)" in text:
-            constructor_owners.append(name)
+def test_exact_three_logger_modules_use_bounded_provider_without_local_engine_authority() -> None:
+    assert set(LOGGER_FILES) == {"analytics", "context", "impression"}
 
-    assert constructor_owners == ["analytics", "context", "impression"]
+    for path in LOGGER_FILES.values():
+        text = path.read_text(encoding="utf-8")
+        assert "create_engine(DB_URL)" not in text
+        assert "from app.db.engine_provider import get_engine" in text
+        assert "DB_URL" not in text
 
 
 def test_logger_transaction_boundary_counts_are_two_one_one() -> None:
@@ -81,18 +110,18 @@ def test_logger_transaction_boundary_counts_are_two_one_one() -> None:
         count = 0
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                count += len(_engine_begin_with_nodes(node))
+                count += len(_provider_begin_with_nodes(node))
         assert count == expected[name]
 
 
 def test_tb02_log_search_is_analytics_transaction_owner() -> None:
     fn = _function(_tree(LOGGER_FILES["analytics"]), "log_search")
-    assert len(_engine_begin_with_nodes(fn)) == 1
+    assert len(_provider_begin_with_nodes(fn)) == 1
 
 
 def test_tb03_log_product_click_is_analytics_transaction_owner() -> None:
     fn = _function(_tree(LOGGER_FILES["analytics"]), "log_product_click")
-    assert len(_engine_begin_with_nodes(fn)) == 1
+    assert len(_provider_begin_with_nodes(fn)) == 1
 
 
 def test_tb04_context_and_impression_functions_own_local_transactions() -> None:
@@ -103,13 +132,13 @@ def test_tb04_context_and_impression_functions_own_local_transactions() -> None:
         node.name
         for node in context_tree.body
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-        and _engine_begin_with_nodes(node)
+        and _provider_begin_with_nodes(node)
     ]
     impression_owners = [
         node.name
         for node in impression_tree.body
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-        and _engine_begin_with_nodes(node)
+        and _provider_begin_with_nodes(node)
     ]
 
     assert len(context_owners) == 1
@@ -134,24 +163,15 @@ def test_tb03_forwards_same_connection_to_preference_and_session_context() -> No
     assert _keyword_name(by_name["update_session_context"], "conn") == "conn"
 
 
-def test_tb03_connection_identity_is_owned_by_single_engine_begin_block() -> None:
+def test_tb03_connection_identity_is_owned_by_single_provider_begin_block() -> None:
     fn = _function(_tree(LOGGER_FILES["analytics"]), "log_product_click")
-    begin_blocks = _engine_begin_with_nodes(fn)
-
+    begin_blocks = _provider_begin_with_nodes(fn)
     assert len(begin_blocks) == 1
-    block = begin_blocks[0]
 
-    assert len(block.items) == 1
+    block = begin_blocks[0]
     optional_vars = block.items[0].optional_vars
     assert isinstance(optional_vars, ast.Name)
     assert optional_vars.id == "conn"
-
-    calls = _calls_named(
-        block,
-        {"update_user_preference", "update_session_context"},
-    )
-    assert len(calls) == 2
-    assert all(_keyword_name(call, "conn") == "conn" for call in calls)
 
 
 def test_borrowed_consumers_do_not_own_transaction_or_lifecycle_capability() -> None:

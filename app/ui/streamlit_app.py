@@ -19,7 +19,8 @@ from app.services.experience.tracking import (
 from app.services.experience.revisit import (
     load_revisit_recommendations as load_revisit_recommendations_from_experience,
 )
-from app.services.analytics_logger import log_search, log_product_click, engine
+from app.services.analytics_logger import log_search, log_product_click
+from app.db.engine_provider import get_engine
 from app.services.intent_analyzer import analyze_user_query, build_related_keywords
 from app.services.context_logger import log_user_context
 from app.tools.fruit_recommendation_tool import search_fruit_recommendations
@@ -4831,7 +4832,7 @@ if run:
             
             # 2-1. 사용자 누적 성향 기반 자동 추천 모드 결정
             try:
-                with engine.connect() as conn:
+                with get_engine().connect() as conn:
                     user_pref = get_user_preference(
                         conn=conn,
                         session_id=st.session_state["session_id"],
@@ -4893,7 +4894,7 @@ if run:
             st.session_state["last_query"] = final_query
             
             
-            with engine.begin() as conn:
+            with get_engine().begin() as conn:
                 update_user_preference(
                     conn=conn,
                     session_id=st.session_state["session_id"],
