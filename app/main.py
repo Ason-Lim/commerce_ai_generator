@@ -1,9 +1,11 @@
+from contextlib import asynccontextmanager
 import os
 from sqlalchemy import create_engine, text
 from pydantic import BaseModel
 from app.services.generator_service import generate_product_strategy
 from app.services.naver_shopping_api_collector import collect_naver_products
 from fastapi import FastAPI, Query
+from app.db.lifecycle import EngineLifecycle
 from fastapi.responses import RedirectResponse
 from app.services.analytics_logger import log_product_click
 from app.services.recommendation_pipeline import run_recommendation_pipeline
@@ -12,13 +14,32 @@ from app.services.session_context import (
     get_session_context,
 )
 
-app = FastAPI()
 DB_URL = os.getenv(
     "FRUIT_DB_URL",
     "postgresql+psycopg2://mom@localhost/dashboard_db",
 )
 
-engine = create_engine(DB_URL)
+engine_lifecycle = EngineLifecycle()
+
+
+def _get_canonical_engine():
+    engine = engine_lifecycle.engine
+    if engine is None:
+        raise RuntimeError("canonical engine lifecycle is not initialized")
+    return engine
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    app.state.engine_lifecycle = engine_lifecycle
+    engine_lifecycle.initialize()
+    try:
+        yield
+    finally:
+        engine_lifecycle.dispose()
+
+
+app = FastAPI(lifespan=_lifespan)
 
 SHOW_DEBUG_RANKING = os.getenv("SHOW_DEBUG_RANKING", "false").lower() == "true"
 SHOW_DEBUG_NOVELTY = os.getenv("SHOW_DEBUG_NOVELTY", "false").lower() == "true"
@@ -343,7 +364,7 @@ def natural_language_recommendations(
     user_pref = None
 
     if session_id:
-        with engine.connect() as conn:
+        with _get_canonical_engine().connect() as conn:
             user_pref = conn.execute(
                 text("""
                     SELECT
@@ -360,7 +381,7 @@ def natural_language_recommendations(
     fruit_pref = None
 
     if session_id:
-        with engine.connect() as conn:
+        with _get_canonical_engine().connect() as conn:
             fruit_pref = conn.execute(
                 text("""
                     SELECT
@@ -378,7 +399,7 @@ def natural_language_recommendations(
     session_context = None
 
     if session_id:
-        with engine.connect() as conn:
+        with _get_canonical_engine().connect() as conn:
             session_context = get_session_context(
                 conn,
                 session_id,
@@ -533,7 +554,7 @@ def natural_language_recommendations(
         """)
 
 
-    with engine.connect() as conn:
+    with _get_canonical_engine().connect() as conn:
         rows = conn.execute(
             sql,
             {
@@ -764,7 +785,7 @@ def revisit_recommendations(
     session_id: str,
     limit: int = 4,
 ):
-    with engine.connect() as conn:
+    with _get_canonical_engine().connect() as conn:
         top_fruit = conn.execute(
             text("""
                 SELECT fruit_name
