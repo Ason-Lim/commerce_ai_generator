@@ -79,29 +79,28 @@ def _imported_modules(tree: ast.Module) -> set[str]:
     return modules
 
 
-def test_both_targets_own_import_time_constructor_authority() -> None:
-    for path in (MARKET_FILE, PIPELINE_FILE):
-        tree = _tree(path)
-        module_names = _module_assignment_names(tree)
-        constructors = _create_engine_assignments(tree)
+def test_market_retains_constructor_while_pipeline_constructor_is_removed() -> None:
+    market_tree = _tree(MARKET_FILE)
+    pipeline_tree = _tree(PIPELINE_FILE)
 
-        assert "DB_URL" in module_names
-        assert "engine" in module_names
-        assert len(constructors) == 1
+    market_names = _module_assignment_names(market_tree)
+    pipeline_names = _module_assignment_names(pipeline_tree)
 
-        assignment = constructors[0]
-        assert len(assignment.targets) == 1
-        assert isinstance(assignment.targets[0], ast.Name)
-        assert assignment.targets[0].id == "engine"
+    market_constructors = _create_engine_assignments(market_tree)
+    pipeline_constructors = _create_engine_assignments(pipeline_tree)
 
-        call = assignment.value
-        assert isinstance(call, ast.Call)
-        assert len(call.args) == 1
-        assert isinstance(call.args[0], ast.Name)
-        assert call.args[0].id == "DB_URL"
+    assert "DB_URL" in market_names
+    assert "engine" in market_names
+    assert len(market_constructors) == 1
+
+    assert "DB_URL" not in pipeline_names
+    assert "engine" not in pipeline_names
+    assert pipeline_constructors == []
 
 
-def test_both_targets_preserve_same_database_url_fallback_chain() -> None:
+
+
+def test_market_retains_database_url_fallback_chain_after_pipeline_removal() -> None:
     market_text = MARKET_FILE.read_text(encoding="utf-8")
     pipeline_text = PIPELINE_FILE.read_text(encoding="utf-8")
 
@@ -113,7 +112,9 @@ def test_both_targets_preserve_same_database_url_fallback_chain() -> None:
 
     for token in required_tokens:
         assert token in market_text
-        assert token in pipeline_text
+        assert token not in pipeline_text
+
+
 
 
 def test_market_collector_owns_one_read_acquisition_without_local_transaction() -> None:
@@ -133,20 +134,24 @@ def test_recommendation_pipeline_local_engine_has_no_observed_runtime_use() -> N
     assert _engine_attribute_call_lines(tree, "execute") == []
 
 
-def test_import_time_constructor_is_distinct_from_real_resource_execution() -> None:
-    for path in (MARKET_FILE, PIPELINE_FILE):
-        tree = _tree(path)
-        constructors = _create_engine_assignments(tree)
-        assert len(constructors) == 1
+def test_import_time_constructor_distinction_remains_for_market_only() -> None:
+    market_tree = _tree(MARKET_FILE)
+    pipeline_tree = _tree(PIPELINE_FILE)
 
-        # Characterization only: the constructor exists at module import, while
-        # actual connection acquisition is separately observable in function bodies.
-        constructor_line = constructors[0].lineno
-        connect_lines = _engine_attribute_call_lines(tree, "connect")
-        begin_lines = _engine_attribute_call_lines(tree, "begin")
+    market_constructors = _create_engine_assignments(market_tree)
+    pipeline_constructors = _create_engine_assignments(pipeline_tree)
 
-        assert constructor_line > 0
-        assert all(line != constructor_line for line in connect_lines + begin_lines)
+    assert len(market_constructors) == 1
+    assert pipeline_constructors == []
+
+    constructor_line = market_constructors[0].lineno
+    connect_lines = _engine_attribute_call_lines(market_tree, "connect")
+    begin_lines = _engine_attribute_call_lines(market_tree, "begin")
+
+    assert constructor_line > 0
+    assert all(line != constructor_line for line in connect_lines + begin_lines)
+
+
 
 
 def test_current_embedded_caller_topology_is_repository_visible() -> None:

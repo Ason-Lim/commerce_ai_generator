@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 from app.services.recommendation.models import (
     RecommendationContext,
@@ -12,14 +12,6 @@ from app.services.recommendation.cross_border_production_provider_composition im
 )
 
 load_dotenv(".env")
-
-DB_URL = (
-    os.getenv("COMMERCE_DB_URL")
-    or os.getenv("FRUIT_DB_URL")
-    or "postgresql+psycopg2://mom@localhost:5432/dashboard_db"
-)
-
-engine = create_engine(DB_URL)
 
 
 def resolve_canonical_priority(
