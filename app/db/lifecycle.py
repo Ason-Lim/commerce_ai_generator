@@ -12,6 +12,10 @@ EngineFactory = Callable[..., Any]
 DatabaseUrlResolver = Callable[[], str]
 
 
+class EngineLifecycleDisposedError(RuntimeError):
+    """Raised when initialization is attempted after terminal disposal."""
+
+
 class EngineLifecycle:
     """Explicit, lazy lifecycle authority for one canonical engine instance."""
 
@@ -24,6 +28,7 @@ class EngineLifecycle:
         self._resolver = resolver
         self._factory = factory
         self._engine: Any | None = None
+        self._disposed = False
 
     @property
     def engine(self) -> Any | None:
@@ -33,7 +38,16 @@ class EngineLifecycle:
     def initialized(self) -> bool:
         return self._engine is not None
 
+    @property
+    def disposed(self) -> bool:
+        return self._disposed
+
     def initialize(self) -> Any:
+        if self._disposed:
+            raise EngineLifecycleDisposedError(
+                "engine lifecycle has been disposed"
+            )
+
         if self._engine is not None:
             return self._engine
 
@@ -42,9 +56,22 @@ class EngineLifecycle:
         self._engine = candidate
         return candidate
 
+    def dispose(self) -> None:
+        if self._disposed:
+            return
+
+        if self._engine is None:
+            return
+
+        engine = self._engine
+        engine.dispose()
+        self._engine = None
+        self._disposed = True
+
 
 __all__ = [
     "DatabaseUrlResolver",
     "EngineFactory",
     "EngineLifecycle",
+    "EngineLifecycleDisposedError",
 ]
