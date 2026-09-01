@@ -3,7 +3,9 @@ from __future__ import annotations
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
+
+from app.db.engine_provider import get_engine
 
 from app.services.coupang_api import (
     search_coupang_products,
@@ -18,14 +20,6 @@ except Exception:
 
 
 load_dotenv(".env")
-
-DB_URL = (
-    os.getenv("COMMERCE_DB_URL")
-    or os.getenv("FRUIT_DB_URL")
-    or "postgresql+psycopg2://mom@localhost:5432/dashboard_db"
-)
-
-engine = create_engine(DB_URL)
 
 
 def _safe_int(
@@ -68,7 +62,7 @@ def fetch_naver_products_from_db(
     )
 
     try:
-        with engine.connect() as conn:
+        with get_engine().connect() as conn:
             rows = conn.execute(
                 sql,
                 {

@@ -79,51 +79,62 @@ def _imported_modules(tree: ast.Module) -> set[str]:
     return modules
 
 
-def test_market_retains_constructor_while_pipeline_constructor_is_removed() -> None:
-    market_tree = _tree(MARKET_FILE)
-    pipeline_tree = _tree(PIPELINE_FILE)
+def test_both_i4_targets_have_local_constructor_authority_removed() -> None:
+    for path in (MARKET_FILE, PIPELINE_FILE):
+        tree = _tree(path)
+        module_names = _module_assignment_names(tree)
+        constructors = _create_engine_assignments(tree)
 
-    market_names = _module_assignment_names(market_tree)
-    pipeline_names = _module_assignment_names(pipeline_tree)
-
-    market_constructors = _create_engine_assignments(market_tree)
-    pipeline_constructors = _create_engine_assignments(pipeline_tree)
-
-    assert "DB_URL" in market_names
-    assert "engine" in market_names
-    assert len(market_constructors) == 1
-
-    assert "DB_URL" not in pipeline_names
-    assert "engine" not in pipeline_names
-    assert pipeline_constructors == []
+        assert "DB_URL" not in module_names
+        assert "engine" not in module_names
+        assert constructors == []
 
 
 
 
-def test_market_retains_database_url_fallback_chain_after_pipeline_removal() -> None:
-    market_text = MARKET_FILE.read_text(encoding="utf-8")
-    pipeline_text = PIPELINE_FILE.read_text(encoding="utf-8")
 
-    required_tokens = (
-        "COMMERCE_DB_URL",
-        "FRUIT_DB_URL",
-        "postgresql+psycopg2://mom@localhost:5432/dashboard_db",
-    )
 
-    for token in required_tokens:
-        assert token in market_text
-        assert token not in pipeline_text
+def test_both_i4_targets_no_longer_own_database_url_fallback_chains() -> None:
+    for path in (MARKET_FILE, PIPELINE_FILE):
+        text = path.read_text(encoding="utf-8")
+        assert "COMMERCE_DB_URL" not in text
+        assert "FRUIT_DB_URL" not in text
+        assert "postgresql+psycopg2://mom@localhost:5432/dashboard_db" not in text
 
 
 
 
-def test_market_collector_owns_one_read_acquisition_without_local_transaction() -> None:
+
+
+def test_market_collector_uses_one_bounded_read_acquisition_without_local_transaction() -> None:
     tree = _tree(MARKET_FILE)
     fn = _function(tree, "fetch_naver_products_from_db")
 
-    assert len(_engine_attribute_call_lines(fn, "connect")) == 1
-    assert _engine_attribute_call_lines(fn, "begin") == []
+    get_engine_connects = []
+    get_engine_begins = []
+
+    for node in ast.walk(fn):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if not isinstance(func, ast.Attribute):
+            continue
+        owner = func.value
+        if not isinstance(owner, ast.Call):
+            continue
+        if not isinstance(owner.func, ast.Name) or owner.func.id != "get_engine":
+            continue
+
+        if func.attr == "connect":
+            get_engine_connects.append(node.lineno)
+        elif func.attr == "begin":
+            get_engine_begins.append(node.lineno)
+
+    assert len(get_engine_connects) == 1
+    assert get_engine_begins == []
     assert len(_attribute_call_lines(fn, "execute")) >= 1
+
+
 
 
 def test_recommendation_pipeline_local_engine_has_no_observed_runtime_use() -> None:
@@ -134,22 +145,12 @@ def test_recommendation_pipeline_local_engine_has_no_observed_runtime_use() -> N
     assert _engine_attribute_call_lines(tree, "execute") == []
 
 
-def test_import_time_constructor_distinction_remains_for_market_only() -> None:
-    market_tree = _tree(MARKET_FILE)
-    pipeline_tree = _tree(PIPELINE_FILE)
+def test_import_time_constructor_authority_is_absent_from_both_i4_targets() -> None:
+    for path in (MARKET_FILE, PIPELINE_FILE):
+        tree = _tree(path)
+        assert _create_engine_assignments(tree) == []
 
-    market_constructors = _create_engine_assignments(market_tree)
-    pipeline_constructors = _create_engine_assignments(pipeline_tree)
 
-    assert len(market_constructors) == 1
-    assert pipeline_constructors == []
-
-    constructor_line = market_constructors[0].lineno
-    connect_lines = _engine_attribute_call_lines(market_tree, "connect")
-    begin_lines = _engine_attribute_call_lines(market_tree, "begin")
-
-    assert constructor_line > 0
-    assert all(line != constructor_line for line in connect_lines + begin_lines)
 
 
 
