@@ -36,6 +36,24 @@ def _engine_calls(node: ast.AST, attr: str) -> list[ast.Call]:
     return calls
 
 
+def _provider_engine_calls(node: ast.AST, attr: str) -> list[ast.Call]:
+    calls: list[ast.Call] = []
+    for candidate in ast.walk(node):
+        if not isinstance(candidate, ast.Call):
+            continue
+        func = candidate.func
+        if not isinstance(func, ast.Attribute):
+            continue
+        provider_call = func.value
+        if not isinstance(provider_call, ast.Call):
+            continue
+        if not isinstance(provider_call.func, ast.Name):
+            continue
+        if provider_call.func.id == "get_engine" and func.attr == attr:
+            calls.append(candidate)
+    return calls
+
+
 def _attribute_calls(node: ast.AST, attr: str) -> list[ast.Call]:
     calls: list[ast.Call] = []
     for candidate in ast.walk(node):
@@ -70,7 +88,9 @@ def _loops(node: ast.AST) -> list[ast.For | ast.AsyncFor]:
 def test_tb06_collector_fetch_uses_direct_read_acquisition() -> None:
     fn = _function(_tree(COLLECTOR_V4), "fetch_targets")
 
-    assert len(_engine_calls(fn, "connect")) >= 1
+    assert len(_provider_engine_calls(fn, "connect")) == 1
+    assert _provider_engine_calls(fn, "begin") == []
+    assert _engine_calls(fn, "connect") == []
     assert _engine_calls(fn, "begin") == []
     assert len(_attribute_calls(fn, "execute")) >= 1
 
@@ -78,7 +98,10 @@ def test_tb06_collector_fetch_uses_direct_read_acquisition() -> None:
 def test_tb07_collector_update_owns_per_call_transaction() -> None:
     fn = _function(_tree(COLLECTOR_V4), "update_snapshot")
 
-    assert len(_engine_calls(fn, "begin")) >= 1
+    assert len(_provider_engine_calls(fn, "begin")) == 1
+    assert _provider_engine_calls(fn, "connect") == []
+    assert _engine_calls(fn, "begin") == []
+    assert _engine_calls(fn, "connect") == []
     assert len(_attribute_calls(fn, "execute")) >= 1
 
 

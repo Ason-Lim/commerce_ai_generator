@@ -17,7 +17,7 @@ EXPECTED_LIFECYCLE_SHA256 = (
 EXPECTED_DATABASE_SHA256 = (
     "8bbbdebd98553bba2045b647a33d5b159a14eeb07c641cfafb8c87d51e465f77"
 )
-EXPECTED_DIRECT_ENGINE_IMPORT_COUNT = 23
+EXPECTED_DIRECT_ENGINE_IMPORT_COUNT = 22
 
 
 class _FakeEngine:
@@ -152,7 +152,7 @@ def test_frozen_persistence_surfaces_remain_unchanged() -> None:
     assert hashlib.sha256(database_data).hexdigest() == EXPECTED_DATABASE_SHA256
 
 
-def test_direct_legacy_engine_importer_count_remains_23() -> None:
+def test_direct_legacy_engine_importer_count_remains_22() -> None:
     count = 0
     for path in Path("app").rglob("*.py"):
         text = path.read_text(encoding="utf-8")

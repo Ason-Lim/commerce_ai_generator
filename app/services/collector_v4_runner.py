@@ -12,7 +12,7 @@ python -m app.services.collector_v4_runner
 """
 
 from sqlalchemy import text
-from app.db.database import engine
+from app.db.engine_provider import get_engine
 from app.services.collectors.collector_router import enrich_product_by_router
 from app.services.product_identity_engine_v3 import enrich_identity_v3
 
@@ -56,7 +56,7 @@ def fetch_targets(limit=50):
         LIMIT :limit
     """)
 
-    with engine.connect() as conn:
+    with get_engine().connect() as conn:
         return [dict(row) for row in conn.execute(sql, {"limit": limit}).mappings().all()]
 
 
@@ -93,7 +93,7 @@ def update_snapshot(row_id, enriched):
         "identity_v3_score": enriched.get("identity_v3_score"),
     }
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(sql, params)
 
 
