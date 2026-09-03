@@ -19,6 +19,7 @@ import re
 from decimal import Decimal
 from sqlalchemy import text
 from app.db.database import engine
+from app.db.engine_provider import get_engine
 
 
 def clean_text(value):
@@ -368,7 +369,7 @@ def fetch_targets(limit=1000):
         LIMIT :limit
     """)
 
-    with engine.connect() as conn:
+    with get_engine().connect() as conn:
         return [dict(row) for row in conn.execute(sql, {"limit": limit}).mappings().all()]
 
 
@@ -385,7 +386,7 @@ def update_market_fields(row_id, payload):
         WHERE id = :id
     """)
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(
             sql,
             {

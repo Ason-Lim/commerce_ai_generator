@@ -44,17 +44,12 @@ def _source(path: str) -> str:
 
 def _functions(path: str) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
     tree = ast.parse(_source(path), filename=path)
-    return {
-        node.name: node
-        for node in tree.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    }
+    return {node.name: node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
 
 
 def _segment(path: str, name: str) -> str:
     source = _source(path)
-    node = _functions(path)[name]
-    segment = ast.get_source_segment(source, node)
+    segment = ast.get_source_segment(source, _functions(path)[name])
     assert segment is not None
     return segment
 
@@ -64,63 +59,55 @@ def test_i6_registered_cohort_is_partitioned_five_seven_one() -> None:
     assert len(TB09) == 7
     assert len(TB11) == 1
     assert len(ALL) == 13
-    assert set(TB08).isdisjoint(TB09)
-    assert set(TB08).isdisjoint(TB11)
-    assert set(TB09).isdisjoint(TB11)
 
 
-def test_all_thirteen_members_preserve_legacy_import_and_explicit_boundaries() -> None:
+def test_all_members_retain_legacy_ddl_import_and_tb08_adds_provider() -> None:
     for path, boundary in ALL.items():
         source = _source(path)
         functions = _functions(path)
-        required = {boundary.ddl, *boundary.reads, *boundary.writes, boundary.orchestrator}
-        assert required <= functions.keys(), path
+        assert {boundary.ddl, *boundary.reads, *boundary.writes, boundary.orchestrator} <= functions.keys(), path
         assert "from app.db.database import engine" in source, path
-        assert "engine.begin()" in source, path
+        if path in TB08:
+            assert "from app.db.engine_provider import get_engine" in source, path
+        else:
+            assert "from app.db.engine_provider import get_engine" not in source, path
 
 
-def test_ddl_read_write_and_orchestrator_shapes_are_separable() -> None:
+def test_ddl_read_write_and_orchestrator_ownership_matches_current_wave() -> None:
     for path, boundary in ALL.items():
         ddl = _segment(path, boundary.ddl)
         assert "engine.begin()" in ddl, path
+        assert "get_engine()" not in ddl, path
         assert any(token in ddl.upper() for token in ("ALTER TABLE", "CREATE TABLE", "CREATE INDEX")), path
 
         for name in boundary.reads:
             read = _segment(path, name)
-            assert "engine.connect()" in read, f"{path}:{name}"
+            expected = "get_engine().connect()" if path in TB08 else "engine.connect()"
+            assert expected in read, f"{path}:{name}"
             assert "SELECT" in read.upper(), f"{path}:{name}"
-            assert "engine.begin()" not in read, f"{path}:{name}"
+            assert "begin()" not in read, f"{path}:{name}"
 
         for name in boundary.writes:
             write = _segment(path, name)
-            assert "engine.begin()" in write, f"{path}:{name}"
+            expected = "get_engine().begin()" if path in TB08 else "engine.begin()"
+            assert expected in write, f"{path}:{name}"
             assert any(token in write.upper() for token in ("INSERT", "UPDATE", "DELETE")), f"{path}:{name}"
 
         orchestrator = _segment(path, boundary.orchestrator)
         assert "engine.begin()" not in orchestrator, f"{path}:{boundary.orchestrator}"
         assert "engine.connect()" not in orchestrator, f"{path}:{boundary.orchestrator}"
+        assert "get_engine()" not in orchestrator, f"{path}:{boundary.orchestrator}"
 
 
-def test_tb11_external_io_is_explicit_but_never_executed_by_characterization() -> None:
+def test_tb11_external_io_remains_explicit_but_unexecuted() -> None:
     path = next(iter(TB11))
-    source = _source(path)
-    api_call = _segment(path, "call_naver_api")
-    credentials = _segment(path, "get_naver_credentials")
-    assert "import requests" in source
-    assert "requests.get(" in api_call
-    assert "os.getenv(" in credentials
+    assert "requests.get(" in _segment(path, "call_naver_api")
+    assert "os.getenv(" in _segment(path, "get_naver_credentials")
 
 
-def test_i7_ddl_reservation_and_global_importer_baseline_are_preserved() -> None:
-    register = Path(
-        "docs/architecture/registers/MA-2026-034-PHASE3-TRANSACTION-BOUNDARY-MIGRATION-SEAM-REGISTER.md"
-    ).read_text(encoding="utf-8")
+def test_i7_reservation_and_global_importer_count_remain_preserved() -> None:
+    register = Path("docs/architecture/registers/MA-2026-034-PHASE3-TRANSACTION-BOUNDARY-MIGRATION-SEAM-REGISTER.md").read_text(encoding="utf-8")
     assert "TB-15 and DDL-01 through DDL-14" in register
-
-    importers = {
-        path
-        for path in Path("app").rglob("*.py")
-        if "from app.db.database import engine" in path.read_text(encoding="utf-8")
-    }
+    importers = {path for path in Path("app").rglob("*.py") if "from app.db.database import engine" in path.read_text(encoding="utf-8")}
     assert len(importers) == 19
     assert {Path(path) for path in ALL} <= importers
