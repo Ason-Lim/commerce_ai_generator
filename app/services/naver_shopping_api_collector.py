@@ -5,6 +5,7 @@ import json
 import hashlib
 from sqlalchemy import text
 from app.db.database import engine
+from app.db.engine_provider import get_engine
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -151,7 +152,7 @@ def insert_products(items, keyword):
             :member_price, :benefit_price, :max_benefit_price, CAST(:raw_payload AS JSONB)
         ) ON CONFLICT DO NOTHING
     """)
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         for item in items:
             product_name = clean_html(item.get("title"))
             mall_name = item.get("mallName") or ""

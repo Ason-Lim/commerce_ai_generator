@@ -36,7 +36,7 @@ TB11 = {
 }
 
 ALL = {**TB08, **TB09, **TB11}
-PROVIDER_RUNTIME = {**TB08, **TB09}
+PROVIDER_RUNTIME = {**TB08, **TB09, **TB11}
 
 
 def _source(path: str) -> str:
