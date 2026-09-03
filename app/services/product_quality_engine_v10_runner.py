@@ -12,6 +12,7 @@ python -m app.services.product_quality_engine_v10_runner
 
 from sqlalchemy import text
 from app.db.database import engine
+from app.db.engine_provider import get_engine
 from app.services.product_quality_engine_v10 import recommendation_base
 
 
@@ -69,7 +70,7 @@ def fetch_targets(limit=1000):
         LIMIT :limit
     """)
 
-    with engine.connect() as conn:
+    with get_engine().connect() as conn:
         return [dict(row) for row in conn.execute(sql, {"limit": limit}).mappings().all()]
 
 
@@ -83,7 +84,7 @@ def update_scores(row_id, scores):
         WHERE id = :id
     """)
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(
             sql,
             {

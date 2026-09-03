@@ -16,6 +16,7 @@ from collections import defaultdict
 from decimal import Decimal
 from sqlalchemy import text
 from app.db.database import engine
+from app.db.engine_provider import get_engine
 
 
 def safe_float(value, default=0):
@@ -122,7 +123,7 @@ def fetch_cluster_rows(limit=1000):
         LIMIT :limit
     """)
 
-    with engine.connect() as conn:
+    with get_engine().connect() as conn:
         return [dict(row) for row in conn.execute(sql, {"limit": limit}).mappings().all()]
 
 
@@ -174,7 +175,7 @@ def reset_cluster_flags(cluster_keys):
         WHERE identity_cluster_key = ANY(:cluster_keys)
     """)
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(sql, {"cluster_keys": list(cluster_keys)})
 
 
@@ -190,7 +191,7 @@ def update_row_flags(row_id, score, flags):
         WHERE id = :id
     """)
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(
             sql,
             {

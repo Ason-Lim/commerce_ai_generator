@@ -16,6 +16,7 @@ import math
 from decimal import Decimal
 from sqlalchemy import text
 from app.db.database import engine
+from app.db.engine_provider import get_engine
 from app.services.product_attribute_engine_v8 import enrich_attribute_v8
 
 
@@ -355,7 +356,7 @@ def fetch_targets(limit=1000):
         LIMIT :limit
     """)
 
-    with engine.connect() as conn:
+    with get_engine().connect() as conn:
         return [dict(row) for row in conn.execute(sql, {"limit": limit}).mappings().all()]
 
 
@@ -376,7 +377,7 @@ def update_quality(row_id, quality):
         WHERE id = :id
     """)
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(
             sql,
             {

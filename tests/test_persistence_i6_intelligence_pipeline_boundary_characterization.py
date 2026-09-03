@@ -36,6 +36,7 @@ TB11 = {
 }
 
 ALL = {**TB08, **TB09, **TB11}
+PROVIDER_RUNTIME = {**TB08, **TB09}
 
 
 def _source(path: str) -> str:
@@ -61,13 +62,13 @@ def test_i6_registered_cohort_is_partitioned_five_seven_one() -> None:
     assert len(ALL) == 13
 
 
-def test_all_members_retain_legacy_ddl_import_and_tb08_adds_provider() -> None:
+def test_all_members_retain_legacy_ddl_import_and_runtime_cohorts_use_provider() -> None:
     for path, boundary in ALL.items():
         source = _source(path)
         functions = _functions(path)
         assert {boundary.ddl, *boundary.reads, *boundary.writes, boundary.orchestrator} <= functions.keys(), path
         assert "from app.db.database import engine" in source, path
-        if path in TB08:
+        if path in PROVIDER_RUNTIME:
             assert "from app.db.engine_provider import get_engine" in source, path
         else:
             assert "from app.db.engine_provider import get_engine" not in source, path
@@ -82,14 +83,14 @@ def test_ddl_read_write_and_orchestrator_ownership_matches_current_wave() -> Non
 
         for name in boundary.reads:
             read = _segment(path, name)
-            expected = "get_engine().connect()" if path in TB08 else "engine.connect()"
+            expected = "get_engine().connect()" if path in PROVIDER_RUNTIME else "engine.connect()"
             assert expected in read, f"{path}:{name}"
             assert "SELECT" in read.upper(), f"{path}:{name}"
             assert "begin()" not in read, f"{path}:{name}"
 
         for name in boundary.writes:
             write = _segment(path, name)
-            expected = "get_engine().begin()" if path in TB08 else "engine.begin()"
+            expected = "get_engine().begin()" if path in PROVIDER_RUNTIME else "engine.begin()"
             assert expected in write, f"{path}:{name}"
             assert any(token in write.upper() for token in ("INSERT", "UPDATE", "DELETE")), f"{path}:{name}"
 
