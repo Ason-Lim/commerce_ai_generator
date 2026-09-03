@@ -2,7 +2,7 @@ import os
 import requests
 import json
 from sqlalchemy import text
-from app.db.database import engine
+from app.db.engine_provider import get_engine
 from datetime import date, timedelta
 from dotenv import load_dotenv
 
@@ -272,7 +272,7 @@ def get_cached_keyword_trend(keyword):
           AND searched_at = CURRENT_DATE
     """)
 
-    with engine.begin() as conn:
+    with get_engine().connect() as conn:
         row = conn.execute(sql, {"keyword": keyword}).mappings().first()
 
     return dict(row) if row else None
@@ -306,7 +306,7 @@ def save_keyword_trend_cache(keyword, summary, raw_payload):
             updated_at = NOW()
     """)
 
-    with engine.begin() as conn:
+    with get_engine().begin() as conn:
         conn.execute(sql, {
             "keyword": keyword,
             "trend_score": trend_score,

@@ -119,29 +119,39 @@ def test_collector_orchestrator_does_not_own_direct_engine_transaction() -> None
     assert _engine_calls(fn, "connect") == []
 
 
-def test_tb10_cached_read_current_shape_is_transactional_begin() -> None:
+def test_tb10_cached_read_uses_bounded_provider_read_scope() -> None:
     fn = _function(_tree(DATALAB), "get_cached_keyword_trend")
 
-    assert len(_engine_calls(fn, "begin")) >= 1
+    assert len(_provider_engine_calls(fn, "connect")) == 1
+    assert _provider_engine_calls(fn, "begin") == []
+    assert _engine_calls(fn, "connect") == []
+    assert _engine_calls(fn, "begin") == []
     assert len(_attribute_calls(fn, "execute")) >= 1
 
 
-def test_tb10_cached_write_current_shape_is_transactional_begin() -> None:
+def test_tb10_cached_write_owns_bounded_provider_transaction() -> None:
     fn = _function(_tree(DATALAB), "save_keyword_trend_cache")
 
-    assert len(_engine_calls(fn, "begin")) >= 1
+    assert len(_provider_engine_calls(fn, "begin")) == 1
+    assert _provider_engine_calls(fn, "connect") == []
+    assert _engine_calls(fn, "begin") == []
+    assert _engine_calls(fn, "connect") == []
     assert len(_attribute_calls(fn, "execute")) >= 1
 
 
-def test_tb10_read_and_write_share_same_module_level_legacy_engine_authority() -> None:
+def test_tb10_uses_provider_without_module_level_legacy_engine_authority() -> None:
     tree = _tree(DATALAB)
-    imported = set()
+    database_imports = set()
+    provider_imports = set()
 
     for node in tree.body:
         if isinstance(node, ast.ImportFrom) and node.module == "app.db.database":
-            imported.update(alias.name for alias in node.names)
+            database_imports.update(alias.name for alias in node.names)
+        if isinstance(node, ast.ImportFrom) and node.module == "app.db.engine_provider":
+            provider_imports.update(alias.name for alias in node.names)
 
-    assert "engine" in imported
+    assert "engine" not in database_imports
+    assert "get_engine" in provider_imports
 
 
 def test_ddl_ensure_function_is_explicitly_separate_from_i5b_transaction_characterization() -> None:
