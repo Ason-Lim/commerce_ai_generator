@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from app.db.database import engine
+from app.db.engine_provider import get_engine
 
 
 def fetch_coupang_review_signal(keyword: str):
@@ -28,7 +28,7 @@ def fetch_coupang_review_signal(keyword: str):
         LIMIT 1
     """)
 
-    with engine.connect() as conn:
+    with get_engine().connect() as conn:
         row = conn.execute(sql, {"keyword": f"%{keyword}%"}).mappings().first()
 
     if not row:

@@ -1,6 +1,6 @@
 import re
 from sqlalchemy import text
-from app.db.database import engine
+from app.db.engine_provider import get_engine
 
 
 def parse_weight_g(text_value):
@@ -50,7 +50,7 @@ def fetch_products_from_db(context: str, limit: int = 30):
         ORDER BY collected_at DESC NULLS LAST, price ASC NULLS LAST
         LIMIT :limit
     """)
-    with engine.connect() as conn:
+    with get_engine().connect() as conn:
         rows = conn.execute(sql, {"keyword": keyword, "limit": limit}).mappings().all()
     products = []
     for row in rows:

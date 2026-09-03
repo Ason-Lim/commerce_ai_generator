@@ -12,7 +12,7 @@ from app.db.lifecycle import EngineLifecycle
 EXPECTED_DATABASE_PY_SHA256 = (
     "8bbbdebd98553bba2045b647a33d5b159a14eeb07c641cfafb8c87d51e465f77"
 )
-EXPECTED_DIRECT_ENGINE_IMPORT_COUNT = 21
+EXPECTED_DIRECT_ENGINE_IMPORT_COUNT = 19
 
 
 @dataclass
@@ -156,7 +156,7 @@ def test_legacy_database_module_is_byte_for_byte_unchanged() -> None:
     assert hashlib.sha256(data).hexdigest() == EXPECTED_DATABASE_PY_SHA256
 
 
-def test_direct_legacy_engine_importer_count_remains_21() -> None:
+def test_direct_legacy_engine_importer_count_remains_19() -> None:
     count = 0
     for path in Path("app").rglob("*.py"):
         text = path.read_text(encoding="utf-8")
