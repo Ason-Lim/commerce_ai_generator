@@ -15,7 +15,6 @@ from collections import defaultdict
 from decimal import Decimal
 from statistics import mean, median
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 
 
@@ -134,33 +133,6 @@ def calculate_price_gap_pct(price, target_price):
     return round((price - target_price) / target_price * 100, 1)
 
 
-def ensure_columns():
-    statements = [
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_count INTEGER",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_min_price NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_max_price NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_avg_price NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_median_price NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_p25_price NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_p75_price NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_percentile NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_score NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_position_label TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_vs_market_avg_pct NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_vs_market_median_pct NUMERIC",
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_market_price_score
-        ON online_food_price_snapshot(market_price_score)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_market_price_percentile
-        ON online_food_price_snapshot(market_price_percentile)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_rows(limit=3000):
@@ -243,7 +215,6 @@ def update_price_fields(row_id, payload):
 
 
 def run_market_representative_price_v54(limit=3000):
-    ensure_columns()
     rows = fetch_rows(limit=limit)
 
     groups = defaultdict(list)

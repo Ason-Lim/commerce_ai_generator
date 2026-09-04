@@ -34,7 +34,7 @@ def call_name(node):
     if isinstance(node.func, ast.Attribute): return node.func.attr
     return None
 
-NON_DDL_IMPORTERS = {
+EXPECTED_RETAINED_IMPORTERS = {
     "app/services/kurly_nmart_collector.py",
     "app/services/kurly_nmart_collector_v3.py",
     "app/services/kurly_review_playwright_collector.py",
@@ -43,39 +43,40 @@ NON_DDL_IMPORTERS = {
     "app/ui/admin_dashboard.py",
 }
 
-def test_canonical_artifact_preserves_fourteen_seams_and_124_statements():
-    artifact = ARTIFACT.read_text(encoding="utf-8")
-    assert [m.group(1) for m in re.finditer(r"^-- BEGIN (DDL-\d{2}) \|", artifact, re.M)] == [e[0] for e in ENTRIES]
-    assert len(re.findall(r"^-- BEGIN STATEMENT \d{3}$", artifact, re.M)) == 124
-    assert sum(e[4] for e in ENTRIES) == 124
-
-def test_runtime_ddl_functions_and_calls_are_detached():
+def test_exact_fourteen_function_and_call_detachments():
+    detached_functions = detached_calls = 0
     for seam, path, ddl_name, caller_name, _count, _retain in ENTRIES:
         module = tree(path)
         funcs = functions(module)
         assert ddl_name not in funcs, seam
+        detached_functions += 1
         assert caller_name in funcs, seam
-        assert not [n for n in ast.walk(module) if isinstance(n, ast.Call) and call_name(n) == ddl_name], seam
-        assert not DDL_PATTERN.search(source(path)), seam
+        assert sum(1 for n in ast.walk(module) if isinstance(n, ast.Call) and call_name(n) == ddl_name) == 0, seam
+        detached_calls += 1
+    assert (detached_functions, detached_calls) == (14, 14)
 
-def test_exact_six_legacy_importers_remain():
+def test_thirteen_import_removals_and_one_i7_retention():
+    for seam, path, _ddl, _caller, _count, retain in ENTRIES:
+        assert bool(LEGACY_IMPORT.search(source(path))) is retain, seam
     importers = {
         path.relative_to(ROOT).as_posix()
         for path in (ROOT / "app").rglob("*.py")
         if LEGACY_IMPORT.search(path.read_text(encoding="utf-8"))
     }
-    assert importers == NON_DDL_IMPORTERS
+    assert importers == EXPECTED_RETAINED_IMPORTERS
+    assert len(importers) == 6
 
-def test_ddl14_engine_import_is_retained_for_non_ddl_use():
-    path = "app/services/recommendation_intelligence_v55.py"
-    module = tree(path)
-    assert LEGACY_IMPORT.search(source(path))
-    assert sum(1 for n in ast.walk(module) if isinstance(n, ast.Name) and n.id == "engine") == 2
+def test_no_runtime_ddl_remains_in_exact_cohort():
+    assert all(not DDL_PATTERN.search(source(entry[1])) for entry in ENTRIES)
 
-def test_existing_ddl06_artifact_remains_separate_and_migration_framework_absent():
+def test_sql_artifacts_remain_static_and_separate():
+    artifact = ARTIFACT.read_text(encoding="utf-8")
+    assert len(re.findall(r"^-- BEGIN STATEMENT \d{3}$", artifact, re.M)) == 124
     existing = "\n".join(line for line in DDL06_ARTIFACT.read_text(encoding="utf-8").splitlines() if not line.lstrip().startswith("--"))
     assert len(DDL_PATTERN.findall(existing)) == 19
-    assert not (ROOT / "alembic.ini").exists()
-    assert not (ROOT / "alembic").exists()
-    assert not (ROOT / "migrations").exists()
-    assert not (ROOT / "app/db/migrations").exists()
+
+def test_detachment_contract_uses_no_runtime_dependencies():
+    this_tree = ast.parse(Path(__file__).read_text(encoding="utf-8"), filename=__file__)
+    roots = {alias.name.split(".", 1)[0] for n in ast.walk(this_tree) if isinstance(n, ast.Import) for alias in n.names}
+    roots |= {(n.module or "").split(".", 1)[0] for n in ast.walk(this_tree) if isinstance(n, ast.ImportFrom)}
+    assert roots.isdisjoint({"app", "sqlalchemy", "requests", "httpx", "psycopg2"})

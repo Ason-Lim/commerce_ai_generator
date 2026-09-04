@@ -296,34 +296,6 @@ def calculate_recommendation_intelligence(row):
     return payload
 
 
-def ensure_columns():
-    statements = [
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_value_score NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_advantage_score NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_advantage_score NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_signal_score_final NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS trust_score_final NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS scarcity_score NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS representative_bonus NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_suitability_score NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_grade TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_reason_1 TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_reason_2 TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_reason_3 TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_rank_score NUMERIC",
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_recommendation_value_score
-        ON online_food_price_snapshot(recommendation_value_score)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_recommendation_rank_score
-        ON online_food_price_snapshot(recommendation_rank_score)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_targets(limit=3000):
@@ -364,7 +336,6 @@ def update_recommendation_fields(row_id, payload):
 
 
 def run_recommendation_intelligence_v55(limit=3000):
-    ensure_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0

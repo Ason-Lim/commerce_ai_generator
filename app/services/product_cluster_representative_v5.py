@@ -15,7 +15,6 @@ python -m app.services.product_cluster_representative_v5
 from collections import defaultdict
 from decimal import Decimal
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 
 
@@ -127,37 +126,6 @@ def fetch_cluster_rows(limit=1000):
         return [dict(row) for row in conn.execute(sql, {"limit": limit}).mappings().all()]
 
 
-def ensure_representative_columns():
-    statements = [
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS cluster_representative_score NUMERIC
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS is_cluster_representative BOOLEAN DEFAULT FALSE
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS cluster_best_price_flag BOOLEAN DEFAULT FALSE
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS cluster_best_quality_flag BOOLEAN DEFAULT FALSE
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS cluster_best_review_flag BOOLEAN DEFAULT FALSE
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_cluster_representative
-        ON online_food_price_snapshot(identity_cluster_key, is_cluster_representative)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def reset_cluster_flags(cluster_keys):
@@ -261,7 +229,6 @@ def choose_best_rows(rows):
 
 
 def run_cluster_representative_v5(limit=1000):
-    ensure_representative_columns()
 
     rows = fetch_cluster_rows(limit=limit)
     clusters = defaultdict(list)

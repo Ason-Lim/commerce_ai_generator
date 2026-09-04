@@ -15,7 +15,6 @@ import json
 import math
 from decimal import Decimal
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 from app.services.product_attribute_engine_v8 import enrich_attribute_v8
 
@@ -324,27 +323,6 @@ def calculate_ai_product_quality(row):
     }
 
 
-def ensure_columns():
-    statements = [
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_score NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_label TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_grade TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_reasons TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_brix NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_attribute NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_identity NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_review NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_price NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_representative NUMERIC",
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_ai_quality_score
-        ON online_food_price_snapshot(ai_product_quality_score)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_targets(limit=1000):
@@ -400,7 +378,6 @@ def update_quality(row_id, quality):
 
 
 def run_quality_engine_v9(limit=1000):
-    ensure_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0

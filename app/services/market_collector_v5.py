@@ -22,7 +22,6 @@ python -m app.services.market_collector_v5
 
 import re
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 
 
@@ -235,29 +234,6 @@ def enrich_market_signal(row):
     }
 
 
-def ensure_columns():
-    statements = [
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS purchase_count BIGINT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS market_signal_score NUMERIC
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_market_signal_score
-        ON online_food_price_snapshot(market_signal_score)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_review_count
-        ON online_food_price_snapshot(review_count)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_targets(limit=1000):
@@ -302,7 +278,6 @@ def update_market_fields(row_id, payload):
 
 
 def run_market_collector_v5(limit=1000):
-    ensure_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0

@@ -19,7 +19,6 @@ import hashlib
 import re
 from difflib import SequenceMatcher
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 from app.services.product_identity_engine_v3 import enrich_identity_v3, normalize_text
 
@@ -306,29 +305,6 @@ def fetch_targets(limit=500):
         return [dict(row) for row in conn.execute(sql, {"limit": limit}).mappings().all()]
 
 
-def ensure_cluster_columns():
-    statements = [
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS identity_cluster_key TEXT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS identity_cluster_seed TEXT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS identity_cluster_confidence NUMERIC
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_identity_cluster_key
-        ON online_food_price_snapshot(identity_cluster_key)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def update_cluster_fields(row_id, enriched):
@@ -361,7 +337,6 @@ def update_cluster_fields(row_id, enriched):
 
 
 def run_identity_cluster_v4(limit=500):
-    ensure_cluster_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0

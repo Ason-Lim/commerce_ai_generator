@@ -13,7 +13,6 @@ python -m app.services.market_signal_propagation_v52
 
 from collections import defaultdict
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 
 
@@ -35,41 +34,6 @@ def safe_int(value, default=0):
         return default
 
 
-def ensure_columns():
-    statements = [
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS propagated_rating NUMERIC
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS propagated_review_count BIGINT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS propagated_market_signal_score NUMERIC
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS market_signal_source_id BIGINT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS market_signal_propagation_key TEXT
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_market_signal_propagation_key
-        ON online_food_price_snapshot(market_signal_propagation_key)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_propagated_market_signal_score
-        ON online_food_price_snapshot(propagated_market_signal_score)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_rows(limit=2000):
@@ -200,7 +164,6 @@ def update_propagated_signal(row_id, source, propagation_key):
 
 
 def run_market_signal_propagation_v52(limit=2000):
-    ensure_columns()
     rows = fetch_rows(limit=limit)
 
     groups = defaultdict(list)

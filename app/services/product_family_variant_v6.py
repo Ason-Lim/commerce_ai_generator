@@ -24,7 +24,6 @@ python -m app.services.product_family_variant_v6
 import hashlib
 import re
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 from app.services.product_identity_engine_v3 import enrich_identity_v3
 from app.services.product_identity_cluster_v4 import (
@@ -197,45 +196,6 @@ def enrich_family_variant_v6(item):
     return enriched
 
 
-def ensure_columns():
-    statements = [
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS product_family_key TEXT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS product_family_seed TEXT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS product_family_confidence NUMERIC
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS product_variant_key TEXT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS product_variant_seed TEXT
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS product_variant_confidence NUMERIC
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_product_family_key
-        ON online_food_price_snapshot(product_family_key)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_product_variant_key
-        ON online_food_price_snapshot(product_variant_key)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_targets(limit=1000):
@@ -310,7 +270,6 @@ def update_family_variant(row_id, enriched):
 
 
 def run_family_variant_v6(limit=1000):
-    ensure_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0

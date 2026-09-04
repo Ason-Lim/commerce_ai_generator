@@ -11,42 +11,10 @@ python -m app.services.product_quality_engine_v10_runner
 """
 
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 from app.services.product_quality_engine_v10 import recommendation_base
 
 
-def ensure_columns():
-    statements = [
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS product_quality_score NUMERIC
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS market_quality_score NUMERIC
-        """,
-        """
-        ALTER TABLE online_food_price_snapshot
-        ADD COLUMN IF NOT EXISTS recommendation_base_score NUMERIC
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_product_quality_score
-        ON online_food_price_snapshot(product_quality_score)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_market_quality_score
-        ON online_food_price_snapshot(market_quality_score)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_recommendation_base_score
-        ON online_food_price_snapshot(recommendation_base_score)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_targets(limit=1000):
@@ -97,7 +65,6 @@ def update_scores(row_id, scores):
 
 
 def run_quality_v10_runner(limit=1000):
-    ensure_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0

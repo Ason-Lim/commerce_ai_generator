@@ -16,7 +16,6 @@ python -m app.services.product_attribute_engine_v8
 import json
 import re
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 from app.services.product_identity_engine_v3 import enrich_identity_v3, normalize_text
 from app.services.product_variety_engine_v7 import enrich_variety_v7
@@ -226,20 +225,6 @@ def enrich_attribute_v8(item):
     return enriched
 
 
-def ensure_columns():
-    statements = [
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_attributes TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_attribute_signature TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_attribute_confidence NUMERIC",
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_product_attribute_signature
-        ON online_food_price_snapshot(product_attribute_signature)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_targets(limit=1000):
@@ -320,7 +305,6 @@ def update_attribute_v8(row_id, enriched):
 
 
 def run_attribute_engine_v8(limit=1000):
-    ensure_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0

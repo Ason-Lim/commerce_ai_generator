@@ -19,7 +19,6 @@ python -m app.services.market_identity_cluster_v53
 import hashlib
 import re
 from sqlalchemy import text
-from app.db.database import engine
 from app.db.engine_provider import get_engine
 
 
@@ -402,30 +401,6 @@ def enrich_market_identity_cluster_v53(row):
     }
 
 
-def ensure_columns():
-    statements = [
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_key TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_seed TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_label TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_confidence NUMERIC",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_weight_band TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_quality_band TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_gift_band TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_attribute_band TEXT",
-        "ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_variety_band TEXT",
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_market_cluster_key
-        ON online_food_price_snapshot(market_cluster_key)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_online_food_market_cluster_confidence
-        ON online_food_price_snapshot(market_cluster_confidence)
-        """,
-    ]
-
-    with engine.begin() as conn:
-        for stmt in statements:
-            conn.execute(text(stmt))
 
 
 def fetch_targets(limit=2000):
@@ -476,7 +451,6 @@ def update_market_cluster(row_id, payload):
 
 
 def run_market_identity_cluster_v53(limit=2000):
-    ensure_columns()
     rows = fetch_targets(limit=limit)
 
     updated = 0
