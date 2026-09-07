@@ -1,0 +1,17 @@
+- canonical_id: herb_spice_plus_other_food_ingredients
+  label: Herbs and spices plus other food ingredients
+  aliases:
+    - herb_spice_food_ingredient_blend
+  provenance:
+    - COMPOSITION-001
+    - SRC-A1
+    - SRC-A2
+- canonical_id: curry_powder_spice_blend
+  label: Curry powder spice blend
+  aliases:
+    - curry_powder
+    - aromatic_spice_blend
+  provenance:
+    - COMPOSITION-002
+    - SRC-A1
+    - SRC-A3

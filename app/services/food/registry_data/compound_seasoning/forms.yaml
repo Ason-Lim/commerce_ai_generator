@@ -1,0 +1,9 @@
+- canonical_id: powder
+  label: Powder
+  aliases:
+    - powdered_blend
+    - dry_powder
+  provenance:
+    - FORM-001
+    - SRC-A1
+    - SRC-A3

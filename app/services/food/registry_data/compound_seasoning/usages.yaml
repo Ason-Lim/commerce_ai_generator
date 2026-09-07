@@ -1,0 +1,23 @@
+- canonical_id: aroma_taste_enhancement
+  label: Aroma and taste enhancement
+  aliases:
+    - aroma_and_taste_enhancement
+  provenance:
+    - USAGE-001
+    - SRC-A1
+- canonical_id: noodle_seasoning
+  label: Noodle seasoning
+  aliases:
+    - instant_noodle_seasoning
+  provenance:
+    - USAGE-002
+    - SRC-A1
+    - SRC-A2
+- canonical_id: prepared_food_seasoning
+  label: Prepared food seasoning
+  aliases:
+    - prepared_food_flavoring
+  provenance:
+    - USAGE-003
+    - SRC-A1
+    - SRC-A2
