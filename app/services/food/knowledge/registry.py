@@ -31,6 +31,9 @@ from app.services.food.knowledge.olive_oil.provider import (
 from app.services.food.knowledge.herb_spice.provider import (
     HerbSpiceKnowledgeProvider,
 )
+from app.services.food.knowledge.compound_seasoning.knowledge_provider import (
+    CompoundSeasoningKnowledgeProvider,
+)
 from app.services.food.knowledge.seafood.provider import (
     SeafoodKnowledgeProvider,
 )
@@ -268,6 +271,9 @@ FOOD_KNOWLEDGE_REGISTRY.register(
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     HerbSpiceKnowledgeProvider()
+)
+FOOD_KNOWLEDGE_REGISTRY.register(
+    CompoundSeasoningKnowledgeProvider()
 )
 FOOD_KNOWLEDGE_REGISTRY.register(
     VenisonKnowledgeProvider()
