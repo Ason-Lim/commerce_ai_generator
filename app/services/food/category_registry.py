@@ -180,6 +180,19 @@ FOOD_CATEGORY_REGISTRY: Dict[str, FoodCategoryConfig] = {
         ),
         provider_id="herb_spice",
     ),
+    "sauce": FoodCategoryConfig(
+        category_id="sauce",
+        display_name="소스",
+        aliases=(
+            "sauce",
+            "소스",
+            "양념 소스",
+            "dipping sauce",
+            "cooking sauce",
+            "sauce base",
+        ),
+        provider_id="sauce",
+    ),
     "meat": FoodCategoryConfig(
         category_id="meat",
         display_name="축산·육류",
