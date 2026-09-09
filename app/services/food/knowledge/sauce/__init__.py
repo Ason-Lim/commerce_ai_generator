@@ -8,6 +8,7 @@ from .attributes import (
     SauceTexture,
     SauceUse,
 )
+from .parser import parse_sauce
 from .parser_models import SauceParseResult
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "SauceParseResult",
     "SauceTexture",
     "SauceUse",
+    "parse_sauce",
 ]
