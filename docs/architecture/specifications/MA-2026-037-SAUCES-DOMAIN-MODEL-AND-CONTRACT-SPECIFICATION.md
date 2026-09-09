@@ -6,7 +6,7 @@
 - Lifecycle type: `DOMAIN_DEVELOPMENT`
 - Subject: `SAUCES`
 - Priority: `P1`
-- Specification status: `ESTABLISHED`
+- Specification status: `ESTABLISHED_CORRECTED_V1_1`
 - Delivery strategy: `DESIGN_FIRST_SEQUENTIAL_SUBWAVES`
 
 This document is the sole canonical specification for the MA-2026-037 Sauces
@@ -139,6 +139,50 @@ generic paste, or generic condiment references into Sauce identities. Each
 normalized result must preserve whether it came from explicit input, an alias,
 a rule, or unresolved evidence.
 
+## 7A. Japanese condiment boundary (canonical v1.1 correction)
+
+This section supersedes v1.0 only for Japanese-condiment boundary routing.
+Product form, intended use, formulation, and marketed identity jointly control
+classification. An ingredient name, paste texture, container, or translated
+alias cannot by itself establish Sauce identity.
+
+Cross-language recognition includes, without changing ownership: wasabi
+(`わさび`, `山葵`), karashi (`からし`, `辛子`), horseradish, shio-kombu
+(`塩昆布`, shio kombu), yuzu-kosho (`柚子胡椒`, yuzu kosho), momiji-oroshi
+(`もみじおろし`), ponzu (`ポン酢`), tare (`たれ`, `タレ`), tsuyu (`つゆ`,
+`めんつゆ`), rayu (`ラー油`), shichimi (`七味`, `七味唐辛子`), ume paste
+(`梅肉`, ume), and nori tsukudani (`海苔佃煮`). Recognition does not override
+the canonical routing rules below.
+
+| ID | Product identity or form | Canonical route |
+| --- | --- | --- |
+| J01 | Raw wasabi; mustard seed or powder; horseradish root; dry shichimi | Outside Sauces. Route the standalone plant/spice or dry blend to its established boundary. |
+| J02 | Prepared wasabi; karashi; prepared horseradish; momiji-oroshi | Kneaded-spice or condiment identity; not automatically a Sauce. |
+| J03 | Distinct formulated wasabi, mustard, horseradish, or yuzu-kosho sauce | Include in Sauces when formulation and product identity establish a sauce. |
+| J04 | Yuzu-kosho paste | Seasoning-paste identity unless evidence establishes a distinct sauce product. |
+| J05 | Yuzu-kosho powder | Dry seasoning outside Sauces. |
+| J06 | Shio-kombu | Seasoned solid kelp outside Sauces. |
+| J07 | Shio-kombu sauce | Include only when it is a distinct formulated sauce; shio-kombu as an ingredient is insufficient. |
+| J08 | Ponzu-shoyu or formulated dipping ponzu | Include in Sauces. |
+| J09 | Pure citrus ponzu | Outside Sauces unless formulated and marketed as a sauce. |
+| J10 | Tare | Functional label only; include when formulation and use establish a sauce product. |
+| J11 | Tsuyu | Include when sold as a dipping or cooking sauce base; exclude broth or dashi identity. |
+| J12 | Rayu | Oil-based condiment outside Sauces; a distinct formulated rayu sauce may qualify. |
+| J13 | Ume paste or nori tsukudani | Spread or preserve identity outside Sauces unless a distinct sauce product is evidenced. |
+| J14 | Cross-language alias | Never overrides product form, use, formulation, or product-identity evidence. |
+
+Positive examples include ponzu-shoyu dipping sauce, bottled tsuyu explicitly
+sold as a dipping/cooking sauce base, and a separately formulated wasabi sauce.
+Negative examples include raw wasabi rhizome, dry shichimi, yuzu-kosho powder,
+solid shio-kombu, broth-identity tsuyu, plain rayu, ume paste, and nori
+tsukudani without distinct sauce evidence. Ambiguous labels remain unresolved.
+
+Wasabi as an herb/spice remains owned by Herb & Spice. Qualifying dry blends,
+including dry yuzu-kosho or shichimi, remain within Compound Seasonings when
+their canonical identity satisfies that domain. This v1.1 correction does not
+reopen Compound Seasonings, Herb & Spice, Category Registry, Alias Resolution,
+or the deferred Origin and Processing dimensions.
+
 ## 8. Prospective repository targets
 
 The specification anticipates, but does not authorize, targets under:
@@ -205,11 +249,18 @@ lifecycle_type=DOMAIN_DEVELOPMENT
 lifecycle_subject=SAUCES
 sauces_priority=P1
 sauces_lifecycle_identity_status=ESTABLISHED
-sauces_lifecycle_status=SPECIFICATION_ESTABLISHED
+sauces_lifecycle_status=SPECIFICATION_CORRECTED_V1_1
 sauces_exact_scope_status=ESTABLISHED
 sauces_exact_scope_result=DESIGN_FIRST_SEQUENTIAL_SUBWAVES
-sauces_specification_status=ESTABLISHED
+sauces_specification_status=ESTABLISHED_CORRECTED_V1_1
 sauces_specification_write_authority=CONSUMED
+sauces_specification_version=v1.1
+sauces_specification_canonical_source_count=1
+sauces_japanese_condiment_route_matrix_count=14
+sauces_japanese_condiment_boundary_status=ESTABLISHED
+sauces_specification_correction_write_authority=CONSUMED
+sauces_specification_correction_status=ESTABLISHED
+sauces_f1_progression_status=ELIGIBLE_FOR_READ_ONLY_PREFLIGHT
 sauces_implementation_authority=NONE
 production_write_authority=NONE
 test_write_authority=NONE
