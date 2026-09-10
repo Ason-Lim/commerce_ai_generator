@@ -14,7 +14,7 @@ def test_all_provider_aliases_bootstrap_without_collision() -> None:
         providers
     )
 
-    assert len(providers) == 16
+    assert len(providers) == 17
     assert len(registry) > 15
 
 
