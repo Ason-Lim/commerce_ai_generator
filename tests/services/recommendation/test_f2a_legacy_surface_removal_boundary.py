@@ -8,12 +8,12 @@ ROOT = Path(__file__).resolve().parents[3]
 
 CANDIDATES = {
     "app/services/recommendation_engine.py",
-    "app/services/recommendation/score_engine.py",
-    "app/services/recommendation/compare_engine.py",
     "app/services/ai_ranking_engine_v7.py",
 }
 
 PRESERVED = {
+    "app/services/recommendation/score_engine.py",
+    "app/services/recommendation/compare_engine.py",
     "app/services/recommendation_pipeline.py",
     "app/services/generator_compatibility.py",
     "app/services/recommendation/recommendation_score_v8.py",
@@ -22,8 +22,6 @@ PRESERVED = {
 
 FORBIDDEN_MODULES = {
     "app.services.recommendation_engine",
-    "app.services.recommendation.score_engine",
-    "app.services.recommendation.compare_engine",
     "app.services.ai_ranking_engine_v7",
 }
 
@@ -61,17 +59,17 @@ def _forbidden_imports(path: str) -> list[str]:
 
 
 def test_f2a_candidate_state_is_atomic() -> None:
-    assert len(CANDIDATES) == 4
+    assert len(CANDIDATES) == 2
     present = {path for path in CANDIDATES if (ROOT / path).is_file()}
     assert present in (CANDIDATES, set()), (
-        "F2-A candidates must be either all present before removal or all absent "
+        "F2-A1 candidates must be either both present before removal or both absent "
         f"after removal; observed present={sorted(present)}"
     )
 
 
 def test_f2a_preserved_surfaces_remain_present() -> None:
     missing = sorted(path for path in PRESERVED if not (ROOT / path).is_file())
-    assert not missing, f"preserved F2-A exclusions missing: {missing}"
+    assert not missing, f"preserved F2-A1 and deferred F2-A2 surfaces missing: {missing}"
 
 
 def test_f2a_has_no_external_python_imports() -> None:
@@ -82,7 +80,7 @@ def test_f2a_has_no_external_python_imports() -> None:
         found = _forbidden_imports(path)
         if found:
             violations[path] = found
-    assert not violations, f"external imports of F2-A candidates found: {violations}"
+    assert not violations, f"external imports of F2-A1 removal candidates found: {violations}"
 
 
 def test_f2a_has_no_external_textual_module_references() -> None:
@@ -101,4 +99,4 @@ def test_f2a_has_no_external_textual_module_references() -> None:
         text = (ROOT / path).read_text(encoding="utf-8")
         if any(pattern.search(text) for pattern in patterns):
             violations.append(path)
-    assert not violations, f"external textual references to F2-A candidates found: {violations}"
+    assert not violations, f"external textual references to F2-A1 removal candidates found: {violations}"
