@@ -58,7 +58,7 @@ def test_compare_v62_direct_import_is_dormant_with_zero_ui_calls():
         STREAMLIT,
         "app.services.recommendation_compare_engine_v62",
     )
-    assert imported.count("build_hero_compare_v62") == 1
+    assert "build_hero_compare_v62" not in imported
     assert _calls(STREAMLIT, "build_hero_compare_v62") == []
 
 
