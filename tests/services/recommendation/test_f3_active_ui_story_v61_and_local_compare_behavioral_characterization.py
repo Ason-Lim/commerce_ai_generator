@@ -127,7 +127,7 @@ def test_story_v61_sparse_input_output_capture():
 
 def test_local_compare_representative_output_capture():
     build_compare = _load_local_compare()
-    result = build_compare(_item(), [_item("비교 상품", 15000, 0.82)], _display(), [_display("비교 상품", 15000)])
+    result = build_compare(_item(), [_item("비교 상품", 15000, 0.82)], _display(), {2: _display("비교 상품", 15000)})
     assert isinstance(result, dict)
     assert COMPARE_FIELDS <= set(result)
     assert isinstance(result["compare_bullets"], list)
