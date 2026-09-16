@@ -76,10 +76,10 @@ def test_hero_compare_empty_input_output_capture():
     result = build_hero_compare_v62(_item(), [], _display(), {})
     assert result == {
         "compare_title": "AI 비교 분석",
-        "compare_summary": "1위 상품을 다른 후보와 가격·품질·배송 기준으로 비교했습니다.",
+        "compare_summary": "1위 상품은 다른 후보보다 일부 핵심 기준에서 더 유리합니다.",
         "compare_bullets": ["1위 상품은 가격·품질·시장 신호를 종합해 우선 추천되었습니다."],
         "pair_summaries": [],
-        "compare_score": 60,
+        "compare_score": 70,
     }
 
 
