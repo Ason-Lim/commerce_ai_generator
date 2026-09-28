@@ -206,39 +206,21 @@ def calculate_price_value_score(item):
 
 
 
-def get_brix_value(item):
+def get_brix_value_with_source(item):
     """상품에서 brix 값을 안전하게 추출
 
     1) API/DB 필드에서 먼저 찾고
     2) 없으면 상품명/설명 텍스트에서 15brix, 15 브릭스, 당도 15 같은 패턴을 추출합니다.
     """
-    candidates = [
-        item.get("brix"),
-        item.get("brix_value"),
-        item.get("avg_brix"),
-        item.get("max_brix"),
-        item.get("sugar_brix"),
-        item.get("display_brix"),
-    ]
-
-    for value in candidates:
+    for key in ("brix", "brix_value", "avg_brix", "max_brix", "sugar_brix", "display_brix"):
+        value = item.get(key)
         try:
             if value is not None and float(value) > 0:
-                return float(value)
+                return float(value), f"item.{key}"
         except Exception:
             pass
 
-    text = " ".join(
-        str(item.get(key) or "")
-        for key in [
-            "product_name",
-            "raw_name",
-            "name",
-            "title",
-            "description",
-            "summary",
-        ]
-    )
+    keys = ("product_name", "raw_name", "name", "title", "description", "summary")
 
     patterns = [
         r"(\d{2}(?:\.\d+)?)\s*brix",
@@ -246,18 +228,24 @@ def get_brix_value(item):
         r"당도\s*(\d{2}(?:\.\d+)?)",
     ]
 
+    # Search patterns across the combined text in the same order as before;
+    # identify the first field containing the selected match.
+    text = " ".join(str(item.get(key) or "") for key in keys)
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)
-
         if match:
             try:
                 value = float(match.group(1))
                 if 8 <= value <= 30:
-                    return value
+                    source = next((key for key in keys if re.search(pattern, str(item.get(key) or ""), re.IGNORECASE)), "UNKNOWN")
+                    return value, f"item.{source}" if source != "UNKNOWN" else "UNKNOWN"
             except Exception:
                 pass
+    return 0, "UNKNOWN"
 
-    return 0
+
+def get_brix_value(item):
+    return get_brix_value_with_source(item)[0]
 
 
 def calculate_reaction_trust_score(item):

@@ -97,6 +97,7 @@ from app.services.recommendation.identity_engine import (
 from app.services.recommendation.recommendation_score_v8 import (
     apply_recommendation_score_v8,
 )
+from app.services.recommendation.score_engine import get_brix_value_with_source
 
 
 from app.services.recommendation.compare_identity_engine import (
@@ -2370,6 +2371,34 @@ def finalize_ranked_reasons(reasons, limit=5):
 
 
 
+def attach_visible_request_linkage(visible_items):
+    """Mark the UI order only when an explicit request-local trace is present."""
+    for ui_rank, item in enumerate(visible_items, start=1):
+        linkage = item.get("recommendation_linkage")
+        if isinstance(linkage, dict):
+            ui_link = linkage.get("ui")
+            if isinstance(ui_link, dict):
+                ui_link["rank"] = ui_rank
+            linkage["hero"] = ui_rank == 1
+    return visible_items
+
+
+def select_hero_rendered_score(item, hero_scores, priority, search_context=None):
+    """Select the displayed score and its field in the same UI branch."""
+    for field in ("_display_score", "v8_final_score", "display_score",
+                  "final_recommendation_score", "final_score"):
+        value = item.get(field)
+        if value:
+            return value, field, min(int(float(value or 0)), 100)
+    score = item.get("score")
+    source = "score" if score is not None else "UNKNOWN"
+    if score is None:
+        base_priority = str(priority or "trust").replace("_adaptive", "")
+        score = calculate_mode_score(item, hero_scores, base_priority, search_context=search_context)
+        source = "calculated_mode_score"
+    return score, source, min(int(float(score or 0)), 100)
+
+
 def build_user_friendly_hero_compare(top_item, compare_items, top_display=None, compare_displays=None):
     """Hero 비교 문구 V6.3
 
@@ -2381,8 +2410,12 @@ def build_user_friendly_hero_compare(top_item, compare_items, top_display=None, 
     compare_displays = compare_displays or {}
 
     top_price = top_display.get("price") or top_display.get("ai_estimated_price") or 0
+    top_price_source = (top_display.get("price_source_fields") or {}).get(
+        "sale_price" if top_display.get("price") else "ai_price", "UNKNOWN"
+    )
     top_unit = top_display.get("price_per_100g") or 0
     top_brix = get_brix_value(top_item)
+    _, top_brix_source = get_brix_value_with_source(top_item)
 
     def safe_num(value):
         try:
@@ -2397,6 +2430,7 @@ def build_user_friendly_hero_compare(top_item, compare_items, top_display=None, 
         return name
 
     bullets = []
+    claim_sources = []
 
     for idx, compare_item in enumerate((compare_items or [])[:3], start=2):
         display = (
@@ -2407,40 +2441,46 @@ def build_user_friendly_hero_compare(top_item, compare_items, top_display=None, 
 
         label = f"{idx}위 {short_name(display)}"
         c_price = safe_num(display.get("price") or display.get("ai_estimated_price"))
+        c_price_source = (display.get("price_source_fields") or {}).get(
+            "sale_price" if display.get("price") else "ai_price", "UNKNOWN"
+        )
         c_unit = safe_num(display.get("price_per_100g"))
         c_brix = get_brix_value(compare_item)
+        _, compare_brix_source = get_brix_value_with_source(compare_item)
 
         if top_price and c_price and c_price < safe_num(top_price):
             diff = safe_num(top_price) - c_price
-            bullets.append(
-                f"{label}는 구매 기준가가 {fmt_money(diff)} 더 낮아 가격 비교용으로 볼 만합니다."
-            )
+            sentence = f"{label}는 구매 기준가가 {fmt_money(diff)} 더 낮아 가격 비교용으로 볼 만합니다."
+            bullets.append(sentence)
+            claim_sources.append({"text": sentence, "source_field": f"{top_price_source};compare.{c_price_source}", "kind": "calculated_value" if top_price_source != "UNKNOWN" and c_price_source != "UNKNOWN" else "UNKNOWN"})
         elif top_price and c_price and c_price > safe_num(top_price):
             diff = c_price - safe_num(top_price)
-            bullets.append(
-                f"{label}보다 1위 상품이 구매 기준가 기준 {fmt_money(diff)} 더 저렴합니다."
-            )
+            sentence = f"{label}보다 1위 상품이 구매 기준가 기준 {fmt_money(diff)} 더 저렴합니다."
+            bullets.append(sentence)
+            claim_sources.append({"text": sentence, "source_field": f"{top_price_source};compare.{c_price_source}", "kind": "calculated_value" if top_price_source != "UNKNOWN" and c_price_source != "UNKNOWN" else "UNKNOWN"})
 
         if top_unit and c_unit and c_unit < safe_num(top_unit):
             diff_unit = safe_num(top_unit) - c_unit
-            bullets.append(
-                f"{label}는 100g당 약 {fmt_money(diff_unit)} 더 낮아 대용량 가성비 확인에 유리합니다."
-            )
+            sentence = f"{label}는 100g당 약 {fmt_money(diff_unit)} 더 낮아 대용량 가성비 확인에 유리합니다."
+            bullets.append(sentence)
+            claim_sources.append({"text": sentence, "source_field": "display.price_per_100g;compare.display.price_per_100g", "kind": "UNKNOWN"})
 
         if top_brix >= 15 and c_brix < top_brix:
-            bullets.append(
-                f"1위 상품은 {top_brix:.0f}brix 당도 수치가 확인되어 {label}보다 품질 비교가 더 명확합니다."
-            )
+            sentence = f"1위 상품은 {top_brix:.0f}brix 당도 수치가 확인되어 {label}보다 품질 비교가 더 명확합니다."
+            bullets.append(sentence)
+            claim_sources.append({"text": sentence, "source_field": f"{top_brix_source};compare.{compare_brix_source}", "kind": "UNKNOWN"})
 
         if len(bullets) >= 4:
             break
 
     if not bullets:
         bullets.append("상위 후보들은 가격·중량·당도 조건이 비슷해 상세 옵션 확인 후 비교하는 것이 좋습니다.")
+        claim_sources.append({"text": bullets[-1], "source_field": "UNKNOWN", "kind": "UNKNOWN"})
 
     return {
         "compare_summary": "가격이 더 낮은 후보가 있어도, 1위는 당도·품질 신호와 구매 조건을 함께 본 대표 추천입니다.",
         "compare_bullets": bullets[:4],
+        "claim_sources": [{"text": "가격이 더 낮은 후보가 있어도, 1위는 당도·품질 신호와 구매 조건을 함께 본 대표 추천입니다.", "source_field": "UNKNOWN", "kind": "UNKNOWN"}, *claim_sources[:4]],
     }
 
 def build_hero_selection_reason(item, priority="trust"):
@@ -3251,10 +3291,16 @@ def calculate_price_intelligence(item):
     price_info["price_notice"] = ""
 
     # 2. 확인된 상세 가격 보정은 임시 fallback으로 유지
+    before_correction = dict(price_info)
     price_info = apply_known_price_corrections(
         item,
         price_info,
     )
+    sources = dict(price_info.get("selected_source_fields") or {})
+    for field in ("sale_price", "original_price", "coupon_applied_price", "member_price", "ai_price"):
+        if price_info.get(field) != before_correction.get(field):
+            sources[field] = "ui_known_price_correction"
+    price_info["selected_source_fields"] = sources
 
     # 3. 보정된 가격 값을 안전하게 숫자로 변환
     def _safe_float(value):
@@ -3281,9 +3327,9 @@ def calculate_price_intelligence(item):
 
     # 4. 최종 실구매가 후보 선정
     price_candidates = [
-        ("판매가", sale_price),
-        ("멤버십 할인가", member_price),
-        ("쿠폰 적용가", coupon_applied_price),
+        ("판매가", sale_price, sources.get("sale_price", "UNKNOWN")),
+        ("멤버십 할인가", member_price, sources.get("member_price", "UNKNOWN")),
+        ("쿠폰 적용가", coupon_applied_price, sources.get("coupon_applied_price", "UNKNOWN")),
     ]
 
     extra_candidates = [
@@ -3291,38 +3337,40 @@ def calculate_price_intelligence(item):
             "최대 혜택가",
             item.get("max_benefit_price")
             or item.get("maximum_benefit_price"),
+            "item.max_benefit_price" if item.get("max_benefit_price") else "item.maximum_benefit_price",
         ),
         (
             "혜택가",
             item.get("benefit_price"),
+            "item.benefit_price",
         ),
     ]
 
-    for label, value in extra_candidates:
+    for label, value, field in extra_candidates:
         number = _safe_float(value)
 
         if number > 0:
-            price_candidates.append(
-                (label, number)
-            )
+            price_candidates.append((label, number, field))
 
     price_candidates = [
-        (label, value)
-        for label, value in price_candidates
+        (label, value, field)
+        for label, value, field in price_candidates
         if value > 0
     ]
 
     if price_candidates:
-        ai_label, ai_price = min(
+        ai_label, ai_price, ai_source = min(
             price_candidates,
             key=lambda pair: pair[1],
         )
     else:
         ai_label = "가격 확인 필요"
         ai_price = 0.0
+        ai_source = "UNKNOWN"
 
     price_info["ai_price"] = ai_price
     price_info["ai_price_label"] = ai_label
+    sources["ai_price"] = ai_source
 
     # 5. 보정된 가격 기준 할인율 재계산
     if (
@@ -3390,6 +3438,7 @@ def calculate_price_intelligence(item):
                 "판매처에서 확인하세요."
             ),
         })
+        price_info["selected_source_fields"] = {}
 
     if is_target_product:
         print(
@@ -3505,6 +3554,13 @@ def structure_product_display(item):
         or item.get("price")
         or item.get("effective_price")
     )
+    display_price_sources = dict(price_info.get("selected_source_fields") or {})
+    if not price_info.get("sale_price"):
+        display_price_sources["sale_price"] = "UNKNOWN"
+    if not price_info.get("original_price"):
+        display_price_sources["original_price"] = "UNKNOWN"
+    if not price_info.get("ai_price"):
+        display_price_sources["ai_price"] = "UNKNOWN"
 
     original_price = price_info.get("original_price") or item.get("original_price")
     discount_rate = price_info.get("discount_rate") or item.get("final_discount_rate") or item.get("discount_rate")
@@ -3665,6 +3721,7 @@ def structure_product_display(item):
         "brix_text": brix_text,
         "weight_text": weight_text,
         "price_notice": price_info.get("price_notice", ""),
+        "price_source_fields": display_price_sources,
     }
 
     if is_kurly_search_identity_weak(item, display_payload) or is_unreliable_search_price_item(item, display_payload):
@@ -3679,6 +3736,7 @@ def structure_product_display(item):
         display_payload["price_per_100g"] = None
         display_payload["unit_price_per_kg"] = None
         display_payload["price_notice"] = "검색 결과 상품이라 실제 가격은 판매처에서 확인하세요."
+        display_payload["price_source_fields"] = {}
 
     return display_payload
     
@@ -5070,6 +5128,8 @@ if "last_result_data" in st.session_state:
             priority=priority,
         )
 
+        attach_visible_request_linkage(visible_items)
+
 # ==========================================================
 # Hero는 실제 종합 추천지수가 가장 높은 상품 선택
 # ==========================================================
@@ -5186,26 +5246,13 @@ if "last_result_data" in st.session_state:
                 priority=priority,
             )
 
-        hero_score = (
-            top_item.get("_display_score")
-            or top_item.get("v8_final_score")
-            or top_item.get("display_score")
-            or top_item.get("final_recommendation_score")
-            or top_item.get("final_score")
-            or top_item.get("score")
+        hero_score, hero_score_source, hero_score_pct = select_hero_rendered_score(
+            top_item, hero_scores, priority, search_context=search_context
         )
-
-        if hero_score is None:
-            base_priority = str(priority or "trust").replace("_adaptive", "")
-
-            hero_score = calculate_mode_score(
-                top_item,
-                hero_scores,
-                base_priority,
-                search_context=search_context,
-            )
-
-        hero_score_pct = min(int(float(hero_score or 0)), 100)
+        hero_linkage = top_item.get("recommendation_linkage")
+        if isinstance(hero_linkage, dict) and isinstance(hero_linkage.get("ui"), dict):
+            hero_linkage["ui"]["rendered_score"] = hero_score_pct
+            hero_linkage["ui"]["rendered_score_source"] = hero_score_source
 
         if hero_score_pct >= 85:
             hero_score_label = "🔥 매우 추천"
@@ -5238,6 +5285,15 @@ if "last_result_data" in st.session_state:
             display=hero_display,
         )
 
+        hero_linkage = top_item.get("recommendation_linkage")
+        if isinstance(hero_linkage, dict):
+            hero_linkage["prices"]["display_source_fields"] = hero_display.get("price_source_fields", {})
+            hero_linkage["explanations"] = list(hero_story_v61.get("claim_sources", []))
+            hero_linkage["explanations"].extend(
+                {"text": text, "source_field": "UNKNOWN", "kind": "UNKNOWN"}
+                for text in (hero_explain.get("target_users") or [])[:2]
+            )
+
         compare_display_map_v62 = {}
         compare_items_v62 = main_items[:3]
 
@@ -5258,6 +5314,10 @@ if "last_result_data" in st.session_state:
             top_display=hero_display,
             compare_displays=compare_display_map_v62,
         )
+        if isinstance(hero_linkage, dict):
+            hero_linkage["explanations"].extend(
+                hero_compare_v62.get("claim_sources", [])
+            )
         
         product_name = hero_display["name"]
         hero_seller_text = hero_display["seller_text"]
@@ -5288,6 +5348,12 @@ if "last_result_data" in st.session_state:
         
 
         hero_highlight_chips, hero_normal_chips = build_info_chips(top_item)
+        if isinstance(hero_linkage, dict):
+            hero_linkage["explanations"].extend(
+                {"text": text, "source_field": "UNKNOWN", "kind": "UNKNOWN"}
+                for text in [*hero_reasons[:3], *hero_highlight_chips, *hero_normal_chips[:3]]
+                if text
+            )
 
         hero_chips_html = ""
 
@@ -5588,4 +5654,3 @@ if "last_result_data" in st.session_state:
         # 상품 비교 테이블
         # ==========================================================
         render_compare_table()
-

@@ -111,6 +111,14 @@ def _first_available_number(
     item: Mapping[str, Any],
     *keys: str,
 ) -> tuple[float, bool]:
+    value, available, _ = _first_available_number_with_source(item, *keys)
+    return value, available
+
+
+def _first_available_number_with_source(
+    item: Mapping[str, Any],
+    *keys: str,
+) -> tuple[float, bool, str]:
     """
     Return the first usable numeric evidence value.
 
@@ -130,18 +138,12 @@ def _first_available_number(
             continue
 
         try:
-            return (
-                float(value),
-                True,
-            )
+            return float(value), True, key
 
         except (TypeError, ValueError):
             continue
 
-    return (
-        0.0,
-        False,
-    )
+    return 0.0, False, "UNKNOWN"
 
 
 def prepare_price_utility(
@@ -177,6 +179,8 @@ def prepare_price_utility(
             row[
                 "_canonical_raw_price"
             ] = observation.raw_price
+
+            row["_canonical_price_utility_source"] = "price"
 
         prepared.append(
             row
@@ -322,6 +326,8 @@ def prepare_identity_evidence(
 
 def build_score_components(
     item: Mapping[str, Any],
+    *,
+    source_record: dict[str, str] | None = None,
 ) -> RecommendationScoreComponents:
     """
     Adapt available upstream evidence into canonical scoring axes.
@@ -339,14 +345,16 @@ def build_score_components(
         )
     )
 
-    price, price_available = (
-        _first_available_number(
+    price, price_available, price_field = (
+        _first_available_number_with_source(
             item,
             "v8_price_score",
             "price_score",
             "v7_price_score",
         )
     )
+    if source_record is not None:
+        source_record["price_component_source"] = price_field
 
     trust, trust_available = (
         _first_available_number(
@@ -600,9 +608,11 @@ class RecommendationProvider:
         ] = []
 
         for item in identity_prepared:
-            components = self.component_builder(
-                item
-            )
+            source_record: dict[str, str] = {}
+            if self.component_builder is build_score_components:
+                components = self.component_builder(item, source_record=source_record)
+            else:
+                components = self.component_builder(item)
 
             score_result = self.scorer(
                 components,
@@ -611,7 +621,7 @@ class RecommendationProvider:
 
             scored.append(
                 (
-                    dict(item),
+                    {**item, "_canonical_price_selected_field": source_record.get("price_component_source", "UNKNOWN")},
                     score_result,
                 )
             )

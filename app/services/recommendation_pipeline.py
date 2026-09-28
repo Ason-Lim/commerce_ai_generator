@@ -1,4 +1,6 @@
 import os
+from datetime import datetime, timezone
+from uuid import uuid4
 from dotenv import load_dotenv
 from sqlalchemy import text
 
@@ -154,10 +156,19 @@ def apply_priority_sort(items: list[dict], priority: str) -> list[dict]:
     )
 
 
-def enrich_response_compatibility(item: dict, query: str, priority: str) -> dict:
+def enrich_response_compatibility(
+    item: dict, query: str, priority: str, *, return_score_source: bool = False
+) -> dict | tuple[dict, str]:
     result = dict(item)
 
-    score = result.get("v7_final_score") or result.get("final_recommendation_score") or 0
+    score = result.get("v7_final_score")
+    score_source = "v7_final_score"
+    if not score:
+        score = result.get("final_recommendation_score")
+        score_source = "final_recommendation_score"
+    if not score:
+        score = 0
+        score_source = "fallback_zero"
 
     result["score"] = score
     result["final_recommendation_score"] = score
@@ -207,7 +218,7 @@ def enrich_response_compatibility(item: dict, query: str, priority: str) -> dict
     result["fruit_name"] = result.get("fruit_name") or query
     result["query"] = query
 
-    return result
+    return (result, score_source) if return_score_source else result
 
 
 def canonical_result_to_compatibility_response(
@@ -215,6 +226,7 @@ def canonical_result_to_compatibility_response(
     *,
     q: str,
     priority: str,
+    include_linkage: bool = False,
 ) -> dict:
     """
     Convert the canonical RecommendationResult into the existing
@@ -222,6 +234,10 @@ def canonical_result_to_compatibility_response(
     concerns into RecommendationProvider.
     """
     items = []
+    # Explicitly opt in only for request-local inspection. The production
+    # facade calls this with the default and keeps its public schema unchanged.
+    request_id = str(uuid4()) if include_linkage else None
+    executed_at = datetime.now(timezone.utc).isoformat() if include_linkage else None
 
     for candidate in result.candidates:
         item = dict(candidate.item)
@@ -229,11 +245,61 @@ def canonical_result_to_compatibility_response(
         item["rank"] = candidate.rank
         item["v7_rank"] = candidate.rank
 
-        item = enrich_response_compatibility(
-            item,
-            result.context.query or q,
-            priority,
-        )
+        if include_linkage:
+            item, public_score_source = enrich_response_compatibility(
+                item, result.context.query or q, priority, return_score_source=True
+            )
+        else:
+            item = enrich_response_compatibility(
+                item, result.context.query or q, priority
+            )
+
+        selected_price_field = item.pop("_canonical_price_selected_field", "UNKNOWN")
+        price_utility_source = item.pop("_canonical_price_utility_source", None)
+        if include_linkage:
+            item["recommendation_linkage"] = {
+                "request_id": request_id,
+                "source_row_id": item.get("source_row_id") or "UNKNOWN",
+                "source_observed_at": item.get("source_observed_at") or "UNKNOWN",
+                "product_id": item.get("product_id") or "UNKNOWN",
+                "option_id": item.get("option_id") or "UNKNOWN",
+                "seller_offer_id": item.get("seller_offer_id") or "UNKNOWN",
+                "api": {
+                    "calculated_score": candidate.score.final_score,
+                    "score_version": candidate.score.version or "UNKNOWN",
+                    "priority": getattr(candidate.score.priority, "value", str(candidate.score.priority)),
+                    "effective_weights": dict(candidate.score.weights),
+                    "components": dict(candidate.score.components.as_mapping()),
+                    "rank": candidate.rank,
+                    "public_score": item["score"],
+                    "public_score_source": public_score_source,
+                    "price_component_source": selected_price_field,
+                },
+                "prices": {
+                    "raw_price": item.get("price"),
+                    "raw_price_source": "price" if item.get("price") is not None else "UNKNOWN",
+                    "raw_price_origin": "UNKNOWN",
+                    "coupon_price": item.get("coupon_applied_price"),
+                    "coupon_price_source": (
+                        "coupon_applied_price" if item.get("coupon_applied_price") is not None
+                        else "UNKNOWN"
+                    ),
+                    "coupon_price_origin": "UNKNOWN",
+                    "price_score": item.get("price_score"),
+                    "price_score_origin": (
+                        "candidate_relative_price_utility"
+                        if price_utility_source == "price"
+                        else "UNKNOWN"
+                    ),
+                    "v8_price_score": item.get("v8_price_score"),
+                    "v8_price_score_origin": "UNKNOWN",
+                    "v7_price_score": item.get("v7_price_score"),
+                    "v7_price_score_origin": "UNKNOWN",
+                },
+                "ui": None,
+                "hero": False,
+                "explanations": [],
+            }
 
         cross_border = candidate.metadata.get("cross_border")
         if cross_border:
@@ -251,6 +317,20 @@ def canonical_result_to_compatibility_response(
         "engine_version": "recommendation_provider_canonical",
         "market_sources": ["naver", "coupang"],
     }
+
+    if include_linkage:
+        response["request_linkage"] = {
+            "request_id": request_id,
+            "executed_at": executed_at,
+            # Runtime deployments may omit the build revision; local HEAD also
+            # cannot identify uncommitted source. Do not guess a revision.
+            "code_revision": os.getenv("COMMERCE_CODE_REVISION") or "UNKNOWN",
+            "code_revision_source": (
+                "COMMERCE_CODE_REVISION" if os.getenv("COMMERCE_CODE_REVISION")
+                else "UNKNOWN: runtime build revision was not supplied"
+            ),
+            "scoring_configuration": "canonical-score-version-per-candidate",
+        }
 
     if result.warnings:
         response["warnings"] = list(

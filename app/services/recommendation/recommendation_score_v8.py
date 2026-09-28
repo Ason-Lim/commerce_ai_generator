@@ -240,4 +240,15 @@ def apply_recommendation_score_v8(
     item["_display_score"] = final_score
     item["final_recommendation_score"] = final_score
 
+    linkage = item.get("recommendation_linkage")
+    if isinstance(linkage, dict):
+        linkage["ui"] = {
+            "display_score": final_score,
+            "score_version": result["version"],
+            "priority": result["priority"],
+            "weights": dict(result["weights"]),
+            "components": dict(result["components"]),
+            "rank": None,
+        }
+
     return result

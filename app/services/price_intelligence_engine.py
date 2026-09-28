@@ -31,6 +31,15 @@ def _positive_number(
     return 0.0
 
 
+def _positive_number_with_source(*candidates: tuple[str, Any]) -> tuple[float, str]:
+    """Return the value and field from the same first-positive selection."""
+    for field, value in candidates:
+        number = _positive_number(value)
+        if number > 0:
+            return number, field
+    return 0.0, "UNKNOWN"
+
+
 def build_price_intelligence(
     item: dict | None,
 ) -> dict:
@@ -48,43 +57,26 @@ def build_price_intelligence(
         source
     )
 
-    sale_price = _positive_number(
-        source.get("final_price"),
-        source.get("sale_price"),
-        source.get("discounted_price"),
-        source.get("current_price"),
-        source.get("selling_price"),
-        source.get("salePrice"),
-        source.get("lprice"),
-        source.get("price"),
-        source.get("effective_price"),
-        signals.get("price"),
+    sale_price, sale_source = _positive_number_with_source(
+        *((f"item.{key}", source.get(key)) for key in (
+            "final_price", "sale_price", "discounted_price", "current_price",
+            "selling_price", "salePrice", "lprice", "price", "effective_price")),
+        ("extracted.price", signals.get("price")),
     )
 
-    original_price = _positive_number(
-        source.get("original_price"),
-        source.get("regular_price"),
-        source.get("list_price"),
-        source.get("consumer_price"),
-        source.get("retail_price"),
-        source.get("before_discount_price"),
-        source.get("high_price"),
-        source.get("hprice"),
-        source.get("highPrice"),
-        source.get("originalPrice"),
-        source.get("regularPrice"),
-        source.get("listPrice"),
-        source.get("base_price"),
-        source.get("market_price"),
-        signals.get("original_price"),
+    original_price, original_source = _positive_number_with_source(
+        *((f"item.{key}", source.get(key)) for key in (
+            "original_price", "regular_price", "list_price", "consumer_price",
+            "retail_price", "before_discount_price", "high_price", "hprice",
+            "highPrice", "originalPrice", "regularPrice", "listPrice",
+            "base_price", "market_price")),
+        ("extracted.original_price", signals.get("original_price")),
     )
 
-    member_price = _positive_number(
-        source.get("member_price"),
-        source.get("membership_price"),
-        source.get("member_sale_price"),
-        source.get("member_discount_price"),
-        signals.get("member_price"),
+    member_price, member_source = _positive_number_with_source(
+        *((f"item.{key}", source.get(key)) for key in (
+            "member_price", "membership_price", "member_sale_price", "member_discount_price")),
+        ("extracted.member_price", signals.get("member_price")),
     )
 
     coupon_amount = _positive_number(
@@ -95,14 +87,11 @@ def build_price_intelligence(
         signals.get("coupon_amount"),
     )
 
-    coupon_applied_price = _positive_number(
-        source.get("coupon_applied_price"),
-        source.get("coupon_price"),
-        source.get("benefit_price"),
-        source.get("max_benefit_price"),
-        source.get("maximum_benefit_price"),
-        source.get("final_coupon_price"),
-        signals.get("coupon_applied_price"),
+    coupon_applied_price, coupon_source = _positive_number_with_source(
+        *((f"item.{key}", source.get(key)) for key in (
+            "coupon_applied_price", "coupon_price", "benefit_price",
+            "max_benefit_price", "maximum_benefit_price", "final_coupon_price")),
+        ("extracted.coupon_applied_price", signals.get("coupon_applied_price")),
     )
 
     price_per_100g = _positive_number(
@@ -140,14 +129,17 @@ def build_price_intelligence(
         (
             "판매가",
             sale_price,
+            sale_source,
         ),
         (
             "멤버십 할인가",
             member_price,
+            member_source,
         ),
         (
             "쿠폰 적용가",
             coupon_applied_price,
+            coupon_source,
         ),
     ]
 
@@ -155,13 +147,14 @@ def build_price_intelligence(
         (
             label,
             value,
+            field,
         )
-        for label, value in price_candidates
+        for label, value, field in price_candidates
         if value > 0
     ]
 
     if price_candidates:
-        ai_price_label, ai_price = min(
+        ai_price_label, ai_price, ai_source = min(
             price_candidates,
             key=lambda pair: pair[1],
         )
@@ -169,6 +162,7 @@ def build_price_intelligence(
     else:
         ai_price_label = "가격 확인 필요"
         ai_price = 0.0
+        ai_source = "UNKNOWN"
 
     has_coupon = bool(
         source.get("has_coupon")
@@ -197,6 +191,14 @@ def build_price_intelligence(
     if discount_rate > 0:
         confidence += 10
 
+    source_fields = {
+        "sale_price": sale_source,
+        "original_price": original_source,
+        "coupon_applied_price": coupon_source,
+        "member_price": member_source,
+    }
+    source_fields["ai_price"] = ai_source
+
     return {
         "original_price": original_price,
         "sale_price": sale_price,
@@ -211,6 +213,7 @@ def build_price_intelligence(
         "has_coupon": has_coupon,
         "ai_price": ai_price,
         "ai_price_label": ai_price_label,
+        "selected_source_fields": source_fields,
         "confidence": min(
             confidence,
             100,

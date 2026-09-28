@@ -78,41 +78,42 @@ def get_text_blob(item, display=None):
     return " ".join(values)
 
 
-def get_brix_value(item, display=None):
-    candidates = [
-        item.get("brix"),
-        item.get("brix_value"),
-        item.get("avg_brix"),
-        item.get("max_brix"),
-        item.get("display_brix"),
-    ]
-
-    for value in candidates:
+def get_brix_evidence(item, display=None):
+    """Return the selected Brix value and the field actually read."""
+    for key in ("brix", "brix_value", "avg_brix", "max_brix", "display_brix"):
         try:
+            value = item.get(key)
             if value is not None and float(value) > 0:
-                return float(value)
-        except Exception:
+                return float(value), f"item.{key}"
+        except (TypeError, ValueError):
             pass
 
-    text = get_text_blob(item, display).lower()
-
-    patterns = [
+    patterns = (
         r"(\d{2}(?:\.\d+)?)\s*brix",
         r"(\d{2}(?:\.\d+)?)\s*브릭스",
         r"당도\s*(\d{2}(?:\.\d+)?)",
-    ]
-
+    )
+    fields = [("item", key, str(item.get(key))) for key in (
+        "product_name", "raw_name", "title", "seller_name", "mall_name",
+        "platform_name", "market_cluster_label", "market_quality_band",
+        "market_gift_band", "market_attribute_band") if item.get(key)]
+    fields += [("display", key, str((display or {}).get(key))) for key in (
+        "name", "seller_text", "brix_text", "weight_text") if (display or {}).get(key)]
+    text = " ".join(value for _, _, value in fields).lower()
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            try:
-                value = float(match.group(1))
-                if 8 <= value <= 30:
-                    return value
-            except Exception:
-                pass
+        if match and 8 <= float(match.group(1)) <= 30:
+            offset = match.start()
+            for source, key, value in fields:
+                if offset < len(value):
+                    return float(match.group(1)), f"{source}.{key}"
+                offset -= len(value) + 1
+            return float(match.group(1)), "UNKNOWN"
+    return 0, "UNKNOWN"
 
-    return 0
+
+def get_brix_value(item, display=None):
+    return get_brix_evidence(item, display)[0]
 
 
 def build_price_story(item, display=None):
@@ -370,8 +371,55 @@ def build_recommendation_story_v61(item, display=None):
     if not detail_parts:
         detail_parts.append("가격·품질·시장 신호를 종합해 비교한 추천 후보입니다.")
 
+    claims = []
+    brix_value, brix_source = get_brix_evidence(item, display)
+    for group_name, sentences in (("quality", quality), ("price", price),
+                                  ("market", market), ("delivery", delivery),
+                                  ("trust", trust), ("caution", cautions)):
+        for sentence in sentences:
+            field = "UNKNOWN"
+            kind = "UNKNOWN"
+            if group_name == "quality" and brix_value and "brix" in sentence.lower():
+                field = brix_source
+                kind = "seller_page_claim" if field in ("item.product_name", "item.raw_name", "item.title", "display.name") else "UNKNOWN"
+            elif group_name == "quality" and "고당도 신호" in sentence:
+                for source, values, keys in (("item", item, ("product_name", "raw_name", "title")),
+                                             ("display", display or {}, ("name",))):
+                    field = next((f"{source}.{key}" for key in keys if "고당도" in str(values.get(key) or "")), "UNKNOWN")
+                    if field != "UNKNOWN":
+                        kind = "seller_page_claim"
+                        break
+                if field == "UNKNOWN" and item.get("is_high_brix"):
+                    field = "item.is_high_brix"
+            elif group_name == "price":
+                price_sources = (display or {}).get("price_source_fields") or {}
+                if "정상가" in sentence:
+                    field = f"{price_sources.get('original_price', 'UNKNOWN')};{price_sources.get('sale_price', 'UNKNOWN')}"
+                elif "멤버십" in sentence:
+                    field = price_sources.get("member_price", "UNKNOWN")
+                elif "할인 신호" in sentence:
+                    field = "UNKNOWN"
+                elif "기준으로" in sentence:
+                    field = price_sources.get("ai_price", "UNKNOWN")
+                if field != "UNKNOWN" and "UNKNOWN" not in field.split(";"):
+                    kind = "calculated_value"
+            elif group_name == "market" and ("리뷰" in sentence or "평점" in sentence):
+                if "리뷰" in sentence:
+                    field = "item.propagated_review_count" if safe_int(item.get("propagated_review_count")) > safe_int(item.get("review_count")) else "item.review_count"
+                else:
+                    field = "item.rating"
+                # Counts without a proven product/option/seller binding are not independent evidence.
+                kind = "UNKNOWN"
+            claims.append({"text": sentence, "source_field": field, "kind": kind})
+
+    title = build_story_title(item, display)
+    claims.extend((
+        {"text": title, "source_field": "UNKNOWN", "kind": "UNKNOWN"},
+        {"text": story_summary, "source_field": "UNKNOWN", "kind": "UNKNOWN"},
+    ))
+
     return {
-        "story_title": build_story_title(item, display),
+        "story_title": title,
         "story_summary": story_summary,
         "story_detail": " ".join(detail_parts[:6]),
         "price_story": price,
@@ -381,6 +429,7 @@ def build_recommendation_story_v61(item, display=None):
         "trust_story": trust,
         "caution_story": cautions,
         "story_bullets": detail_parts[:5],
+        "claim_sources": claims,
     }
 
 
