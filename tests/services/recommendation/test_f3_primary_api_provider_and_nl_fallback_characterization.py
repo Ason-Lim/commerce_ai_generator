@@ -3,6 +3,8 @@ from __future__ import annotations
 import builtins
 from types import SimpleNamespace
 
+import pytest
+
 import app.main as main
 import app.services.generator_service as generator
 import app.services.recommendation.provider as provider_module
@@ -174,6 +176,7 @@ def test_recommendations_v2_executes_canonical_provider_ranking_once(
     assert result["engine_version"] == (
         "recommendation_provider_canonical"
     )
+    assert "recommendation_path" not in result
 
 
 def test_recommendations_nl_success_executes_rank_once_and_no_fallback_sort(
@@ -205,6 +208,9 @@ def test_recommendations_nl_success_executes_rank_once_and_no_fallback_sort(
     assert result["engine_version"] == (
         "recommendation_provider_canonical"
     )
+    assert result["recommendation_path"] == main.NL_PATH_CANONICAL
+    assert [item["score"] for item in result["items"]] == [0, 0]
+    assert [item["rank"] for item in result["items"]] == [1, 2]
 
 
 class _FallbackRows:
@@ -216,11 +222,13 @@ class _FallbackRows:
             {
                 "product_name": "사과 A",
                 "price": 12000,
+                "db_price_per_100g": 12000,
                 "final_recommendation_score": 80.0,
             },
             {
                 "product_name": "사과 B",
                 "price": 9000,
+                "db_price_per_100g": 9000,
                 "final_recommendation_score": 70.0,
             },
         ]
@@ -278,7 +286,87 @@ def test_recommendations_nl_exception_executes_only_one_fallback_sort(
 
     assert rank_calls["count"] == 0
     assert fallback_sort_calls["count"] == 1
+    assert result["recommendation_path"] == main.NL_PATH_DB_FALLBACK
+    assert [item["score"] for item in result["items"]] == [80.0, 70.0]
     assert [
         item["rank"]
         for item in result["items"]
     ] == [1, 2]
+
+
+def test_nl_db_fallback_price_order_does_not_redefine_score(monkeypatch):
+    monkeypatch.setattr(
+        main, "run_recommendation_pipeline", lambda **kwargs: 1 / 0
+    )
+    monkeypatch.setattr(main, "_get_canonical_engine", lambda: _FallbackEngine())
+
+    result = main.natural_language_recommendations(q="사과", priority="price")
+
+    assert result["recommendation_path"] == main.NL_PATH_DB_FALLBACK
+    assert [item["product_name"] for item in result["items"]] == ["사과 B", "사과 A"]
+    assert [item["score"] for item in result["items"]] == [70.0, 80.0]
+    assert [item["rank"] for item in result["items"]] == [1, 2]
+
+
+@pytest.mark.parametrize("path", [main.NL_PATH_CANONICAL, main.NL_PATH_DB_FALLBACK])
+def test_revisit_forwards_nl_path_without_resorting_items(monkeypatch, path):
+    class RevisitRows:
+        def first(self):
+            return {"fruit_name": "사과"}
+
+    class RevisitConnection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def execute(self, statement, parameters):
+            return SimpleNamespace(mappings=lambda: RevisitRows())
+
+    monkeypatch.setattr(
+        main, "_get_canonical_engine",
+        lambda: SimpleNamespace(connect=lambda: RevisitConnection()),
+    )
+    nl_items = [
+        {"product_name": "첫째", "rank": 1, "score": 30},
+        {"product_name": "둘째", "rank": 2, "score": 90},
+        {"product_name": "셋째", "rank": 3, "score": 70},
+    ]
+    monkeypatch.setattr(
+        main,
+        "natural_language_recommendations",
+        lambda **kwargs: {"recommendation_path": path, "items": nl_items},
+    )
+
+    result = main.revisit_recommendations("test-session", limit=2)
+
+    assert result["recommendation_path"] == path
+    assert result["items"] == nl_items[:2]
+    assert [item["rank"] for item in result["items"]] == [1, 2]
+
+
+def test_revisit_without_fruit_did_not_call_nl(monkeypatch):
+    class EmptyConnection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def execute(self, statement, parameters):
+            return SimpleNamespace(mappings=lambda: SimpleNamespace(first=lambda: None))
+
+    monkeypatch.setattr(
+        main, "_get_canonical_engine",
+        lambda: SimpleNamespace(connect=lambda: EmptyConnection()),
+    )
+    monkeypatch.setattr(
+        main, "natural_language_recommendations",
+        lambda **kwargs: pytest.fail("/nl must not run without a fruit"),
+    )
+
+    result = main.revisit_recommendations("test-session")
+
+    assert result["items"] == []
+    assert result["recommendation_path"] == main.NL_PATH_NOT_CALLED
