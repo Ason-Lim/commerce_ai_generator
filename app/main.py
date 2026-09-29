@@ -47,6 +47,21 @@ app = FastAPI(lifespan=_lifespan)
 SHOW_DEBUG_RANKING = os.getenv("SHOW_DEBUG_RANKING", "false").lower() == "true"
 SHOW_DEBUG_NOVELTY = os.getenv("SHOW_DEBUG_NOVELTY", "false").lower() == "true"
 
+# /recommendations/nl response contract. The route is selected by the branch
+# that produced the items, not inferred from optional response fields.
+# canonical_provider: score = truthy v7_final_score, otherwise truthy
+# final_recommendation_score, otherwise 0; rank = canonical provider ordering:
+# price ascending then calculated final score, quality/trust signal descending
+# then calculated final score, or calculated final score descending otherwise.
+# db_fallback: score = DB final_recommendation_score (or 0); rank is assigned
+# after the DB query and a second sort: price per 100g ascending with DB score
+# and adaptive score tie breaks; exploration by exposure/click count;
+# discovery by CTR/click count/exposure; otherwise adaptive score descending.
+NL_PATH_CANONICAL = "canonical_provider"
+NL_PATH_DB_FALLBACK = "db_fallback"
+NL_PATH_NOT_CALLED = "not_called"
+NL_PATH_UNKNOWN = "UNKNOWN"
+
 class RequestModel(BaseModel):
     context: str
     mode: str
@@ -320,12 +335,13 @@ def natural_language_recommendations(
     session_id: str | None = None,
 ):
     try:
-        return run_recommendation_pipeline(
+        result = run_recommendation_pipeline(
             q=q,
             priority=priority,
             session_id=session_id,
             limit=10,
         )
+        return {**result, "recommendation_path": NL_PATH_CANONICAL}
     except Exception as e:
         print("[Recommendation Pipeline V8 Error]", e)
 
@@ -781,6 +797,7 @@ def natural_language_recommendations(
     return {
         "summary": f"'{q}' 기준으로 반응 좋은 추천 상품 {len(items)}개를 찾았습니다.",
         "items": items,
+        "recommendation_path": NL_PATH_DB_FALLBACK,
     }
 
 @app.get("/recommendations/revisit")
@@ -804,6 +821,7 @@ def revisit_recommendations(
         return {
             "summary": "아직 재방문 추천을 만들 만큼의 관심 데이터가 없습니다.",
             "items": [],
+            "recommendation_path": NL_PATH_NOT_CALLED,
         }
 
     fruit_name = top_fruit["fruit_name"]
@@ -818,4 +836,6 @@ def revisit_recommendations(
         "summary": f"최근 관심이 많았던 '{fruit_name}' 기준으로 다시 볼 만한 상품을 추천했어요.",
         "fruit_name": fruit_name,
         "items": result.get("items", [])[:limit],
+        # Slicing preserves the /nl order and the existing item ranks.
+        "recommendation_path": result.get("recommendation_path", NL_PATH_UNKNOWN),
     }

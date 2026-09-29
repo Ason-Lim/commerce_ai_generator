@@ -208,4 +208,7 @@ def test_recommendations_v2_and_nl_pipeline_bridge_behavior(monkeypatch):
     }
     assert calls == [expected_call, expected_call]
     assert v2_result == {"call_number": 1}
-    assert nl_result == {"call_number": 2}
+    assert nl_result == {
+        "call_number": 2,
+        "recommendation_path": main.NL_PATH_CANONICAL,
+    }
