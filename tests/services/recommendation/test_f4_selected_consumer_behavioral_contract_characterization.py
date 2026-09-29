@@ -53,9 +53,13 @@ def test_streamlit_scoring_identity_v8_and_compare_contract():
 def test_api_generator_and_pipeline_bridge_contract():
     source = _source("app/main.py")
     assert "from app.services.generator_service import generate_product_strategy" in source
-    assert "from app.services.recommendation_pipeline import run_recommendation_pipeline" in source
+    assert "from app.services.recommendation_pipeline import (" in source
+    assert "run_recommendation_pipeline," in source
     assert 'result = generate_product_strategy(request)' in source
-    assert source.count("return run_recommendation_pipeline(") == 2
+    assert source.count("run_recommendation_pipeline(") == 2
+    assert "return run_recommendation_pipeline(" in source
+    assert "result = run_recommendation_pipeline(" in source
+    assert 'return {**result, "recommendation_path": NL_PATH_CANONICAL}' in source
     assert '@app.post("/generate")' in source
     assert '@app.get("/recommendations/v2")' in source
     assert '@app.get("/recommendations/nl")' in source
