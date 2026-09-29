@@ -10,6 +10,8 @@ from app.services.recommendation.models import (
 from app.services.recommendation.cross_border_production_provider_composition import (
     compose_production_recommendation_provider,
 )
+from app.services.recommendation.claim_source import brix_claim_source
+import re
 
 load_dotenv(".env")
 
@@ -115,6 +117,31 @@ def normalize_priority(priority: str) -> tuple[str, bool]:
     return priority_to_mode.get(base_priority, "ranking"), use_adaptive
 
 
+def present_recommendation_reason(value, item=None):
+    """Keep unlinked review claims and unverified sweetness out of public copy."""
+    if not isinstance(value, str):
+        return value
+    if any(token in value for token in ("리뷰", "평점", "만족도", "사용자 반응", "구매자 반응", "구매 반응")):
+        return "가격·품질 계산 지표를 반영한 추천 후보입니다. 구매자 반응 근거는 확인되지 않았습니다."
+    if ("brix" in value.lower() or "고당도" in value) and any(
+        token in value for token in ("상품 정보", "표기", "확인", "검증", "실측", "보장")
+    ):
+        match = re.search(r"(\d{1,2}(?:\.\d+)?)\s*brix", value, re.IGNORECASE)
+        if match and brix_claim_source(item, float(match.group(1))) == "seller_page_claim":
+            return f"상품명·상세 설명에 {match.group(1)}brix로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다."
+        if not match and "고당도" in value and brix_claim_source(item) == "seller_page_claim":
+            return "상품명·상세 설명에 고당도로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다."
+        return "Brix·고당도 입력의 출처와 실제 당도는 확인되지 않았습니다."
+    return value
+
+
+def present_recommendation_label(value):
+    """Avoid presenting an unlinked legacy reaction label as buyer evidence."""
+    if value == "사용자 반응 우수 추천":
+        return "계산 지표 기반 추천"
+    return value
+
+
 def apply_priority_sort(items: list[dict], priority: str) -> list[dict]:
     base_priority = (priority or "ranking").replace("_adaptive", "")
 
@@ -187,12 +214,21 @@ def enrich_response_compatibility(item: dict, query: str, priority: str) -> dict
         or ""
     )
 
-    result["recommendation_reason"] = (
+    result["recommendation_reason"] = present_recommendation_reason(
         result.get("v8_score_reason")
         or result.get("v7_score_reason")
         or result.get("food_intelligence_reason")
-        or "AI가 가격, 품질, 혜택 정보를 종합해 추천했습니다."
+        or "AI가 가격, 품질, 혜택 정보를 종합해 추천했습니다.",
+        result,
     )
+    # The source narrative fields also pass through in the public item dict.
+    for key in (
+        "v8_score_reason", "v7_score_reason", "food_intelligence_reason",
+        "fruit_quality_reason", "recommendation_reason_1",
+        "recommendation_reason_2", "recommendation_reason_3",
+    ):
+        if key in result:
+            result[key] = present_recommendation_reason(result[key], result)
 
     result["final_recommendation_label"] = (
         "강력추천"

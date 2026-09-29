@@ -224,6 +224,8 @@ class _FallbackRows:
                 "price": 12000,
                 "db_price_per_100g": 12000,
                 "final_recommendation_score": 80.0,
+                "final_recommendation_label": "사용자 반응 우수 추천",
+                "recommendation_reason": "리뷰 999건으로 구매자 반응이 확인됩니다.",
             },
             {
                 "product_name": "사과 B",
@@ -288,6 +290,10 @@ def test_recommendations_nl_exception_executes_only_one_fallback_sort(
     assert fallback_sort_calls["count"] == 1
     assert result["recommendation_path"] == main.NL_PATH_DB_FALLBACK
     assert [item["score"] for item in result["items"]] == [80.0, 70.0]
+    assert "추천 후보" in result["summary"]
+    assert "반응 좋은" not in result["summary"]
+    assert "구매자 반응 근거는 확인되지 않았습니다" in result["items"][0]["recommendation_reason"]
+    assert result["items"][0]["final_recommendation_label"] == "계산 지표 기반 추천"
     assert [
         item["rank"]
         for item in result["items"]

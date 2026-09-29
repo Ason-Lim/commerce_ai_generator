@@ -125,7 +125,7 @@ def build_score_weight_rows(hero_scores, hero_score_pct=None):
     rows = [
         ("품질", quality, 0.35),
         ("가격", price, 0.30),
-        ("시장 반응", popularity, 0.20),
+        ("인기도 계산 점수", popularity, 0.20),
         ("개인화", personalization, 0.15),
     ]
 
@@ -160,7 +160,7 @@ def build_compliance_messages(top_item=None, hero_seller_text="", hero_explain=N
             "",
             "🤖 AI 추천 원칙",
             "• 네이버쇼핑, 쿠팡 등 여러 쇼핑몰의 상품을 함께 비교합니다.",
-            "• 판매처보다 품질, 가격, 인증, 사용자 반응을 종합 평가합니다.",
+            "• 상품 정보와 계산된 품질·가격 지표를 함께 비교합니다.",
             "• 추천 결과는 AI 분석을 기반으로 자동 선정되며,"
             "  특정 쇼핑몰을 우선 추천하지 않습니다.",
         ])

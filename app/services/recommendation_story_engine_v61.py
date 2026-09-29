@@ -10,6 +10,7 @@ Recommendation Story Engine V6.1
 
 from decimal import Decimal
 import re
+from app.services.recommendation.claim_source import brix_claim_source
 
 
 def safe_float(value, default=0):
@@ -172,12 +173,16 @@ def build_quality_story(item, display=None):
 
     text = get_text_blob(item, display)
 
-    if brix >= 15:
-        stories.append(f"{brix:g}brix 당도 정보가 확인된 고당도 상품입니다.")
-    elif brix >= 13:
-        stories.append(f"{brix:g}brix 당도 정보가 확인되어 맛 기준 비교가 가능합니다.")
+    if brix >= 13:
+        if brix_claim_source(item, brix) == "seller_page_claim":
+            stories.append(f"상품명·상세 설명에 {brix:g}brix로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다.")
+        else:
+            stories.append(f"입력된 Brix 값은 {brix:g}입니다. 출처와 실제 당도는 확인되지 않았습니다.")
     elif "고당도" in text or item.get("is_high_brix"):
-        stories.append("상품명에서 고당도 신호가 확인됩니다.")
+        if brix_claim_source(item) == "seller_page_claim":
+            stories.append("상품명·상세 설명에 고당도로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다.")
+        else:
+            stories.append("고당도 입력값의 출처와 실제 당도는 확인되지 않았습니다.")
 
     if "GAP" in text.upper():
         stories.append("GAP 인증 또는 관련 품질 신호가 함께 확인됩니다.")
@@ -196,28 +201,11 @@ def build_quality_story(item, display=None):
 def build_market_story(item, display=None):
     stories = []
 
-    review_count = max(
-        safe_int(item.get("review_count"), 0),
-        safe_int(item.get("propagated_review_count"), 0),
-    )
-    rating = safe_float(item.get("rating"), 0)
     market_count = safe_int(item.get("market_price_count"), 0)
     market_label = item.get("market_cluster_label") or ""
 
     if market_label:
         stories.append(f"'{market_label}' 시장군 기준으로 비교되었습니다.")
-
-    if review_count >= 9999:
-        stories.append("리뷰 9,999건 이상으로 시장 반응이 매우 충분합니다.")
-    elif review_count >= 1000:
-        stories.append(f"리뷰 {review_count:,}건으로 구매자 반응이 확인됩니다.")
-    elif review_count >= 100:
-        stories.append(f"리뷰 {review_count:,}건이 있어 기본적인 구매 반응을 참고할 수 있습니다.")
-
-    if rating >= 4.7:
-        stories.append(f"평점 {rating:g}점으로 만족도 신호가 좋습니다.")
-    elif rating >= 4.3:
-        stories.append(f"평점 {rating:g}점으로 기본 만족도는 확인됩니다.")
 
     if market_count >= 5:
         stories.append(f"동일 시장 내 {market_count}개 가격 후보와 비교되었습니다.")
@@ -280,15 +268,9 @@ def build_trust_story(item, display=None):
 def build_caution_story(item, display=None):
     cautions = []
 
-    review_count = max(
-        safe_int(item.get("review_count"), 0),
-        safe_int(item.get("propagated_review_count"), 0),
-    )
-    rating = safe_float(item.get("rating"), 0)
     market_count = safe_int(item.get("market_price_count"), 0)
 
-    if review_count <= 0 and rating <= 0:
-        cautions.append("리뷰·평점 데이터가 부족해 사용자 만족도 판단은 제한적입니다.")
+    cautions.append("리뷰·평점의 상품·옵션·판매 제안 연결은 확인되지 않았습니다.")
 
     if market_count > 0 and market_count <= 2:
         cautions.append("동일 시장 비교 상품 수가 적어 평균가 기준은 참고용으로 보는 것이 좋습니다.")
@@ -308,13 +290,13 @@ def build_story_title(item, display=None):
     avg_gap = safe_float(item.get("price_vs_market_avg_pct"), 0)
 
     if brix >= 13 and (discount_rate >= 10 or avg_gap < -5):
-        return "당도와 가격 경쟁력을 함께 갖춘 추천 후보"
+        return ("당도 표기" if brix_claim_source(item, brix) == "seller_page_claim" else "Brix 입력값") + "과 가격 조건을 함께 비교할 추천 후보"
 
     if discount_rate >= 30:
         return "할인 폭이 큰 가격 경쟁형 상품"
 
     if brix >= 15:
-        return "고당도 품질 중심 추천 후보"
+        return "고당도 표기가 있는 추천 후보" if brix_claim_source(item, brix) == "seller_page_claim" else "Brix 입력값이 있는 추천 후보"
 
     return "가격·품질 기준으로 비교한 추천 후보"
 

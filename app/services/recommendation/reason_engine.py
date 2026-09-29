@@ -2,6 +2,7 @@ from .score_engine import (
     calculate_ai_scores,
     get_brix_value,
 )
+from .claim_source import brix_claim_source
 
 from .price_signal_engine import (
     extract_price_signals,
@@ -133,7 +134,7 @@ def classify_recommendation_type(item, priority="trust"):
     if base_priority == "trust":
         return (
             "✅ 신뢰 추천",
-            "리뷰와 평점 등 검증 신호를 우선으로 본 상품이에요"
+            "추천 계산의 신뢰도 지표를 우선으로 본 상품이에요"
         )
 
     if base_priority == "price":
@@ -151,7 +152,7 @@ def classify_recommendation_type(item, priority="trust"):
     if base_priority == "discovery":
         return (
             "💎 발견 추천",
-            "일부 사용자가 반응하기 시작한 숨은 상품이에요"
+            "추천 계산의 발견성 기준을 반영한 상품이에요"
         )
 
     if base_priority == "mix":
@@ -187,7 +188,7 @@ def build_reason_list(item, priority="trust"):
     if brix >= 16:
         add_ranked_reason(
             reasons,
-            f"🍯 {brix:.0f}brix 고당도 수치가 확인된 상품이에요",
+            f"🍯 상품명·상세 설명에 {brix:.0f}brix로 표기된 상품이에요" if brix_claim_source(item, brix) == "seller_page_claim" else f"🍯 Brix 입력값 {brix:.0f}의 출처는 확인되지 않았어요",
             adjust_reason_weight_by_priority(
             100,
             "brix",
@@ -197,7 +198,7 @@ def build_reason_list(item, priority="trust"):
     elif brix >= 15:
         add_ranked_reason(
             reasons,
-            f"🍯 {brix:.0f}brix 고당도 수치가 확인된 상품이에요",
+            f"🍯 상품명·상세 설명에 {brix:.0f}brix로 표기된 상품이에요" if brix_claim_source(item, brix) == "seller_page_claim" else f"🍯 Brix 입력값 {brix:.0f}의 출처는 확인되지 않았어요",
             adjust_reason_weight_by_priority(
                 92,
                 "brix",
@@ -207,7 +208,7 @@ def build_reason_list(item, priority="trust"):
     elif brix >= 13:
         add_ranked_reason(
             reasons,
-            f"🍬 {brix:.0f}brix 당도 정보가 있어 맛 기준 비교가 가능해요",
+            f"🍬 상품명·상세 설명에 {brix:.0f}brix로 표기되어 있어요" if brix_claim_source(item, brix) == "seller_page_claim" else f"🍬 Brix 입력값 {brix:.0f}의 출처는 확인되지 않았어요",
             adjust_reason_weight_by_priority(
                 80,
                 "brix",
@@ -217,7 +218,7 @@ def build_reason_list(item, priority="trust"):
     elif item.get("is_high_brix"):
         add_ranked_reason(
             reasons,
-            "🍎 고당도 문구가 확인된 상품이에요",
+            "🍎 상품명·상세 설명에 고당도로 표기된 상품이에요" if brix_claim_source(item) == "seller_page_claim" else "🍎 고당도 입력값의 출처는 확인되지 않았어요",
             adjust_reason_weight_by_priority(
                 72,
                 "brix",
@@ -392,60 +393,7 @@ def build_reason_list(item, priority="trust"):
             ),
         )
 
-    # 5. 리뷰/사용자 반응
-    review_count = item.get("review_count")
-    rating = item.get("rating")
-
-    try:
-        review_count_value = int(review_count or 0)
-        if review_count_value >= 1000:
-            add_ranked_reason(
-                reasons,
-                f"💬 리뷰 {review_count_value:,}개 이상으로 구매 반응이 충분해요",
-                adjust_reason_weight_by_priority(
-                    84,
-                    "review",
-                    priority,
-                ),
-            )
-        elif review_count_value >= 500:
-            add_ranked_reason(
-                reasons,
-                f"💬 리뷰 {review_count_value:,}개 이상 누적된 상품이에요",
-                adjust_reason_weight_by_priority(
-                    78,
-                    "review",
-                    priority,
-                ),
-            )
-    except Exception:
-        pass
-
-    try:
-        rating_value = float(rating or 0)
-        if rating_value >= 4.7:
-            add_ranked_reason(
-                reasons,
-                f"⭐ 별점 {rating_value:.1f}점으로 만족도 신호가 좋아요",
-                adjust_reason_weight_by_priority(
-                    84,
-                    "review",
-                    priority,
-                ),
-            )
-        elif rating_value >= 4.5:
-            add_ranked_reason(
-                reasons,
-                f"⭐ 별점 {rating_value:.1f}점으로 만족도가 높아요",
-                adjust_reason_weight_by_priority(
-                    78,
-                    "review",
-                    priority,
-                ),
-            )
-    except Exception:
-        pass
-
+    # 5. 리뷰·평점의 상품·옵션·판매 제안 연결이 입증되지 않아 설명에서 제외합니다.
     # 6. 탐색/발견 모드
     impression_count = item.get("impression_count") or 0
     click_count = item.get("click_count") or 0
@@ -471,7 +419,7 @@ def build_reason_list(item, priority="trust"):
         if hidden_gem_score >= 60:
             add_ranked_reason(
                 reasons,
-                "💎 숨은 인기 상품 후보예요",
+                "💎 발견성 계산 점수가 높은 추천 후보예요",
                 adjust_reason_weight_by_priority(
                     90,
                     "discovery",
@@ -493,7 +441,7 @@ def build_reason_list(item, priority="trust"):
         if ctr_pct > 0:
             add_ranked_reason(
                 reasons,
-                f"클릭 반응률 {ctr_pct:.1f}%",
+                f"입력의 클릭률(CTR) {ctr_pct:.1f}%",
                 adjust_reason_weight_by_priority(
                     70,
                     "exploration",
@@ -528,4 +476,3 @@ def build_reason_list(item, priority="trust"):
             )
 
     return finalize_ranked_reasons(reasons, limit=5)
-

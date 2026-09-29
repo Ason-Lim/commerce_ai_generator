@@ -1,4 +1,5 @@
 from .score_engine import get_brix_value
+from .claim_source import brix_claim_source
 
 from .price_signal_engine import (
     extract_price_signals,
@@ -14,34 +15,20 @@ def build_compare_message(item, priority="trust"):
         return "품질과 가격을 함께 고려한 숨은 후보 상품이에요"
 
     if base_priority == "discovery":
-        return "품질과 가격이 좋고 사용자 반응도 확인된 상품이에요"
+        return "품질과 가격을 반영한 발견 추천 후보예요"
 
     messages = []
 
     brix = get_brix_value(item)
 
     if brix >= 15:
-        messages.append(f"{brix:.0f}brix 고당도 수치가 확인된 상품이에요")
+        messages.append(f"상품명·상세 설명에 {brix:.0f}brix로 표기된 상품이에요" if brix_claim_source(item, brix) == "seller_page_claim" else f"Brix 입력값은 {brix:.0f}이에요. 출처는 확인되지 않았어요")
 
     elif brix >= 13:
-        messages.append(f"{brix:.0f}brix 당도 정보가 있는 상품이에요")
+        messages.append(f"상품명·상세 설명에 {brix:.0f}brix로 표기된 상품이에요" if brix_claim_source(item, brix) == "seller_page_claim" else f"Brix 입력값은 {brix:.0f}이에요. 출처는 확인되지 않았어요")
 
     elif item.get("is_high_brix"):
-        messages.append("고당도 문구가 확인된 상품이에요")
-
-    review_count = item.get("review_count") or 0
-    try:
-        if int(review_count) >= 500:
-            messages.append("리뷰가 많아 선택 참고가 쉬워요")
-    except Exception:
-        pass
-
-    rating = item.get("rating") or 0
-    try:
-        if float(rating) >= 4.5:
-            messages.append("만족도 신호가 좋은 편이에요")
-    except Exception:
-        pass
+        messages.append("상품명·상세 설명에 고당도로 표기된 상품이에요" if brix_claim_source(item) == "seller_page_claim" else "고당도 입력값의 출처는 확인되지 않았어요")
 
     discount_rate = (
         item.get("final_discount_rate")
@@ -59,7 +46,7 @@ def build_compare_message(item, priority="trust"):
         messages.append("단가 기준 비교가 가능한 상품이에요")
 
     if not messages:
-        messages.append("가격, 품질, 사용자 반응을 함께 비교했어요")
+        messages.append("가격과 상품 정보를 함께 비교했어요")
 
     return " · ".join(messages[:2])
 
@@ -84,11 +71,11 @@ def build_info_chips(item):
 
     if brix > 0:
         highlight_chips.append(
-            f"🍬 {brix:g}brix"
+            f"🍬 {'상품명·상세 설명 표기' if brix_claim_source(item, brix) == 'seller_page_claim' else '출처 불명 입력'} {brix:g}brix"
         )
     elif item.get("is_high_brix"):
         highlight_chips.append(
-            "🍬 고당도"
+            "🍬 상품명·상세 설명 고당도 표기" if brix_claim_source(item) == "seller_page_claim" else "🍬 고당도 입력 출처 불명"
         )
 
     # ==========================================================
@@ -158,28 +145,7 @@ def build_info_chips(item):
             )
 
     # ==========================================================
-    # 평점 / 리뷰
-    # ==========================================================
-    rating = safe_number(
-        item.get("rating"),
-        0.0,
-    )
-
-    if rating >= 4:
-        highlight_chips.append(
-            f"⭐ {rating:.1f}"
-        )
-
-    review_count = safe_number(
-        item.get("review_count"),
-        0.0,
-    )
-
-    if review_count >= 100:
-        normal_chips.append(
-            f"💬 {int(review_count):,}개 리뷰"
-        )
-
+    # 리뷰·평점은 이 상품·옵션·판매 제안과의 연결이 입증되지 않아 표시하지 않습니다.
     # ==========================================================
     # 100g당 가격
     # ==========================================================

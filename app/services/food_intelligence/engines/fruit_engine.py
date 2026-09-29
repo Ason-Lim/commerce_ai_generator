@@ -1,4 +1,5 @@
 import re
+from app.services.recommendation.claim_source import brix_claim_source
 
 
 FRUIT_QUALITY_KEYWORDS = {
@@ -131,9 +132,15 @@ def calculate_fruit_quality(item: dict) -> dict:
     reasons = []
 
     if brix:
-        reasons.append(f"{brix:g}brix 당도 수치가 확인되었습니다.")
+        if brix_claim_source(item, brix) == "seller_page_claim":
+            reasons.append(f"상품명·상세 설명에 {brix:g}brix로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다.")
+        else:
+            reasons.append(f"Brix 입력값 {brix:g}의 출처와 실제 당도는 확인되지 않았습니다.")
     elif brix_score:
-        reasons.append("고당도 표현이 확인되었습니다.")
+        if brix_claim_source(item) == "seller_page_claim":
+            reasons.append("상품명·상세 설명에 고당도로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다.")
+        else:
+            reasons.append("고당도 입력값의 출처와 실제 당도는 확인되지 않았습니다.")
 
     if premium_score:
         reasons.append("특품·정품·프리미엄 등급 신호가 있습니다.")

@@ -4,6 +4,7 @@ import hashlib
 
 
 from app.ui.html_utils import safe_html, safe_attr
+from app.services.recommendation.claim_source import brix_claim_source
 
 from dataclasses import dataclass
 from typing import Callable
@@ -216,20 +217,12 @@ def render_product_badges(
     brix = get_brix_value_fn(item)
 
     if brix >= 13:
-        badges.append(f"🍬 {brix:.0f}brix")
+        badges.append(f"🍬 {'상품명·상세 설명 표기' if brix_claim_source(item, brix) == 'seller_page_claim' else '출처 불명 입력'} {brix:.0f}brix")
     elif item.get("is_high_brix"):
-        badges.append("⭐ 고당도 표시")
+        badges.append("⭐ 상품명·상세 설명 고당도 표기" if brix_claim_source(item) == "seller_page_claim" else "⭐ 고당도 입력 출처 불명")
 
     if item.get("recommendation_label") == "관심 상승 상품":
-        badges.append("👀 관심이 많은 상품")
-
-    review_count = item.get("review_count") or 0
-
-    try:
-        if int(review_count) >= 500:
-            badges.append("💬 리뷰가 많은 상품")
-    except Exception:
-        pass
+        badges.append("👀 관심 상승 분류")
 
     if item.get("coupon_name") or has_coupon_signal_fn(item):
         try:
@@ -245,9 +238,6 @@ def render_product_badges(
 
         except Exception:
             badges.append("🎟️ 쿠폰/특가")
-
-    if item.get("final_recommendation_label") == "사용자 반응 우수 추천":
-        badges.append("🏷️ 사용자 반응 우수 추천")
 
     if not badges:
         return
@@ -357,7 +347,7 @@ def render_ai_judgement_card(
         trust_parts.append(f"가격 검증 {validation.get('price_confidence', 0)}점")
 
     if base_priority == "quality":
-        trust_parts.append(f"당도 검증 {validation.get('brix_confidence', 0)}점")
+        trust_parts.append(f"Brix 입력 신뢰 점수 {validation.get('brix_confidence', 0)}점")
 
     st.caption("🤖 AI 신뢰도 · " + " · ".join(trust_parts))
 
@@ -653,9 +643,9 @@ def render_product_card(
             st.info(compare_message)
 
             score_rows = [
-                ("품질 만족도", scores.get("quality", 0)),
+                ("품질 계산 점수", scores.get("quality", 0)),
                 ("가격 경쟁력", scores.get("price", 0)),
-                ("사용자 반응", scores.get("popularity", 0)),
+                ("인기도 계산 점수", scores.get("popularity", 0)),
             ]
 
             visible_score_rows = [
