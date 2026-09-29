@@ -28,6 +28,7 @@ from app.services.impression_logger import log_recommendation_impressions
 from app.services.explainability_service import build_explainability
 from app.ui.hero_renderer_v3 import render_hero_v3
 from app.services.recommendation_story_engine_v61 import build_recommendation_story_v61
+from app.services.recommendation.claim_source import brix_claim_source
 
 from app.services.preference import (
     update_user_preference,
@@ -1042,44 +1043,28 @@ def build_customer_summary(items, priority, local_intent=None):
     if intent_type == "gift_recommend":
         messages.append("선물용으로 적합한 상품을 중심으로 골랐어요.")
     elif base_priority == "price":
-        messages.append("가격 만족도가 좋은 상품을 우선으로 골랐어요.")
+        messages.append("가격 조건을 우선으로 골랐어요.")
     elif base_priority == "quality":
         messages.append("품질 신호가 좋은 상품을 중심으로 추천했어요.")
     elif base_priority == "trust":
-        messages.append("신뢰도와 사용자 반응을 함께 고려했어요.")
+        messages.append("추천 계산의 신뢰도 지표를 고려했어요.")
     elif base_priority == "balanced":
-        messages.append("누적 반응을 반영해 가격과 품질 균형을 함께 고려했어요.")
+        messages.append("가격과 품질의 계산 지표를 함께 고려했어요.")
     elif base_priority == "exploration":
         messages.append("품질과 가격이 괜찮지만 아직 많이 알려지지 않은 상품을 중심으로 추천했어요.")
     elif base_priority == "discovery":
-        messages.append("품질과 가격을 갖추고, 일부 사용자가 반응하기 시작한 숨은 상품을 추천했어요.")
+        messages.append("품질과 가격의 계산 지표를 반영한 발견 추천 후보예요.")
     elif base_priority == "mix":
         messages.append("맛, 가격, 안심 구매 기준을 균형 있게 반영했어요.")
 
 
     total_count = len(items)
 
-    high_brix_count = sum(1 for item in items if item.get("is_high_brix"))
+    high_brix_count = sum(1 for item in items if item.get("is_high_brix") and brix_claim_source(item) == "seller_page_claim")
 
     price_down_count = sum(
         1 for item in items
         if (item.get("price_drop_boost") or 0) >= 5
-    )
-
-    reaction_count = sum(
-        1 for item in items
-        if item.get("final_recommendation_label") == "사용자 반응 우수 추천"
-        or (item.get("ctr_feedback_boost") or 0) >= 7
-    )
-
-    review_count = sum(
-        1 for item in items
-        if (item.get("review_count") or 0) >= 500
-    )
-
-    rating_count = sum(
-        1 for item in items
-        if (item.get("rating") or 0) >= 4.5
     )
 
     discount_count = sum(
@@ -1089,23 +1074,14 @@ def build_customer_summary(items, priority, local_intent=None):
         or item.get("discount_rate")
     )
 
-    if reaction_count > 0:
-        messages.append(f"최근 반응 좋은 상품 {reaction_count}개가 포함되어 있어요.")
-
     if price_down_count > 0:
         messages.append(f"가격이 좋아진 상품 {price_down_count}개도 함께 확인할 수 있어요.")
 
     if discount_count > 0:
         messages.append(f"할인이나 쿠폰 정보가 있는 상품 {discount_count}개를 반영했어요.")
 
-    if review_count > 0:
-        messages.append(f"리뷰가 많은 상품 {review_count}개를 포함했어요.")
-
-    if rating_count > 0:
-        messages.append(f"별점이 높은 상품 {rating_count}개를 함께 고려했어요.")
-
     if high_brix_count > 0:
-        messages.append(f"고당도 상품 {high_brix_count}개가 포함되어 있어요.")
+        messages.append(f"상품명·상세 설명에 고당도로 표기된 후보 {high_brix_count}개가 있어요.")
 
     if not messages:
         messages.append(f"조건에 맞는 상품 {total_count}개를 추천했어요.")
@@ -1942,11 +1918,11 @@ def describe_score_signal(label, score):
 
     if label == "popularity":
         if score >= 60:
-            return "🔥 사용자 반응 매우 좋음"
+            return "🔥 인기도 계산 점수 높음"
         if score >= 40:
-            return "🔥 사용자 반응 우수"
+            return "🔥 인기도 계산 점수 양호"
         if score > 0:
-            return "🔥 사용자 반응 참고"
+            return "🔥 인기도 계산 점수 참고"
         return ""
 
     return "추천 근거 확인"
@@ -1973,7 +1949,7 @@ def build_adaptive_score_detail_text(scores, item=None, priority="trust"):
         f"종합 추천지수 세부 · "
         f"품질 {scores.get('quality', 0):.0f}점 · "
         f"가격 {scores.get('price', 0):.0f}점 · "
-        f"사용자 반응 {scores.get('popularity', 0):.0f}점"
+        f"인기도 계산 점수 {scores.get('popularity', 0):.0f}점"
     )
 
     if item:
@@ -2005,7 +1981,7 @@ def build_hero_score_breakdown(item, scores, priority="trust"):
     breakdown = [
             ("품질", scores.get("quality", 0)),
             ("가격", scores.get("price", 0)),
-            ("사용자 반응", scores.get("popularity", 0)),
+            ("인기도 계산 점수", scores.get("popularity", 0)),
         ] 
 
     if base_priority == "exploration":
@@ -2170,7 +2146,7 @@ def build_hero_selection_reason(
         hidden_gem = calculate_hidden_gem_score(item)
 
         if hidden_gem >= 60:
-            reasons.append("사용자 반응 확인")
+            reasons.append("발견성 계산 점수 반영")
 
     return " · ".join(reasons)
 
@@ -2184,7 +2160,7 @@ def build_hero_rank_reason(item, priority="trust"):
 
     if base_priority == "trust":
         return (
-            "신뢰 추천 상품 중 사용자 반응과 검증 신호가 가장 좋아 "
+            "신뢰 추천 상품 중 계산된 신뢰도 지표가 높아 "
             "1위로 선정되었어요."
         )
 
@@ -2208,7 +2184,7 @@ def build_hero_rank_reason(item, priority="trust"):
 
     if base_priority == "discovery":
         return (
-            "발견 추천 상품 중 사용자 반응과 품질이 좋아 "
+            "발견 추천 상품 중 계산된 발견성·품질 지표가 높아 "
             "가장 높은 점수를 받았어요."
         )
 
@@ -2219,7 +2195,7 @@ def build_hero_rank_reason(item, priority="trust"):
         )
 
     return (
-        "가격, 품질, 사용자 반응을 종합해 "
+        "가격과 품질의 계산 지표를 종합해 "
         "가장 높은 점수를 받았어요."
     )
     
@@ -2231,18 +2207,18 @@ def build_trust_badge(item):
     if click_count >= 10 or ctr_pct >= 10:
         return (
             "🥇 인기 추천",
-            "많은 사용자가 관심을 보인 상품이에요."
+            "입력의 클릭·CTR 지표가 높은 상품이에요."
         )
 
     if click_count >= 3:
         return (
             "🥈 검증 추천",
-            "사용자 반응이 확인된 상품이에요."
+            "입력의 클릭 지표가 있는 상품이에요."
         )
 
     return (
         "🥉 신규 추천",
-        "아직 반응 데이터가 많지 않아요."
+        "입력의 클릭 지표가 적어요."
     )
     
 def calculate_trust_level(item):
@@ -2428,9 +2404,10 @@ def build_user_friendly_hero_compare(top_item, compare_items, top_display=None, 
             )
 
         if top_brix >= 15 and c_brix < top_brix:
-            bullets.append(
-                f"1위 상품은 {top_brix:.0f}brix 당도 수치가 확인되어 {label}보다 품질 비교가 더 명확합니다."
-            )
+            if brix_claim_source(top_item, top_brix) == "seller_page_claim":
+                bullets.append(f"1위 상품명·상세 설명에는 {top_brix:.0f}brix로 표기되어 있습니다. {label}와 실제 당도 비교는 확인되지 않았습니다.")
+            else:
+                bullets.append(f"1위 상품의 Brix 입력값은 {top_brix:.0f}이며 출처는 확인되지 않았습니다. {label}와 실제 당도 비교도 확인되지 않았습니다.")
 
         if len(bullets) >= 4:
             break
@@ -2439,7 +2416,7 @@ def build_user_friendly_hero_compare(top_item, compare_items, top_display=None, 
         bullets.append("상위 후보들은 가격·중량·당도 조건이 비슷해 상세 옵션 확인 후 비교하는 것이 좋습니다.")
 
     return {
-        "compare_summary": "가격이 더 낮은 후보가 있어도, 1위는 당도·품질 신호와 구매 조건을 함께 본 대표 추천입니다.",
+        "compare_summary": "1위는 Brix 입력값과 구매 조건을 계산에 반영한 추천 후보입니다. Brix 출처는 개별 확인이 필요합니다.",
         "compare_bullets": bullets[:4],
     }
 
@@ -2473,7 +2450,7 @@ def build_hero_selection_reason(item, priority="trust"):
         hidden_gem_score = calculate_hidden_gem_score(item)
 
         if hidden_gem_score >= 60:
-            reasons.append("사용자 반응 확인")
+            reasons.append("발견성 계산 점수 반영")
 
     if not reasons:
         reasons.append("종합 점수 우수")
@@ -2502,13 +2479,11 @@ def build_hero_message(item, local_intent=None, priority="trust"):
         or item.get("discount_rate")
         or 0
     )
-    review_count = item.get("review_count") or 0
-
     messages = []
 
     try:
         if brix and float(brix) >= 15:
-            messages.append("고당도 품질 기준이 우수한 상품이에요")
+            messages.append("상품명·상세 설명에 고당도 수치가 표기되어 있어요" if brix_claim_source(item, float(brix)) == "seller_page_claim" else "Brix 입력값의 출처는 확인되지 않았어요")
     except Exception:
         pass
 
@@ -2518,31 +2493,25 @@ def build_hero_message(item, local_intent=None, priority="trust"):
     except Exception:
         pass
 
-    try:
-        if int(review_count) >= 300:
-            messages.append("사용자 반응이 활발한 상품이에요")
-    except Exception:
-        pass
-
     base_priority = str(priority or "trust").replace("_adaptive", "")
 
     if base_priority == "exploration":
         messages.append("품질과 가격이 괜찮지만 아직 많이 알려지지 않은 상품을 중심으로 추천했어요.")
 
     elif base_priority == "discovery":
-        messages.append("품질과 가격이 괜찮고, 사용자 반응도 확인되기 시작한 상품이에요.")
+        messages.append("품질과 가격의 계산 지표를 반영한 발견 추천 후보예요.")
 
     elif base_priority == "price":
-        messages.append("가격 부담은 낮추고 만족도는 챙길 수 있는 상품이에요.")
+        messages.append("가격 조건을 우선 고려한 추천 후보예요.")
 
     elif base_priority == "quality":
-        messages.append("품질 신호와 상품 만족도를 함께 고려해 추천했어요.")
+        messages.append("품질 계산 지표를 고려해 추천했어요.")
 
     elif base_priority == "mix":
         messages.append("맛, 가격, 안심 구매 기준을 함께 고려한 추천이에요.")
 
     elif "인기" in recommend_type:
-        messages.append("최근 사용자 관심이 높아 많이 찾는 상품이에요.")
+        messages.append("추천 계산에서 인기도 지표를 반영했어요.")
 
     if not messages:
         messages.append("가격과 품질 균형을 함께 고려한 추천이에요")
@@ -3712,7 +3681,7 @@ def calculate_recommendation_stage(item):
     ):
         return (
             "✅ 검증 단계",
-            "사용자 반응이 충분히 확인된 상품"
+            "입력의 노출·클릭 지표가 기준을 넘은 상품"
         )
 
     if (
@@ -3722,12 +3691,12 @@ def calculate_recommendation_stage(item):
     ):
         return (
             "💎 발견 단계",
-            "좋은 반응이 확인되기 시작한 상품"
+            "입력의 노출·클릭 지표가 있는 상품"
         )
 
     return (
         "🧭 탐색 단계",
-        "아직 더 많은 반응을 확인하는 상품"
+        "입력의 노출·클릭 지표가 적은 상품"
     )
 
 
@@ -4079,7 +4048,7 @@ def build_cta_text(priority, section="main"):
         return "🔥 가격 메리트 보기"
 
     if section.startswith("high_brix"):
-        return "🍬 고당도 상품 보기"
+        return "🍬 고당도 표기 상품 보기"
 
     return "🛒 상품 보러가기"
 
@@ -4107,7 +4076,7 @@ def build_ai_insight_message():
         if fruit_name:
             return (
                 f"최근 {fruit_name}를 자주 살펴보셨어요. "
-                f"반응이 좋았던 {fruit_name} 상품을 우선 추천할게요."
+                f"{fruit_name} 추천 후보를 다시 살펴볼 수 있어요."
             )
 
     except Exception:
@@ -4479,6 +4448,7 @@ def render_compare_table():
 
             "쿠폰": coupon_text,
             "Brix": brix_value,
+            "Brix_출처": brix_claim_source(item, brix_value) if brix_value != "-" else "UNKNOWN",
             "인증": cert_text,
         })
     
@@ -4588,9 +4558,7 @@ def render_compare_table():
             ):
                 discount_text += " 🏆"
 
-            brix_text = f"**Brix**  {brix_value}"
-            if brix_value not in (None, "", "-"):
-                brix_text += " 🍯"
+            brix_text = f"**{'상품명·상세 설명 Brix 표기' if row['Brix_출처'] == 'seller_page_claim' else 'Brix 입력값 (출처 불명)'}**  {brix_value}"
 
             st.markdown(unit_text)
             st.markdown(discount_text)
@@ -5588,4 +5556,3 @@ if "last_result_data" in st.session_state:
         # 상품 비교 테이블
         # ==========================================================
         render_compare_table()
-

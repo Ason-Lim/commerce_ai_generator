@@ -62,7 +62,7 @@ def build_recommendation_summary(item):
         return "동일 시장 안에서 가격 경쟁력이 돋보이는 상품입니다."
 
     if market_score >= 75:
-        return "리뷰와 시장 반응이 확인된 안정적인 추천 상품입니다."
+        return "시장 신호 계산 점수가 높은 추천 후보입니다."
 
     if value_score >= 70:
         return "가격·품질·시장 정보를 종합해 추천할 만한 상품입니다."
@@ -97,7 +97,7 @@ def build_recommendation_story(item):
         sentences.append("품질 점수가 양호해 가격과 품질의 균형이 괜찮습니다.")
 
     if market_score >= 75:
-        sentences.append("리뷰·평점 등 시장 반응도 확인되어 구매 안정성이 높습니다.")
+        sentences.append("시장 신호 계산 점수가 높습니다. 실제 구매 만족도는 확인되지 않았습니다.")
 
     if trust_score >= 85:
         sentences.append("상품 식별과 시장 분류 신뢰도도 높아 비교 기준이 비교적 명확합니다.")
@@ -117,7 +117,14 @@ def build_recommendation_reasons(item):
         "recommendation_reason_3",
     ]:
         value = item.get(key)
-        if value and value not in reasons:
+        # 저장된 과거 문구에는 상품·옵션·판매 제안에 연결되지 않은
+        # 리뷰·평점이 구매자 반응으로 서술될 수 있습니다.
+        if value and not any(token in str(value) for token in (
+            "리뷰", "평점", "만족도", "사용자 반응", "구매 반응", "시장 반응",
+        )) and not (
+            any(token in str(value).lower() for token in ("brix", "고당도"))
+            and any(token in str(value) for token in ("확인", "검증", "실측", "보장"))
+        ) and value not in reasons:
             reasons.append(value)
 
     avg_gap = safe_float(item.get("price_vs_market_avg_pct"), 0)
@@ -125,8 +132,6 @@ def build_recommendation_reasons(item):
     price_score = safe_float(item.get("price_advantage_score"), 0)
     quality_score = safe_float(item.get("quality_advantage_score"), 0)
     market_score = safe_float(item.get("market_signal_score_final"), 0)
-    review_count = get_effective_review_count(item)
-    rating = safe_float(item.get("rating"), 0)
 
     if avg_gap < -5:
         text = f"동일 시장 평균보다 {abs(avg_gap):.1f}% 저렴합니다."
@@ -149,19 +154,6 @@ def build_recommendation_reasons(item):
             reasons.append(text)
     elif quality_score >= 75:
         text = "상품 품질 점수가 양호합니다."
-        if text not in reasons:
-            reasons.append(text)
-
-    if review_count >= 9999:
-        text = "리뷰 9,999건 이상으로 시장 반응이 충분히 확인되었습니다."
-        if text not in reasons:
-            reasons.append(text)
-    elif review_count >= 1000:
-        text = f"리뷰 {review_count:,}건으로 시장 반응이 확인되었습니다."
-        if text not in reasons:
-            reasons.append(text)
-    elif rating >= 4.7:
-        text = f"평점 {rating:g}점으로 만족도 신호가 좋습니다."
         if text not in reasons:
             reasons.append(text)
 
@@ -229,16 +221,13 @@ def build_target_users(item):
 def build_cautions(item):
     cautions = []
 
-    review_count = get_effective_review_count(item)
-    rating = safe_float(item.get("rating"), 0)
     quality_score = safe_float(item.get("quality_advantage_score"), 0)
     trust_score = safe_float(item.get("trust_score_final"), 0)
     market_count = safe_int(item.get("market_price_count"), 0)
     market_cluster_confidence = safe_float(item.get("market_cluster_confidence"), 0)
     price_score = safe_float(item.get("price_advantage_score"), 0)
 
-    if review_count <= 0 and rating <= 0:
-        cautions.append("리뷰·평점 데이터가 아직 충분하지 않습니다.")
+    cautions.append("리뷰·평점의 상품·옵션·판매 제안 연결은 확인되지 않았습니다.")
 
     if market_count <= 2:
         cautions.append("동일 시장 내 비교 상품 수가 적어 가격 기준이 제한적일 수 있습니다.")

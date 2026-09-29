@@ -1,5 +1,6 @@
 import textwrap
 import streamlit as st
+from app.services.recommendation.claim_source import brix_claim_source
 
 from app.ui.html_utils import (
     safe_html,
@@ -52,9 +53,9 @@ def build_ai_badges(item: dict) -> List[str]:
 
     # 품질
     if brix >= 16:
-        badges.append("🍯 16Brix")
+        badges.append("🍯 상품명·상세 설명 표기 16Brix" if brix_claim_source(item, brix) == "seller_page_claim" else "🍯 Brix 입력 출처 불명")
     elif brix >= 15:
-        badges.append("🍎 고당도")
+        badges.append("🍎 상품명·상세 설명 Brix 표기" if brix_claim_source(item, brix) == "seller_page_claim" else "🍎 Brix 입력 출처 불명")
 
     if fruit_score >= 70:
         badges.append("👑 프리미엄")

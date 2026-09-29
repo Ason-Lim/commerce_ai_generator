@@ -9,7 +9,11 @@ from app.db.lifecycle import EngineLifecycle
 from app.db.engine_provider import bind_engine, unbind_engine
 from fastapi.responses import RedirectResponse
 from app.services.analytics_logger import log_product_click
-from app.services.recommendation_pipeline import run_recommendation_pipeline
+from app.services.recommendation_pipeline import (
+    present_recommendation_label,
+    present_recommendation_reason,
+    run_recommendation_pipeline,
+)
 from app.services.session_context import (
     calculate_session_context_boost,
     get_session_context,
@@ -587,6 +591,12 @@ def natural_language_recommendations(
 
     for idx, row in enumerate(rows, start=1):
         item = dict(row)
+        item["recommendation_reason"] = present_recommendation_reason(
+            item.get("recommendation_reason"), item
+        )
+        item["final_recommendation_label"] = present_recommendation_label(
+            item.get("final_recommendation_label")
+        )
 
         # ----------------------------------------------------------
         # Price Intelligence passthrough
@@ -795,7 +805,7 @@ def natural_language_recommendations(
         
 
     return {
-        "summary": f"'{q}' 기준으로 반응 좋은 추천 상품 {len(items)}개를 찾았습니다.",
+        "summary": f"'{q}' 기준으로 추천 후보 {len(items)}개를 찾았습니다.",
         "items": items,
         "recommendation_path": NL_PATH_DB_FALLBACK,
     }
