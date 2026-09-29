@@ -8,7 +8,7 @@ from app.ui.html_utils import (
 )
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, List
 
 
 def _safe_float(value, default: float = 0.0) -> float:
