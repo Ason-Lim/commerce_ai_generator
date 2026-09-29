@@ -33,7 +33,7 @@ from app.ui.components.cta_button import (
     render_cta_button,
 )
 
-from app.services.recommendation.compare_snapshot_engine import (
+from app.services.comparison.compare_snapshot_engine import (
     build_compare_snapshot,
 )
 
@@ -44,7 +44,7 @@ from app.services.experience.cross_border_estimate_disclosure import (
     build_cross_border_estimate_disclosure,
 )
 
-from app.services.recommendation.compare_identity_engine import (
+from app.services.comparison.compare_identity_engine import (
     build_compare_widget_key,
     get_compare_identity,
 )

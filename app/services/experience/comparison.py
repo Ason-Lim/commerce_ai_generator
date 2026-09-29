@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
-from app.services.recommendation.compare_identity_engine import (
+from app.services.comparison.compare_identity_engine import (
     get_compare_identity,
 )
-from app.services.recommendation.compare_snapshot_engine import (
+from app.services.comparison.compare_snapshot_engine import (
     build_compare_snapshot,
 )
 

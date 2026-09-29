@@ -100,7 +100,7 @@ from app.services.recommendation.recommendation_score_v8 import (
 )
 
 
-from app.services.recommendation.compare_identity_engine import (
+from app.services.comparison.compare_identity_engine import (
     get_compare_identity,
 )
 
