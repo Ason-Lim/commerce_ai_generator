@@ -1,0 +1,102 @@
+B4-B E1/E2 — 공개 픽업 응답 계약과 B4-A M4·M5 증거 보존 대조
+작성일: 2026-10-01 (Asia/Seoul)
+유형: 공식 공개 문서 및 스키마 desk review; 실제 거래 증거 아님
+
+1. 연구 판정
+이번 공개 계약 대조에서 B4-A M4·M5 의미 계약의 신규 구조 필요성을 입증하지 못했다. 예약 생성, 요청 조건, 응답 경고·반환 값, 변경·취소 이력을 기존의 source-attributed assertion과 exact scope/lineage 의무로 구분할 수 있다.
+다만 source에 없는 조건별 약속이나 binding quote 권한을 내부 구조가 만들어낼 수 없다. U3·U4의 실제 권한 증거와 생산 구현 채택은 여전히 UNRESOLVED이다.
+새 Logistics Provider 연구의 Architecture Need 추천은 UNRESOLVED로 유지한다. 새 구조 불필요가 입증됐다는 결론도 아니다. 실제 정보 손실 사례가 아직 없다.
+이번 대조는 E1/E2의 공개 계약 부분을 완료한다. 동일 요청의 실제 견적·인증된 응답·account/service agreement는 확보되지 않았다.
+
+2. 입력과 출처
+I1. B4-A M1–M7 bounded semantic consolidation (2026-09-26), 현재 본문 전체 63행 재확인.
+I2. B4-A assertion/correlation contract draft (2026-09-26), 현재 본문 전체 42행 재확인.
+M4는 source-owned rate/quote, M5는 assignment와 별도 attributable provider response. 공통 의무는 exact scope, 시간, 권한 근거, uncertainty/conflict, correction/cancellation/supersession.
+I1은 architecture guidance이며 production contract NOT_ADOPTED. I2는 설계 초안이며 adopted field/enum/API가 아니다.
+
+S1. DHL Express MyDHL API 공식 페이지
+https://developer.dhl.com/api-reference/dhl-express-mydhl-api
+확인일: 2026-10-01. 표시 버전: 3.3.2.
+
+S2. 위 공식 페이지에 연결된 OpenAPI YAML
+https://developer.dhl.com/sites/default/files/2026-09/dpdhl-express-api-3.3.2.yaml
+공식 호스트에서 직접 다운로드한 원본의 info.version=3.3.2.
+원본 SHA-256: 3b8efc2089ceefd9b84da0d7aa45b64f8e645350922c2406a4c276885ae92473
+웹 검색 도구의 YAML 열기는 실패했으나 Python HTTP 다운로드는 성공했다. 원본에 tab 문자 5개가 있어 파싱용 메모리 사본에서 공백으로 치환했다. 위 SHA는 치환 전 원본에 대한 값이다. 치환된 분석 사본이나 외부 원본 전체를 채택 계약으로 배포하지 않는다. 검토는 pickups operation/schema 및 관련 parameter로 한정했다.
+
+S3. FedEx Pickup Request API REST v1 공식 설명
+https://developer.fedex.com/api/en-us/catalog/pickup/v1/docs.html
+확인일: 2026-10-01. 서술 문서 재확인. 완전한 machine-readable response schema는 이번에도 확보하지 못했다.
+
+본 자료는 업체 선정 추천, 한국 서비스/계정 가용성 확인, 라이브 API 호출, 실제 픽업 실행, 운송 성과 검증이 아니다. 문서 열람일은 실제 서비스 효력일이나 관측 발생 시각이 아니다.
+
+3. DHL REST — 검토한 스키마의 요약
+POST /pickups는 생성 201 응답과 입력 오류 400을 구분한다. 요청에는 준비 시각, 계정, 고객, shipment 범위가 필수이다. location/closeTime/specialInstructions는 요청 정보이다.
+생성 응답은 dispatchConfirmationNumbers 배열, readyByTime, nextPickupDate, warnings를 정의한다. 응답 property에 required 목록은 없고 번호 배열의 minItems는 0이다. 이는 스키마상 허용 범위이며 실서버가 항상 그렇게 반환한다는 주장은 아니다.
+조건별 accepted/rejected 목록은 이 응답 스키마에 없다. 시간 반환 값의 예시만으로 실제 픽업 시각·보장 시간·계약상 약속을 확정하지 않는다.
+PATCH는 기존 예약 번호와 원래 계정 및 새 요청 문맥을 요구한다. 갱신 응답은 단수 dispatchConfirmationNumber와 시간·warnings를 정의한다. DELETE는 cancelled/not-found/error를 구분한다.
+Message-Reference는 optional correlation 입력이고 x-version은 required이다. reference는 인증 또는 provider commitment 증명이 아니다.
+검토 지점: paths./pickups.post; paths./pickups/{dispatchConfirmationNumber}.patch/delete; components.schemas.supermodelIoLogisticsExpressPickupRequest/PickupResponse/UpdatePickupRequest/UpdatePickupResponse; components.parameters.messageReferenceHeader/messageReferenceDateHeader/xVersionHeader.
+
+4. 대조표 — 원자료 의미 / 기존 책임 / 판정
+A. 준비 시각·마감·위치·특별 지시
+원자료: provider로 보낸 요청 조건.
+기존 책임: M2 request intent; M5의 원 요청 참조와 exact scope.
+판정: 의미 보존 가능. 요청한 시간이나 지시를 수락된 SLA로 승격하지 않는다.
+
+B. 예약 생성 결과와 번호
+원자료: 해당 API operation의 예약 생성 응답.
+기존 책임: M5의 별도 provider response와 provenance.
+판정: 의미 보존 가능. 내부 assignment, dispatch 또는 physical pickup과 구별한다. 생성 응답의 복수 번호를 한 개로 축약하지 않는다. 각 번호와 shipmentDetails 항목의 대응은 별도 원자료 근거가 없으면 UNKNOWN이다.
+
+C. warning·반환 시간
+원자료: source response에 있는 추가 값.
+기존 책임: M5 exact response scope, exceptions, uncertainty/conflict.
+판정: 조건부 보존 가능. 경고 있는 생성 응답을 무조건 전체 실패 또는 무조건 완전 수락으로 단순화하지 않는다. 요청 값과 반환 값이 다르면 각각 유지하고 의미 근거가 없으면 변경 수락을 추정하지 않는다.
+
+D. 조건 전체의 수락
+원자료: 현재 응답 스키마에는 조건별 수락 목록 없음.
+기존 책임: M5 response의 실제 asserted scope.
+판정: EXISTING_MEANING_WITH_EXTERNAL_EVIDENCE_GAP. 스키마에 목록이 없다고 별도 수락 시스템을 무조건 요구하지 않는다. 원문 약정이나 응답 의미가 전체/일부 수락을 명시한다면 그 근거를 함께 읽어야 한다. 현재는 그러한 실제 약정 증거가 없다.
+
+E. 견적·금액·유효기간·binding authority
+원자료: 검토한 pickup 생성 응답으로 binding quote를 확정할 수 없음.
+기존 책임: M4 source-owned quote와 별도 U3 authority.
+판정: E1 실제 quote evidence 미확보. 다른 rate operation의 결과를 이 요청의 binding quote로 자동 연결하지 않는다.
+
+F. 변경·취소
+원자료: update/cancel operations.
+기존 책임: M5 response revisions와 공통 correction/cancellation lineage.
+판정: 의미 보존 가능. 기존 예약과 변경 요청 revision을 연결하고 과거 증거를 유지한다. 현재 생성/갱신 스키마 차이를 다른 SOAP 계약에 이식하지 않는다.
+
+G. 인증·issuer·legal provider identity
+원자료: 공개 API 설명과 optional message reference만 확보.
+기존 책임: issuer/authority evidence; U4 named authenticated response.
+판정: 실제 거래에서 미검증. 공식 사이트의 schema issuer를 실제 응답 행위자·법적 운송 계약 상대방으로 자동 동일시하지 않는다.
+
+H. 생산 구현
+원자료: 내부 의미 결정과 공개 schema를 읽음. M4/M5 생산 코드 전체는 검토하지 않음.
+판정: EXISTING_MEANING_WITH_IMPLEMENTATION_MAPPING_UNVERIFIED. semantic sufficiency를 필드 채택이나 런타임 검증으로 바꾸지 않는다.
+
+5. FedEx 대조 및 버전 경계
+공식 REST v1 설명은 availability와 create/cancel을 구분하며 성공 생성의 확인 번호·notification·location 정보를 설명한다. 변경은 원 예약 취소 후 새 요청을 제출하도록 안내한다.
+M5는 예약 응답과 취소/재생성 lineage를 보존할 수 있어야 한다. 이 설명은 모든 요청 조건의 약속 수락이나 실제 픽업을 증명하지 않는다.
+FedEx REST 서술, DHL REST 3.3.2 스키마와 과거 DHL SOAP 2.41 결과를 각각 별도 source/version으로 둔다. 단수/복수 번호, 변경 방식이나 메시지 필드를 업체 공통 확정 모델로 일반화하지 않는다.
+
+6. 추가 증거가 필요한 정확한 지점
+U3: named account/service agreement, 실제 source-owned quote, 조건·유효기간·binding basis.
+U4: 동일 요청의 attributable authenticated response, 원 요청/견적 revision과의 연결, accepted scope 및 변경 근거.
+공개 API를 더 반복 조사하는 것만으로 U3/U4를 해소하지 않는다. 다음 E1/E2 진입은 inspectable actual artifact 또는 구체적인 provider/account agreement가 생길 때 한다.
+이전 연구의 E3–E6(관측 lineage, 성과 방법론, 후기 작성자/경험, verification/aggregation)은 별도 증거 의존성으로 유지한다.
+
+7. 완료 및 handoff 범위
+E0 bounded document comparison: COMPLETE; 제출 본문 해시 13/13 일치. 직접 원격/배포/전체 코드 확인 아님.
+E1/E2 public-contract mapping: COMPLETE_BOUNDED.
+E1/E2 actual-transaction review: UNRESOLVED_NO_ARTIFACT.
+B4-A M3/M4/M5 semantic gap: NOT_DEMONSTRATED_BY_REVIEWED_EVIDENCE.
+새 Logistics Provider Architecture Need recommendation: UNRESOLVED.
+00_1 중간 반환은 준비됨. 전체 연구 closure 또는 최종 architecture adoption 요청은 아님.
+PM1/PM2 M1–M8 완료 접수 유지; M9 없음; 완료 스트림 재개 없음.
+저장소 변경·커밋·푸시·새 MA·schema·provider integration·ranking·automatic selection·추천 점수 연동: 수행하지 않음.
+
+검증: 공식 YAML의 버전/원본 해시 확인, 선택 스키마 및 ref/parameter 구조 읽기, 내부 의미 문서 현재 본문 재확인, 반례 대조. 테스트나 실 API 요청은 하지 않았다.
