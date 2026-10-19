@@ -164,6 +164,12 @@ st.set_page_config(
     layout="wide",
 )
 
+# B2B evidence panel
+if st.sidebar.checkbox("B2B 업체·상품 근거 보기", key="b2b_evidence_panel"):
+    from app.ui.b2b_panel import render_b2b_panel
+    render_b2b_panel()
+    st.stop()
+
 st.markdown(
     """
 <style>

@@ -849,3 +849,7 @@ def revisit_recommendations(
         # Slicing preserves the /nl order and the existing item ranks.
         "recommendation_path": result.get("recommendation_path", NL_PATH_UNKNOWN),
     }
+
+# B2B evidence routes
+from app.api.b2b_routes import router as b2b_router
+app.include_router(b2b_router)

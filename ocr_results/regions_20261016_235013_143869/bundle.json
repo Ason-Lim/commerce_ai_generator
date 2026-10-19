@@ -1,0 +1,1256 @@
+{
+  "schema_version": 2,
+  "source_name": "상품상세.png",
+  "source_sha256": "79bbdcbdbf4f34d12daba1cfdefb7410fecad510422081b2443eee4a462d5cba",
+  "source_size_px": [
+    2342,
+    1390
+  ],
+  "regions": [
+    {
+      "id": "R001",
+      "source_bbox_xyxy_px": [
+        82,
+        0,
+        2342,
+        69
+      ],
+      "scale": 2,
+      "image": "R001_source.png",
+      "image_sha256": "043f15c93279c8e7e29960dfab73ba07391618fe6dc0d27624ad188543cee1c2",
+      "processed_image": "R001_retry.png",
+      "ocr": {
+        "source": "상품상세.png",
+        "text": "LH\nor\n=\n환 / 반 품\n/ 교 환\n~\n배송\n의\n상 품 문\n6)\n평 (4\nak\n상품\n상세\n상품",
+        "words": [
+          {
+            "text": "LH",
+            "confidence": 55.833984,
+            "bbox_px": [
+              4407,
+              35,
+              68,
+              58
+            ],
+            "source_bbox_px": [
+              2285.5,
+              17.5,
+              34.0,
+              29.0
+            ]
+          },
+          {
+            "text": "or",
+            "confidence": 74.260635,
+            "bbox_px": [
+              4371,
+              40,
+              46,
+              52
+            ],
+            "source_bbox_px": [
+              2267.5,
+              20.0,
+              23.0,
+              26.0
+            ]
+          },
+          {
+            "text": "=",
+            "confidence": 53.058933,
+            "bbox_px": [
+              4280,
+              35,
+              65,
+              43
+            ],
+            "source_bbox_px": [
+              2222.0,
+              17.5,
+              32.5,
+              21.5
+            ]
+          },
+          {
+            "text": "환",
+            "confidence": 92.052094,
+            "bbox_px": [
+              4163,
+              35,
+              77,
+              57
+            ],
+            "source_bbox_px": [
+              2163.5,
+              17.5,
+              38.5,
+              28.5
+            ]
+          },
+          {
+            "text": "/",
+            "confidence": 93.119087,
+            "bbox_px": [
+              4215,
+              31,
+              36,
+              70
+            ],
+            "source_bbox_px": [
+              2189.5,
+              15.5,
+              18.0,
+              35.0
+            ]
+          },
+          {
+            "text": "반",
+            "confidence": 93.304306,
+            "bbox_px": [
+              4244,
+              39,
+              46,
+              53
+            ],
+            "source_bbox_px": [
+              2204.0,
+              19.5,
+              23.0,
+              26.5
+            ]
+          },
+          {
+            "text": "품",
+            "confidence": 92.543488,
+            "bbox_px": [
+              4298,
+              62,
+              52,
+              30
+            ],
+            "source_bbox_px": [
+              2231.0,
+              31.0,
+              26.0,
+              15.0
+            ]
+          },
+          {
+            "text": "/",
+            "confidence": 92.082062,
+            "bbox_px": [
+              4084,
+              37,
+              22,
+              55
+            ],
+            "source_bbox_px": [
+              2124.0,
+              18.5,
+              11.0,
+              27.5
+            ]
+          },
+          {
+            "text": "교",
+            "confidence": 93.293594,
+            "bbox_px": [
+              4109,
+              41,
+              53,
+              44
+            ],
+            "source_bbox_px": [
+              2136.5,
+              20.5,
+              26.5,
+              22.0
+            ]
+          },
+          {
+            "text": "환",
+            "confidence": 93.009468,
+            "bbox_px": [
+              4171,
+              78,
+              41,
+              14
+            ],
+            "source_bbox_px": [
+              2167.5,
+              39.0,
+              20.5,
+              7.0
+            ]
+          },
+          {
+            "text": "~",
+            "confidence": 84.765854,
+            "bbox_px": [
+              4033,
+              36,
+              47,
+              24
+            ],
+            "source_bbox_px": [
+              2098.5,
+              18.0,
+              23.5,
+              12.0
+            ]
+          },
+          {
+            "text": "배송",
+            "confidence": 96.647041,
+            "bbox_px": [
+              3976,
+              35,
+              107,
+              58
+            ],
+            "source_bbox_px": [
+              2070.0,
+              17.5,
+              53.5,
+              29.0
+            ]
+          },
+          {
+            "text": "의",
+            "confidence": 97.023102,
+            "bbox_px": [
+              2964,
+              35,
+              50,
+              58
+            ],
+            "source_bbox_px": [
+              1564.0,
+              17.5,
+              25.0,
+              29.0
+            ]
+          },
+          {
+            "text": "상",
+            "confidence": 93.297722,
+            "bbox_px": [
+              2798,
+              35,
+              164,
+              58
+            ],
+            "source_bbox_px": [
+              1481.0,
+              17.5,
+              82.0,
+              29.0
+            ]
+          },
+          {
+            "text": "품",
+            "confidence": 92.943993,
+            "bbox_px": [
+              2866,
+              30,
+              54,
+              72
+            ],
+            "source_bbox_px": [
+              1515.0,
+              15.0,
+              27.0,
+              36.0
+            ]
+          },
+          {
+            "text": "문",
+            "confidence": 93.298286,
+            "bbox_px": [
+              2920,
+              30,
+              45,
+              72
+            ],
+            "source_bbox_px": [
+              1542.0,
+              15.0,
+              22.5,
+              36.0
+            ]
+          },
+          {
+            "text": "6)",
+            "confidence": 96.336113,
+            "bbox_px": [
+              1682,
+              37,
+              54,
+              55
+            ],
+            "source_bbox_px": [
+              923.0,
+              18.5,
+              27.0,
+              27.5
+            ]
+          },
+          {
+            "text": "평",
+            "confidence": 92.299034,
+            "bbox_px": [
+              1550,
+              35,
+              49,
+              58
+            ],
+            "source_bbox_px": [
+              857.0,
+              17.5,
+              24.5,
+              29.0
+            ]
+          },
+          {
+            "text": "(4",
+            "confidence": 96.57769,
+            "bbox_px": [
+              1624,
+              37,
+              54,
+              55
+            ],
+            "source_bbox_px": [
+              894.0,
+              18.5,
+              27.0,
+              27.5
+            ]
+          },
+          {
+            "text": "ak",
+            "confidence": 65.107422,
+            "bbox_px": [
+              1500,
+              37,
+              43,
+              23
+            ],
+            "source_bbox_px": [
+              832.0,
+              18.5,
+              21.5,
+              11.5
+            ]
+          },
+          {
+            "text": "상품",
+            "confidence": 96.451698,
+            "bbox_px": [
+              1440,
+              35,
+              108,
+              58
+            ],
+            "source_bbox_px": [
+              802.0,
+              17.5,
+              54.0,
+              29.0
+            ]
+          },
+          {
+            "text": "상세",
+            "confidence": 96.966805,
+            "bbox_px": [
+              272,
+              35,
+              106,
+              59
+            ],
+            "source_bbox_px": [
+              218.0,
+              17.5,
+              53.0,
+              29.5
+            ]
+          },
+          {
+            "text": "상품",
+            "confidence": 96.822563,
+            "bbox_px": [
+              162,
+              35,
+              108,
+              58
+            ],
+            "source_bbox_px": [
+              163.0,
+              17.5,
+              54.0,
+              29.0
+            ]
+          }
+        ],
+        "engine": "tesseract 5.5.2",
+        "language": "kor+eng",
+        "psm": 6,
+        "status": "OCR_EXTRACTED_UNVERIFIED",
+        "field_validation": "NOT_PERFORMED",
+        "API_CALLS": 0
+      },
+      "review_status": "REVIEW_REQUIRED",
+      "reason": "OCR text is unverified; confidence cannot establish factual correctness."
+    },
+    {
+      "id": "R002",
+      "source_bbox_xyxy_px": [
+        626,
+        1117,
+        1777,
+        1348
+      ],
+      "scale": 2,
+      "image": "R002_source.png",
+      "image_sha256": "f5de68fa7da01a8871e2228f9020a300c5c6e986efd3eeb3e71a1bd39b420b90",
+      "processed_image": "R002_retry.png",
+      "ocr": {
+        "source": "상품상세.png",
+        "text": "낮은 평균 온 도 와 높은 일 교 차 가 어우러져 과 육 이 단 단 하고\n아 삭 하며, 새 콤 달콤한 흥 로 사 괴 가 생 산 됩니다.\n안 동 시 의 대표 사 과 인 흥 로 사 과 의 신 선 함 을 느 껴 보세요.",
+        "words": [
+          {
+            "text": "낮은",
+            "confidence": 97.011513,
+            "bbox_px": [
+              160,
+              49,
+              153,
+              86
+            ],
+            "source_bbox_px": [
+              706.0,
+              1141.5,
+              76.5,
+              43.0
+            ]
+          },
+          {
+            "text": "평균",
+            "confidence": 93.304169,
+            "bbox_px": [
+              335,
+              49,
+              149,
+              85
+            ],
+            "source_bbox_px": [
+              793.5,
+              1141.5,
+              74.5,
+              42.5
+            ]
+          },
+          {
+            "text": "온",
+            "confidence": 93.239006,
+            "bbox_px": [
+              510,
+              51,
+              76,
+              83
+            ],
+            "source_bbox_px": [
+              881.0,
+              1142.5,
+              38.0,
+              41.5
+            ]
+          },
+          {
+            "text": "도",
+            "confidence": 93.287804,
+            "bbox_px": [
+              585,
+              63,
+              75,
+              61
+            ],
+            "source_bbox_px": [
+              918.5,
+              1148.5,
+              37.5,
+              30.5
+            ]
+          },
+          {
+            "text": "와",
+            "confidence": 97.016212,
+            "bbox_px": [
+              661,
+              50,
+              54,
+              82
+            ],
+            "source_bbox_px": [
+              956.5,
+              1142.0,
+              27.0,
+              41.0
+            ]
+          },
+          {
+            "text": "높은",
+            "confidence": 93.306229,
+            "bbox_px": [
+              762,
+              51,
+              155,
+              84
+            ],
+            "source_bbox_px": [
+              1007.0,
+              1142.5,
+              77.5,
+              42.0
+            ]
+          },
+          {
+            "text": "일",
+            "confidence": 93.289207,
+            "bbox_px": [
+              942,
+              49,
+              64,
+              85
+            ],
+            "source_bbox_px": [
+              1097.0,
+              1141.5,
+              32.0,
+              42.5
+            ]
+          },
+          {
+            "text": "교",
+            "confidence": 93.296051,
+            "bbox_px": [
+              1015,
+              58,
+              77,
+              66
+            ],
+            "source_bbox_px": [
+              1133.5,
+              1146.0,
+              38.5,
+              33.0
+            ]
+          },
+          {
+            "text": "차",
+            "confidence": 93.270073,
+            "bbox_px": [
+              1141,
+              50,
+              26,
+              82
+            ],
+            "source_bbox_px": [
+              1196.5,
+              1142.0,
+              13.0,
+              41.0
+            ]
+          },
+          {
+            "text": "가",
+            "confidence": 89.592941,
+            "bbox_px": [
+              1166,
+              67,
+              39,
+              50
+            ],
+            "source_bbox_px": [
+              1209.0,
+              1150.5,
+              19.5,
+              25.0
+            ]
+          },
+          {
+            "text": "어우러져",
+            "confidence": 89.592941,
+            "bbox_px": [
+              1265,
+              49,
+              289,
+              84
+            ],
+            "source_bbox_px": [
+              1258.5,
+              1141.5,
+              144.5,
+              42.0
+            ]
+          },
+          {
+            "text": "과",
+            "confidence": 93.074844,
+            "bbox_px": [
+              1585,
+              64,
+              52,
+              52
+            ],
+            "source_bbox_px": [
+              1418.5,
+              1149.0,
+              26.0,
+              26.0
+            ]
+          },
+          {
+            "text": "육",
+            "confidence": 89.713882,
+            "bbox_px": [
+              1638,
+              49,
+              166,
+              84
+            ],
+            "source_bbox_px": [
+              1445.0,
+              1141.5,
+              83.0,
+              42.0
+            ]
+          },
+          {
+            "text": "이",
+            "confidence": 93.30452,
+            "bbox_px": [
+              1746,
+              0,
+              44,
+              172
+            ],
+            "source_bbox_px": [
+              1499.0,
+              1117.0,
+              22.0,
+              86.0
+            ]
+          },
+          {
+            "text": "단",
+            "confidence": 93.284836,
+            "bbox_px": [
+              1840,
+              49,
+              74,
+              85
+            ],
+            "source_bbox_px": [
+              1546.0,
+              1141.5,
+              37.0,
+              42.5
+            ]
+          },
+          {
+            "text": "단",
+            "confidence": 93.298981,
+            "bbox_px": [
+              1918,
+              49,
+              73,
+              85
+            ],
+            "source_bbox_px": [
+              1585.0,
+              1141.5,
+              36.5,
+              42.5
+            ]
+          },
+          {
+            "text": "하고",
+            "confidence": 96.953819,
+            "bbox_px": [
+              1989,
+              50,
+              154,
+              82
+            ],
+            "source_bbox_px": [
+              1620.5,
+              1142.0,
+              77.0,
+              41.0
+            ]
+          },
+          {
+            "text": "아",
+            "confidence": 93.252968,
+            "bbox_px": [
+              371,
+              207,
+              41,
+              39
+            ],
+            "source_bbox_px": [
+              811.5,
+              1220.5,
+              20.5,
+              19.5
+            ]
+          },
+          {
+            "text": "삭",
+            "confidence": 93.289421,
+            "bbox_px": [
+              453,
+              187,
+              55,
+              84
+            ],
+            "source_bbox_px": [
+              852.5,
+              1210.5,
+              27.5,
+              42.0
+            ]
+          },
+          {
+            "text": "하며,",
+            "confidence": 96.777496,
+            "bbox_px": [
+              499,
+              187,
+              192,
+              86
+            ],
+            "source_bbox_px": [
+              875.5,
+              1210.5,
+              96.0,
+              43.0
+            ]
+          },
+          {
+            "text": "새",
+            "confidence": 93.157875,
+            "bbox_px": [
+              723,
+              187,
+              62,
+              82
+            ],
+            "source_bbox_px": [
+              987.5,
+              1210.5,
+              31.0,
+              41.0
+            ]
+          },
+          {
+            "text": "콤",
+            "confidence": 92.988457,
+            "bbox_px": [
+              799,
+              188,
+              71,
+              86
+            ],
+            "source_bbox_px": [
+              1025.5,
+              1211.0,
+              35.5,
+              43.0
+            ]
+          },
+          {
+            "text": "달콤한",
+            "confidence": 93.299995,
+            "bbox_px": [
+              874,
+              187,
+              226,
+              88
+            ],
+            "source_bbox_px": [
+              1063.0,
+              1210.5,
+              113.0,
+              44.0
+            ]
+          },
+          {
+            "text": "흥",
+            "confidence": 89.678894,
+            "bbox_px": [
+              1124,
+              190,
+              74,
+              82
+            ],
+            "source_bbox_px": [
+              1188.0,
+              1212.0,
+              37.0,
+              41.0
+            ]
+          },
+          {
+            "text": "로",
+            "confidence": 93.00946,
+            "bbox_px": [
+              1201,
+              200,
+              75,
+              60
+            ],
+            "source_bbox_px": [
+              1226.5,
+              1217.0,
+              37.5,
+              30.0
+            ]
+          },
+          {
+            "text": "사",
+            "confidence": 93.263412,
+            "bbox_px": [
+              1276,
+              189,
+              75,
+              80
+            ],
+            "source_bbox_px": [
+              1264.0,
+              1211.5,
+              37.5,
+              40.0
+            ]
+          },
+          {
+            "text": "괴",
+            "confidence": 91.530594,
+            "bbox_px": [
+              1353,
+              189,
+              74,
+              79
+            ],
+            "source_bbox_px": [
+              1302.5,
+              1211.5,
+              37.0,
+              39.5
+            ]
+          },
+          {
+            "text": "가",
+            "confidence": 93.146004,
+            "bbox_px": [
+              1432,
+              205,
+              38,
+              51
+            ],
+            "source_bbox_px": [
+              1342.0,
+              1219.5,
+              19.0,
+              25.5
+            ]
+          },
+          {
+            "text": "생",
+            "confidence": 93.146004,
+            "bbox_px": [
+              1534,
+              187,
+              63,
+              85
+            ],
+            "source_bbox_px": [
+              1393.0,
+              1210.5,
+              31.5,
+              42.5
+            ]
+          },
+          {
+            "text": "산",
+            "confidence": 93.27327,
+            "bbox_px": [
+              1610,
+              188,
+              74,
+              84
+            ],
+            "source_bbox_px": [
+              1431.0,
+              1211.0,
+              37.0,
+              42.0
+            ]
+          },
+          {
+            "text": "됩니다.",
+            "confidence": 96.650291,
+            "bbox_px": [
+              1764,
+              187,
+              162,
+              84
+            ],
+            "source_bbox_px": [
+              1508.0,
+              1210.5,
+              81.0,
+              42.0
+            ]
+          },
+          {
+            "text": "안",
+            "confidence": 92.176132,
+            "bbox_px": [
+              218,
+              326,
+              74,
+              84
+            ],
+            "source_bbox_px": [
+              735.0,
+              1280.0,
+              37.0,
+              42.0
+            ]
+          },
+          {
+            "text": "동",
+            "confidence": 93.24131,
+            "bbox_px": [
+              300,
+              328,
+              70,
+              84
+            ],
+            "source_bbox_px": [
+              776.0,
+              1281.0,
+              35.0,
+              42.0
+            ]
+          },
+          {
+            "text": "시",
+            "confidence": 93.254181,
+            "bbox_px": [
+              376,
+              326,
+              59,
+              82
+            ],
+            "source_bbox_px": [
+              814.0,
+              1280.0,
+              29.5,
+              41.0
+            ]
+          },
+          {
+            "text": "의",
+            "confidence": 97.016068,
+            "bbox_px": [
+              443,
+              336,
+              53,
+              54
+            ],
+            "source_bbox_px": [
+              847.5,
+              1285.0,
+              26.5,
+              27.0
+            ]
+          },
+          {
+            "text": "대표",
+            "confidence": 93.284775,
+            "bbox_px": [
+              547,
+              327,
+              149,
+              81
+            ],
+            "source_bbox_px": [
+              899.5,
+              1280.5,
+              74.5,
+              40.5
+            ]
+          },
+          {
+            "text": "사",
+            "confidence": 93.25386,
+            "bbox_px": [
+              722,
+              325,
+              66,
+              83
+            ],
+            "source_bbox_px": [
+              987.0,
+              1279.5,
+              33.0,
+              41.5
+            ]
+          },
+          {
+            "text": "과",
+            "confidence": 93.289825,
+            "bbox_px": [
+              796,
+              325,
+              144,
+              85
+            ],
+            "source_bbox_px": [
+              1024.0,
+              1279.5,
+              72.0,
+              42.5
+            ]
+          },
+          {
+            "text": "인",
+            "confidence": 93.294296,
+            "bbox_px": [
+              873,
+              276,
+              55,
+              173
+            ],
+            "source_bbox_px": [
+              1062.5,
+              1255.0,
+              27.5,
+              86.5
+            ]
+          },
+          {
+            "text": "흥",
+            "confidence": 74.913193,
+            "bbox_px": [
+              971,
+              325,
+              76,
+              87
+            ],
+            "source_bbox_px": [
+              1111.5,
+              1279.5,
+              38.0,
+              43.5
+            ]
+          },
+          {
+            "text": "로",
+            "confidence": 93.265022,
+            "bbox_px": [
+              1047,
+              336,
+              76,
+              63
+            ],
+            "source_bbox_px": [
+              1149.5,
+              1285.0,
+              38.0,
+              31.5
+            ]
+          },
+          {
+            "text": "사",
+            "confidence": 93.240433,
+            "bbox_px": [
+              1122,
+              326,
+              76,
+              82
+            ],
+            "source_bbox_px": [
+              1187.0,
+              1280.0,
+              38.0,
+              41.0
+            ]
+          },
+          {
+            "text": "과",
+            "confidence": 93.185425,
+            "bbox_px": [
+              1200,
+              325,
+              74,
+              83
+            ],
+            "source_bbox_px": [
+              1226.0,
+              1279.5,
+              37.0,
+              41.5
+            ]
+          },
+          {
+            "text": "의",
+            "confidence": 93.298859,
+            "bbox_px": [
+              1279,
+              336,
+              49,
+              55
+            ],
+            "source_bbox_px": [
+              1265.5,
+              1285.0,
+              24.5,
+              27.5
+            ]
+          },
+          {
+            "text": "신",
+            "confidence": 93.294083,
+            "bbox_px": [
+              1370,
+              325,
+              75,
+              85
+            ],
+            "source_bbox_px": [
+              1311.0,
+              1279.5,
+              37.5,
+              42.5
+            ]
+          },
+          {
+            "text": "선",
+            "confidence": 93.23497,
+            "bbox_px": [
+              1451,
+              326,
+              66,
+              84
+            ],
+            "source_bbox_px": [
+              1351.5,
+              1280.0,
+              33.0,
+              42.0
+            ]
+          },
+          {
+            "text": "함",
+            "confidence": 93.256683,
+            "bbox_px": [
+              1524,
+              325,
+              63,
+              87
+            ],
+            "source_bbox_px": [
+              1388.0,
+              1279.5,
+              31.5,
+              43.5
+            ]
+          },
+          {
+            "text": "을",
+            "confidence": 93.306007,
+            "bbox_px": [
+              1598,
+              326,
+              55,
+              84
+            ],
+            "source_bbox_px": [
+              1425.0,
+              1280.0,
+              27.5,
+              42.0
+            ]
+          },
+          {
+            "text": "느",
+            "confidence": 93.237862,
+            "bbox_px": [
+              1702,
+              326,
+              145,
+              83
+            ],
+            "source_bbox_px": [
+              1477.0,
+              1280.0,
+              72.5,
+              41.5
+            ]
+          },
+          {
+            "text": "껴",
+            "confidence": 93.14357,
+            "bbox_px": [
+              1781,
+              276,
+              77,
+              173
+            ],
+            "source_bbox_px": [
+              1516.5,
+              1255.0,
+              38.5,
+              86.5
+            ]
+          },
+          {
+            "text": "보세요.",
+            "confidence": 96.771927,
+            "bbox_px": [
+              1857,
+              326,
+              248,
+              83
+            ],
+            "source_bbox_px": [
+              1554.5,
+              1280.0,
+              124.0,
+              41.5
+            ]
+          }
+        ],
+        "engine": "tesseract 5.5.2",
+        "language": "kor+eng",
+        "psm": 6,
+        "status": "OCR_EXTRACTED_UNVERIFIED",
+        "field_validation": "NOT_PERFORMED",
+        "API_CALLS": 0
+      },
+      "review_status": "REVIEW_REQUIRED",
+      "reason": "OCR text is unverified; confidence cannot establish factual correctness."
+    }
+  ],
+  "detector": "light_background_neutral_text_rows_v1",
+  "coverage": "PARTIAL_CANDIDATES_ONLY",
+  "detected_regions": 2,
+  "omitted_region_count": 0,
+  "field_validation": "NOT_PERFORMED",
+  "API_CALLS": 0,
+  "note": "No factual corrections, product-field inference, or automatic approvals."
+}

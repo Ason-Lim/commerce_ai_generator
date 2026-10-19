@@ -1,0 +1,156 @@
+{
+  "id": "resp_04de8b151e39b440016ad5ab8a714087d0ba35652b66630e22",
+  "object": "response",
+  "created_at": 1792387978,
+  "status": "completed",
+  "access_programs": null,
+  "background": false,
+  "billing": {
+    "payer": "openai"
+  },
+  "completed_at": 1792387993,
+  "error": null,
+  "frequency_penalty": 0.0,
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 2500,
+  "max_tool_calls": null,
+  "model": "gpt-6.1-sol",
+  "moderation": null,
+  "output": [
+    {
+      "id": "rs_04de8b151e39b440016ad5ab8c703c87d0afbb7101a5ff81e6",
+      "type": "reasoning",
+      "content": [],
+      "encrypted_content": "gAAAAABq1auZysiKoa4mifV8mvcYpHVrp4vCWg6Ij9cOAdJPjWHjFdhs7GtTmfsRRSjPrEIV0svLUm2mSDaIiLdzuN6U4uf_PzHkjbGrVnOESfCKXg5eMCfXAnA9Ym32LPbC4YtxaKMpK4v2Vq51FQYPaPDyzBXsRUuL3IDo-ctdAdQyrf6VHajMkSVoPgly1KoJ4xE7Mo7yzXDSFjOzBmox3duVzMJHi_amz_IptA36EWVSdhUmeifsQKYFfyOnU04oEksV7E3XV3BRwoUHKJrS23SYYgesyg1X5ewJJuRYAO-feXZqfM4nSNt08MuX096UhVUJnfpvo6BT7kWIPaHn17jurzPTQFVDVT2mGW2fcwI5Bsd78BuDDn2HfrZTpngcf4q3zUBNEQP7x8FfN9pj_6uMja4PvNET5O76oF-9nktOVRqqAF_N6YpEGbwmTabnohMxB-WtfVoAGwiESfr1la_iwzNuhMG6ce9wRmjaYiUF6xHv_8frQtwk4mJH06JbB4KNlpKYD4SNIjDxO_w5ut_M5YEBJqdiaqHvIq8HEu-0fH68IORge-QoQUaC4GXKYbKfa_zVRcXyOOf2U8FMAMxkXuZADHf8jWag4Mfnb70C-me7bPciFjHpDY9okMuXkpLxiByfAxnESmbPZI7X-FUYBW-OpryVwR8UESQLunMb6Mxkyt_6FhtYNyMXjsLojPI-wuFS8NLuVjwkvUkkAOpMAR6_Y8Fo7u89WCvCk90CWm0HsG2LfDsF2IMDpTjUe-b6YdLl1iOeK1QFMt25CRVZhg55ESEDVKTPL9btYeo1NH5kVeRNf9J6gWS32cNKqXxt3Dmc0kNt0tOY2CPuYwUlxmK2tZmHibz-Ta2AEeuKlDf0lDVqjDY02qm0w9ddEM3xZGVxlYoIyN7hYt6HsehkZoQQj0LA4pZ6rSBNCni5XbHYW93l86HjcgXkKtsU-4DHRsOw6bIx16ve0h8hsRhV82kN1ti9uzeOixiZw-X7YaVQg16_OeNYoR_hX_18X0OHMr3buZN0r5Ax4mvMVv17ttjBoMEk7P3xUoaR3unOsyro-wXGumgHObmgvk0qVe9wxRLJzjCKi20xmN_5tRB0VzilQpFEGyzo7xYBk0nG2gzyVblSO_zRrLuZgspp3899mggBPLz97qHlq0zTOqJQ_13bHLBOMTZNxhX2jKvyZorqN11xVTmM4IPYbp-VmXvK8hzJ0sAZVMlTTECpi0LG7PmTQb6wpRbLJGq7zqCoYPuF0ftmhQJhks9tHeda208bMeWTWn_0W3f7kU8yy37yeqtocONZYEgQYmTMZk6e49baqxzsi54Ui87aqJu0WkS_1CDhO3A4kVXcVl47_-0WS5JczEt1O0C2Kb9g4nU2IY04am7Fzj8IS_IcLNg6QYM_fAP_PSyh1r5bxgc_lkfTF0G101gVkPItv-eFu7mLmr3xGazdNNbKHR2eaDD0Bt8dBfseX4Tg4bp4RX75Y6DkGY7dvRiAY4XkKNnpgejD4sWyDkNI6-VG4uUvYy1mGiHETNuo4E60gLIyK7_SwtPxgWSzqMvMuOVMFSu6eApzJeH2LQjy1OaEy5vbcvWhyk1QVZfRJqZOn6Y-JYVok-mGyRyUNiBW9-68nXTSwhxBB9UXoWQXuTbdw5fBjqDByrykXF50tFuQF_3r52uO0N0g5Soi-ue-0onjn0M8CO28ZttwrIFnN1dNWzqNjZ21_ewCySdDEzi8vp5hOkM6q-0XCVS3lqOztvwWZITgMlecr2HiAZHxnSq8it1KYhWq9hPWDbiyY2S4e3bjcSeAmDzfHfpfx1OW9XGAoKYG3RgEM4NGq0NjBoXT8e1Gr73ZQifYdkQHnqn3H6hsv63KDFiRNWu8uEMw9aPbziCh5vltuGkltGHS2ypgtmT7smtmprP91EXBuKYSdLsOW_CDa6DjxS8MZ2pk1FJey93eyjZ-M5Y8VK9KCP5fUgds3ZGwzMGQpuLAABom1irnzvGx_3E8GO24z6UfRb4oswUarN1WbY_CJK3wlbsix8B1hd9WmQaT03Q2_SjQESMfsbskPQQA46HoYOIkWcDMwWawAyfgGB-4p1Ty_Enzc94D9MRnbqQtpOJ8fNwghgAxsYxmjFUup1gY7WVn42yflIHRDvaxVKFu6zQRDHKlpV6LpEY4V7anRW0bRQ3CSeQpqb7Km6AHUPPV8w==",
+      "summary": []
+    },
+    {
+      "id": "msg_04de8b151e39b440016ad5ab8f10a487d0874d7b814d9326a0",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\n  \"transcription_issues\": [],\n  \"claim_checks\": [\n    {\n      \"claim_index\": 0,\n      \"verdict\": \"supported\",\n      \"reason\": \"이미지 본문에 '홍로사과'가 명시되어 있습니다. 다만 별도의 상품명 표제가 아니라 설명 문장 안의 표기입니다.\"\n    },\n    {\n      \"claim_index\": 1,\n      \"verdict\": \"supported\",\n      \"reason\": \"이미지에 '낮은 평균 온도와 높은 일교차가 어우러져' 홍로사과가 생산된다는 설명이 있습니다. 생산 환경에 관한 판매자 설명으로 확인되며, 실제 환경을 독립적으로 입증하는 자료는 아닙니다.\"\n    },\n    {\n      \"claim_index\": 2,\n      \"verdict\": \"supported\",\n      \"reason\": \"이미지의 '과육이 단단하고 아삭하며'와 일치합니다. 식감에 관한 판매자 주장으로 확인됩니다.\"\n    },\n    {\n      \"claim_index\": 3,\n      \"verdict\": \"supported\",\n      \"reason\": \"이미지에 '새콤달콤한 홍로사과'라고 적혀 있습니다. 맛에 관한 판매자 주장으로 확인됩니다.\"\n    },\n    {\n      \"claim_index\": 4,\n      \"verdict\": \"supported\",\n      \"reason\": \"이미지에 '안동시의 대표 사과인 홍로사과'라는 표현이 있습니다. 판매자의 지역 관련 표현이며, 공식적인 대표 품목 지정이나 실제 원산지를 입증하는 것으로 볼 수는 없습니다.\"\n    },\n    {\n      \"claim_index\": 5,\n      \"verdict\": \"supported\",\n      \"reason\": \"이미지에 '홍로사과의 신선함을 느껴보세요.'라고 적혀 있습니다. 신선함을 강조하는 홍보 표현이며, 실제 신선도를 검증한 사실은 아닙니다.\"\n    }\n  ],\n  \"remaining_uncertainties\": [\n    \"제공된 이미지 범위에서는 글자 오인식이나 문장 잘림이 확인되지 않습니다. 다만 식감·맛·신선함 및 생산 환경의 실제 여부는 이 이미지로 독립 검증할 수 없습니다.\"\n  ]\n}"
+        }
+      ],
+      "phase": "final_answer",
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0.0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "prompt_cache_retention": "24h",
+  "reasoning": {
+    "context": "all_turns",
+    "effort": "medium",
+    "mode": "standard",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": false,
+  "temperature": 1.0,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "description": null,
+      "name": "sol",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "transcription_issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "claim_checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "claim_index": {
+                  "type": "integer"
+                },
+                "verdict": {
+                  "type": "string",
+                  "enum": [
+                    "supported",
+                    "unsupported",
+                    "uncertain"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "claim_index",
+                "verdict",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "remaining_uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "transcription_issues",
+          "claim_checks",
+          "remaining_uncertainties"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tool_usage": {
+    "image_gen": {
+      "input_tokens": 0,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "total_tokens": 0
+    },
+    "web_search": {
+      "num_requests": 0
+    }
+  },
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 0.98,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 936,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 550,
+    "output_tokens_details": {
+      "reasoning_tokens": 59
+    },
+    "total_tokens": 1486
+  },
+  "user": null,
+  "metadata": {}
+}

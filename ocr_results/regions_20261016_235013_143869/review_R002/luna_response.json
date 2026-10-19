@@ -1,0 +1,157 @@
+{
+  "id": "resp_0b1098a3f71d6c57016ad5ab80b95487d0bba82509411bc770",
+  "object": "response",
+  "created_at": 1792387968,
+  "status": "completed",
+  "access_programs": null,
+  "background": false,
+  "billing": {
+    "payer": "openai"
+  },
+  "completed_at": 1792387977,
+  "error": null,
+  "frequency_penalty": 0.0,
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 2500,
+  "max_tool_calls": null,
+  "model": "gpt-6-luna",
+  "moderation": null,
+  "output": [
+    {
+      "id": "rs_0b1098a3f71d6c57016ad5ab8204d087d0ad5e17bc0b014b56",
+      "type": "reasoning",
+      "content": [],
+      "encrypted_content": "gAAAAABq1auJYLt_scm-ZRFGA33mkffq4CxDjpid8TXJ8T33BN7kA2ujnFg8QwNp-pAZRXOgTBqcg84Tuhz7MI9Q8bsSKymcQdKJstGN_vuO358MI4OzQdzw6_r7DxIUbEMBQRb0qIH4BlKqAZFdrYKPzkYMvlPD2JtPwHkfPr6ASsCEQqz8ojAFOMcRWVsfZdHoeP2i9_q-RTkG8AIk20BqKpomBtCLfxkWSgwG6ZT-e5vEjMCFgabq2WW_JNOs_YB9mT_HaA9Mxxd4PwibwbselcskXJDQLHu-R_wQSkm7E3vd-PXw5e_5YjaABYxzJdCoA6eDMRKs-UhXEV5OOFAUAl0wKQHooILOSyqb3ml8uND_AE9Xgaap9k-1VY0jQ5AiUjWxriKft74hllUtWV4hpVY-uq9zW-Krfq9JydAunXVaCmfqEoXAsAsu8c_Vse0m__DLf6CGbna_u9Nze_tpiZ4bqfQHDmrXCBzC9cX-9RBFt-_Xxa6748vjIGWQiSnwQDpWEDdDWym3Nx0jqrsbM5wdE0tkUZ5Elxh3lyay0XtHIWXBjBshjwIYRqWpJGRqs6KzPYI87DAubGRhkYc3qF7NmWqYqUemCBwZC-W1qUn5V9L6m_EhaLLINGunPRK-TAcnm-10yqLjlL8QKZPgfkxOoyYzaMOX4Y6LK98Jtt3QwsHfqhdUjLPUudPMYls2zNp0Max7vr6hcsWxmxDIpZXddyInRjkaf7_N9YV3kwrNihkYQFUtyztAI67hpXkmqknyA5QxfQW3wqp8kqmJhOYkhRlGi0IayYdZ0ZUoufrveaxlhpyJ7BWWIsXibtm6m3Z3wWJeRZ-K_oORN0tLwhotnS7TVsY7ZIySFOVUP6oqtqavXiVlULO3YeF0fOxRzRYDuCYPs1-p9eFY5hqWx5vd5b2cNZwEUa0N2A4rpOFk0ykqElU2eFIOk7laLQEx0tgYHcnJl-GqfsIacPElMVNHdqs4bhubB1wiKvaOru2z1QYBrEWbwapgpdyXp9QUWxHJtwMAuCArW_ygbJiQrl3F2VaVfxxLlhi_wHeP8ysRmPd9p02K12zJ0ULpGIl5rg7FVupU8naNdf68rtkkR8gMGAnqSVPao8hqlnWE95qZqetpnGw9QH9JnRKZ42lNDWHwYVNHp3nT6Y4-0V-DtNAQJe3LW5ozrks3PG0tLBCZYo3DOPYxApshHtBuDhSci98mKKCRXu7ZZMIYGYzWdK-f7Cei0PzJwV9KlFqBqWLFe3PcGQr2DomZthykaXFoUaeWFAQIUTigtVe9p6YaBPu7ComHRpcX1vWb3QKKk8yJfPJMmo4C6t_QeU51Hy-nu-16dl4rX0hcDccMtn35OaIfVdA4f2NnmUuQRESELH5JOfBKVWZT8a_4DOE9LiMK9MP-JqGjTDtfq798jVK9CVC6fNsjkZkN3Wl6RHTl5swAGk5e0DBEq79m5jnV8BKhnA4LmqU7P-a38b030eMwm80Gt6LpdkZthASwqGRR0PGuBgxaYBoFv85A4-bw9Ff0LCiUb9q4Ag8qcpWrsyHrPsxDNSxYAiUIg1MoRyOFnVsX3iKlf0dXUotHRGjz3LpKYdMTuP_0Zw5IVa8jQrFTWXsZumpxKgmwTE_Ovr5-wUnI06JeI-F8EPeyvGohOPXboXgX6w6Q4TThBXUIKsGZVyLq0PzsAZmf3hmOymqMMr4Eg90USeGzjJNEJz3iRr1CVKkYjQ56NsfWdFNG0xZGEG81nd0CyvJ91oLjIH9BD2vuBfVbj6dh6_DbYBeyamXGA0Tcbe1SGEBtxlkgk8oXm4MFvFYsDMJRjVUab72c8i352oPPyuBUS915IlqS19MNycMJLqdgF_Yt9-aoUsiCIDSb4tYtlvn7R6b5mYv3cHW9u3gP0IrNX2x3XjHxze11W8mjMcW8SH9Zb95cYd8Q44FnPvNF2rgSetwlwPFPwmg0xo5GpP29E_0rMjXJ-V8b0ADNi6G-dtEcVzaUfhltUUam9eXcCcbJFdkxVPp5zoPTkCPtb-6Cg8FGb5utF2r0eE-kEOzR-OlbYKX4tE_3g0yMvY9sqPvgUtKx829_dzfGweGBUYsd8A4nxyCzUs739LSY841pb5GtjpE3xYMfV3c48tO65zd0j5tv4WxAmIKRuwN7nYWO47THOx5QwQJugpyWkJKkXdMaoRMMM5rL49t9eymQbgtcfcHxRYqyEbz4T4c5NWnqlMpWaGOQiMnJ-j7rDSZWJxRkcbHCGk6OFtba0lXv8L1LLw05d3xDhqv2qEkXGpD2bp1W_Yva58Xet9eumxzVJyen0Psp1LJUck-gpqQSqpipG4OsBMpmYhqsypv01Gps1TvSYjsq6pBfSiRhHf0_3qcDJHGnxSLH0146SfjkeEed6qyi_gbM9g-8IIj9vimvDukEBQ0HkOjHbPGs0dDQyIFXuCYU7PNsI6v9dnlY5Jos_JxWFtwp1MM6KrB8DJzjjGqV8i8s8v7CgNP98kYpcMRxSi7UfSVkD5QOCoE2FoINCrRlnx1YL2TuTtSWR9QV84fJCNXSwRH0LSCOPO_N7thLPYCVc_NP-zvECk_i9KTDn2FfdjuLWApbmMkXNfkk9F_fmV-Z1w4MyiL2jmDlABl5TfkPrzM2ft2UxIE6aBS6Phnch780oYOxDtvAEHNR-wHBpfcS5KM95b6TDarn7yeRbAqY8J7Z6HE8wwNs6O61Wv3p41QCyll3azSgIwKSFG__-28NDT1olAa3tEg3z6UfzIppxBCrIPd_mISpq71YcMMrz8je8fDp-pTqSan70tqbvUtWU52_z_fpH2XGIYmIjAAtphFxe3o61uL08G7nTBiWHazrjq7D-y36EolkKB5dVSKEfn1T5c6nHnYTW-FGWCUnrxwhB2F_V7QcS2mzaHjLPQLRcExNgaNV7RHZuQkSDTULrEENCI5redSeliga1iAx7871RmiXsw9X8T7mKsWHicZ3dtk1QtITqcQH25xQpAYWEGzfl4IxcCwWnA_xCuz8sBi3Hvl8vQsusAB5cBYopw0T3iRfl72ssOl9cWx49M1tEtacGoc--Uc8aFPaH3XbbREGzVBavImRTza3UUW79qSxg2jW1BpSUaMrVq30GC2y5HMmmmVt2jhtvHngsK53x0QsKwHV68R-BWmHhPpgJDVf5hkPJ-UMBFXocT1cK6TASkaPlv1BIkva9nwx8Ph6bYUagNVLq5PK5LaoGSG3A46l_5PuGJtsa761qfFYk1aPiALB3yhGN-G385zp31WRJBd5wP2I8ui_uXJr-2WNnWjc9vkDnCBzdo_jBACsLztF0YYOmWcNnlQyhhn3Gd4dGUj_H3_RgcR8igmZL2oHr_97tzvq7jkvc3pxW3hRWaY8oNVrg5ea_4B_EwcrDK_JGb_gcoGWJzv8NoOjUeYyocXkuQv1NFVCrqJhsHjJIQYG5C1DtTPfyysSXYgsHiEiHXyypssRRcnlILwR3mVZLbhayySnUpOX2wJgBdfJc1_AJUv72eCGngj6nuMNk5Z7vuaWn8Pi0XNu1E-7Gy1f1H1w1EZHy4jvsY2VNcDPYPsiTOP-IV-I7Wkfm2s2Gws4W_QWzEOAkiBqGoQTifUwmaYxq5Zjg5aPynWHF8DtxgqUD--tia3KENX_3sfoqZrSDlHd4mEzem0zANeZoA-YYd6jdslXWbgDvY7UrSjzGGyBEoCMd8xX0Svfdv134sAHc-ZAA1J_dRfthWfyT0NBcllZXu212u4_9qelpay7ob_tUm5i0KKqVr-qXSm3yvLKmj_CLk-tywfZ4M4N_ItGjiQnvJOLJSVujajaBfryWX_96zFjo6LlGfzpcTivzwyR67DMO0aI4cYWL5THzp_tN2PEcnAUwz5NMXWSs2jm9fnIDLLNUXP2VPyACXOSYzVS3A9oUJdmbeG41rBCO8Ib7i-i46mQrEc4stz58eu3dWW6ms9FCuJBFec7CUCmFylU79VJ1ropwfFz4q4N84vEHcnr9vdYlysW2Mi1j7LALy559NwJt1TFNakiK2P3j4qXIccYYZFwQYzxvwn8iyb_dSIlhebytg9SjoegmDrNG33VsZW3yS3I9OIqtcA8Z01LC20WFur4z9PHriWfHL5Tv3-P-eTANh-M4pqRct7yGaG4KsFghWy4kIfpF1o7nQPWgpnfCiCGlc4aL9EHkFr5jGE-_3qJR6l0fuXVyDpGqEz4o-qHks5ieluTW6q9WjSsVcxVpsn6R2PzH_h0gMI3KE1JSbdIDsN5gcy8SOE7EQw5GJqNUp7R1iZdute7gw1jAi8-4nQgAbnyXYq-HJNUDZw121j76zv7zfZLbc-bTgpDLulda9LTzfAI144-xqrb9HGxDI7g6nEhjmjaHE3zkNmHtk8H9GlwWqSmqPhL7ixYSAXKHqPyEbmE9OY3gu0C41yxiQAMIRIObNaiBzpLcqk1kIiN5XGc34O3QEbxCyomUqt29GcU0xY6WXhrc5B5Kt0feXnH7YTf5pI7LHnW9cNgVLlfaxoUkdQi-DhuXDuJ6Ot5RzEpQCqg9ydkpeq7JhTYAFByhnE389meJEGSGI6yzr2lpPEg91zwP03vQbrCo-OnLKptlWdDiaDO7psL3axhO_ikNz2JLoAGsGWiyHJ39e7M6d3OFTM-g2ricGlFNyl8iKS1t4ypPbcomMT4uEGXlX5TMZ0j9Q0FQ9C2BdkjpuG2VkhDpQ96X0UZrBrVaS2uV4chgVxFa7jYFIQhdrMv4sGvSHcsjnlarnezomZT4Abne8O2wCWKXkEb2V-_Z9unBoNN1YzpTpKDuoOQRcdWjeeQwP1icYoFQ4S1AXoAh5ri7E_wo2NhjeCaWFIZAKgZ_K_vY5HEendzE35XkTc7TqtyRTojRKl9pNC85LQsQ_vInmqc9nIm9ih0IgQc95D3MvR-46hFfnTYi4VpgF84HP1MTNX3eKMMQnJ51QEx5zDX7ZBbheg485a8K7ZCViCH4HA8MnvBNMI8dQWUSSSk4Ccc1TA8lx7jKqM78avUZQba-JFPUTFl7iF-EzDNrs7ze-Y8WS1KRhh_FT2B56lyEiHVJxrpwOzoVDtHapMc9GlUO03yowGNGz_YfCuVgmZekvdtMQmIkr2oKcuFimTflKkLdx593myWO3IBLA3JlPN50wRzKswmipGd6vuO5ujwTztCH8WJlCepZkm1_B6JyoZ5ViYjS0APoV8L746ZSg545kTz9y2uQ4uk7qec-yaVNz_OKrmlQszmryPoU6GJoSKgXHq9PVhrNsj1b_oCgF-xJ8hPtgD0PYx4cpacOFOzW1cSZZ5OpuIFbQNTbmQnikZN1rdvmP450_skVDCc1Mf_sFwxQp2NSvvOSEP4H2c8ftyw0RGceBuY36qZdAOcf8fIbIW1h7wUOqqdC73gCi6tqhrA_P0-DTnwVEVl7sUEj14kJx-_rX-RcKWIzGiI6FjnWlBuA5bFtawzkDV2Un0ZI4ZnKV-v02ClctpyHaE48yB8E-nqR0CWAmKtbeexXqiia9pYCAT-6a2zT1wXcZwIcBuPMrEvtj-LekIPYkKXnD0-Hm7rHtHRSCv12BB70XgATREkpshFQ_v7YcFHywQ6B95XqyDuu3OVXdOkG8mdcW0HxOqP1joG1OIPNKpXD2U5xm9SszCEeyuxHkRj-JwfcqJq0fTNOdX_QXOTSLRUPsjPFywBOSEKNKpQC_CfmojqJIw4x1w61dtXvQSS53xs9uuFY7rECHTUnoZgqzAoC4WnKkuA1UEWvIGKYZUFbE73ntSnvvTlG7FQUHvN99nMzPmvDuJGRZKLFPaNUTAJV4YjQyHeeAngBWz0r9GSCtUfUU94HRqj2midBQ9h26aQNr9IyQ4LalVa6TjD6Ha1eiscoRRbPys8PbaTV8CEB-Ao0F_nLeg-TemH1ZonN305MGd8mX1T--W5-MIwDuP3gHawBvdgMsJKM7iqc9MvLbAFlUTu-Jp1p-jzApksnbS5McpY86fQplFVthSkGGmt7QMUwaNMA2QjYUIAajf68vBAae5cvzOpH0dGN4AQQsDSwR4oKXPCv5EdmTFaWXf9uAarZr4Rfj-WLlsY05OMKjFAUnZ5efRK1sk7xYhcLycah3ZJsA-TqyGkbax9nfInAWbXX9h06wQfaXHVxZdtrQMmOMFKq_lmKti2U7tNQEzbDN0g-yTmWAr3zuhazLjgIczJwkXM_8o066fvriXKtkXrI2T2vULMHU0wFILcRWHTDgrgxSfyJhsDtE927oj7f6qS844wgQUrqy_M-FV0zR2HQemDrE-AatRhrroAT6MbFRLkNXsft4UC5mq8WjU6x-jaR2GvNIHiZs-PI2pZZkJc8hR-ybF5rTfvi7_WbkNMVVl4qjUFEUdLqRHiuhYW8IpS32xOY07HKerhYe--zFsexoFUuLXdSUiS0nQz5Uh9Q-Iy7nLaG5Zr1woMVwzBNPiP_Xq0gOoYW23MMKwEvM8ZSrTjdSV6fu0zekzaUsfa0oQTpSde2lPQM9aGy-2F7PaYQXHsI_U38rDwg3MW6oJqzu0UzT_rCIz01iFri49Ien0uTGAo9xu8oLTqU7YZLYmhoBeHhbhC_KrAuN6Ze9mR3AayLe8NRXXSYY7Ihkc3jH0mPaeeLxA0mG_Q7jP6OSl9rD8Q0QCCLTSltPP3NCi7hllVVyR78WKYt8qqgtF7UbXuektOr8j4t9ZyLf0rx2LSWeeotcdRq3tf438N2qSeKCTjMmz38rO8MYXu9CaY0SQ24FA=",
+      "summary": []
+    },
+    {
+      "id": "msg_0b1098a3f71d6c57016ad5ab86e74887d08f1fb8e938d9c3a0",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\"transcribed_text\":\"낮은 평균 온도와 높은 일교차가 어우러져 과육이 단단하고 아삭하며, 새콤달콤한 홍로사과가 생산됩니다. 안동시의 대표 사과인 홍로사과의 신선함을 느껴보세요.\",\"uncertain_spans\":[],\"claims\":[{\"field\":\"상품명\",\"value\":\"홍로사과\",\"quote\":\"홍로사과\",\"kind\":\"explicit_label\"},{\"field\":\"생산 환경 설명\",\"value\":\"낮은 평균 온도와 높은 일교차가 어우러져 생산된다고 설명함\",\"quote\":\"낮은 평균 온도와 높은 일교차가 어우러져 과육이 단단하고 아삭하며, 새콤달콤한 홍로사과가 생산됩니다.\",\"kind\":\"seller_claim\"},{\"field\":\"식감\",\"value\":\"과육이 단단하고 아삭함\",\"quote\":\"과육이 단단하고 아삭하며\",\"kind\":\"seller_claim\"},{\"field\":\"맛\",\"value\":\"새콤달콤함\",\"quote\":\"새콤달콤한\",\"kind\":\"seller_claim\"},{\"field\":\"지역 관련 표현\",\"value\":\"안동시의 대표 사과라고 표현함\",\"quote\":\"안동시의 대표 사과인 홍로사과\",\"kind\":\"seller_claim\"},{\"field\":\"신선함\",\"value\":\"신선함을 느껴보라고 표현함\",\"quote\":\"홍로사과의 신선함을 느껴보세요.\",\"kind\":\"seller_claim\"}]}"
+        }
+      ],
+      "phase": "final_answer",
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0.0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "prompt_cache_retention": "24h",
+  "reasoning": {
+    "context": "all_turns",
+    "effort": "medium",
+    "mode": "standard",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": false,
+  "temperature": 1.0,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "description": null,
+      "name": "luna",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "transcribed_text": {
+            "type": "string"
+          },
+          "uncertain_spans": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "quote": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "seller_claim",
+                    "explicit_label",
+                    "uncertain"
+                  ]
+                }
+              },
+              "required": [
+                "field",
+                "value",
+                "quote",
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "transcribed_text",
+          "uncertain_spans",
+          "claims"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tool_usage": {
+    "image_gen": {
+      "input_tokens": 0,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "total_tokens": 0
+    },
+    "web_search": {
+      "num_requests": 0
+    }
+  },
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 0.98,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 677,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 744,
+    "output_tokens_details": {
+      "reasoning_tokens": 411
+    },
+    "total_tokens": 1421
+  },
+  "user": null,
+  "metadata": {}
+}
