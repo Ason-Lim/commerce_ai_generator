@@ -1,0 +1,1516 @@
+{
+  "meta": {
+    "base": "26776c6",
+    "head": "06f72f1",
+    "engine_uncommitted_changes": true,
+    "run_at": "2026-11-09T13:02:53+00:00",
+    "n_items": 8,
+    "source": "대표 입력 fixture"
+  },
+  "report": {
+    "trust": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": 2,
+        "rank_after": 7,
+        "mode_before": 83.65,
+        "mode_after": 13.75,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 32.3
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 27.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": 3,
+        "rank_after": 2,
+        "mode_before": 83.65,
+        "mode_after": 83.65,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 32.3
+        },
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 32.3
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": 4,
+        "rank_after": 3,
+        "mode_before": 47.5,
+        "mode_after": 47.5,
+        "scores_before": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 52.5
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 52.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": 1,
+        "rank_after": 1,
+        "mode_before": 87.9,
+        "mode_after": 85.5,
+        "scores_before": {
+          "quality": 116,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 40.8
+        },
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 36.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": 8,
+        "rank_after": 8,
+        "mode_before": 10.0,
+        "mode_after": 10.0,
+        "scores_before": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 23.0
+        },
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 20.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": 6,
+        "rank_after": 5,
+        "mode_before": 20.75,
+        "mode_after": 20.75,
+        "scores_before": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 41.5
+        },
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 41.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": 7,
+        "rank_after": 6,
+        "mode_before": 16.75,
+        "mode_after": 16.75,
+        "scores_before": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 33.5
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 33.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": 5,
+        "rank_after": 4,
+        "mode_before": 32.25,
+        "mode_after": 32.25,
+        "scores_before": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 31.5
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 31.5
+        },
+        "error_before": null,
+        "error_after": null
+      }
+    ],
+    "quality": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": 3,
+        "rank_after": 7,
+        "mode_before": 61.1,
+        "mode_after": 43.6,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.1
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 37.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": 4,
+        "rank_after": 3,
+        "mode_before": 61.1,
+        "mode_after": 61.1,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.1
+        },
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.1
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": 7,
+        "rank_after": 6,
+        "mode_before": 46.75,
+        "mode_after": 46.75,
+        "scores_before": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 50.0
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 50.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": 1,
+        "rank_after": 1,
+        "mode_before": 98.4,
+        "mode_after": 87.2,
+        "scores_before": {
+          "quality": 116,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 74.1
+        },
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 64.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": 8,
+        "rank_after": 8,
+        "mode_before": 13.0,
+        "mode_after": 13.0,
+        "scores_before": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 17.2
+        },
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 15.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": 2,
+        "rank_after": 2,
+        "mode_before": 71.9,
+        "mode_after": 61.9,
+        "scores_before": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 63.0
+        },
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 63.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": 6,
+        "rank_after": 5,
+        "mode_before": 57.6,
+        "mode_after": 57.6,
+        "scores_before": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 49.5
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 49.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": 5,
+        "rank_after": 4,
+        "mode_before": 58.84,
+        "mode_after": 58.84,
+        "scores_before": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 48.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 48.0
+        },
+        "error_before": null,
+        "error_after": null
+      }
+    ],
+    "price": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": 3,
+        "rank_after": 5,
+        "mode_before": 66.12,
+        "mode_after": 57.0,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 57.2
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 53.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": 4,
+        "rank_after": 2,
+        "mode_before": 66.12,
+        "mode_after": 66.12,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 57.2
+        },
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 57.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": 5,
+        "rank_after": 3,
+        "mode_before": 60.6,
+        "mode_after": 60.6,
+        "scores_before": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 60.8
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 60.8
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": 8,
+        "rank_after": 8,
+        "mode_before": 49.52,
+        "mode_after": 47.6,
+        "scores_before": {
+          "quality": 116,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 43.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": 1,
+        "rank_after": 1,
+        "mode_before": 69.0,
+        "mode_after": 69.0,
+        "scores_before": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 69.0
+        },
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 60.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": 2,
+        "rank_after": 6,
+        "mode_before": 67.6,
+        "mode_after": 56.6,
+        "scores_before": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 69.2
+        },
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 69.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": 6,
+        "rank_after": 4,
+        "mode_before": 59.4,
+        "mode_after": 59.4,
+        "scores_before": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 58.2
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 58.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": 7,
+        "rank_after": 7,
+        "mode_before": 55.36,
+        "mode_after": 55.36,
+        "scores_before": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 52.2
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 52.2
+        },
+        "error_before": null,
+        "error_after": null
+      }
+    ],
+    "mix": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": 2,
+        "rank_after": 7,
+        "mode_before": 72.4,
+        "mode_after": 39.0,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 39.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": 3,
+        "rank_after": 2,
+        "mode_before": 72.4,
+        "mode_after": 72.4,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": 5,
+        "rank_after": 4,
+        "mode_before": 52.5,
+        "mode_after": 52.5,
+        "scores_before": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 54.0
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 54.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": 1,
+        "rank_after": 1,
+        "mode_before": 82.4,
+        "mode_after": 76.0,
+        "scores_before": {
+          "quality": 116,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 55.4
+        },
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 49.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": 8,
+        "rank_after": 8,
+        "mode_before": 30.0,
+        "mode_after": 30.0,
+        "scores_before": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 34.5
+        },
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 30.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": 4,
+        "rank_after": 3,
+        "mode_before": 58.0,
+        "mode_after": 58.0,
+        "scores_before": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 58.0
+        },
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 58.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": 7,
+        "rank_after": 6,
+        "mode_before": 47.0,
+        "mode_after": 47.0,
+        "scores_before": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": 6,
+        "rank_after": 5,
+        "mode_before": 50.6,
+        "mode_after": 50.6,
+        "scores_before": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 44.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 44.0
+        },
+        "error_before": null,
+        "error_after": null
+      }
+    ],
+    "discovery": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": 5,
+        "rank_after": 7,
+        "mode_before": 36.45,
+        "mode_after": 20.25,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 39.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": 6,
+        "rank_after": 5,
+        "mode_before": 36.45,
+        "mode_after": 36.45,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": 1,
+        "rank_after": 1,
+        "mode_before": 69.75,
+        "mode_after": 69.75,
+        "scores_before": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 54.0
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 54.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": 2,
+        "rank_after": 3,
+        "mode_before": 61.2,
+        "mode_after": 54.0,
+        "scores_before": {
+          "quality": 116,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 55.4
+        },
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 49.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": 8,
+        "rank_after": 8,
+        "mode_before": 0.0,
+        "mode_after": 0.0,
+        "scores_before": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 34.5
+        },
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 30.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": 4,
+        "rank_after": 4,
+        "mode_before": 38.25,
+        "mode_after": 38.25,
+        "scores_before": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 58.0
+        },
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 58.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": 7,
+        "rank_after": 6,
+        "mode_before": 29.25,
+        "mode_after": 29.25,
+        "scores_before": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": 3,
+        "rank_after": 2,
+        "mode_before": 58.45,
+        "mode_after": 58.45,
+        "scores_before": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 24.0,
+          "total": 51.2
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 24.0,
+          "total": 51.2
+        },
+        "error_before": null,
+        "error_after": null
+      }
+    ],
+    "exploration": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": null,
+        "rank_after": 5,
+        "mode_before": null,
+        "mode_after": 49.25,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 39.0
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": null,
+        "rank_after": 4,
+        "mode_before": null,
+        "mode_after": 58.05,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": null,
+        "rank_after": 7,
+        "mode_before": null,
+        "mode_after": 40.5,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 54.0
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": null,
+        "rank_after": 1,
+        "mode_before": null,
+        "mode_after": 75.5,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 49.0
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": null,
+        "rank_after": 8,
+        "mode_before": null,
+        "mode_after": 27.5,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 30.0
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": null,
+        "rank_after": 2,
+        "mode_before": null,
+        "mode_after": 72.25,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 58.0
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": null,
+        "rank_after": 3,
+        "mode_before": null,
+        "mode_after": 60.25,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": null,
+        "rank_after": 6,
+        "mode_before": null,
+        "mode_after": 44.55,
+        "scores_before": null,
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 44.0
+        },
+        "error_before": "NameError: name 'calculate_novelty_score' is not defined",
+        "error_after": null
+      }
+    ],
+    "quality_adaptive": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": 3,
+        "rank_after": 7,
+        "mode_before": 61.1,
+        "mode_after": 43.6,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 37.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": 4,
+        "rank_after": 3,
+        "mode_before": 61.1,
+        "mode_after": 61.1,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.1
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": 7,
+        "rank_after": 6,
+        "mode_before": 46.75,
+        "mode_after": 46.75,
+        "scores_before": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 54.0
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 50.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": 1,
+        "rank_after": 1,
+        "mode_before": 98.4,
+        "mode_after": 87.2,
+        "scores_before": {
+          "quality": 116,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 55.4
+        },
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 64.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": 8,
+        "rank_after": 8,
+        "mode_before": 13.0,
+        "mode_after": 13.0,
+        "scores_before": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 34.5
+        },
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 15.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": 2,
+        "rank_after": 2,
+        "mode_before": 71.9,
+        "mode_after": 61.9,
+        "scores_before": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 58.0
+        },
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 63.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": 6,
+        "rank_after": 5,
+        "mode_before": 57.6,
+        "mode_after": 57.6,
+        "scores_before": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 49.5
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": 5,
+        "rank_after": 4,
+        "mode_before": 58.84,
+        "mode_after": 58.84,
+        "scores_before": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 44.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 48.0
+        },
+        "error_before": null,
+        "error_after": null
+      }
+    ],
+    "price_adaptive": [
+      {
+        "id": "A_scraped_rating",
+        "note": "페이지 보강 평점·리뷰 (검증 표시 없음)",
+        "rank_before": 3,
+        "rank_after": 5,
+        "mode_before": 66.12,
+        "mode_after": 57.0,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 53.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "B_verified_rating",
+        "note": "A와 같지만 검증 표시 True",
+        "rank_before": 4,
+        "rank_after": 2,
+        "mode_before": 66.12,
+        "mode_after": 66.12,
+        "scores_before": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 45.4
+        },
+        "scores_after": {
+          "quality": 61,
+          "trust": 90,
+          "price": 70,
+          "popularity": 0,
+          "total": 57.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "C_click_reaction",
+        "note": "평점 없음, 클릭·CTR 반응 높음",
+        "rank_before": 5,
+        "rank_after": 3,
+        "mode_before": 60.6,
+        "mode_after": 60.6,
+        "scores_before": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 54.0
+        },
+        "scores_after": {
+          "quality": 45,
+          "trust": 45,
+          "price": 70,
+          "popularity": 50,
+          "total": 60.8
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "D_quality_cap",
+        "note": "고당도 + 검증 평점 (품질 100 상한)",
+        "rank_before": 8,
+        "rank_after": 8,
+        "mode_before": 49.52,
+        "mode_after": 47.6,
+        "scores_before": {
+          "quality": 116,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 55.4
+        },
+        "scores_after": {
+          "quality": 100,
+          "trust": 90,
+          "price": 30,
+          "popularity": 0,
+          "total": 43.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "E_price_cap",
+        "note": "저가 + 할인 + 가격하락 (가격 100 상한)",
+        "rank_before": 1,
+        "rank_after": 1,
+        "mode_before": 69.0,
+        "mode_after": 69.0,
+        "scores_before": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 34.5
+        },
+        "scores_after": {
+          "quality": 0,
+          "trust": 0,
+          "price": 100,
+          "popularity": 0,
+          "total": 60.0
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "F_zero_confidence",
+        "note": "Identity 캐시 신뢰도 0 (이전엔 50으로 처리)",
+        "rank_before": 2,
+        "rank_after": 6,
+        "mode_before": 67.6,
+        "mode_after": 56.6,
+        "scores_before": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 58.0
+        },
+        "scores_after": {
+          "quality": 85,
+          "trust": 0,
+          "price": 80,
+          "popularity": 0,
+          "total": 69.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "G_new_item",
+        "note": "노출·클릭 없는 신규 상품 (탐색 모드)",
+        "rank_before": 6,
+        "rank_after": 4,
+        "mode_before": 59.4,
+        "mode_after": 59.4,
+        "scores_before": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 47.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 0,
+          "price": 70,
+          "popularity": 0,
+          "total": 58.2
+        },
+        "error_before": null,
+        "error_after": null
+      },
+      {
+        "id": "H_plain",
+        "note": "보통 상품",
+        "rank_before": 7,
+        "rank_after": 7,
+        "mode_before": 55.36,
+        "mode_after": 55.36,
+        "scores_before": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 44.0
+        },
+        "scores_after": {
+          "quality": 65,
+          "trust": 22,
+          "price": 60,
+          "popularity": 0,
+          "total": 52.2
+        },
+        "error_before": null,
+        "error_after": null
+      }
+    ]
+  }
+}
