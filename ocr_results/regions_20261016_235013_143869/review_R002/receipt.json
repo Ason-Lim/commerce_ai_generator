@@ -1,0 +1,46 @@
+{
+  "source_sha256": "79bbdcbdbf4f34d12daba1cfdefb7410fecad510422081b2443eee4a462d5cba",
+  "region": "R002",
+  "source_bbox_xyxy_px": [
+    626,
+    1117,
+    1777,
+    1348
+  ],
+  "crop_sha256": "f5de68fa7da01a8871e2228f9020a300c5c6e986efd3eeb3e71a1bd39b420b90",
+  "extract_model": "gpt-6-luna",
+  "judge_model": "gpt-6.1-sol",
+  "status": "MODEL_REVIEW_COMPLETE_HUMAN_REVIEW_REQUIRED",
+  "field_validation": "NOT_PERFORMED",
+  "human_review": "PENDING",
+  "max_calls": 2,
+  "retries": 0,
+  "cost_usd": null,
+  "attempted_calls": 2,
+  "usage": {
+    "luna_response": {
+      "input_tokens": 677,
+      "input_tokens_details": {
+        "cache_write_tokens": 0,
+        "cached_tokens": 0
+      },
+      "output_tokens": 744,
+      "output_tokens_details": {
+        "reasoning_tokens": 411
+      },
+      "total_tokens": 1421
+    },
+    "sol_response": {
+      "input_tokens": 936,
+      "input_tokens_details": {
+        "cache_write_tokens": 0,
+        "cached_tokens": 0
+      },
+      "output_tokens": 550,
+      "output_tokens_details": {
+        "reasoning_tokens": 59
+      },
+      "total_tokens": 1486
+    }
+  }
+}

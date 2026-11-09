@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제안서 템플릿 · B2B</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;--acc:#1d5fa8;--acc-s:#e7f0fb;--ex:#b42318;--hold:#9a6200;--hold-s:#fff1d1}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.help{font-size:12.5px;color:#9fb2c5;margin-top:18px;line-height:1.7}
+main{padding:24px 28px 60px;max-width:1180px;width:100%}
+h2{font-size:22px;margin:0 0 4px;letter-spacing:-.02em} .lead{color:var(--ink2);margin:0 0 18px}
+h3{font-size:16px;margin:28px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.tcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.thumb{height:128px;position:relative;padding:16px 18px;overflow:hidden}
+.thumb .k{font-size:9px;letter-spacing:.12em;font-weight:700;opacity:.7}
+.thumb .t{font-size:19px;font-weight:800;line-height:1.25;margin-top:4px;letter-spacing:-.02em;max-width:62%}
+.thumb .blk{position:absolute;right:-20px;top:0;bottom:0;width:42%;clip-path:polygon(22% 0,100% 0,100% 100%,0 100%)}
+.thumb .chips{position:absolute;left:18px;bottom:14px;display:flex;gap:4px}.thumb .chips i{width:30px;height:8px;border-radius:4px}
+.tbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.tbody b{font-size:15px}.tbody p{margin:0;color:var(--ink2);font-size:12.5px;flex:1}
+.meta{display:flex;gap:6px;flex-wrap:wrap}.meta span{font-size:11px;border-radius:6px;padding:1px 7px;background:#eef1f4;color:var(--ink2)}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.btns a,.btns button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font-size:12.5px;cursor:pointer;text-decoration:none;color:var(--ink)}
+.btns a:hover,.btns button:hover{border-color:var(--ink2)} .btns .del{color:var(--ex)}
+form.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:14px 22px}
+.f{display:flex;flex-direction:column;gap:4px}.f label,.f .lb{font-size:12.5px;font-weight:650;color:var(--ink2)}
+.f small{color:var(--ink3);font-size:11.5px}
+.f input[type=text],.f select,.f textarea{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:#fff}
+.full{grid-column:1/-1}
+.colors{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.colors .f input[type=color]{width:100%;height:38px;border:1px solid var(--line);border-radius:9px;padding:2px;background:#fff;cursor:pointer}
+.radios{display:flex;gap:8px;flex-wrap:wrap}.radios label{border:1px solid var(--line);border-radius:9px;padding:6px 12px;cursor:pointer;font-weight:500;font-size:13px}
+.radios input{margin-right:6px}
+.drop{border:1px dashed #b9c4d0;border-radius:10px;padding:10px;font-size:12.5px;color:var(--ink2);background:#fafbfc}
+.go{border:0;background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer;justify-self:start}
+.msg{font-size:13px;border-radius:10px;padding:8px 12px;display:none}.msg.ok{display:block;background:var(--acc-s);color:var(--acc)}.msg.err{display:block;background:#fde8e6;color:var(--ex)}
+#live{grid-column:1/-1}
+@media (max-width:900px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:16px 12px}form.panel{grid-template-columns:1fr}.colors{grid-template-columns:1fr 1fr}}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/b2b" aria-current="page">B2B</a></nav>
+  <nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/templates" aria-current="page">제안서 템플릿</a></nav>
+  <div class="help">템플릿은 <b>HTML 슬라이드 · PowerPoint · PDF</b> 에 모두 적용됩니다. Word · 한글(HWPX)은 문서형이라 기본 서식을 씁니다.<br><br>
+  콘솔 아래쪽 <b>제안서 템플릿</b> 선택 상자에서 고르거나, "공공 네이비로 제안서 만들어줘"처럼 말하면 됩니다.</div>
+</aside>
+<main>
+  <h2>제안서 디자인 템플릿</h2>
+  <p class="lead">기본 템플릿 4종을 바로 쓰거나, 회사 색·로고·PPT 양식으로 새 템플릿을 등록하세요. 미리보기는 가상의 예시 제안서로 보여 줍니다.</p>
+  <div class="grid" id="list"></div>
+
+  <h3>새 템플릿 등록</h3>
+  <form class="panel" id="f">
+    <div class="f"><label for="name">템플릿 이름 *</label><input type="text" id="name" name="name" required maxlength="40" placeholder="예: 우리회사 브랜드"></div>
+    <div class="f"><label for="base">시작할 템플릿</label><select id="base" name="base"></select><small>비워 둔 색·폰트는 이 템플릿 값을 씁니다</small></div>
+    <div class="f full"><label for="desc">설명</label><input type="text" id="desc" name="description" maxlength="200" placeholder="예: 공공기관 제출용, 회사 CI 색"></div>
+    <div class="f full"><span class="lb">디자인 레퍼런스 이미지 (선택)</span>
+      <div class="drop"><input type="file" id="reference" name="reference" accept=".png,.jpg,.jpeg,.webp"> — 마음에 드는 제안서·슬라이드 이미지를 올리면 주색·보조색을 자동으로 뽑아 아래 색에 채웁니다 (핀터레스트 등에서 받은 이미지).</div></div>
+    <div class="full colors">
+      <div class="f"><label for="primary">주색</label><input type="color" id="primary" name="primary"></div>
+      <div class="f"><label for="accent">보조색</label><input type="color" id="accent" name="accent"></div>
+      <div class="f"><label for="ink">글자색</label><input type="color" id="ink" name="ink"></div>
+      <div class="f"><label for="surface">카드 배경</label><input type="color" id="surface" name="surface"></div>
+    </div>
+    <div class="f"><span class="lb">표지 스타일</span><div class="radios">
+      <label><input type="radio" name="cover" value="split" checked>분할(오른쪽 색 블록)</label>
+      <label><input type="radio" name="cover" value="bold">전면 컬러</label>
+      <label><input type="radio" name="cover" value="minimal">미니멀(공공)</label></div></div>
+    <div class="f"><span class="lb">움직임</span><label style="font-weight:500"><input type="checkbox" id="motion" checked> 등장 애니메이션 · 숫자 카운트업 사용</label></div>
+    <div class="f"><label for="font_office">문서 글꼴 (PPTX·Word·HWPX)</label><input type="text" id="font_office" name="font_office" placeholder="예: 맑은 고딕, 나눔고딕, Pretendard"></div>
+    <div class="f"><label for="font_css">슬라이드 글꼴 (HTML·PDF)</label><input type="text" id="font_css" name="font_css" placeholder="비우면 Pretendard"><small>PC에 설치된 글꼴 이름. 없으면 기본 글꼴로 대체</small></div>
+    <div class="f"><span class="lb">로고 (선택)</span><div class="drop"><input type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,.webp"> 표지·바닥글에 들어갑니다</div></div>
+    <div class="f"><span class="lb">회사 PPT 양식 (선택)</span><div class="drop"><input type="file" name="pptx_base" accept=".pptx,.potx"> 이 양식의 마스터·배경·로고 위에 PPTX 를 만듭니다</div></div>
+    <div id="live"></div>
+    <button class="go">템플릿 등록</button>
+    <div class="msg full" id="msg" role="status"></div>
+  </form>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let T=[];
+function thumb(t){const p=t.palette,bold=t.cover==="bold",min=t.cover==="minimal";
+  return `<div class="thumb" style="background:${bold?p.primary:p.bg};color:${bold?p.on_primary:p.ink};${min?`border-top:8px solid ${p.primary}`:""}">
+   ${!bold&&!min?`<div class="blk" style="background:linear-gradient(150deg,${p.primary},${p.accent})"></div>`:""}
+   <div class="k">PROPOSAL</div><div class="t">임직원 선물<br><span style="color:${bold?p.accent:p.primary}">공급 제안</span></div>
+   <div class="chips"><i style="background:${p.primary}"></i><i style="background:${p.accent}"></i><i style="background:${p.surface};border:1px solid ${p.line}"></i></div></div>`}
+async function load(){const r=await fetch("/admin/b2b/api/templates");if(r.status===401){location.href="/admin/login?next="+encodeURIComponent(location.pathname);return}
+  const d=await r.json();T=d.items;
+  $("#list").innerHTML=T.map(t=>`<div class="tcard">${thumb(t)}<div class="tbody"><b>${esc(t.name)}</b><p>${esc(t.description||"")}</p>
+   <div class="meta">${t.builtin?"<span>기본</span>":"<span>등록</span>"}<span>${{split:"분할 표지",bold:"전면 컬러",minimal:"미니멀"}[t.cover]}</span>${t.motion?"<span>모션</span>":""}${t.has_logo?"<span>로고</span>":""}${t.has_pptx_base?"<span>PPT 양식</span>":""}<span>${esc(t.font_office)}</span></div>
+   <div class="btns"><a href="/admin/b2b/api/templates/${esc(t.id)}/preview" target="_blank" rel="noopener">슬라이드 미리보기 ↗</a><a href="/admin/b2b/api/templates/${esc(t.id)}/preview?fmt=pptx">PPTX 예시 ⬇</a>
+   ${t.builtin?"":`<button type="button" class="del" data-id="${esc(t.id)}">삭제</button>`}</div></div></div>`).join("");
+  $("#list").querySelectorAll(".del").forEach(b=>b.onclick=async()=>{if(!confirm("이 템플릿을 삭제할까요?"))return;
+    await fetch(`/admin/b2b/api/templates/${b.dataset.id}`,{method:"DELETE"});load()});
+  const base=$("#base"),cur=base.value;base.innerHTML=T.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join("");base.value=cur||d.default;fill()}
+function fill(){const t=T.find(x=>x.id===$("#base").value);if(!t)return;["primary","accent","ink","surface"].forEach(k=>$("#"+k).value=t.palette[k].toLowerCase());
+  $("#font_office").placeholder=`비우면 ${t.font_office}`;live()}
+function live(){const p={primary:$("#primary").value,accent:$("#accent").value,ink:$("#ink").value,surface:$("#surface").value,bg:"#ffffff",line:"#e5e5e5",on_primary:"#ffffff"};
+  const cover=document.querySelector("input[name=cover]:checked").value;
+  $("#live").innerHTML=`<div class="tcard" style="max-width:340px">${thumb({palette:p,cover})}</div>`}
+$("#base").onchange=fill;["primary","accent","ink","surface"].forEach(k=>$("#"+k).oninput=live);
+document.querySelectorAll("input[name=cover]").forEach(r=>r.onchange=live);
+$("#reference").onchange=async e=>{const f=e.target.files[0];if(!f)return;const fd=new FormData();fd.append("image",f);
+  const r=await fetch("/admin/b2b/api/templates/palette",{method:"POST",body:fd});if(!r.ok)return;const p=await r.json();
+  ["primary","accent","surface"].forEach(k=>{if(p[k])$("#"+k).value=p[k].toLowerCase()});live();
+  msg("ok","레퍼런스 이미지에서 색을 뽑아 채웠어요. 필요하면 직접 바꿔도 됩니다.")};
+function msg(c,t){const m=$("#msg");m.className="msg full "+c;m.textContent=t}
+$("#f").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);fd.set("motion",$("#motion").checked?"true":"false");
+  const r=await fetch("/admin/b2b/api/templates",{method:"POST",body:fd});const d=await r.json().catch(()=>({}));
+  if(!r.ok){msg("err",d.detail||"등록 실패");return}
+  msg("ok",`'${d.name}' 템플릿을 등록했어요. 콘솔의 템플릿 선택 상자에서 고를 수 있어요.`);e.target.reset();load()};
+load();
+</script>
+</body>
+</html>

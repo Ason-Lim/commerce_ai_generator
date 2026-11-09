@@ -1,0 +1,494 @@
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/app/services/chat/explain.py	2026-11-03 06:54:32.010931897 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/app/services/chat/explain.py	2026-11-03 08:15:28.658359056 +0000
+@@ -97,6 +97,30 @@
+ UNUSABLE_TITLE_KINDS = ("ambiguous", "count_unclear", "multiply_unclear")   # 중량 표기는 있으나 총중량 확정 불가
+ UNUSABLE_SOURCES = tuple(WEIGHT_SOURCE[k] for k in UNUSABLE_TITLE_KINDS)
+ 
++# 2026-11-03 p39: 개수의 적용 범위가 불명확한 표기 — 개당 가격을 계산하지 않는다.
++#   'ambiguous'(옵션 목록 '1kg … 2개, 500g')·'multiply_unclear'(소수·여러 번 곱하기)는 가격이 어느 구성의 것인지 모른다.
++#   개수 표기가 서로 다른 값으로 여러 개('2개 … 3개')여도 같다.
++#   'count_unclear'('100g 10팩')는 중량이 개당인지 전체인지가 불명확할 뿐, 개수는 상품명에 하나로 적혀 있어 개당 가격은 계산한다.
++UNIT_UNCLEAR_KINDS = ("ambiguous", "multiply_unclear")
++
++
++def unit_scope(title: str) -> dict:
++    """개수의 적용 범위 판정: {'clear': bool, 'found': [표기들]} (p39)."""
++    text = title or ""
++    counts = [m.group(0).replace(" ", "") for m in _UNIT_RE.finditer(text)]
++    parsed = parse_weight(text)
++    distinct = {int(m.group(1)) for m in _UNIT_RE.finditer(text)}
++    clear = parsed["kind"] not in UNIT_UNCLEAR_KINDS and len(distinct) <= 1
++    return {"clear": clear, "found": parsed["found"] + [c for c in counts if c not in parsed["found"]]}
++
++
++def per_unit_price(card: dict, unit: int | None) -> int | None:
++    """개당 가격 — 개수가 2 이상이고 적용 범위가 분명할 때만 (p39)."""
++    basis = _basis(card)
++    if not (unit and unit > 1 and basis):
++        return None
++    return round(basis / unit) if unit_scope(card.get("title") or "")["clear"] else None
++
+ 
+ ROLE_LABEL = {"value": "가성비", "lowest": "최저가", "fast": "빠른 배송", "ample": "넉넉한 양",
+               "gift": "선물용", "alt": "다른 선택"}
+@@ -194,7 +218,7 @@
+                       if weight_source in UNUSABLE_SOURCES else None),
+         unit_count=unit,
+         per100g=round(_basis(card) / weight * 100) if weight and _basis(card) else None,
+-        per_unit=round(_basis(card) / unit) if unit and unit > 1 and _basis(card) else None,
++        per_unit=per_unit_price(card, unit),   # p39: 개수 적용 범위가 불명확하면 None
+         rocket=rocket,
+         free_shipping=free,
+         seller_claims=seller_claims(card.get("title") or ""),
+@@ -221,7 +245,7 @@
+                weight_found=parsed["found"] if source in UNUSABLE_SOURCES else None)
+     basis = _basis(out)
+     out["per100g"] = round(basis / weight * 100) if weight and basis else None
+-    out["per_unit"] = round(basis / unit) if unit and unit > 1 and basis else None
++    out["per_unit"] = per_unit_price(out, unit)   # p39: 저장 카드의 예전 개당 가격도 남기지 않는다
+     return out
+ 
+ 
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/app/services/commerce/search.py	2026-11-03 07:58:09.780083778 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/app/services/commerce/search.py	2026-11-03 08:15:33.914359505 +0000
+@@ -182,6 +182,8 @@
+ 
+ 
+ def _evidence(card: dict, item: dict | None) -> list[Evidence]:
++    from app.services.chat import explain
++
+     ev: list[Evidence] = []
+     mall = card.get("mall") or None
+     src = card.get("weight_source")
+@@ -215,8 +217,15 @@
+                            source="상품명에 중량 여러 개 (옵션 목록 — 가격이 어느 옵션인지 모름)",
+                            raw_text=", ".join(found) or None))
+     if card.get("unit_count"):
+-        ev.append(Evidence(field="unit_count", value=str(card["unit_count"]), unit="개", method="title_parse",
+-                           source="상품명 표기"))
++        scope = explain.unit_scope(card.get("title") or "")
++        if scope["clear"]:
++            ev.append(Evidence(field="unit_count", value=str(card["unit_count"]), unit="개", method="title_parse",
++                               source="상품명 표기"))
++        else:
++            # p39: 옵션 목록·소수/여러 번 곱하기·서로 다른 개수 — 가격이 어느 구성의 것인지 몰라 개수를 쓰지 않는다
++            ev.append(Evidence(field="unit_count", value=None, unit="개", method="title_parse", status="conflict",
++                               source="개수 적용 범위 불명확 (옵션 목록 등 — 가격이 어느 구성인지 모름)",
++                               raw_text=", ".join(scope["found"]) or None))
+     if card.get("rocket") is not None:
+         ev.append(Evidence(field="rocket", value=str(card["rocket"]).lower(), method="api", source=mall))
+     if card.get("free_shipping") is not None:
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/app/services/recipe_chat/recipes.py	2026-11-01 07:16:35.833299353 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/app/services/recipe_chat/recipes.py	2026-11-03 08:15:28.659359056 +0000
+@@ -269,6 +269,11 @@
+ 
+ _VAGUE = re.compile(r"^(약간|적당량?|적량|조금|소량|기호에\s*따라)")
+ 
++
++def amount_known(amount) -> bool:
++    """재료표 분량이 정량인지 — '적당량'·'약간' 같은 표현은 아님 (원문 표현은 그대로 둔다).  p39: MCP 응답과 같은 규칙."""
++    return bool(amount) and not _VAGUE.match(display_amount(str(amount)))
++
+ # Photos are shown only for sources whose terms were reviewed (RECIPE_IMAGE_SOURCES, comma separated).
+ # 2026-10-29: food-safety COOKRCP01 (data.go.kr "이용허락범위 제한 없음", source shown on the card).
+ # Nongsaro photo terms are not confirmed yet, so its images stay hidden by default.
+@@ -304,7 +309,7 @@
+         amount = (item.get("amount") or "").strip()
+         quantity = display_amount(amount) or "분량 표기 없음"
+         out.append(dict(
+-            name=name, quantity=quantity, quantity_known=bool(amount) and not _VAGUE.match(display_amount(amount)),
++            name=name, quantity=quantity, quantity_known=amount_known(amount),
+             source_kind="ingredient_table", source_role=item.get("kind") or "재료",
+             context=dict(recipe_id=record["id"], recipe_version=version, servings=servings,
+                          ingredient_id=f"{record['id']}:{n}:{name}",
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/app/services/commerce/recipes.py	2026-11-02 12:08:49.231617325 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/app/services/commerce/recipes.py	2026-11-03 08:15:28.659359056 +0000
+@@ -20,8 +20,11 @@
+     ai = recipe.source_level == "ai_suggestion"
+     citation = ("AI 제안 레시피 (원문 아님)" if ai
+                 else f"출처: {recipe.provider} · {recipe.source_name} (원문을 참고해 정리, 원문 그대로가 아님)")
++    from app.services.recipe_chat.recipes import amount_known
++
++    # p39: '적당량'·'약간'은 재료표에 있어도 정량이 아니다 → quantity_known=False (원문 표현은 amount 에 그대로)
+     ingredients = [RecipeIngredient(name=i["name"], amount=i.get("amount") or "",
+-                                    quantity_known=bool(i.get("amount")), source_kind="ingredient_table")
++                                    quantity_known=amount_known(i.get("amount")), source_kind="ingredient_table")
+                    for i in recipe.ingredients]
+     ingredients += [RecipeIngredient(name=m["name"], amount=m.get("quantity") or "", quantity_known=False,
+                                      source_kind="step_only") for m in recipe.extras() if m.get("name")]
+--- /dev/null
++++ app/services/commerce/relevance.py
+@@ -0,0 +1,50 @@
++"""판매처(쿠팡·네이버) 검색 결과 관련성 — 새 규칙 후보의 '영향 비교'용 분류 (2026-11-03 p39).
++
++아직 실제 경로(검색·재선택·MCP)에 연결하지 않는다 — 비교 결과를 확인한 뒤 적용 여부를 정한다 (GPT 검토 17:13).
++기존 규칙(service.relevant)은 검색 낱말 중 하나만 맞아도 통과 → '한우 등심'에 '한우 … 스테이크 소고기'가 들어온다.
++
++분류 (상품명에 낱말이 없다고 '다른 상품'으로 확정하지 않는다 — 확인할 수 없다는 뜻):
++    keep                   상품 낱말이 모두 있고 조건(원산지·보관)도 확인됨
++    item_unconfirmed       요청한 품목·부위 확인 불가 — 상품 낱말 중 상품명(또는 같은 부류 말)에 없는 것이 있음
++    condition_unconfirmed  품목은 맞지만 원산지·보관 조건 확인 불가 — 상품명에 같은 뜻 표기가 없음
++    old_excluded           기존 규칙에서도 빠지던 결과
++"""
++from __future__ import annotations
++
++# 확인된 조건 동의어 — 상품명에 이 말이 있으면 조건이 표기된 것으로 본다 (근거를 같이 적는다)
++#   한우: 국내에서 사육된 한우 품종 소고기를 가리키는 말 → 국산
++#   한돈: 국내산 돼지고기 공동 브랜드(한돈자조금) → 국산
++CONDITION_SYNONYMS: dict[str, tuple[str, ...]] = {"국산": ("한우", "한돈"), "국내산": ("한우", "한돈")}
++
++LABELS = {"keep": "유지", "item_unconfirmed": "요청 품목·부위 확인 불가", "condition_unconfirmed": "원산지·보관 조건 확인 불가",
++          "old_excluded": "기존에도 제외"}
++
++
++def classify(title: str, terms: list[str] | None) -> dict:
++    """{'verdict', 'missing': [확인 못 한 낱말], 'synonym': [동의어로 확인한 조건 '국산←한우']}."""
++    from app.services.chat.service import relevant
++    from app.services.commerce.search import CONDITIONS, _w, partner_terms_required
++
++    terms = [t for t in (terms or []) if (t or "").strip()]
++    if not terms:
++        return {"verdict": "keep", "missing": [], "synonym": []}
++    if not relevant(title, terms):
++        return {"verdict": "old_excluded", "missing": [], "synonym": []}
++    missing = [t for t in partner_terms_required(terms) if _w(t) not in CONDITIONS and not relevant(title, [t])]
++    if missing:
++        return {"verdict": "item_unconfirmed", "missing": missing, "synonym": []}
++    cond_missing, synonym = [], []
++    for t in terms:
++        w = _w(t)
++        if w not in CONDITIONS:
++            continue
++        if any(form in (title or "") for form in CONDITIONS[w]):
++            continue
++        hit = next((s for s in CONDITION_SYNONYMS.get(w, ()) if s in (title or "")), None)
++        if hit:
++            synonym.append(f"{w}←{hit}")
++        else:
++            cond_missing.append(t)
++    if cond_missing:
++        return {"verdict": "condition_unconfirmed", "missing": cond_missing, "synonym": synonym}
++    return {"verdict": "keep", "missing": [], "synonym": synonym}
+--- /dev/null
++++ check_coupang_relevance.py
+@@ -0,0 +1,74 @@
++# check_coupang_relevance.py — 읽기 전용 비교. DB를 바꾸지 않고, 판매처 API도 부르지 않는다. (2026-11-03 p39)
++# 목적: 저장된 검색 결과(상품명)에 새 관련성 규칙(app/services/commerce/relevance.py)을 적용하면
++#       무엇이 유지되고 무엇이 '확인 불가'로 바뀌는지 센다.  실제 경로에는 아직 적용하지 않았다.
++# 자료: (1) online_food_price_snapshot 의 keyword·상품명  (2) 대화 기록(recipe_chat_session)의 '본 후보'(seen) 검색어·상품명
++# 결과: 화면 요약 + Claude outputs/coupang_relevance_compare_20261103.csv  (세션 ID 등 개인 식별 정보는 넣지 않음)
++# 사용: 저장소 폴더에서  python check_coupang_relevance.py
++import csv
++import json
++from collections import Counter, defaultdict
++from pathlib import Path
++
++from sqlalchemy import create_engine, text
++
++from app.core.config import DATABASE_URL
++from app.services.chat.service import shopping_terms
++from app.services.commerce.relevance import LABELS, classify
++
++eng = create_engine(DATABASE_URL, pool_pre_ping=True)
++rows: list[tuple[str, str, str, str]] = []          # (자료, 검색어, 상품명, 판매처)
++with eng.connect() as c:
++    c.execute(text("SET TRANSACTION READ ONLY"))
++    try:
++        for kw, name, src, mall in c.execute(text(
++                "SELECT DISTINCT keyword, product_name, coalesce(source_type,'(null)'), coalesce(mall_name,'') "
++                "FROM online_food_price_snapshot WHERE keyword IS NOT NULL AND product_name IS NOT NULL")):
++            rows.append((f"snapshot:{src}", kw, name, mall))
++    except Exception as e:  # noqa: BLE001
++        print("snapshot 읽기 실패:", type(e).__name__)
++    try:
++        seen = set()
++        for (state_json,) in c.execute(text("SELECT state_json FROM recipe_chat_session")):
++            try:
++                state = json.loads(state_json)
++            except (TypeError, ValueError):
++                continue
++            for s in state.get("seen") or []:
++                for card in s.get("cards") or []:
++                    k = (s.get("query") or "", card.get("title") or "")
++                    if k[0] and k[1] and k not in seen:
++                        seen.add(k)
++                        rows.append(("chat_seen", k[0], k[1], card.get("mall") or ""))
++    except Exception as e:  # noqa: BLE001
++        print("대화 기록 읽기 실패:", type(e).__name__)
++
++counts: dict[str, Counter] = defaultdict(Counter)
++multi: Counter = Counter()
++out = []
++for source, query, title, mall in rows:
++    _q, terms = shopping_terms(query)
++    got = classify(title, terms)
++    counts[source][got["verdict"]] += 1
++    if terms and len(terms) >= 2:
++        multi[source] += 1
++    out.append({"자료": source, "검색어": query, "낱말": " ".join(terms or []), "상품명": title, "판매처": mall,
++                "분류": LABELS[got["verdict"]], "확인 못 한 낱말": " ".join(got["missing"]),
++                "동의어로 확인": " ".join(got["synonym"])})
++
++print("\n== 자료별 분류 (새 규칙 적용 시) ==")
++print("자료 | 행 | 낱말 2개 이상 | 유지 | 품목·부위 확인 불가 | 조건 확인 불가 | 기존에도 제외")
++for src, cnt in sorted(counts.items(), key=lambda kv: -sum(kv[1].values())):
++    print(f"{src} | {sum(cnt.values())} | {multi[src]} | {cnt['keep']} | {cnt['item_unconfirmed']} | "
++          f"{cnt['condition_unconfirmed']} | {cnt['old_excluded']}")
++print("\n== 바뀌는 예 (기존 통과 → 확인 불가, 최대 25) ==")
++changed = [r for r in out if r["분류"] in (LABELS["item_unconfirmed"], LABELS["condition_unconfirmed"])]
++for r in changed[:25]:
++    print(f"{r['검색어']} | {r['상품명'][:45]} | {r['분류']} | 없음: {r['확인 못 한 낱말']}")
++dest = Path("Claude outputs")
++dest.mkdir(exist_ok=True)
++path = dest / "coupang_relevance_compare_20261103.csv"
++with path.open("w", newline="", encoding="utf-8-sig") as f:
++    w = csv.DictWriter(f, fieldnames=list(out[0].keys()) if out else ["자료"])
++    w.writeheader()
++    w.writerows(out)
++print(f"\n저장: {path} ({len(out)}행, 바뀌는 행 {len(changed)})")
+--- /dev/null
++++ capture_mcp_raw.py
+@@ -0,0 +1,70 @@
++# capture_mcp_raw.py — 실제 MCP 프로토콜(stdio)로 서버를 띄워 도구를 부르고, 응답 원본을 그대로 저장한다. (2026-11-03 p39)
++# Claude 앱과 같은 서버 코드(python -m app.mcp_adapter.server)를 쓴다.  읽기 전용 도구만 부른다 (판매처 검색 API 호출 있음).
++# 결과: Claude outputs/mcp_raw_p39/*.json  — 저장 전에 제휴 링크·키처럼 보이는 문자열이 없는지 검사한다.
++# 사용: 저장소 폴더에서  python capture_mcp_raw.py
++import asyncio
++import datetime as dt
++import json
++import os
++import re
++import sys
++from pathlib import Path
++
++from mcp import ClientSession, StdioServerParameters
++from mcp.client.stdio import stdio_client
++
++CALLS = [
++    ("search_국산_삼겹살", "food_search_products", {"text": "국산 삼겹살", "limit": 5}),
++    ("search_5만원_한우_등심", "food_search_products", {"text": "5만원 이하 한우 등심", "limit": 5}),
++    ("search_빈_검색어", "food_search_products", {"text": "   ", "limit": 5}),
++    ("recipe_파스타", "food_get_recipe", {"dish_name": "파스타"}),
++    ("recipe_epis-318", "food_get_recipe", {"recipe_id": "epis-318"}),
++]
++# 저장하면 안 되는 것: 제휴 링크(쿠팡 파트너스·쇼핑커넥트), API 키·토큰 모양 문자열
++BLOCK = re.compile(r"link\.coupang\.com|coupa\.ng|naver\.me/|brandconnect|(?:api[_-]?key|secret|access[_-]?key|token)\"?\s*[:=]",
++                   re.IGNORECASE)
++OUT = Path("Claude outputs") / "mcp_raw_p39"
++
++
++def _get(obj, *names):
++    """mcp 1.x(camelCase)·2.x(snake_case) 모두 지원."""
++    for n in names:
++        try:
++            return getattr(obj, n)
++        except AttributeError:
++            continue
++    return None
++
++
++async def main() -> None:
++    OUT.mkdir(parents=True, exist_ok=True)
++    params = StdioServerParameters(command=sys.executable, args=["-m", "app.mcp_adapter.server"],
++                                   cwd=str(Path.cwd()), env=dict(os.environ))
++    async with stdio_client(params) as (read, write):
++        async with ClientSession(read, write) as session:
++            init = await session.initialize()
++            tools = await session.list_tools()
++            meta = {"captured_at": dt.datetime.now().isoformat(timespec="seconds"),
++                    "server": getattr(_get(init, "server_info", "serverInfo"), "name", None),
++                    "protocol": _get(init, "protocol_version", "protocolVersion"),
++                    "tools": [t.name for t in tools.tools]}
++            for name, tool, args in CALLS:
++                res = await session.call_tool(tool, args)
++                texts = [c.text for c in res.content if getattr(c, "type", "") == "text"]
++                raw = texts[0] if len(texts) == 1 else json.dumps(texts, ensure_ascii=False)
++                if BLOCK.search(raw):
++                    print(f"[건너뜀] {name}: 제휴 링크·키 모양 문자열이 있어 저장하지 않았어요")
++                    continue
++                try:
++                    body = json.loads(raw)
++                except ValueError:
++                    body = raw
++                record = {"call": {"tool": tool, "arguments": args}, "is_error": bool(_get(res, "is_error", "isError")), "response": body}
++                (OUT / f"{name}.json").write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
++                status = body.get("status") if isinstance(body, dict) else "?"
++                print(f"저장: {name}.json  status={status}")
++            (OUT / "_meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
++    print(f"완료: {OUT}")
++
++
++asyncio.run(main())
+--- /dev/null
++++ tests/services/chat/test_unit_scope.py
+@@ -0,0 +1,85 @@
++"""개당 가격의 적용 범위 (2026-11-03 p39, GPT 검토 17:13).
++
++옵션 목록('1kg … 2개, 500g')·소수/여러 번 곱하기·서로 다른 개수 표기는 가격이 어느 구성의 것인지 모른다
++→ 중량뿐 아니라 개당 가격도 비우고, 개당 가격 기반 '가성비' 선택·설명에서도 뺀다.  상품은 계속 보인다.
++'100g 10팩'·'200g, 3개'는 개수가 하나로 적혀 있어 개당 가격을 계산한다 (중량만 보류, p33).
++"""
++from __future__ import annotations
++
++import pytest
++
++from app.domain.commerce.requests import SearchRequest
++from app.services.chat import explain
++from app.services.commerce.search import search_products, to_item
++from tests.services.chat.conftest import FakeShopping
++
++OPTION_MIX = "한돈 냉동삼겹살 1kg (구이용,바베큐용), 2개, 500g"      # 실제 MCP 응답(17:07)에서 발견
++
++
++@pytest.mark.parametrize("title, clear", [
++    (OPTION_MIX, False),                                    # 중량 여러 개(옵션 목록)
++    ("국산 삼겹살 500g × 2.5팩", False),                     # 소수 곱하기
++    ("견과 25g x 30봉 x 2박스", False),                     # 여러 번 곱하기
++    ("사과 부사 2개 3개 선택", False),                       # 서로 다른 개수
++    ("[꿈에그린한우] 한우 1++등급 등심 구이용 (냉장), 200g, 3개", True),   # 중량만 불명 (p33)
++    ("닭가슴살 100g 10팩", True),
++    ("국산 삼겹살 500g x 2팩", True),
++    ("사과 10개입 10개입", True),                            # 같은 값 반복은 하나
++    ("한우 등심 300g", True),
++])
++def test_unit_scope(title, clear):
++    assert explain.unit_scope(title)["clear"] is clear
++
++
++def _card(title, price, **kw):
++    return dict({"key": title[:6], "title": title, "price": price, "total": price, "mall": "쿠팡"}, **kw)
++
++
++def test_enrich_leaves_per_unit_empty_when_the_count_scope_is_unclear():
++    card = explain.enrich(_card(OPTION_MIX, 28400), {})
++    assert card["unit_count"] == 2 and card["per_unit"] is None and card["weight_g"] is None
++    kept = explain.enrich(_card("[꿈에그린한우] 한우 1++등급 등심 구이용 (냉장), 200g, 3개", 73170), {})
++    assert kept["per_unit"] == 24390 and kept["weight_g"] is None
++
++
++def it(n, title, price):
++    return {"product_name": title, "price": price, "product_url": f"https://www.coupang.com/vp/products/{n}",
++            "platform_name": "쿠팡", "is_coupang": True}
++
++
++def test_first_search_projection_and_selection():
++    items = [it(1, OPTION_MIX, 28400), it(2, "사과 부사 2개 3개 선택", 9000), it(3, "한돈 삼겹살 구이용", 12000)]
++    res = search_products(SearchRequest(text="삼겹살 추천"), shopping=FakeShopping(items=items))
++    mix = next(i for i in res.items if i.product.title == OPTION_MIX)
++    assert mix.offer.per_unit_krw is None and mix.offer.per100g_krw is None
++    ev = next(e for e in mix.evidence if e.field == "unit_count")
++    assert ev.value is None and ev.status == "conflict" and "개수 적용 범위 불명확" in ev.source
++    assert ev.raw_text == "1kg, 500g, 2개"
++    assert {d.use: d.verdict for d in ev.usage}["price_compare"] == "hold"
++    # 개당 비교 후보가 없으니 '가성비(개당)'가 아니라 '최저가'
++    assert all(i.score.role != "value" for i in res.items)
++    assert not any("개당" in r.text for i in res.items for r in i.score.reasons)
++    assert len(res.items) >= 1 and any(i.product.title == OPTION_MIX for i in res.items)   # 상품은 계속 보인다
++
++
++def test_per_unit_value_still_works_when_counts_are_clear():
++    picked = explain.choose([explain.enrich(_card("귤 10개입", 10000), {}), explain.enrich(_card("귤 20개입", 16000), {}),
++                             explain.enrich(_card(OPTION_MIX, 2000), {})], ask="귤")
++    value = next(p for p in picked["picks"] if p["role"] == "value")
++    assert value["title"] == "귤 20개입" and "개당 800원" in value["why"][0]["text"]
++    assert all(OPTION_MIX not in w["text"] for p in picked["picks"] for w in p["why"])
++
++
++def test_saved_and_reselected_cards_drop_old_per_unit():
++    from app.services.commerce.reselect import compare_saved, rechoose
++
++    stale = [_card(OPTION_MIX, 2000, unit_count=2, per_unit=1000, query="삼겹살"),     # 예전 규칙으로 저장된 값
++             _card("한돈 삼겹살 2개입", 9000, unit_count=2, per_unit=4500, query="삼겹살"),
++             _card("한돈 삼겹살 3개입", 15000, unit_count=3, per_unit=5000, query="삼겹살")]
++    for picked in (rechoose(stale, ask="삼겹살"), compare_saved(stale)["groups"][0]["picked"]):
++        cards = picked["picks"] + picked["others"]
++        mix = next(c for c in cards if c["title"] == OPTION_MIX)
++        assert mix["per_unit"] is None
++        value = next(c for c in picked["picks"] if c["role"] == "value")
++        assert value["title"] == "한돈 삼겹살 2개입"                  # 1,000원/개 옛 값이 이기지 않는다
++        assert to_item(mix, "others").offer.per_unit_krw is None
+--- /dev/null
++++ tests/services/chat/test_recipe_quantity_known.py
+@@ -0,0 +1,28 @@
++"""재료 분량 '적당량'·'약간'은 정량이 아니다 (2026-11-03 p39) — MCP 레시피 응답과 대화 서비스가 같은 규칙."""
++from __future__ import annotations
++
++from types import SimpleNamespace
++
++import pytest
++
++from app.services.commerce.recipes import to_item
++from app.services.recipe_chat.recipes import amount_known
++
++
++@pytest.mark.parametrize("amount, known", [
++    ("적당량", False), ("(적당량)", False), ("약간", False), ("조금", False), ("기호에 따라", False), ("", False),
++    (None, False), ("250g", True), ("2큰술", True), ("(가슴살, 100g)", True), ("(1/4개)", True),
++])
++def test_amount_known(amount, known):
++    assert amount_known(amount) is known
++
++
++def test_mcp_recipe_keeps_the_text_but_marks_vague_amounts_unknown():
++    recipe = SimpleNamespace(
++        source_level="source", provider="농식품정보누리", source_name="농식품정보누리 레시피", recipe_id="epis-318",
++        title="버섯파스타", summary="", meta=[], steps=[], tips=[], extras=lambda: [],
++        ingredients=[{"name": "파스타", "amount": "250g"}, {"name": "올리브오일", "amount": "적당량"}],
++        content_hash=lambda: "x")
++    got = {i.name: i for i in to_item(recipe).ingredients}
++    assert got["파스타"].quantity_known is True
++    assert got["올리브오일"].quantity_known is False and got["올리브오일"].amount == "적당량"
+--- /dev/null
++++ tests/services/chat/test_relevance_compare.py
+@@ -0,0 +1,51 @@
++"""판매처 결과 관련성 — 영향 비교용 분류 (2026-11-03 p39).  아직 실제 경로에는 연결하지 않는다."""
++from __future__ import annotations
++
++import ast
++from pathlib import Path
++
++import pytest
++
++from app.services.commerce.relevance import classify
++
++APP = Path(__file__).resolve().parents[3] / "app"
++
++
++@pytest.mark.parametrize("title, terms, verdict, missing", [
++    # 실제 MCP 응답(17:07)의 '한우 등심' 결과
++    ("[로켓프레시] 농협안심한우 숙성등심 1등급 구이용 (냉장)", ["한우", "등심"], "keep", []),
++    ("[농협안심한우] 1++ 프리미엄 메가 스테이크 소고기", ["한우", "등심"], "item_unconfirmed", ["등심"]),
++    ("냉장 한우 1등급 꽃등심 국내산", ["한우", "등심"], "keep", []),
++    ("한우 양지 국거리", ["한우", "등심"], "item_unconfirmed", ["등심"]),
++    # 조건 낱말: 품목과 구분
++    ("한돈 삼겹살 구이용 (냉장)", ["국산", "삼겹살"], "keep", []),                     # 국산←한돈
++    ("[로켓프레시] 선진포크 삼겹살 (냉장)", ["국산", "삼겹살"], "condition_unconfirmed", ["국산"]),
++    ("국내산 삼겹살 500g", ["국산", "삼겹살"], "keep", []),
++    ("수입 삼겹살 1kg", ["국산", "삼겹살"], "condition_unconfirmed", ["국산"]),
++    ("삼겹살 구이용", ["냉동", "삼겹살"], "condition_unconfirmed", ["냉동"]),
++    # 꾸밈 낱말은 요구하지 않는다
++    ("한우 등심 1++ 300g", ["명절", "한우", "등심"], "keep", []),
++    ("고등어 순살", ["한우", "등심"], "old_excluded", []),
++])
++def test_classify(title, terms, verdict, missing):
++    got = classify(title, terms)
++    assert got["verdict"] == verdict and got["missing"] == missing
++
++
++def test_synonym_is_reported():
++    assert classify("한돈 삼겹살 구이용 (냉장)", ["국산", "삼겹살"])["synonym"] == ["국산←한돈"]
++
++
++def test_not_wired_into_any_app_path_yet():
++    """비교 결과를 확인하기 전에는 어떤 앱 모듈도 이 분류를 불러오지 않는다."""
++    for path in APP.rglob("*.py"):
++        if path.name == "relevance.py" and path.parent.name == "commerce":
++            continue
++        tree = ast.parse(path.read_text(encoding="utf-8"))
++        for node in ast.walk(tree):
++            names = []
++            if isinstance(node, ast.ImportFrom) and node.module:
++                names = [node.module] + [f"{node.module}.{a.name}" for a in node.names]
++            elif isinstance(node, ast.Import):
++                names = [a.name for a in node.names]
++            assert not any(n.endswith("commerce.relevance") for n in names), path

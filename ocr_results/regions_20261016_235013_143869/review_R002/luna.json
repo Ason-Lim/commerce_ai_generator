@@ -1,0 +1,42 @@
+{
+  "transcribed_text": "낮은 평균 온도와 높은 일교차가 어우러져 과육이 단단하고 아삭하며, 새콤달콤한 홍로사과가 생산됩니다. 안동시의 대표 사과인 홍로사과의 신선함을 느껴보세요.",
+  "uncertain_spans": [],
+  "claims": [
+    {
+      "field": "상품명",
+      "value": "홍로사과",
+      "quote": "홍로사과",
+      "kind": "explicit_label"
+    },
+    {
+      "field": "생산 환경 설명",
+      "value": "낮은 평균 온도와 높은 일교차가 어우러져 생산된다고 설명함",
+      "quote": "낮은 평균 온도와 높은 일교차가 어우러져 과육이 단단하고 아삭하며, 새콤달콤한 홍로사과가 생산됩니다.",
+      "kind": "seller_claim"
+    },
+    {
+      "field": "식감",
+      "value": "과육이 단단하고 아삭함",
+      "quote": "과육이 단단하고 아삭하며",
+      "kind": "seller_claim"
+    },
+    {
+      "field": "맛",
+      "value": "새콤달콤함",
+      "quote": "새콤달콤한",
+      "kind": "seller_claim"
+    },
+    {
+      "field": "지역 관련 표현",
+      "value": "안동시의 대표 사과라고 표현함",
+      "quote": "안동시의 대표 사과인 홍로사과",
+      "kind": "seller_claim"
+    },
+    {
+      "field": "신선함",
+      "value": "신선함을 느껴보라고 표현함",
+      "quote": "홍로사과의 신선함을 느껴보세요.",
+      "kind": "seller_claim"
+    }
+  ]
+}

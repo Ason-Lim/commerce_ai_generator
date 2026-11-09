@@ -1,0 +1,31 @@
+## 1. 검증기 없을 때
+  validate_search_response → (None, ['jsonschema 없음 — 응답 스키마 검증 안 함'])
+  client.search: schema_valid None 이면 ok 를 바꾸지 않음 (client.py 103-110행) → check_ucp_catalog.py 는 '검증 안 함' 출력 후 mapping.to_cards 진행
+  requirements.txt 의 jsonschema/referencing: 없음
+
+## 2. 프로필 캐시 TTL (discovery._max_age)
+  Cache-Control 'max-age=10'             → 보관 60초
+  Cache-Control 'public, max-age=30'     → 보관 60초
+  Cache-Control 'max-age=600'            → 보관 600초
+  Cache-Control 'no-store'               → 보관 3600초
+  Cache-Control 'private, max-age=5'     → 보관 60초
+  Cache-Control 'no-cache'               → 보관 3600초
+  Cache-Control ''                       → 보관 3600초
+  schemas._cache: TTL 없음 (프로세스 수명 동안 보관)
+  게시 점검(schemas.check_published_profile)의 max-age≥60 은 '우리 프로필의 게시 조건' — 위 캐시 보관 시간과 별개 로직
+
+## 3. 판매 단위 (mapping._is_single_unit 계열)
+  판정 함수: sold_each
+  quantity_unit=null → 한 개 가격 카드로 만듦: True
+  quantity_unit={"unit": "C62", "display_text": "each"} → 한 개 가격 카드로 만듦: True
+  quantity_unit={"unit": "C62", "display_text": "each", "increment": 6} → 한 개 가격 카드로 만듦: True
+  quantity_unit={"unit": "LBR", "scale": 2, "increment": 25, "display_text": "lb"} → 한 개 가격 카드로 만듦: False
+  quantity_unit={"unit": "LBR", "scale": 2, "display_text": "lb"} → 한 개 가격 카드로 만듦: False
+  quantity_unit={"unit": "KGM", "display_text": "kg"} → 한 개 가격 카드로 만듦: False
+
+## 4. 판매자 단위가격이 비교 입력에 들어가는 경로
+  explain.choose 는 score_use 를 읽는가: False
+  explain.enrich 를 거친 뒤 per100g: None (판매자 값 500 → 상품명 중량이 없으면 None 으로 덮어씀)
+  상품명에 1kg 이 있으면: 1000 (판매자 unit_price 대신 재계산 — 사양 MUST NOT recompute 와 충돌)
+  enrich 없이 choose 에 넣으면 1번 역할: [('u2', 'value'), ('u1', 'alt')] → score_use='block' 이어도 per100g 로 '가성비' 선택
+  현재 app/ 안에서 ucp 카드를 공통 검색·대화에 넣는 코드: 없음 (미연결)

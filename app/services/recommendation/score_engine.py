@@ -1,5 +1,7 @@
 import re
 
+from app.services.food_intelligence.brix_standards import item_brix_tier
+
 def get_safe_number(
     value,
     default=0.0,
@@ -347,6 +349,37 @@ def calculate_hidden_gem_score(item):
     return min(score, 100)
 
 
+# 2026-11-04: 품종별 Brix 기준표(food_intelligence/brix_standards)와 같은 구간을 쓴다.
+QUALITY_BRIX_TIER_POINTS = {"top": 100, "high": 85, "normal": 45, "below": 0}
+QUALITY_BRIX_TEXT_ONLY_POINTS = 20
+
+
+def calculate_brix_quality_points(item, brix):
+    """품질 점수의 Brix 부분 (최대 100).
+
+    기준표에 있는 품종은 그 품종의 고당도·최상 기준으로, 없는 상품은 이전 고정 구간으로 판정한다.
+    """
+    tier, _standard = item_brix_tier(item, brix)
+
+    if tier is None:
+        if brix >= 16:
+            return 100
+        if brix >= 15:
+            return 85
+        if brix >= 14:
+            return 65
+        if brix >= 13:
+            return 45
+        if item.get("is_high_brix"):
+            return 20
+        return 0
+
+    if tier == "no_value":
+        return QUALITY_BRIX_TEXT_ONLY_POINTS if item.get("is_high_brix") else 0
+
+    return QUALITY_BRIX_TIER_POINTS[tier]
+
+
 def calculate_ai_scores(item, priority="trust"):
     """상품별 AI 추천 근거 점수 계산"""
 
@@ -359,17 +392,7 @@ def calculate_ai_scores(item, priority="trust"):
     review_count = item.get("review_count") or 0
 
     brix = get_brix_value(item)
-
-    if brix >= 16:
-        quality_score += 100
-    elif brix >= 15:
-        quality_score += 85
-    elif brix >= 14:
-        quality_score += 65
-    elif brix >= 13:
-        quality_score += 45
-    elif item.get("is_high_brix"):
-        quality_score += 20
+    quality_score += calculate_brix_quality_points(item, brix)
 
     try:
         rating = float(rating)

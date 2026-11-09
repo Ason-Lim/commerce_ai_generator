@@ -1,0 +1,3 @@
+{"jsonrpc": "2.0", "id": 2, "error": {"code": -32001, "message": "UCP discovery failed",
+ "data": {"code": "profile_unreachable", "content": "Unable to fetch agent profile: Network error",
+          "continue_url": "https://shop.example.com/"}}}

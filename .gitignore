@@ -24,3 +24,15 @@ __pycache__/
 *.bak
 *.before_fix.bak
 *.phase43.bak
+.aider*
+
+# --- 0단계 기준선 보강 (2026-11-09): 비밀키 백업·설치 백업·생성물 제외 ---
+.env.*
+**/env.before
+**/env.backup*
+**/.env.*
+*_backups/
+*.tgz
+ocr_results/
+var/logs/
+!.env.example

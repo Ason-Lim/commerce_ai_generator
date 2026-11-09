@@ -1,0 +1,628 @@
+{
+ "recipes": [
+  {
+   "id": "epis-48",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "갈비구이",
+   "summary": "영양 풍부한 갈비로 푸짐한 구이 한번 해볼까요?",
+   "category": "한식 · 구이",
+   "method": "",
+   "servings": "4인분",
+   "time": "60분",
+   "kcal": "324Kcal",
+   "level": "보통",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "갈비 1.2kg, 배즙 4큰술, 양파즙 2큰술, 물엿 2큰술, 설탕 2큰술, 통깨 약간, 참기름 약간, 후춧가루 약간, 청주 2큰술, 간장 1/4컵, 육수 1/4컵, 대파 1/2뿌리, 마늘 3쪽, 양파 1/2개, 상추 약간, 깻잎 약간, 생강즙 1작은술, 월계수잎 3장",
+   "ingredients": [
+    {
+     "name": "갈비",
+     "amount": "1.2kg",
+     "kind": "주재료"
+    },
+    {
+     "name": "배즙",
+     "amount": "4큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "양파즙",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "물엿",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "설탕",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "통깨",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "참기름",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "후춧가루",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "청주",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "간장",
+     "amount": "1/4컵",
+     "kind": "양념"
+    },
+    {
+     "name": "육수",
+     "amount": "1/4컵",
+     "kind": "양념"
+    },
+    {
+     "name": "대파",
+     "amount": "1/2뿌리",
+     "kind": "양념"
+    },
+    {
+     "name": "마늘",
+     "amount": "3쪽",
+     "kind": "양념"
+    },
+    {
+     "name": "양파",
+     "amount": "1/2개",
+     "kind": "양념"
+    },
+    {
+     "name": "상추",
+     "amount": "약간",
+     "kind": "부재료"
+    },
+    {
+     "name": "깻잎",
+     "amount": "약간",
+     "kind": "부재료"
+    },
+    {
+     "name": "생강즙",
+     "amount": "1작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "월계수잎",
+     "amount": "3장",
+     "kind": "양념"
+    }
+   ],
+   "steps": [
+    {
+     "text": "갈비는 뼈가 얇고 4.5cm 정도로 토막 낸 것으로 골라 핏물을 우려 낸 후 깨끗이 씻어 물기를 없앤다.",
+     "image": null
+    },
+    {
+     "text": "갈비의 기름을 떼고 갈빗대의 중심으로 앞뒤로 뒤집어 가며 양편의 살을 저미면서 얇게 편다.",
+     "image": null
+    },
+    {
+     "text": "손질한 갈비는 배즙과 설탕, 청주를 넣어 1시간 정도 재워둔다.",
+     "image": null
+    },
+    {
+     "text": "냄비에 간장, 육수, 굵은 파, 양파, 마늘, 월계수잎, 생강을 넣고 재료가 무를 때까지 푹 끓인다.",
+     "image": null
+    },
+    {
+     "text": "충분히 끓여 둔 양념장은 체에 걸러 따라 놓는다.",
+     "image": null
+    },
+    {
+     "text": "걸러 둔 양념장 5큰술에 양파즙, 물엿, 통깨, 후춧가루, 참기름을 넣고 섞는다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "epis-128",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "떡갈비구이",
+   "summary": "갈비 속에 떡이 들어있듯이 쫄깃쫄깃해서~ 떡갈비!",
+   "category": "한식 · 구이",
+   "method": "",
+   "servings": "2인분",
+   "time": "50분",
+   "kcal": "380Kcal",
+   "level": "보통",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "쇠고기 300g, 양파 1개, 다진파 1큰술, 다진마늘 1/2큰술, 간장 3큰술, 설탕 2큰술, 깨소금 약간, 참기름 1큰술, 후춧가루 1작은술, 밀가루 약간",
+   "ingredients": [
+    {
+     "name": "쇠고기",
+     "amount": "300g",
+     "kind": "주재료"
+    },
+    {
+     "name": "양파",
+     "amount": "1개",
+     "kind": "부재료"
+    },
+    {
+     "name": "다진파",
+     "amount": "1큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "다진마늘",
+     "amount": "1/2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "간장",
+     "amount": "3큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "설탕",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "깨소금",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "참기름",
+     "amount": "1큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "후춧가루",
+     "amount": "1작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "밀가루",
+     "amount": "약간",
+     "kind": "부재료"
+    }
+   ],
+   "steps": [
+    {
+     "text": "양파는 곱게 다져 물기를 빼준 후 달구어진 프라이팬에 기름을 두르고 갈색이 나도록 볶아둔다.",
+     "image": null
+    },
+    {
+     "text": "소갈비는 살을 발라 곱게 다져 분량의 양념 재료를 넣어 양념해 골고루 끈기가 나도록 치댄다.",
+     "image": null
+    },
+    {
+     "text": "살을 발라낸 갈비에 밀가루를 바르고 ②를 양면으로 도톰하게 바른다.",
+     "image": null
+    },
+    {
+     "text": "석쇠에 호일을 깔고 기름을 발라 고기를 얹은 후 뒤집어가며 구워낸다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "epis-109",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "돼지갈비구이",
+   "summary": "돼지갈비를 양념에 잘 재워 채소에 싸 드셔보세요. 입안 가득 넣어도 계속 계속 들어갈거에요.",
+   "category": "한식 · 구이",
+   "method": "",
+   "servings": "4인분",
+   "time": "50분",
+   "kcal": "1000Kcal",
+   "level": "초보환영",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "돼지갈비 600g, 생강즙 2큰술, 술 2큰술, 진간장 5큰술, 다진파 2큰술, 다진마늘 1큰술, 고춧가루 1큰술, 설탕 2큰술, 깨소금 조금, 상추 조금, 깻잎 조금",
+   "ingredients": [
+    {
+     "name": "돼지갈비",
+     "amount": "600g",
+     "kind": "주재료"
+    },
+    {
+     "name": "생강즙",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "술",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "진간장",
+     "amount": "5큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "다진파",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "다진마늘",
+     "amount": "1큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "고춧가루",
+     "amount": "1큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "설탕",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "깨소금",
+     "amount": "조금",
+     "kind": "부재료"
+    },
+    {
+     "name": "상추",
+     "amount": "조금",
+     "kind": "부재료"
+    },
+    {
+     "name": "깻잎",
+     "amount": "조금",
+     "kind": "부재료"
+    }
+   ],
+   "steps": [
+    {
+     "text": "돼지갈비는 먹기 좋게 토막 내 기름을 떼어내고 병풍모양으로 포를 떠서 잔칼집을 넣는다.",
+     "image": null
+    },
+    {
+     "text": "손질한 갈비에 생강즙과 술을 뿌려 놓는다.",
+     "image": null
+    },
+    {
+     "text": "진간장 5큰술에 나머지 양념 재료를 합해 양념장을 만든다.",
+     "image": null
+    },
+    {
+     "text": "②의 고기에 ③의 양념장을 넣고 버무려 재워둔다.",
+     "image": null
+    },
+    {
+     "text": "간이 충분히 배면 팬에 기름을 두르고 지지거나 석쇠에 얹어 속까지 잘 익도록 굽는다.",
+     "image": null
+    },
+    {
+     "text": "구운 돼지갈비와 깨소금, 상추, 깻잎을 함께 곁들여 낸다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "fs-468",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "L..A갈비구이",
+   "summary": "월계수잎과 통후추 등을 사용해 깊은 맛을 내주어 소금을 사용하지 않아도 깊은 맛이 나는 갈비를 만들었어요.",
+   "category": "반찬",
+   "method": "굽기",
+   "servings": null,
+   "time": null,
+   "kcal": "310.8",
+   "tags": [
+    "저염간장"
+   ],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/10_00468_2.png",
+   "ingredients_raw": "L.A갈비(200g), 배(20g), 양파(20g)\n- 양념 : 저염간장(20g), 월계수잎(5g), 통후추(5g)\n올리고당(20g), 정종(10g), 설탕(10g), 매실액(10g)\n대파 다진것(20g), 다진 마늘(20g), 참기름(3g)\n통깨(5g)",
+   "ingredients": [
+    {
+     "name": "L.A갈비",
+     "amount": "(200g)"
+    },
+    {
+     "name": "배",
+     "amount": "(20g)"
+    },
+    {
+     "name": "양파",
+     "amount": "(20g)"
+    },
+    {
+     "name": "저염간장",
+     "amount": "(20g)"
+    },
+    {
+     "name": "월계수잎",
+     "amount": "(5g)"
+    },
+    {
+     "name": "통후추",
+     "amount": "(5g)"
+    },
+    {
+     "name": "올리고당",
+     "amount": "(20g)"
+    },
+    {
+     "name": "정종",
+     "amount": "(10g)"
+    },
+    {
+     "name": "설탕",
+     "amount": "(10g)"
+    },
+    {
+     "name": "매실액",
+     "amount": "(10g)"
+    },
+    {
+     "name": "대파 다진것",
+     "amount": "(20g)"
+    },
+    {
+     "name": "다진 마늘",
+     "amount": "(20g)"
+    },
+    {
+     "name": "참기름",
+     "amount": "(3g)"
+    },
+    {
+     "name": "통깨",
+     "amount": "(5g)"
+    }
+   ],
+   "steps": [
+    {
+     "text": "L.A 갈비는 물에 담그어 핏물과 갈비 톱밥을 제거시켜 놓는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00468_1.png"
+    },
+    {
+     "text": "강판에 배와 양파를 곱게 갈아 준비 한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00468_2.png"
+    },
+    {
+     "text": "핏물을 제거한 갈비에 배즙과 양파즙을 넣어 숙성시킨다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00468_3.png"
+    },
+    {
+     "text": "냄비에 저염간장과 월계수잎, 통후추, 올리고당, 정종, 설탕, 물, 매실액을 넣어 은근히 약 30분 정도 끓여 식힌다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00468_4.png"
+    },
+    {
+     "text": "끓여 식힌 간장에 파, 마늘, 참기름, 통깨를 넣는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00468_5.png"
+    },
+    {
+     "text": "숙성시킨 L.A 갈비에 만들어 놓은 양념을 넣고 다시 하루 정도 더 숙성 후 팬에 구워 완성한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00468_6.png"
+    }
+   ]
+  },
+  {
+   "id": "fs-485",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "유자등갈비구이",
+   "summary": "유자소스가 고기의 잡내를 없애주고, 고기를 연하게 합니다. 새콤달콤한 소스로 인해 나트륨을 적게 넣고도 맛있는 등갈비를 만들 수 있어요.",
+   "category": "반찬",
+   "method": "굽기",
+   "servings": null,
+   "time": null,
+   "kcal": "433.3",
+   "tags": [],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/10_00485_2.png",
+   "ingredients_raw": "등갈비(150g), 월계수잎(2g), 생강(10g), 통후추(3g)\n식용유(10g), 마늘(20g)m 적양배추(20g), 양파(20g)\n당근(20g)\n- 소스 : 유자청(30g), 사과(20g), 밤(10g), 생크림(10g)\n설탕(10g), 소금(0.2g), 식초(10g)",
+   "ingredients": [
+    {
+     "name": "등갈비",
+     "amount": "(150g)"
+    },
+    {
+     "name": "월계수잎",
+     "amount": "(2g)"
+    },
+    {
+     "name": "생강",
+     "amount": "(10g)"
+    },
+    {
+     "name": "통후추",
+     "amount": "(3g)"
+    },
+    {
+     "name": "식용유",
+     "amount": "(10g)"
+    },
+    {
+     "name": "마늘",
+     "amount": "(20g)m 적양배추(20g)"
+    },
+    {
+     "name": "양파",
+     "amount": "(20g)"
+    },
+    {
+     "name": "당근",
+     "amount": "(20g)"
+    },
+    {
+     "name": "유자청",
+     "amount": "(30g)"
+    },
+    {
+     "name": "사과",
+     "amount": "(20g)"
+    },
+    {
+     "name": "밤",
+     "amount": "(10g)"
+    },
+    {
+     "name": "생크림",
+     "amount": "(10g)"
+    },
+    {
+     "name": "설탕",
+     "amount": "(10g)"
+    },
+    {
+     "name": "소금",
+     "amount": "(0.2g)"
+    },
+    {
+     "name": "식초",
+     "amount": "(10g)"
+    }
+   ],
+   "steps": [
+    {
+     "text": "등갈비는 찬물에 약 2시간 이상 담그어 핏물을 빼고, 월계수잎과 생강, 통훗추를 넣고 약 1시간 삶아 건져 놓는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00485_1.png"
+    },
+    {
+     "text": "적양배추와 당근, 양파를 채를 썰어 찬물에 담그어 놓는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00485_2.png"
+    },
+    {
+     "text": "유자청에 밤을 다져넣고 사과즙, 생크림, 설탕, 소금, 식초를 넣어 골고루 섞어 소스를 만든다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00485_3.png"
+    },
+    {
+     "text": "물에 담그어 놓은 채소는 채에 올려 물기를 빼 놓는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00485_4.png"
+    },
+    {
+     "text": "팬에 기름을 두르고 다진마늘을 볶아 마늘기름을 만들어 놓는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00485_5.png"
+    },
+    {
+     "text": "마늘기름으로 삶아 놓은 등갈비를 노릇노릇 하게 굽고, 접시에 담아 물기를 빼 놓은 채소를 담고 유자소스를 올려 완성한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00485_6.png"
+    }
+   ]
+  },
+  {
+   "id": "fs-375",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "쪽갈비구이",
+   "summary": "고기에는 로즈마리의 향으로 잡냄새를 제거해주고 통후추를 사용해 훨씬 더 깊은 맛을 내주어 소금을 사용 안 해도 깊은 맛을 내 주어 나트륨을 줄였다.",
+   "category": "반찬",
+   "method": "굽기",
+   "servings": null,
+   "time": null,
+   "kcal": "306.8",
+   "tags": [
+    "등갈비"
+   ],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/10_00375_2.png",
+   "ingredients_raw": "쪽갈비 400g, 올리브오일 30g, 통후추 1g, 건 로즈마리 1g, 와인 15g\n곁들이채소 : 방울토마토 45g, 양파 60g, 레몬껍질 10g\n소스 : 마요네즈 30g, 식초 15g, 홀그레인 머스터즈 10g, 설탕 5g, 다진마늘 5g, 백후추 1g",
+   "ingredients": [
+    {
+     "name": "쪽갈비",
+     "amount": "400g"
+    },
+    {
+     "name": "올리브오일",
+     "amount": "30g"
+    },
+    {
+     "name": "통후추",
+     "amount": "1g"
+    },
+    {
+     "name": "건 로즈마리",
+     "amount": "1g"
+    },
+    {
+     "name": "와인",
+     "amount": "15g"
+    },
+    {
+     "name": "방울토마토",
+     "amount": "45g"
+    },
+    {
+     "name": "양파",
+     "amount": "60g"
+    },
+    {
+     "name": "레몬껍질",
+     "amount": "10g"
+    },
+    {
+     "name": "마요네즈",
+     "amount": "30g"
+    },
+    {
+     "name": "식초",
+     "amount": "15g"
+    },
+    {
+     "name": "홀그레인 머스터즈",
+     "amount": "10g"
+    },
+    {
+     "name": "설탕",
+     "amount": "5g"
+    },
+    {
+     "name": "다진마늘",
+     "amount": "5g"
+    },
+    {
+     "name": "백후추",
+     "amount": "1g"
+    }
+   ],
+   "steps": [
+    {
+     "text": "쪽갈비는 물에 와인을 넣어 80% 이상을 삶아 냉수에 헹군다. 데쳐낸 쪽갈비를 올리브오일 과 로즈마리와 통후추를 뿌려서 구워준다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00375_01.png"
+    },
+    {
+     "text": "소스를 만들어준다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00375_02.png"
+    },
+    {
+     "text": "레몬껍질은 채 썰어준다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00375_03.png"
+    },
+    {
+     "text": "방울토마토는 먹기 좋게 자르고 양파도 먹기 좋게 잘라 팬에 구워준다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00375_04.png"
+    },
+    {
+     "text": "쪽갈비를 레몬껍질과 함께 굽는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00375_05.png"
+    },
+    {
+     "text": "구워진 채소에 함께 쪽갈비를 굽고 소스와 함께 완성한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00375_06.png"
+    }
+   ]
+  }
+ ]
+}

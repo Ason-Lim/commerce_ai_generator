@@ -1,0 +1,12 @@
+8710b804f6c79936  2026-11-04 13:21  app/services/ucp/__init__.py
+bfe4c7b8189c7df3  2026-11-04 13:37  app/services/ucp/client.py
+1e72b1e6b47dd2dd  2026-11-04 13:37  app/services/ucp/discovery.py
+df4d3b7b057155ea  2026-11-04 13:37  app/services/ucp/mapping.py
+d9db804a67111085  2026-11-04 13:21  app/services/ucp/platform.py
+a9b68d9b85b5c380  2026-11-04 13:21  app/services/ucp/registry.py
+2957906c8338b455  2026-11-04 13:37  app/services/ucp/schemas.py
+d67bae5a311abaa1  2026-11-04 13:37  check_ucp_catalog.py
+28ea034954e98c87  2026-11-04 13:38  check_ucp_profiles.py
+437ccb5c6f1a84f9  2026-11-05 08:05  make_ucp_profile.py
+b41927541cc6cf83  2026-11-04 13:37  tests/services/ucp/test_ucp_catalog.py
+8f16fd91a69a74ee  2026-11-05 08:05  Claude outputs/ucp_site/ucp-profile.json

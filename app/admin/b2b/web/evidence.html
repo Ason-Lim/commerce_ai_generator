@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공급사 근거 | B2B</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,select,input{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
+main{padding:22px 26px;min-width:0}
+h2{font-size:20px;margin:0 0 4px} .lede{color:var(--ink2);margin:0 0 16px;font-size:13.5px}
+.seg{display:inline-flex;background:#e6ebf1;border-radius:999px;padding:3px;margin-bottom:14px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;cursor:pointer;color:var(--ink2);font-weight:600}
+.seg button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 2px #0001}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.filters select,.filters input{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+.filters label{font-size:13px;color:var(--ink2);display:flex;gap:6px;align-items:center}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 0;overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap;background:#fafbfc;position:sticky;top:0}
+td small{display:block;color:var(--ink3);font-size:12px}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p-active{background:var(--ok-s);color:var(--ok)} .p-other{background:#eef1f4;color:var(--ink3)} .p-hold{background:var(--hold-s);color:var(--hold)}
+.meta{font-size:12.5px;color:var(--ink3);margin:10px 2px} .err{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:10px 12px;margin:8px 0}
+ul.q{margin:0;padding-left:16px;color:var(--ink2);font-size:12.5px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/b2b" aria-current="page">B2B</a></nav>
+  <nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence" aria-current="page">공급사 근거</a></nav>
+  <div class="railnote">공공 명부와 상품 관측 자료를 읽기 전용으로 보여 줘요. 명부 등록·영업상태는 현재 공급·재고·가격을 뜻하지 않고, 미확인 항목은 보류로 둬요.</div>
+</aside>
+<main>
+  <h2>공급사 근거</h2>
+  <p class="lede">업체 탐색 후보와 상품 근거예요. 추천 순위가 아니라, 견적 전에 확인할 질문을 함께 보여 줘요.</p>
+  <div class="seg" role="tablist" aria-label="보기">
+    <button role="tab" id="t-sup" aria-selected="true">공급사 후보</button>
+    <button role="tab" id="t-prod" aria-selected="false">상품 근거</button>
+  </div>
+
+  <section id="sup">
+    <div class="filters">
+      <select id="kind" aria-label="업종">
+        <option>식육포장처리업</option><option>도축업</option><option>축산물유통전문판매업</option><option>식육가공업</option>
+        <option>유가공업</option><option>알가공업</option><option>식품제조가공업</option><option>전체</option>
+      </select>
+      <input id="region" placeholder="지역 (예: 경기)" maxlength="50" aria-label="지역">
+      <label><input type="checkbox" id="unknown"> 영업상태 미확인 포함</label>
+      <button class="btn primary" id="go">조회</button>
+    </div>
+    <div id="supErr" class="err" hidden></div>
+    <div class="card"><table><thead><tr><th>업체</th><th>업종</th><th>주소 · 연락처</th><th>상태</th><th>자료 기준</th><th>견적 전 확인</th></tr></thead><tbody id="supRows"></tbody></table></div>
+    <div class="meta"><span id="supMeta"></span> <button class="btn" id="prev">이전</button> <button class="btn" id="next">다음</button></div>
+  </section>
+
+  <section id="prod" hidden>
+    <div class="filters">
+      <select id="species" aria-label="축종"><option value="">축종 전체</option><option value="beef">소</option><option value="pork">돼지</option></select>
+      <select id="stage" aria-label="거래 단계"><option value="">거래 단계 전체</option><option value="wholesale_primal">도매 부분육</option><option value="retail_small_pack">소매 소포장</option></select>
+      <button class="btn primary" id="goP">조회</button>
+    </div>
+    <div id="prodErr" class="err" hidden></div>
+    <div class="card"><table><thead><tr><th>상품 · 옵션</th><th>판매 · 가공</th><th>관측 가격</th><th>판정</th><th>미확인 항목</th></tr></thead><tbody id="prodRows"></tbody></table></div>
+    <div class="meta" id="prodMeta"></div>
+  </section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won=v=>v==null?"—":Number(v).toLocaleString("ko-KR")+"원";
+let offset=0; const LIMIT=30;
+async function api(url){const r=await fetch(url);if(r.status===401){location.href="/admin/login?next="+encodeURIComponent(location.pathname);throw new Error("auth")}
+  const d=await r.json(); if(!r.ok) throw new Error(d.detail||("오류 "+r.status)); return d}
+function tab(which){const s=which==="sup";$("#t-sup").setAttribute("aria-selected",s);$("#t-prod").setAttribute("aria-selected",!s);$("#sup").hidden=!s;$("#prod").hidden=s;if(!s&&!$("#prodRows").children.length)loadProd()}
+async function loadSup(){
+  $("#supErr").hidden=true;
+  const q=new URLSearchParams({kind:$("#kind").value,region:$("#region").value.trim(),include_unknown:$("#unknown").checked,offset,limit:LIMIT});
+  // 업종별 명부 출처 (app/services/b2b_evidence.py REGISTRY_SOURCES 와 같게)
+  const SOURCES={"식육포장처리업":"mois_packing","도축업":"foodsafety_I2858","축산물유통전문판매업":"bupyeong_distribution",
+    "식육가공업":"localdata_livestock_processing_csv","유가공업":"localdata_livestock_processing_csv","알가공업":"localdata_livestock_processing_csv",
+    "식품제조가공업":"localdata_food_manufacturing_csv","전체":""};
+  q.set("source",SOURCES[$("#kind").value]??"");
+  try{const d=await api("/b2b/suppliers?"+q);
+    $("#supRows").innerHTML=d.items.map(r=>`<tr><td><b>${esc(r.name)}</b><small>${esc(r.license_no||r.management_no||r.record_key)}</small></td>
+      <td>${esc(r.business_type)}${r.business_subtype?`<small>${esc(r.business_subtype)}</small>`:""}</td>
+      <td>${esc(r.address)}<small>${esc(r.phone)}</small></td>
+      <td><span class="pill ${r.operation_status==="active"?"p-active":"p-other"}">${r.operation_status==="active"?"영업중":esc(r.operation_status||"미확인")}</span></td>
+      <td>${esc(r.dataset_effective_date||r.received_or_reference_date)}<small>${esc(r.source)}</small></td>
+      <td><ul class="q">${(r.questions||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></td></tr>`).join("")||`<tr><td colspan=6>조건에 맞는 후보가 없어요.</td></tr>`;
+    $("#supMeta").textContent=`${d.total.toLocaleString("ko-KR")}곳 중 ${d.total?offset+1:0}–${Math.min(offset+LIMIT,d.total)} · ${d.scope}`;
+    $("#prev").disabled=offset===0;$("#next").disabled=offset+LIMIT>=d.total;
+  }catch(e){if(e.message!=="auth"){$("#supErr").textContent=e.message;$("#supErr").hidden=false}}
+}
+async function loadProd(){
+  $("#prodErr").hidden=true;
+  const q=new URLSearchParams({limit:100});if($("#species").value)q.set("species",$("#species").value);if($("#stage").value)q.set("stage",$("#stage").value);
+  try{const d=await api("/b2b/products?"+q);
+    $("#prodRows").innerHTML=d.items.map(p=>`<tr><td><b>${esc(p.name)}</b><small>${esc(p.option_raw)}</small></td>
+      <td>${esc(p.actual_seller||p.sales_channel)}<small>${esc(p.processor)}</small></td>
+      <td>${won(p.observed_price_krw)}<small>${esc(p.price_kind)} · ${esc(p.observed_date)}</small></td>
+      <td><span class="pill p-hold">보류</span><small>${esc(p.reason)}</small></td>
+      <td><ul class="q">${(p.supplier_questions||[]).slice(0,4).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></td></tr>`).join("")||`<tr><td colspan=5>상품 근거가 없어요.</td></tr>`;
+    $("#prodMeta").textContent=`${d.total}건 · 확정 조건으로 제외 ${d.excluded_by_confirmed_condition}건 · ${d.scope}`;
+  }catch(e){if(e.message!=="auth"){$("#prodErr").textContent=e.message;$("#prodErr").hidden=false}}
+}
+$("#t-sup").onclick=()=>tab("sup");$("#t-prod").onclick=()=>tab("prod");
+$("#go").onclick=()=>{offset=0;loadSup()};$("#goP").onclick=loadProd;
+$("#prev").onclick=()=>{offset=Math.max(0,offset-LIMIT);loadSup()};$("#next").onclick=()=>{offset+=LIMIT;loadSup()};
+loadSup();
+</script>
+</body>
+</html>

@@ -849,3 +849,26 @@ def revisit_recommendations(
         # Slicing preserves the /nl order and the existing item ranks.
         "recommendation_path": result.get("recommendation_path", NL_PATH_UNKNOWN),
     }
+
+# B2B evidence routes — 관리자 로그인 필요 (2026-10-29: 클라우드 공개 전 보호, 화면은 /admin/b2b/evidence)
+from fastapi import Depends as _Depends
+
+from app.admin.auth import require_admin as _require_admin
+from app.api.b2b_routes import router as b2b_router
+app.include_router(b2b_router, dependencies=[_Depends(_require_admin)])
+
+# 관리자 백엔드 (/admin: 운영 탭 · B2B 탭) — integrated_system 소비자 백엔드 · B2B 콘솔을 옮김
+from app.admin.routes import router as admin_router
+app.include_router(admin_router)
+
+# Conversation API (shopping + recipe) for the React front end
+from app.api.chat_routes import router as chat_router
+app.include_router(chat_router)
+
+# 인터넷 공개 보호 (2026-11-05 p43) — PUBLIC_MODE=1 일 때 Cloudflare 를 거친 요청만: 예전 API·문서 차단, 대화 요청 수 제한
+from app.public_guard import install as install_public_guard
+install_public_guard(app)
+
+# 고객 화면 (React 빌드 결과, frontend/dist) — 2026-11-02: 화면과 API를 같은 주소(:8001)에서. 반드시 마지막에 등록
+from app.web_frontend import mount_frontend
+mount_frontend(app)

@@ -1,0 +1,243 @@
+diff --git a/app/services/food_intelligence/engines/fruit_engine.py b/app/services/food_intelligence/engines/fruit_engine.py
+index abc9f00..5498536 100644
+--- a/app/services/food_intelligence/engines/fruit_engine.py
++++ b/app/services/food_intelligence/engines/fruit_engine.py
+@@ -1,5 +1,10 @@
+ import re
+ from app.services.recommendation.claim_source import brix_claim_source
++from app.services.food_intelligence.brix_standards import (
++    SUGGESTED_TEXT_ONLY_POINTS,
++    SUGGESTED_TIER_POINTS,
++    classify_brix,
++)
+ 
+ 
+ FRUIT_QUALITY_KEYWORDS = {
+@@ -40,9 +45,13 @@ def extract_brix(text: str) -> float:
+     return 0
+ 
+ 
+-def score_brix(brix: float, text: str) -> float:
+-    normalized = normalize_text(text)
++TIER_LABEL = {"top": "최상", "high": "고당도", "normal": "보통", "below": "출하 하한 미만"}
++
++_TEXT_ONLY_WORDS = ["초고당도", "고당도", "당도"]
++
+ 
++def _legacy_score_brix(brix: float, normalized: str) -> float:
++    """품종 기준표에 없는 상품: 2026-11-04 이전과 같은 고정 구간."""
+     if brix >= 16:
+         return 30
+     if brix >= 15:
+@@ -52,12 +61,46 @@ def score_brix(brix: float, text: str) -> float:
+     if brix >= 13:
+         return 16
+ 
+-    if any(word in normalized for word in ["초고당도", "고당도", "당도"]):
++    if any(word in normalized for word in _TEXT_ONLY_WORDS):
+         return 14
+ 
+     return 0
+ 
+ 
++def judge_brix(brix: float, text: str) -> dict:
++    """Brix 가점과 판정 근거.
++
++    2026-11-04: 품종별 기준표(brix_standards)에 있는 과일은 그 품종의 고당도·최상 기준으로 판정한다.
++    숫자 없는 '고당도' 문구는 숫자로 적은 '보통'보다 낮은 가점을 준다.
++    기준표에 없는 상품은 이전 고정 구간을 그대로 쓴다.
++    """
++    normalized = normalize_text(text)
++    judged = classify_brix(text, brix)
++    standard = judged["standard"]
++
++    if standard is None:
++        return {"points": _legacy_score_brix(brix, normalized), "tier": None, "standard": None}
++
++    tier = judged["tier"]
++    if tier == "no_value":
++        text_only = any(word in normalized for word in _TEXT_ONLY_WORDS)
++        return {
++            "points": SUGGESTED_TEXT_ONLY_POINTS if text_only else 0,
++            "tier": "text_only" if text_only else None,
++            "standard": standard,
++        }
++
++    return {"points": SUGGESTED_TIER_POINTS[tier], "tier": tier, "standard": standard}
++
++
++def score_brix(brix: float, text: str) -> float:
++    return judge_brix(brix, text)["points"]
++
++
++def _standard_label(standard) -> str:
++    return standard.variety or f"{standard.fruit} 공통"
++
++
+ def keyword_score(text: str, keywords: list[str], score_per_match: float, max_score: float) -> float:
+     normalized = normalize_text(text)
+     score = 0
+@@ -78,7 +121,10 @@ def calculate_fruit_quality(item: dict) -> dict:
+ 
+     brix = extract_brix(name)
+ 
+-    brix_score = score_brix(brix, name)
++    brix_judgement = judge_brix(brix, name)
++    brix_score = brix_judgement["points"]
++    brix_tier = brix_judgement["tier"]
++    brix_standard = brix_judgement["standard"]
+ 
+     premium_score = keyword_score(
+         name,
+@@ -136,6 +182,11 @@ def calculate_fruit_quality(item: dict) -> dict:
+             reasons.append(f"상품명·상세 설명에 {brix:g}brix로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다.")
+         else:
+             reasons.append(f"Brix 입력값 {brix:g}의 출처와 실제 당도는 확인되지 않았습니다.")
++        if brix_standard is not None and brix_tier in TIER_LABEL:
++            reasons.append(
++                f"표기값은 {_standard_label(brix_standard)} 기준 {TIER_LABEL[brix_tier]} 구간입니다 "
++                f"(고당도 {brix_standard.high:g}·최상 {brix_standard.top:g} 이상)."
++            )
+     elif brix_score:
+         if brix_claim_source(item) == "seller_page_claim":
+             reasons.append("상품명·상세 설명에 고당도로 표기되어 있습니다. 실제 당도는 확인되지 않았습니다.")
+@@ -164,6 +215,8 @@ def calculate_fruit_quality(item: dict) -> dict:
+         "fruit_quality_score": score,
+         "fruit_brix": brix,
+         "fruit_brix_score": brix_score,
++        "fruit_brix_tier": brix_tier,
++        "fruit_brix_standard": _standard_label(brix_standard) if brix_standard else None,
+         "fruit_premium_score": premium_score,
+         "fruit_origin_score": origin_score,
+         "fruit_freshness_score": freshness_score,
+diff --git a/app/services/recommendation/identity_engine.py b/app/services/recommendation/identity_engine.py
+index 56ca156..915a167 100644
+--- a/app/services/recommendation/identity_engine.py
++++ b/app/services/recommendation/identity_engine.py
+@@ -22,6 +22,8 @@ from .score_engine import (
+     get_brix_value,
+ )
+ 
++from app.services.food_intelligence.brix_standards import item_brix_tier
++
+ def get_effective_price_value(
+     item,
+ ):
+@@ -210,6 +212,32 @@ def is_kurly_search_identity_weak(
+         or not raw_url
+     )
+ 
++# 2026-11-04: 품종별 Brix 기준표(food_intelligence/brix_standards)와 같은 구간을 쓴다.
++BRIX_CONFIDENCE_TIER_POINTS = {"top": 55, "high": 42, "normal": 30, "below": 0}
++BRIX_CONFIDENCE_TEXT_ONLY_POINTS = 12
++
++
++def _brix_confidence_tier_points(item, brix):
++    """Brix 신뢰도 중 당도 구간 부분 (최대 55). 기준표에 없는 상품은 이전 고정 구간."""
++    tier, _standard = item_brix_tier(item, brix)
++
++    if tier is None:
++        if brix >= 15:
++            return 55
++        if brix >= 14:
++            return 42
++        if brix >= 13:
++            return 30
++        if item.get("is_high_brix"):
++            return 12
++        return 0
++
++    if tier == "no_value":
++        return BRIX_CONFIDENCE_TEXT_ONLY_POINTS if item.get("is_high_brix") else 0
++
++    return BRIX_CONFIDENCE_TIER_POINTS[tier]
++
++
+ def calculate_brix_confidence_score(
+     item,
+     display=None,
+@@ -242,14 +270,7 @@ def calculate_brix_confidence_score(
+ 
+     score = 0
+ 
+-    if brix >= 15:
+-        score += 55
+-    elif brix >= 14:
+-        score += 42
+-    elif brix >= 13:
+-        score += 30
+-    elif item.get("is_high_brix"):
+-        score += 12
++    score += _brix_confidence_tier_points(item, brix)
+ 
+     if re.search(
+         r"\d{2}(?:\.\d+)?\s*brix",
+diff --git a/app/services/recommendation/score_engine.py b/app/services/recommendation/score_engine.py
+index da565ba..b05e6aa 100644
+--- a/app/services/recommendation/score_engine.py
++++ b/app/services/recommendation/score_engine.py
+@@ -1,5 +1,7 @@
+ import re
+ 
++from app.services.food_intelligence.brix_standards import item_brix_tier
++
+ def get_safe_number(
+     value,
+     default=0.0,
+@@ -347,6 +349,37 @@ def calculate_hidden_gem_score(item):
+     return min(score, 100)
+ 
+ 
++# 2026-11-04: 품종별 Brix 기준표(food_intelligence/brix_standards)와 같은 구간을 쓴다.
++QUALITY_BRIX_TIER_POINTS = {"top": 100, "high": 85, "normal": 45, "below": 0}
++QUALITY_BRIX_TEXT_ONLY_POINTS = 20
++
++
++def calculate_brix_quality_points(item, brix):
++    """품질 점수의 Brix 부분 (최대 100).
++
++    기준표에 있는 품종은 그 품종의 고당도·최상 기준으로, 없는 상품은 이전 고정 구간으로 판정한다.
++    """
++    tier, _standard = item_brix_tier(item, brix)
++
++    if tier is None:
++        if brix >= 16:
++            return 100
++        if brix >= 15:
++            return 85
++        if brix >= 14:
++            return 65
++        if brix >= 13:
++            return 45
++        if item.get("is_high_brix"):
++            return 20
++        return 0
++
++    if tier == "no_value":
++        return QUALITY_BRIX_TEXT_ONLY_POINTS if item.get("is_high_brix") else 0
++
++    return QUALITY_BRIX_TIER_POINTS[tier]
++
++
+ def calculate_ai_scores(item, priority="trust"):
+     """상품별 AI 추천 근거 점수 계산"""
+ 
+@@ -359,17 +392,7 @@ def calculate_ai_scores(item, priority="trust"):
+     review_count = item.get("review_count") or 0
+ 
+     brix = get_brix_value(item)
+-
+-    if brix >= 16:
+-        quality_score += 100
+-    elif brix >= 15:
+-        quality_score += 85
+-    elif brix >= 14:
+-        quality_score += 65
+-    elif brix >= 13:
+-        quality_score += 45
+-    elif item.get("is_high_brix"):
+-        quality_score += 20
++    quality_score += calculate_brix_quality_points(item, brix)
+ 
+     try:
+         rating = float(rating)

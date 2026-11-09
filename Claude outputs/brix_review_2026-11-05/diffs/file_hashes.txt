@@ -1,0 +1,6 @@
+HEAD 658c6611ec89e11383e3433e46e2520ef3148076
+app/services/food_intelligence/brix_standards.py HEAD=HEAD:app/ser work=be74c5902837 sha256=f1c6700e28916a40
+app/services/food_intelligence/engines/fruit_engine.py HEAD=abc9f00a1547 work=54985363803e sha256=a30e4ac519eb11ec
+app/services/recommendation/score_engine.py HEAD=da565ba11fda work=b05e6aab6dc4 sha256=e9dd03b7f4f7c55b
+app/services/recommendation/identity_engine.py HEAD=56ca15689b41 work=915a167f6d10 sha256=678a5953f88c0143
+tests/services/food_intelligence/test_brix_standards.py HEAD=HEAD:tests/s work=d301a8b8560e sha256=9bf6a6e5b3f377ea

@@ -1,0 +1,222 @@
+{
+  "source": "/Users/mom/Downloads/상품상세.png",
+  "text": "상 품 상세\n상품평 (46)\n품\n의\n| 다 .\n\" 산 됩 니\n가 생산\n신\n= -: 40\nLoe",
+  "words": [
+    {
+      "text": "상",
+      "confidence": 93.104324,
+      "bbox_px": [
+        163,
+        18,
+        108,
+        29
+      ]
+    },
+    {
+      "text": "품",
+      "confidence": 93.29174,
+      "bbox_px": [
+        197,
+        14,
+        27,
+        47
+      ]
+    },
+    {
+      "text": "상세",
+      "confidence": 97.010941,
+      "bbox_px": [
+        223,
+        18,
+        48,
+        29
+      ]
+    },
+    {
+      "text": "상품평",
+      "confidence": 96.968781,
+      "bbox_px": [
+        802,
+        18,
+        80,
+        29
+      ]
+    },
+    {
+      "text": "(46)",
+      "confidence": 96.555336,
+      "bbox_px": [
+        894,
+        18,
+        56,
+        28
+      ]
+    },
+    {
+      "text": "품",
+      "confidence": 93.29203,
+      "bbox_px": [
+        830,
+        31,
+        26,
+        15
+      ]
+    },
+    {
+      "text": "의",
+      "confidence": 97.020714,
+      "bbox_px": [
+        1266,
+        1280,
+        32,
+        41
+      ]
+    },
+    {
+      "text": "|",
+      "confidence": 88.887398,
+      "bbox_px": [
+        1534,
+        1211,
+        4,
+        41
+      ]
+    },
+    {
+      "text": "다",
+      "confidence": 93.211693,
+      "bbox_px": [
+        1551,
+        1211,
+        26,
+        41
+      ]
+    },
+    {
+      "text": ".",
+      "confidence": 92.627792,
+      "bbox_px": [
+        1584,
+        1242,
+        5,
+        5
+      ]
+    },
+    {
+      "text": "\"",
+      "confidence": 0.0,
+      "bbox_px": [
+        1411,
+        1211,
+        13,
+        26
+      ]
+    },
+    {
+      "text": "산",
+      "confidence": 62.192436,
+      "bbox_px": [
+        1434,
+        1211,
+        34,
+        32
+      ]
+    },
+    {
+      "text": "됩",
+      "confidence": 93.283005,
+      "bbox_px": [
+        1472,
+        1211,
+        29,
+        43
+      ]
+    },
+    {
+      "text": "니",
+      "confidence": 92.499001,
+      "bbox_px": [
+        1511,
+        1219,
+        21,
+        23
+      ]
+    },
+    {
+      "text": "가",
+      "confidence": 95.544693,
+      "bbox_px": [
+        1342,
+        1211,
+        35,
+        41
+      ]
+    },
+    {
+      "text": "생산",
+      "confidence": 95.544693,
+      "bbox_px": [
+        1437,
+        1238,
+        24,
+        15
+      ]
+    },
+    {
+      "text": "신",
+      "confidence": 93.036133,
+      "bbox_px": [
+        1316,
+        1281,
+        32,
+        41
+      ]
+    },
+    {
+      "text": "=",
+      "confidence": 44.164902,
+      "bbox_px": [
+        1473,
+        1299,
+        20,
+        28
+      ]
+    },
+    {
+      "text": "-:",
+      "confidence": 12.099007,
+      "bbox_px": [
+        1501,
+        1299,
+        20,
+        28
+      ]
+    },
+    {
+      "text": "40",
+      "confidence": 72.82724,
+      "bbox_px": [
+        1628,
+        1282,
+        50,
+        44
+      ]
+    },
+    {
+      "text": "Loe",
+      "confidence": 65.40979,
+      "bbox_px": [
+        1361,
+        1305,
+        97,
+        18
+      ]
+    }
+  ],
+  "engine": "tesseract 5.5.2",
+  "language": "kor+eng",
+  "psm": 3,
+  "status": "OCR_EXTRACTED_UNVERIFIED",
+  "field_validation": "NOT_PERFORMED",
+  "API_CALLS": 0
+}

@@ -1,0 +1,18 @@
+{
+ "_note": "테스트용 가상 예시 — regions.prepare 형식 (schema 2). 값은 지어낸 것이다.",
+ "schema_version": 2, "source_name": "example_detail.png",
+ "source_sha256": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+ "source_size_px": [860, 5200],
+ "regions": [
+  {"id": "R001", "source_bbox_xyxy_px": [0, 1200, 860, 1480], "scale": 2, "image": "R001_source.png",
+   "image_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+   "ocr": {"text": "원재료명 돼지고기(국산) 100%\n알레르기 유발물질: 돼지고기 함유", "words": [], "engine": "5.3.0",
+           "status": "OCR_EXTRACTED_UNVERIFIED", "field_validation": "NOT_PERFORMED"}, "review_status": "REVIEW_REQUIRED"},
+  {"id": "R002", "source_bbox_xyxy_px": [0, 3000, 860, 3100], "scale": 2, "image": "R002_source.png",
+   "image_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+   "ocr": {"text": "", "words": [], "engine": "5.3.0", "status": "NO_TEXT_DETECTED", "field_validation": "NOT_PERFORMED"},
+   "review_status": "REVIEW_REQUIRED"}
+ ],
+ "detector": "light_background_neutral_text_rows_v1", "coverage": "PARTIAL_CANDIDATES_ONLY",
+ "detected_regions": 11, "omitted_region_count": 3, "field_validation": "NOT_PERFORMED", "API_CALLS": 0
+}

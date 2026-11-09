@@ -32,6 +32,23 @@ def _safe_int(
         return default
 
 
+def _naver_db_since():
+    """2026-11-02: 예전에 저장한 네이버 쇼핑 API 결과를 오늘 가격처럼 다시 보여 주지 않는다.
+
+    네이버 쇼핑 검색 API는 2026-07-31 종료(보도), 저장 조건은 검토 중 → 기본 2일 이내 수집분만 쓴다.
+    NAVER_DB_MAX_AGE_DAYS 로 바꿀 수 있다 (0 이면 DB 결과를 쓰지 않음)."""
+    import os
+    from datetime import datetime, timedelta
+
+    try:
+        days = float(os.getenv("NAVER_DB_MAX_AGE_DAYS", "2"))
+    except ValueError:
+        days = 2.0
+    if days <= 0:
+        return datetime(9999, 1, 1)
+    return datetime.now() - timedelta(days=days)
+
+
 def fetch_naver_products_from_db(
     keyword: str,
     limit: int = 10,
@@ -53,9 +70,11 @@ def fetch_naver_products_from_db(
             weight_text,
             weight_g,
             weight_kg,
-            brix_value
+            brix_value,
+            collected_at
         FROM online_food_price_snapshot
         WHERE keyword = :keyword
+          AND collected_at >= :since
         ORDER BY price ASC
         LIMIT :limit
         """
@@ -68,6 +87,7 @@ def fetch_naver_products_from_db(
                 {
                     "keyword": keyword,
                     "limit": limit,
+                    "since": _naver_db_since(),
                 },
             ).mappings().all()
 
@@ -89,6 +109,8 @@ def fetch_naver_products_from_db(
             )
             item["is_ad"] = False
             item["is_coupang"] = False
+            if item.get("collected_at") is not None:          # 화면에 '○○ 확인 가격 · 지금은 다를 수 있어요'
+                item["seen_at"] = str(item["collected_at"])[:16]
 
             results.append(item)
 

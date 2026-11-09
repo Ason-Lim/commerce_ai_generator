@@ -1,0 +1,22 @@
+{
+ "_note": "테스트용 가상 예시 — '예시몰'은 실제 업체가 아니며 값은 지어낸 것이다. offer_rows.write_result 형식 (schema 3.4).",
+ "schema_version": "3.4", "layout": "RADIO_OPTION_ROWS", "source_name": "example_offer.png",
+ "source_sha256": "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0",
+ "source_size_px": [1080, 2400], "panel_bbox_xyxy_px": [40, 900, 1040, 1700],
+ "options": [
+  {"id": "O001", "weight_kg": 0.5, "pack_quantity": 2, "pack_unit": "팩", "box_quantity": null,
+   "total_weight_kg_derived": 1.0, "selected": true, "price_krw": 12900, "title_ocr_raw": "국산 삼겹살 500g x 2팩",
+   "source_bbox_xyxy_px": [60, 960, 1020, 1040], "source_image": "O001_source.png",
+   "status": "CANDIDATE_REQUIRES_REVIEW", "review_reasons": ["screen_claim_not_product_fact"], "verified_product_fact": false},
+  {"id": "O002", "weight_kg": 1.0, "pack_quantity": null, "pack_unit": null, "box_quantity": null,
+   "total_weight_kg_derived": null, "selected": false, "price_krw": 11900, "title_ocr_raw": "국산 삼겹살 1kg ?팩",
+   "source_bbox_xyxy_px": [60, 1060, 1020, 1140], "source_image": "O002_source.png",
+   "status": "CANDIDATE_REQUIRES_REVIEW",
+   "review_reasons": ["screen_claim_not_product_fact", "quantity_unresolved_or_conflicting"], "verified_product_fact": false}
+ ],
+ "selected_option_id": "O001", "end_boundary_method": "EXPLICIT_OPTIONS_BUTTON_FOCUSED_OCR",
+ "status": "UNRESOLVED_REQUIRES_REVIEW", "API_CALLS": 0, "ocr_recognition_calls": 7,
+ "field_validation": "NOT_PERFORMED", "human_review": "PENDING",
+ "limits": ["Screen OCR candidates only; no actual product facts or current purchase conditions verified."],
+ "price_comparison_flags": [{"lighter_option_id": "O001", "heavier_option_id": "O002"}]
+}

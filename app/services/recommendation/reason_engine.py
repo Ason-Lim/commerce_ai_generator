@@ -382,10 +382,11 @@ def build_reason_list(item, priority="trust"):
                 priority,
             ),
         )
-    elif "쿠팡" in platform_name or "coupang" in platform_name.lower():
+    elif ("쿠팡" in platform_name or "coupang" in platform_name.lower()) and item.get("is_rocket") is True:
+        # 2026-11-01: 쿠팡 상품이라는 이유만으로 '빠른배송'이라고 하지 않는다 — 판매처가 로켓배송으로 표시한 상품만
         add_ranked_reason(
             reasons,
-            "🚀 빠른배송이 가능해 배송 대기 부담이 적어요",
+            "🚀 쿠팡이 로켓배송으로 표시한 상품이에요",
             adjust_reason_weight_by_priority(
                 74,
                 "delivery",
