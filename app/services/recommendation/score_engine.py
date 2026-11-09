@@ -1,6 +1,78 @@
+"""레거시 추천 점수 엔진 (PM-2 스냅샷·reason_engine·Streamlit이 사용).
+
+00_1 결정(2026-11-09): 이 모듈은 F2-A1 제거 후보가 아니라 보존 대상이다.
+compare_snapshot_engine(PM-2)·identity_engine·reason_engine·compare_engine이 의존한다.
+
+점수 정책
+- 평점·리뷰 수는 `rating_score_usable is True`로 표시된 상품에서만 점수에 넣는다.
+  현재 DB의 평점·리뷰 값은 페이지 보강 스크립트에서 온 것이므로 기본값은 제외다
+  (2026-11-02 결정: 스크래핑 평점·리뷰는 DB에 남기되 점수 계산에서 제외).
+- 제휴(수수료) 여부는 어떤 점수에도 들어가지 않는다 (2026-11-01 원칙).
+"""
+
+from __future__ import annotations
+
 import re
+from collections.abc import Mapping
 
 from app.services.food_intelligence.brix_standards import item_brix_tier
+
+SCORE_ENGINE_VERSION = "legacy-score-2026-11-09"
+
+# 평점·리뷰를 점수에 넣어도 된다는 명시 표시. 검증 로그에 남은 값에만 True를 붙인다.
+RATING_SCORE_USABLE_FLAG = "rating_score_usable"
+
+REACTION_LABEL = "사용자 반응 우수 추천"
+
+# 2026-11-04: 품종별 Brix 기준표(food_intelligence/brix_standards)와 같은 구간을 쓴다.
+QUALITY_BRIX_TIER_POINTS = {"top": 100, "high": 85, "normal": 45, "below": 0}
+QUALITY_BRIX_TEXT_ONLY_POINTS = 20
+
+# 기준표에 없는 품종의 고정 Brix 구간 (이상, 점수)
+_FALLBACK_BRIX_TIERS = ((16, 100), (15, 85), (14, 65), (13, 45))
+
+# 100g당 가격 구간 (이하, 점수). 마지막 구간 초과는 15점.
+_PRICE_PER_100G_TIERS = ((400, 90), (600, 80), (800, 70), (1000, 60), (1200, 45), (1500, 30))
+_PRICE_PER_100G_ABOVE = 15
+
+_RATING_QUALITY_TIERS = ((4.8, 8), (4.5, 5), (4.0, 3))
+_REVIEW_QUALITY_TIERS = ((10000, 8), (3000, 6), (1000, 4), (500, 2))
+_RATING_TRUST_TIERS = ((4.8, 35), (4.5, 25), (4.0, 15))
+_REVIEW_TRUST_TIERS = ((10000, 35), (3000, 25), (1000, 15), (500, 10))
+# (최소 평점, 최소 리뷰 수, 점수) — 위에서부터 첫 일치만 적용
+_RATING_REVIEW_COMBO_TIERS = ((4.7, 3000, 20), (4.5, 1000, 12), (4.3, 500, 6))
+
+_REACTION_CLICK_TIERS = ((10, 25), (5, 18), (3, 12), (1, 6))
+_REACTION_CTR_TIERS = ((10, 25), (5, 18), (3, 10))
+_REACTION_CAP = 45
+
+_HIDDEN_GEM_CLICK_TIERS = ((10, 35), (5, 30), (3, 25), (1, 15))
+_HIDDEN_GEM_CTR_TIERS = ((20, 40), (10, 30), (5, 20), (3, 10))
+
+# priority별 total 가중치 (quality, price, popularity)
+_TOTAL_WEIGHTS = {
+    "price": (0.25, 0.60, 0.15),
+    "quality": (0.60, 0.15, 0.25),
+    "trust": (0.30, 0.20, 0.50),
+}
+_TOTAL_WEIGHTS_DEFAULT = (0.40, 0.30, 0.30)
+
+_BRIX_FIELDS = ("brix", "brix_value", "avg_brix", "max_brix", "sugar_brix", "display_brix")
+_BRIX_TEXT_FIELDS = ("product_name", "raw_name", "name", "title", "description", "summary")
+_BRIX_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"(\d{2}(?:\.\d+)?)\s*brix",
+        r"(\d{2}(?:\.\d+)?)\s*브릭스",
+        r"당도\s*(\d{2}(?:\.\d+)?)",
+    )
+)
+_BRIX_TEXT_RANGE = (8, 30)
+
+
+# ---------------------------------------------------------------------------
+# 공통 도우미
+# ---------------------------------------------------------------------------
 
 def get_safe_number(
     value,
@@ -24,6 +96,44 @@ def get_safe_number(
     except (TypeError, ValueError):
         return float(default)
 
+
+def _at_least(value, tiers, default=0):
+    """(기준, 점수) 내림차순 구간에서 value >= 기준인 첫 점수."""
+    for threshold, points in tiers:
+        if value >= threshold:
+            return points
+    return default
+
+
+def _base_priority(priority) -> str:
+    return str(priority or "trust").replace("_adaptive", "")
+
+
+def _trend_boost(search_context) -> float:
+    if search_context is None:
+        return 0.0
+    if isinstance(search_context, Mapping):
+        raw = search_context.get("trend_boost", 0.0)
+    else:
+        raw = getattr(search_context, "trend_boost", 0.0)
+    return get_safe_number(raw, 0.0)
+
+
+def rating_signals_usable(item) -> bool:
+    """평점·리뷰 수를 점수에 넣어도 되는지. 명시적으로 True일 때만 허용."""
+    return (item or {}).get(RATING_SCORE_USABLE_FLAG) is True
+
+
+def _rating_inputs(item) -> tuple[float, int]:
+    """점수에 쓸 (평점, 리뷰 수). 사용 불가 표시면 (0, 0)."""
+    if not rating_signals_usable(item):
+        return 0.0, 0
+    return (
+        get_safe_number(item.get("rating"), 0),
+        int(get_safe_number(item.get("review_count"), 0)),
+    )
+
+
 def get_cached_identity_validation(
     item,
 ) -> dict:
@@ -32,47 +142,255 @@ def get_cached_identity_validation(
 
     Identity 엔진 전체 이전 전까지 score_engine이
     UI 계층의 enrich_item_identity()에 의존하지 않도록 합니다.
+    값이 없을 때만 50(중립)을 쓰고, 실제 0은 0으로 둡니다.
     """
     item = item or {}
 
-    validation = item.get(
-        "_identity_validation"
-    )
+    validation = item.get("_identity_validation")
 
     if isinstance(validation, dict):
         return validation
 
     return {
-        "identity_score": float(
-            item.get(
-                "_identity_score",
-                50,
-            )
-            or 50
-        ),
-        "price_confidence": float(
-            item.get(
-                "_price_confidence",
-                50,
-            )
-            or 50
-        ),
-        "brix_confidence": float(
-            item.get(
-                "_brix_confidence",
-                50,
-            )
-            or 50
-        ),
-        "identity_key": str(
-            item.get(
-                "_product_identity_key",
-                "",
-            )
-            or ""
-        ),
+        "identity_score": get_safe_number(item.get("_identity_score"), 50),
+        "price_confidence": get_safe_number(item.get("_price_confidence"), 50),
+        "brix_confidence": get_safe_number(item.get("_brix_confidence"), 50),
+        "identity_key": str(item.get("_product_identity_key") or ""),
         "warnings": [],
     }
+
+
+# ---------------------------------------------------------------------------
+# 세부 점수
+# ---------------------------------------------------------------------------
+
+def calculate_price_value_score(item):
+    """100g당 가격 기준 가성비 점수 계산"""
+
+    price_per_100g = get_safe_number(item.get("price_per_100g"), 0)
+
+    if price_per_100g <= 0:
+        return 0
+
+    for limit, points in _PRICE_PER_100G_TIERS:
+        if price_per_100g <= limit:
+            return points
+
+    return _PRICE_PER_100G_ABOVE
+
+
+def get_brix_value(item):
+    """상품에서 brix 값을 안전하게 추출
+
+    1) API/DB 필드에서 먼저 찾고
+    2) 없으면 상품명/설명 텍스트에서 15brix, 15 브릭스, 당도 15 같은 패턴을 추출합니다.
+    """
+    for field in _BRIX_FIELDS:
+        value = get_safe_number(item.get(field), 0)
+        if value > 0:
+            return value
+
+    text = " ".join(str(item.get(key) or "") for key in _BRIX_TEXT_FIELDS)
+
+    low, high = _BRIX_TEXT_RANGE
+    for pattern in _BRIX_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            value = float(match.group(1))
+            if low <= value <= high:
+                return value
+
+    return 0
+
+
+def calculate_reaction_trust_score(item):
+    """클릭/CTR/사용자 반응 기반 안심 점수 보정"""
+
+    click_count = int(get_safe_number(item.get("click_count"), 0))
+    ctr_pct = get_safe_number(item.get("ctr_pct"), 0)
+
+    score = 0
+
+    if item.get("final_recommendation_label") == REACTION_LABEL:
+        score += 25
+
+    score += _at_least(click_count, _REACTION_CLICK_TIERS)
+
+    if ctr_pct > 0:
+        score += _at_least(ctr_pct, _REACTION_CTR_TIERS, default=5)
+
+    return min(score, _REACTION_CAP)
+
+
+def calculate_hidden_gem_score(item):
+    """숨은 인기 상품 점수"""
+
+    impression_count = int(get_safe_number(item.get("impression_count"), 0))
+    click_count = int(get_safe_number(item.get("click_count"), 0))
+    ctr_pct = get_safe_number(item.get("ctr_pct"), 0)
+
+    score = 0
+
+    # 발견 추천은 너무 적은 노출보다, 어느 정도 검증된 노출을 더 높게 봅니다.
+    if 30 <= impression_count <= 150:
+        score += 25
+    elif 10 <= impression_count < 30:
+        score += 15
+    elif 150 < impression_count <= 300:
+        score += 10
+
+    score += _at_least(click_count, _HIDDEN_GEM_CLICK_TIERS)
+    score += _at_least(ctr_pct, _HIDDEN_GEM_CTR_TIERS)
+
+    return min(score, 100)
+
+
+def calculate_novelty_score(item):
+    """탐색 추천용 신규성 점수 계산 (Streamlit 화면과 같은 산식).
+
+    calculate_mode_score(…, "exploration")가 호출한다. 이전에는 이 모듈에
+    정의가 없어 탐색 모드에서 NameError가 났다.
+    """
+
+    impression_count = int(get_safe_number(item.get("impression_count"), 0))
+    click_count = int(get_safe_number(item.get("click_count"), 0))
+    ctr_pct = get_safe_number(item.get("ctr_pct"), 0)
+
+    score = 0
+
+    if impression_count == 0:
+        score += 35
+    elif impression_count <= 10:
+        score += 30
+    elif impression_count <= 30:
+        score += 20
+    elif impression_count <= 60:
+        score += 10
+
+    if click_count == 0:
+        score += 15
+    elif click_count <= 2:
+        score += 8
+
+    if ctr_pct >= 10:
+        score += 25
+    elif ctr_pct >= 5:
+        score += 15
+    elif ctr_pct > 0:
+        score += 8
+
+    if item.get("recommendation_mode") == "exploration":
+        score += 20
+
+    return min(score, 100)
+
+
+def calculate_brix_quality_points(item, brix):
+    """품질 점수의 Brix 부분 (최대 100).
+
+    기준표에 있는 품종은 그 품종의 고당도·최상 기준으로, 없는 상품은 이전 고정 구간으로 판정한다.
+    """
+    tier, _standard = item_brix_tier(item, brix)
+
+    if tier is None:
+        points = _at_least(brix, _FALLBACK_BRIX_TIERS)
+        if points:
+            return points
+        return QUALITY_BRIX_TEXT_ONLY_POINTS if item.get("is_high_brix") else 0
+
+    if tier == "no_value":
+        return QUALITY_BRIX_TEXT_ONLY_POINTS if item.get("is_high_brix") else 0
+
+    return QUALITY_BRIX_TIER_POINTS[tier]
+
+
+def _quality_score(item, rating, review_count) -> float:
+    score = calculate_brix_quality_points(item, get_brix_value(item))
+    score += _at_least(rating, _RATING_QUALITY_TIERS)
+    score += _at_least(review_count, _REVIEW_QUALITY_TIERS)
+    return min(score, 100)
+
+
+def _trust_score(item, rating, review_count) -> float:
+    score = _at_least(rating, _RATING_TRUST_TIERS)
+    score += _at_least(review_count, _REVIEW_TRUST_TIERS)
+
+    for min_rating, min_reviews, points in _RATING_REVIEW_COMBO_TIERS:
+        if rating >= min_rating and review_count >= min_reviews:
+            score += points
+            break
+
+    # 리뷰/평점이 부족한(또는 점수에서 제외된) 상품도 실제 클릭/CTR 반응이 있으면
+    # 오늘의 베스트와 안심 기준에서 완전히 밀리지 않도록 보정합니다.
+    score += calculate_reaction_trust_score(item)
+
+    return min(score, 100)
+
+
+def _price_score(item) -> float:
+    score = calculate_price_value_score(item)
+
+    if item.get("final_discount_rate") or item.get("discount_rate"):
+        score += 10
+
+    if get_safe_number(item.get("price_drop_boost"), 0) >= 5:
+        score += 15
+
+    return min(score, 100)
+
+
+def _popularity_score(item, base_priority) -> float:
+    score = 0
+
+    if item.get("final_recommendation_label") == REACTION_LABEL:
+        score += 30
+
+    if get_safe_number(item.get("ctr_feedback_boost"), 0) >= 7:
+        score += 30
+
+    if get_safe_number(item.get("ctr_pct"), 0) >= 20:
+        score += 20
+
+    # 발견 추천에서는 실제 클릭/CTR 반응이 있는데도
+    # 사용자 반응이 0점으로 보이지 않도록 발견성 점수를 일부 반영합니다.
+    if base_priority == "discovery":
+        score = max(score, min(calculate_hidden_gem_score(item) * 0.4, 35))
+
+    return score
+
+
+# ---------------------------------------------------------------------------
+# 공개 진입점
+# ---------------------------------------------------------------------------
+
+def calculate_ai_scores(item, priority="trust"):
+    """상품별 AI 추천 근거 점수 계산.
+
+    반환: quality·trust·price·popularity(각 0~100)와 total.
+    total은 화면에 보이는 (상한 적용된) 세부 점수로 계산한다.
+    """
+
+    base_priority = _base_priority(priority)
+    rating, review_count = _rating_inputs(item)
+
+    quality = _quality_score(item, rating, review_count)
+    trust = _trust_score(item, rating, review_count)
+    price = _price_score(item)
+    popularity = _popularity_score(item, base_priority)
+
+    w_quality, w_price, w_popularity = _TOTAL_WEIGHTS.get(
+        base_priority, _TOTAL_WEIGHTS_DEFAULT
+    )
+    total = quality * w_quality + price * w_price + popularity * w_popularity
+
+    return {
+        "quality": round(quality, 1),
+        "trust": round(trust, 1),
+        "price": round(price, 1),
+        "popularity": round(popularity, 1),
+        "total": round(total, 1),
+    }
+
 
 def calculate_mode_score(
     item,
@@ -80,18 +398,9 @@ def calculate_mode_score(
     base_priority,
     search_context=None,
 ):
-    
     """추천 모드별 최종 정렬 점수 계산"""
 
-    try:
-        trend_boost = float(
-            getattr(search_context, "trend_boost", 0.0)
-            if search_context is not None
-            else 0.0
-        )
-    except Exception:
-        trend_boost = 0.0
-    
+    trend_boost = _trend_boost(search_context)
 
     quality_score = scores.get("quality", 0)
     price_score = scores.get("price", 0)
@@ -99,25 +408,17 @@ def calculate_mode_score(
     popularity_score = scores.get("popularity", 0)
 
     if base_priority == "quality":
-        validation = get_cached_identity_validation(
-            item
-        )
-        brix_confidence = validation.get("brix_confidence", 0)
-
+        brix_confidence = get_cached_identity_validation(item).get("brix_confidence", 0)
         return (
-    quality_score * 0.70
-    + brix_confidence * 0.20
-    + trust_score * 0.07
-    + price_score * 0.03
-    + trend_boost
-)
+            quality_score * 0.70
+            + brix_confidence * 0.20
+            + trust_score * 0.07
+            + price_score * 0.03
+            + trend_boost
+        )
 
     if base_priority == "price":
-        validation = get_cached_identity_validation(
-            item
-        )
-        price_confidence = validation.get("price_confidence", 0)
-
+        price_confidence = get_cached_identity_validation(item).get("price_confidence", 0)
         return (
             price_score * 0.58
             + price_confidence * 0.22
@@ -134,24 +435,18 @@ def calculate_mode_score(
             + trend_boost
         )
 
-
-
     if base_priority == "exploration":
-        novelty_score = calculate_novelty_score(item)
-
         return (
             quality_score * 0.55
-            + novelty_score * 0.35
+            + calculate_novelty_score(item) * 0.35
             + price_score * 0.10
             + trend_boost
         )
 
     if base_priority == "discovery":
-        hidden_gem_score = calculate_hidden_gem_score(item)
-
         return (
             quality_score * 0.45
-            + hidden_gem_score * 0.45
+            + calculate_hidden_gem_score(item) * 0.45
             + trust_score * 0.10
             + trend_boost
         )
@@ -172,361 +467,30 @@ def calculate_mode_score(
         + trend_boost
     )
 
-    
-def calculate_price_value_score(item):
-    """100g당 가격 기준 가성비 점수 계산"""
 
-    price_per_100g = item.get("price_per_100g")
+def explain_score_inputs(item) -> dict:
+    """1단계 '추천 근거 표시'용: 이 상품 점수에 무엇이 들어갔고 무엇이 빠졌는지.
 
-    try:
-        price_per_100g = float(price_per_100g or 0)
-    except Exception:
-        price_per_100g = 0
-
-    if price_per_100g <= 0:
-        return 0
-
-    if price_per_100g <= 400:
-        return 90
-
-    if price_per_100g <= 600:
-        return 80
-
-    if price_per_100g <= 800:
-        return 70
-
-    if price_per_100g <= 1000:
-        return 60
-
-    if price_per_100g <= 1200:
-        return 45
-
-    if price_per_100g <= 1500:
-        return 30
-
-    return 15
-
-
-
-def get_brix_value(item):
-    """상품에서 brix 값을 안전하게 추출
-
-    1) API/DB 필드에서 먼저 찾고
-    2) 없으면 상품명/설명 텍스트에서 15brix, 15 브릭스, 당도 15 같은 패턴을 추출합니다.
+    점수 자체는 바꾸지 않는다. 화면·로그에서 산식 버전과 제외 사유를 보여 주는 데 쓴다.
     """
-    candidates = [
-        item.get("brix"),
-        item.get("brix_value"),
-        item.get("avg_brix"),
-        item.get("max_brix"),
-        item.get("sugar_brix"),
-        item.get("display_brix"),
-    ]
-
-    for value in candidates:
-        try:
-            if value is not None and float(value) > 0:
-                return float(value)
-        except Exception:
-            pass
-
-    text = " ".join(
-        str(item.get(key) or "")
-        for key in [
-            "product_name",
-            "raw_name",
-            "name",
-            "title",
-            "description",
-            "summary",
-        ]
+    item = item or {}
+    rating_used = rating_signals_usable(item)
+    has_rating_values = any(
+        get_safe_number(item.get(key), 0) > 0 for key in ("rating", "review_count")
     )
 
-    patterns = [
-        r"(\d{2}(?:\.\d+)?)\s*brix",
-        r"(\d{2}(?:\.\d+)?)\s*브릭스",
-        r"당도\s*(\d{2}(?:\.\d+)?)",
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-
-        if match:
-            try:
-                value = float(match.group(1))
-                if 8 <= value <= 30:
-                    return value
-            except Exception:
-                pass
-
-    return 0
-
-
-def calculate_reaction_trust_score(item):
-    """클릭/CTR/사용자 반응 기반 안심 점수 보정"""
-
-    click_count = int(get_safe_number(item.get("click_count"), 0))
-    ctr_pct = get_safe_number(item.get("ctr_pct"), 0)
-
-    score = 0
-
-    if item.get("final_recommendation_label") == "사용자 반응 우수 추천":
-        score += 25
-
-    if click_count >= 10:
-        score += 25
-    elif click_count >= 5:
-        score += 18
-    elif click_count >= 3:
-        score += 12
-    elif click_count >= 1:
-        score += 6
-
-    if ctr_pct >= 10:
-        score += 25
-    elif ctr_pct >= 5:
-        score += 18
-    elif ctr_pct >= 3:
-        score += 10
-    elif ctr_pct > 0:
-        score += 5
-
-    return min(score, 45)
-
-
-def calculate_hidden_gem_score(item):
-    """숨은 인기 상품 점수"""
-
-    impression_count = item.get("impression_count") or 0
-    click_count = item.get("click_count") or 0
-    ctr_pct = item.get("ctr_pct") or 0
-
-    try:
-        impression_count = int(impression_count)
-    except Exception:
-        impression_count = 0
-
-    try:
-        click_count = int(click_count)
-    except Exception:
-        click_count = 0
-
-    try:
-        ctr_pct = float(ctr_pct)
-    except Exception:
-        ctr_pct = 0
-
-    score = 0
-
-    # 발견 추천은 너무 적은 노출보다, 어느 정도 검증된 노출을 더 높게 봅니다.
-    if 30 <= impression_count <= 150:
-        score += 25
-    elif 10 <= impression_count < 30:
-        score += 15
-    elif 150 < impression_count <= 300:
-        score += 10
-
-    # 실제 클릭 반응
-    if click_count >= 10:
-        score += 35
-    elif click_count >= 5:
-        score += 30
-    elif click_count >= 3:
-        score += 25
-    elif click_count >= 1:
-        score += 15
-
-    # 클릭 반응률
-    if ctr_pct >= 20:
-        score += 40
-    elif ctr_pct >= 10:
-        score += 30
-    elif ctr_pct >= 5:
-        score += 20
-    elif ctr_pct >= 3:
-        score += 10
-
-    return min(score, 100)
-
-
-# 2026-11-04: 품종별 Brix 기준표(food_intelligence/brix_standards)와 같은 구간을 쓴다.
-QUALITY_BRIX_TIER_POINTS = {"top": 100, "high": 85, "normal": 45, "below": 0}
-QUALITY_BRIX_TEXT_ONLY_POINTS = 20
-
-
-def calculate_brix_quality_points(item, brix):
-    """품질 점수의 Brix 부분 (최대 100).
-
-    기준표에 있는 품종은 그 품종의 고당도·최상 기준으로, 없는 상품은 이전 고정 구간으로 판정한다.
-    """
-    tier, _standard = item_brix_tier(item, brix)
-
-    if tier is None:
-        if brix >= 16:
-            return 100
-        if brix >= 15:
-            return 85
-        if brix >= 14:
-            return 65
-        if brix >= 13:
-            return 45
-        if item.get("is_high_brix"):
-            return 20
-        return 0
-
-    if tier == "no_value":
-        return QUALITY_BRIX_TEXT_ONLY_POINTS if item.get("is_high_brix") else 0
-
-    return QUALITY_BRIX_TIER_POINTS[tier]
-
-
-def calculate_ai_scores(item, priority="trust"):
-    """상품별 AI 추천 근거 점수 계산"""
-
-    scores = {}
-
-    # 품질 점수
-    quality_score = 0
-
-    rating = item.get("rating") or 0
-    review_count = item.get("review_count") or 0
-
-    brix = get_brix_value(item)
-    quality_score += calculate_brix_quality_points(item, brix)
-
-    try:
-        rating = float(rating)
-    except Exception:
-        rating = 0
-
-    try:
-        review_count = int(review_count)
-    except Exception:
-        review_count = 0
-
-    if rating >= 4.8:
-        quality_score += 8
-    elif rating >= 4.5:
-        quality_score += 5
-    elif rating >= 4.0:
-        quality_score += 3
-
-    if review_count >= 10000:
-        quality_score += 8
-    elif review_count >= 3000:
-        quality_score += 6
-    elif review_count >= 1000:
-        quality_score += 4
-    elif review_count >= 500:
-        quality_score += 2
-
-    scores["quality"] = round(quality_score, 1)
-    
-    # 신뢰 점수    
-    
-    trust_score = 0
-
-    if rating >= 4.8:
-        trust_score += 35
-    elif rating >= 4.5:
-        trust_score += 25
-    elif rating >= 4.0:
-        trust_score += 15
-
-    if review_count >= 10000:
-        trust_score += 35
-    elif review_count >= 3000:
-        trust_score += 25
-    elif review_count >= 1000:
-        trust_score += 15
-    elif review_count >= 500:
-        trust_score += 10
-
-    if rating >= 4.7 and review_count >= 3000:
-        trust_score += 20
-    elif rating >= 4.5 and review_count >= 1000:
-        trust_score += 12
-    elif rating >= 4.3 and review_count >= 500:
-        trust_score += 6
-
-    # 리뷰/평점이 부족한 신규 데이터도 실제 클릭/CTR 반응이 있으면
-    # 오늘의 베스트와 안심 기준에서 완전히 밀리지 않도록 보정합니다.
-    trust_score += calculate_reaction_trust_score(item)
-
-    scores["trust"] = round(min(trust_score, 100), 1)
-    
-
-    # 가격 점수
-
-    price_score = calculate_price_value_score(item)
-
-    if item.get("final_discount_rate") or item.get("discount_rate"):
-        price_score += 10
-
-    if (item.get("price_drop_boost") or 0) >= 5:
-        price_score += 15
-
-    scores["price"] = round(min(price_score, 100), 1)
-
-    # 사용자 반응 점수
-    popularity_score = 0
-
-    if item.get("final_recommendation_label") == "사용자 반응 우수 추천":
-        popularity_score += 30
-
-    if (item.get("ctr_feedback_boost") or 0) >= 7:
-        popularity_score += 30
-
-    try:
-        if (item.get("ctr_pct") or 0) >= 20:
-            popularity_score += 20
-    except Exception:
-        pass
-
-    # 발견 추천에서는 실제 클릭/CTR 반응이 있는데도
-    # 사용자 반응이 0점으로 보이지 않도록 발견성 점수를 일부 반영합니다.
-    base_priority = str(priority or "trust").replace("_adaptive", "")
-
-    if base_priority == "discovery":
-        try:
-            hidden_gem_score = calculate_hidden_gem_score(item)
-            popularity_score = max(
-                popularity_score,
-                min(hidden_gem_score * 0.4, 35)
-            )
-        except Exception:
-            pass
-
-    scores["popularity"] = round(popularity_score, 1)
-
-    if priority == "price":
-        total_score = (
-            quality_score * 0.25
-            + price_score * 0.60
-            + popularity_score * 0.15
-        )
-
-    elif priority == "quality":
-        total_score = (
-            quality_score * 0.60
-            + price_score * 0.15
-            + popularity_score * 0.25
-        )
-
-    elif priority == "trust":
-        total_score = (
-            quality_score * 0.30
-            + price_score * 0.20
-            + popularity_score * 0.50
-        )
-
-    else:
-        total_score = (
-            quality_score * 0.40
-            + price_score * 0.30
-            + popularity_score * 0.30
-        )
-
-    scores["total"] = round(total_score, 1)
-
-    return scores
+    excluded = []
+    if has_rating_values and not rating_used:
+        excluded.append({
+            "field": "rating/review_count",
+            "reason": "출처 미검증(페이지 보강 값) — 점수 제외",
+            "source": item.get("review_source"),
+        })
+
+    return {
+        "score_engine_version": SCORE_ENGINE_VERSION,
+        "rating_used": rating_used,
+        "brix_value": get_brix_value(item),
+        "excluded": excluded,
+        "affiliate_bonus": False,
+    }

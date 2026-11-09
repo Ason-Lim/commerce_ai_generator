@@ -25,6 +25,8 @@ FORBIDDEN_MODULES = {
     "app.services.ai_ranking_engine_v7",
 }
 
+# 00_1 결정(2026-11-09): score_engine·compare_engine은 PM-2(compare_snapshot_engine)가
+# 의존하는 보존 대상이므로 텍스트 참조 금지 목록에 넣지 않는다.
 SELF = "tests/services/recommendation/test_f2a_legacy_surface_removal_boundary.py"
 
 
@@ -86,10 +88,8 @@ def test_f2a_has_no_external_python_imports() -> None:
 def test_f2a_has_no_external_textual_module_references() -> None:
     patterns = [
         re.compile(r"\bapp\.services\.recommendation_engine\b"),
-        re.compile(r"\bapp\.services\.recommendation\.(?:score_engine|compare_engine)\b"),
         re.compile(r"\bapp\.services\.ai_ranking_engine_v7\b"),
         re.compile(r"\bfrom\s+app\.services\s+import\s+recommendation_engine\b"),
-        re.compile(r"\bfrom\s+app\.services\.recommendation\s+import\s+(?:score_engine|compare_engine)\b"),
         re.compile(r"\bfrom\s+app\.services\s+import\s+ai_ranking_engine_v7\b"),
     ]
     violations: list[str] = []
@@ -100,3 +100,9 @@ def test_f2a_has_no_external_textual_module_references() -> None:
         if any(pattern.search(text) for pattern in patterns):
             violations.append(path)
     assert not violations, f"external textual references to F2-A1 removal candidates found: {violations}"
+
+
+def test_f2a_preserved_surfaces_are_not_forbidden() -> None:
+    preserved_modules = {path[:-3].replace("/", ".") for path in PRESERVED}
+    assert not (preserved_modules & FORBIDDEN_MODULES)
+    assert not (PRESERVED & CANDIDATES)

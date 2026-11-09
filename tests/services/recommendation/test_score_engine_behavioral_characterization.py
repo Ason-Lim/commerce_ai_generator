@@ -189,8 +189,10 @@ def test_calculate_hidden_gem_score_preserves_exact_values_and_boundaries():
 
 
 def test_calculate_ai_scores_preserves_exact_supported_priority_contrast():
+    # 평점·리뷰는 rating_score_usable=True일 때만 점수에 들어간다 (2026-11-02 결정).
     item = {"rating": 4.7, "review_count": 500, "price_per_100g": 600, "discount_rate": 15,
-            "click_count": 25, "ctr_pct": 12, "impression_count": 100, "brix": 14}
+            "click_count": 25, "ctr_pct": 12, "impression_count": 100, "brix": 14,
+            "rating_score_usable": True}
     expected_by_priority = {'price': {'popularity': 0, 'price': 90, 'quality': 72, 'total': 72.0, 'trust': 86},
  'quality': {'popularity': 0, 'price': 90, 'quality': 72, 'total': 56.7, 'trust': 86},
  'trust': {'popularity': 0, 'price': 90, 'quality': 72, 'total': 39.6, 'trust': 86}}
