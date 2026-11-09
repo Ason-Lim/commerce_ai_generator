@@ -1,0 +1,142 @@
+diff --git a/tests/services/food_intelligence/test_brix_standards.py b/tests/services/food_intelligence/test_brix_standards.py
+new file mode 100644
+index 0000000..d301a8b
+--- /dev/null
++++ b/tests/services/food_intelligence/test_brix_standards.py
+@@ -0,0 +1,136 @@
++"""품종별 Brix 기준표 연결 (2026-11-04)."""
++
++import pytest
++
++from app.services.food_intelligence.brix_standards import (
++    FRUIT_BRIX_STANDARDS,
++    SOURCES,
++    classify_brix,
++    find_standard,
++)
++from app.services.food_intelligence.engines.fruit_engine import (
++    calculate_fruit_quality,
++    judge_brix,
++    score_brix,
++)
++
++
++def test_every_standard_is_ordered_and_sourced():
++    for std in FRUIT_BRIX_STANDARDS:
++        assert std.top > std.high, std
++        assert std.floor is None or std.floor <= std.high, std
++        assert set(std.sources) <= set(SOURCES), std
++
++
++@pytest.mark.parametrize(
++    "name, variety",
++    [
++        ("경북 청송 부사 사과 5kg", "후지(부사)"),
++        ("샤인머스켓 1.5kg", "샤인머스캣"),
++        ("나주배 신고 7.5kg", "신고"),
++        ("제주 한라봉 3kg", "한라봉"),
++        ("곡성 머스크 멜론 2입", None),
++        ("제스프리 썬골드 키위", "골드키위"),
++    ],
++)
++def test_variety_keywords_win_over_fruit_keywords(name, variety):
++    assert find_standard(name).variety == variety
++
++
++@pytest.mark.parametrize("name", ["반도체 부품", "배송비 무료 머그컵", "신고하기 버튼"])
++def test_short_keywords_do_not_match_other_words(name):
++    assert find_standard(name) is None
++
++
++@pytest.mark.parametrize(
++    "name, brix, tier",
++    [
++        ("샤인머스캣 2kg", 17, "normal"),     # 상(16) 이상이지만 특(18) 미만
++        ("샤인머스캣 2kg", 18, "high"),
++        ("샤인머스캣 2kg", 15, "below"),      # 표준규격 상 16 미만
++        ("고당도 수박 8kg", 12, "top"),
++        ("아오리 사과", 13, "high"),
++        ("홍로 사과", 13, "normal"),
++        ("극조생 감귤 5kg", 8, "below"),
++    ],
++)
++def test_tier_depends_on_variety(name, brix, tier):
++    assert classify_brix(name, brix)["tier"] == tier
++
++
++def test_same_number_scores_differently_by_variety():
++    # 이전에는 품종과 상관없이 16 이상이면 30점이었다
++    assert score_brix(16, "샤인머스캣 16brix") == 10
++    assert score_brix(16, "감홍 사과 16brix") == 22
++    assert score_brix(12, "수박 12brix") == 30
++
++
++def test_text_only_claim_scores_below_a_written_number():
++    text_only = score_brix(0, "고당도 부사 사과")
++    written_normal = score_brix(14, "부사 사과 14brix")
++    assert text_only == 6
++    assert text_only < written_normal
++
++
++def test_unknown_products_keep_the_legacy_scale():
++    assert judge_brix(16, "빙 체리 16brix")["standard"] is None
++    assert score_brix(16, "빙 체리 16brix") == 30
++    assert score_brix(0, "고당도 빙 체리") == 14
++
++
++def test_quality_result_carries_tier_and_reason():
++    result = calculate_fruit_quality({"product_name": "샤인머스캣 2kg 18brix"})
++    assert result["fruit_brix_tier"] == "high"
++    assert result["fruit_brix_standard"] == "샤인머스캣"
++    assert "샤인머스캣 기준 고당도 구간" in result["fruit_quality_reason"]
++    assert "실제 당도는 확인되지 않았습니다" in result["fruit_quality_reason"]
++
++
++# ── 레거시 점수 (Streamlit 화면) ────────────────────────────────
++from app.services.recommendation.identity_engine import calculate_brix_confidence_score  # noqa: E402
++from app.services.recommendation.score_engine import calculate_brix_quality_points  # noqa: E402
++
++
++@pytest.mark.parametrize(
++    "item, points",
++    [
++        ({"product_name": "샤인머스캣 2kg", "brix": 17}, 45),   # 보통 (특 18 미만)
++        ({"product_name": "샤인머스캣 2kg", "brix": 20}, 100),  # 최상
++        ({"product_name": "감홍 사과", "brix": 16}, 85),        # 고당도
++        ({"product_name": "수박 8kg", "brix": 12}, 100),        # 최상 (이전 0)
++        ({"product_name": "극조생 감귤", "brix": 8}, 0),        # 출하 하한 미만
++        ({"product_name": "부사 사과", "is_high_brix": True}, 20),
++        ({"product_name": "부사 사과"}, 0),
++        ({"product_name": "빙 체리", "brix": 16}, 100),         # 기준표 밖: 이전 구간
++        ({"product_name": "빙 체리", "brix": 14}, 65),
++    ],
++)
++def test_legacy_quality_brix_points_follow_variety(item, points):
++    from app.services.recommendation.score_engine import get_brix_value
++
++    assert calculate_brix_quality_points(item, get_brix_value(item)) == points
++
++
++@pytest.mark.parametrize(
++    "name, brix, base",
++    [
++        ("샤인머스캣", 17, 30),
++        ("샤인머스캣", 18, 42),
++        ("수박", 12, 55),
++        ("극조생 감귤", 8, 0),
++        ("빙 체리", 15, 55),   # 기준표 밖: 이전 구간
++    ],
++)
++def test_brix_confidence_tier_part_follows_variety(name, brix, base):
++    # 상품명에 brix 숫자·중량·URL이 없게 두어 당도 구간 부분만 본다
++    assert calculate_brix_confidence_score({"product_name": name, "brix": brix}) == base
++
++
++def test_three_engines_agree_on_the_tier():
++    from app.services.food_intelligence.brix_standards import item_brix_tier
++
++    item = {"product_name": "샤인머스캣 1.5kg 18brix"}
++    tier, standard = item_brix_tier(item, 18)
++    assert (tier, standard.variety) == ("high", "샤인머스캣")
++    assert calculate_fruit_quality(item)["fruit_brix_tier"] == tier
++    assert calculate_brix_quality_points(item, 18) == 85

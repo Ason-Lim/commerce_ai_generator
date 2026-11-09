@@ -1,0 +1,9 @@
+{"ucp": {"version": "2026-08-25",
+  "supported_versions": {"2026-04-08": "https://shop.example.com/.well-known/ucp/2026-04-08"},
+  "services": {"dev.ucp.shopping": [
+    {"version": "2026-08-25", "transport": "mcp", "endpoint": "https://shop.example.com/api/ucp/mcp"},
+    {"version": "2026-08-25", "transport": "embedded"}]},
+  "capabilities": {"dev.ucp.shopping.checkout": [{"version": "2026-08-25"}],
+                   "dev.ucp.shopping.catalog.search": [{"version": "2026-08-25"}],
+                   "dev.ucp.shopping.catalog.lookup": [{"version": "2026-08-25"}]},
+  "payment_handlers": {}}}

@@ -1,0 +1,6 @@
+{"ucp": {"version": "2026-08-25",
+  "services": {"dev.ucp.shopping": [
+    {"version": "2026-08-25", "transport": "mcp", "endpoint": "https://mall.example.kr/ucp/mcp"},
+    {"version": "2026-08-25", "transport": "rest", "endpoint": "https://mall.example.kr/ucp/v1/"}]},
+  "capabilities": {"dev.ucp.shopping.catalog.search": [{"version": "2026-08-25"}]},
+  "payment_handlers": {}}}

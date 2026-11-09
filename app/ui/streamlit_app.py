@@ -4589,6 +4589,36 @@ def render_compare_table():
         st.rerun()
 
 
+# recipe_trial_bridge_v1
+@st.cache_resource
+def _initialize_recipe_engine():
+    from app.db.lifecycle import EngineLifecycle
+    from app.db.engine_provider import bind_engine, is_bound
+
+    if is_bound():
+        return None
+
+    lifecycle = EngineLifecycle()
+    lifecycle.initialize()
+    bind_engine(lifecycle.engine)
+    return lifecycle
+
+
+def _get_recipe_engine():
+    _initialize_recipe_engine()
+    return get_engine()
+
+
+if st.sidebar.checkbox(
+    "레시피 재료 확인 시험",
+    value=False,
+    key="recipe_trial_mode",
+):
+    from app.ui.recipe_followup_panel import render_recipe_followup_panel
+
+    render_recipe_followup_panel(_get_recipe_engine)
+    st.stop()
+
 # ============================================================================
 # 메인 UI
 # ============================================================================

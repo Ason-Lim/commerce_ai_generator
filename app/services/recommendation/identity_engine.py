@@ -22,6 +22,8 @@ from .score_engine import (
     get_brix_value,
 )
 
+from app.services.food_intelligence.brix_standards import item_brix_tier
+
 def get_effective_price_value(
     item,
 ):
@@ -210,6 +212,32 @@ def is_kurly_search_identity_weak(
         or not raw_url
     )
 
+# 2026-11-04: 품종별 Brix 기준표(food_intelligence/brix_standards)와 같은 구간을 쓴다.
+BRIX_CONFIDENCE_TIER_POINTS = {"top": 55, "high": 42, "normal": 30, "below": 0}
+BRIX_CONFIDENCE_TEXT_ONLY_POINTS = 12
+
+
+def _brix_confidence_tier_points(item, brix):
+    """Brix 신뢰도 중 당도 구간 부분 (최대 55). 기준표에 없는 상품은 이전 고정 구간."""
+    tier, _standard = item_brix_tier(item, brix)
+
+    if tier is None:
+        if brix >= 15:
+            return 55
+        if brix >= 14:
+            return 42
+        if brix >= 13:
+            return 30
+        if item.get("is_high_brix"):
+            return 12
+        return 0
+
+    if tier == "no_value":
+        return BRIX_CONFIDENCE_TEXT_ONLY_POINTS if item.get("is_high_brix") else 0
+
+    return BRIX_CONFIDENCE_TIER_POINTS[tier]
+
+
 def calculate_brix_confidence_score(
     item,
     display=None,
@@ -242,14 +270,7 @@ def calculate_brix_confidence_score(
 
     score = 0
 
-    if brix >= 15:
-        score += 55
-    elif brix >= 14:
-        score += 42
-    elif brix >= 13:
-        score += 30
-    elif item.get("is_high_brix"):
-        score += 12
+    score += _brix_confidence_tier_points(item, brix)
 
     if re.search(
         r"\d{2}(?:\.\d+)?\s*brix",

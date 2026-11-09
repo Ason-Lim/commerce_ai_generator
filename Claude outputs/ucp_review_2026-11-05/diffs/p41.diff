@@ -1,0 +1,975 @@
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/app/services/ucp/discovery.py	2026-11-04 13:21:59.939527478 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/app/services/ucp/discovery.py	2026-11-04 13:33:17.374454140 +0000
+@@ -2,6 +2,13 @@
+ 
+ 협상 (사양 overview): 정확한 판 하나를 고르고 → 양쪽이 광고한 capability 교집합 → capability 마다 공통 최고 판.
+ 우리가 쓰는 것은 catalog.search(·lookup) 하나뿐이라, 그것이 없으면 이 판매자는 쓰지 않는다.
++
++p41 (GPT 검토 22:31, 사양 overview 규범):
++- 프로필·schema 를 가져올 때 https 만, 리다이렉트(3xx)를 따라가지 않는다 (MUST NOT follow redirects).
++- capability·service 의 schema URL 출처는 이름의 namespace 와 맞아야 한다 — 'dev.ucp.shopping.catalog.search' 의
++  schema 는 ucp.dev 에서 와야 한다 (MUST match … MUST reject the entity).  안 맞는 항목은 버린다.
++- 캐시 TTL 은 원본 Cache-Control 과 무관하게 최소 60초 (SHOULD).
++- 협상 성공 = '이 판매자에게 검색을 보낼 수 있음'일 뿐, 실제 검색 성공·응답 스키마 적합은 client 에서 따로 판정한다.
+ """
+ from __future__ import annotations
+ 
+@@ -9,6 +16,8 @@
+ import time
+ from dataclasses import dataclass, field
+ 
++from urllib.parse import urlsplit
++
+ from app.services.ucp import platform
+ 
+ MAX_BYTES = 256_000
+@@ -27,6 +36,8 @@
+     capabilities: list[str] = field(default_factory=list)   # 판매자가 광고한 전체
+     search: bool = False
+     lookup: bool = False
++    schemas: dict = field(default_factory=dict)              # 협상한 capability → schema URL (출처 검증 통과분)
++    rejected: list[str] = field(default_factory=list)        # 출처 검증에 떨어진 항목
+ 
+ 
+ def valid_host(host: str) -> bool:
+@@ -38,6 +49,17 @@
+     return url.rstrip("/") if url.startswith("https://") and " " not in url else None
+ 
+ 
++def origin_ok(name: str, url: str | None) -> bool:
++    """schema URL 출처 = 이름의 namespace (호스트를 뒤집은 값이 이름과 같거나 라벨 경계 접두사).  https 만."""
++    if not url:
++        return True                        # schema 를 밝히지 않은 항목은 출처 검사 대상 아님 (사양 기본 schema 사용)
++    parts = urlsplit(url)
++    if parts.scheme != "https" or not parts.hostname:
++        return False
++    rev = ".".join(reversed(parts.hostname.lower().split(".")))
++    return name == rev or name.startswith(rev + ".")
++
++
+ def _versions(ucp: dict) -> list[str]:
+     out = [ucp.get("version")] if isinstance(ucp.get("version"), str) else []
+     sv = ucp.get("supported_versions")
+@@ -56,18 +78,37 @@
+     theirs = _versions(ucp)
+     version = next((v for v in platform.SUPPORTED_VERSIONS if v in theirs), None)
+     caps = ucp.get("capabilities") or {}
+-    names = list(caps) if isinstance(caps, dict) else [c.get("name") for c in caps if isinstance(c, dict) and c.get("name")]
+-    m = Merchant(host, False, capabilities=names, version=version)
++    if not isinstance(caps, dict):         # 판 2026-01 형식(목록)은 이름만 읽는다
++        caps = {c.get("name"): [c] for c in caps if isinstance(c, dict) and c.get("name")}
++    names, schemas, rejected = [], {}, []
++    for name, entries in caps.items():
++        entries = entries if isinstance(entries, list) else [entries]
++        ok_entries = [e for e in entries if isinstance(e, dict) and origin_ok(name, e.get("schema"))]
++        if not ok_entries:
++            rejected.append(name)
++            continue
++        names.append(name)
++        pick = next((e for e in ok_entries if e.get("version") == version), ok_entries[0])
++        schemas[name] = pick.get("schema")
++    m = Merchant(host, False, capabilities=names, version=version, schemas=schemas, rejected=rejected)
+     if version is None:
+         m.reason = f"공통 판 없음 (판매자 {', '.join(theirs) or '없음'})"
+         return m
+     m.search = "dev.ucp.shopping.catalog.search" in names
+     m.lookup = "dev.ucp.shopping.catalog.lookup" in names
+     if not m.search:
+-        m.reason = "catalog.search 미지원"
++        m.reason = ("catalog.search schema 출처 불일치" if "dev.ucp.shopping.catalog.search" in rejected
++                    else "catalog.search 미지원")
+         return m
+     services = ((ucp.get("services") or {}).get("dev.ucp.shopping") or []) if isinstance(ucp.get("services"), dict) else []
+-    usable = {s.get("transport"): _https(s.get("endpoint")) for s in services if isinstance(s, dict)}
++    usable = {}
++    for svc in services:
++        if not isinstance(svc, dict):
++            continue
++        if not origin_ok("dev.ucp.shopping", svc.get("schema")):
++            m.rejected.append(f"dev.ucp.shopping[{svc.get('transport')}]")
++            continue
++        usable.setdefault(svc.get("transport"), _https(svc.get("endpoint")))
+     for transport in ("rest", "mcp"):          # REST 를 먼저, 없으면 MCP (Shopify 는 MCP 만 광고)
+         if usable.get(transport):
+             m.transport, m.endpoint = transport, usable[transport]
+@@ -82,7 +123,7 @@
+ def _max_age(headers) -> int:
+     cc = (headers or {}).get("Cache-Control") or (headers or {}).get("cache-control") or ""
+     hit = re.search(r"max-age=(\d+)", cc)
+-    return min(int(hit.group(1)), 86_400) if hit else 3_600
++    return max(60, min(int(hit.group(1)), 86_400)) if hit else 3_600     # 최소 60초 (사양 SHOULD)
+ 
+ 
+ def discover(host: str, *, http, now=time.time) -> Merchant:
+@@ -94,19 +135,21 @@
+     if hit and hit[0] > now():
+         return hit[1]
+     try:
+-        r = http.get(f"https://{host}/.well-known/ucp", timeout=10,
++        r = http.get(f"https://{host}/.well-known/ucp", timeout=10, allow_redirects=False,
+                      headers={"Accept": "application/json", "User-Agent": "commerce-ai-ucp/0.1"})
+     except Exception as e:  # noqa: BLE001
+         return Merchant(host, False, f"연결 실패 ({type(e).__name__})")
+-    if r.status_code != 200:
+-        m = Merchant(host, False, f"프로필 없음 (HTTP {r.status_code})")
++    if 300 <= r.status_code < 400:
++        m = Merchant(host, False, f"프로필 리다이렉트 (HTTP {r.status_code}) — 사양상 따라가지 않음")
++    elif r.status_code != 200:
++        m = Merchant(host, False, f"이 주소에서 유효 프로필 미확인 (HTTP {r.status_code})")
+     elif len(r.content or b"") > MAX_BYTES:
+         m = Merchant(host, False, "프로필이 너무 큼")
+     else:
+         try:
+             m = negotiate(host, r.json())
+         except ValueError:
+-            m = Merchant(host, False, "프로필이 JSON 아님")
++            m = Merchant(host, False, "이 주소에서 유효 프로필 미확인 (JSON 아님)")
+     _cache[host] = (now() + _max_age(getattr(r, "headers", {})), m)
+     return m
+ 
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/app/services/ucp/client.py	2026-11-04 13:21:59.956571656 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/app/services/ucp/client.py	2026-11-04 13:33:39.918454952 +0000
+@@ -23,6 +23,8 @@
+     code: str | None = None             # 판매자 오류 코드 (profile_unreachable · not_found · rate_limited …)
+     continue_url: str | None = None     # 판매자가 준 웹 이동 주소 (협상 실패 등)
+     messages: list = field(default_factory=list)
++    schema_valid: bool | None = None    # p41: 협상 schema 로 응답 검증 — True 통과 · False 위반 · None 검증 안 함
++    schema_errors: list = field(default_factory=list)
+ 
+ 
+ def search_request(query: str, *, limit: int = 10, country: str = "KR", language: str = "ko-KR",
+@@ -37,8 +39,10 @@
+     return url if isinstance(url, str) and url.startswith("https://") else None
+ 
+ 
+-def search(merchant: Merchant, query: str, *, http, limit: int = 10, profile_url: str | None = None) -> SearchOutcome:
+-    """판매자 하나에 상품 검색.  profile_url 이 없으면(공개 프로필 없음) 호출하지 않는다."""
++def search(merchant: Merchant, query: str, *, http, limit: int = 10, profile_url: str | None = None,
++           validate: bool = True) -> SearchOutcome:
++    """판매자 하나에 상품 검색.  profile_url 이 없으면(공개 프로필 없음) 호출하지 않는다.
++    p41: 리다이렉트를 따라가지 않고, 응답은 협상한 catalog.search schema 로 검증한다 — 위반이면 실패(schema_invalid)."""
+     profile = profile_url or platform.profile_url()
+     if not merchant.ok:
+         return SearchOutcome(merchant.host, False, error=merchant.reason or "쓸 수 없는 판매자")
+@@ -49,11 +53,11 @@
+     rid = str(uuid.uuid4())
+     try:
+         if merchant.transport == "rest":
+-            r = http.post(f"{merchant.endpoint}/catalog/search", json=body, timeout=15,
++            r = http.post(f"{merchant.endpoint}/catalog/search", json=body, timeout=15, allow_redirects=False,
+                           headers={"Content-Type": "application/json", "Accept": "application/json",
+                                    "Request-Id": rid, "UCP-Agent": f'profile="{profile}"'})
+         else:
+-            r = http.post(merchant.endpoint, timeout=15,
++            r = http.post(merchant.endpoint, timeout=15, allow_redirects=False,
+                           headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream"},
+                           json={"jsonrpc": "2.0", "id": rid, "method": "tools/call",
+                                 "params": {"name": "search_catalog",
+@@ -62,6 +66,8 @@
+         return SearchOutcome(merchant.host, False, error=f"연결 실패 ({type(e).__name__})", code="network")
+     if len(r.content or b"") > MAX_BYTES:
+         return SearchOutcome(merchant.host, False, error="응답이 너무 큼", code="too_large")
++    if 300 <= r.status_code < 400:
++        return SearchOutcome(merchant.host, False, error=f"리다이렉트 (HTTP {r.status_code}) — 따라가지 않음", code="redirect")
+     if r.status_code == 429:
+         return SearchOutcome(merchant.host, False, error="판매자 호출 한도 초과", code="rate_limited")
+     try:
+@@ -93,4 +99,12 @@
+                              code=first.get("code"), continue_url=_continue(data), messages=messages)
+     if not isinstance(data.get("products"), list):
+         return SearchOutcome(merchant.host, False, error="products 없음", code="bad_response")
+-    return SearchOutcome(merchant.host, True, response=data, messages=messages)
++    out = SearchOutcome(merchant.host, True, response=data, messages=messages)
++    if validate:
++        from app.services.ucp import schemas
++
++        url = merchant.schemas.get(schemas.SEARCH) or schemas.default_url(schemas.SEARCH, merchant.version or "")
++        out.schema_valid, out.schema_errors = schemas.validate_search_response(data, schema_url=url, http=http)
++        if out.schema_valid is False:
++            out.ok, out.code, out.error = False, "schema_invalid", "응답이 협상한 schema 와 맞지 않음"
++    return out
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/app/services/ucp/mapping.py	2026-11-04 13:21:59.969337918 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/app/services/ucp/mapping.py	2026-11-04 13:33:17.375454140 +0000
+@@ -3,10 +3,16 @@
+ - 옵션(variant)마다 카드 1개 — 판매자가 옵션별 가격을 주므로, 상품명 옵션 목록('3kg 5kg')을 추측할 필요가 없다.
+ - 가격은 ISO 4217 최소 단위 정수(사양).  지금 비교는 원화만 — 원화가 아니면 카드로 만들지 않는다(skipped).
+ - 판매자 unit_price 는 '권위 있는 값' — 플랫폼이 다시 계산·대체하면 안 된다(MUST NOT).  그래서:
+-    reference 가 정확히 100g 일 때만 그 값을 per100g 로 쓰고, 그 밖의 기준(1kg·100ml 등)은 환산하지 않고 표시 문구만 둔다.
+-    unit_price 가 있으면 상품명으로 100g당을 따로 계산하지 않는다.
++    reference 가 정확히 100g(단위 코드 GRM, value×10^-scale = 100, 통화 KRW = price 통화)일 때만 그 값을 per100g 로
++    쓰고, 그 밖의 기준(1kg·100ml 등)은 환산하지 않고 표시 문구만 둔다.  unit_price 가 있으면 상품명으로 따로 계산하지 않는다.
++    단위는 UN/ECE Rec20 코드 (GRM 그램, KGM 킬로그램, C62 개 …), 수치는 value × 10^-scale (사양).
++- p41: price 는 quantity_unit 1단위당 가격이다 (사양).  quantity_unit 이 '개(C62, scale 0)'가 아니면
++  ('kg당'·'0.25 lb 단위' 판매 등) 한 팩 가격처럼 보이면 안 되므로 지금은 카드로 만들지 않는다 (skipped, 원문 보존).
+ - 판매 가능(available)이 아닌 옵션은 뺀다.  disclosure 경고(알레르기·안전 고지)는 숨기지 않도록 카드에 그대로 싣는다.
+-- 카탈로그 값은 거래 확약이 아니고(checkout is authoritative) 세션 간 재검증 없이 재사용하지 않는다 → seen_at 기록.
++- 카탈로그 값은 거래 확약이 아니다(checkout is authoritative).  세션 간 재검증 없는 재사용은 사양 권고상 하지 않는다
++  (SHOULD NOT) — 프로젝트 정책은 연결 단계에서 정한다.  seen_at 기록.
++- 출처 보존: 판매자 호스트 · product/variant ID · 선택 옵션 · 응답 시각 · 협상 판 · 전송.  UCP 응답이라는 이유만으로
++  추천 점수 사용을 허용하지 않는다 (score_use='block' — 근거 용도 판정 policies 연결 전까지).
+ """
+ from __future__ import annotations
+ 
+@@ -29,16 +35,63 @@
+     return amount                                       # KRW 최소 단위 = 원 (소수 자릿수 0)
+ 
+ 
+-def _unit_price(v: dict) -> dict | None:
++UNIT_TEXT = {"GRM": "g", "KGM": "kg", "MLT": "ml", "LTR": "L", "C62": "개"}
++
++
++def _int(x) -> int | None:
++    return x if isinstance(x, int) and not isinstance(x, bool) else None
++
++
++def quantity(q: dict | None) -> tuple[int, str, int] | None:
++    """Rec20 수량 {'value','unit','scale'} → (value, unit, scale).  scale 없으면 0.  형식이 틀리면 None."""
++    if not isinstance(q, dict):
++        return None
++    value, scale = _int(q.get("value")), _int(q.get("scale", 0))
++    unit = q.get("unit")
++    if value is None or value <= 0 or scale is None or scale < 0 or not isinstance(unit, str):
++        return None
++    return value, unit, scale
++
++
++def is_100g(ref: dict | None) -> bool:
++    """reference = 정확히 100 g — 단위 GRM, value × 10^-scale = 100 (정수 비교, 금액 계산 아님)."""
++    q = quantity(ref)
++    return bool(q) and q[1] == "GRM" and q[0] == 100 * 10 ** q[2]
++
++
++def _qtext(q: dict | None) -> str:
++    t = quantity(q)
++    if not t:
++        return ""
++    if isinstance(q.get("display_text"), str) and q["display_text"].strip():
++        return q["display_text"].strip()
++    value, unit, scale = t
++    num = f"{value / 10 ** scale:g}" if scale else str(value)
++    return f"{num}{UNIT_TEXT.get(unit, unit)}"
++
++
++def _unit_price(v: dict, price_currency: str | None) -> dict | None:
+     up = v.get("unit_price")
+-    if not isinstance(up, dict) or won({"amount": up.get("amount"), "currency": up.get("currency")}) is None:
++    if not isinstance(up, dict) or up.get("currency") != price_currency:      # 통화는 price 와 같아야 (사양 MUST)
++        return None
++    if won({"amount": up.get("amount"), "currency": up.get("currency")}) is None:
+         return None
+-    ref = up.get("reference") if isinstance(up.get("reference"), dict) else {}
+-    measure = up.get("measure") if isinstance(up.get("measure"), dict) else {}
+-    ref_text = ref.get("display_text") or f"{ref.get('value', '')}{ref.get('unit', '')}"
+-    return {"amount": up["amount"], "reference": {"value": ref.get("value"), "unit": ref.get("unit")},
+-            "measure_text": measure.get("display_text"),
+-            "text": f"{ref_text}당 {up['amount']:,}원 (판매자 표시)"}
++    ref = up.get("reference") if isinstance(up.get("reference"), dict) else None
++    measure = up.get("measure") if isinstance(up.get("measure"), dict) else None
++    rq, mq = quantity(ref), quantity(measure)
++    if not rq or (mq and mq[1] != rq[1]):                                      # measure·reference 단위가 같아야 (사양)
++        return None
++    return {"amount": up["amount"], "reference": dict(ref), "measure": dict(measure) if measure else None,
++            "is_100g": is_100g(ref), "measure_text": _qtext(measure) or None,
++            "text": f"{_qtext(ref)}당 {up['amount']:,}원 (판매자 표시)"}
++
++
++def sold_each(v: dict) -> bool:
++    """quantity_unit 이 없거나 '개(C62, scale 0)'면 price = 한 개(한 구성) 가격."""
++    qu = v.get("quantity_unit")
++    if qu is None:
++        return True
++    return isinstance(qu, dict) and qu.get("unit") == "C62" and (qu.get("scale") in (None, 0))
+ 
+ 
+ def _disclosures(messages, product_id: str) -> list[str]:
+@@ -63,7 +116,8 @@
+     return None
+ 
+ 
+-def to_cards(response: dict, *, host: str, merchant_name: str, now=None) -> tuple[list[dict], list[dict]]:
++def to_cards(response: dict, *, host: str, merchant_name: str, now=None, version: str | None = None,
++             transport: str | None = None) -> tuple[list[dict], list[dict]]:
+     """catalog.search 응답 → (카드들, 뺀 것들[{title, reason}])."""
+     seen_at = (now or dt.datetime.now)().strftime("%Y-%m-%d %H:%M")
+     messages = response.get("messages") or []
+@@ -86,10 +140,15 @@
+             if (v.get("availability") or {}).get("available") is False:
+                 skipped.append({"title": full, "reason": "판매 불가(품절 등)"})
+                 continue
++            if not sold_each(v):
++                qu = v.get("quantity_unit") or {}
++                skipped.append({"title": full, "reason": f"단위 판매 (가격이 {qu.get('display_text') or qu.get('unit')}당) — 한 팩 가격 아님",
++                                "quantity_unit": qu, "price": v.get("price")})
++                continue
+             url = safe_url(v.get("url") or product.get("url"))
+             url = url if url and url.startswith("https://") else None
+-            up = _unit_price(v)
+-            per100g = (up["amount"] if up and up["reference"] == {"value": 100, "unit": "g"} else None)
++            up = _unit_price(v, (v.get("price") or {}).get("currency"))
++            per100g = up["amount"] if up and up["is_100g"] else None
+             vid = str(v.get("id") or "")
+             key = hashlib.sha1(f"ucp|{host}|{pid}|{vid}".encode()).hexdigest()[:12]
+             cards.append({
+@@ -98,8 +157,10 @@
+                 "pid": vid or pid, "affiliate": False, "affiliate_program": None, "direct": True,
+                 "per100g": per100g, "unit_price_text": up["text"] if up else None,
+                 "check_at_mall": True, "seen_at": seen_at,
+-                "ucp": {"host": host, "product_id": pid, "variant_id": vid, "unit_price": up,
+-                        "disclosures": disclosures, "seen_at": seen_at,
++                "ucp": {"host": host, "product_id": pid, "variant_id": vid,
++                        "options": [o for o in (v.get("options") or []) if isinstance(o, dict)],
++                        "version": version, "transport": transport, "seen_at": seen_at,
++                        "unit_price": up, "disclosures": disclosures, "score_use": "block",
+                         "note": "카탈로그 가격은 확약이 아니에요 — 판매처 결제 화면 가격이 기준이에요."},
+             })
+     return cards, skipped
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/check_ucp_catalog.py	2026-11-04 13:22:00.004052733 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/check_ucp_catalog.py	2026-11-04 13:35:29.930458912 +0000
+@@ -11,7 +11,7 @@
+ from dotenv import load_dotenv
+ 
+ load_dotenv(os.path.join(os.getcwd(), ".env"))
+-from app.services.ucp import client, discovery, mapping, platform, registry  # noqa: E402
++from app.services.ucp import client, discovery, mapping, platform, registry, schemas  # noqa: E402
+ 
+ query = sys.argv[1] if len(sys.argv) > 1 else "감귤"
+ hosts = [{"host": h, "name": h} for h in sys.argv[2:]]
+@@ -22,12 +22,11 @@
+ profile = platform.profile_url()
+ print(f"우리 프로필: {profile or '없음 (UCP_PLATFORM_PROFILE_URL) — 발견·협상만 확인'}")
+ if profile:
+-    try:
+-        r = requests.get(profile, timeout=10)
+-        ok = r.status_code == 200 and isinstance(r.json().get("ucp"), dict)
+-        print(f"  프로필 접근: HTTP {r.status_code}, Content-Type {r.headers.get('content-type')}, {'정상' if ok else '형식 확인 필요'}")
+-    except Exception as e:  # noqa: BLE001
+-        print(f"  프로필 접근 실패: {type(e).__name__}")
++    problems = schemas.check_published_profile(profile, http=requests)
++    print("  게시 점검(https·리다이렉트 없음·Cache-Control·JSON·platform 스키마): "
++          + ("통과 — 판매자가 실제로 받아 주는지는 아래 검색으로 확인" if not problems else "문제 있음"))
++    for p in problems:
++        print(f"   ! {p}")
+ for m in hosts:
+     merchant = discovery.discover(m["host"], http=requests)
+     print(f"\n[{m['host']}] 협상: {'가능' if merchant.ok else '불가'} — 판 {merchant.version}, 전송 {merchant.transport}, "
+@@ -36,9 +35,13 @@
+         continue
+     out = client.search(merchant, query, http=requests, limit=5, profile_url=profile)
+     if not out.ok:
++        for e in out.schema_errors[:5]:
++            print(f"   · {e}")
+         print(f"  검색 실패: {out.code} — {out.error}" + (f" (이동 주소 {out.continue_url})" if out.continue_url else ""))
+         continue
+-    cards, skipped = mapping.to_cards(out.response, host=m["host"], merchant_name=m["name"])
++    print(f"  응답 스키마 검증: {dict([(True, '통과'), (False, '위반'), (None, '검증 안 함')])[out.schema_valid]}")
++    cards, skipped = mapping.to_cards(out.response, host=m["host"], merchant_name=m["name"],
++                                      version=merchant.version, transport=merchant.transport)
+     print(f"  상품 {len(out.response['products'])}개 → 원화 카드 {len(cards)}개, 뺀 것 {len(skipped)}개")
+     for c in cards[:5]:
+         print(f"   - {c['title'][:40]} | {c['price']:,}원 | {c['unit_price_text'] or '단위 가격 없음'} | {c['url']}")
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/tests/services/ucp/test_ucp_catalog.py	2026-11-04 13:22:00.034066474 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/tests/services/ucp/test_ucp_catalog.py	2026-11-04 13:35:49.898459630 +0000
+@@ -7,7 +7,7 @@
+ 
+ import pytest
+ 
+-from app.services.ucp import client, discovery, mapping, platform, registry
++from app.services.ucp import client, discovery, mapping, platform, registry, schemas
+ 
+ FIX = Path(__file__).parent / "fixtures"
+ APP = Path(__file__).resolve().parents[3] / "app"
+@@ -29,11 +29,19 @@
+         return self._body
+ 
+ 
++SCHEMA_DIR = FIX / "schemas_2026-08-25"
++SCHEMA_FILES = json.loads((SCHEMA_DIR / "_index.json").read_text(encoding="utf-8"))["files"]
++
++
+ class Http:
++    """가짜 HTTP — ucp.dev schema 는 내려받아 둔 공식 파일로 응답 (오프라인)."""
++
+     def __init__(self, get=None, post=None):
+         self._get, self._post, self.calls = get, post, []
+ 
+     def get(self, url, **kw):
++        if url in SCHEMA_FILES:
++            return Resp(200, json.loads((SCHEMA_DIR / SCHEMA_FILES[url]).read_text(encoding="utf-8")))
+         self.calls.append(("GET", url, kw))
+         return self._get
+ 
+@@ -45,6 +53,7 @@
+ @pytest.fixture(autouse=True)
+ def _clean(monkeypatch):
+     discovery.clear_cache()
++    schemas.clear_cache()
+     for k in ("UCP_CATALOG", "UCP_PLATFORM_PROFILE_URL", "UCP_MERCHANTS_CSV"):
+         monkeypatch.delenv(k, raising=False)
+ 
+@@ -59,7 +68,13 @@
+ 
+ def test_rest_is_preferred_and_trailing_slash_removed():
+     m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
+-    assert m.ok and m.version == "2026-04-08" and m.transport == "rest" and m.endpoint == "https://mall.example.kr/ucp/v1"
++    assert m.ok and m.version == "2026-08-25" and m.transport == "rest" and m.endpoint == "https://mall.example.kr/ucp/v1"
++
++
++def test_older_supported_version_is_negotiated():
++    doc = fx("profile_rest.json")
++    doc["ucp"]["version"] = "2026-04-08"
++    assert discovery.negotiate("mall.example.kr", doc).version == "2026-04-08"
+ 
+ 
+ @pytest.mark.parametrize("change, reason", [
+@@ -90,7 +105,7 @@
+ 
+ def test_missing_profile():
+     m = discovery.discover("www.kurly.com", http=Http(get=Resp(404, None)))
+-    assert not m.ok and "HTTP 404" in m.reason
++    assert not m.ok and "HTTP 404" in m.reason and "유효 프로필 미확인" in m.reason   # 미지원 확정이 아님
+ 
+ 
+ # ── 검색 호출 ──────────────────────────────────────────────
+@@ -99,7 +114,7 @@
+     m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
+     http = Http(post=Resp(200, fx("search_krw.json")))
+     out = client.search(m, "감귤", http=http, limit=5, profile_url=PROFILE)
+-    assert out.ok and len(out.response["products"]) == 3
++    assert out.ok and len(out.response["products"]) == 4 and out.schema_valid is True
+     method, url, kw = http.calls[0]
+     assert (method, url) == ("POST", "https://mall.example.kr/ucp/v1/catalog/search")
+     assert kw["headers"]["UCP-Agent"] == f'profile="{PROFILE}"' and kw["headers"]["Request-Id"]
+@@ -149,14 +164,16 @@
+ def cards():
+     import datetime as dt
+     return mapping.to_cards(fx("search_krw.json"), host="mall.example.kr", merchant_name="예시몰",
+-                            now=lambda: dt.datetime(2026, 11, 4, 22, 30))
++                            now=lambda: dt.datetime(2026, 11, 4, 22, 30), version="2026-08-25", transport="rest")
+ 
+ 
+ def test_one_card_per_available_krw_variant():
+     got, skipped = cards()
+     assert [c["title"] for c in got] == ["제주 노지 감귤 3kg", "제주 노지 감귤 5kg", "감귤 선물세트 (한라봉 혼합)"]
+     assert [c["price"] for c in got] == [18900, 27900, 39000]          # KRW 최소 단위 = 원
+-    assert {s["reason"] for s in skipped} == {"판매 불가(품절 등)", "원화 가격 아님"}
++    reasons = [s["reason"] for s in skipped]
++    assert "판매 불가(품절 등)" in reasons and "원화 가격 아님" in reasons
++    assert any(r.startswith("단위 판매 (가격이 kg당)") for r in reasons)    # p41: kg당 가격은 팩 가격처럼 넣지 않음
+     assert all(c["affiliate"] is False and c["direct"] and c["seen_at"] == "2026-11-04 22:30" for c in got)
+ 
+ 
+@@ -226,3 +243,132 @@
+             names = ([node.module] if isinstance(node, ast.ImportFrom) and node.module else
+                      [a.name for a in node.names] if isinstance(node, ast.Import) else [])
+             assert not any(n.startswith("app.services.ucp") for n in names), path
++
++
++# ── p41 (GPT 검토 22:31) ────────────────────────────────────
++
++def test_fixture_search_response_conforms_to_official_schema():
++    ok, errors = schemas.validate_search_response(
++        fx("search_krw.json"), schema_url="https://ucp.dev/2026-08-25/schemas/shopping/catalog_search.json", http=Http())
++    assert ok is True and errors == []
++
++
++def test_schema_violation_fails_the_search():
++    m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
++    bad = fx("search_krw.json")
++    del bad["products"][0]["price_range"]
++    out = client.search(m, "감귤", http=Http(post=Resp(200, bad)), profile_url=PROFILE)
++    assert not out.ok and out.code == "schema_invalid" and out.schema_valid is False
++    assert any("price_range" in e for e in out.schema_errors)
++
++
++def test_without_validator_the_result_says_not_validated(monkeypatch):
++    import sys
++
++    monkeypatch.setitem(sys.modules, "jsonschema", None)
++    m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
++    out = client.search(m, "감귤", http=Http(post=Resp(200, fx("search_krw.json"))), profile_url=PROFILE)
++    assert out.ok and out.schema_valid is None and "검증 안 함" in out.schema_errors[0]
++
++
++@pytest.mark.parametrize("name, url, ok", [
++    ("dev.ucp.shopping.catalog.search", "https://ucp.dev/2026-08-25/schemas/shopping/catalog_search.json", True),
++    ("dev.ucp.shopping.catalog.search", "https://evil.example.com/catalog_search.json", False),
++    ("dev.ucp.shopping.catalog.search", "http://ucp.dev/x.json", False),
++    ("dev.ucp.shopping.catalog.search", "https://ucp.dev.evil.com/x.json", False),
++    ("com.shopify.catalog", "https://shopify.com/schemas/catalog.json", True),
++    ("com.shopifyx.catalog", "https://shopify.com/schemas/catalog.json", False),          # 라벨 경계
++    ("dev.ucp.shopping.catalog.search", None, True),
++])
++def test_schema_origin_must_match_namespace(name, url, ok):
++    assert discovery.origin_ok(name, url) is ok
++
++
++def test_capability_with_foreign_schema_is_rejected():
++    doc = fx("profile_mcp_only.json")
++    doc["ucp"]["capabilities"]["dev.ucp.shopping.catalog.search"] = [
++        {"version": "2026-08-25", "schema": "https://evil.example.com/catalog_search.json"}]
++    m = discovery.negotiate("shop.example.com", doc)
++    assert not m.ok and "출처 불일치" in m.reason and "dev.ucp.shopping.catalog.search" in m.rejected
++
++
++def test_profile_redirect_is_not_followed():
++    http = Http(get=Resp(301, None, {"Location": "https://other.example.com/.well-known/ucp"}))
++    m = discovery.discover("shop.example.com", http=http)
++    assert not m.ok and "리다이렉트" in m.reason
++    assert http.calls[0][2]["allow_redirects"] is False
++
++
++def test_search_redirect_is_not_followed():
++    m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
++    http = Http(post=Resp(302, None, {"Location": "https://elsewhere.example.com/"}))
++    out = client.search(m, "감귤", http=http, profile_url=PROFILE)
++    assert not out.ok and out.code == "redirect" and http.calls[0][2]["allow_redirects"] is False
++
++
++def test_cache_ttl_is_at_least_60_seconds():
++    http = Http(get=Resp(200, fx("profile_mcp_only.json"), {"Cache-Control": "public, max-age=5"}))
++    discovery.discover("shop.example.com", http=http, now=lambda: 1000)
++    discovery.discover("shop.example.com", http=http, now=lambda: 1059)
++    assert len(http.calls) == 1
++
++
++@pytest.mark.parametrize("ref, yes", [
++    ({"value": 100, "unit": "GRM"}, True), ({"value": 1000, "unit": "GRM", "scale": 1}, True),
++    ({"value": 100, "unit": "GRM", "scale": 1}, False),            # 10g
++    ({"value": 1, "unit": "HGM"}, False),                         # 다른 단위 코드는 환산하지 않음
++    ({"value": 100, "unit": "g"}, False),                         # Rec20 코드가 아니면 아님
++    ({"value": 100, "unit": "MLT"}, False), ({"value": "100", "unit": "GRM"}, False), (None, False),
++])
++def test_is_100g_checks_unit_value_and_scale(ref, yes):
++    assert mapping.is_100g(ref) is yes
++
++
++def test_unit_price_needs_same_currency_and_same_unit():
++    base = {"price": {"amount": 18900, "currency": "KRW"},
++            "unit_price": {"amount": 630, "currency": "KRW", "measure": {"value": 3000, "unit": "GRM"},
++                           "reference": {"value": 100, "unit": "GRM"}}}
++    assert mapping._unit_price(base, "KRW")["is_100g"] is True
++    assert mapping._unit_price(base, "USD") is None                                   # price 통화와 다름
++    wrong = json.loads(json.dumps(base))
++    wrong["unit_price"]["measure"]["unit"] = "KGM"
++    assert mapping._unit_price(wrong, "KRW") is None                                  # measure·reference 단위 다름
++
++
++@pytest.mark.parametrize("qu, each", [(None, True), ({"unit": "C62"}, True), ({"unit": "C62", "scale": 0}, True),
++                                      ({"unit": "KGM", "scale": 1}, False), ({"unit": "LBR", "scale": 2, "increment": 25}, False),
++                                      ({"unit": "C62", "scale": 2}, False), ("each", False)])
++def test_sold_each(qu, each):
++    assert mapping.sold_each({} if qu is None else {"quantity_unit": qu}) is each
++
++
++def test_provenance_is_kept_and_score_is_blocked():
++    three = cards()[0][0]
++    u = three["ucp"]
++    assert (u["host"], u["product_id"], u["variant_id"], u["version"], u["transport"]) == (
++        "mall.example.kr", "prod_citrus", "var_3kg", "2026-08-25", "rest")
++    assert u["seen_at"] == "2026-11-04 22:30" and u["score_use"] == "block"
++
++
++@pytest.mark.parametrize("status, headers, expect", [
++    (200, {"Cache-Control": "public, max-age=3600", "Content-Type": "application/json"}, []),
++    (301, {"Location": "https://trendguide.co.kr/.well-known/ucp"}, ["리다이렉트"]),
++    (200, {"Cache-Control": "max-age=600", "Content-Type": "application/json"}, ["public"]),          # GitHub Pages 기본값 모양
++    (200, {"Cache-Control": "public, max-age=30", "Content-Type": "application/json"}, ["max-age≥60"]),
++    (200, {"Cache-Control": "public, max-age=3600, no-cache", "Content-Type": "application/json"}, ["no-cache"]),
++    (200, {"Cache-Control": "public, max-age=3600", "Content-Type": "application/octet-stream"}, ["Content-Type"]),
++])
++def test_published_profile_check(status, headers, expect):
++    http = Http(get=Resp(status, platform.platform_profile() if status == 200 else None, headers))
++    problems = schemas.check_published_profile("https://trendguide.kr/.well-known/ucp", http=http)
++    assert (problems == []) if not expect else all(any(word in p for p in problems) for word in expect)
++
++
++def test_our_generated_profile_passes_the_official_platform_schema():
++    http = Http(get=Resp(200, platform.platform_profile(), {"Cache-Control": "public, max-age=3600",
++                                                            "Content-Type": "application/json; charset=utf-8"}))
++    assert schemas.check_published_profile("https://trendguide.kr/.well-known/ucp", http=http) == []
++    broken = platform.platform_profile()
++    del broken["ucp"]["payment_handlers"]
++    http = Http(get=Resp(200, broken, {"Cache-Control": "public, max-age=3600", "Content-Type": "application/json"}))
++    assert any("payment_handlers" in p for p in schemas.check_published_profile("https://trendguide.kr/.well-known/ucp", http=http))
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/tests/services/ucp/fixtures/search_krw.json	2026-11-04 13:22:00.070672602 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/tests/services/ucp/fixtures/search_krw.json	2026-11-04 13:34:09.776456026 +0000
+@@ -1,21 +1,224 @@
+-{"ucp": {"version": "2026-08-25", "status": "success"},
++{
++ "ucp": {
++  "version": "2026-08-25",
++  "status": "success"
++ },
+  "products": [
+-  {"id": "prod_citrus", "title": "제주 노지 감귤", "url": "https://mall.example.kr/p/citrus",
+-   "media": [{"type": "image", "url": "https://img.example.kr/citrus.jpg"}],
++  {
++   "id": "prod_citrus",
++   "title": "제주 노지 감귤",
++   "url": "https://mall.example.kr/p/citrus",
++   "media": [
++    {
++     "type": "image",
++     "url": "https://img.example.kr/citrus.jpg"
++    }
++   ],
+    "variants": [
+-     {"id": "var_3kg", "title": "3kg", "price": {"amount": 18900, "currency": "KRW"}, "availability": {"available": true},
+-      "unit_price": {"amount": 630, "currency": "KRW", "measure": {"value": 3000, "unit": "g", "display_text": "3kg"},
+-                     "reference": {"value": 100, "unit": "g", "display_text": "100g"}}},
+-     {"id": "var_5kg", "title": "5kg", "price": {"amount": 27900, "currency": "KRW"}, "availability": {"available": true},
+-      "unit_price": {"amount": 5580, "currency": "KRW", "measure": {"value": 5, "unit": "kg", "display_text": "5kg"},
+-                     "reference": {"value": 1, "unit": "kg", "display_text": "1kg"}}},
+-     {"id": "var_10kg", "title": "10kg", "price": {"amount": 49000, "currency": "KRW"}, "availability": {"available": false}}]},
+-  {"id": "prod_gift", "title": "감귤 선물세트 (한라봉 혼합)", "url": "javascript:alert(1)",
+-   "variants": [{"id": "var_gift", "title": "Default Title", "price": {"amount": 39000, "currency": "KRW"},
+-                 "availability": {"available": true}}]},
+-  {"id": "prod_usd", "title": "Mandarin Box", "url": "https://us.example.com/p/m",
+-   "variants": [{"id": "var_usd", "title": "Default Title", "price": {"amount": 2499, "currency": "USD"},
+-                 "availability": {"available": true}}]}],
+- "messages": [{"type": "warning", "code": "allergen", "presentation": "disclosure", "path": "$.products[?(@.id=='prod_gift')]",
+-               "content": "이 상품은 견과류를 사용하는 시설에서 포장합니다."}],
+- "pagination": {"has_next_page": false}}
++    {
++     "id": "var_3kg",
++     "title": "3kg",
++     "price": {
++      "amount": 18900,
++      "currency": "KRW"
++     },
++     "availability": {
++      "available": true
++     },
++     "unit_price": {
++      "amount": 630,
++      "currency": "KRW",
++      "measure": {
++       "value": 3000,
++       "unit": "GRM",
++       "display_text": "3kg"
++      },
++      "reference": {
++       "value": 100,
++       "unit": "GRM",
++       "display_text": "100g"
++      }
++     },
++     "description": {
++      "plain": "제주 노지 감귤 3kg"
++     }
++    },
++    {
++     "id": "var_5kg",
++     "title": "5kg",
++     "price": {
++      "amount": 27900,
++      "currency": "KRW"
++     },
++     "availability": {
++      "available": true
++     },
++     "unit_price": {
++      "amount": 5580,
++      "currency": "KRW",
++      "measure": {
++       "value": 5,
++       "unit": "KGM",
++       "display_text": "5kg"
++      },
++      "reference": {
++       "value": 1,
++       "unit": "KGM",
++       "display_text": "1kg"
++      }
++     },
++     "description": {
++      "plain": "제주 노지 감귤 5kg"
++     }
++    },
++    {
++     "id": "var_10kg",
++     "title": "10kg",
++     "price": {
++      "amount": 49000,
++      "currency": "KRW"
++     },
++     "availability": {
++      "available": false
++     },
++     "description": {
++      "plain": "제주 노지 감귤 10kg"
++     }
++    }
++   ],
++   "description": {
++    "plain": "제주 노지 감귤"
++   },
++   "price_range": {
++    "min": {
++     "amount": 18900,
++     "currency": "KRW"
++    },
++    "max": {
++     "amount": 49000,
++     "currency": "KRW"
++    }
++   }
++  },
++  {
++   "id": "prod_gift",
++   "title": "감귤 선물세트 (한라봉 혼합)",
++   "url": "javascript:alert(1)",
++   "variants": [
++    {
++     "id": "var_gift",
++     "title": "Default Title",
++     "price": {
++      "amount": 39000,
++      "currency": "KRW"
++     },
++     "availability": {
++      "available": true
++     },
++     "description": {
++      "plain": "감귤 선물세트 (한라봉 혼합) Default Title"
++     }
++    }
++   ],
++   "description": {
++    "plain": "감귤 선물세트 (한라봉 혼합)"
++   },
++   "price_range": {
++    "min": {
++     "amount": 39000,
++     "currency": "KRW"
++    },
++    "max": {
++     "amount": 39000,
++     "currency": "KRW"
++    }
++   }
++  },
++  {
++   "id": "prod_usd",
++   "title": "Mandarin Box",
++   "url": "https://us.example.com/p/m",
++   "variants": [
++    {
++     "id": "var_usd",
++     "title": "Default Title",
++     "price": {
++      "amount": 2499,
++      "currency": "USD"
++     },
++     "availability": {
++      "available": true
++     },
++     "description": {
++      "plain": "Mandarin Box Default Title"
++     }
++    }
++   ],
++   "description": {
++    "plain": "Mandarin Box"
++   },
++   "price_range": {
++    "min": {
++     "amount": 2499,
++     "currency": "USD"
++    },
++    "max": {
++     "amount": 2499,
++     "currency": "USD"
++    }
++   }
++  },
++  {
++   "id": "prod_bulk",
++   "title": "감귤 무게 단위 판매",
++   "url": "https://mall.example.kr/p/bulk",
++   "variants": [
++    {
++     "id": "var_bulk",
++     "title": "Default Title",
++     "price": {
++      "amount": 5000,
++      "currency": "KRW"
++     },
++     "quantity_unit": {
++      "unit": "KGM",
++      "scale": 1,
++      "display_text": "kg",
++      "increment": 5
++     },
++     "availability": {
++      "available": true
++     },
++     "description": {
++      "plain": "감귤 무게 단위 판매 Default Title"
++     }
++    }
++   ],
++   "description": {
++    "plain": "감귤 무게 단위 판매"
++   },
++   "price_range": {
++    "min": {
++     "amount": 5000,
++     "currency": "KRW"
++    },
++    "max": {
++     "amount": 5000,
++     "currency": "KRW"
++    }
++   }
++  }
++ ],
++ "messages": [
++  {
++   "type": "warning",
++   "code": "allergen",
++   "presentation": "disclosure",
++   "path": "$.products[?(@.id=='prod_gift')]",
++   "content": "이 상품은 견과류를 사용하는 시설에서 포장합니다."
++  }
++ ],
++ "pagination": {
++  "has_next_page": false
++ }
++}
+\ No newline at end of file
+--- /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/mnt/commerce_ai_generator/tests/services/ucp/fixtures/profile_rest.json	2026-11-04 13:22:00.057898357 +0000
++++ /sessions/rcw-0135j4pkhdijt4zabbrxk4qa/cur/tests/services/ucp/fixtures/profile_rest.json	2026-11-04 13:35:06.346458063 +0000
+@@ -1,6 +1,6 @@
+-{"ucp": {"version": "2026-04-08",
++{"ucp": {"version": "2026-08-25",
+   "services": {"dev.ucp.shopping": [
+-    {"version": "2026-04-08", "transport": "mcp", "endpoint": "https://mall.example.kr/ucp/mcp"},
+-    {"version": "2026-04-08", "transport": "rest", "endpoint": "https://mall.example.kr/ucp/v1/"}]},
+-  "capabilities": {"dev.ucp.shopping.catalog.search": [{"version": "2026-04-08"}]},
++    {"version": "2026-08-25", "transport": "mcp", "endpoint": "https://mall.example.kr/ucp/mcp"},
++    {"version": "2026-08-25", "transport": "rest", "endpoint": "https://mall.example.kr/ucp/v1/"}]},
++  "capabilities": {"dev.ucp.shopping.catalog.search": [{"version": "2026-08-25"}]},
+   "payment_handlers": {}}}
+--- /dev/null
++++ app/services/ucp/schemas.py
+@@ -0,0 +1,119 @@
++"""협상한 capability 의 schema 가져오기·응답 검증 (p41, 사양 overview "Platforms MUST fetch and compose schemas for
++negotiated capabilities before making requests" · 요청/응답 검증).
++
++- 가져오기: https 만, 리다이렉트를 따라가지 않음, 크기 제한, 출처(origin) = 이름의 namespace (dev.ucp.* → ucp.dev).
++- 합성: 우리가 활성화하는 확장(extension)은 없다 → 기본 capability schema 그대로가 합성 결과다.
++  확장을 켜는 단계가 오면 여기서 base + extension 을 합친다.
++- 검증기: jsonschema + referencing (맥 .venv 에 있음).  없으면 검증하지 않았다고 표시한다 (통과로 치지 않음).
++- schema 안의 $ref 도 같은 규칙으로 가져온다 (ucp.dev 판 경로).
++"""
++from __future__ import annotations
++
++from urllib.parse import urlsplit
++
++from app.services.ucp.discovery import origin_ok
++
++MAX_BYTES = 1_000_000
++SEARCH = "dev.ucp.shopping.catalog.search"
++_cache: dict[str, dict] = {}
++
++
++class SchemaError(Exception):
++    pass
++
++
++def default_url(capability: str, version: str) -> str | None:
++    """판매자가 schema 를 밝히지 않았을 때 사양의 기본 schema (판별)."""
++    return {SEARCH: f"https://ucp.dev/{version}/schemas/shopping/catalog_search.json"}.get(capability)
++
++
++def fetch(url: str, *, http, name: str = "dev.ucp") -> dict:
++    if url in _cache:
++        return _cache[url]
++    parts = urlsplit(url)
++    if parts.scheme != "https" or not origin_ok(name, url):
++        raise SchemaError(f"schema 출처 불일치: {url}")
++    r = http.get(url, timeout=15, allow_redirects=False, headers={"Accept": "application/schema+json, application/json"})
++    if r is None or r.status_code != 200:
++        raise SchemaError(f"schema HTTP {getattr(r, 'status_code', None)}: {url}")
++    if len(r.content or b"") > MAX_BYTES:
++        raise SchemaError(f"schema 너무 큼: {url}")
++    try:
++        doc = r.json()
++    except ValueError as e:
++        raise SchemaError(f"schema JSON 아님: {url}") from e
++    _cache[url] = doc
++    return doc
++
++
++def validate_search_response(data: dict, *, schema_url: str, http) -> tuple[bool | None, list[str]]:
++    """(검증 결과, 오류들).  결과 None = 검증기 없음(검증 안 함)."""
++    try:
++        from jsonschema import Draft202012Validator
++        from referencing import Registry, Resource
++    except ImportError:
++        return None, ["jsonschema 없음 — 응답 스키마 검증 안 함"]
++    try:
++        root = fetch(schema_url, http=http)
++
++        def retrieve(uri):
++            return Resource.from_contents(fetch(uri.split("#")[0], http=http))
++
++        registry = Registry(retrieve=retrieve).with_resource(schema_url, Resource.from_contents(root))
++        validator = Draft202012Validator({"$ref": f"{schema_url}#/$defs/search_response"}, registry=registry)
++        errors = [f"{'/'.join(map(str, e.absolute_path)) or '(최상위)'}: {e.message[:160]}"
++                  for e in validator.iter_errors(data)]
++    except SchemaError as e:
++        return False, [str(e)]
++    except Exception as e:  # noqa: BLE001 — 참조 해석 실패 등
++        return False, [f"검증 실패 ({type(e).__name__}: {str(e)[:120]})"]
++    return not errors, errors[:20]
++
++
++def check_published_profile(url: str, *, http) -> list[str]:
++    """우리 프로필 게시 상태 점검 (사양 overview 게시 규범) → 문제 목록 (빈 목록 = 통과).
++    https · 리다이렉트 없음(3xx 금지) · Cache-Control 에 public + max-age ≥ 60, private/no-store/no-cache 없음 ·
++    JSON · ucp.json platform_schema 적합.  통과해도 '판매자가 실제로 받아 주는지'는 별개 (실제 검색으로 확인)."""
++    import re
++
++    problems = []
++    if not url.startswith("https://"):
++        return ["https 주소가 아님"]
++    try:
++        r = http.get(url, timeout=10, allow_redirects=False, headers={"Accept": "application/json"})
++    except Exception as e:  # noqa: BLE001
++        return [f"접속 실패 ({type(e).__name__})"]
++    if 300 <= r.status_code < 400:
++        return [f"리다이렉트 (HTTP {r.status_code} → {r.headers.get('Location')}) — 프로필 주소는 리다이렉트 금지"]
++    if r.status_code != 200:
++        return [f"HTTP {r.status_code}"]
++    cc = (r.headers.get("Cache-Control") or "").lower()
++    age = re.search(r"max-age=(\d+)", cc)
++    if "public" not in cc or not age or int(age.group(1)) < 60:
++        problems.append(f"Cache-Control 에 public 과 max-age≥60 필요 (지금: '{cc or '없음'}')")
++    if any(d in cc for d in ("private", "no-store", "no-cache")):
++        problems.append(f"Cache-Control 에 private/no-store/no-cache 금지 (지금: '{cc}')")
++    if "json" not in (r.headers.get("Content-Type") or "").lower():
++        problems.append(f"Content-Type 이 JSON 아님 ({r.headers.get('Content-Type')})")
++    try:
++        doc = r.json()
++    except ValueError:
++        return problems + ["JSON 아님"]
++    try:
++        from jsonschema import Draft202012Validator
++        from referencing import Registry, Resource
++    except ImportError:
++        return problems + ["jsonschema 없음 — 스키마 적합성 확인 안 함"]
++    version = ((doc or {}).get("ucp") or {}).get("version") or ""
++    root = f"https://ucp.dev/{version}/schemas/ucp.json"
++    try:
++        registry = Registry(retrieve=lambda uri: Resource.from_contents(fetch(uri.split("#")[0], http=http)))
++        errors = list(Draft202012Validator({"$ref": f"{root}#/$defs/platform_schema"}, registry=registry)
++                      .iter_errors((doc or {}).get("ucp")))
++    except Exception as e:  # noqa: BLE001
++        return problems + [f"스키마 확인 실패 ({type(e).__name__})"]
++    return problems + [f"스키마: {'/'.join(map(str, e.absolute_path)) or '(최상위)'} {e.message[:120]}" for e in errors[:10]]
++
++
++def clear_cache() -> None:
++    _cache.clear()

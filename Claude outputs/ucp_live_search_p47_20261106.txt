@@ -1,0 +1,16 @@
+우리 프로필: https://trendguide.kr/.well-known/ucp
+  게시 점검(https·리다이렉트 없음·Cache-Control·JSON·platform 스키마): 통과 — 판매자가 실제로 받아 주는지는 아래 검색으로 확인
+
+[allbirds.com] 협상: 가능 — 판 2026-08-25, 전송 mcp, search True, lookup True
+  응답 스키마 검증: 통과 (요청 전 schema·참조 확보, 검증 중 조회 없음)
+  상품 5개 → 원화 카드 0개, 뺀 것 41개
+   · Women's Wool Runner - Natural Black (Black Sole) | 옵션 7개 | USD 110.00 | https://www.allbirds.com/products/womens-wool-runners-natural-black
+   · Women's Wool Runner - Natural Grey (Light Grey Sol | 옵션 7개 | USD 49.00 | https://www.allbirds.com/products/womens-wool-runners-natural-grey
+   · Men's Wool Runner - Natural Grey (Light Grey Sole) | 옵션 7개 | USD 110.00 | https://www.allbirds.com/products/mens-wool-runners
+   · Men's Wool Runner NZ - Dark Grey (Light Grey Sole) | 옵션 10개 | USD 110.00 | https://www.allbirds.com/products/mens-wool-runner-nz
+   · Women's Wool Runner NZ - Natural Black (Natural Bl | 옵션 10개 | USD 110.00 | https://www.allbirds.com/products/womens-wool-runner-nz-natural-black
+   x Women's Wool Runner - Natural Black (Bla — 원화 가격 아님
+   x Women's Wool Runner - Natural Black (Bla — 원화 가격 아님
+   x Women's Wool Runner - Natural Black (Bla — 원화 가격 아님
+   x Women's Wool Runner - Natural Black (Bla — 원화 가격 아님
+   x Women's Wool Runner - Natural Black (Bla — 원화 가격 아님

@@ -1,0 +1,21 @@
+{"ucp": {"version": "2026-08-25", "status": "success"},
+ "products": [
+  {"id": "prod_citrus", "title": "제주 노지 감귤", "url": "https://mall.example.kr/p/citrus",
+   "media": [{"type": "image", "url": "https://img.example.kr/citrus.jpg"}],
+   "variants": [
+     {"id": "var_3kg", "title": "3kg", "price": {"amount": 18900, "currency": "KRW"}, "availability": {"available": true},
+      "unit_price": {"amount": 630, "currency": "KRW", "measure": {"value": 3000, "unit": "g", "display_text": "3kg"},
+                     "reference": {"value": 100, "unit": "g", "display_text": "100g"}}},
+     {"id": "var_5kg", "title": "5kg", "price": {"amount": 27900, "currency": "KRW"}, "availability": {"available": true},
+      "unit_price": {"amount": 5580, "currency": "KRW", "measure": {"value": 5, "unit": "kg", "display_text": "5kg"},
+                     "reference": {"value": 1, "unit": "kg", "display_text": "1kg"}}},
+     {"id": "var_10kg", "title": "10kg", "price": {"amount": 49000, "currency": "KRW"}, "availability": {"available": false}}]},
+  {"id": "prod_gift", "title": "감귤 선물세트 (한라봉 혼합)", "url": "javascript:alert(1)",
+   "variants": [{"id": "var_gift", "title": "Default Title", "price": {"amount": 39000, "currency": "KRW"},
+                 "availability": {"available": true}}]},
+  {"id": "prod_usd", "title": "Mandarin Box", "url": "https://us.example.com/p/m",
+   "variants": [{"id": "var_usd", "title": "Default Title", "price": {"amount": 2499, "currency": "USD"},
+                 "availability": {"available": true}}]}],
+ "messages": [{"type": "warning", "code": "allergen", "presentation": "disclosure", "path": "$.products[?(@.id=='prod_gift')]",
+               "content": "이 상품은 견과류를 사용하는 시설에서 포장합니다."}],
+ "pagination": {"has_next_page": false}}

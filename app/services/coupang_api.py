@@ -57,12 +57,20 @@ def normalize_coupang_product(item: dict, keyword: str = "") -> dict:
         "keyword": keyword,
         "is_coupang": True,
         "is_ad": True,
+        # 2026-11-01: 판매처 API가 주는 배송 표시를 그대로 남긴다 (값이 없으면 None — 추정하지 않음)
+        "is_rocket": item.get("isRocket") if isinstance(item.get("isRocket"), bool) else None,
+        "is_free_shipping": item.get("isFreeShipping") if isinstance(item.get("isFreeShipping"), bool) else None,
         "partner_notice": "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.",
     }
 
 
 def search_coupang_products(keyword: str, limit: int = 10):
     if not is_coupang_available():
+        return []
+    from app.services import coupang_rate
+
+    if not coupang_rate.acquire():          # 1분 한도(문서: 50번) 직전 — 넘기면 24시간 사용 제한
+        print("[Coupang API] 1분 호출 한도에 가까워 이번 검색은 건너뜀")
         return []
 
     method = "GET"

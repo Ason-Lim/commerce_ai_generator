@@ -1,0 +1,32 @@
+{
+ "baseline": {
+  "tests/services/food/knowledge/seafood/test_seafood_registry_integration.py::test_seafood_provider_is_appended_after_legacy_providers": "AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]",
+  "tests/services/food/knowledge/seafood/test_seafood_registry_integration.py::test_legacy_provider_relative_order_is_preserved": "AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]",
+  "tests/services/recommendation/test_f2a_legacy_surface_removal_boundary.py::test_f2a_has_no_external_textual_module_references": "AssertionError: external textual references to F2-A1 removal candidates found: ['app/services/comparison/compare_snapshot_engine.py', 'tests/services/recommendation/test_apple_explanation_claim_copy.p",
+  "tests/test_persistence_i5b_collector_per_item_boundary_characterization.py::test_ddl_ensure_function_is_explicitly_separate_from_i5b_transaction_characterization": "AssertionError: function not found: ensure_collector_v2_columns",
+  "tests/test_persistence_i5b_collector_per_item_boundary_characterization.py::test_ddl_boundary_is_not_used_as_evidence_for_per_item_update_atomicity": "AssertionError: function not found: ensure_collector_v2_columns",
+  "tests/services/cross_border/test_tracx_smartship_observed_route_event_history_projector.py::test_at_48_pending_scope_is_exactly_two_files": "AssertionError: assert [' M app/main...gine.py', ...] == ['?? app/serv...projector.py']",
+  "tests/services/chat/test_recipe_discover.py::test_the_trace_reaches_the_api_only_in_dev_mode": "KeyError: 'trace'"
+ },
+ "after": {
+  "tests/services/food/knowledge/seafood/test_seafood_registry_integration.py::test_seafood_provider_is_appended_after_legacy_providers": "AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]",
+  "tests/services/food/knowledge/seafood/test_seafood_registry_integration.py::test_legacy_provider_relative_order_is_preserved": "AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]",
+  "tests/services/recommendation/test_f2a_legacy_surface_removal_boundary.py::test_f2a_has_no_external_textual_module_references": "AssertionError: external textual references to F2-A1 removal candidates found: ['app/services/comparison/compare_snapshot_engine.py', 'tests/services/recommendation/test_apple_explanation_claim_copy.p",
+  "tests/test_persistence_i5b_collector_per_item_boundary_characterization.py::test_ddl_ensure_function_is_explicitly_separate_from_i5b_transaction_characterization": "AssertionError: function not found: ensure_collector_v2_columns",
+  "tests/test_persistence_i5b_collector_per_item_boundary_characterization.py::test_ddl_boundary_is_not_used_as_evidence_for_per_item_update_atomicity": "AssertionError: function not found: ensure_collector_v2_columns",
+  "tests/services/cross_border/test_tracx_smartship_observed_route_event_history_projector.py::test_at_48_pending_scope_is_exactly_two_files": "AssertionError: assert [' M app/main...gine.py', ...] == ['?? app/serv...projector.py']",
+  "tests/services/chat/test_recipe_discover.py::test_the_trace_reaches_the_api_only_in_dev_mode": "KeyError: 'trace'"
+ },
+ "baseline_totals": {
+  "tests": 5351,
+  "failures": 7,
+  "errors": 0,
+  "skipped": 5
+ },
+ "after_totals": {
+  "tests": 5387,
+  "failures": 7,
+  "errors": 0,
+  "skipped": 5
+ }
+}

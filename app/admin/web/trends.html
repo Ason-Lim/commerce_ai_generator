@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>트렌드 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,select,input,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
+.logout{margin-top:18px;background:transparent;border:1px solid #23364a;color:#c3d1de;border-radius:10px;padding:7px 11px;cursor:pointer;width:100%}
+main{padding:22px 26px;min-width:0;display:grid;gap:22px;align-content:start}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-width:0}
+h2{font-size:17px;margin:0 0 2px} .lede{color:var(--ink2);margin:0 0 12px;font-size:13.5px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12.5px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap;background:#fafbfc;position:sticky;top:0}
+td small{display:block;color:var(--ink3);font-size:12px}
+tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{background:var(--acc-s)}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p-ok{background:var(--ok-s);color:var(--ok)} .p-off{background:#eef1f4;color:var(--ink3)} .p-err{background:var(--ex-s);color:var(--ex)} .p-hold{background:var(--hold-s);color:var(--hold)}
+.detail{margin-top:14px;display:grid;gap:12px}
+.turns{display:grid;gap:6px;font-size:13.5px} .turn{display:flex;gap:10px} .turn span{color:var(--ink3);font-size:12px;min-width:120px}
+.k{font-size:12px;color:var(--ink3);font-weight:600;margin:0 0 4px}
+.err{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:10px 12px}
+.note{font-size:12.5px;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+</style>
+<style>
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px}.kpi b{display:block;font-size:18px}.kpi span{font-size:12px;color:var(--ink3)}
+.chart{width:100%;height:190px;border:1px solid var(--line);border-radius:12px;background:#fbfcfd}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.list{margin:0;padding-left:18px;font-size:13.5px}.list li{margin:3px 0}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--ink2);margin:4px 0 12px}
+.flow span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff}.flow i{color:var(--ink3);font-style:normal}
+.mono{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/b2b">B2B</a></nav>
+  <nav aria-label="트렌드 메뉴"><a href="#summary">리포트 요약</a><a href="#requests" id="nav-req">발급 요청</a><a href="#surge">급상승 목록</a><a href="#detail">비교 분석</a><a href="#blog">블로그 초안</a></nav>
+  <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
+  데이터랩은 전날까지의 일별 지수라 하루 1회 갱신해요. 검색이 사람인지 매크로인지는 판별할 수 없어요.</div>
+  <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
+</aside>
+<main>
+  <section id="summary" aria-labelledby="sum-h">
+    <h2 id="sum-h">검색량 급상승 리포트</h2>
+    <div class="flow" aria-label="분석 순서"><span>① 데이터랩 검색량 급상승</span><i>→</i><span>② 블로그 탐지 (제목·날짜)</span><i>→</i><span>③ 구글 트렌드</span><i>→</i><span>④ 교차 확인 · 비교 분석</span></div>
+    <div class="row">
+      <select id="date" aria-label="리포트 날짜"></select>
+      <button class="btn primary" id="run">오늘 리포트 만들기</button>
+      <span class="note" id="job"></span>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <p class="note" id="method"></p>
+  </section>
+  <section id="requests" aria-labelledby="req-h">
+    <h2 id="req-h">쇼핑커넥트 발급 요청 <span class="pill p-hold" id="req-n" hidden></span></h2>
+    <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요. 브랜드커넥트에서 링크를 발급해 <b>data/naver_connect_links.csv</b> 에 적은 뒤 '발급 완료'로 정리해 주세요. 주류는 올리지 않아요.
+    <br><b>쇼핑커넥트 링크는 블로그 글에만</b> 넣어요 — 네이버 정책상 이 사이트·앱 화면에는 보여 줄 수 없어요 (2026-11-04 회신).</p>
+    <div class="row">
+      <select id="req-status" aria-label="요청 상태"><option value="open">남은 요청</option><option value="issued">발급 완료</option><option value="skipped">건너뜀</option></select>
+      <button class="btn" id="req-trends">이 리포트에서 올리기</button>
+      <span class="note" id="req-note"></span>
+    </div>
+    <div class="scroll"><table><thead><tr><th>키워드</th><th>이유</th><th>요청</th><th>마지막</th><th>등록부</th><th></th></tr></thead>
+    <tbody id="req-rows"><tr><td colspan="6" class="note">불러오는 중…</td></tr></tbody></table></div>
+  </section>
+  <section id="surge" aria-labelledby="surge-h">
+    <h2 id="surge-h">급상승 목록</h2>
+    <p class="lede">배수는 각 키워드의 평소(35~8일 전 중앙값) 대비예요. 키워드끼리의 검색량 크기 비교가 아니에요. 행을 누르면 아래에 비교 분석이 열려요.</p>
+    <div class="scroll"><table><thead><tr><th></th><th>키워드</th><th>상태</th><th>평소 대비</th><th>시작</th><th>식품 순위</th><th>블로그</th><th>구글</th><th>교차 확인</th><th>계기 (AI 추정)</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="10" class="note">불러오는 중…</td></tr></tbody></table></div>
+  </section>
+  <section id="detail" aria-labelledby="detail-h">
+    <h2 id="detail-h">비교 분석</h2>
+    <div id="dout"><p class="note">급상승 목록에서 키워드를 골라 주세요.</p></div>
+  </section>
+  <section id="blog" aria-labelledby="blog-h">
+    <h2 id="blog-h">applesodda 블로그 초안</h2>
+    <p class="lede">목록에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 발행하지 않고 텍스트 파일로만 저장해요 — 블로그 임시저장은 요청하시면 확인 후 진행해요.</p>
+    <div class="row"><button class="btn" id="draft">초안 만들기</button><span class="note" id="dnote"></span></div>
+    <div id="bout"></div>
+  </section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const href=u=>/^https?:\/\//.test(u||"")?esc(u):"#";
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/trends";throw new Error("auth")}
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.detail||("HTTP "+r.status));return d}
+const STATUS={surging:["급상승","p-err"],new:["새로 등장","p-hold"],rising:["상승","p-ok"]};
+let REPORT=null;
+function spark(series,onset){ // 60-day line with the baseline window shaded and the onset marked
+  const w=760,h=180,p=26,vals=series.map(x=>x.value),max=Math.max(...vals,1);
+  const x=i=>p+i*(w-2*p)/Math.max(series.length-1,1), y=v=>h-p-v*(h-2*p)/max;
+  const pts=vals.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const bs=series.length-35, be=series.length-8, oi=series.findIndex(s=>s.date===onset);
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="최근 60일 검색량 지수">
+   <rect x="${x(bs)}" y="${p}" width="${x(be)-x(bs)}" height="${h-2*p}" fill="#eef3f8"/><text x="${x(bs)+4}" y="${p+12}" font-size="11" fill="#8494a5">평소 구간</text>
+   ${oi>=0?`<line x1="${x(oi)}" x2="${x(oi)}" y1="${p}" y2="${h-p}" stroke="#b42318" stroke-dasharray="4 3"/><text x="${x(oi)+4}" y="${h-p-4}" font-size="11" fill="#b42318">시작 ${esc(onset.slice(5))}</text>`:""}
+   <polyline fill="none" stroke="#1d5fa8" stroke-width="2" points="${pts}"/>
+   <text x="${p}" y="${h-6}" font-size="11" fill="#8494a5">${esc(series[0].date.slice(5))}</text><text x="${w-p-34}" y="${h-6}" font-size="11" fill="#8494a5">${esc(series[series.length-1].date.slice(5))}</text></svg>`}
+function rankText(r){return r&&r.status==="ok"?`${r.first.rank}→${r.last.rank}위<small>${esc(r.first.date.slice(5))}→${esc(r.last.date.slice(5))}</small>`:"순위 밖"}
+function blogText(b){if(!b||b.status!=="ok")return b&&b.status==="none"?"글 없음":"—";
+  const clue=Object.entries(b.clues||{}).slice(0,2).map(([k,v])=>`${k} ${v}`).join(" · ");
+  return `최근 7일 ${b.last7}건${b.rising?' <span class="pill p-ok">증가</span>':""}<small>${clue||"단서 없음"}</small>`}
+function render(){
+  const r=REPORT; if(!r){$("#rows").innerHTML=`<tr><td colspan="10" class="note">아직 리포트가 없어요. '오늘 리포트 만들기'를 눌러 주세요.</td></tr>`;$("#kpis").innerHTML="";return}
+  const src=r.sources||{};
+  $("#kpis").innerHTML=[["데이터 기준일",r.data_until],["감시 키워드",`${r.universe.total}개`],["식품 순위 / 고객 검색어",`${r.universe.food_rank} / ${r.universe.chat_search}`],
+    ["데이터랩 호출",`${r.datalab.calls}회${r.datalab.errors.length?` · 오류 ${r.datalab.errors.length}`:""}`],["급상승·상승",`${r.items.length}개`],
+    ["구글 트렌드",src.google_trends==="connected"?"연결":"미연결"],["원인 추정(AI)",src.ai_cause==="deepseek"?"DeepSeek":"꺼짐"]]
+    .map(([k,v])=>`<div class="kpi"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
+  $("#method").textContent=`기준: ${r.method.surging} · 평소=${r.method.baseline}, 최근=${r.method.recent} · ${r.method.note} · 생성 ${r.generated_at.replace("T"," ").slice(0,16)}`;
+  $("#rows").innerHTML=r.items.length?r.items.map((it,i)=>{const s=STATUS[it.status]||[it.status,"p-off"];
+    return `<tr class="click" data-i="${i}" tabindex="0"><td><input type="checkbox" class="pick" value="${esc(it.keyword)}" aria-label="${esc(it.keyword)} 초안에 넣기"></td>
+    <td><b>${esc(it.keyword)}</b><small>${it.from==="chat_search"?"고객 검색어":"식품 순위 "+(it.rank??"-")+"위"}</small></td>
+    <td><span class="pill ${s[1]}">${s[0]}</span></td><td>${it.ratio_recent}배<small>최고 ${it.ratio_peak}배 · ${esc((it.peak_day||"").slice(5))}</small></td>
+    <td>${esc(it.onset||"-")}</td><td>${rankText(it.rank_trend)}</td><td>${blogText(it.blog)}</td>
+    <td>${it.google&&it.google.status==="ok"?'<span class="pill p-ok">있음</span>':it.google&&it.google.status==="unavailable"?"미연결":"없음"}</td>
+    <td>${it.cross.n}/${it.cross.of}<small>${Object.entries(it.cross.parts).filter(([,v])=>v).map(([k])=>k).join(" · ")||"함께 움직인 신호 없음"}</small></td>
+    <td>${it.cause?esc(it.cause.cause)+`<small>${esc(it.cause.kind)} · ${esc(it.cause.confidence)}${it.cause.public===false?" · 고객 화면·블로그 제외(가격·건강 주장)":""}</small>`:'<span class="note">—</span>'}</td></tr>`}).join("")
+    :`<tr><td colspan="10" class="note">평소보다 크게 늘어난 키워드가 없어요.</td></tr>`;
+  document.querySelectorAll("#rows tr.click").forEach(tr=>{const go=e=>{if(e.target.classList.contains("pick"))return;detail(+tr.dataset.i)};tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter")go(e)}});
+}
+function detail(i){
+  const it=REPORT.items[i]; document.querySelectorAll("#rows tr").forEach(t=>t.classList.toggle("sel",t.dataset.i==String(i)));
+  const b=it.blog||{}, g=it.google||{}, rk=it.rank_trend||{};
+  const titles=(arr)=>arr&&arr.length?`<ul class="list">${arr.map(p=>`<li><a href="${href(p.link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(p.title)}</a> <small>${esc(p.date)} · ${esc(p.source)}</small></li>`).join("")}</ul>`:'<p class="note">없음</p>';
+  $("#dout").innerHTML=`<h3 style="margin:0 0 6px">${esc(it.keyword)} — 평소의 ${it.ratio_recent}배 (최고 ${it.ratio_peak}배)</h3>
+   <p class="k">① 데이터랩 검색량 (최근 60일, 이 키워드만 단독 조회한 상대 지수)</p>${spark(it.series,it.onset)}
+   <div class="grid2" style="margin-top:12px">
+    <div><p class="k">② 블로그 — 시작일 전후 제목 (본문은 가져오지 않음)</p>${titles(b.around_onset)}
+      <p class="k">최근 글</p>${titles(b.latest)}
+      <p class="note">${b.status==="ok"?`최근 ${b.posts}건이 ${b.span_days}일 동안 · 하루 ${b.per_day_recent}건(최근 7일) / ${b.per_day_before}건(그 전) · 단서 ${esc(Object.entries(b.clues||{}).map(([k,v])=>k+" "+v).join(", ")||"없음")}`:"블로그 결과 없음"}</p></div>
+    <div><p class="k">③ 구글 트렌드 (rising 식품 검색어, 최근 14일)</p>${g.status==="ok"?`<ul class="list">${g.hits.map(h=>`<li>${esc(h.date)} · ${esc(h.query)} (${esc(h.type)} ${esc(h.value)})</li>`).join("")}</ul>`:`<p class="note">${g.status==="unavailable"?"구글 트렌드 데이터 미연결":"해당 없음"}</p>`}
+      <p class="k">네이버 식품 키워드 순위 (빈 날은 순위 밖 또는 수집 없음)</p>
+      <p class="mono">${(rk.series||[]).map(s=>`${s.date.slice(5)} ${s.rank??"·"}`).join("  ")||"없음"}</p>
+      <p class="k">④ 교차 확인</p><p>${Object.entries(it.cross.parts).map(([k,v])=>`<span class="pill ${v?"p-ok":"p-off"}">${esc(k)}</span>`).join(" ")}</p>
+      ${it.cause?`<p class="k">계기 (${esc(it.cause.label)})</p><p>${esc(it.cause.cause)}</p>`:""}
+      <p class="note">고객 화면 링크: "${esc(it.ask)}"</p></div>
+   </div>`;
+  location.hash="#detail";
+}
+async function load(date){
+  const d=await api("/admin/api/trends"+(date?`?date=${encodeURIComponent(date)}`:""));
+  REPORT=d.report; $("#date").innerHTML=d.dates.slice().reverse().map(x=>`<option ${REPORT&&REPORT.generated_at.startsWith(x)?"selected":""}>${esc(x)}</option>`).join("")||"<option>리포트 없음</option>";
+  job(d.job); render(); if(d.guest) guest(); else loadReq().catch(e=>{$("#req-rows").innerHTML=`<tr><td colspan="6"><div class="err">${esc(e.message)}</div></td></tr>`});
+}
+// 쇼핑커넥트 발급 요청 (2026-11-02) — 관리자만
+const kst=iso=>{const t=Date.parse(iso||"");if(isNaN(t))return "";const d=new Date(t+9*3600e3).toISOString();return d.slice(0,10)+" "+d.slice(11,16)};
+const REASON={trend_dish:["급상승","p-err"],no_match:["검색 미매칭","p-hold"],manual:["직접","p-off"]};
+async function loadReq(){
+  const st=$("#req-status").value, d=await api("/admin/api/connect/requests?status="+st);
+  $("#req-note").textContent=d.queue_on?"":"자동 쌓기 꺼짐 — .env 에 SC_REQUEST_QUEUE=1 을 넣고 서버를 다시 켜 주세요.";
+  if(st==="open"){const n=$("#req-n");n.hidden=!d.items.length;n.textContent=`${d.items.length}건`}
+  $("#req-rows").innerHTML=d.items.length?d.items.map(it=>{const r=REASON[it.reason]||[it.reason_label,"p-off"];
+    const acts=st==="open"?`<button class="btn" data-id="${it.id}" data-s="issued">발급 완료</button> <button class="btn" data-id="${it.id}" data-s="skipped">건너뛰기</button>`
+      :`<button class="btn" data-id="${it.id}" data-s="open">되돌리기</button>`;
+    return `<tr><td><b>${esc(it.keyword)}</b></td><td><span class="pill ${r[1]}">${esc(r[0])}</span></td><td>${it.hit_count}회</td>
+     <td>${esc(kst(it.updated_at))}</td>
+     <td>${it.registered?'<span class="pill p-ok">링크 있음</span><small>발급 완료로 정리하세요</small>':'<span class="note">없음</span>'}</td><td>${acts}</td></tr>`}).join("")
+    :`<tr><td colspan="6" class="note">${st==="open"?"남은 발급 요청이 없어요.":"없어요."}</td></tr>`;
+  document.querySelectorAll("#req-rows button[data-id]").forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{await api("/admin/api/connect/requests/"+b.dataset.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:b.dataset.s})})}
+    catch(e){$("#req-note").textContent=e.message} loadReq()})}
+$("#req-status").onchange=()=>loadReq();
+$("#req-trends").onclick=async()=>{try{const d=await api("/admin/api/connect/queue-trends",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:$("#date").value||null})});
+  $("#req-note").textContent=d.queued.length?`올림: ${d.queued.join(", ")}`:"새로 올릴 키워드가 없어요 (이미 등록됐거나 주류·반짝 키워드).";
+  $("#req-status").value="open";loadReq()}catch(e){$("#req-note").textContent=e.message}};
+// 둘러보기 모드 (토큰 없이 읽기 전용): 실행·초안·다른 관리자 탭은 숨김
+function guest(){["#run",".logout","#blog","#requests","#nav-req",'nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
+  const n=$(".railnote");if(n&&!$("#gnote"))n.insertAdjacentHTML("beforebegin",'<div class="railnote" id="gnote"><b>둘러보기 모드</b> — 읽기 전용이에요. 리포트 실행과 블로그 초안은 관리자만 할 수 있어요.</div>')}
+function job(j){$("#job").textContent=j.running?"만드는 중… (1~3분)":j.error?"실패: "+j.error:j.finished?`마지막 실행 ${j.finished}`:"";$("#run").disabled=!!j.running}
+$("#date").onchange=e=>load(e.target.value);
+$("#run").onclick=async()=>{const d=await api("/admin/api/trends/run",{method:"POST"});job(d.job);
+  const t=setInterval(async()=>{const s=await api("/admin/api/trends");job(s.job);if(!s.job.running){clearInterval(t);load()}},5000)};
+$("#draft").onclick=async()=>{const picks=[...document.querySelectorAll(".pick:checked")].map(x=>x.value).slice(0,5);
+  try{const d=await api("/admin/api/trends/blog-draft",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:$("#date").value||null,keywords:picks.length?picks:null})});
+   $("#dnote").textContent="저장: "+d.file;const ln=d.link_needs;
+   const needHtml=ln?`<div class="${ln.need.length?"err":"note"}" style="margin-bottom:10px"><b>발급이 필요한 상품</b> ${ln.need.length?esc(ln.need.join(", "))+" — 글을 올리기 전에 브랜드커넥트에서 링크를 발급해 주세요.":"없음 — 초안 키워드 모두 등록부에 링크가 있어요."}${ln.have.length?`<br><small>등록된 키워드: ${esc(ln.have.join(", "))}</small>`:""}${ln.alcohol.length?`<br><small>주류(링크 넣지 않음): ${esc(ln.alcohol.join(", "))}</small>`:""}</div>`:"";
+   $("#bout").innerHTML=needHtml+`<p class="k">제목</p><p><b>${esc(d.title)}</b></p><p class="k">태그</p><p>${esc(d.tags.join(", "))}</p><p class="k">본문</p><textarea readonly style="min-height:320px">${esc(d.body)}</textarea>`}
+  catch(e){$("#dnote").textContent=e.message}};
+load().catch(e=>{$("#rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`});
+</script>
+</body>
+</html>

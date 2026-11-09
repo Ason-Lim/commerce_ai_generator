@@ -1,0 +1,785 @@
+--- /dev/null
++++ app/services/ucp/__init__.py
+@@ -0,0 +1,15 @@
++"""UCP(Universal Commerce Protocol) 구매자(플랫폼) 쪽 — 판매자 카탈로그 읽기 전용 (2026-11-04 p40).
++
++아직 어떤 화면·MCP 경로에도 연결하지 않는다 (AST 테스트로 보장).  기본 꺼짐: UCP_CATALOG=1 과
++UCP_PLATFORM_PROFILE_URL(공개 https 주소의 우리 플랫폼 프로필) 둘 다 있어야 실제 호출한다.
++
++  discovery.py  판매자 /.well-known/ucp 프로필 읽기 · 버전·capability 협상
++  client.py     catalog.search 호출 (REST · MCP 전송)
++  mapping.py    UCP 상품·옵션(variant) → 기존 상품 카드 dict (옵션마다 카드 1개, 판매자 단위 가격 그대로)
++  registry.py   쓸 판매자 등록부 data/ucp/merchants.csv
++  platform.py   우리 플랫폼 프로필 문서 · 사용 여부
++
++사양: https://ucp.dev/2026-08-25/specification/overview/ , catalog: https://ucp.dev/specification/shopping/catalog/
++결제·장바구니·회원 연결(identity linking)은 쓰지 않는다 — 지금처럼 판매처 페이지로 이동만 한다.
++판매자 쪽(우리가 판매자 프로필을 내는 일, 배송 fulfillment)은 별도 단계.
++"""
+--- /dev/null
++++ app/services/ucp/platform.py
+@@ -0,0 +1,44 @@
++"""우리 플랫폼 프로필과 사용 여부 (p40).
++
++UCP 판매자는 모든 요청의 플랫폼 프로필 URI(HTTP `UCP-Agent: profile="…"`, MCP meta `ucp-agent.profile`)를
++직접 가져와 검증한다 — 공개 https 주소에 이 문서가 없으면 판매자가 `profile_unreachable` 로 거절한다
++(2026-11-04 Shopify 판매자에 시험 호출로 확인).
++"""
++from __future__ import annotations
++
++import os
++
++SPEC_VERSION = "2026-08-25"
++SUPPORTED_VERSIONS = ("2026-08-25", "2026-04-08")      # 협상 때 고를 수 있는 판(새 판이 앞)
++SPEC = f"https://ucp.dev/{SPEC_VERSION}/specification/overview/"
++CAPABILITIES = ("dev.ucp.shopping.catalog.search", "dev.ucp.shopping.catalog.lookup")
++
++
++def profile_url() -> str | None:
++    url = (os.getenv("UCP_PLATFORM_PROFILE_URL") or "").strip()
++    return url if url.startswith("https://") else None
++
++
++def enabled() -> bool:
++    """UCP_CATALOG=1 이고 공개 https 프로필 주소가 있을 때만 실제 판매자에 요청한다."""
++    return (os.getenv("UCP_CATALOG") or "0").strip() == "1" and profile_url() is not None
++
++
++def platform_profile() -> dict:
++    """우리 플랫폼 프로필 (사양 ucp.json platform_schema: services · capabilities · payment_handlers 필수).
++    카탈로그 읽기만 광고한다 — 결제를 하지 않으므로 payment_handlers 는 비어 있다."""
++    base = f"https://ucp.dev/{SPEC_VERSION}"
++    return {"ucp": {
++        "version": SPEC_VERSION,
++        "services": {"dev.ucp.shopping": [
++            {"version": SPEC_VERSION, "spec": SPEC, "transport": "rest",
++             "schema": f"{base}/services/shopping/rest.openapi.json"},
++            {"version": SPEC_VERSION, "spec": SPEC, "transport": "mcp",
++             "schema": f"{base}/services/shopping/mcp.openrpc.json"}]},
++        "capabilities": {
++            "dev.ucp.shopping.catalog.search": [{"version": SPEC_VERSION, "spec": f"{base}/specification/shopping/catalog/",
++                                                 "schema": f"{base}/schemas/shopping/catalog_search.json"}],
++            "dev.ucp.shopping.catalog.lookup": [{"version": SPEC_VERSION, "spec": f"{base}/specification/shopping/catalog/",
++                                                 "schema": f"{base}/schemas/shopping/catalog_lookup.json"}]},
++        "payment_handlers": {},
++    }}
+--- /dev/null
++++ app/services/ucp/discovery.py
+@@ -0,0 +1,115 @@
++"""판매자 프로필(/.well-known/ucp) 읽기와 협상 (p40).
++
++협상 (사양 overview): 정확한 판 하나를 고르고 → 양쪽이 광고한 capability 교집합 → capability 마다 공통 최고 판.
++우리가 쓰는 것은 catalog.search(·lookup) 하나뿐이라, 그것이 없으면 이 판매자는 쓰지 않는다.
++"""
++from __future__ import annotations
++
++import re
++import time
++from dataclasses import dataclass, field
++
++from app.services.ucp import platform
++
++MAX_BYTES = 256_000
++_HOST_RE = re.compile(r"^(?=.{1,253}$)[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
++_cache: dict[str, tuple[float, "Merchant"]] = {}
++
++
++@dataclass
++class Merchant:
++    host: str
++    ok: bool
++    reason: str = ""                          # 쓰지 못하는 이유 (ok=False)
++    version: str | None = None                # 협상한 판
++    transport: str | None = None              # 'rest' | 'mcp'
++    endpoint: str | None = None
++    capabilities: list[str] = field(default_factory=list)   # 판매자가 광고한 전체
++    search: bool = False
++    lookup: bool = False
++
++
++def valid_host(host: str) -> bool:
++    return bool(_HOST_RE.match((host or "").strip().lower()))
++
++
++def _https(url) -> str | None:
++    url = (url or "").strip() if isinstance(url, str) else ""
++    return url.rstrip("/") if url.startswith("https://") and " " not in url else None
++
++
++def _versions(ucp: dict) -> list[str]:
++    out = [ucp.get("version")] if isinstance(ucp.get("version"), str) else []
++    sv = ucp.get("supported_versions")
++    if isinstance(sv, dict):
++        out += [k for k in sv if isinstance(k, str)]
++    elif isinstance(sv, list):
++        out += [v for v in sv if isinstance(v, str)]
++    return out
++
++
++def negotiate(host: str, doc: dict) -> Merchant:
++    """프로필 문서 → Merchant.  판·전송·endpoint·catalog.search 가 모두 맞아야 ok."""
++    ucp = (doc or {}).get("ucp") if isinstance(doc, dict) else None
++    if not isinstance(ucp, dict):
++        return Merchant(host, False, "프로필 형식 아님")
++    theirs = _versions(ucp)
++    version = next((v for v in platform.SUPPORTED_VERSIONS if v in theirs), None)
++    caps = ucp.get("capabilities") or {}
++    names = list(caps) if isinstance(caps, dict) else [c.get("name") for c in caps if isinstance(c, dict) and c.get("name")]
++    m = Merchant(host, False, capabilities=names, version=version)
++    if version is None:
++        m.reason = f"공통 판 없음 (판매자 {', '.join(theirs) or '없음'})"
++        return m
++    m.search = "dev.ucp.shopping.catalog.search" in names
++    m.lookup = "dev.ucp.shopping.catalog.lookup" in names
++    if not m.search:
++        m.reason = "catalog.search 미지원"
++        return m
++    services = ((ucp.get("services") or {}).get("dev.ucp.shopping") or []) if isinstance(ucp.get("services"), dict) else []
++    usable = {s.get("transport"): _https(s.get("endpoint")) for s in services if isinstance(s, dict)}
++    for transport in ("rest", "mcp"):          # REST 를 먼저, 없으면 MCP (Shopify 는 MCP 만 광고)
++        if usable.get(transport):
++            m.transport, m.endpoint = transport, usable[transport]
++            break
++    if not m.endpoint:
++        m.reason = "쓸 수 있는 전송(rest·mcp https endpoint) 없음"
++        return m
++    m.ok = True
++    return m
++
++
++def _max_age(headers) -> int:
++    cc = (headers or {}).get("Cache-Control") or (headers or {}).get("cache-control") or ""
++    hit = re.search(r"max-age=(\d+)", cc)
++    return min(int(hit.group(1)), 86_400) if hit else 3_600
++
++
++def discover(host: str, *, http, now=time.time) -> Merchant:
++    """https://<host>/.well-known/ucp 를 읽어 협상한다.  http: requests 와 같은 get(url, timeout, headers)."""
++    host = (host or "").strip().lower()
++    if not valid_host(host):
++        return Merchant(host, False, "호스트 형식 아님")
++    hit = _cache.get(host)
++    if hit and hit[0] > now():
++        return hit[1]
++    try:
++        r = http.get(f"https://{host}/.well-known/ucp", timeout=10,
++                     headers={"Accept": "application/json", "User-Agent": "commerce-ai-ucp/0.1"})
++    except Exception as e:  # noqa: BLE001
++        return Merchant(host, False, f"연결 실패 ({type(e).__name__})")
++    if r.status_code != 200:
++        m = Merchant(host, False, f"프로필 없음 (HTTP {r.status_code})")
++    elif len(r.content or b"") > MAX_BYTES:
++        m = Merchant(host, False, "프로필이 너무 큼")
++    else:
++        try:
++            m = negotiate(host, r.json())
++        except ValueError:
++            m = Merchant(host, False, "프로필이 JSON 아님")
++    _cache[host] = (now() + _max_age(getattr(r, "headers", {})), m)
++    return m
++
++
++def clear_cache() -> None:
++    _cache.clear()
+--- /dev/null
++++ app/services/ucp/client.py
+@@ -0,0 +1,96 @@
++"""catalog.search 호출 (p40) — REST: POST {endpoint}/catalog/search · MCP: tools/call search_catalog.
++
++결과는 판매자 응답 그대로(dict) 돌려주고, 상품 카드 변환은 mapping.py 가 한다.
++실패도 예외 대신 SearchOutcome 으로 — 판매자 하나가 실패해도 다른 결과는 보여 줄 수 있게 (한 판매처 장애 격리).
++"""
++from __future__ import annotations
++
++import uuid
++from dataclasses import dataclass, field
++
++from app.services.ucp import platform
++from app.services.ucp.discovery import Merchant
++
++MAX_BYTES = 2_000_000
++
++
++@dataclass
++class SearchOutcome:
++    host: str
++    ok: bool
++    response: dict | None = None
++    error: str | None = None            # 사람이 읽는 사유
++    code: str | None = None             # 판매자 오류 코드 (profile_unreachable · not_found · rate_limited …)
++    continue_url: str | None = None     # 판매자가 준 웹 이동 주소 (협상 실패 등)
++    messages: list = field(default_factory=list)
++
++
++def search_request(query: str, *, limit: int = 10, country: str = "KR", language: str = "ko-KR",
++                   currency: str = "KRW") -> dict:
++    """사양 catalog_search search_request.  context 는 비인증 힌트 — 개인정보(주소·IP)는 넣지 않는다."""
++    return {"query": query, "context": {"address_country": country, "language": language, "currency": currency},
++            "pagination": {"limit": max(1, min(int(limit), 50))}}
++
++
++def _continue(data) -> str | None:
++    url = (data or {}).get("continue_url") if isinstance(data, dict) else None
++    return url if isinstance(url, str) and url.startswith("https://") else None
++
++
++def search(merchant: Merchant, query: str, *, http, limit: int = 10, profile_url: str | None = None) -> SearchOutcome:
++    """판매자 하나에 상품 검색.  profile_url 이 없으면(공개 프로필 없음) 호출하지 않는다."""
++    profile = profile_url or platform.profile_url()
++    if not merchant.ok:
++        return SearchOutcome(merchant.host, False, error=merchant.reason or "쓸 수 없는 판매자")
++    if not profile:
++        return SearchOutcome(merchant.host, False, error="우리 플랫폼 프로필 주소(UCP_PLATFORM_PROFILE_URL) 없음",
++                             code="no_platform_profile")
++    body = search_request(query, limit=limit)
++    rid = str(uuid.uuid4())
++    try:
++        if merchant.transport == "rest":
++            r = http.post(f"{merchant.endpoint}/catalog/search", json=body, timeout=15,
++                          headers={"Content-Type": "application/json", "Accept": "application/json",
++                                   "Request-Id": rid, "UCP-Agent": f'profile="{profile}"'})
++        else:
++            r = http.post(merchant.endpoint, timeout=15,
++                          headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream"},
++                          json={"jsonrpc": "2.0", "id": rid, "method": "tools/call",
++                                "params": {"name": "search_catalog",
++                                           "arguments": {"meta": {"ucp-agent": {"profile": profile}}, "catalog": body}}})
++    except Exception as e:  # noqa: BLE001
++        return SearchOutcome(merchant.host, False, error=f"연결 실패 ({type(e).__name__})", code="network")
++    if len(r.content or b"") > MAX_BYTES:
++        return SearchOutcome(merchant.host, False, error="응답이 너무 큼", code="too_large")
++    if r.status_code == 429:
++        return SearchOutcome(merchant.host, False, error="판매자 호출 한도 초과", code="rate_limited")
++    try:
++        data = r.json()
++    except ValueError:
++        return SearchOutcome(merchant.host, False, error=f"JSON 아님 (HTTP {r.status_code})", code="bad_response")
++    if not isinstance(data, dict):
++        return SearchOutcome(merchant.host, False, error="응답 형식 아님", code="bad_response")
++    if merchant.transport == "mcp":
++        if data.get("error"):
++            err = data["error"]
++            detail = err.get("data") if isinstance(err.get("data"), dict) else {}
++            return SearchOutcome(merchant.host, False, error=err.get("message") or "판매자 오류",
++                                 code=detail.get("code") or str(err.get("code")), continue_url=_continue(detail))
++        result = (data or {}).get("result") or {}
++        if result.get("isError"):
++            return SearchOutcome(merchant.host, False, error="판매자 도구 오류", code="tool_error")
++        data = result.get("structuredContent")
++        if not isinstance(data, dict):
++            return SearchOutcome(merchant.host, False, error="structuredContent 없음", code="bad_response")
++    elif r.status_code != 200:
++        return SearchOutcome(merchant.host, False, error=f"HTTP {r.status_code}", code=str(r.status_code),
++                             continue_url=_continue(data))
++    ucp = data.get("ucp")
++    messages = data.get("messages") if isinstance(data.get("messages"), list) else []
++    if isinstance(ucp, dict) and ucp.get("status") == "error":
++        first = next((m for m in messages if isinstance(m, dict)), {})
++        return SearchOutcome(merchant.host, False, error=first.get("content") or "판매자 오류",
++                             code=first.get("code"), continue_url=_continue(data), messages=messages)
++    if not isinstance(data.get("products"), list):
++        return SearchOutcome(merchant.host, False, error="products 없음", code="bad_response")
++    return SearchOutcome(merchant.host, True, response=data, messages=messages)
+--- /dev/null
++++ app/services/ucp/mapping.py
+@@ -0,0 +1,105 @@
++"""UCP 상품 → 상품 카드 dict (p40).
++
++- 옵션(variant)마다 카드 1개 — 판매자가 옵션별 가격을 주므로, 상품명 옵션 목록('3kg 5kg')을 추측할 필요가 없다.
++- 가격은 ISO 4217 최소 단위 정수(사양).  지금 비교는 원화만 — 원화가 아니면 카드로 만들지 않는다(skipped).
++- 판매자 unit_price 는 '권위 있는 값' — 플랫폼이 다시 계산·대체하면 안 된다(MUST NOT).  그래서:
++    reference 가 정확히 100g 일 때만 그 값을 per100g 로 쓰고, 그 밖의 기준(1kg·100ml 등)은 환산하지 않고 표시 문구만 둔다.
++    unit_price 가 있으면 상품명으로 100g당을 따로 계산하지 않는다.
++- 판매 가능(available)이 아닌 옵션은 뺀다.  disclosure 경고(알레르기·안전 고지)는 숨기지 않도록 카드에 그대로 싣는다.
++- 카탈로그 값은 거래 확약이 아니고(checkout is authoritative) 세션 간 재검증 없이 재사용하지 않는다 → seen_at 기록.
++"""
++from __future__ import annotations
++
++import datetime as dt
++import hashlib
++
++from app.domain.commerce.policies import safe_url
++
++MINOR_DIGITS = {"KRW": 0, "JPY": 0, "USD": 2, "EUR": 2, "GBP": 2, "CAD": 2, "AUD": 2}
++DEFAULT_VARIANT_TITLES = {"", "default", "default title", "기본"}
++
++
++def won(price) -> int | None:
++    """{'amount': 최소 단위 정수, 'currency': 'KRW'} → 원.  원화가 아니거나 형식이 틀리면 None."""
++    if not isinstance(price, dict) or price.get("currency") != "KRW":
++        return None
++    amount = price.get("amount")
++    if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
++        return None
++    return amount                                       # KRW 최소 단위 = 원 (소수 자릿수 0)
++
++
++def _unit_price(v: dict) -> dict | None:
++    up = v.get("unit_price")
++    if not isinstance(up, dict) or won({"amount": up.get("amount"), "currency": up.get("currency")}) is None:
++        return None
++    ref = up.get("reference") if isinstance(up.get("reference"), dict) else {}
++    measure = up.get("measure") if isinstance(up.get("measure"), dict) else {}
++    ref_text = ref.get("display_text") or f"{ref.get('value', '')}{ref.get('unit', '')}"
++    return {"amount": up["amount"], "reference": {"value": ref.get("value"), "unit": ref.get("unit")},
++            "measure_text": measure.get("display_text"),
++            "text": f"{ref_text}당 {up['amount']:,}원 (판매자 표시)"}
++
++
++def _disclosures(messages, product_id: str) -> list[str]:
++    out = []
++    for m in messages or []:
++        if not isinstance(m, dict) or m.get("presentation") != "disclosure":
++            continue
++        path = m.get("path") or ""
++        if not path or product_id in path or path in ("$", "$.products"):
++            text = m.get("content")
++            if isinstance(text, str) and text.strip():
++                out.append(text.strip())
++    return out
++
++
++def _image(product: dict, variant: dict) -> str | None:
++    for media in (variant.get("media") or []) + (product.get("media") or []):
++        if isinstance(media, dict) and media.get("type") == "image":
++            url = safe_url(media.get("url"))
++            if url and url.startswith("https://"):
++                return url
++    return None
++
++
++def to_cards(response: dict, *, host: str, merchant_name: str, now=None) -> tuple[list[dict], list[dict]]:
++    """catalog.search 응답 → (카드들, 뺀 것들[{title, reason}])."""
++    seen_at = (now or dt.datetime.now)().strftime("%Y-%m-%d %H:%M")
++    messages = response.get("messages") or []
++    cards, skipped = [], []
++    for product in response.get("products") or []:
++        if not isinstance(product, dict):
++            continue
++        pid = str(product.get("id") or "")
++        title = (product.get("title") or "").strip()
++        disclosures = _disclosures(messages, pid)
++        for v in product.get("variants") or []:
++            if not isinstance(v, dict):
++                continue
++            vt = (v.get("title") or "").strip()
++            full = title if vt.lower() in DEFAULT_VARIANT_TITLES or vt in title else f"{title} {vt}".strip()
++            price = won(v.get("price"))
++            if price is None:
++                skipped.append({"title": full, "reason": "원화 가격 아님"})
++                continue
++            if (v.get("availability") or {}).get("available") is False:
++                skipped.append({"title": full, "reason": "판매 불가(품절 등)"})
++                continue
++            url = safe_url(v.get("url") or product.get("url"))
++            url = url if url and url.startswith("https://") else None
++            up = _unit_price(v)
++            per100g = (up["amount"] if up and up["reference"] == {"value": 100, "unit": "g"} else None)
++            vid = str(v.get("id") or "")
++            key = hashlib.sha1(f"ucp|{host}|{pid}|{vid}".encode()).hexdigest()[:12]
++            cards.append({
++                "key": key, "title": full, "price": price, "shipping_fee": None, "total": None,
++                "mall": merchant_name, "url": url, "image": _image(product, v),
++                "pid": vid or pid, "affiliate": False, "affiliate_program": None, "direct": True,
++                "per100g": per100g, "unit_price_text": up["text"] if up else None,
++                "check_at_mall": True, "seen_at": seen_at,
++                "ucp": {"host": host, "product_id": pid, "variant_id": vid, "unit_price": up,
++                        "disclosures": disclosures, "seen_at": seen_at,
++                        "note": "카탈로그 가격은 확약이 아니에요 — 판매처 결제 화면 가격이 기준이에요."},
++            })
++    return cards, skipped
+--- /dev/null
++++ app/services/ucp/registry.py
+@@ -0,0 +1,31 @@
++"""쓸 UCP 판매자 등록부 data/ucp/merchants.csv (p40).  열: 호스트, 이름, 상태, 확인일, 메모.
++상태: 사용(대화에 쓸 수 있음 — 연결은 별도 단계) · 시험(확인 스크립트에서만) · 중지.
++등록부에 없는 판매자는 부르지 않는다 (사양은 사전 등록 없는 참여가 기본이지만, 이용 조건 확인 전에는 쓰지 않음)."""
++from __future__ import annotations
++
++import csv
++import os
++from pathlib import Path
++
++from app.services.ucp.discovery import valid_host
++
++COLUMNS = ("호스트", "이름", "상태", "확인일", "메모")
++STATES = ("사용", "시험", "중지")
++
++
++def path() -> Path:
++    return Path(os.getenv("UCP_MERCHANTS_CSV") or "data/ucp/merchants.csv")
++
++
++def load(states=("사용",)) -> list[dict]:
++    p = path()
++    if not p.exists():
++        return []
++    with p.open(encoding="utf-8-sig", newline="") as f:
++        rows = list(csv.DictReader(f))
++    out = []
++    for r in rows:
++        host = (r.get("호스트") or "").strip().lower()
++        if valid_host(host) and (r.get("상태") or "").strip() in states:
++            out.append({"host": host, "name": (r.get("이름") or host).strip(), "state": r["상태"].strip()})
++    return out
+--- /dev/null
++++ make_ucp_profile.py
+@@ -0,0 +1,22 @@
++# make_ucp_profile.py — 우리 UCP 플랫폼 프로필을 정적 파일로 만든다 (업로드용). (2026-11-04 p40)
++# UCP 판매자는 요청마다 우리 프로필 주소(예: https://trendguide.kr/.well-known/ucp)를 직접 가져와 검증한다.
++# 결과: Claude outputs/ucp_site/  ─ .well-known/ucp (JSON) · _headers (Cloudflare Pages·Netlify 용 Content-Type 지정)
++#       · .nojekyll (GitHub Pages 가 .well-known 폴더를 숨기지 않게) · index.html (안내 한 줄)
++# 내용은 app/services/ucp/platform.py 의 platform_profile() — 카탈로그 읽기만 광고, 결제 없음. 비밀값 없음.
++# 사용: python make_ucp_profile.py
++import json
++from pathlib import Path
++
++from app.services.ucp.platform import platform_profile
++
++out = Path("Claude outputs") / "ucp_site"
++(out / ".well-known").mkdir(parents=True, exist_ok=True)
++(out / ".well-known" / "ucp").write_text(json.dumps(platform_profile(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
++(out / "_headers").write_text("/.well-known/ucp\n  Content-Type: application/json; charset=utf-8\n"
++                              "  Cache-Control: public, max-age=3600\n  Access-Control-Allow-Origin: *\n", encoding="utf-8")
++(out / ".nojekyll").write_text("", encoding="utf-8")
++(out / "index.html").write_text('<!doctype html><meta charset="utf-8"><title>trendguide</title>'
++                                '<p>trendguide — UCP platform profile: <a href="/.well-known/ucp">/.well-known/ucp</a></p>\n',
++                                encoding="utf-8")
++print(f"만듦: {out}/.well-known/ucp — 이 폴더를 https://trendguide.kr 루트에 올린 뒤 .env 에\n"
++      "  UCP_PLATFORM_PROFILE_URL=https://trendguide.kr/.well-known/ucp")
+--- /dev/null
++++ check_ucp_catalog.py
+@@ -0,0 +1,46 @@
++# check_ucp_catalog.py — UCP 판매자 카탈로그 시험 (읽기 전용, 결제·장바구니 없음). (2026-11-04 p40)
++# 등록부(data/ucp/merchants.csv, 없으면 data/ucp/merchants_template.csv)의 '사용·시험' 판매자에 대해
++#   1) /.well-known/ucp 발견·협상  2) 우리 프로필 주소가 있으면 catalog.search 1회  3) 상품 카드로 바꾼 결과를 보여 준다.
++# 화면·DB 에는 아무것도 반영하지 않는다.  우리 프로필 주소: .env UCP_PLATFORM_PROFILE_URL (공개 https).
++# 사용: python check_ucp_catalog.py "wool runner"        (판매자 지정: python check_ucp_catalog.py 감귤 mall.example.kr)
++import os
++import sys
++from pathlib import Path
++
++import requests
++from dotenv import load_dotenv
++
++load_dotenv(os.path.join(os.getcwd(), ".env"))
++from app.services.ucp import client, discovery, mapping, platform, registry  # noqa: E402
++
++query = sys.argv[1] if len(sys.argv) > 1 else "감귤"
++hosts = [{"host": h, "name": h} for h in sys.argv[2:]]
++if not hosts:
++    if not registry.path().exists() and Path("data/ucp/merchants_template.csv").exists():
++        os.environ["UCP_MERCHANTS_CSV"] = "data/ucp/merchants_template.csv"
++    hosts = registry.load(("사용", "시험"))
++profile = platform.profile_url()
++print(f"우리 프로필: {profile or '없음 (UCP_PLATFORM_PROFILE_URL) — 발견·협상만 확인'}")
++if profile:
++    try:
++        r = requests.get(profile, timeout=10)
++        ok = r.status_code == 200 and isinstance(r.json().get("ucp"), dict)
++        print(f"  프로필 접근: HTTP {r.status_code}, Content-Type {r.headers.get('content-type')}, {'정상' if ok else '형식 확인 필요'}")
++    except Exception as e:  # noqa: BLE001
++        print(f"  프로필 접근 실패: {type(e).__name__}")
++for m in hosts:
++    merchant = discovery.discover(m["host"], http=requests)
++    print(f"\n[{m['host']}] 협상: {'가능' if merchant.ok else '불가'} — 판 {merchant.version}, 전송 {merchant.transport}, "
++          f"search {merchant.search}, lookup {merchant.lookup}" + ("" if merchant.ok else f", 사유 {merchant.reason}"))
++    if not (merchant.ok and profile):
++        continue
++    out = client.search(merchant, query, http=requests, limit=5, profile_url=profile)
++    if not out.ok:
++        print(f"  검색 실패: {out.code} — {out.error}" + (f" (이동 주소 {out.continue_url})" if out.continue_url else ""))
++        continue
++    cards, skipped = mapping.to_cards(out.response, host=m["host"], merchant_name=m["name"])
++    print(f"  상품 {len(out.response['products'])}개 → 원화 카드 {len(cards)}개, 뺀 것 {len(skipped)}개")
++    for c in cards[:5]:
++        print(f"   - {c['title'][:40]} | {c['price']:,}원 | {c['unit_price_text'] or '단위 가격 없음'} | {c['url']}")
++    for s in skipped[:5]:
++        print(f"   x {s['title'][:40]} — {s['reason']}")
+--- /dev/null
++++ tests/services/ucp/test_ucp_catalog.py
+@@ -0,0 +1,228 @@
++"""UCP 판매자 카탈로그 읽기 (2026-11-04 p40) — 발견·협상, 검색 호출(REST·MCP), 카드 변환, 기본 꺼짐, 미연결."""
++from __future__ import annotations
++
++import ast
++import json
++from pathlib import Path
++
++import pytest
++
++from app.services.ucp import client, discovery, mapping, platform, registry
++
++FIX = Path(__file__).parent / "fixtures"
++APP = Path(__file__).resolve().parents[3] / "app"
++PROFILE = "https://commerce-ai.example.kr/.well-known/ucp"
++
++
++def fx(name):
++    return json.loads((FIX / name).read_text(encoding="utf-8"))
++
++
++class Resp:
++    def __init__(self, status=200, body=None, headers=None):
++        self.status_code, self._body, self.headers = status, body, headers or {}
++        self.content = json.dumps(body).encode() if body is not None else b""
++
++    def json(self):
++        if self._body is None:
++            raise ValueError("no json")
++        return self._body
++
++
++class Http:
++    def __init__(self, get=None, post=None):
++        self._get, self._post, self.calls = get, post, []
++
++    def get(self, url, **kw):
++        self.calls.append(("GET", url, kw))
++        return self._get
++
++    def post(self, url, **kw):
++        self.calls.append(("POST", url, kw))
++        return self._post
++
++
++@pytest.fixture(autouse=True)
++def _clean(monkeypatch):
++    discovery.clear_cache()
++    for k in ("UCP_CATALOG", "UCP_PLATFORM_PROFILE_URL", "UCP_MERCHANTS_CSV"):
++        monkeypatch.delenv(k, raising=False)
++
++
++# ── 발견·협상 ──────────────────────────────────────────────
++
++def test_mcp_only_profile_like_shopify():
++    m = discovery.negotiate("shop.example.com", fx("profile_mcp_only.json"))
++    assert m.ok and m.version == "2026-08-25" and m.transport == "mcp" and m.search and m.lookup
++    assert m.endpoint == "https://shop.example.com/api/ucp/mcp"
++
++
++def test_rest_is_preferred_and_trailing_slash_removed():
++    m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
++    assert m.ok and m.version == "2026-04-08" and m.transport == "rest" and m.endpoint == "https://mall.example.kr/ucp/v1"
++
++
++@pytest.mark.parametrize("change, reason", [
++    (lambda u: u.update(version="2025-01-01", supported_versions={}), "공통 판 없음"),
++    (lambda u: u["capabilities"].pop("dev.ucp.shopping.catalog.search"), "catalog.search 미지원"),
++    (lambda u: u["services"]["dev.ucp.shopping"][0].update(endpoint="http://shop.example.com/mcp"), "전송"),
++])
++def test_unusable_profiles(change, reason):
++    doc = fx("profile_mcp_only.json")
++    change(doc["ucp"])
++    m = discovery.negotiate("shop.example.com", doc)
++    assert not m.ok and reason in m.reason
++
++
++def test_discover_fetches_well_known_and_caches():
++    http = Http(get=Resp(200, fx("profile_mcp_only.json"), {"Cache-Control": "max-age=600"}))
++    a = discovery.discover("Shop.Example.com", http=http, now=lambda: 1000)
++    b = discovery.discover("shop.example.com", http=http, now=lambda: 1500)
++    assert a.ok and b is a and len(http.calls) == 1
++    assert http.calls[0][1] == "https://shop.example.com/.well-known/ucp"
++
++
++@pytest.mark.parametrize("host", ["", "localhost", "127.0.0.1:8080", "a b.com", "evil.com/../x"])
++def test_bad_hosts_are_not_called(host):
++    http = Http(get=Resp(200, fx("profile_mcp_only.json")))
++    assert not discovery.discover(host, http=http).ok and http.calls == []
++
++
++def test_missing_profile():
++    m = discovery.discover("www.kurly.com", http=Http(get=Resp(404, None)))
++    assert not m.ok and "HTTP 404" in m.reason
++
++
++# ── 검색 호출 ──────────────────────────────────────────────
++
++def test_rest_search_sends_ucp_agent_and_request_id():
++    m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
++    http = Http(post=Resp(200, fx("search_krw.json")))
++    out = client.search(m, "감귤", http=http, limit=5, profile_url=PROFILE)
++    assert out.ok and len(out.response["products"]) == 3
++    method, url, kw = http.calls[0]
++    assert (method, url) == ("POST", "https://mall.example.kr/ucp/v1/catalog/search")
++    assert kw["headers"]["UCP-Agent"] == f'profile="{PROFILE}"' and kw["headers"]["Request-Id"]
++    assert kw["json"]["query"] == "감귤" and kw["json"]["pagination"] == {"limit": 5}
++    assert kw["json"]["context"] == {"address_country": "KR", "language": "ko-KR", "currency": "KRW"}
++
++
++def test_mcp_search_uses_tools_call_with_meta():
++    m = discovery.negotiate("shop.example.com", fx("profile_mcp_only.json"))
++    http = Http(post=Resp(200, {"jsonrpc": "2.0", "id": "1", "result": {"structuredContent": fx("search_krw.json")}}))
++    out = client.search(m, "감귤", http=http, profile_url=PROFILE)
++    assert out.ok
++    rpc = http.calls[0][2]["json"]
++    assert rpc["method"] == "tools/call" and rpc["params"]["name"] == "search_catalog"
++    assert rpc["params"]["arguments"]["meta"] == {"ucp-agent": {"profile": PROFILE}}
++
++
++def test_profile_unreachable_is_reported_with_continue_url():
++    """실제 Shopify 판매자 응답(2026-11-04)과 같은 모양 — 우리 프로필을 못 가져오면 거절."""
++    m = discovery.negotiate("shop.example.com", fx("profile_mcp_only.json"))
++    out = client.search(m, "감귤", http=Http(post=Resp(422, fx("mcp_profile_unreachable.json"))), profile_url=PROFILE)
++    assert not out.ok and out.code == "profile_unreachable" and out.continue_url == "https://shop.example.com/"
++
++
++@pytest.mark.parametrize("resp, code", [
++    (Resp(429, {"error": "slow down"}), "rate_limited"),
++    (Resp(200, {"ucp": {"status": "error"}, "messages": [{"type": "error", "code": "not_found", "content": "없음"}]}),
++     "not_found"),
++    (Resp(200, ["not", "a", "dict"]), "bad_response"),
++    (Resp(500, None), "bad_response"),
++])
++def test_rest_errors(resp, code):
++    m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
++    out = client.search(m, "감귤", http=Http(post=resp), profile_url=PROFILE)
++    assert not out.ok and out.code == code
++
++
++def test_no_platform_profile_means_no_call():
++    m = discovery.negotiate("mall.example.kr", fx("profile_rest.json"))
++    http = Http(post=Resp(200, fx("search_krw.json")))
++    out = client.search(m, "감귤", http=http)
++    assert not out.ok and out.code == "no_platform_profile" and http.calls == []
++
++
++# ── 카드 변환 ──────────────────────────────────────────────
++
++def cards():
++    import datetime as dt
++    return mapping.to_cards(fx("search_krw.json"), host="mall.example.kr", merchant_name="예시몰",
++                            now=lambda: dt.datetime(2026, 11, 4, 22, 30))
++
++
++def test_one_card_per_available_krw_variant():
++    got, skipped = cards()
++    assert [c["title"] for c in got] == ["제주 노지 감귤 3kg", "제주 노지 감귤 5kg", "감귤 선물세트 (한라봉 혼합)"]
++    assert [c["price"] for c in got] == [18900, 27900, 39000]          # KRW 최소 단위 = 원
++    assert {s["reason"] for s in skipped} == {"판매 불가(품절 등)", "원화 가격 아님"}
++    assert all(c["affiliate"] is False and c["direct"] and c["seen_at"] == "2026-11-04 22:30" for c in got)
++
++
++def test_merchant_unit_price_is_used_as_is_never_recomputed():
++    three, five, gift = cards()[0]
++    assert three["per100g"] == 630                                    # 기준 100g → 그대로 (18900/30=630 과 같아도 계산 아님)
++    assert five["per100g"] is None                                    # 기준 1kg → 100g 로 환산하지 않음
++    assert five["unit_price_text"] == "1kg당 5,580원 (판매자 표시)"
++    assert gift["per100g"] is None and gift["unit_price_text"] is None
++
++
++def test_unsafe_urls_dropped_and_disclosure_kept():
++    _three, _five, gift = cards()[0]
++    assert gift["url"] is None                                        # javascript: 링크는 버림
++    assert gift["ucp"]["disclosures"] == ["이 상품은 견과류를 사용하는 시설에서 포장합니다."]
++    assert cards()[0][0]["image"] == "https://img.example.kr/citrus.jpg"
++
++
++@pytest.mark.parametrize("price, expect", [
++    ({"amount": 100, "currency": "KRW"}, 100), ({"amount": 100.5, "currency": "KRW"}, None),
++    ({"amount": True, "currency": "KRW"}, None), ({"amount": -1, "currency": "KRW"}, None),
++    ({"amount": 100, "currency": "USD"}, None), (None, None),
++])
++def test_won(price, expect):
++    assert mapping.won(price) == expect
++
++
++# ── 플랫폼 프로필 · 사용 여부 · 등록부 ─────────────────────────
++
++def test_platform_profile_has_required_parts_and_no_payment():
++    u = platform.platform_profile()["ucp"]
++    assert u["version"] == platform.SPEC_VERSION and set(u) >= {"services", "capabilities", "payment_handlers"}
++    assert set(u["capabilities"]) == set(platform.CAPABILITIES) and u["payment_handlers"] == {}
++    assert not any("checkout" in k or "cart" in k for k in u["capabilities"])
++
++
++@pytest.mark.parametrize("flag, url, on", [(None, None, False), ("1", None, False), ("1", "http://x.kr/p", False),
++                                            ("0", PROFILE, False), ("1", PROFILE, True)])
++def test_enabled_only_with_flag_and_https_profile(monkeypatch, flag, url, on):
++    if flag:
++        monkeypatch.setenv("UCP_CATALOG", flag)
++    if url:
++        monkeypatch.setenv("UCP_PLATFORM_PROFILE_URL", url)
++    assert platform.enabled() is on
++
++
++def test_registry_reads_only_requested_states(tmp_path, monkeypatch):
++    p = tmp_path / "m.csv"
++    p.write_text("호스트,이름,상태,확인일,메모\nmall.example.kr,예시몰,사용,2026-11-04,\nallbirds.com,Allbirds,시험,,\n"
++                 "bad host,x,사용,,\nstop.example.kr,중지몰,중지,,\n", encoding="utf-8")
++    monkeypatch.setenv("UCP_MERCHANTS_CSV", str(p))
++    assert [m["host"] for m in registry.load()] == ["mall.example.kr"]
++    assert [m["host"] for m in registry.load(("사용", "시험"))] == ["mall.example.kr", "allbirds.com"]
++
++
++def test_missing_registry_is_empty(monkeypatch, tmp_path):
++    monkeypatch.setenv("UCP_MERCHANTS_CSV", str(tmp_path / "none.csv"))
++    assert registry.load() == []
++
++
++def test_not_wired_into_any_app_path_yet():
++    """연결 결정 전에는 ucp 패키지 밖의 어떤 앱 모듈도 불러오지 않는다."""
++    for path in APP.rglob("*.py"):
++        if "ucp" in path.parts:
++            continue
++        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
++            names = ([node.module] if isinstance(node, ast.ImportFrom) and node.module else
++                     [a.name for a in node.names] if isinstance(node, ast.Import) else [])
++            assert not any(n.startswith("app.services.ucp") for n in names), path
+--- /dev/null
++++ tests/services/ucp/fixtures/profile_mcp_only.json
+@@ -0,0 +1,9 @@
++{"ucp": {"version": "2026-08-25",
++  "supported_versions": {"2026-04-08": "https://shop.example.com/.well-known/ucp/2026-04-08"},
++  "services": {"dev.ucp.shopping": [
++    {"version": "2026-08-25", "transport": "mcp", "endpoint": "https://shop.example.com/api/ucp/mcp"},
++    {"version": "2026-08-25", "transport": "embedded"}]},
++  "capabilities": {"dev.ucp.shopping.checkout": [{"version": "2026-08-25"}],
++                   "dev.ucp.shopping.catalog.search": [{"version": "2026-08-25"}],
++                   "dev.ucp.shopping.catalog.lookup": [{"version": "2026-08-25"}]},
++  "payment_handlers": {}}}
+--- /dev/null
++++ tests/services/ucp/fixtures/profile_rest.json
+@@ -0,0 +1,6 @@
++{"ucp": {"version": "2026-04-08",
++  "services": {"dev.ucp.shopping": [
++    {"version": "2026-04-08", "transport": "mcp", "endpoint": "https://mall.example.kr/ucp/mcp"},
++    {"version": "2026-04-08", "transport": "rest", "endpoint": "https://mall.example.kr/ucp/v1/"}]},
++  "capabilities": {"dev.ucp.shopping.catalog.search": [{"version": "2026-04-08"}]},
++  "payment_handlers": {}}}
+--- /dev/null
++++ tests/services/ucp/fixtures/search_krw.json
+@@ -0,0 +1,21 @@
++{"ucp": {"version": "2026-08-25", "status": "success"},
++ "products": [
++  {"id": "prod_citrus", "title": "제주 노지 감귤", "url": "https://mall.example.kr/p/citrus",
++   "media": [{"type": "image", "url": "https://img.example.kr/citrus.jpg"}],
++   "variants": [
++     {"id": "var_3kg", "title": "3kg", "price": {"amount": 18900, "currency": "KRW"}, "availability": {"available": true},
++      "unit_price": {"amount": 630, "currency": "KRW", "measure": {"value": 3000, "unit": "g", "display_text": "3kg"},
++                     "reference": {"value": 100, "unit": "g", "display_text": "100g"}}},
++     {"id": "var_5kg", "title": "5kg", "price": {"amount": 27900, "currency": "KRW"}, "availability": {"available": true},
++      "unit_price": {"amount": 5580, "currency": "KRW", "measure": {"value": 5, "unit": "kg", "display_text": "5kg"},
++                     "reference": {"value": 1, "unit": "kg", "display_text": "1kg"}}},
++     {"id": "var_10kg", "title": "10kg", "price": {"amount": 49000, "currency": "KRW"}, "availability": {"available": false}}]},
++  {"id": "prod_gift", "title": "감귤 선물세트 (한라봉 혼합)", "url": "javascript:alert(1)",
++   "variants": [{"id": "var_gift", "title": "Default Title", "price": {"amount": 39000, "currency": "KRW"},
++                 "availability": {"available": true}}]},
++  {"id": "prod_usd", "title": "Mandarin Box", "url": "https://us.example.com/p/m",
++   "variants": [{"id": "var_usd", "title": "Default Title", "price": {"amount": 2499, "currency": "USD"},
++                 "availability": {"available": true}}]}],
++ "messages": [{"type": "warning", "code": "allergen", "presentation": "disclosure", "path": "$.products[?(@.id=='prod_gift')]",
++               "content": "이 상품은 견과류를 사용하는 시설에서 포장합니다."}],
++ "pagination": {"has_next_page": false}}
+--- /dev/null
++++ tests/services/ucp/fixtures/mcp_profile_unreachable.json
+@@ -0,0 +1,3 @@
++{"jsonrpc": "2.0", "id": 2, "error": {"code": -32001, "message": "UCP discovery failed",
++ "data": {"code": "profile_unreachable", "content": "Unable to fetch agent profile: Network error",
++          "continue_url": "https://shop.example.com/"}}}
+--- /dev/null
++++ data/ucp/merchants_template.csv
+@@ -0,0 +1,2 @@
++호스트,이름,상태,확인일,메모
++allbirds.com,Allbirds (해외 Shopify — 형식 시험용),시험,2026-11-04,"UCP 2026-08-25 · catalog.search · MCP 전송만. 화면에 쓰지 않음"

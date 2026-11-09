@@ -1,0 +1,1169 @@
+{
+ "note": "2026-10-30 여러 레시피 흐름 시험용 — 공공데이터(농식품정보누리 EPIS, 식품안전나라) 원문 일부",
+ "recipes": [
+  {
+   "id": "epis-337",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "계란찜",
+   "summary": "여러가지 야채들과 완전단백식품 계란으로 간단한 찜요리를 해보세요~ 부드러운 아침식사로 너무 좋아요!",
+   "category": "한식 · 찜",
+   "method": "",
+   "servings": "2인분",
+   "time": "20분",
+   "kcal": "98Kcal",
+   "level": "초보환영",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "계란 2개, 시금치 10g, 당근 1/4개, 옥수수통조림 2큰술, 다진파 1큰술, 소금 약간, 후춧가루 약간, 설탕 1/4작은술, 물 1/2컵, 청정원맛선생 약간",
+   "ingredients": [
+    {
+     "name": "계란",
+     "amount": "2개",
+     "kind": "주재료"
+    },
+    {
+     "name": "시금치",
+     "amount": "10g",
+     "kind": "부재료"
+    },
+    {
+     "name": "당근",
+     "amount": "1/4개",
+     "kind": "부재료"
+    },
+    {
+     "name": "옥수수통조림",
+     "amount": "2큰술",
+     "kind": "부재료"
+    },
+    {
+     "name": "다진파",
+     "amount": "1큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "소금",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "후춧가루",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "설탕",
+     "amount": "1/4작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "물",
+     "amount": "1/2컵",
+     "kind": "양념"
+    },
+    {
+     "name": "청정원맛선생",
+     "amount": "약간",
+     "kind": "양념"
+    }
+   ],
+   "steps": [
+    {
+     "text": "옥수수통조림은 물기를 빼둔다.",
+     "image": null
+    },
+    {
+     "text": "당근, 옥수수통조림은 잘게 다져놓는다.",
+     "image": null
+    },
+    {
+     "text": "시금치는 소금을 넣고 살짝 데쳐서 물기를 제거한 후 잘게 다져놓는다.",
+     "image": null
+    },
+    {
+     "text": "큰 볼에 계란, 당근, 옥수수, 다진 파를 넣고 소금, 설탕, 후춧가루, 새우젓으로 간하여 분량의 물을 넣고 거품기로 잘 풀어둔다.",
+     "image": null
+    },
+    {
+     "text": "깊은 냄비에 ④를 넣고 끓는 물에서 중탕하여 중불로 15분 정도 쪄낸다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "epis-97",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "계란말이",
+   "summary": "도시락 반찬의 단골메뉴이자 훌륭한 안주인 계란말이입니다.",
+   "category": "한식 · 부침",
+   "method": "",
+   "servings": "4인분",
+   "time": "30분",
+   "kcal": "110Kcal",
+   "level": "초보환영",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "계란 4개, 다진파 1큰술, 다진마늘 1작은술, 소금 1작은술, 후춧가루 약간, 물 1컵, 식용유 2큰술, 다시마 5cm",
+   "ingredients": [
+    {
+     "name": "계란",
+     "amount": "4개",
+     "kind": "주재료"
+    },
+    {
+     "name": "다진파",
+     "amount": "1큰술",
+     "kind": "부재료"
+    },
+    {
+     "name": "다진마늘",
+     "amount": "1작은술",
+     "kind": "부재료"
+    },
+    {
+     "name": "소금",
+     "amount": "1작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "후춧가루",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "물",
+     "amount": "1컵",
+     "kind": "부재료"
+    },
+    {
+     "name": "식용유",
+     "amount": "2큰술",
+     "kind": "부재료"
+    },
+    {
+     "name": "다시마",
+     "amount": "5cm",
+     "kind": "부재료"
+    }
+   ],
+   "steps": [
+    {
+     "text": "계란을 그릇에 깨뜨려 넣고, 분량의 소금과 후추를 넣어 젓가락으로 섞는다.",
+     "image": null
+    },
+    {
+     "text": "물 1컵과 다시마 끓인 국물을 걸러내고 차게 식힌다. ①의 계란에 붓고 거품기로 고루 섞는다. 다진 파와 다진 마늘을 넣고 더 섞는다.",
+     "image": null
+    },
+    {
+     "text": "사각 팬에 기름을 두르고 달구어지면 계란물을 2/3정도 붓고 젓가락으로 저어 꾸덕꾸덕해지면 도톰하게 만든다.",
+     "image": null
+    },
+    {
+     "text": "다시 팬에 기름을 두르고 나머지 계란물을 부어 완전히 익기 직전에 접는다.",
+     "image": null
+    },
+    {
+     "text": "김발에 싸서 두었다가 완전히 식으면 도톰하게 썬다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "fs-2958",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "일본식 계란말이",
+   "summary": "가츠오부시 육수로 소금을 대신해 맛을 낼 수 있어요.",
+   "category": "반찬",
+   "method": "굽기",
+   "servings": null,
+   "time": null,
+   "kcal": "138.34",
+   "tags": [
+    "계란"
+   ],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408094414_1554684254971.jpg",
+   "ingredients_raw": "계란 150g, 가츠오부시 10g, 다시마 10g, 설탕 5g, 미림 5g",
+   "ingredients": [
+    {
+     "name": "계란",
+     "amount": "150g"
+    },
+    {
+     "name": "가츠오부시",
+     "amount": "10g"
+    },
+    {
+     "name": "다시마",
+     "amount": "10g"
+    },
+    {
+     "name": "설탕",
+     "amount": "5g"
+    },
+    {
+     "name": "미림",
+     "amount": "5g"
+    }
+   ],
+   "steps": [
+    {
+     "text": "물에 다시마를 넣고 끓인다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408094453_1554684293710.jpg"
+    },
+    {
+     "text": "물이 끓어 오르면 다시마를 건진다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408094511_1554684311206.jpg"
+    },
+    {
+     "text": "불을 끈 뒤 가츠오부시를 넣고 체에 걸러 육수를 완성한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408094540_1554684340109.jpg"
+    },
+    {
+     "text": "계란을 풀어 채에 내린 뒤 육수와 미림, 설탕을 넣는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408094556_1554684356928.jpg"
+    },
+    {
+     "text": "팬에 기름을 둘러 계란물을 한겹 한겹 만다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408094611_1554684371874.jpg"
+    },
+    {
+     "text": "완성된 계란말이는 모양을 잡고 한입크기로 자른다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408094630_1554684390645.jpg"
+    }
+   ]
+  },
+  {
+   "id": "fs-2973",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "토마토 채소 계란찜",
+   "summary": "소금 대신 파마산치즈로 간을 해 나트륨을 줄였어요.",
+   "category": "반찬",
+   "method": "찌기",
+   "servings": null,
+   "time": null,
+   "kcal": "181.76",
+   "tags": [
+    "계란"
+   ],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408113717_1554691037799.jpg",
+   "ingredients_raw": "방울토마토 20g, 양파 5g, 브로콜리 10g, 그린빈스 10g, 계란 80g, 파마산치즈 3g, 생크림 20g, 마늘 0.1g, 후추 0.1g",
+   "ingredients": [
+    {
+     "name": "방울토마토",
+     "amount": "20g"
+    },
+    {
+     "name": "양파",
+     "amount": "5g"
+    },
+    {
+     "name": "브로콜리",
+     "amount": "10g"
+    },
+    {
+     "name": "그린빈스",
+     "amount": "10g"
+    },
+    {
+     "name": "계란",
+     "amount": "80g"
+    },
+    {
+     "name": "파마산치즈",
+     "amount": "3g"
+    },
+    {
+     "name": "생크림",
+     "amount": "20g"
+    },
+    {
+     "name": "마늘",
+     "amount": "0.1g"
+    },
+    {
+     "name": "후추",
+     "amount": "0.1g"
+    }
+   ],
+   "steps": [
+    {
+     "text": "볼에 계란을 푼다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408113757_1554691077396.jpg"
+    },
+    {
+     "text": "마늘을 다져 계란과 섞고 파마산치즈, 후추를 넣어 간을 맞춘다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408113814_1554691094356.jpg"
+    },
+    {
+     "text": "양파는 채 썰고 브로콜리는 깍둑썰고 그린빈스는 2cm 길이로 자른다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408113828_1554691108509.jpg"
+    },
+    {
+     "text": "3의 재료를 볶은 뒤 계란물과 섞는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408113849_1554691129904.jpg"
+    },
+    {
+     "text": "방울토마토를 반으로 잘라 4에 넣는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408113914_1554691154761.jpg"
+    },
+    {
+     "text": "그릇에 옮겨 담아 찐다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/20190408/20190408113927_1554691167879.jpg"
+    }
+   ]
+  },
+  {
+   "id": "epis-96",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "냉이된장찌개",
+   "summary": "모시조개로 시원한 국물맛을 내고, 냉이로 향긋한 내음이 나는 냉이조갯국 만들어 보세요~",
+   "category": "한식 · 찌개/전골/스튜",
+   "method": "",
+   "servings": "4인분",
+   "time": "30분",
+   "kcal": "109Kcal",
+   "level": "보통",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "냉이 100g, 모시조개 1컵, 된장 3큰술, 다시마 10cm, 대파 1뿌리, 마늘 3쪽, 물 10컵, 소금 약간",
+   "ingredients": [
+    {
+     "name": "냉이",
+     "amount": "100g",
+     "kind": "주재료"
+    },
+    {
+     "name": "모시조개",
+     "amount": "1컵",
+     "kind": "주재료"
+    },
+    {
+     "name": "된장",
+     "amount": "3큰술",
+     "kind": "주재료"
+    },
+    {
+     "name": "다시마",
+     "amount": "10cm",
+     "kind": "양념"
+    },
+    {
+     "name": "대파",
+     "amount": "1뿌리",
+     "kind": "부재료"
+    },
+    {
+     "name": "마늘",
+     "amount": "3쪽",
+     "kind": "부재료"
+    },
+    {
+     "name": "물",
+     "amount": "10컵",
+     "kind": "부재료"
+    },
+    {
+     "name": "소금",
+     "amount": "약간",
+     "kind": "양념"
+    }
+   ],
+   "steps": [
+    {
+     "text": "냉이는 소금을 넣은 끓는 물에 살짝 데친 후 마늘 3쪽 다진 것과 된장을 넣어 손으로 무쳐 낸다.",
+     "image": null
+    },
+    {
+     "text": "모시조개는 하룻밤정도 물에 담가두어 해감을 토하게 한다.",
+     "image": null
+    },
+    {
+     "text": "냄비에 물 10컵과 모시조개를 넣고 끓이다가 모시조개의 입이 벌어지면 건져내고 국물을 거즈에 걸러 냄비에 담고 된장에 무친 냉이를 넣고 푹 끓인다.",
+     "image": null
+    },
+    {
+     "text": "찌개가 끓기 시작하면 파와 마늘을 어슷하게 썰어 넣고 간을 맞춘 뒤 마지막으로 모시조개를 넣는다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "epis-181",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "달래된장찌개",
+   "summary": "구수한 된장찌개에 상큼한 달래가 들어가 향긋한 달래된장찌개!",
+   "category": "한식 · 찌개/전골/스튜",
+   "method": "",
+   "servings": "2인분",
+   "time": "40분",
+   "kcal": "125Kcal",
+   "level": "보통",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "달래 50g, 두부 1/2모, 말린표고버섯 1장, 홍고추 1개, 청양고추 1개, 다진마늘 1작은술, 대파 1/4뿌리, 된장 2큰술, 육수용멸치 한줌, 물 3컵, 바지락 약간",
+   "ingredients": [
+    {
+     "name": "달래",
+     "amount": "50g",
+     "kind": "주재료"
+    },
+    {
+     "name": "두부",
+     "amount": "1/2모",
+     "kind": "주재료"
+    },
+    {
+     "name": "말린표고버섯",
+     "amount": "1장",
+     "kind": "주재료"
+    },
+    {
+     "name": "홍고추",
+     "amount": "1개",
+     "kind": "부재료"
+    },
+    {
+     "name": "청양고추",
+     "amount": "1개",
+     "kind": "부재료"
+    },
+    {
+     "name": "다진마늘",
+     "amount": "1작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "대파",
+     "amount": "1/4뿌리",
+     "kind": "부재료"
+    },
+    {
+     "name": "된장",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "육수용멸치",
+     "amount": "한줌",
+     "kind": "양념"
+    },
+    {
+     "name": "물",
+     "amount": "3컵",
+     "kind": "부재료"
+    },
+    {
+     "name": "바지락",
+     "amount": "약간",
+     "kind": "부재료"
+    }
+   ],
+   "steps": [
+    {
+     "text": "말린 표고버섯은 물에 불려 굵게 채썰고 기둥은 결대로 찢는다.(불린 물은 ②에 섞어 육수로 사용한다.)",
+     "image": null
+    },
+    {
+     "text": "멸치는 내장과 머리를 발라낸 후 냄비에 물 2컵과 ①의 표고버섯 불린 물을 붓고 된장을 풀어 끓인다.",
+     "image": null
+    },
+    {
+     "text": "두부는 사방 1.5cm로 깍둑썰어 준비하고 달래는 길이로 3등분하며 대파, 청양고추는 어슷썬다.",
+     "image": null
+    },
+    {
+     "text": "바지락은 연한 소금물에 담가 해감시킨다.",
+     "image": null
+    },
+    {
+     "text": "②가 끓으면 두부와 해감 시킨 바지락을 넣는다.",
+     "image": null
+    },
+    {
+     "text": "⑤에 나머지 재료인 달래, 표고버섯, 대파, 청양고추를 넣고 끓인다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "epis-75",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "우거지된장찌개",
+   "summary": "비타민이 듬뿍 들어있는 우거지를 이용한 구수한 찌개요리예요~",
+   "category": "한식 · 찌개/전골/스튜",
+   "method": "",
+   "servings": "4인분",
+   "time": "30분",
+   "kcal": "124Kcal",
+   "level": "보통",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "우거지 300g, 배춧잎 200g, 된장 4큰술, 마늘 2쪽, 생강 1/3개, 식용유 1큰술, 쇠고기 100g, 청고추 2개, 홍고추 1개, 대파 1뿌리, 쌀뜨물 9컵, 간장 1/2큰술",
+   "ingredients": [
+    {
+     "name": "우거지",
+     "amount": "300g",
+     "kind": "주재료"
+    },
+    {
+     "name": "배춧잎",
+     "amount": "200g",
+     "kind": "주재료"
+    },
+    {
+     "name": "된장",
+     "amount": "4큰술",
+     "kind": "주재료"
+    },
+    {
+     "name": "마늘",
+     "amount": "2쪽",
+     "kind": "양념"
+    },
+    {
+     "name": "생강",
+     "amount": "1/3개",
+     "kind": "양념"
+    },
+    {
+     "name": "식용유",
+     "amount": "1큰술",
+     "kind": "부재료"
+    },
+    {
+     "name": "쇠고기",
+     "amount": "100g",
+     "kind": "부재료"
+    },
+    {
+     "name": "청고추",
+     "amount": "2개",
+     "kind": "부재료"
+    },
+    {
+     "name": "홍고추",
+     "amount": "1개",
+     "kind": "부재료"
+    },
+    {
+     "name": "대파",
+     "amount": "1뿌리",
+     "kind": "부재료"
+    },
+    {
+     "name": "쌀뜨물",
+     "amount": "9컵",
+     "kind": "부재료"
+    },
+    {
+     "name": "간장",
+     "amount": "1/2큰술",
+     "kind": "양념"
+    }
+   ],
+   "steps": [
+    {
+     "text": "우거지는 깨끗이 다듬어 끓는 물에 푹 삶은 뒤 찬물에 담가 냄새를 뺀다.",
+     "image": null
+    },
+    {
+     "text": "쇠고기는 기름기가 많은 것으로 골라 먹기 좋은 크기로 얄팍하게 저며 썬다.",
+     "image": null
+    },
+    {
+     "text": "청고추와 홍고추는 꼭지를 딴 뒤 송송 썰어 씨와 함께 다져놓는다. 파는 어슷썰고 마늘과 생강은 곱게 다진다.",
+     "image": null
+    },
+    {
+     "text": "그릇에 물기를 뺀 ①을 넣고 된장 4큰술과 다진 마늘, 식용유 1큰술을 넣어 무친다.",
+     "image": null
+    },
+    {
+     "text": "냄비에 기름을 두르고 쇠고기를 넣어 볶다가 무쳐놓은 우거지를 넣고 함께 볶은 후 쌀뜨물을 붓고 약불에서 은근히 끓인다.",
+     "image": null
+    },
+    {
+     "text": "찌개가 끓으면 다진 청고추와 홍고추, 어슷썬 파를 넣고 간장으로 심심하게 간을 맞춘다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "fs-137",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "된장 두부찌개",
+   "summary": "김치는 물에 헹구어 염분을 제거하고 고추를 넣어 매운 맛과 향을 더한다. 두부는 콩 단백질이 풍부한 식품으로 두뇌발달에 좋다.",
+   "category": "국&찌개",
+   "method": "끓이기",
+   "servings": null,
+   "time": null,
+   "kcal": "77.3",
+   "tags": [],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/10_00137_2.png",
+   "ingredients_raw": "두부 320g(1모), 쌀뜨물 300g(1½컵), 돼지고기 100g, 김치 140g, 된장 20g(1½큰술), 청양고추 10g(1/2개), 홍고추 5g(1/4개),\n대파 10g(2cm), 고춧가루 5g(1작은술)",
+   "ingredients": [
+    {
+     "name": "두부",
+     "amount": "320g(1모)"
+    },
+    {
+     "name": "쌀뜨물",
+     "amount": "300g(1½컵)"
+    },
+    {
+     "name": "돼지고기",
+     "amount": "100g"
+    },
+    {
+     "name": "김치",
+     "amount": "140g"
+    },
+    {
+     "name": "된장",
+     "amount": "20g(1½큰술)"
+    },
+    {
+     "name": "청양고추",
+     "amount": "10g(1/2개)"
+    },
+    {
+     "name": "홍고추",
+     "amount": "5g(1/4개)"
+    },
+    {
+     "name": "대파",
+     "amount": "10g(2cm)"
+    },
+    {
+     "name": "고춧가루",
+     "amount": "5g(1작은술)"
+    }
+   ],
+   "steps": [
+    {
+     "text": "두부에 쌀뜨물을 넣고 갈아준다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00137_1.png"
+    },
+    {
+     "text": "돼지고기는 썰고 김치는 물에 씻어 양념을 제거하고 3×3cm로 썬다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00137_2.png"
+    },
+    {
+     "text": "냄비에 돼지고기와 김치를 함께 볶은 후, 망에 거른 된장과 1의 두부, 고춧가루, 청양고추, 홍고추를 넣어 끓이다가 대파를 넣어 완성한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00137_3.png"
+    }
+   ]
+  },
+  {
+   "id": "epis-330",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "불고기찹쌀구이",
+   "summary": "부드러운 육질에 찹쌀로 쫄깃함을 입힌 불고기 찹쌀구이! 오늘의 별식으로 어떠신가요?",
+   "category": "한식 · 구이",
+   "method": "",
+   "servings": "2인분",
+   "time": "30분",
+   "kcal": "268Kcal",
+   "level": "보통",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "쇠고기 200g, 찹쌀가루 1/2컵, 간장 2큰술, 후춧가루 약간, 참기름 약간, 기름 1/4컵, 겨자 2큰술, 식초 2큰술, 설탕 2큰술",
+   "ingredients": [
+    {
+     "name": "쇠고기",
+     "amount": "200g",
+     "kind": "주재료"
+    },
+    {
+     "name": "찹쌀가루",
+     "amount": "1/2컵",
+     "kind": "주재료"
+    },
+    {
+     "name": "간장",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "후춧가루",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "참기름",
+     "amount": "약간",
+     "kind": "양념"
+    },
+    {
+     "name": "기름",
+     "amount": "1/4컵",
+     "kind": "부재료"
+    },
+    {
+     "name": "겨자",
+     "amount": "2큰술",
+     "kind": "주재료"
+    },
+    {
+     "name": "식초",
+     "amount": "2큰술",
+     "kind": "주재료"
+    },
+    {
+     "name": "설탕",
+     "amount": "2큰술",
+     "kind": "주재료"
+    }
+   ],
+   "steps": [
+    {
+     "text": "쇠고기를 얇게 저민 불고기 감으로 준비하여 다진 파, 마늘, 깨소금, 후춧가루, 설탕, 참기름, 간장을 넣고 양념하여 1시간 정도 재운다.",
+     "image": null
+    },
+    {
+     "text": "넓은 접시에 찹쌀가루를 펴고 밑간한 쇠고기의 앞 뒤를 고루 묻힌다.",
+     "image": null
+    },
+    {
+     "text": "프라에팬에 기름을 넉넉히 두르고 찹쌀가루를 묻힌 쇠고기를 지져낸다.",
+     "image": null
+    },
+    {
+     "text": "겨자, 식초, 설탕을 각각 2큰술씩 넣어 양념장을 만든다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "fs-490",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "소고기꼬치구이",
+   "summary": "간장이나 고추장 소스 대신 유자소스를 이용하여 나트륨 함량을 줄일 수 있어요",
+   "category": "반찬",
+   "method": "굽기",
+   "servings": null,
+   "time": null,
+   "kcal": "412.3",
+   "tags": [],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/10_00490_2.png",
+   "ingredients_raw": "소고기(100g), 소금(0.5g), 후춧가루(0.02g), 인삼(20g)\n올리브오일(5g), 파프리카(20g), 파인애플(30g)\n표고버섯(20g), 대파(30g), 토마토(20g), 베이컨(30g)\n마늘(20g), 꼬치(3개)\n- 소스 : 유자청(50g), 저염간장(10g), 레몬(10g), 설탕(10g)",
+   "ingredients": [
+    {
+     "name": "소고기",
+     "amount": "(100g)"
+    },
+    {
+     "name": "소금",
+     "amount": "(0.5g)"
+    },
+    {
+     "name": "후춧가루",
+     "amount": "(0.02g)"
+    },
+    {
+     "name": "인삼",
+     "amount": "(20g)"
+    },
+    {
+     "name": "올리브오일",
+     "amount": "(5g)"
+    },
+    {
+     "name": "파프리카",
+     "amount": "(20g)"
+    },
+    {
+     "name": "파인애플",
+     "amount": "(30g)"
+    },
+    {
+     "name": "표고버섯",
+     "amount": "(20g)"
+    },
+    {
+     "name": "대파",
+     "amount": "(30g)"
+    },
+    {
+     "name": "토마토",
+     "amount": "(20g)"
+    },
+    {
+     "name": "베이컨",
+     "amount": "(30g)"
+    },
+    {
+     "name": "마늘",
+     "amount": "(20g)"
+    },
+    {
+     "name": "꼬치",
+     "amount": "(3개)"
+    },
+    {
+     "name": "유자청",
+     "amount": "(50g)"
+    },
+    {
+     "name": "저염간장",
+     "amount": "(10g)"
+    },
+    {
+     "name": "레몬",
+     "amount": "(10g)"
+    },
+    {
+     "name": "설탕",
+     "amount": "(10g)"
+    }
+   ],
+   "steps": [
+    {
+     "text": "소고기는 포를 두툼하게 떠서, 소금과 후춧가루를 뿌려 숙성을 시킨다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00490_1.png"
+    },
+    {
+     "text": "인삼은 뇌두를 잘라 씻어 약 2cm 두께로 썰고, 파인애플과 파프리카도 두툼하게 썰고, 표고버섯과 대파, 토마토를 썰어 준비하고, 베이컨도 2cm 길이로 썰어 준비한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00490_2.png"
+    },
+    {
+     "text": "팬에 기름 없이 파인애플과 파프리카를 먼저 굽는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00490_3.png"
+    },
+    {
+     "text": "잘라놓은 인삼은 올리브오일을 살짝 넣고 굽는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00490_4.png"
+    },
+    {
+     "text": "마늘은 썰어 굽고, 준비한 재료를 꼬치에 차례로 꽂아 프라이팬 또는 직화로 구워 담는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00490_5.png"
+    },
+    {
+     "text": "유자청에 저염간장과 레몬, 설탕을 넣고 골고루 섞어 구워 놓은 소고기 꼬지에 올려 완성한다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/20_00490_6.png"
+    }
+   ]
+  },
+  {
+   "id": "epis-428",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "고등어양념구이",
+   "summary": "고등어에 양념장 솔솔 발라서 중불이나 약불에서 구워보세요.",
+   "category": "한식 · 구이",
+   "method": "",
+   "servings": "2인분",
+   "time": "30분",
+   "kcal": "175Kcal",
+   "level": "초보환영",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "고등어 1/2마리, 간장 3큰술, 굵은고춧가루 2큰술, 고운고춧가루 1큰술, 대파 1개, 양파 1개, 실파 3개, 홍고추 2개, 청고추 2개, 정종 2큰술, 생강 1개, 마늘 5쪽, 참기름 2작은술, 깨소금 1큰술, 물엿 2큰술",
+   "ingredients": [
+    {
+     "name": "고등어",
+     "amount": "1/2마리",
+     "kind": "주재료"
+    },
+    {
+     "name": "간장",
+     "amount": "3큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "굵은고춧가루",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "고운고춧가루",
+     "amount": "1큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "대파",
+     "amount": "1개",
+     "kind": "부재료"
+    },
+    {
+     "name": "양파",
+     "amount": "1개",
+     "kind": "부재료"
+    },
+    {
+     "name": "실파",
+     "amount": "3개",
+     "kind": "부재료"
+    },
+    {
+     "name": "홍고추",
+     "amount": "2개",
+     "kind": "부재료"
+    },
+    {
+     "name": "청고추",
+     "amount": "2개",
+     "kind": "부재료"
+    },
+    {
+     "name": "정종",
+     "amount": "2큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "생강",
+     "amount": "1개",
+     "kind": "양념"
+    },
+    {
+     "name": "마늘",
+     "amount": "5쪽",
+     "kind": "양념"
+    },
+    {
+     "name": "참기름",
+     "amount": "2작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "깨소금",
+     "amount": "1큰술",
+     "kind": "양념"
+    },
+    {
+     "name": "물엿",
+     "amount": "2큰술",
+     "kind": "양념"
+    }
+   ],
+   "steps": [
+    {
+     "text": "고등어를 머리, 꼬리와 내장을 제거하고 손질한 후, 포를 떠서 뼈를 발라낸다.",
+     "image": null
+    },
+    {
+     "text": "양념장을 만들어 고등어를 12시간 재운 후 석쇠에 굽는다.",
+     "image": null
+    },
+    {
+     "text": "구울 때 양념장을 발라 가면서 굽는다.",
+     "image": null
+    },
+    {
+     "text": "센 불에 구우면 생선이 완전히 익지 않으므로 중, 약불에 구워낸다.",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "fs-878",
+   "source": "foodsafety",
+   "source_name": "식품안전나라 조리식품 레시피 DB",
+   "name": "꽁치 양념구이",
+   "summary": "생선류는 염을 가하지 않은 상태로 그대로 바싹 구운 후 양념장을 살짝 뿌려서 먹는다.",
+   "category": "반찬",
+   "method": "굽기",
+   "servings": null,
+   "time": null,
+   "kcal": "234.4",
+   "tags": [],
+   "image": "http://www.foodsafetykorea.go.kr/uploadimg/20141117/20141117053514_1416213314814.jpg",
+   "ingredients_raw": "꽁치 60g, 후춧가루 0.1g, 밀가루 4g, 녹말가루 8g, 식용유 2g [소스소개]저나트륨고추장소스:토마토케첩 2g, 고추장 2g, 마늘 2g, 생강즙 2.4g, 청고추다진것 4g, 홍고추다진것 2g, 물엿 20g, 간장 1g, 물 75g, 맛술 5g",
+   "ingredients": [
+    {
+     "name": "꽁치",
+     "amount": "60g"
+    },
+    {
+     "name": "후춧가루",
+     "amount": "0.1g"
+    },
+    {
+     "name": "밀가루",
+     "amount": "4g"
+    },
+    {
+     "name": "녹말가루",
+     "amount": "8g"
+    },
+    {
+     "name": "토마토케첩",
+     "amount": "2g"
+    },
+    {
+     "name": "고추장",
+     "amount": "2g"
+    },
+    {
+     "name": "마늘",
+     "amount": "2g"
+    },
+    {
+     "name": "생강즙",
+     "amount": "2.4g"
+    },
+    {
+     "name": "청고추다진것",
+     "amount": "4g"
+    },
+    {
+     "name": "홍고추다진것",
+     "amount": "2g"
+    },
+    {
+     "name": "물엿",
+     "amount": "20g"
+    },
+    {
+     "name": "간장",
+     "amount": "1g"
+    },
+    {
+     "name": "물",
+     "amount": "75g"
+    },
+    {
+     "name": "맛술",
+     "amount": "5g"
+    }
+   ],
+   "steps": [
+    {
+     "text": "꽁치는 머리와 내장을 제거해 손질하고 칼집을 낸다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/878-1.jpg"
+    },
+    {
+     "text": "손질한 꽁치에 후춧가루와 청주를 뿌려 밑간해 둔다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/878-2.jpg"
+    },
+    {
+     "text": "밑간해 둔 꽁치의 수분을 제거하고 밀가루를 묻힌다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/878-3.jpg"
+    },
+    {
+     "text": "밀가루 묻힌 꽁치를 팬에서 노릇하게 굽는다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/878-4.jpg"
+    },
+    {
+     "text": "팬에 저나트륨 고추장소스 재료를 넣고 살짝 졸인다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/878-5.jpg"
+    },
+    {
+     "text": "구워진 꽁치에 소스를 뿌려낸다.",
+     "image": "http://www.foodsafetykorea.go.kr/uploadimg/cook/878-6.jpg"
+    }
+   ]
+  },
+  {
+   "id": "epis-445",
+   "source": "epis",
+   "source_name": "농식품정보누리 레시피",
+   "name": "된장찌개",
+   "summary": "구수한 냄새, 고소한 맛! 한국의 대표음식 된장찌개! 우리 입맛에 딱이예요~",
+   "category": "한식 · 찌개/전골/스튜",
+   "method": "",
+   "servings": "2인분",
+   "time": "30분",
+   "kcal": "136Kcal",
+   "level": "초보환영",
+   "tags": [],
+   "image": null,
+   "ingredients_raw": "멸치 한줌, 다시마 1장, 표고버섯 1장, 애호박 1/4개, 청고추 1개, 홍고추 1/2개, 두부 1/2모, 순창콩된장 50g, 고춧가루 1작은술, 다진마늘 1작은술, 대파 1/2뿌리, 참기름 약간",
+   "ingredients": [
+    {
+     "name": "멸치",
+     "amount": "한줌",
+     "kind": "양념"
+    },
+    {
+     "name": "다시마",
+     "amount": "1장",
+     "kind": "양념"
+    },
+    {
+     "name": "표고버섯",
+     "amount": "1장",
+     "kind": "부재료"
+    },
+    {
+     "name": "애호박",
+     "amount": "1/4개",
+     "kind": "부재료"
+    },
+    {
+     "name": "청고추",
+     "amount": "1개",
+     "kind": "부재료"
+    },
+    {
+     "name": "홍고추",
+     "amount": "1/2개",
+     "kind": "부재료"
+    },
+    {
+     "name": "두부",
+     "amount": "1/2모",
+     "kind": "주재료"
+    },
+    {
+     "name": "순창콩된장",
+     "amount": "50g",
+     "kind": "주재료"
+    },
+    {
+     "name": "고춧가루",
+     "amount": "1작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "다진마늘",
+     "amount": "1작은술",
+     "kind": "양념"
+    },
+    {
+     "name": "대파",
+     "amount": "1/2뿌리",
+     "kind": "부재료"
+    },
+    {
+     "name": "참기름",
+     "amount": "약간",
+     "kind": "양념"
+    }
+   ],
+   "steps": [
+    {
+     "text": "멸치는 내장과 머리를 제거하고 살을 가른 다음 다시마, 표고버섯과 함께 물 3컵을 부어 육수를 끓인다. 육수가 끓으면 멸치와 다시마는 건져내고 표고버섯은 건져서 굵게 채썬다.",
+     "image": null
+    },
+    {
+     "text": "육수에 된장과 고춧가루를 푼다.",
+     "image": null
+    },
+    {
+     "text": "애호박은 길이로 반 갈라 0.5cm로 썰고, 두부는 3cm x 4cm로 썬다.",
+     "image": null
+    },
+    {
+     "text": "청고추, 홍고추는 꼭지를 떼고 씨를 털어 어슷썰고, 대파도 같은 크기로 어슷썬다.",
+     "image": null
+    },
+    {
+     "text": "끓는 육수에 표고버섯, 애호박을 넣고 끓으면 두부를 넣어 더 끓인후, 청고추, 홍고추, 대파, 다진 마늘, 참기름을 넣는다.",
+     "image": null
+    }
+   ]
+  }
+ ]
+}

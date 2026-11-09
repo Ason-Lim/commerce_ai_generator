@@ -50,7 +50,7 @@ def _parse(tsv):
         if row.get('level') != '5' or not text:
             continue
         line = tuple(int(row[k]) for k in ('page_num', 'block_num', 'par_num', 'line_num'))
-        words.append({'text': text, 'confidence': float(row['conf']),
+        words.append({'text': text, 'confidence': float(row['conf']), 'line_key': list(line),
                       'bbox_px': [int(row[k]) for k in ('left', 'top', 'width', 'height')]})
         lines.setdefault(line, []).append(text)
     return '\n'.join(' '.join(parts) for parts in lines.values()), words

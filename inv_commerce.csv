@@ -1,0 +1,776 @@
+﻿kind,file,line,match,context
+llm_call,.env.example,2,DeepSeek,# React(ui_ux)에는 어떤 키도 넣지 않는다 — DeepSeek 키는 이 서버만 읽는다.
+llm_call,.env.example,14,deepseek,LLM_PROVIDER=deepseek
+llm_call,.env.example,15,DEEPSEEK,DEEPSEEK_API_KEY=
+llm_call,.env.example,16,DEEPSEEK,DEEPSEEK_MODEL=deepseek-chat
+llm_call,.env.example,17,DEEPSEEK,DEEPSEEK_BASE_URL=https://api.deepseek.com
+llm_call,.env.example,31,DeepSeek,# DeepSeek 키가 있어야 생성됨. 결과는 recipe_easy_view 테이블에 저장 (scripts.recipe_chat_db init)
+llm_call,.env.example,50,deepseek,# 관리자 화면 LLM (공고 조건 추출 · 제안서 문장): none | deepseek | openai | anthropic (없으면 LLM_PROVIDER)
+llm_call,.env.example,51,deepseek,ADMIN_LLM_PROVIDER=deepseek
+http_client,app/admin/b2b/bids.py,184,requests.get,"r = requests.get(url, timeout=30)"
+official_api,app/admin/b2b/gift_monitor/collectors.py,7,apis.data.go.kr,https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfo{Thng|Servc|Etc}PPSSrch
+official_api,app/admin/b2b/gift_monitor/collectors.py,27,apis.data.go.kr,"G2B_BASE = ""https://apis.data.go.kr/1230000/ad/BidPublicInfoService"""
+http_client,app/admin/b2b/gift_monitor/collectors.py,153,fetch(,"def fetch(self, keyword: str, kind: str, start: datetime, end: datetime, rows: int = G2B_ROWS) -> list[dict]:"
+http_client,app/admin/b2b/gift_monitor/collectors.py,206,fetch(,"items = self.fetch(kw, kind, start, end)"
+llm_call,app/admin/b2b/proposal.py,285,chat_json(,"out = llm.chat_json(sys, json.dumps({""lines"": lines}, ensure_ascii=False)).get(""lines"", [])"
+storage,app/admin/b2b/proposal.py,285,json.dump,"out = llm.chat_json(sys, json.dumps({""lines"": lines}, ensure_ascii=False)).get(""lines"", [])"
+storage,app/admin/b2b/proposal_deck.py,341,json.dump,"data = json.dumps(toc, ensure_ascii=False)"
+http_client,app/admin/b2b/proposal_export.py,5,Playwright,"* PDF  : HTML 슬라이드(가로 16:9) / 문서형(A4) 두 가지. Playwright(Chromium → 설치된 Chrome → Edge) 로 인쇄하고,"
+http_client,app/admin/b2b/proposal_export.py,529,playwright,"PDF_HELP = (""PDF 변환 도구가 없습니다. 터미널에서 `.venv/bin/python -m playwright install chromium` 을 한 번 실행하거나 """
+http_client,app/admin/b2b/proposal_export.py,541,playwright,from playwright.sync_api import sync_playwright
+http_client,app/admin/b2b/proposal_export.py,543,playwright,sync_playwright = None
+http_client,app/admin/b2b/proposal_export.py,544,playwright,if sync_playwright and jobs:
+http_client,app/admin/b2b/proposal_export.py,546,playwright,with sync_playwright() as pw:
+llm_call,app/admin/b2b/request_parser.py,96,chat_json(,"data = llm.chat_json(LLM_SYSTEM, text[:6000])"
+storage,app/admin/b2b/sourcing.py,3,offer_observation,1) 근거 저장소(bundle)  2) 소비자 앱이 쌓은 관측 가격(core.offer_observation)  3) 마켓 검색(shared.markets)
+http_client,app/admin/ops/checkout.py,100,httpx.,def _client(self) -> httpx.Client:
+http_client,app/admin/ops/checkout.py,101,httpx.,return self._session or httpx.Client(timeout=15.0)
+official_api,app/admin/routes.py,115,DataLab,"""""""Makes today's report in the background (DataLab · blog search · DeepSeek) — about 1~3 minutes."""""""
+llm_call,app/admin/routes.py,115,DeepSeek,"""""""Makes today's report in the background (DataLab · blog search · DeepSeek) — about 1~3 minutes."""""""
+llm_call,app/admin/shared/config.py,7,deepseek,"ADMIN_LLM_PROVIDER   none | deepseek | openai | anthropic | ollama  (없으면 LLM_PROVIDER, 모르는 값이면 none)"
+llm_call,app/admin/shared/config.py,21,deepseek,"SUPPORTED_LLM = {""none"", ""deepseek"", ""openai"", ""anthropic"", ""ollama""}"
+llm_call,app/admin/shared/config.py,50,deepseek,# ── LLM (none | deepseek | openai | anthropic | ollama) ──
+llm_call,app/admin/shared/config.py,55,anthropic,"anthropic_model: str = field(default_factory=lambda: os.getenv(""ANTHROPIC_MODEL"", ""claude-sonnet-5-5""))"
+llm_call,app/admin/shared/llm.py,1,anthropic,"""""""LLM 클라이언트 — food-nlu 의 Ollama/OpenAI 스위치를 확장(anthropic · deepseek 추가)하고,"
+llm_call,app/admin/shared/llm.py,25,anthropic,"return self.s.llm_provider in {""ollama"", ""openai"", ""anthropic"", ""deepseek""}"
+http_client,app/admin/shared/llm.py,39,requests.post,"r = requests.post(self.s.ollama_base_url + ""/api/chat"", json=body, timeout=120)"
+llm_call,app/admin/shared/llm.py,43,from openai,from openai import OpenAI  # 지연 import
+llm_call,app/admin/shared/llm.py,48,chat.completions,resp = OpenAI().chat.completions.create(
+llm_call,app/admin/shared/llm.py,53,anthropic,"if p == ""anthropic"":"
+llm_call,app/admin/shared/llm.py,54,anthropic,import anthropic  # 지연 import
+llm_call,app/admin/shared/llm.py,56,anthropic,msg = anthropic.Anthropic().messages.create(
+llm_call,app/admin/shared/llm.py,57,anthropic,"model=self.s.anthropic_model, max_tokens=max_tokens, temperature=temperature,"
+llm_call,app/admin/shared/llm.py,63,chat_json(,"def chat_json(self, system: str, user: str, **kw) -> dict:"
+llm_call,app/admin/shared/llm.py,64,deepseek,"if self.s.llm_provider == ""deepseek"":"
+llm_call,app/admin/shared/llm.py,65,DEEPSEEK,"# commerce 공용 클라이언트 (DEEPSEEK_API_KEY · DEEPSEEK_MODEL, 공식 API 주소만)"
+llm_call,app/admin/shared/llm.py,66,DeepSeek,from app.services.nlu.llm_client import LLMClient as DeepSeekClient
+llm_call,app/admin/shared/llm.py,68,DeepSeek,"return DeepSeekClient(system, provider=""deepseek"").chat_json(user, kw.get(""temperature"", 0.0))"
+http_client,app/admin/shared/logistics/shipping_agency.py,102,httpx.,def _client(self) -> httpx.Client:
+http_client,app/admin/shared/logistics/shipping_agency.py,103,httpx.,return self._session or httpx.Client(timeout=10.0)
+mall_domain,app/admin/shared/markets/coupang.py,15,coupang.com,"DOMAIN = ""https://api-gateway.coupang.com"""
+official_api,app/admin/shared/markets/coupang.py,15,api-gateway.coupang,"DOMAIN = ""https://api-gateway.coupang.com"""
+http_client,app/admin/shared/markets/coupang.py,39,requests.get,"r = requests.get(f""{DOMAIN}{SEARCH_PATH}?{qs}"", timeout=10, headers={"
+official_api,app/admin/shared/markets/naver.py,18,openapi.naver.com,"BASE = ""https://openapi.naver.com/v1/search/shop.json"""
+http_client,app/admin/shared/markets/naver.py,33,requests.get,"r = requests.get(BASE, timeout=10, params={"
+storage,app/admin/shared/store.py,20,offer_observation,offer_observation = Table(
+storage,app/admin/shared/store.py,21,offer_observation,"""offer_observation"", meta,"
+storage,app/admin/shared/store.py,100,offer_observation,"c.execute(insert(offer_observation), rows)"
+storage,app/admin/shared/store.py,107,json.dump,"slots=json.loads(json.dumps(intent.slots, ensure_ascii=False)), result_count=count, engine=engine_name,"
+storage,app/admin/shared/store.py,129,json.dump,"snapshot=json.loads(json.dumps(entry.snapshot, ensure_ascii=False, default=str)),"
+storage,app/admin/shared/store.py,162,offer_observation,q = select(offer_observation).where(offer_observation.c.title.contains(keyword))
+storage,app/admin/shared/store.py,164,offer_observation,q = q.where(offer_observation.c.is_sample == 0)
+storage,app/admin/shared/store.py,165,offer_observation,q = q.order_by(offer_observation.c.observed_at.desc()).limit(limit)
+storage,app/admin/shared/store.py,172,offer_observation,"return {""observations"": c.execute(select(func.count()).select_from(offer_observation)).scalar(),"
+llm_call,app/api/chat_routes.py,12,DeepSeek,No secret is sent to the browser: the DeepSeek key stays in the server
+llm_call,app/api/chat_routes.py,50,deepseek,def _deepseek_ready() -> bool:
+llm_call,app/api/chat_routes.py,51,DEEPSEEK,"return bool((os.getenv(""DEEPSEEK_API_KEY"") or """").strip() and (os.getenv(""DEEPSEEK_MODEL"") or """").strip())"
+llm_call,app/api/chat_routes.py,65,deepseek,ready = _deepseek_ready()
+llm_call,app/api/chat_routes.py,75,DeepSeek,"# trend / new dish / link: NAVER search (server keys) + DeepSeek reading, validated"
+llm_call,app/api/chat_routes.py,80,DeepSeek,"# 2026-11-01: recipe consultation ('참치 샐러드 식감을 살리는 재료') — DeepSeek candidates, catalogue + blog evidence"
+llm_call,app/api/chat_routes.py,87,deepseek,"reader = LLMClient(consult.PROMPT, provider=""deepseek"", timeout=60.0)"
+llm_call,app/api/chat_routes.py,88,chat_json(,"recipe.consultant = consult.Consultant(lambda text: reader.chat_json(text, temperature=0.2),"
+llm_call,app/api/chat_routes.py,96,deepseek,"client = LLMClient(SHOP_KEYWORD_PROMPT, provider=""deepseek"")"
+llm_call,app/api/chat_routes.py,97,chat_json(,"keyword_extractor = lambda text: client.chat_json(text, temperature=0)  # noqa: E731"
+storage,app/main.py,530,online_food_price_snapshot,FROM online_food_price_snapshot s
+storage,app/main.py,604,online_food_price_snapshot,# online_food_price_snapshot 최신 row에서 보강해 API 응답에 포함합니다.
+storage,app/services/analytics_logger.py,26,INSERT INTO,INSERT INTO search_log (
+storage,app/services/analytics_logger.py,103,INSERT INTO,INSERT INTO product_click_log (
+storage,app/services/analytics_logger.py,159,INSERT INTO,INSERT INTO user_product_preference (
+storage,app/services/analytics_logger.py,202,INSERT INTO,INSERT INTO user_fruit_preference (
+llm_call,app/services/chat/service.py,129,DeepSeek,"# keyword_extractor(text) -> {""keyword"": str} (DeepSeek); only for long shopping sentences, validated"
+http_client,app/services/chat/service.py,442,fetch(,"def _fetch(self, q, sid, priority):"
+http_client,app/services/chat/service.py,454,fetch(,"items = self._fetch(q, sid, priority)"
+http_client,app/services/chat/service.py,480,fetch(,"cards = self._fetch(query, sid, priority)"
+storage,app/services/chat/state_store.py,52,json.dump,"state_json=json.dumps(state, ensure_ascii=False, allow_nan=False))"
+storage,app/services/chat/state_store.py,54,INSERT INTO,"sql = """"""INSERT INTO recipe_chat_session (session_id, state_json, revision)"
+storage,app/services/collector_v4_runner.py,6,online_food_price_snapshot,- online_food_price_snapshot에서 보강 대상 상품을 조회
+storage,app/services/collector_v4_runner.py,42,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/collector_v4_runner.py,65,UPDATE online_,UPDATE online_food_price_snapshot
+mall_domain,app/services/collectors/collector_router.py,20,smartstore.naver,"if ""smartstore.naver.com"" in url:"
+mall_domain,app/services/collectors/collector_router.py,23,smartstore.naver,"if (""컬리n마트"" in mall_name or ""컬리"" in mall_name) and ""smartstore.naver.com"" in url:"
+user_agent,app/services/collectors/naver_smartstore_json_collector.py,7,User-Agent,"""User-Agent"": ("
+http_client,app/services/collectors/naver_smartstore_json_collector.py,122,requests.get,"response = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)"
+storage,app/services/context_logger.py,13,INSERT INTO,INSERT INTO user_context_log (
+storage,app/services/context_logger.py,42,json.dump,"""raw_json"": json.dumps(intent_data, ensure_ascii=False),"
+mall_domain,app/services/coupang_api.py,16,coupang.com,"COUPANG_DOMAIN = ""https://api-gateway.coupang.com"""
+official_api,app/services/coupang_api.py,16,api-gateway.coupang,"COUPANG_DOMAIN = ""https://api-gateway.coupang.com"""
+http_client,app/services/coupang_api.py,85,requests.get,"response = requests.get(url, headers=headers, timeout=7)"
+storage,app/services/coupang_review_matcher.py,17,online_food_price_snapshot,FROM online_food_price_snapshot
+mall_domain,app/services/db_product_collector.py,27,shopping.naver,"if ""naver"" in source or ""네이버"" in mall or ""smartstore"" in mall or ""shopping.naver"" in url:"
+storage,app/services/db_product_collector.py,48,online_food_price_snapshot,FROM online_food_price_snapshot
+http_client,app/services/experience/revisit.py,37,requests.get,response = requests.get(
+storage,app/services/impression_logger.py,21,INSERT INTO,INSERT INTO impression_log (
+user_agent,app/services/kurly_nmart_collector.py,10,User-Agent,"""User-Agent"": ("
+http_client,app/services/kurly_nmart_collector.py,179,requests.get,response = requests.get(
+storage,app/services/kurly_nmart_collector.py,208,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/kurly_nmart_collector.py,227,UPDATE online_,UPDATE online_food_price_snapshot
+http_client,app/services/kurly_nmart_collector_v3.py,5,playwright,"from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError"
+storage,app/services/kurly_nmart_collector_v3.py,135,online_food_price_snapshot,FROM online_food_price_snapshot
+mall_domain,app/services/kurly_nmart_collector_v3.py,138,smartstore.naver,AND product_url ILIKE '%smartstore.naver.com/main/products/%'
+storage,app/services/kurly_nmart_collector_v3.py,156,UPDATE online_,UPDATE online_food_price_snapshot
+http_client,app/services/kurly_nmart_collector_v3.py,235,playwright,with sync_playwright() as p:
+user_agent,app/services/kurly_nmart_collector_v3.py,239,user_agent=,user_agent=(
+http_client,app/services/kurly_nmart_collector_v3.py,307,Playwright,except PlaywrightTimeoutError:
+http_client,app/services/kurly_review_playwright_collector.py,5,playwright,from playwright.sync_api import sync_playwright
+storage,app/services/kurly_review_playwright_collector.py,79,online_food_price_snapshot,FROM online_food_price_snapshot
+mall_domain,app/services/kurly_review_playwright_collector.py,82,smartstore.naver,AND product_url ILIKE '%smartstore.naver.com/main/products/%'
+storage,app/services/kurly_review_playwright_collector.py,103,UPDATE online_,UPDATE online_food_price_snapshot
+http_client,app/services/kurly_review_playwright_collector.py,127,Playwright,"print(f""🔎 Playwright 리뷰/평점 보강 대상: {len(targets)}건"")"
+http_client,app/services/kurly_review_playwright_collector.py,129,playwright,with sync_playwright() as p:
+user_agent,app/services/kurly_review_playwright_collector.py,133,user_agent=,user_agent=(
+http_client,app/services/kurly_review_playwright_collector.py,176,Playwright,"print(f""✅ Playwright 리뷰/평점 보강 완료: updated={updated}, skipped={skipped}"")"
+storage,app/services/market/collector.py,57,online_food_price_snapshot,FROM online_food_price_snapshot
+mall_domain,app/services/market/normalizer.py,221,SSG.COM,- SSG.COM
+mall_domain,app/services/market/registry.py,84,shopping.naver,"""shopping.naver.com"","
+mall_domain,app/services/market/registry.py,85,shopping.naver,"""search.shopping.naver.com"","
+mall_domain,app/services/market/registry.py,86,smartstore.naver,"""smartstore.naver.com"","
+mall_domain,app/services/market/registry.py,119,coupang.com,"""coupang.com"","
+mall_domain,app/services/market/registry.py,120,coupang.com,"""link.coupang.com"","
+mall_domain,app/services/market/registry.py,126,SSG.COM,"display_name=""SSG.COM"","
+mall_domain,app/services/market/registry.py,149,SSG.COM,"""SSG.COM"","
+mall_domain,app/services/market/registry.py,157,ssg.com,"""ssg.com"","
+mall_domain,app/services/market/registry.py,158,emart.ssg,"""emart.ssg.com"","
+mall_domain,app/services/market/registry.py,159,ssg.com,"""shinsegaemall.ssg.com"","
+mall_domain,app/services/market/registry.py,266,lotteon,"""lotteon.com"","
+mall_domain,app/services/market/ssg_search_link.py,6,ssg.com,"SSG_SEARCH_BASE_URL = ""https://www.ssg.com/search.ssg"""
+mall_domain,app/services/market/ssg_search_link.py,12,SSG.COM,"""""""SSG.COM 통합검색 이동 URL을 생성합니다."""""""
+mall_domain,app/services/market/ssg_search_link.py,19,ssg.com,"return ""https://www.ssg.com/"""
+storage,app/services/market_collector_v5.py,6,online_food_price_snapshot,- online_food_price_snapshot의 상품명/몰명/URL/기존 필드에서 시장 검증 신호를 추출합니다.
+storage,app/services/market_collector_v5.py,242,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/market_collector_v5.py,254,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/market_collector_v51.py,344,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/market_collector_v51.py,356,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/market_identity_cluster_v53.py,409,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/market_identity_cluster_v53.py,421,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/market_representative_price_v54.py,157,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/market_representative_price_v54.py,196,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/market_signal_propagation_v52.py,56,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/market_signal_propagation_v52.py,136,UPDATE online_,UPDATE online_food_price_snapshot
+official_api,app/services/naver_datalab_service.py,11,datalab,def normalize_datalab_keywords(keywords):
+official_api,app/services/naver_datalab_service.py,13,DataLab,네이버 DataLab API에 전달할 검색어 목록을 안전하게 정리합니다.
+official_api,app/services/naver_datalab_service.py,51,datalab,def get_naver_datalab_credentials():
+official_api,app/services/naver_datalab_service.py,58,datalab,def call_naver_datalab_search_trend(
+official_api,app/services/naver_datalab_service.py,65,DataLab,네이버 DataLab 검색어 트렌드 API 호출.
+official_api,app/services/naver_datalab_service.py,69,datalab,keywords = normalize_datalab_keywords(
+official_api,app/services/naver_datalab_service.py,92,datalab,"client_id, client_secret = get_naver_datalab_credentials()"
+official_api,app/services/naver_datalab_service.py,94,openapi.naver.com,"url = ""https://openapi.naver.com/v1/datalab/search"""
+official_api,app/services/naver_datalab_service.py,108,DataLab,"f""유효하지 않은 DataLab 검색어: {keywords!r}"""
+http_client,app/services/naver_datalab_service.py,124,requests.post,response = requests.post(
+official_api,app/services/naver_datalab_service.py,133,DataLab,"f""네이버 DataLab API 오류: {response.status_code} / {response.text}"""
+official_api,app/services/naver_datalab_service.py,140,DataLab,"""""""DataLab 응답을 간단한 관심도 요약으로 변환"""""""
+official_api,app/services/naver_datalab_service.py,201,datalab,keywords = normalize_datalab_keywords(
+official_api,app/services/naver_datalab_service.py,208,datalab,trend_data = call_naver_datalab_search_trend(
+official_api,app/services/naver_datalab_service.py,221,DataLab,단일 검색어의 최근 DataLab 관심도 점수를 반환합니다.
+official_api,app/services/naver_datalab_service.py,224,datalab,normalized_keywords = normalize_datalab_keywords(
+official_api,app/services/naver_datalab_service.py,249,DATALAB,"""[DATALAB SCORE ERROR]"","
+storage,app/services/naver_datalab_service.py,286,INSERT INTO,INSERT INTO keyword_trend_cache (
+storage,app/services/naver_datalab_service.py,314,json.dump,"""raw_payload"": json.dumps(raw_payload, ensure_ascii=False),"
+official_api,app/services/naver_datalab_service.py,319,datalab,normalized_keywords = normalize_datalab_keywords(
+official_api,app/services/naver_datalab_service.py,354,datalab,raw_data = call_naver_datalab_search_trend(
+official_api,app/services/naver_shopping_api_collector.py,19,openapi.naver.com,"url = ""https://openapi.naver.com/v1/search/shop.json"""
+http_client,app/services/naver_shopping_api_collector.py,22,requests.get,"response = requests.get(url, headers=headers, params=params, timeout=10)"
+mall_domain,app/services/naver_shopping_api_collector.py,99,shopping.naver,"elif ""kurly.com/search"" in lower or ""search.shopping.naver.com"" in lower:"
+storage,app/services/naver_shopping_api_collector.py,113,INSERT INTO,INSERT INTO online_food_price_snapshot (
+storage,app/services/naver_shopping_api_collector.py,155,json.dump,"""raw_payload"": json.dumps(item, ensure_ascii=False),"
+storage,app/services/nlu/dictionary.py,94,json.dump,"return json.dumps(dict(actions=self.actions, contexts=self.contexts, slots=self.slots,"
+llm_call,app/services/nlu/food_nlu.py,27,chat_json(,raw = self.client.chat_json(text)
+llm_call,app/services/nlu/llm_client.py,1,DeepSeek,"""""""LLM JSON client (DeepSeek / OpenAI / Ollama)."
+llm_call,app/services/nlu/llm_client.py,5,chat_json(,LLMClient(system_prompt).chat_json(user_text)  ->  dict
+llm_call,app/services/nlu/llm_client.py,8,DeepSeek,"* DeepSeek: OpenAI SDK, JSON mode, timeout 30s, no retries, and the base URL"
+llm_call,app/services/nlu/llm_client.py,9,deepseek,must be the official API host (``https://api.deepseek.com`` or ``/v1``)
+llm_call,app/services/nlu/llm_client.py,12,DEEPSEEK,Secrets are read from the environment only (``DEEPSEEK_API_KEY`` …).  An
+llm_call,app/services/nlu/llm_client.py,24,DEEPSEEK,"DEEPSEEK_OFFICIAL_URL = ""https://"" + ""api.deepseek.com"""
+llm_call,app/services/nlu/llm_client.py,43,DeepSeek,# 2026-11-01: a long title list made DeepSeek think for 20–35 s; callers that need it may wait longer
+llm_call,app/services/nlu/llm_client.py,59,from openai,from openai import OpenAI  # 지연 import
+llm_call,app/services/nlu/llm_client.py,64,chat_json(,"def chat_json(self, user_text: str, temperature: float = 0.0) -> dict:"
+llm_call,app/services/nlu/llm_client.py,65,deepseek,"if self.provider == ""deepseek"":"
+llm_call,app/services/nlu/llm_client.py,66,deepseek,"raw = self._deepseek(user_text, temperature)"
+llm_call,app/services/nlu/llm_client.py,76,DeepSeek,# ── DeepSeek ──────────────────────────────────────────
+llm_call,app/services/nlu/llm_client.py,77,deepseek,"def deepseek_settings(self) -> dict[str, str]:"
+llm_call,app/services/nlu/llm_client.py,78,DEEPSEEK,"api_key = self._get(""DEEPSEEK_API_KEY"").strip()"
+llm_call,app/services/nlu/llm_client.py,79,DEEPSEEK,"model = self._get(""DEEPSEEK_MODEL"").strip()"
+llm_call,app/services/nlu/llm_client.py,80,DEEPSEEK,"base_url = self._get(""DEEPSEEK_BASE_URL"").strip()"
+llm_call,app/services/nlu/llm_client.py,83,DEEPSEEK,"raise LLMConfigError(""DEEPSEEK_API_KEY 미설정"")"
+llm_call,app/services/nlu/llm_client.py,85,DEEPSEEK,"raise LLMConfigError(""DEEPSEEK_MODEL 미설정"")"
+llm_call,app/services/nlu/llm_client.py,87,DEEPSEEK,base_url = DEEPSEEK_OFFICIAL_URL
+llm_call,app/services/nlu/llm_client.py,89,DEEPSEEK,"if base_url.rstrip(""/"") not in (DEEPSEEK_OFFICIAL_URL, DEEPSEEK_OFFICIAL_URL + ""/v1""):"
+llm_call,app/services/nlu/llm_client.py,90,DEEPSEEK,"raise LLMConfigError(""DEEPSEEK_BASE_URL은 공식 API 주소로 설정하세요"")"
+llm_call,app/services/nlu/llm_client.py,93,deepseek,"def _deepseek(self, user_text: str, temperature: float) -> str:"
+llm_call,app/services/nlu/llm_client.py,94,deepseek,cfg = self.deepseek_settings()
+llm_call,app/services/nlu/llm_client.py,101,chat.completions,response = client.chat.completions.create(
+llm_call,app/services/nlu/llm_client.py,111,DeepSeek,"raise ValueError(""DeepSeek 빈 응답"")"
+http_client,app/services/nlu/llm_client.py,132,requests.post,post = requests.post
+llm_call,app/services/nlu/llm_client.py,144,chat.completions,resp = client.chat.completions.create(
+llm_call,app/services/nlu/llm_client.py,175,deepseek,"if provider == ""deepseek"":"
+llm_call,app/services/nlu/llm_client.py,176,DEEPSEEK,"return bool((source.get(""DEEPSEEK_API_KEY"") or """").strip() and (source.get(""DEEPSEEK_MODEL"") or """").strip())"
+storage,app/services/nts_companies.py,92,json.dump,"return hashlib.sha256(json.dumps(identities,ensure_ascii=False,sort_keys=True).encode()).hexdigest()[:16]"
+storage,app/services/nts_links.py,18,json.dump,"return hashlib.sha256(json.dumps([source,key],ensure_ascii=False).encode()).hexdigest()"
+storage,app/services/nts_links.py,22,json.dump,"return hashlib.sha256(json.dumps(vals,ensure_ascii=False).encode()).hexdigest()"
+storage,app/services/nts_links.py,80,INSERT INTO,"cur=c.execute('INSERT INTO company_link_events(entity_key,payload) VALUES(?,?)',(key,json.dumps(payload,ensure_ascii=False,sort_keys=True)));c.commit()"
+http_client,app/services/nts_lookup.py,6,urllib.request,"from urllib.request import Request, build_opener, HTTPRedirectHandler"
+storage,app/services/nts_lookup.py,40,json.dump,"req=Request(ENDPOINT+'?'+urlencode({'serviceKey':key,'returnType':'JSON'}),data=json.dumps({'b_no':numbers}).encode(),headers={'Content-Type':'application/json'"
+storage,app/services/nts_lookup.py,62,json.dump,"payload=json.dumps(check,ensure_ascii=False,sort_keys=True)"
+storage,app/services/nts_lookup.py,65,json.dump,"(dest/'response.json').write_text(json.dumps(raw,ensure_ascii=False),encoding='utf-8')"
+storage,app/services/preference/store.py,59,INSERT INTO,INSERT INTO user_preference_profile (
+user_agent,app/services/price_detail_enricher.py,10,User-Agent,"""User-Agent"": ("
+http_client,app/services/price_detail_enricher.py,219,requests.get,response = requests.get(
+storage,app/services/price_detail_enricher.py,265,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/price_detail_enricher.py,288,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/product_attribute_engine_v8.py,267,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/product_attribute_engine_v8.py,279,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/product_attribute_engine_v8.py,300,json.dump,"""product_attributes"": json.dumps(attributes, ensure_ascii=False),"
+storage,app/services/product_cluster_representative_v5.py,117,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/product_cluster_representative_v5.py,136,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/product_cluster_representative_v5.py,152,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/product_family_variant_v6.py,228,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/product_family_variant_v6.py,240,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/product_identity_cluster_v4.py,298,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/product_identity_cluster_v4.py,312,UPDATE online_,UPDATE online_food_price_snapshot
+mall_domain,app/services/product_identity_engine.py,146,shopping.naver,"or ""shopping.naver.com"" in url"
+storage,app/services/product_quality_engine_v10_runner.py,6,online_food_price_snapshot,- online_food_price_snapshot 전체 상품에 대해 V10 점수를 계산합니다.
+storage,app/services/product_quality_engine_v10_runner.py,35,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/product_quality_engine_v10_runner.py,47,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/product_quality_engine_v9.py,331,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/product_quality_engine_v9.py,343,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/product_quality_engine_v9.py,366,json.dump,"""ai_product_quality_reasons"": json.dumps("
+storage,app/services/product_variety_engine_v7.py,380,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/product_variety_engine_v7.py,392,UPDATE online_,UPDATE online_food_price_snapshot
+storage,app/services/recipe_chat/ai_image.py,80,INSERT INTO,"""INSERT INTO recipe_ai_image (recipe_id, content_hash, prompt_version, mime, image, model, prompt) """
+llm_call,app/services/recipe_chat/ai_image.py,222,from openai,from openai import OpenAI
+llm_call,app/services/recipe_chat/ai_image.py,226,images.generate,"result = client.images.generate(model=model, prompt=prompt, n=1, response_format=""b64_json"","
+llm_call,app/services/recipe_chat/ai_image.py,230,images.generate,"result = client.images.generate(model=model, prompt=prompt, size=size, quality=quality, n=1,"
+storage,app/services/recipe_chat/ai_recipe.py,282,json.dump,"out = self.identifier(json.dumps(payload, ensure_ascii=False))"
+storage,app/services/recipe_chat/ai_recipe.py,323,json.dump,"out = self.checker(json.dumps({""고객 설명"": detail[:100], ""레시피 초안"": draft}, ensure_ascii=False))"
+llm_call,app/services/recipe_chat/ai_recipe.py,337,DeepSeek,"return None, [""AI 해석 기능(DeepSeek) 꺼짐""]"
+storage,app/services/recipe_chat/ai_recipe.py,348,json.dump,"draft = self.generator(json.dumps(ask, ensure_ascii=False))"
+llm_call,app/services/recipe_chat/ai_recipe.py,391,DEEPSEEK,"if (source.get(""DEEPSEEK_API_KEY"") or """").strip() and (source.get(""DEEPSEEK_MODEL"") or """").strip():"
+llm_call,app/services/recipe_chat/ai_recipe.py,394,deepseek,"client = LLMClient(PROMPT, provider=""deepseek"", env=source)"
+llm_call,app/services/recipe_chat/ai_recipe.py,395,deepseek,"checker = LLMClient(IDENTIFY_PROMPT, provider=""deepseek"", env=source)"
+llm_call,app/services/recipe_chat/ai_recipe.py,396,deepseek,"reviewer = LLMClient(DESCRIPTION_CHECK_PROMPT, provider=""deepseek"", env=source)"
+llm_call,app/services/recipe_chat/ai_recipe.py,397,chat_json(,"generator = lambda text: client.chat_json(text, temperature=0.3)  # noqa: E731"
+llm_call,app/services/recipe_chat/ai_recipe.py,398,chat_json(,"identifier = lambda text: checker.chat_json(text, temperature=0)  # noqa: E731"
+llm_call,app/services/recipe_chat/ai_recipe.py,399,chat_json(,"described = lambda text: reviewer.chat_json(text, temperature=0)  # noqa: E731"
+llm_call,app/services/recipe_chat/ai_recipe.py,403,DEEPSEEK,"checker=described, model=(source.get(""DEEPSEEK_MODEL"") or """").strip() or None)"
+llm_call,app/services/recipe_chat/consult.py,6,DeepSeek,1. DeepSeek 은 질문을 읽고 **후보 재료**와 식감 특징(일반 지식)만 낸다. 후보는 '제안'일 뿐 근거가 아니다.
+llm_call,app/services/recipe_chat/consult.py,69,DeepSeek,"self.interpreter = interpreter          # DeepSeek (PROMPT) — None: no candidates, catalogue counts only"
+storage,app/services/recipe_chat/consult.py,84,json.dump,"out = self.interpreter(json.dumps(payload, ensure_ascii=False))"
+llm_call,app/services/recipe_chat/discover.py,11,DeepSeek,* DeepSeek 은 검색어·요리 이름 해석에만 쓴다. 모델 답을 검색 결과로 취급하지 않는다:
+official_api,app/services/recipe_chat/discover.py,45,datalab,"""naver_datalab"": ""네이버 데이터랩 급상승 리포트 (var/trends/surge_*.json, 매일 10:00) — 있으면 교차 확인"","
+official_api,app/services/recipe_chat/discover.py,46,datalab,"""naver_datalab_history"": ""네이버 데이터랩 검색어 트렌드 2년 일별 지수 — '새로 등장' 판단 (같은 네이버 키)"","
+official_api,app/services/recipe_chat/discover.py,55,datalab,"""datalab_report"": discovery.surge is not None, ""datalab_history"": discovery.history is not None}"
+official_api,app/services/recipe_chat/discover.py,107,openapi.naver.com,"ENDPOINT = ""https://openapi.naver.com/v1/search/{kind}.json"""
+http_client,app/services/recipe_chat/discover.py,126,requests.get,"r = requests.get(url, params=params, headers=headers, timeout=8)"
+official_api,app/services/recipe_chat/discover.py,132,openapi.naver.com,"call = {""api"": f""openapi.naver.com/v1/search/{kind}.json"", ""query"": query, ""sort"": sort, ""display"": display}"
+official_api,app/services/recipe_chat/discover.py,187,googleapis.com/youtube,"ENDPOINT = ""https://www.googleapis.com/youtube/v3/search"""
+http_client,app/services/recipe_chat/discover.py,201,requests.get,"r = requests.get(self.ENDPOINT, params=params, timeout=8)"
+http_client,app/services/recipe_chat/discover.py,268,requests.get,"r = requests.get(url, params=params, timeout=8)"
+official_api,app/services/recipe_chat/discover.py,303,DataLab,"""""""Is a dish *new*?  From its own NAVER DataLab search index (daily, relative to its own peak = 100) over the"
+llm_call,app/services/recipe_chat/discover.py,342,DeepSeek,"""""""Discovery with the NAVER provider (DISCOVER_SEARCH=naver default | off) and DeepSeek interpretation."""""""
+official_api,app/services/recipe_chat/discover.py,356,DataLab,from app.services.trends.surge import DataLab
+official_api,app/services/recipe_chat/discover.py,358,DataLab,"lab, memo = DataLab(cid, secret), {}"
+llm_call,app/services/recipe_chat/discover.py,375,DEEPSEEK,"if (source.get(""DEEPSEEK_API_KEY"") or """").strip() and (source.get(""DEEPSEEK_MODEL"") or """").strip():"
+llm_call,app/services/recipe_chat/discover.py,383,deepseek,"clients[system] = LLMClient(system, provider=""deepseek"", env=source,"
+llm_call,app/services/recipe_chat/discover.py,385,chat_json(,"return clients[system].chat_json(json.dumps(payload, ensure_ascii=False), temperature=0)"
+storage,app/services/recipe_chat/discover.py,385,json.dump,"return clients[system].chat_json(json.dumps(payload, ensure_ascii=False), temperature=0)"
+llm_call,app/services/recipe_chat/discover.py,422,DeepSeek,# ── DeepSeek prompts (interpretation only; every answer is validated) ─────
+official_api,app/services/recipe_chat/discover.py,461,DataLab,"surge: Callable[[], dict | None] | None = None  # today's DataLab surge report"
+official_api,app/services/recipe_chat/discover.py,463,DataLab,"history: Callable[[str], dict] | None = None   # NAVER DataLab 2-year daily index of one keyword"
+llm_call,app/services/recipe_chat/discover.py,475,deepseek,"trace.append({""llm"": ""deepseek"", ""task"": what, ""called"": False})"
+llm_call,app/services/recipe_chat/discover.py,485,deepseek,"trace.append({""llm"": ""deepseek"", ""task"": what, ""called"": True, ""ok"": ok,"
+llm_call,app/services/recipe_chat/discover.py,533,DeepSeek,"# 2026-11-01 real run: a DeepSeek timeout was answered ""no dish found"" — say what really happened"
+official_api,app/services/recipe_chat/discover.py,581,datalab,"out: dict = {""name"": name, ""history"": None, ""new"": None, ""youtube"": None, ""instagram"": None, ""datalab"": None}"
+official_api,app/services/recipe_chat/discover.py,587,datalab,"log.warning(""datalab history failed: %s"", type(exc).__name__)"
+official_api,app/services/recipe_chat/discover.py,590,datalab,"tr.append({""api"": ""naver datalab (2년 일별 검색 지수)"", ""keyword"": name, ""result"": em})"
+official_api,app/services/recipe_chat/discover.py,610,datalab,"out[""datalab""] = {k: it.get(k) for k in (""ratio_recent"", ""onset"", ""status"")}"
+official_api,app/services/recipe_chat/discover.py,611,datalab,"out[""datalab""][""date""] = report.get(""data_until"")"
+http_client,app/services/recipe_chat/discover.py,715,requests.get,"r = requests.get(""https://www.youtube.com/oembed"", params={""url"": url, ""format"": ""json""}, timeout=8)"
+llm_call,app/services/recipe_chat/easy_view.py,13,DeepSeek,"a real DeepSeek draft paraphrased ""끓어 오르면"" as ""끓어오르면 불을 줄이고 간을 맞추면"""
+storage,app/services/recipe_chat/easy_view.py,115,json.dump,"text = json.dumps(request_payload(recipe), ensure_ascii=False)"
+llm_call,app/services/recipe_chat/easy_view.py,158,DeepSeek,"# end (""②의 양파가 투명해질 정도로 볶아지면 우유…"" opens step 3) — a real DeepSeek draft put it"
+storage,app/services/recipe_chat/easy_view.py,332,INSERT INTO,"""INSERT INTO recipe_easy_view (recipe_id, content_hash, prompt_version, view_json, model) """
+storage,app/services/recipe_chat/easy_view.py,336,json.dump,"view_json=json.dumps(view, ensure_ascii=False, allow_nan=False)))"
+llm_call,app/services/recipe_chat/easy_view.py,451,DeepSeek,"# same provider rule as the stock interpreter: DeepSeek, key only from the server environment"
+llm_call,app/services/recipe_chat/easy_view.py,452,DEEPSEEK,"ready = bool((source.get(""DEEPSEEK_API_KEY"") or """").strip() and (source.get(""DEEPSEEK_MODEL"") or """").strip())"
+llm_call,app/services/recipe_chat/easy_view.py,454,deepseek,"client = LLMClient(SYSTEM_PROMPT, provider=""deepseek"", env=source)"
+llm_call,app/services/recipe_chat/easy_view.py,455,chat_json(,"generator = lambda text: client.chat_json(text, temperature=0.2)  # noqa: E731"
+llm_call,app/services/recipe_chat/easy_view.py,456,DEEPSEEK,"model = (source.get(""DEEPSEEK_MODEL"") or """").strip() or None"
+storage,app/services/recipe_chat/recipes.py,116,json.dump,"return hashlib.sha256(json.dumps(body, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:24]"
+official_api,app/services/recipe_chat/recipes.py,276,foodsafetykorea,"_HTTPS_HOSTS = (""www.foodsafetykorea.go.kr"",)   # verified to serve the same images over https"
+storage,app/services/recipe_chat/recipes.py,297,json.dump,"version = hashlib.sha256(json.dumps(record, sort_keys=True, ensure_ascii=False).encode()).hexdigest()"
+storage,app/services/recipe_chat/recipes.py,312,json.dump,"evidence_raw=json.dumps(item, ensure_ascii=False, sort_keys=True))))"
+official_api,app/services/recipe_chat/service.py,123,datalab,"dl = sig.get(""datalab"") or {}"
+llm_call,app/services/recipe_chat/service.py,134,DeepSeek,"# stock_interpreter(message, materials) -> proposal dict (DeepSeek); optional"
+llm_call,app/services/recipe_chat/service.py,145,DeepSeek,# discovery: discover.Discovery — trend / new-dish / link search (NAVER search + DeepSeek reading); None = off
+llm_call,app/services/recipe_chat/service.py,154,DeepSeek,"# servings_interpreter(text) -> {kind, target} (DeepSeek); only for unclear servings messages,"
+llm_call,app/services/recipe_chat/service.py,434,DeepSeek,"return RecipeTurn([B.notice(f""검색은 했지만({r['searched_at']}) 요리 이름을 정리하는 기능(DeepSeek)이 꺼져 있어 """
+llm_call,app/services/recipe_chat/servings.py,191,DeepSeek,"""""""DeepSeek fallback for unclear servings messages (same server-side key rule as the stock interpreter)."
+llm_call,app/services/recipe_chat/servings.py,195,deepseek,"client = LLMClient(LLM_PROMPT, provider=""deepseek"", env=env)"
+llm_call,app/services/recipe_chat/servings.py,198,chat_json(,"return client.chat_json(text, temperature=0)"
+llm_call,app/services/recipe_chat/supplement.py,5,DeepSeek,* 보충은 DeepSeek 이 만들고 화면에는 '일반 조리 제안 · 원문 아님 (AI)'으로 원문 단계 뒤에 따로 붙는다.
+storage,app/services/recipe_chat/supplement.py,67,json.dump,return json.dumps({
+llm_call,app/services/recipe_chat/supplement.py,134,DeepSeek,"""""""RECIPE_SUPPLEMENT = on (default when DeepSeek is configured) | cache | off."""""""
+llm_call,app/services/recipe_chat/supplement.py,141,DEEPSEEK,"ready = bool((source.get(""DEEPSEEK_API_KEY"") or """").strip() and (source.get(""DEEPSEEK_MODEL"") or """").strip())"
+llm_call,app/services/recipe_chat/supplement.py,144,deepseek,"client = LLMClient(SYSTEM_PROMPT, provider=""deepseek"", env=source)"
+llm_call,app/services/recipe_chat/supplement.py,145,chat_json(,"generator = lambda text: client.chat_json(text, temperature=0.2)  # noqa: E731"
+llm_call,app/services/recipe_chat/supplement.py,146,DEEPSEEK,"model = (source.get(""DEEPSEEK_MODEL"") or """").strip() or None"
+storage,app/services/recipe_session/direct_stock_chat.py,58,json.dump,"+json.dumps([m['name'] for m in materials],ensure_ascii=False)"
+llm_call,app/services/recipe_session/direct_stock_chat.py,66,DEEPSEEK,base=(get('DEEPSEEK_BASE_URL') or '').strip()
+llm_call,app/services/recipe_session/direct_stock_chat.py,67,deepseek,official='https://'+'api.deepseek.com'
+llm_call,app/services/recipe_session/direct_stock_chat.py,69,DEEPSEEK,raise ValueError('DEEPSEEK_BASE_URL 설정을 확인해 주세요.')
+llm_call,app/services/recipe_session/direct_stock_chat.py,70,DEEPSEEK,key=get('DEEPSEEK_API_KEY'); model=get('DEEPSEEK_MODEL')
+llm_call,app/services/recipe_session/direct_stock_chat.py,71,DeepSeek,if not key or not model: raise ValueError('DeepSeek 설정을 확인해 주세요.')
+llm_call,app/services/recipe_session/direct_stock_chat.py,75,deepseek,"env=dict(LLM_PROVIDER='deepseek',DEEPSEEK_API_KEY=key,DEEPSEEK_MODEL=model,DEEPSEEK_BASE_URL=base)"
+llm_call,app/services/recipe_session/direct_stock_chat.py,76,deepseek,"factory=client_factory or (lambda prompt: LLMClient(prompt,provider='deepseek',env=env))"
+llm_call,app/services/recipe_session/direct_stock_chat.py,77,chat_json(,value=factory(stock_prompt(materials)).chat_json(message)
+storage,app/services/recipe_session/review_store.py,101,json.dump,"params.update(review_json=json.dumps(data,ensure_ascii=False,allow_nan=False),expected_revision=expected_revision)"
+storage,app/services/recipe_session/review_store.py,103,INSERT INTO,query='''INSERT INTO public.recipe_material_review
+storage,app/services/recipe_session/sequence_467.py,14,json.dump,"version=hashlib.sha256(json.dumps(source,sort_keys=True,ensure_ascii=False).encode()).hexdigest()"
+storage,app/services/recipe_session/sequence_467.py,22,json.dump,"evidence_raw=json.dumps(item,ensure_ascii=False,sort_keys=True))))"
+storage,app/services/recipe_session/shortage_review.py,21,json.dump,"identity=json.dumps([sid,item['context'],item['revision']],sort_keys=True,ensure_ascii=False)"
+storage,app/services/recipe_session/store.py,17,json.dump,"encoded = json.dumps(context, sort_keys=True, ensure_ascii=False).encode('utf-8')"
+storage,app/services/recipe_session/store.py,58,json.dump,"params.update(context_key=key, state_json=json.dumps(state, ensure_ascii=False,"
+storage,app/services/recipe_session/store.py,61,INSERT INTO,sql = '''INSERT INTO recipe_followup_state
+mall_domain,app/services/recommendation/platform_normalization.py,38,coupang.com,"if ""link.coupang.com"" in url or ""coupang.com"" in url:"
+mall_domain,app/services/recommendation/platform_normalization.py,41,smartstore.naver,"if ""smartstore.naver.com"" in url:"
+http_client,app/services/recommendation/platform_normalization.py,45,selenium,"return ""kurly_selenium_html"""
+storage,app/services/recommendation_intelligence_v55.py,304,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,app/services/recommendation_intelligence_v55.py,316,UPDATE online_,UPDATE online_food_price_snapshot
+official_api,app/services/search_context.py,22,DataLab,# 네이버 DataLab
+official_api,app/services/search_context.py,66,DataLab,DataLab 관심도 0~100을 추천 가산점 0~5점으로 변환합니다.
+official_api,app/services/search_context.py,93,DataLab,검색어와 DataLab 결과를 기반으로 SearchContext를 생성합니다.
+storage,app/services/session_context/store.py,25,INSERT INTO,INSERT INTO user_session_context (
+http_client,app/services/trends/surge.py,31,urllib.request,import urllib.request
+official_api,app/services/trends/surge.py,42,DataLab,GROUP = 5                 # keyword groups per DataLab request (API maximum)
+official_api,app/services/trends/surge.py,131,DataLab,# ── NAVER DataLab ─────────────────────────────────────────────────────────────
+official_api,app/services/trends/surge.py,132,DataLab,class DataLab:
+official_api,app/services/trends/surge.py,133,openapi.naver.com,"URL = ""https://openapi.naver.com/v1/datalab/search"""
+http_client,app/services/trends/surge.py,148,urllib.request,"req = urllib.request.Request(self.URL, data=json.dumps(body).encode(), headers={"
+storage,app/services/trends/surge.py,148,json.dump,"req = urllib.request.Request(self.URL, data=json.dumps(body).encode(), headers={"
+http_client,app/services/trends/surge.py,151,urllib.request,"with urllib.request.urlopen(req, timeout=20) as r:"
+storage,app/services/trends/surge.py,308,json.dump,"out = ask(json.dumps({""키워드"": keyword, ""블로그 제목"": titles, ""제목 단서 수"": blog.get(""clues"")}, ensure_ascii=False))"
+official_api,app/services/trends/surge.py,327,datalab,"def run(*, datalab: DataLab, blog_search: Callable[[str], list[dict]] | None, rank_dir=None, google_dir=None,"
+official_api,app/services/trends/surge.py,331,DataLab,end = end or (started.date() - dt.timedelta(days=1)).isoformat()     # DataLab: up to yesterday
+official_api,app/services/trends/surge.py,337,datalab,"screened = datalab.series([k[""keyword""] for k in order], start, end)"
+official_api,app/services/trends/surge.py,344,datalab,"alone.update(datalab.series([kw], start, end))"
+official_api,app/services/trends/surge.py,370,datalab,"""datalab"": {""calls"": datalab.calls, ""errors"": datalab.errors[:10], ""screened"": len(screened),"
+storage,app/services/trends/surge.py,391,json.dump,"tmp.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding=""utf-8"")"
+llm_call,app/services/trends/surge.py,508,DEEPSEEK,"if (source.get(""DEEPSEEK_API_KEY"") or """").strip() and (source.get(""DEEPSEEK_MODEL"") or """").strip():"
+llm_call,app/services/trends/surge.py,511,deepseek,"client = LLMClient(CAUSE_PROMPT, provider=""deepseek"", env=source)"
+llm_call,app/services/trends/surge.py,512,chat_json(,"ask = lambda text: client.chat_json(text, temperature=0)  # noqa: E731"
+official_api,app/services/trends/surge.py,513,datalab,"report = run(datalab=DataLab(cid, secret), blog_search=blog_search,"
+llm_call,app/services/trends/surge.py,518,deepseek,"""google_trends"": report[""google_dir""], ""ai_cause"": ""deepseek"" if ask else ""off"","
+http_client,app/tools/fruit_recommendation_tool.py,30,requests.get,response = requests.get(
+official_api,app/ui/hero_renderer_v3.py,535,DataLab,"""""""네이버 DataLab 시장 관심도 패널"""""""
+storage,app/ui/recipe_pack_review_panel.py,15,json.dump,"signature=hashlib.sha256(json.dumps([comparison,volume],sort_keys=True).encode()).hexdigest()"
+storage,app/ui/recipe_reference_compare_panel.py,26,json.dump,"signature=hashlib.sha256(json.dumps([stock,cup],ensure_ascii=False,sort_keys=True).encode()).hexdigest()"
+storage,app/ui/recipe_stock_clarify_panel.py,17,json.dump,"identity=json.dumps([note,capacity,remaining,approximate],ensure_ascii=False)"
+official_api,app/ui/streamlit_app.py,55,datalab,from app.services.naver_datalab_service import get_keyword_trend_with_cache
+storage,check_snapshot_sources.py,10,online_food_price_snapshot,FROM online_food_price_snapshot
+mall_domain,check_snapshot_sources.py,13,coupang.com,SELECT CASE WHEN product_url ILIKE '%coupang.com%' THEN 'coupang'
+mall_domain,check_snapshot_sources.py,14,smartstore.naver,WHEN product_url ILIKE '%smartstore.naver.com%' THEN 'smartstore'
+storage,check_snapshot_sources.py,17,online_food_price_snapshot,FROM online_food_price_snapshot
+mall_domain,check_snapshot_sources.py,18,coupang.com,"WHERE product_url ILIKE ANY (ARRAY['%coupang.com%','%smartstore.naver.com%','%kurly.com%'])"
+storage,commerce_ai_local_ocr/__main__.py,19,json.dump,"print(json.dumps(check_installation(args.language, args.tessdata), ensure_ascii=False, indent=2))"
+storage,commerce_ai_local_ocr/__main__.py,32,json.dump,"(output / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')"
+storage,commerce_ai_local_ocr/inline_offer.py,116,json.dump,"(out/'options.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')"
+storage,commerce_ai_local_ocr/inline_offer.py,123,json.dump,"(out/'inline_evidence.json').write_text(json.dumps({'source_sha256':result['source_sha256'],"
+storage,commerce_ai_local_ocr/offer_rows.py,222,json.dump,"(out/'options.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')"
+storage,commerce_ai_local_ocr/offer_rows.py,234,json.dump,"(out/'offer_evidence.json').write_text(json.dumps({'source_sha256':result['source_sha256'],"
+storage,commerce_ai_local_ocr/options.py,145,json.dump,"(out/'options.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')"
+storage,commerce_ai_local_ocr/options.py,187,json.dump,"(out / 'panel_ocr.json').write_text(json.dumps(scan,ensure_ascii=False,indent=2),encoding='utf-8')"
+storage,commerce_ai_local_ocr/options.py,189,json.dump,"(out / 'diagnostics.json').write_text(json.dumps({'source_name':source.name,"
+storage,commerce_ai_local_ocr/options.py,208,json.dump,"(out/'options.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')"
+storage,commerce_ai_local_ocr/regions.py,72,json.dump,"(output / 'baseline.json').write_text(json.dumps(baseline, ensure_ascii=False, indent=2), encoding='utf-8')"
+storage,commerce_ai_local_ocr/regions.py,99,json.dump,"(output / 'bundle.json').write_text(json.dumps(bundle, ensure_ascii=False, indent=2), encoding='utf-8')"
+http_client,commerce_ai_local_ocr/review.py,13,urllib.request,import urllib.request
+http_client,commerce_ai_local_ocr/review.py,62,urllib.request,class NoRedirect(urllib.request.HTTPRedirectHandler):
+storage,commerce_ai_local_ocr/review.py,74,json.dump,"(output / (label + '_attempt.json')).write_text(json.dumps({'model': model, 'attempted_calls': 1, 'retries': 0}), encoding='utf-8')"
+http_client,commerce_ai_local_ocr/review.py,75,urllib.request,"req = urllib.request.Request('https://api.openai.com/v1/responses',"
+llm_call,commerce_ai_local_ocr/review.py,75,api.openai,"req = urllib.request.Request('https://api.openai.com/v1/responses',"
+storage,commerce_ai_local_ocr/review.py,76,json.dump,"data=json.dumps(payload).encode(), headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'})"
+http_client,commerce_ai_local_ocr/review.py,77,urllib.request,"with urllib.request.build_opener(NoRedirect()).open(req, timeout=120) as response:"
+storage,commerce_ai_local_ocr/review.py,79,json.dump,"(output / (label + '_response.json')).write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding='utf-8')"
+storage,commerce_ai_local_ocr/review.py,86,json.dump,"(output / (label + '.json')).write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding='utf-8')"
+storage,commerce_ai_local_ocr/review.py,127,json.dump,"(output / 'receipt.json').write_text(json.dumps(receipt, ensure_ascii=False, indent=2), encoding='utf-8')"
+storage,commerce_ai_local_ocr/review.py,138,json.dump,"'다른 모델의 주장만으로 승인하지 마세요.\n추출 결과:\n' + json.dumps(extracted, ensure_ascii=False),"
+storage,commerce_ai_local_ocr/variant_quantity.py,110,json.dump,"(out/'options.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')"
+storage,data/b2b_evidence/v1/b2b_store.py,19,json.dump,"c.execute('INSERT OR IGNORE INTO sources VALUES(?,?,?)',(s['source_id'],s['filename'],json.dumps(s,ensure_ascii=False)))"
+storage,data/b2b_evidence/v1/b2b_store.py,23,json.dump,"c.execute('INSERT OR IGNORE INTO observations VALUES(?,?,?,?)',(oid,s['source_id'],index,json.dumps(o,ensure_ascii=False)))"
+storage,data/b2b_evidence/v1/b2b_store.py,25,INSERT INTO,"c.execute('INSERT INTO products VALUES(?,?,?) ON CONFLICT(product_id) DO UPDATE SET source_id=excluded.source_id,payload=excluded.payload',(product['product_id'"
+storage,data/b2b_evidence/v1/b2b_store.py,26,INSERT INTO,"for s in b['suppliers']:c.execute('INSERT INTO suppliers VALUES(?,?) ON CONFLICT(supplier_id) DO UPDATE SET payload=excluded.payload',(s['supplier_id'],json.dum"
+storage,data/b2b_evidence/v1/b2b_store.py,37,json.dump,"print(json.dumps(supplier_candidates(a.db,a.species) if a.species else ingest(a.bundle,a.db),ensure_ascii=False,indent=2))"
+storage,data/b2b_evidence/v1/install.py,16,json.dump,"print(json.dumps(dict(status='INSTALLED_EVIDENCE_STORE',path=str(dst),db=str(db),counts=stats,live_recommendation_route='NOT_CONNECTED',existing_application_db="
+storage,data/b2b_evidence/v2/b2b_store.py,19,json.dump,"c.execute('INSERT OR IGNORE INTO sources VALUES(?,?,?)',(s['source_id'],s['filename'],json.dumps(s,ensure_ascii=False)))"
+storage,data/b2b_evidence/v2/b2b_store.py,23,json.dump,"c.execute('INSERT OR IGNORE INTO observations VALUES(?,?,?,?)',(oid,s['source_id'],index,json.dumps(o,ensure_ascii=False)))"
+storage,data/b2b_evidence/v2/b2b_store.py,25,INSERT INTO,"c.execute('INSERT INTO products VALUES(?,?,?) ON CONFLICT(product_id) DO UPDATE SET source_id=excluded.source_id,payload=excluded.payload',(product['product_id'"
+storage,data/b2b_evidence/v2/b2b_store.py,26,INSERT INTO,"for s in b['suppliers']:c.execute('INSERT INTO suppliers VALUES(?,?) ON CONFLICT(supplier_id) DO UPDATE SET payload=excluded.payload',(s['supplier_id'],json.dum"
+storage,data/b2b_evidence/v2/b2b_store.py,37,json.dump,"print(json.dumps(supplier_candidates(a.db,a.species) if a.species else ingest(a.bundle,a.db),ensure_ascii=False,indent=2))"
+storage,data/b2b_evidence/v2/install.py,16,json.dump,"print(json.dumps(dict(status='INSTALLED_EVIDENCE_STORE',path=str(dst),db=str(db),counts=stats,live_recommendation_route='NOT_CONNECTED',existing_application_db="
+storage,data/b2b_evidence/v2/recommend_b2b.py,64,json.dump,"result=recommend(products,json.loads(open(a.request).read()));text=json.dumps(result,ensure_ascii=False,indent=2)"
+storage,data/b2b_evidence/v2/verify.py,18,json.dump,"b=json.loads(Path(__file__).with_name('bundle.json').read_text());result=recommend(b['products'],r,TODAY);assert not result['recommended'];Path(__file__).with_n"
+storage,docs/institution_engineering/archive/institution_engineering_archive/scripts/build_archive.py,70,json.dump,"out.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding=""utf-8"")"
+http_client,docs/verification/tea/tea_registry_evidence.py,40,requests.get,"""requests.get"","
+http_client,docs/verification/tea/tea_registry_evidence.py,41,requests.post,"""requests.post"","
+http_client,docs/verification/tea/tea_registry_evidence.py,44,httpx.,"""httpx.get"","
+http_client,docs/verification/tea/tea_registry_evidence.py,45,httpx.,"""httpx.post"","
+http_client,docs/verification/tea/tea_registry_evidence.py,46,urllib.request,"""urllib.request.urlopen"","
+storage,docs/verification/tea/tea_registry_evidence.py,461,json.dump,"json.dumps(payload, ensure_ascii=False, indent=2),"
+storage,foundation documents/build_archive (1).py,70,json.dump,"out.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding=""utf-8"")"
+storage,foundation documents/build_archive.py,70,json.dump,"out.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding=""utf-8"")"
+http_client,frontend/src/api/client.ts,10,fetch(,"const r = await fetch(""/api/chat"", {"
+http_client,frontend/src/api/client.ts,51,fetch(,"const r = await fetch(`/api/chat/saved?${q}`, { signal });"
+http_client,frontend/src/api/client.ts,58,fetch(,"const r = await fetch(""/api/chat/saved"", {"
+http_client,frontend/src/api/client.ts,71,fetch(,"const r = await fetch(`/api/recipe/easy?${q}`, { signal });"
+http_client,frontend/src/api/client.ts,85,fetch(,"const r = await fetch(""/api/trends/surge"", { signal });"
+http_client,frontend/src/lib/api.ts,29,fetch(,"const response = await fetch(`${base}${endpoint}`, {"
+mall_domain,inventory_path.py,11,meatbox,"""mall_domain"": r""meatbox|herbon|onbrix|meatfriends|hanwooeats|hyun-deok|dodrammall|"""
+mall_domain,inventory_path.py,12,delicious-market,"r""delicious-market|saenong|emart\.ssg|ssg\.com|lotteon|lottemartzetta|homeplus|"""
+official_api,inventory_path.py,14,datalab,"""official_api"": r""api-gateway\.coupang|openapi\.naver\.com|datalab|apis\.data\.go\.kr|"""
+official_api,inventory_path.py,15,foodsafetykorea,"r""foodsafetykorea|googleapis\.com/youtube"","
+http_client,inventory_path.py,16,aiohttp,"""http_client"": r""\brequests\.(get|post)|httpx\.|aiohttp|urllib\.request|playwright|selenium|"""
+http_client,inventory_path.py,17,BeautifulSoup,"r""BeautifulSoup|scrapy|fetch\("","
+llm_call,inventory_path.py,18,deepseek,"""llm_call"": r""deepseek|api\.openai|openai\.|anthropic|chat\.completions|images\.generate|LLMClient"","
+storage,inventory_path.py,19,offer_observation,"""storage"": r""offer_observation|saved:|search_log|click_log|to_csv|json\.dump|INSERT INTO"","
+llm_call,scripts/build_recipe_easy_views.py,8,DeepSeek,* Calls DeepSeek (DEEPSEEK_API_KEY / DEEPSEEK_MODEL from .env) once or twice per recipe.
+llm_call,scripts/build_recipe_easy_views.py,78,DEEPSEEK,"out(""DEEPSEEK_API_KEY / DEEPSEEK_MODEL 이 설정되지 않았어요 (.env). RECIPE_EASY_VIEW=off 도 확인해 주세요."")"
+storage,scripts/build_recipe_easy_views.py,121,json.dump,"Path(dump).write_text(json.dumps(dumped, ensure_ascii=False, indent=1), encoding=""utf-8"")"
+llm_call,scripts/check_easy_view_dump.py,11,DeepSeek,* model / prompt version recorded in the dump (shows whether DeepSeek actually wrote it)
+http_client,scripts/coupang_review_collector.py,3,selenium,from selenium import webdriver
+http_client,scripts/coupang_review_collector.py,4,selenium,from selenium.webdriver.chrome.options import Options
+http_client,scripts/coupang_review_collector.py,5,selenium,from selenium.webdriver.common.by import By
+mall_domain,scripts/coupang_review_collector.py,36,coupang.com,"url = f""https://www.coupang.com/np/search?q={keyword}"""
+storage,scripts/coupang_review_collector.py,79,INSERT INTO,INSERT INTO online_food_price_snapshot (
+storage,scripts/import_recipe_catalog.py,32,json.dump,"return hashlib.sha256(json.dumps(record, sort_keys=True, ensure_ascii=False).encode(""utf-8"")).hexdigest()"
+storage,scripts/import_recipe_catalog.py,151,json.dump,"out(json.dumps(report, ensure_ascii=False, indent=2))"
+storage,scripts/migrate_nlu_dictionary.py,272,json.dump,"out(json.dumps(report, ensure_ascii=False, indent=2, default=repr))"
+storage,scripts/migrate_nlu_dictionary.py,275,json.dump,"out(json.dumps(report, ensure_ascii=False, indent=2, default=repr))"
+http_client,scripts/nongsaro_api.py,8,urllib.request,"import html, os, re, time, urllib.parse, urllib.request"
+http_client,scripts/nongsaro_api.py,36,urllib.request,"with urllib.request.urlopen(f""{BASE}/{service}/{op}?{q}"", timeout=30) as r:"
+http_client,scripts/update_recipes.py,20,urllib.request,"import argparse, json, os, re, sys, tempfile, time, urllib.parse, urllib.request"
+http_client,scripts/update_recipes.py,54,urllib.request,"with urllib.request.urlopen(url, timeout=40) as r:"
+official_api,scripts/update_recipes.py,206,foodsafetykorea,"rows, t = _rows(fetch_json(f""http://openapi.foodsafetykorea.go.kr/api/{key}/{svc}/json/{start}/{end}""))"
+storage,scripts/update_recipes.py,444,json.dump,"json.dump(doc, f, ensure_ascii=False)"
+http_client,scripts/update_reviews_ratings.py,5,BeautifulSoup,from bs4 import BeautifulSoup
+user_agent,scripts/update_reviews_ratings.py,12,User-Agent,"""User-Agent"": ("
+http_client,scripts/update_reviews_ratings.py,61,requests.get,"response = requests.get(url, headers=HEADERS, timeout=8)"
+http_client,scripts/update_reviews_ratings.py,78,BeautifulSoup,"soup = BeautifulSoup(html, ""lxml"")"
+http_client,scripts/update_reviews_ratings.py,113,BeautifulSoup,"soup = BeautifulSoup(html, ""lxml"")"
+storage,scripts/update_reviews_ratings.py,217,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,scripts/update_reviews_ratings.py,237,UPDATE online_,UPDATE online_food_price_snapshot
+http_client,scripts/update_reviews_ratings_selenium.py,5,BeautifulSoup,from bs4 import BeautifulSoup
+http_client,scripts/update_reviews_ratings_selenium.py,8,selenium,from selenium import webdriver
+http_client,scripts/update_reviews_ratings_selenium.py,9,selenium,from selenium.webdriver.chrome.service import Service
+http_client,scripts/update_reviews_ratings_selenium.py,10,selenium,from selenium.webdriver.chrome.options import Options
+mall_domain,scripts/update_reviews_ratings_selenium.py,41,coupang.com,"if ""coupang.com"" in host:"
+mall_domain,scripts/update_reviews_ratings_selenium.py,43,smartstore.naver,"if ""smartstore.naver.com"" in host or ""shopping.naver.com"" in host:"
+user_agent,scripts/update_reviews_ratings_selenium.py,65,user-agent,"""user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) """
+http_client,scripts/update_reviews_ratings_selenium.py,78,BeautifulSoup,"soup = BeautifulSoup(driver.page_source, ""lxml"")"
+http_client,scripts/update_reviews_ratings_selenium.py,173,selenium,"def extract_with_selenium(driver, url):"
+http_client,scripts/update_reviews_ratings_selenium.py,202,BeautifulSoup,"soup = BeautifulSoup(driver.page_source, ""lxml"")"
+http_client,scripts/update_reviews_ratings_selenium.py,266,selenium,"""source"": f""selenium_{platform}"","
+storage,scripts/update_reviews_ratings_selenium.py,281,online_food_price_snapshot,FROM online_food_price_snapshot
+storage,scripts/update_reviews_ratings_selenium.py,302,UPDATE online_,UPDATE online_food_price_snapshot
+http_client,scripts/update_reviews_ratings_selenium.py,342,selenium,"result = extract_with_selenium(driver, url)"
+llm_call,scripts/update_trend_surge.py,6,DEEPSEEK,"GOOGLE_DATA_DIR(구글 트렌드 CSV 폴더, 선택), DEEPSEEK_API_KEY/DEEPSEEK_MODEL(원인 추정, 선택)"
+official_api,scripts/update_trend_surge.py,28,datalab,"print(f""데이터 기준일 {report['data_until']} · 감시 {report['universe']['total']}개 · 데이터랩 호출 {report['datalab']['calls']}회"""
+official_api,scripts/update_trend_surge.py,29,datalab,"+ (f"" · 오류 {len(report['datalab']['errors'])}건"" if report[""datalab""][""errors""] else """"))"
+http_client,scripts/whittakers_research.py,20,urllib.request,import urllib.request
+storage,scripts/whittakers_research.py,34,json.dump,data = json.dumps(body).encode() if body is not None else None
+http_client,scripts/whittakers_research.py,35,urllib.request,"req = urllib.request.Request(url, data=data, headers={**HEADERS, **({""Content-Type"": ""application/json""} if data else {})})"
+http_client,scripts/whittakers_research.py,37,urllib.request,"with urllib.request.urlopen(req, timeout=15) as r:"
+official_api,scripts/whittakers_research.py,47,openapi.naver.com,"r = call(f""https://openapi.naver.com/v1/search/news.json?{q}"")"
+official_api,scripts/whittakers_research.py,54,datalab,"def datalab(start: str, end: str, groups: list[tuple[str, list[str]]]) -> dict:"
+official_api,scripts/whittakers_research.py,57,openapi.naver.com,"r = call(""https://openapi.naver.com/v1/datalab/search"", body)"
+official_api,scripts/whittakers_research.py,71,datalab,"""datalab"": {"
+official_api,scripts/whittakers_research.py,72,datalab,"""2026_three"": datalab(""2026-09-01"", ""2026-10-30"", [W, H, P]),"
+official_api,scripts/whittakers_research.py,73,datalab,"""2026_whittakers_only"": datalab(""2026-09-01"", ""2026-10-30"", [W]),"
+official_api,scripts/whittakers_research.py,74,datalab,"""2025_three"": datalab(""2025-09-01"", ""2025-11-30"", [W, H, P]),"
+official_api,scripts/whittakers_research.py,75,datalab,"""2025_whittakers_only"": datalab(""2025-09-01"", ""2025-11-30"", [W]),"
+storage,scripts/whittakers_research.py,80,json.dump,"dest.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding=""utf-8"")"
+official_api,scripts/whittakers_research.py,85,datalab,"for k, d in out[""datalab""].items():"
+storage,sql/collector_v2_migration.sql,2,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS raw_link TEXT;
+storage,sql/collector_v2_migration.sql,3,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS redirect_url TEXT;
+storage,sql/collector_v2_migration.sql,4,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS search_url TEXT;
+storage,sql/collector_v2_migration.sql,5,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
+storage,sql/collector_v2_migration.sql,6,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS brand TEXT;
+storage,sql/collector_v2_migration.sql,7,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS maker TEXT;
+storage,sql/collector_v2_migration.sql,8,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category1 TEXT;
+storage,sql/collector_v2_migration.sql,9,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category2 TEXT;
+storage,sql/collector_v2_migration.sql,10,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category3 TEXT;
+storage,sql/collector_v2_migration.sql,11,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category4 TEXT;
+storage,sql/collector_v2_migration.sql,12,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS mall_product_id TEXT;
+storage,sql/collector_v2_migration.sql,13,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_identity_key TEXT;
+storage,sql/collector_v2_migration.sql,14,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS weight_g INTEGER;
+storage,sql/collector_v2_migration.sql,15,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_per_100g NUMERIC;
+storage,sql/collector_v2_migration.sql,16,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS member_price INTEGER;
+storage,sql/collector_v2_migration.sql,17,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS benefit_price INTEGER;
+storage,sql/collector_v2_migration.sql,18,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS max_benefit_price INTEGER;
+storage,sql/collector_v2_migration.sql,19,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS raw_payload JSONB;
+storage,sql/collector_v2_migration.sql,20,online_food_price_snapshot,CREATE INDEX IF NOT EXISTS idx_online_food_price_snapshot_identity ON online_food_price_snapshot(product_identity_key);
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,10,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,15,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,21,online_food_price_snapshot,ON online_food_price_snapshot(market_signal_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,26,online_food_price_snapshot,ON online_food_price_snapshot(review_count)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,33,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS purchase_count BIGINT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,37,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_signal_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,42,online_food_price_snapshot,ON online_food_price_snapshot(market_signal_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,47,online_food_price_snapshot,ON online_food_price_snapshot(review_count)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,52,online_food_price_snapshot,ON online_food_price_snapshot(rating)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,59,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_key TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,63,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_seed TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,67,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_label TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,71,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_cluster_confidence NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,75,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_weight_band TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,79,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_quality_band TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,83,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_gift_band TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,87,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_attribute_band TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,91,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_variety_band TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,96,online_food_price_snapshot,ON online_food_price_snapshot(market_cluster_key)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,101,online_food_price_snapshot,ON online_food_price_snapshot(market_cluster_confidence)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,108,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_count INTEGER
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,112,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_min_price NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,116,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_max_price NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,120,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_avg_price NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,124,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_median_price NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,128,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_p25_price NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,132,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_p75_price NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,136,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_percentile NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,140,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,144,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_price_position_label TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,148,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_vs_market_avg_pct NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,152,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_vs_market_median_pct NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,157,online_food_price_snapshot,ON online_food_price_snapshot(market_price_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,162,online_food_price_snapshot,ON online_food_price_snapshot(market_price_percentile)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,169,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,174,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,179,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,184,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,189,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,195,online_food_price_snapshot,ON online_food_price_snapshot(market_signal_propagation_key)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,200,online_food_price_snapshot,ON online_food_price_snapshot(propagated_market_signal_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,207,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS raw_link TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,211,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS redirect_url TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,215,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS search_url TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,219,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS thumbnail_url TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,223,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS brand TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,227,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS maker TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,231,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category1 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,235,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category2 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,239,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category3 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,243,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS category4 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,247,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS mall_product_id TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,251,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_identity_key TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,255,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS weight_g INTEGER
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,259,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_per_100g NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,263,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS member_price INTEGER
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,267,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS benefit_price INTEGER
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,271,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS max_benefit_price INTEGER
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,275,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS raw_payload JSONB
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,282,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_attributes TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,286,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_attribute_signature TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,290,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_attribute_confidence NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,295,online_food_price_snapshot,ON online_food_price_snapshot(product_attribute_signature)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,302,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,307,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,312,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,317,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,322,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,328,online_food_price_snapshot,"ON online_food_price_snapshot(identity_cluster_key, is_cluster_representative)"
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,335,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,340,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,345,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,350,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,355,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,360,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,366,online_food_price_snapshot,ON online_food_price_snapshot(product_family_key)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,371,online_food_price_snapshot,ON online_food_price_snapshot(product_variant_key)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,378,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,383,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,388,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,394,online_food_price_snapshot,ON online_food_price_snapshot(identity_cluster_key)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,401,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,405,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_label TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,409,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_grade TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,413,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_product_quality_reasons TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,417,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_brix NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,421,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_attribute NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,425,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_identity NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,429,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_review NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,433,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_price NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,437,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_component_representative NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,442,online_food_price_snapshot,ON online_food_price_snapshot(ai_product_quality_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,449,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,454,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,459,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,465,online_food_price_snapshot,ON online_food_price_snapshot(product_quality_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,470,online_food_price_snapshot,ON online_food_price_snapshot(market_quality_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,475,online_food_price_snapshot,ON online_food_price_snapshot(recommendation_base_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,482,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_variety TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,486,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_variety_confidence NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,490,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_family_key_v7 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,494,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_family_seed_v7 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,498,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_family_confidence_v7 NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,502,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_variant_key_v7 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,506,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_variant_seed_v7 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,510,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS product_variant_confidence_v7 NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,515,online_food_price_snapshot,ON online_food_price_snapshot(product_family_key_v7)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,520,online_food_price_snapshot,ON online_food_price_snapshot(product_variant_key_v7)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,525,online_food_price_snapshot,ON online_food_price_snapshot(product_variety)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,532,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_value_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,536,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS price_advantage_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,540,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS quality_advantage_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,544,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS market_signal_score_final NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,548,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS trust_score_final NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,552,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS scarcity_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,556,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS representative_bonus NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,560,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS ai_suitability_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,564,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_grade TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,568,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_reason_1 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,572,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_reason_2 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,576,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_reason_3 TEXT
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,580,online_food_price_snapshot,ALTER TABLE online_food_price_snapshot ADD COLUMN IF NOT EXISTS recommendation_rank_score NUMERIC
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,585,online_food_price_snapshot,ON online_food_price_snapshot(recommendation_value_score)
+storage,sql/ma_2026_034_phase4_i7_ddl01_through_ddl14.sql,590,online_food_price_snapshot,ON online_food_price_snapshot(recommendation_rank_score)
+storage,sql/platform_master.sql,41,INSERT INTO,INSERT INTO platform_master (
+mall_domain,sql/platform_master.sql,59,shopping.naver,"'https://shopping.naver.com',"
+mall_domain,sql/platform_master.sql,60,shopping.naver,"'shopping.naver.com',"
+mall_domain,sql/platform_master.sql,72,coupang.com,"'https://www.coupang.com',"
+mall_domain,sql/platform_master.sql,73,coupang.com,"'www.coupang.com',"
+mall_domain,sql/platform_master.sql,98,emart.ssg,"'https://emart.ssg.com',"
+mall_domain,sql/platform_master.sql,99,emart.ssg,"'emart.ssg.com',"
+mall_domain,sql/platform_master.sql,104,SSG.COM,"'SSG.COM 내 이마트몰 채널',"
+http_client,sql/platform_master.sql,113,selenium,"'selenium',"
+http_client,streamlit_app_card_grouped_fixed.py,4546,requests.get,response = requests.get(
+llm_call,tests/admin/test_admin_b2b.py,92,chat_json(,"def chat_json(self, *a, **k):"
+storage,tests/admin/test_admin_gift_monitor.py,82,INSERT INTO,"con.execute(""INSERT INTO gift_bids VALUES (1,'가상기관','추석 온누리상품권 구매','2026-07-01','2026-07-20','총무','김가상','02-1','금 80,000,000원','https://www.g2b.go.kr','본문','입찰중"
+storage,tests/admin/test_admin_gift_monitor.py,83,INSERT INTO,"con.execute(""INSERT INTO programs VALUES (1,'소상공인 지원사업')"")"
+http_client,tests/admin/test_admin_ops.py,48,fetch(,"assert 'fetch(""/api/' not in text and 'href=""/monitor""' not in text and '""/login""' not in text"
+storage,tests/admin/test_admin_ops.py,132,INSERT INTO,"raw.execute(""INSERT INTO product_click_log VALUES ('s-new', '대봉감 5kg', 32900)"")"
+storage,tests/admin/test_admin_ops.py,136,INSERT INTO,"raw.execute(""INSERT INTO recipe_chat_session VALUES ('s-old', ?, 1, '2026-10-28T10:00:00')"","
+storage,tests/admin/test_admin_ops.py,137,json.dump,"(json.dumps({""mode"": ""shopping"", ""turns"": []}),))"
+storage,tests/admin/test_admin_ops.py,138,INSERT INTO,"raw.execute(""INSERT INTO recipe_chat_session VALUES ('s-new', ?, 3, '2026-10-29T10:00:00')"", (json.dumps(state),))"
+storage,tests/admin/test_admin_ops.py,139,INSERT INTO,"raw.execute(""INSERT INTO recipe_followup_state VALUES ('recipe:s-new', 'EPIS:467:5145', 'k', ?, 2, '2026-10-29')"","
+storage,tests/admin/test_admin_ops.py,140,json.dump,"(json.dumps({""status"": ""CUSTOMER_REPORTED_SHORT"", ""direct_stock"": {""amount"": ""100"", ""unit"": ""mL""},"
+storage,tests/admin/test_admin_ops.py,142,INSERT INTO,"raw.execute(""INSERT INTO search_log VALUES ('s-new', '생크림', 'ranking', 5)"")"
+storage,tests/admin/test_admin_ops.py,187,json.dump,"assert ""sk_test_secret_value"" not in json.dumps(d)"
+official_api,tests/services/chat/test_recipe_card_hero_stock.py,87,foodsafetykorea,"record[""image_large""] = ""http://www.foodsafetykorea.go.kr/uploadimg/cook/10_00450_1.png"""
+official_api,tests/services/chat/test_recipe_card_hero_stock.py,90,foodsafetykorea,"assert card[""hero""] == {""src"": ""https://www.foodsafetykorea.go.kr/uploadimg/cook/10_00450_1.png"", ""kind"": ""source"","
+official_api,tests/services/chat/test_recipe_card_hero_stock.py,98,foodsafetykorea,"catalog.get(""fs-450"")[""image_large""] = ""http://www.foodsafetykorea.go.kr/uploadimg/cook/10_00450_1.png"""
+storage,tests/services/chat/test_recipe_catalog_chat.py,92,json.dump,"text = json.dumps(res[""blocks""], ensure_ascii=False)"
+storage,tests/services/chat/test_recipe_catalog_chat.py,178,json.dump,"path.write_text(json.dumps(doc, ensure_ascii=False), encoding=""utf-8"")"
+storage,tests/services/chat/test_recipe_catalog_chat.py,259,json.dump,"p.write_text(json.dumps(changed, ensure_ascii=False), encoding=""utf-8"")"
+official_api,tests/services/chat/test_recipe_catalog_chat.py,276,foodsafetykorea,"assert card[""image""] == ""https://www.foodsafetykorea.go.kr/uploadimg/cook/10_00450_2.png"""
+official_api,tests/services/chat/test_recipe_catalog_chat.py,277,foodsafetykorea,"assert all(s[""image""].startswith(""https://www.foodsafetykorea.go.kr/"") for s in card[""steps""])"
+storage,tests/services/chat/test_recipe_catalog_sources.py,30,json.dump,"p.write_text(json.dumps(doc, ensure_ascii=False), encoding=""utf-8"")"
+storage,tests/services/chat/test_recipe_catalog_sources.py,53,json.dump,"text = json.dumps(svc.handle(None, message=""크림파스타 만드는 법"")[""blocks""], ensure_ascii=False)"
+storage,tests/services/chat/test_recipe_chat_flow.py,24,json.dump,"return ""\n"".join(json.dumps(b[""data""], ensure_ascii=False) for b in res[""blocks""])"
+storage,tests/services/chat/test_recipe_chat_flow.py,219,json.dump,"assert ""product_list"" not in types(res) and ""같은 재료로 볼 수 있는 상품을 찾지 못했어요"" in json.dumps(res, ensure_ascii=False)"
+llm_call,tests/services/chat/test_recipe_chat_flow.py,303,deepseek,"raise TimeoutError(""deepseek timeout"")"
+official_api,tests/services/chat/test_recipe_consult_sources.py,132,datalab,def test_emergence_from_two_years_of_datalab():
+storage,tests/services/chat/test_recipe_consult_sources.py,156,json.dump,"assert ""본문"" not in json.dumps(D.asdict(hits[0]), ensure_ascii=False)"
+storage,tests/services/chat/test_recipe_consult_sources.py,165,json.dump,"assert got[""posts_24h""] == 3 and ""caption"" not in json.dumps(got)"
+official_api,tests/services/chat/test_recipe_consult_sources.py,171,datalab,"""instagram"": False, ""datalab_report"": False,"
+official_api,tests/services/chat/test_recipe_consult_sources.py,172,datalab,"""datalab_history"": False}"
+llm_call,tests/services/chat/test_recipe_discover.py,1,DeepSeek,"""""""트렌드·신규 요리 검색 (2026-10-30) — 모의 시험: 네이버 검색 응답과 DeepSeek 해석을 가짜로 둔다 (실제 호출 없음)."
+storage,tests/services/chat/test_recipe_discover.py,194,json.dump,"assert ""trace"" not in json.dumps(chat_routes.public(res))"
+official_api,tests/services/chat/test_recipe_discover.py,196,openapi.naver.com,"assert chat_routes.public(res)[""blocks""][0][""data""][""trace""][""search""][0][""api""] == ""openapi.naver.com/v1/search/news.json"""
+llm_call,tests/services/chat/test_recipe_discover.py,255,DeepSeek,"assert ""요리 이름을 정리하는 기능(DeepSeek)이 꺼져 있어"" in md(svc.handle(None, message=""요즘 유행하는 요리 알려줘""))"
+storage,tests/services/chat/test_recipe_discover.py,276,json.dump,"assert ""description"" not in json.dumps(D.asdict(hit))"
+llm_call,tests/services/chat/test_recipe_easy_view.py,115,DeepSeek,"# real DeepSeek draft (2026-10-29, deepseek-v4-flash): a 5-letter quote with a paraphrase that"
+llm_call,tests/services/chat/test_recipe_easy_view.py,127,DeepSeek,"# real DeepSeek draft (2026-10-29, easy-v3 run): ""양파가 투명해질 정도로 볶아지면"" opens source step 3,"
+llm_call,tests/services/chat/test_recipe_easy_view.py,295,deepseek,def test_from_env_needs_a_server_side_deepseek_key():
+llm_call,tests/services/chat/test_recipe_easy_view.py,297,DEEPSEEK,"assert easy_view.from_env({""DEEPSEEK_API_KEY"": ""k"", ""DEEPSEEK_MODEL"": ""deepseek-chat"","
+llm_call,tests/services/chat/test_recipe_easy_view.py,299,DEEPSEEK,"views = easy_view.from_env({""DEEPSEEK_API_KEY"": ""k"", ""DEEPSEEK_MODEL"": ""deepseek-chat""})"
+llm_call,tests/services/chat/test_recipe_easy_view.py,300,deepseek,"assert views.generator is not None and views.mode == ""on"" and views.model == ""deepseek-chat"""
+storage,tests/services/chat/test_recipe_easy_view.py,322,json.dump,"text = json.dumps(res[""blocks""], ensure_ascii=False)"
+llm_call,tests/services/chat/test_recipe_easy_view.py,428,DeepSeek,# easy-v3 allowed 4 notes (2 per step); a real DeepSeek view had a caution on 4 of 5 steps
+llm_call,tests/services/chat/test_recipe_easy_view.py,439,DeepSeek,"# regression (2026-10-30, real DeepSeek easy-v4 view): the last step had a note, and the"
+llm_call,tests/services/chat/test_recipe_multi.py,156,DeepSeek,"""""""Mock of the DeepSeek stock interpreter: '삼백 그램' is not parsed by the rules; the proposal is still"
+llm_call,tests/services/chat/test_recipe_supplement.py,1,DeepSeek,"""""""원문에 핵심 조리 단계가 빠진 레시피 (2026-10-30 사용자 결정) — 모의 시험 (DeepSeek 호출 없음)."
+mall_domain,tests/services/chat/test_shopping_reasons.py,20,coupang.com,"return {""product_name"": name, ""price"": price, ""product_url"": url or f""https://www.coupang.com/vp/{abs(hash(name))}"","
+mall_domain,tests/services/chat/test_shopping_reasons.py,197,coupang.com,"ad = dict(base, is_ad=True, product_url=""https://link.coupang.com/a"")"
+mall_domain,tests/services/chat/test_shopping_relevance.py,14,coupang.com,"JUNK = [{""product_name"": n, ""price"": 9000, ""product_url"": ""https://www.coupang.com/x"", ""platform_name"": ""coupang""}"
+mall_domain,tests/services/chat/test_shopping_relevance.py,16,coupang.com,"GOOD = [{""product_name"": ""휘태커스 다크 초콜릿 72% 250g"", ""price"": 8900, ""product_url"": ""https://www.coupang.com/w"","
+http_client,tests/services/cross_border/test_mydhl_api_observed_route_event_history_projector.py,1060,aiohttp,"""aiohttp"","
+http_client,tests/services/experience/test_revisit.py,34,requests.get,"""app.services.experience.revisit.requests.get"","
+http_client,tests/services/experience/test_revisit.py,46,requests.get,"""app.services.experience.revisit.requests.get"","
+http_client,tests/services/experience/test_revisit.py,69,requests.get,"""app.services.experience.revisit.requests.get"","
+http_client,tests/services/experience/test_revisit.py,89,requests.get,"""app.services.experience.revisit.requests.get"","
+http_client,tests/services/experience/test_revisit.py,110,requests.get,"""app.services.experience.revisit.requests.get"","
+http_client,tests/services/experience/test_revisit.py,122,requests.get,"""app.services.experience.revisit.requests.get"","
+http_client,tests/services/experience/test_revisit.py,146,requests.get,"""app.services.experience.revisit.requests.get"","
+http_client,tests/services/experience/test_revisit.py,184,requests.get,"""app.services.experience.revisit.requests.get"","
+storage,tests/services/food/knowledge/fruit/test_fruit_result_contract.py,52,json.dump,encoded = json.dumps(
+mall_domain,tests/services/market/test_marketplace_core_baseline.py,73,coupang.com,"""https://www.coupang.com/vp/products/1"""
+mall_domain,tests/services/market/test_marketplace_core_baseline.py,80,emart.ssg,"""https://emart.ssg.com/item/itemView.ssg"""
+mall_domain,tests/services/market/test_marketplace_core_baseline.py,119,shopping.naver,"""link"": ""https://shopping.naver.com/test"","
+mall_domain,tests/services/market/test_marketplace_core_baseline.py,131,shopping.naver,"== ""https://shopping.naver.com/test"""
+mall_domain,tests/services/market/test_marketplace_core_baseline.py,139,SSG.COM,"""mallName"": ""SSG.COM"","
+mall_domain,tests/services/market/test_marketplace_core_baseline.py,141,ssg.com,"""link"": ""https://www.ssg.com/item/test"","
+storage,tests/services/nlu/test_migrate_nlu_dictionary.py,133,INSERT INTO,"INSERT INTO intent_master (intent_code, category_code, name, description, required_slots, optional_slots, examples) VALUES"
+storage,tests/services/nlu/test_migrate_nlu_dictionary.py,137,INSERT INTO,"INSERT INTO slot_definition VALUES ('ingredient','text',NULL,'재료',NULL),('mall','enum','{coupang,naver}','몰','{""max"": 1}'),"
+storage,tests/services/nlu/test_migrate_nlu_dictionary.py,139,INSERT INTO,"INSERT INTO entity_master (entity_type, canonical_name, aliases, metadata) VALUES"
+storage,tests/services/nlu/test_migrate_nlu_dictionary.py,240,INSERT INTO,"INSERT INTO entity_master (entity_type, canonical_name, aliases, metadata) VALUES ('situation','solo','{혼밥}','{""scene"":""local-edit""}')"""""")"
+storage,tests/services/nlu/test_migrate_nlu_dictionary.py,253,INSERT INTO,"INSERT INTO entity_master (entity_type, canonical_name) VALUES ('keep','기존행')"""""")"
+llm_call,tests/services/nlu/test_nlu_integration.py,17,DEEPSEEK,"DEEPSEEK_ENV = {""LLM_PROVIDER"": ""deepseek"", ""DEEPSEEK_API_KEY"": ""sk-test"", ""DEEPSEEK_MODEL"": ""deepseek-chat"","
+llm_call,tests/services/nlu/test_nlu_integration.py,18,DEEPSEEK,"""DEEPSEEK_BASE_URL"": ""https://api.deepseek.com""}"
+llm_call,tests/services/nlu/test_nlu_integration.py,40,deepseek,def test_deepseek_call_contract_is_preserved():
+llm_call,tests/services/nlu/test_nlu_integration.py,42,DEEPSEEK,"client = LLMClient(""SYSTEM"", env=DEEPSEEK_ENV, openai_factory=fake)"
+llm_call,tests/services/nlu/test_nlu_integration.py,43,chat_json(,"out = client.chat_json(""생크림 100mL 있어요"")"
+llm_call,tests/services/nlu/test_nlu_integration.py,45,deepseek,"assert fake.init_kwargs == {""api_key"": ""sk-test"", ""base_url"": ""https://api.deepseek.com"","
+llm_call,tests/services/nlu/test_nlu_integration.py,48,deepseek,"""model"": ""deepseek-chat"", ""temperature"": 0.0, ""response_format"": {""type"": ""json_object""},"
+llm_call,tests/services/nlu/test_nlu_integration.py,53,DEEPSEEK,"({**DEEPSEEK_ENV, ""DEEPSEEK_API_KEY"": """"}, ""DEEPSEEK_API_KEY 미설정""),"
+llm_call,tests/services/nlu/test_nlu_integration.py,54,DEEPSEEK,"({**DEEPSEEK_ENV, ""DEEPSEEK_MODEL"": """"}, ""DEEPSEEK_MODEL 미설정""),"
+llm_call,tests/services/nlu/test_nlu_integration.py,55,DEEPSEEK,"({**DEEPSEEK_ENV, ""DEEPSEEK_BASE_URL"": ""https://evil.example.com""}, ""공식 API 주소""),"
+llm_call,tests/services/nlu/test_nlu_integration.py,57,deepseek,"def test_deepseek_settings_are_checked_before_any_call(env, message):"
+llm_call,tests/services/nlu/test_nlu_integration.py,60,chat_json(,"LLMClient(""S"", env=env, openai_factory=fake).chat_json(""x"")"
+llm_call,tests/services/nlu/test_nlu_integration.py,66,DEEPSEEK,"LLMClient(""S"", env={**DEEPSEEK_ENV, ""DEEPSEEK_BASE_URL"": """"}, openai_factory=fake).chat_json(""x"")"
+llm_call,tests/services/nlu/test_nlu_integration.py,67,deepseek,"assert fake.init_kwargs[""base_url""] == ""https://api.deepseek.com"""
+llm_call,tests/services/nlu/test_nlu_integration.py,73,chat_json(,"LLMClient(""S"", env={""LLM_PROVIDER"": ""nope""}).chat_json(""x"")"
+llm_call,tests/services/nlu/test_nlu_integration.py,108,DEEPSEEK,"nlu = FoodNLU(RES, LLMClient(""S"", env=DEEPSEEK_ENV, openai_factory=fake))"
+llm_call,tests/services/nlu/test_nlu_integration.py,110,DEEPSEEK,"broken = FoodNLU(RES, LLMClient(""S"", env={**DEEPSEEK_ENV, ""DEEPSEEK_API_KEY"": """"}))"
+llm_call,tests/services/nlu/test_nlu_integration.py,138,DEEPSEEK,"assert food_nlu_module.load_food_nlu(env={**DEEPSEEK_ENV, ""CHAT_NLU_ENABLED"": ""0""}) is None"
+llm_call,tests/services/nlu/test_nlu_integration.py,143,DEEPSEEK,"assert food_nlu_module.load_food_nlu(no_engine, env=DEEPSEEK_ENV) is None"
+llm_call,tests/services/nlu/test_nlu_integration.py,151,DEEPSEEK,"for k, v in DEEPSEEK_ENV.items():"
+llm_call,tests/services/nlu/test_nlu_integration.py,158,deepseek,"return LLMClient(prompt, provider=""deepseek"", env=DEEPSEEK_ENV, openai_factory=fake)"
+storage,tests/services/preference/test_store.py,248,INSERT INTO,"""INSERT INTO user_preference_profile"""
+official_api,tests/services/trends/test_surge.py,81,datalab,"report = S.run(datalab=S.DataLab(""id"", ""secret"", http=fake_http(calls), pause=0), blog_search=blog_posts,"
+official_api,tests/services/trends/test_surge.py,100,datalab,def test_failed_datalab_requests_are_reported_not_guessed(data_dirs):
+official_api,tests/services/trends/test_surge.py,102,datalab,"report = S.run(datalab=S.DataLab(""id"", ""s"", http=lambda u, b: (429, None), pause=0), blog_search=None,"
+official_api,tests/services/trends/test_surge.py,104,datalab,"assert report[""items""] == [] and report[""datalab""][""errors""][0].startswith(""HTTP 429"")"
+official_api,tests/services/trends/test_surge.py,109,datalab,"report = S.run(datalab=S.DataLab(""id"", ""s"", http=fake_http([]), pause=0), blog_search=blog_posts,"
+storage,tests/services/trends/test_surge.py,114,json.dump,"assert ""calls"" not in json.dumps(view) and ""queries"" not in json.dumps(view)    # nothing internal for customers"
+official_api,tests/services/trends/test_surge.py,126,datalab,"report = S.run(datalab=S.DataLab(""id"", ""s"", http=fake_http([]), pause=0), blog_search=blog_posts,"
+official_api,tests/services/trends/test_surge.py,152,DataLab,"lab = S.DataLab(""id"", ""s"", http=flaky, pause=0, retry_waits=(0, 0))"
+official_api,tests/services/trends/test_surge.py,156,DataLab,"lab = S.DataLab(""id"", ""s"", http=lambda u, b: (quota.append(1), (429, None))[1], pause=0, retry_waits=(0, 0))"
+official_api,tests/services/trends/test_surge.py,158,DataLab,"down = S.DataLab(""id"", ""s"", http=lambda u, b: (None, {""error"": ""URLError""}), pause=0, retry_waits=(0, 0))"
+official_api,tests/services/trends/test_surge.py,174,datalab,"S.save(S.run(datalab=S.DataLab(""id"", ""s"", http=fake_http([]), pause=0), blog_search=blog_posts,"
+http_client,tests/test_persistence_collector_pipeline_constructor_characterization.py,223,aiohttp,"""aiohttp"","
+http_client,tests/test_persistence_collector_pipeline_constructor_characterization.py,225,playwright,"""playwright"","
+http_client,tests/test_persistence_collector_pipeline_constructor_characterization.py,226,selenium,"""selenium"","
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,10,datalab,from app.services import naver_datalab_service as datalab
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,13,datalab,"TARGET = Path(""app/services/naver_datalab_service.py"")"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,157,datalab,"monkeypatch.setattr(datalab, ""get_engine"", lambda: engine)"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,158,datalab,"monkeypatch.setattr(datalab.requests, ""post"", _deny_network)"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,160,datalab,"result = datalab.get_cached_keyword_trend(""사과"")"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,176,datalab,"monkeypatch.setattr(datalab, ""get_engine"", lambda: engine)"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,177,datalab,"monkeypatch.setattr(datalab.requests, ""post"", _deny_network)"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,179,datalab,"assert datalab.get_cached_keyword_trend(""없는검색어"") is None"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,188,datalab,"monkeypatch.setattr(datalab, ""get_engine"", lambda: engine)"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,189,datalab,"monkeypatch.setattr(datalab.requests, ""post"", _deny_network)"
+official_api,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,192,datalab,result = datalab.save_keyword_trend_cache(
+storage,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,203,INSERT INTO,"assert ""INSERT INTO keyword_trend_cache"" in sql"
+storage,tests/test_persistence_i5b3_tb10_naver_datalab_migration.py,209,json.dump,"""raw_payload"": json.dumps(payload, ensure_ascii=False),"
+storage,tests/test_persistence_i5b4_tb05_simple_reader_migration.py,170,online_food_price_snapshot,"assert ""FROM online_food_price_snapshot"" in sql"
+storage,tests/test_persistence_i5b4_tb05_simple_reader_migration.py,216,online_food_price_snapshot,"assert ""FROM online_food_price_snapshot"" in sql"
+official_api,tests/test_persistence_i5b_collector_per_item_boundary_characterization.py,8,DATALAB,"DATALAB = Path(""app/services/naver_datalab_service.py"")"
+official_api,tests/test_persistence_i5b_collector_per_item_boundary_characterization.py,123,DATALAB,"fn = _function(_tree(DATALAB), ""get_cached_keyword_trend"")"
+official_api,tests/test_persistence_i5b_collector_per_item_boundary_characterization.py,133,DATALAB,"fn = _function(_tree(DATALAB), ""save_keyword_trend_cache"")"
+official_api,tests/test_persistence_i5b_collector_per_item_boundary_characterization.py,143,DATALAB,tree = _tree(DATALAB)
+http_client,tests/test_persistence_i6_intelligence_pipeline_boundary_characterization.py,66,requests.get,"assert ""requests.get("" in functions[""call_naver_api""]"
+storage,tests/test_persistence_i6b3_tb11_naver_shopping_collector_migration.py,24,INSERT INTO,"assert ""INSERT INTO online_food_price_snapshot"" in write and ""ON CONFLICT DO NOTHING"" in write"
+http_client,tests/test_persistence_i6b3_tb11_naver_shopping_collector_migration.py,29,requests.get,"assert ""requests.get("" in functions[""call_naver_api""]"
+http_client,tests/test_persistence_i7_ddl_extraction_boundary_characterization.py,40,playwright,"""app/services/kurly_review_playwright_collector.py"","
+http_client,tests/test_persistence_i7b2_runtime_ddl_detachment.py,40,playwright,"""app/services/kurly_review_playwright_collector.py"","
+storage,tools/verification/boundary/cli.py,73,json.dump,output = json.dumps(
+storage,tools/verification/integration/cli.py,110,json.dump,json.dumps(

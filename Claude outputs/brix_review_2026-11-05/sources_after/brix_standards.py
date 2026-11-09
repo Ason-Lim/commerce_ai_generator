@@ -1,0 +1,316 @@
+"""과일 종류·품종별 Brix 기준표 (2026-11-04 조사, 근거 문서: Claude Docs '과일 품종별 Brix 기준표').
+
+상품명에 적힌 Brix 숫자를 품종에 맞춰 판정하기 위한 데이터와 도우미 함수.
+fruit_engine.judge_brix 가 이 표로 품종별 Brix 가점을 정한다.
+
+구간 의미
+- floor : 공식·산지 출하(상품) 하한. 이 값 미만이면 'below'. 공개 기준이 없으면 None.
+- high  : '고당도'로 볼 하한.
+- top   : '최상'으로 볼 하한.
+- typical: 조사로 확인한 일반 수확기(또는 후숙 후) 범위. 판정에는 쓰지 않고 근거로만 남긴다.
+
+basis (high 값을 정한 근거)
+- official : 법령·고시·조례 수치
+- channel  : 산지 APC·농협·지리적표시·대형마트의 실제 선별 기준
+- research : 논문·농진청·도 농업기술원 평균값에서 정함 (평균보다 약 1 높게 고당도, 2 높게 최상)
+- estimate : 직접 자료가 없어 같은 품목의 다른 품종이나 일반 값으로 정함 — 신뢰 낮음
+
+모든 수치는 판매자 표기(상품명)와 비교하는 기준이며 실측 당도를 보증하지 않는다.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class BrixStandard:
+    fruit: str
+    variety: str | None            # None 이면 품목 공통(품종 불명) 기준
+    keywords: tuple[str, ...]      # 상품명 매칭용 (정규화 후 부분 일치)
+    high: float
+    top: float
+    floor: float | None = None
+    typical: tuple[float, float] | None = None
+    basis: str = "research"
+    note: str = ""
+    sources: tuple[str, ...] = field(default_factory=tuple)
+
+
+SOURCES: dict[str, tuple[str, str]] = {
+    # key: (설명·날짜, URL)
+    "shine_std": ("농산물 표준규격 개정, 샤인머스캣 특 18·상 16°Bx (이투데이 2023-11-21)", "https://www.etoday.co.kr/news/view/2304427"),
+    "shine_kb": ("경북 샤인머스캣 출하 대책: 16 이상만 출하 (경북매일 2026-09-02)", "https://www.kbmaeil.com/article/20260902500425"),
+    "jeju_rule18": ("감귤 조례 시행규칙 제18조: 광센서 10Brix 이상 규격 외 출하 (제주투데이 2026-09)", "https://www.ijejutoday.com/news/articleView.html?idxno=403117"),
+    "jeju_2024": ("감귤 조례 시행규칙 개정: 만감류 11.5·황금향 10, 극조생 8.5 (서귀포신문 2024-09-19)", "https://www.seogwipo.co.kr/news/articleView.html?idxno=225036"),
+    "jeju_agri133": ("제주농기원 새로운 제주농업 133호: 온주 출하 9, 우수 11, 한라봉 상품 12·우수 13", "https://agri.jeju.go.kr/files/board/%EC%A0%9C%EC%A3%BC%EB%86%8D%EC%97%85-133%ED%98%B8.pdf"),
+    "bullocho": ("이마트 불로초 감귤 12.5 이상 선별 (지디넷 2023-12-17)", "https://zdnet.co.kr/view/?no=20231217095052"),
+    "mangam_pass": ("서귀포 만감류 출하 전 품질검사 합격품 평균 12.8 (뉴스서울 2023-12-05)", "https://www.newsseoul.co.kr/news/view/1065583255403061"),
+    "house_citrus": ("하우스 감귤 첫 출하 평균 11 이상 (뉴시스 2025-06-30)", "https://www.newsis.com/view/NISX20250630_0003232951"),
+    "tyvek": ("타이벡 온주 11.1 (원예과학기술지 2014)", "https://koreascience.or.kr/article/JAKO201409864556382.pdf"),
+    "rda_2024": ("농진청 신품종: 신고 11.4, 신화 13 등 (한국농촌경제신문 2024-03-28)", "https://www.kenews.co.kr/mobile/article.html?no=84841"),
+    "apple_5": ("사과 품종 당도 비교: 후지·홍로 14~15 (소셜타임스, 농진청 자료)", "https://www.esocialtimes.com/news/articleView.html?idxno=33348"),
+    "summerking": ("썸머킹 13.7, 쓰가루보다 2.4 높음 (HortScience / 서울신문 2013-08-06)", "https://doaj.org/article/88ceb426620e40908daec0137344aef9"),
+    "hongro": ("홍로 적숙기 13.2~13.7 (2014 논문)", "https://koreascience.kr/article/JAKO201431057371140.pdf"),
+    "gamhong": ("감홍 15~16 (농진청 평가회, 2009-09-25)", "https://korea.kr/news/pressReleaseView.do?newsId=155374463"),
+    "shinano": ("시나노골드 14.2~16.2, 수확 적기 15 이상 (일본 이와테현 2007)", "https://www.naro.go.jp/org/tarc/to-noken/DB/DATA/061/061-131.pdf"),
+    "arisoo": ("아리수 15.0 (상주시농업기술센터, 경북매일 2016-08-23)", "https://kbmaeil.com/article/201608230170016"),
+    "fuji": ("후지 13.3~15.9 (2013 논문)", "https://koreascience.kr/article/JAKO201329063577244.pdf"),
+    "rubys": ("루비에스 13.8, 신화 13 (아주경제 2018-11-27)", "https://www.ajunews.com/view/20181127113019471"),
+    "pear_wonhwang": ("원황·화산 수확기별 당도 (2012 논문)", "https://koreascience.kr/article/JAKO201233356078811.pdf"),
+    "pear_chuhwang": ("추황 12.4~14.0 (2001 논문)", "https://koreascience.kr/article/JAKO200128066987728.pdf"),
+    "pear_singo": ("신고 성숙기 12.3 (2012 논문)", "https://koreascience.kr/article/JAKO201228448584425.pdf"),
+    "campbell": ("캠벨얼리 13.8~15.9, 상품 기준 15 (2017 논문)", "https://koreascience.kr/article/JAKO201726868680663.pdf"),
+    "grape_harvest": ("거봉 적정 수확 18, 흑보석 17 수확 기준 (2014 논문)", "https://koreascience.kr/article/JAKO201435640763617.pdf"),
+    "kyoho_mba": ("거봉 15.9, MBA 16.7 (2016 논문)", "https://koreascience.kr/article/JAKO201633056057042.pdf"),
+    "jaok": ("자옥 19.5, 흑보석 17.0 (2016 논문)", "https://koreascience.kr/article/JAKO201633056057005.pdf"),
+    "peach_white": ("천중도백도 평균 11.2 (2014 논문)", "https://koreascience.kr/article/JAKO201431057371132.pdf"),
+    "peach_yellow": ("장호원황도 12~14 (조선일보 2023-07-21)", "https://v.daum.net/v/20230721030354819"),
+    "peach_flat": ("납작복숭아 새빛반도 11.2 (경북매일 2025-02-13)", "https://kbmaeil.com/article/202502130909160"),
+    "sinbi": ("신비복숭아 10~13 (아이뉴스24 2024-06-24, 이마트 발표)", "https://www.inews24.com/view/1733559"),
+    "strawberry": ("설향 10.4, 금실 11.4, 죽향 12.8 (아주경제 2022-07-14, 농진청 자료)", "https://www.ajunews.com/view/20220714165122815"),
+    "maehyang": ("매향 11.1 재인용 (2017 논문)", "https://koreascience.kr/article/JAKO201719554996854.pdf"),
+    "chamoe": ("성주 참외 과육 14.3 (2016 시험 재배)", "https://koreascience.kr/article/JAKO201622341791590.pdf"),
+    "watermelon_mart": ("홈플러스 초고당도 수박 12 이상 (한국일보 2021-05-20)", "https://www.hankookilbo.com/news/article/A2021052009570005192"),
+    "watermelon_gochang": ("고창 프리미엄 수박 12 이상 (전북일보 2025-06-26)", "https://www.jjan.kr/articleAmp/20250626580053"),
+    "watermelon_eumseong": ("음성 다올찬 수박 11 이상 비파괴 선별 (2026-05-29)", "https://news.jkn.co.kr/post/921541"),
+    "melon_gokseong": ("곡성 멜론 13~15, 얼스 엘리트 15~17 (경인일보 2021-04-21)", "https://www.kyeongin.com/article/1546568"),
+    "melon_yanggu": ("양구 멜론 평균 15 이상 (MTN 2026-08-26)", "https://news.mtn.co.kr/news-detail/2026082614172046828"),
+    "melon_honiwon": ("춘천 하니원 멜론 15~20 선별 (데일리안 2023-06-22)", "https://www.dailian.co.kr/news/view/1245740/"),
+    "persimmon_gi": ("창원단감 지리적표시: 부유 13·태추 14 이상 (파이낸셜뉴스 2025-06-18)", "https://www.fnnews.com/news/202506181102298872"),
+    "fuyu": ("부유 수확기 15.1~17.5 (2021 논문)", "https://koreascience.or.kr/article/JAKO202113939669213.pdf"),
+    "zespri": ("Zespri handling guide: 그린 12~17, 스위트그린 15~20 (익었을 때)", "https://handling-guide.zespri.com/en/identify"),
+    "sungold": ("Zespri SunGold 포스터: 13.3~17.5 (익었을 때)", "https://handling-guide.zespri.com/media/1274/sun-gold-variety-poster.pdf"),
+    "haegeum": ("해금 키위 16 (더팩트 2022-11-08)", "https://news.tf.co.kr/read/ogmeta/1977558.htm"),
+    "blueberry": ("국산 하이부시 10.0~12.7 (원예원 논문 2020)", "https://koreascience.kr/article/JAKO202023258046746.pdf"),
+    "plum_apc": ("군위농협 자두 비파괴 선별 13 이상 (경북매일 2025-08-07)", "https://kbmaeil.com/article/20250807500288"),
+    "plum_daeseok": ("대석조생 완전 착색 13~14 (원예원 논문 2011)", "https://koreascience.kr/article/JAKO201106654859716.pdf"),
+    "plum_chuhui": ("추희 13.9 (농과원 논문 2016)", "https://koreascience.kr/article/JAKO201620341075887.pdf"),
+    "rainier": ("워싱턴주 레이니어 체리 가용성고형물 17% 이상 (WAC 16-414-005)", "https://lawfilesext.leg.wa.gov/law/WSR/2007/12/07-12-076.htm"),
+    "mango": ("국산 애플망고 17.3~17.7 (농과원 논문 2022) / 고흥 수확 기준 15 (2025-07-22)", "https://www.koreascience.or.kr/article/JAKO202206154559838.pdf"),
+    "tomato": ("토마토 평균 5.6, 생식용 6.5~7.5 (2011 논문)", "https://www.koreascience.or.kr/article/JAKO201118860407173.pdf"),
+    "jjapjjali": ("대저 짭짤이 롯데백화점 비파괴 선별 7 이상 (청년일보 2025-03-26)", "https://www.youthdaily.co.kr/news/article.html?no=181201"),
+    "jujube_tomato": ("대추방울토마토 신품종 9.2 (서울신문 2025-09-15)", "https://m.go.seoul.co.kr/news/2025/09/15/20250915500278"),
+    "fig": ("영암 무화과 목표 당도 약 14 (아시아경제 2021)", "https://www.asiae.co.kr/en/article/2021083009255771635"),
+}
+
+
+S = BrixStandard
+FRUIT_BRIX_STANDARDS: tuple[BrixStandard, ...] = (
+    # ── 사과 ─────────────────────────────────────────
+    S("사과", None, ("사과",), high=14, top=15, typical=(13, 15), basis="research",
+      note="품종 불명 시. 후지·홍로 평균 14 기준", sources=("apple_5",)),
+    S("사과", "쓰가루(아오리)", ("아오리", "쓰가루"), high=13, top=14, typical=(11, 12.5), basis="estimate",
+      note="절대값 자료 없음. 썸머킹 13.7보다 2.4 낮다는 비교에서 추정", sources=("summerking",)),
+    S("사과", "썸머킹", ("썸머킹", "서머킹"), high=14, top=15, typical=(13, 14), sources=("summerking",)),
+    S("사과", "홍로", ("홍로",), high=14, top=15, typical=(13.2, 14.5), sources=("hongro", "apple_5")),
+    S("사과", "감홍", ("감홍",), high=16, top=17, typical=(15, 16), sources=("gamhong",)),
+    S("사과", "시나노골드", ("시나노골드", "황금사과"), high=15, top=16, typical=(14.2, 16.2), basis="research",
+      note="국내 자료 없음, 일본 이와테현 수확 적기 15 이상", sources=("shinano",)),
+    S("사과", "시나노스위트", ("시나노스위트",), high=15, top=16, typical=(14, 15), basis="estimate",
+      note="일본 자료 1건, 판독 불확실", sources=()),
+    S("사과", "아리수", ("아리수",), high=16, top=17, typical=(15, 15.7), sources=("arisoo",)),
+    S("사과", "후지(부사)", ("부사", "후지", "후지사과", "꿀사과"), high=15, top=16, typical=(13.3, 15.9),
+      note="전국 평균 약 14", sources=("fuji", "apple_5")),
+    S("사과", "루비에스(미니사과)", ("루비에스", "미니사과"), high=15, top=16, typical=(13.5, 14), sources=("rubys",)),
+
+    # ── 배 ───────────────────────────────────────────
+    S("배", None, ("배", "나주배", "햇배", "먹골배", "안성배", "상주배", "천안배", "배선물"), high=12.5, top=13.5, typical=(11.4, 12.5),
+      note="품종 불명 시 신고 기준", sources=("rda_2024", "pear_singo")),
+    S("배", "신고", ("신고배", "신고 배", "신고"), high=12.5, top=13.5, typical=(11.4, 12.3), sources=("rda_2024", "pear_singo")),
+    S("배", "원황", ("원황",), high=13, top=14, typical=(11.5, 12.9), sources=("pear_wonhwang",)),
+    S("배", "화산", ("화산배", "화산 배"), high=13, top=14, typical=(11.3, 14.4),
+      note="늦게 딸수록 높음", sources=("pear_wonhwang",)),
+    S("배", "추황", ("추황",), high=13.5, top=14.5, typical=(12.4, 14), sources=("pear_chuhwang",)),
+    S("배", "신화", ("신화배", "신화 배"), high=14, top=15, typical=(13, 13.5), sources=("rda_2024", "rubys")),
+
+    # ── 포도 ─────────────────────────────────────────
+    S("포도", None, ("포도",), high=16, top=18, typical=(14, 16), basis="estimate",
+      note="품종 불명 시", sources=("campbell",)),
+    S("포도", "샤인머스캣", ("샤인머스캣", "샤인머스켓", "샤인 머스캣"), floor=16, high=18, top=20,
+      typical=(16, 19), basis="official",
+      note="농산물 표준규격 상 16·특 18 (2023-11 시행). top 20은 추정", sources=("shine_std", "shine_kb")),
+    S("포도", "캠벨얼리", ("캠벨", "켐벨"), floor=15, high=16, top=17, typical=(13.8, 15.9),
+      note="논문상 상품 기준 15", sources=("campbell",)),
+    S("포도", "거봉", ("거봉",), high=18, top=19, typical=(15.9, 18),
+      note="적정 수확 당도 18", sources=("kyoho_mba", "grape_harvest")),
+    S("포도", "자옥", ("자옥",), high=20, top=21, typical=(18.4, 20.4), sources=("jaok",)),
+    S("포도", "흑보석", ("흑보석",), high=18, top=19, typical=(16.3, 17.7), sources=("jaok", "grape_harvest")),
+    S("포도", "MBA(머루포도)", ("머루포도", "mba"), high=18, top=19, typical=(16, 17), basis="research",
+      note="논문 대조값 1건", sources=("kyoho_mba",)),
+
+    # ── 복숭아 ───────────────────────────────────────
+    S("복숭아", None, ("복숭아",), high=12, top=13, typical=(10, 13), basis="estimate",
+      note="품종 불명 시", sources=("peach_white", "peach_yellow")),
+    S("복숭아", "백도", ("백도", "천중도", "미백"), high=13, top=14, typical=(8.6, 13),
+      note="천중도백도 평균 11.2 (편차 큼)", sources=("peach_white",)),
+    S("복숭아", "황도", ("황도",), high=14, top=15, typical=(12, 14), sources=("peach_yellow",)),
+    S("복숭아", "신비·납작복숭아", ("신비복숭아", "납작복숭아", "반도"), high=12, top=13, typical=(10, 13),
+      note="농진청 반도 육성 목표 12", sources=("peach_flat", "sinbi")),
+    S("복숭아", "천도", ("천도",), high=12, top=13, basis="estimate",
+      note="자료 없음, 복숭아 공통 기준", sources=()),
+
+    # ── 감귤 ─────────────────────────────────────────
+    S("감귤", None, ("감귤", "밀감", "귤"), floor=9, high=11, top=12.5, typical=(9, 11), basis="official",
+      note="노지 온주 기준. 출하 9, 우수 11 (제주농기원), 10 이상 규격 외 출하 허용 (조례)",
+      sources=("jeju_agri133", "jeju_rule18", "bullocho")),
+    S("감귤", "극조생", ("극조생",), floor=8.5, high=10, top=11, basis="official",
+      note="2024 개정 시행규칙 극조생 8.5 (시행 추정)", sources=("jeju_2024",)),
+    S("감귤", "하우스 감귤", ("하우스감귤", "하우스 감귤", "하우스귤", "하우스 귤"), high=12, top=13, typical=(11, 12), basis="research",
+      note="첫 출하 평균 11 이상", sources=("house_citrus",)),
+    S("감귤", "타이벡 감귤", ("타이벡",), high=12, top=13, typical=(11, 11.2), sources=("tyvek",)),
+    S("만감류", "한라봉", ("한라봉", "부지화"), floor=11.5, high=13, top=14, typical=(12, 13),
+      basis="official", note="상품 11.5 (2024 개정, 시행 추정) · 우수 13 (제주농기원) · 합격품 평균 12.8",
+      sources=("jeju_2024", "jeju_agri133", "mangam_pass")),
+    S("만감류", "천혜향", ("천혜향",), floor=11.5, high=13, top=14, basis="official",
+      note="상품 11.5 (시행 추정), 고당도는 한라봉 우수 기준 준용", sources=("jeju_2024", "mangam_pass")),
+    S("만감류", "레드향", ("레드향",), floor=11.5, high=13, top=14, basis="official",
+      note="상품 11.5 (시행 추정), 고당도는 한라봉 우수 기준 준용", sources=("jeju_2024",)),
+    S("만감류", "카라향", ("카라향",), floor=11.5, high=13, top=14, basis="official",
+      note="상품 11.5 (시행 추정)", sources=("jeju_2024",)),
+    S("만감류", "황금향", ("황금향",), floor=10, high=12, top=13, basis="official",
+      note="상품 10 (시행 추정). high·top은 추정", sources=("jeju_2024",)),
+
+    # ── 딸기 ─────────────────────────────────────────
+    S("딸기", None, ("딸기",), high=12, top=13, typical=(10, 12.8), basis="research",
+      note="품종 불명 시", sources=("strawberry",)),
+    S("딸기", "설향", ("설향",), high=12, top=13, typical=(10, 11), sources=("strawberry",)),
+    S("딸기", "금실", ("금실",), high=13, top=14, typical=(11, 12), sources=("strawberry",)),
+    S("딸기", "죽향", ("죽향",), high=14, top=15, typical=(12.5, 13), sources=("strawberry",)),
+    S("딸기", "매향", ("매향",), high=13, top=14, typical=(11, 12), sources=("maehyang",)),
+    S("딸기", "장희", ("장희", "아키히메"), high=12, top=13, basis="estimate",
+      note="시판 당도 자료 없음, 딸기 공통", sources=()),
+    S("딸기", "킹스베리", ("킹스베리",), high=12, top=13, basis="estimate",
+      note="자료 없음, 딸기 공통", sources=()),
+
+    # ── 박과 ─────────────────────────────────────────
+    S("수박", None, ("수박",), floor=None, high=11, top=12, typical=(10, 12), basis="channel",
+      note="당도선별 11 (음성·봉화·쿠팡), 초고당도 12 (홈플러스·고창 프리미엄)",
+      sources=("watermelon_eumseong", "watermelon_mart", "watermelon_gochang")),
+    S("참외", None, ("참외",), high=14, top=15, typical=(12, 14.3), basis="estimate",
+      note="성주 시험 재배 과육 14.3 1건. 공개 선별 기준 없음", sources=("chamoe",)),
+    S("멜론", None, ("멜론", "머스크", "얼스"), high=15, top=17, typical=(13, 15), basis="channel",
+      note="양구 평균 15+, 하니원 선별 15~20, 얼스 엘리트 15~17",
+      sources=("melon_gokseong", "melon_yanggu", "melon_honiwon")),
+
+    # ── 단감 ─────────────────────────────────────────
+    S("단감", None, ("단감",), floor=13, high=16, top=17, typical=(15, 17.5), basis="channel",
+      note="창원단감 GI 13 이상. 품종 불명 시 부유 기준", sources=("persimmon_gi", "fuyu")),
+    S("단감", "부유", ("부유", "부유단감"), floor=13, high=16, top=17, typical=(15.1, 17.5), basis="channel",
+      sources=("persimmon_gi", "fuyu")),
+    S("단감", "태추", ("태추",), floor=14, high=16, top=18, basis="channel",
+      note="GI 14 이상. 평균 자료 없음, high·top 추정", sources=("persimmon_gi",)),
+
+    # ── 키위 (후숙 후 기준) ───────────────────────────
+    S("키위", None, ("키위", "참다래"), high=15, top=16, typical=(12, 17), basis="research",
+      note="후숙 후 기준. 수확 시 6~8. 품종 불명 시 그린 기준", sources=("zespri",)),
+    S("키위", "골드키위", ("골드키위", "썬골드", "선골드", "골드 키위"), high=16, top=17, typical=(13.3, 17.5),
+      note="후숙 후. Zespri 수확 기준은 Brix가 아니라 드라이매터", sources=("sungold",)),
+    S("키위", "해금", ("해금키위", "해금 키위"), high=16, top=17, typical=(13.7, 16), sources=("haegeum",)),
+    S("키위", "레드·스위트그린", ("레드키위", "스위트그린", "루비레드"), high=18, top=19, typical=(15, 20),
+      sources=("zespri",)),
+
+    # ── 기타 ─────────────────────────────────────────
+    S("블루베리", None, ("블루베리",), high=12, top=13, typical=(10, 12.7), sources=("blueberry",)),
+    S("자두", None, ("자두",), high=13, top=14, typical=(12, 14), basis="channel",
+      note="군위농협 비파괴 선별 13 이상 (대석·후무사·추희 공통)", sources=("plum_apc", "plum_daeseok")),
+    S("자두", "추희", ("추희",), high=14, top=15, typical=(13.5, 14), sources=("plum_chuhui", "plum_apc")),
+    S("체리", "레이니어", ("레이니어",), floor=17, high=19, top=21, basis="official",
+      note="워싱턴주 최소 17. high·top 추정", sources=("rainier",)),
+    S("망고", "애플망고(국산)", ("애플망고",), floor=15, high=17, top=18, typical=(17.3, 17.7),
+      basis="research", note="고흥 수확 기준 15", sources=("mango",)),
+    S("토마토", None, ("토마토",), high=7, top=8, typical=(5, 7.5), basis="research",
+      note="일반 토마토", sources=("tomato",)),
+    S("토마토", "대저 짭짤이", ("짭짤이", "대저토마토", "대저 토마토"), high=7, top=8, basis="channel",
+      note="롯데백화점 비파괴 선별 7 이상", sources=("jjapjjali",)),
+    S("토마토", "방울토마토", ("방울토마토",), high=8, top=9, typical=(5, 7), basis="research",
+      sources=("tomato",)),
+    S("토마토", "대추방울토마토", ("대추방울", "대추토마토"), high=9, top=10, typical=(8, 9.2),
+      sources=("jujube_tomato",)),
+    S("무화과", None, ("무화과",), high=14, top=16, basis="estimate",
+      note="영암 목표 당도 약 14", sources=("fig",)),
+)
+del S
+
+# 다크 체리(빙 등)·수입 망고·퍼플퀸·차랑은 근거 자료가 없어 넣지 않았다 → 판정 보류(None).
+
+
+def _norm(text: str) -> str:
+    text = (text or "").lower()
+    text = re.sub(r"[^가-힣a-z0-9\s\.]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+# 짧은 키워드는 독립된 단어일 때만 인정한다 ('배송'의 '배', '반도체'의 '반도' 방지)
+_STANDALONE = {"배", "신고", "반도", "부유", "mba", "후지", "신비"}
+
+
+def _hit(keyword: str, text: str) -> bool:
+    kw = _norm(keyword)
+    if kw not in text:
+        return False
+    if kw in _STANDALONE:
+        return re.search(rf"(?<![가-힣a-z]){re.escape(kw)}(?![가-힣a-z])", text) is not None
+    return True
+
+
+def find_standard(product_name: str) -> BrixStandard | None:
+    """상품명에서 가장 구체적인 기준을 고른다: 키워드가 긴 쪽, 같으면 품종 기준 우선."""
+    text = _norm(product_name)
+    best, best_key = None, (-1, -1)
+    for std in FRUIT_BRIX_STANDARDS:
+        for kw in std.keywords:
+            if _hit(kw, text):
+                key = (1 if std.variety else 0, len(_norm(kw)))
+                if key > best_key:
+                    best, best_key = std, key
+    return best
+
+
+def classify_brix(product_name: str, brix: float | None) -> dict:
+    """상품명의 품종에 맞춰 Brix 구간을 판정한다.
+
+    tier: 'top' | 'high' | 'normal' | 'below' | 'no_value' | 'no_standard'
+    """
+    std = find_standard(product_name)
+    if std is None:
+        return {"tier": "no_standard", "standard": None}
+    if not brix:
+        return {"tier": "no_value", "standard": std}
+    if brix >= std.top:
+        tier = "top"
+    elif brix >= std.high:
+        tier = "high"
+    elif std.floor is not None and brix < std.floor:
+        tier = "below"
+    else:
+        tier = "normal"
+    return {"tier": tier, "standard": std}
+
+
+_ITEM_NAME_KEYS = ("product_name", "raw_name", "name", "title")
+
+
+def item_product_name(item: dict) -> str:
+    """품종 판정에 쓰는 상품명 (상세 설명은 다른 상품명이 섞일 수 있어 쓰지 않는다)."""
+    item = item or {}
+    return " ".join(str(item.get(key) or "") for key in _ITEM_NAME_KEYS).strip()
+
+
+def item_brix_tier(item: dict, brix: float | None) -> tuple[str | None, BrixStandard | None]:
+    """레거시 점수(score_engine·identity_engine)용 판정.
+
+    기준표에 있는 상품: ('top'|'high'|'normal'|'below'|'no_value', 기준)
+    기준표에 없는 상품: (None, None) → 호출한 쪽은 이전 고정 구간을 그대로 쓴다.
+    """
+    judged = classify_brix(item_product_name(item), brix)
+    if judged["standard"] is None:
+        return None, None
+    return judged["tier"], judged["standard"]
+
+
+# fruit_engine.score_brix 의 가점(최대 30)과 맞춘 제안 배점.
+# 숫자 없는 '고당도' 문구는 숫자로 적은 '보통'보다 낮게 둔다.
+SUGGESTED_TIER_POINTS = {"top": 30, "high": 22, "normal": 10, "below": 0, "no_value": 0, "no_standard": None}
+SUGGESTED_TEXT_ONLY_POINTS = 6

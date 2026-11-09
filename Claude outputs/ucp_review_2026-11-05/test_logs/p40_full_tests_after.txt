@@ -1,0 +1,217 @@
+........................................................................ [  1%]
+........................................................................ [  2%]
+.......................................................s.......s........ [  4%]
+...........................F............................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+.......................................................................F [ 25%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 57%]
+........................................FF.............................. [ 58%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+.......................................................sss.............. [ 70%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+.........................................F.............................. [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+.............................FF......................................... [ 98%]
+........................................................................ [ 99%]
+.......................                                                  [100%]
+=================================== FAILURES ===================================
+_______________ test_the_trace_reaches_the_api_only_in_dev_mode ________________
+
+make = <function make.<locals>.build at 0x7b8891b07e20>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7b8891b51510>
+
+    def test_the_trace_reaches_the_api_only_in_dev_mode(make, monkeypatch):
+        from app.api import chat_routes
+    
+        svc, _http = make({"news": TREND_NEWS})
+        res = svc.handle(None, message="요즘 유행하는 요리 알려줘")
+        monkeypatch.delenv("CHAT_DEV_TRACE", raising=False)
+        assert "trace" not in json.dumps(chat_routes.public(res))
+        monkeypatch.setenv("CHAT_DEV_TRACE", "1")
+>       assert chat_routes.public(res)["blocks"][0]["data"]["trace"]["search"][0]["api"] == "openapi.naver.com/v1/search/news.json"
+E       KeyError: 'trace'
+
+tests/services/chat/test_recipe_discover.py:196: KeyError
+________________ test_at_48_pending_scope_is_exactly_two_files _________________
+
+    def test_at_48_pending_scope_is_exactly_two_files() -> None:
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+>       assert status == [f"?? {PROJECTOR_PATH}", f"?? {TEST_PATH}"]
+E       AssertionError: assert [' M app/main...gine.py', ...] == ['?? app/serv...projector.py']
+E         
+E         At index 0 diff: ' M app/main.py' != '?? app/services/cross_border/tracx_smartship_observed_route_event_history_projector.py'
+E         Left contains 153 more items, first extra item: ' M app/services/coupang_api.py'
+E         Use -v to get more diff
+
+tests/services/cross_border/test_tracx_smartship_observed_route_event_history_projector.py:541: AssertionError
+___________ test_seafood_provider_is_appended_after_legacy_providers ___________
+
+    def test_seafood_provider_is_appended_after_legacy_providers():
+        providers = list_food_providers()
+    
+        actual_order = [
+            provider.category_id
+            for provider in providers
+        ]
+    
+>       assert actual_order == [
+            *LEGACY_PROVIDER_ORDER,
+            "seafood",
+        ]
+E       AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]
+E         
+E         At index 7 diff: 'sauce' != 'herb_spice'
+E         Left contains 2 more items, first extra item: 'duck'
+E         Use -v to get more diff
+
+tests/services/food/knowledge/seafood/test_seafood_registry_integration.py:96: AssertionError
+_______________ test_legacy_provider_relative_order_is_preserved _______________
+
+    def test_legacy_provider_relative_order_is_preserved():
+        actual_order = [
+            provider.category_id
+            for provider in list_food_providers()
+            if provider.category_id != "seafood"
+        ]
+    
+>       assert actual_order == LEGACY_PROVIDER_ORDER
+E       AssertionError: assert ['fruit', 've...', 'tea', ...] == ['fruit', 've...', 'tea', ...]
+E         
+E         At index 7 diff: 'sauce' != 'herb_spice'
+E         Left contains 2 more items, first extra item: 'chicken'
+E         Use -v to get more diff
+
+tests/services/food/knowledge/seafood/test_seafood_registry_integration.py:109: AssertionError
+______________ test_f2a_has_no_external_textual_module_references ______________
+
+    def test_f2a_has_no_external_textual_module_references() -> None:
+        patterns = [
+            re.compile(r"\bapp\.services\.recommendation_engine\b"),
+            re.compile(r"\bapp\.services\.recommendation\.(?:score_engine|compare_engine)\b"),
+            re.compile(r"\bapp\.services\.ai_ranking_engine_v7\b"),
+            re.compile(r"\bfrom\s+app\.services\s+import\s+recommendation_engine\b"),
+            re.compile(r"\bfrom\s+app\.services\.recommendation\s+import\s+(?:score_engine|compare_engine)\b"),
+            re.compile(r"\bfrom\s+app\.services\s+import\s+ai_ranking_engine_v7\b"),
+        ]
+        violations: list[str] = []
+        for path in _tracked_python_files():
+            if path in CANDIDATES or path == SELF:
+                continue
+            text = (ROOT / path).read_text(encoding="utf-8")
+            if any(pattern.search(text) for pattern in patterns):
+                violations.append(path)
+>       assert not violations, f"external textual references to F2-A1 removal candidates found: {violations}"
+E       AssertionError: external textual references to F2-A1 removal candidates found: ['app/services/comparison/compare_snapshot_engine.py', 'tests/services/recommendation/test_apple_explanation_claim_copy.py']
+E       assert not ['app/services/comparison/compare_snapshot_engine.py', 'tests/services/recommendation/test_apple_explanation_claim_copy.py']
+
+tests/services/recommendation/test_f2a_legacy_surface_removal_boundary.py:102: AssertionError
+_ test_ddl_ensure_function_is_explicitly_separate_from_i5b_transaction_characterization _
+
+    def test_ddl_ensure_function_is_explicitly_separate_from_i5b_transaction_characterization() -> None:
+>       fn = _function(_tree(NAVER_SHOPPING), "ensure_collector_v2_columns")
+
+tests/test_persistence_i5b_collector_per_item_boundary_characterization.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tree = <ast.Module object at 0x7b88da5dbd00>
+name = 'ensure_collector_v2_columns'
+
+    def _function(tree: ast.Module, name: str) -> ast.FunctionDef | ast.AsyncFunctionDef:
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
+                return node
+>       raise AssertionError(f"function not found: {name}")
+E       AssertionError: function not found: ensure_collector_v2_columns
+
+tests/test_persistence_i5b_collector_per_item_boundary_characterization.py:20: AssertionError
+___ test_ddl_boundary_is_not_used_as_evidence_for_per_item_update_atomicity ____
+
+    def test_ddl_boundary_is_not_used_as_evidence_for_per_item_update_atomicity() -> None:
+>       ddl_fn = _function(_tree(NAVER_SHOPPING), "ensure_collector_v2_columns")
+
+tests/test_persistence_i5b_collector_per_item_boundary_characterization.py:168: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tree = <ast.Module object at 0x7b88da435ed0>
+name = 'ensure_collector_v2_columns'
+
+    def _function(tree: ast.Module, name: str) -> ast.FunctionDef | ast.AsyncFunctionDef:
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
+                return node
+>       raise AssertionError(f"function not found: {name}")
+E       AssertionError: function not found: ensure_collector_v2_columns
+
+tests/test_persistence_i5b_collector_per_item_boundary_characterization.py:20: AssertionError
+=========================== short test summary info ============================
+FAILED tests/services/chat/test_recipe_discover.py::test_the_trace_reaches_the_api_only_in_dev_mode
+FAILED tests/services/cross_border/test_tracx_smartship_observed_route_event_history_projector.py::test_at_48_pending_scope_is_exactly_two_files
+FAILED tests/services/food/knowledge/seafood/test_seafood_registry_integration.py::test_seafood_provider_is_appended_after_legacy_providers
+FAILED tests/services/food/knowledge/seafood/test_seafood_registry_integration.py::test_legacy_provider_relative_order_is_preserved
+FAILED tests/services/recommendation/test_f2a_legacy_surface_removal_boundary.py::test_f2a_has_no_external_textual_module_references
+FAILED tests/test_persistence_i5b_collector_per_item_boundary_characterization.py::test_ddl_ensure_function_is_explicitly_separate_from_i5b_transaction_characterization
+FAILED tests/test_persistence_i5b_collector_per_item_boundary_characterization.py::test_ddl_boundary_is_not_used_as_evidence_for_per_item_update_atomicity
+7 failed, 5267 passed, 5 skipped in 99.91s (0:01:39)

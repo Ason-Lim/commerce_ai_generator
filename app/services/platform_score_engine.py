@@ -38,11 +38,8 @@ def calculate_platform_scores(item: dict) -> dict:
         conversion_score = 78
         policy_score = 65
 
-        if item.get("is_ad"):
-            policy_score += 5
-
-        if item.get("product_url"):
-            conversion_score += 5
+        # 2026-11-01: 제휴(수수료) 여부·링크 유무로 점수를 올리지 않는다 (is_ad +5, product_url +5 제거).
+        # 고객 화면에 "수수료는 추천 순위에 반영하지 않습니다"라고 고지하고 있다.
 
     elif platform == "naver":
         trust_score = 68

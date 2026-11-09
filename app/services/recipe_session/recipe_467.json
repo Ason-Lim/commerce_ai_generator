@@ -1,0 +1,140 @@
+{
+  "basic": {
+    "CALORIE": "350Kcal",
+    "COOKING_TIME": "60분",
+    "IRDNT_CODE": "밀가루",
+    "LEVEL_NM": "보통",
+    "NATION_CODE": "3020006",
+    "NATION_NM": "이탈리아",
+    "PC_NM": "",
+    "QNT": "2인분",
+    "RECIPE_ID": "467",
+    "RECIPE_NM_KO": "크림소스파스타",
+    "ROW_NUM": "467",
+    "SUMRY": "남녀노소 좋아하는 크림파스타! 이젠 집에서도 즐겨보세요~",
+    "TY_CODE": "3010016",
+    "TY_NM": "만두/면류"
+  },
+  "ingredients": [
+    {
+      "IRDNT_CPCTY": "200g",
+      "IRDNT_NM": "파스타",
+      "IRDNT_SN": "5144",
+      "IRDNT_TY_CODE": "3060001",
+      "IRDNT_TY_NM": "주재료",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5144"
+    },
+    {
+      "IRDNT_CPCTY": "1과1/2컵",
+      "IRDNT_NM": "생크림",
+      "IRDNT_SN": "5145",
+      "IRDNT_TY_CODE": "3060001",
+      "IRDNT_TY_NM": "주재료",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5145"
+    },
+    {
+      "IRDNT_CPCTY": "1/2개",
+      "IRDNT_NM": "양파",
+      "IRDNT_SN": "5146",
+      "IRDNT_TY_CODE": "3060002",
+      "IRDNT_TY_NM": "부재료",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5146"
+    },
+    {
+      "IRDNT_CPCTY": "약간",
+      "IRDNT_NM": "후춧가루",
+      "IRDNT_SN": "5147",
+      "IRDNT_TY_CODE": "3060003",
+      "IRDNT_TY_NM": "양념",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5147"
+    },
+    {
+      "IRDNT_CPCTY": "약간",
+      "IRDNT_NM": "소금",
+      "IRDNT_SN": "5148",
+      "IRDNT_TY_CODE": "3060003",
+      "IRDNT_TY_NM": "양념",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5148"
+    },
+    {
+      "IRDNT_CPCTY": "6장",
+      "IRDNT_NM": "베이컨",
+      "IRDNT_SN": "5149",
+      "IRDNT_TY_CODE": "3060002",
+      "IRDNT_TY_NM": "부재료",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5149"
+    },
+    {
+      "IRDNT_CPCTY": "1/2컵",
+      "IRDNT_NM": "우유",
+      "IRDNT_SN": "5150",
+      "IRDNT_TY_CODE": "3060001",
+      "IRDNT_TY_NM": "주재료",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5150"
+    },
+    {
+      "IRDNT_CPCTY": "2큰술",
+      "IRDNT_NM": "버터",
+      "IRDNT_SN": "5151",
+      "IRDNT_TY_CODE": "3060002",
+      "IRDNT_TY_NM": "부재료",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5151"
+    },
+    {
+      "IRDNT_CPCTY": "1작은술",
+      "IRDNT_NM": "다진마늘",
+      "IRDNT_SN": "5152",
+      "IRDNT_TY_CODE": "3060003",
+      "IRDNT_TY_NM": "양념",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "5152"
+    }
+  ],
+  "source": "EPIS",
+  "source_recipe_id": "467",
+  "steps": [
+    {
+      "COOKING_DC": "양파는 채썰고, 베이컨은 먹기 좋은 크기로 썰어놓는다.",
+      "COOKING_NO": "1",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "2475",
+      "STEP_TIP": ""
+    },
+    {
+      "COOKING_DC": "냄비에 버터를 두르고, 양파와 다진 마늘을 넣고 볶다가 베이컨을 넣고 함께 볶아준다.",
+      "COOKING_NO": "2",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "2476",
+      "STEP_TIP": ""
+    },
+    {
+      "COOKING_DC": "②의 양파가 투명해질 정도로 볶아지면 우유, 생크림, 바질을 넣고 끓이다가 끓어 오르면 불을 약하게 줄이고, 2분 정도 더 끓여 소금, 후춧가루로 간한다.",
+      "COOKING_NO": "3",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "2477",
+      "STEP_TIP": ""
+    },
+    {
+      "COOKING_DC": "끓는 물에 소금, 식용유를 약간 넣고 파스타를 넣어 기호에 맞게 적당히 삶아 물기를 뺀다.",
+      "COOKING_NO": "4",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "2478",
+      "STEP_TIP": ""
+    },
+    {
+      "COOKING_DC": "프라이팬에 버터를 두르고, 삶아놓은 파스타면을 볶다가 끓여 놓은 소스를 버무려 접시에 담아 낸다.",
+      "COOKING_NO": "5",
+      "RECIPE_ID": "467",
+      "ROW_NUM": "2479",
+      "STEP_TIP": ""
+    }
+  ]
+}
