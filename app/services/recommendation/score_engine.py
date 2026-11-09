@@ -17,7 +17,9 @@ from collections.abc import Mapping
 
 from app.services.food_intelligence.brix_standards import item_brix_tier
 
+# 산식 식별자. 배포 계보가 검증된 버전 번호가 아니다 (SCORE_FORMULA_STATUS 참고).
 SCORE_ENGINE_VERSION = "legacy-score-2026-11-09"
+SCORE_FORMULA_STATUS = "local_unreleased"  # 로컬 커밋만 됨, 배포·검증 계보 미연결
 
 # 평점·리뷰를 점수에 넣어도 된다는 명시 표시. 검증 로그에 남은 값에만 True를 붙인다.
 RATING_SCORE_USABLE_FLAG = "rating_score_usable"
@@ -179,16 +181,12 @@ def calculate_price_value_score(item):
     return _PRICE_PER_100G_ABOVE
 
 
-def get_brix_value(item):
-    """상품에서 brix 값을 안전하게 추출
-
-    1) API/DB 필드에서 먼저 찾고
-    2) 없으면 상품명/설명 텍스트에서 15brix, 15 브릭스, 당도 15 같은 패턴을 추출합니다.
-    """
+def _brix_with_source(item) -> tuple[float, str | None]:
+    """(brix 값, 출처). 출처는 'field:<이름>' 또는 'text', 없으면 None."""
     for field in _BRIX_FIELDS:
         value = get_safe_number(item.get(field), 0)
         if value > 0:
-            return value
+            return value, f"field:{field}"
 
     text = " ".join(str(item.get(key) or "") for key in _BRIX_TEXT_FIELDS)
 
@@ -198,9 +196,18 @@ def get_brix_value(item):
         if match:
             value = float(match.group(1))
             if low <= value <= high:
-                return value
+                return value, "text"
 
-    return 0
+    return 0, None
+
+
+def get_brix_value(item):
+    """상품에서 brix 값을 안전하게 추출
+
+    1) API/DB 필드에서 먼저 찾고
+    2) 없으면 상품명/설명 텍스트에서 15brix, 15 브릭스, 당도 15 같은 패턴을 추출합니다.
+    """
+    return _brix_with_source(item)[0]
 
 
 def calculate_reaction_trust_score(item):
@@ -468,29 +475,75 @@ def calculate_mode_score(
     )
 
 
-def explain_score_inputs(item) -> dict:
-    """1단계 '추천 근거 표시'용: 이 상품 점수에 무엇이 들어갔고 무엇이 빠졌는지.
+def _rating_exclusion_reason(item) -> str:
+    if RATING_SCORE_USABLE_FLAG not in item:
+        return "flag_missing"      # 표시 없음 → 기본 제외
+    if item.get(RATING_SCORE_USABLE_FLAG) is False:
+        return "flag_false"        # 점수 사용 불가로 표시됨
+    return "flag_not_true"         # True가 아닌 값(문자열·1 등) → 불확실, 제외
 
-    점수 자체는 바꾸지 않는다. 화면·로그에서 산식 버전과 제외 사유를 보여 주는 데 쓴다.
+
+_RATING_EXCLUSION_TEXT = {
+    "flag_missing": "평점·리뷰 출처 검증 표시가 없어 점수에서 제외",
+    "flag_false": "평점·리뷰가 점수 사용 불가로 표시되어 제외",
+    "flag_not_true": "평점·리뷰 검증 표시가 True가 아니어서(불확실) 제외",
+}
+
+
+def explain_score_inputs(item) -> dict:
+    """1단계 '추천 근거 표시'용 내부 설명: 점수에 실제로 들어간 값, 기본값, 제외 사유.
+
+    점수 자체는 바꾸지 않는다. formula_status가 'local_unreleased'인 동안
+    formula_id를 배포·검증된 버전처럼 화면에 표시하지 않는다.
     """
     item = item or {}
     rating_used = rating_signals_usable(item)
+    rating, review_count = _rating_inputs(item)
+    brix, brix_source = _brix_with_source(item)
+
+    inputs_used = {
+        "brix": {"value": brix, "source": brix_source},
+        "price_per_100g": get_safe_number(item.get("price_per_100g"), 0) or None,
+        "discount": bool(item.get("final_discount_rate") or item.get("discount_rate")),
+        "price_drop_boost": get_safe_number(item.get("price_drop_boost"), 0),
+        "click_count": int(get_safe_number(item.get("click_count"), 0)),
+        "ctr_pct": get_safe_number(item.get("ctr_pct"), 0),
+        "impression_count": int(get_safe_number(item.get("impression_count"), 0)),
+        "rating": rating if rating_used else None,
+        "review_count": review_count if rating_used else None,
+    }
+
+    defaults_applied = []
+    if brix_source is None:
+        defaults_applied.append({"field": "brix", "default": 0, "reason": "필드·상품명 모두 값 없음"})
+    if inputs_used["price_per_100g"] is None:
+        defaults_applied.append({"field": "price_per_100g", "default": 0, "reason": "단위가격 없음 → 가성비 0점"})
+    if not isinstance(item.get("_identity_validation"), dict):
+        for field, key in (("brix_confidence", "_brix_confidence"),
+                           ("price_confidence", "_price_confidence")):
+            if item.get(key) is None:
+                defaults_applied.append({"field": field, "default": 50,
+                                         "reason": "Identity 캐시 없음 → 중립값"})
+
+    excluded = []
     has_rating_values = any(
         get_safe_number(item.get(key), 0) > 0 for key in ("rating", "review_count")
     )
-
-    excluded = []
     if has_rating_values and not rating_used:
+        code = _rating_exclusion_reason(item)
         excluded.append({
             "field": "rating/review_count",
-            "reason": "출처 미검증(페이지 보강 값) — 점수 제외",
+            "code": code,
+            "reason": _RATING_EXCLUSION_TEXT[code],
             "source": item.get("review_source"),
         })
 
     return {
-        "score_engine_version": SCORE_ENGINE_VERSION,
+        "formula_id": SCORE_ENGINE_VERSION,
+        "formula_status": SCORE_FORMULA_STATUS,
         "rating_used": rating_used,
-        "brix_value": get_brix_value(item),
+        "inputs_used": inputs_used,
+        "defaults_applied": defaults_applied,
         "excluded": excluded,
         "affiliate_bonus": False,
     }

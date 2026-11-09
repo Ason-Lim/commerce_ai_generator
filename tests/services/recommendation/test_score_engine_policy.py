@@ -48,6 +48,33 @@ def test_scraped_source_marker_does_not_open_rating():
     assert info["excluded"][0]["source"] == "kurly_page"
 
 
+@pytest.mark.parametrize(
+    ("extra", "code"),
+    [
+        ({}, "flag_missing"),
+        ({"rating_score_usable": False}, "flag_false"),
+        ({"rating_score_usable": None}, "flag_not_true"),
+        ({"rating_score_usable": "True"}, "flag_not_true"),
+        ({"rating_score_usable": 1}, "flag_not_true"),
+    ],
+)
+def test_each_exclusion_path_scores_like_no_rating_and_is_explained(extra, code):
+    no_rating = {k: v for k, v in BASE.items() if k not in ("rating", "review_count")}
+    item = dict(BASE, **extra)
+    for priority in ("trust", "quality", "price", "discovery"):
+        assert calculate_ai_scores(dict(item), priority) == calculate_ai_scores(dict(no_rating), priority)
+    info = se.explain_score_inputs(item)
+    assert info["inputs_used"]["rating"] is None
+    assert info["inputs_used"]["review_count"] is None
+    assert [e["code"] for e in info["excluded"]] == [code]
+
+
+@pytest.mark.parametrize("bad", ["4.9점", "", None, "n/a"])
+def test_unparseable_rating_with_flag_is_treated_as_zero(bad):
+    item = {"rating": bad, "review_count": "많음", "rating_score_usable": True}
+    assert calculate_ai_scores(item)["trust"] == 0
+
+
 def test_affiliate_flag_has_no_effect_on_scores():
     plain = calculate_ai_scores(dict(BASE), priority="price")
     for key in ("is_affiliate", "affiliate", "coupang_partners", "commission_rate"):
@@ -127,9 +154,31 @@ def test_string_numbers_do_not_raise():
 
 # --- 근거 표시 ----------------------------------------------------------------
 
-def test_explain_score_inputs_reports_version_and_no_affiliate_bonus():
+def test_explain_reports_formula_as_unreleased_and_no_affiliate_bonus():
     info = se.explain_score_inputs({"brix": 15})
-    assert info["score_engine_version"] == se.SCORE_ENGINE_VERSION
+    assert info["formula_id"] == se.SCORE_ENGINE_VERSION
+    assert info["formula_status"] == "local_unreleased"
     assert info["affiliate_bonus"] is False
     assert info["excluded"] == []
-    assert info["brix_value"] == 15
+    assert "score_engine_version" not in info  # 검증된 버전처럼 보이는 키 사용 안 함
+
+
+def test_explain_reports_actual_inputs_and_sources():
+    info = se.explain_score_inputs(dict(BASE, rating_score_usable=True, discount_rate=10))
+    used = info["inputs_used"]
+    assert used["brix"] == {"value": 14.0, "source": "field:brix"}
+    assert used["rating"] == 4.9 and used["review_count"] == 12000
+    assert used["price_per_100g"] == 600 and used["discount"] is True
+
+    text_only = se.explain_score_inputs({"title": "참외 당도 15"})
+    assert text_only["inputs_used"]["brix"] == {"value": 15.0, "source": "text"}
+
+
+def test_explain_lists_defaults_applied():
+    info = se.explain_score_inputs({})
+    fields = {d["field"]: d["default"] for d in info["defaults_applied"]}
+    assert fields == {"brix": 0, "price_per_100g": 0, "brix_confidence": 50, "price_confidence": 50}
+
+    cached = se.explain_score_inputs({"_identity_validation": {"brix_confidence": 80},
+                                      "brix": 15, "price_per_100g": 500})
+    assert cached["defaults_applied"] == []
