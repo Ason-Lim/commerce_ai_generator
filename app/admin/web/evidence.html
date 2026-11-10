@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>추천 근거 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,select,input,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
+.logout{margin-top:18px;background:transparent;border:1px solid #23364a;color:#c3d1de;border-radius:10px;padding:7px 11px;cursor:pointer;width:100%}
+main{padding:22px 26px;min-width:0;display:grid;gap:22px;align-content:start}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-width:0}
+h2{font-size:17px;margin:0 0 2px} .lede{color:var(--ink2);margin:0 0 12px;font-size:13.5px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12.5px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap;background:#fafbfc;position:sticky;top:0}
+td small{display:block;color:var(--ink3);font-size:12px}
+tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{background:var(--acc-s)}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p-ok{background:var(--ok-s);color:var(--ok)} .p-off{background:#eef1f4;color:var(--ink3)} .p-err{background:var(--ex-s);color:var(--ex)} .p-hold{background:var(--hold-s);color:var(--hold)}
+.detail{margin-top:14px;display:grid;gap:12px}
+.turns{display:grid;gap:6px;font-size:13.5px} .turn{display:flex;gap:10px} .turn span{color:var(--ink3);font-size:12px;min-width:120px}
+.k{font-size:12px;color:var(--ink3);font-weight:600;margin:0 0 4px}
+.err{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:10px 12px}
+.note{font-size:12.5px;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.sum span{border:1px solid var(--line);border-radius:10px;padding:4px 10px;font-size:12.5px;background:#fafbfc}
+.sum b{font-variant-numeric:tabular-nums}
+.cards{display:grid;gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
+.card h3{font-size:14.5px;margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h3 .rk{font-variant-numeric:tabular-nums;color:var(--ink3);font-weight:600;min-width:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.box{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;min-width:0}
+.box .k{margin:0 0 2px}
+.box ul{margin:4px 0 0;padding-left:16px}
+.warn{background:var(--hold-s);color:var(--hold);border-radius:10px;padding:8px 10px;font-size:13px}
+.bad{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:8px 10px;font-size:13px}
+.mono{font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--ink2);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence" aria-current="page">근거</a><a href="/admin/b2b">B2B</a></nav>
+  <div class="railnote">고객 화면과 같은 방식으로 고른 결과를 읽기만 해요. 순위와 선택은 바꾸지 않아요.<br><br>
+  <b>DB 예비 경로</b>는 외부 API를 부르지 않아요. <b>고객과 같은 경로</b>는 쿠팡 API를 실시간으로 불러요 — 자주 누르지 마세요.</div>
+  <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
+</aside>
+<main>
+  <section aria-labelledby="ev-h">
+    <h2 id="ev-h">추천 근거</h2>
+    <p class="lede">결과마다 경로, 화면 순위와 상위 점수, 점수에 들어간 값과 빠진 값, 가격 출처와 확인 시각, 100g당 비교 가능 여부를 나눠 보여 줘요.</p>
+    <form class="row" id="f">
+      <input id="q" value="사과" maxlength="200" aria-label="고객 문장" style="min-width:240px">
+      <select id="path" aria-label="경로"><option value="db">DB 예비 경로 (외부 호출 없음)</option><option value="auto">고객과 같은 경로 (쿠팡 실시간)</option></select>
+      <select id="pri" aria-label="모드"><option value="">모드 자동</option><option>ranking</option><option>trust</option><option>quality</option><option>price</option><option>discovery</option><option>exploration</option></select>
+      <button class="btn primary" id="go">보기</button><span class="note" id="meta"></span>
+    </form>
+    <div id="err" class="err" hidden></div>
+    <div id="head"></div>
+    <div class="cards" id="rows"><p class="note">문장을 넣고 보기를 눌러 주세요.</p></div>
+  </section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won=v=>v==null?"없음":Number(v).toLocaleString("ko-KR")+"원";
+const n=v=>v==null?"—":(Math.round(v*100)/100).toLocaleString("ko-KR");
+const PILL={live:"p-ok",recorded:"p-ok",stale:"p-hold",missing:"p-err"};
+const VERDICT={allow:"허용",allow_labelled:"표기 붙여 허용",hold:"보류",block:"차단"};
+const ok=b=>b===true?'<span class="pill p-ok">일치</span>':b===false?'<span class="pill p-err">불일치</span>':'<span class="pill p-off">확인 불가</span>';
+
+async function api(url){const r=await fetch(url);if(r.status===401){location.href="/admin/login?next=/admin/evidence";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{m=(await r.json()).detail||m}catch{}throw new Error(m)}return r.json()}
+
+function scoreBox(s){
+  if(!s||!s.available) return `<div class="box"><p class="k">점수</p>${esc(s&&s.note||"없음")}</div>`;
+  let h="";
+  if(s.kind==="canonical"){
+    h+=`<p class="k">주 경로 점수 ${esc(s.version||"")} · 최종 ${n(s.final_score)} · 다시 계산 ${n(s.recomputed)} ${ok(s.matches)}</p><ul>`;
+    h+=s.used.map(u=>`<li>${esc(u.name)} ${n(u.value)} × ${n(u.weight)} = ${n(u.contribution)}</li>`).join("");
+    h+=s.missing.map(m=>`<li class="note">${esc(m.name)}: ${esc(m.reason)}</li>`).join("")+"</ul>";
+  }else{
+    h+=`<p class="k">DB 점수 · 뷰 다시 계산 ${n(s.view_recomputed)} ${ok(s.view_matches)} · 정렬값 다시 계산 ${n(s.main_recomputed)} ${ok(s.main_matches)}</p><ul>`;
+    if(s.behavior_applied) h+=`<div class="warn">과거 행동 가점 적용 · 실제 노출 미검증 — 현재 고객 선호·인기도의 근거로 보지 마세요</div>`;
+    h+=s.steps.map(t=>`<li>${esc(t.name)}: <b class="mono">${n(t.value)}</b>${t.delta!=null?` (${t.delta>=0?"+":""}${n(t.delta)})`:""}${t.parts?` <span class="note">${esc(Object.entries(t.parts).map(([k,v])=>k+" "+n(v)).join(" · "))}</span>`:""}${t.note?`<small>${esc(t.note)}</small>`:""}</li>`).join("");
+    const b=Object.entries(s.main_boosts).filter(([,v])=>v);h+=`<li>main.py 가산: ${b.length?esc(b.map(([k,v])=>k+" "+n(v)+(s.behavior_main&&s.behavior_main[k]?" (행동 기록)":"")).join(" · ")):"없음"} → 정렬값 ${n(s.adaptive_score)}${s.behavior_main?`<small>${esc(Object.entries(s.behavior_main).map(([k,v])=>k+": "+v.source).join(" · "))}</small>`:""}</li></ul>`;
+    h+=`<small>${esc(s.note)}</small>`;
+  }
+  h+=`<details><summary>점수에서 뺀 값 ${s.excluded.length}개</summary><ul>${s.excluded.map(x=>`<li>${esc(x.field)} — ${esc(x.reason)}${x.decided?` (${esc(x.decided)} 결정)`:""}</li>`).join("")}</ul></details>`;
+  return `<div class="box">${h}</div>`;
+}
+
+function render(d){
+  $("#meta").textContent=`${d.path_label} · 검색어 '${d.query}' · ${new Date(d.generated_at).toLocaleString("ko-KR")}`;
+  const s=d.summary;
+  let head=`<div class="sum"><span>결과 <b>${s.count}</b></span><span>확인 시각 없음 <b>${s.price_missing}</b></span><span>오래된 가격 <b>${s.price_stale}</b></span><span>100g당 비교 불가 <b>${s.per100g_not_comparable}</b></span><span>문구 검사 경고 <b>${s.check_warnings}</b></span><span>점수 불일치 <b>${s.score_mismatch}</b></span><span>과거 행동 가점 적용 <b>${s.behavior_applied??0}</b></span><span class="note">근거 판정 ${esc(d.policy_version)}</span></div>`;
+  if(d.error) head+=`<div class="bad">${esc(d.error)}</div>`;
+  head+=d.audit.map(a=>`<div class="warn">${esc(a)}</div>`).join("");
+  $("#head").innerHTML=head;
+  if(!d.rows.length){$("#rows").innerHTML='<p class="note">결과가 없어요.</p>';return}
+  $("#rows").innerHTML=d.rows.map(r=>{
+    const p=r.price,c=r.per100g;
+    const up=Object.entries(r.upstream_scores||{}).map(([k,v])=>`${k} ${n(v)}`).join(" · ");
+    const ev=r.evidence.map(e=>`<li>${esc(e.field)} ${esc(e.value??"—")}${esc(e.unit||"")} · ${esc(e.method)} · ${esc(e.status)}${e.source?` · ${esc(e.source)}`:""}<small>${["display","price_compare","score"].map(u=>e.usage[u]?`${u}: ${VERDICT[e.usage[u].verdict]||e.usage[u].verdict} (${esc(e.usage[u].reason)})`:"").filter(Boolean).join(" · ")}</small></li>`).join("");
+    return `<article class="card">
+      <h3><span class="rk">${r.display_rank}</span>${esc(r.title)} <span class="pill p-off">${esc(r.section_label)}</span>${r.role?`<span class="pill p-ok">${esc(r.role)}</span>`:""}</h3>
+      ${r.checks.map(x=>`<div class="bad">검사: ${esc(x)}</div>`).join("")}
+      <div class="grid">
+        <div class="box"><p class="k">화면 순위 · 선택 이유</p>${r.display_rank}위 · ${esc(r.mall||"")}<ul>${r.why.map(w=>`<li>${esc(w)}</li>`).join("")||"<li class='note'>이유 없음 (다른 후보)</li>"}</ul><small>상위 엔진 순위 ${r.upstream_rank??"—"}${up?` · ${esc(up)}`:""}</small></div>
+        <div class="box"><p class="k">가격 <span class="pill ${PILL[p.status]}">${esc(p.label)}</span></p><b class="mono">${won(p.price)}</b><small>${esc(p.source)}${p.seen_at?` · ${esc(p.seen_at)}`:""}</small></div>
+        <div class="box"><p class="k">100g당 <span class="pill ${c.comparable?"p-ok":"p-hold"}">${c.comparable?"비교 가능":"비교 불가"}</span></p>${c.value!=null?`<b class="mono">${won(c.value)}</b>`:""}<small>${esc(c.label)}</small>${c.weight?`<small>중량 ${esc(c.weight.value??"—")}g · ${esc(c.weight.source||"")}${c.weight.raw_text?` · 원문 ${esc(c.weight.raw_text)}`:""}</small>`:""}</div>
+        ${r.rating?`<div class="box"><p class="k">평점·리뷰 <span class="pill p-off">${esc(r.rating.flag)}</span></p>${esc(r.rating.rating??"—")} · ${esc(r.rating.review_count??"—")}<small>${esc(r.rating.label)}</small></div>`:""}
+      </div>
+      ${scoreBox(r.score)}
+      <details><summary>근거 값 ${r.evidence.length}개 · 용도별 판정</summary><ul>${ev||"<li class='note'>없음</li>"}</ul></details>
+    </article>`}).join("");
+}
+
+$("#f").addEventListener("submit",async e=>{e.preventDefault();$("#err").hidden=true;$("#go").disabled=true;
+  if($("#path").value==="auto"&&!confirm("쿠팡 API를 실시간으로 호출해요. 계속할까요?")){$("#go").disabled=false;return}
+  try{const u=new URLSearchParams({q:$("#q").value,path:$("#path").value});if($("#pri").value)u.set("priority",$("#pri").value);
+    render(await api("/admin/api/evidence?"+u))}
+  catch(x){if(x.message!=="auth"){$("#err").textContent=x.message;$("#err").hidden=false}}
+  finally{$("#go").disabled=false}});
+</script>
+</body>
+</html>

@@ -349,6 +349,16 @@ def natural_language_recommendations(
     except Exception as e:
         print("[Recommendation Pipeline V8 Error]", e)
 
+    return db_fallback_recommendations(q=q, priority=priority, session_id=session_id)
+
+
+def db_fallback_recommendations(
+    q: str,
+    priority: str = "ranking",
+    session_id: str | None = None,
+):
+    """DB 예비 경로 (vw_ai_recommendation_final). 2026-11-10: 관리자 근거 화면이 주 경로 없이 부를 수 있게
+    natural_language_recommendations 에서 떼어 냄 — 내용은 그대로."""
     cleaned_query = (
         q.replace("신뢰도 높은", "")
         .replace("가성비 좋은", "")
@@ -513,6 +523,12 @@ def natural_language_recommendations(
             r.price_drop_boost,
             r.price_drop_label,
             r.price_change_pct,
+            r.trust_first_score AS view_trust_first_score,
+            r.adaptive_score AS view_adaptive_score,
+            r.adaptive_score_v3 AS view_adaptive_score_v3,
+            r.ctr_boost AS view_ctr_boost,
+            r.rank_ctr_boost AS view_rank_ctr_boost,
+            s.collected_at AS db_price_collected_at,
             COALESCE(r.impression_count, 0) AS impression_count,
             COALESCE(r.click_count, 0) AS click_count,
             COALESCE(r.ctr_pct, 0) AS ctr_pct,
@@ -532,7 +548,8 @@ def natural_language_recommendations(
                 s.benefit_price,
                 s.max_benefit_price,
                 s.price_per_100g,
-                s.weight_g
+                s.weight_g,
+                s.collected_at
             FROM online_food_price_snapshot s
             -- 2026-11-10: URL이 같은 스냅샷만 붙인다. 이전에는 상품명만 같아도 붙어
             -- 다른 판매처 가격이 결합됐다(294건 중 12건). 없으면 뷰 가격·계산값을 쓴다.
