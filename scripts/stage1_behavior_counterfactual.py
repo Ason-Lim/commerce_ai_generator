@@ -18,6 +18,8 @@ DB 예비 경로의 행동 기반 가점 6종 (2026-11-10 저장소·DB 정의 �
   탐색·발견 모드는 정렬 자체가 노출·클릭 수 기반이라 '제외 순위'를 정의할 수 없어 제외한다.
 
 사용 (Mac): .venv/bin/python scripts/stage1_behavior_counterfactual.py
+  2026-11-10 이후 main.py 는 기본으로 행동 가점을 빼므로, '지금(가점 포함)' 순위를 재현하려면
+  RANKING_USE_BEHAVIOR=1 .venv/bin/python scripts/stage1_behavior_counterfactual.py
 결과: docs/claude/stage1_behavior_counterfactual_<날짜>.md (+ var/ranking_snapshots/behavior_counterfactual.json)
 """
 from __future__ import annotations
@@ -142,6 +144,7 @@ def main():
                         moves.append({"name": r["name"], "now": i, "without": j, "boosts": _boosts(r["item"])})
             results.append({
                 "query": q, "mode": p, "candidates": len(full), "same": cur_keys == cf_keys,
+                "cur_keys": cur_keys, "cf_keys": cf_keys,
                 "same_set": set(cur_keys) == set(cf_keys),
                 "left": [{"name": r["name"], "now": cur_keys.index(r["key"]) + 1, "boosts": _boosts(r["item"])} for r in left],
                 "entered": [{"name": r["name"], "without": cf_keys.index(r["key"]) + 1, "boosts": _boosts(r["item"])}

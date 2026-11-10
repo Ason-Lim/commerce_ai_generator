@@ -66,6 +66,12 @@ NL_PATH_DB_FALLBACK = "db_fallback"
 NL_PATH_NOT_CALLED = "not_called"
 NL_PATH_UNKNOWN = "UNKNOWN"
 
+# 2026-11-10 사용자 결정: 방문·클릭(행동 신호)은 당분간 DB 예비 경로 순위에 넣지 않는다
+# (docs/claude/scoring_review_2026-11-10.md). 뷰의 click·ctr·rank_ctr·ctr_feedback 가점, main.py 의
+# mode·product 가점, 세션 행동 기반 개인화(personal·user_product·fruit_affinity·revisit·session_context)를
+# 순위에서 뺀다 — 값은 item["behavior_reference"]에 참고로 남긴다. RANKING_USE_BEHAVIOR=1 이면 예전 동작.
+RANKING_USE_BEHAVIOR = os.getenv("RANKING_USE_BEHAVIOR", "0") == "1"
+
 class RequestModel(BaseModel):
     context: str
     mode: str
@@ -487,6 +493,21 @@ def db_fallback_recommendations(
             ORDER BY r.final_recommendation_score DESC, r.product_url
         """
 
+    use_behavior = RANKING_USE_BEHAVIOR
+    discovery_filter = """
+            AND (
+                :recommendation_mode != 'discovery'
+                OR (
+                    COALESCE(r.click_count, 0) >= 1
+                    AND COALESCE(r.ctr_pct, 0) >= 5
+                )
+            )""" if use_behavior else ""
+    if not use_behavior:
+        # 행동 가점 없는 점수: 고당도 기본 점수(trust_first) + 가격 하락. 동점은 product_url 순.
+        order_by_clause = """
+            ORDER BY ranking_base_score DESC, r.product_url
+        """
+
     sql = text(f"""
         SELECT
             r.fruit_name,
@@ -524,6 +545,8 @@ def db_fallback_recommendations(
             r.price_drop_label,
             r.price_change_pct,
             r.trust_first_score AS view_trust_first_score,
+            ROUND(LEAST(100, COALESCE(r.trust_first_score, 0) + COALESCE(r.price_drop_boost, 0))::numeric, 1)
+                AS ranking_base_score,
             r.adaptive_score AS view_adaptive_score,
             r.adaptive_score_v3 AS view_adaptive_score_v3,
             r.ctr_boost AS view_ctr_boost,
@@ -577,13 +600,7 @@ def db_fallback_recommendations(
                 r.product_name ILIKE :keyword
                 OR r.fruit_name ILIKE :keyword
             )
-            AND (
-                :recommendation_mode != 'discovery'
-                OR (
-                    COALESCE(r.click_count, 0) >= 1
-                    AND COALESCE(r.ctr_pct, 0) >= 5
-                )
-            )
+            {discovery_filter}
         {order_by_clause}
         LIMIT 10
         """)
@@ -658,7 +675,7 @@ def db_fallback_recommendations(
         item["rank"] = idx
 
         base_score = float(
-            item.get("final_recommendation_score") or 0
+            (item.get("final_recommendation_score") if use_behavior else item.get("ranking_base_score")) or 0
         )
 
         mode_boost = float(
@@ -720,11 +737,22 @@ def db_fallback_recommendations(
             item,
             base_priority,
         )
-            
 
+        if not use_behavior:
+            item["behavior_reference"] = {
+                "mode_boost": mode_boost, "product_boost": product_boost, "personal_boost": personal_boost,
+                "user_product_boost": user_product_boost, "fruit_affinity_boost": fruit_affinity_boost,
+                "revisit_boost": revisit_boost, "session_context_boost": session_context_boost,
+                "final_recommendation_score": item.get("final_recommendation_score"),
+            }
+            mode_boost = product_boost = personal_boost = 0
+            user_product_boost = fruit_affinity_boost = revisit_boost = session_context_boost = 0
+
+        item["ranking_score"] = base_score
         item["context_boost"] = context_boost
 
-        item["score"] = base_score
+        # score 는 예전과 같은 뜻(뷰 최종 점수, 행동 가점 포함 — 참고값). 순위에 쓰는 값은 ranking_score.
+        item["score"] = float(item.get("final_recommendation_score") or 0)
         
         if db_price_per_100g is not None:
             price_per_100g = db_price_per_100g
@@ -777,12 +805,12 @@ def db_fallback_recommendations(
             items,
             key=lambda x: (
                 x.get("price_per_100g") or 999999,
-                -(x.get("final_recommendation_score") or 0),
+                -(x.get("ranking_score") or 0),
                 -(x.get("adaptive_score") or 0),
             ),
         )
 
-    elif base_priority == "exploration":
+    elif base_priority == "exploration" and use_behavior:
         # 탐색 추천은 아직 덜 노출된 상품과 실험 가치가 있는 상품을 우선합니다.
         items = sorted(
             items,
@@ -793,7 +821,7 @@ def db_fallback_recommendations(
             ),
         )
 
-    elif base_priority == "discovery":
+    elif base_priority == "discovery" and use_behavior:
         # 발견 추천은 클릭 반응률과 클릭 수가 있는 숨은 상품을 우선합니다.
         items = sorted(
             items,

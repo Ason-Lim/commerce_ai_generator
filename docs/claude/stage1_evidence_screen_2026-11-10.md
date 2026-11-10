@@ -57,3 +57,16 @@
 
 ## 결정 반영
 - 방문·클릭은 당분간 순위에 넣지 않고 내부 화면에서 참고로만 — 기록: `scoring_review_2026-11-10.md`. 순위에서 실제로 빼는 변경은 다음 단계(별도 전후 비교)
+
+## 후속 3 — 방문·클릭(행동 신호)을 DB 예비 경로 순위에서 제외 (2026-11-10, 순위 변경)
+- `app/main.py` `db_fallback_recommendations`: 순위 점수 `ranking_base_score = round(min(100, trust_first + price_drop_boost), 1)`, 일반 모드 정렬값 = 그 값 + 문맥 가산. 행동 가점 6종(click·ctr·rank_ctr·ctr_feedback — 뷰 / mode·product — main.py)과 세션 행동 개인화 5종(personal·user_product·fruit_affinity·revisit·session_context)은 순위에서 빼고 `behavior_reference`에 참고로 남김. 탐색·발견 모드는 정렬 자체가 행동 기반이라 기본 순서(발견 모드의 클릭 조건도 끔). `score` 필드는 예전 뜻(뷰 점수, 참고)을 유지, 순위 값은 `ranking_score`. `RANKING_USE_BEHAVIOR=1`이면 예전 동작
+- 근거 화면: '순위 점수(행동 가점 제외)'와 재계산 일치, 행동 가점은 '참고 (순위 미반영)'
+- 검증 (Mac 실데이터):
+  - **예측과 같음 45 / 다름 0** — 예전 동작을 재현(재현 검사 일치)해 만든 '가점 제외 예측'과 새 순위가 모두 같음 → 변동이 가점 제거로 설명됨 (`stage1_behavior_check_s6_no_behavior.md`)
+  - **세션 개인화 점검 같음 45 / 다름 0** — 행동 기록이 있는 실제 세션으로 불러도 세션 없음과 같은 순위 (선호 기록 세션이 1개뿐이라 표본은 작음)
+  - `/nl` s5 → s6: 같음 14 · 순서 9 · 구성 40 (63) — 발견 모드 9/9 구성 변화는 예상(원래 클릭 있는 상품만 보이던 모드) (`stage1_ranking_compare_s5_stage1_vs_s6_no_behavior.md`)
+  - 채팅 최종 순위 d2 → d3: 11개 중 8개 변화, 점수 불일치 0 · 문구 경고 0 · 과거 행동 가점 적용 0 (`stage1_display_d2_price_wording_vs_d3_no_behavior.md`)
+  - Mac 전체 테스트 5,535 통과 / 7 실패(기준선 동일) / 5 건너뜀
+- 새 순위 기준점: **s6_no_behavior**(/nl), **d3_no_behavior**(채팅 최종)
+- 관찰: '망고' 1위가 '샤인머스켓 망고포도'에서 '마하차녹 망고'로 바뀌었지만 망고포도는 목록에 남음 → 상품 관련성 수정은 별도(다음)
+- 주의: DB 예비 경로에서 상품을 구분하는 것은 이제 고당도 표기 여부·가격 하락·문맥 가산뿐이고 나머지는 동점 고정 순서 — R3(DB 경로 역할)의 근거

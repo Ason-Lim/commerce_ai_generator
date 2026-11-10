@@ -221,3 +221,37 @@ def test_behavior_boosts_are_labelled_unverified(db_items):
                  final_recommendation_score=53.3, adaptive_score=55.3)
     s = _row(_report([quiet]), "경북 사과 2kg")["score"]
     assert s["behavior_applied"] is False and s["view_matches"] is True
+
+
+def test_no_behavior_ranking_is_recomputed_and_behavior_is_reference_only(db_items):
+    """2026-11-10 결정: 행동 가점은 순위에 넣지 않고 참고로만 (main.py RANKING_USE_BEHAVIOR 기본 꺼짐)."""
+    ref = {"mode_boost": 2, "product_boost": 3, "personal_boost": 0, "user_product_boost": 0,
+           "fruit_affinity_boost": 0, "revisit_boost": 0, "session_context_boost": 0,
+           "final_recommendation_score": 63.3}
+    items = [dict(it, ranking_base_score=53.3, context_boost=1, adaptive_score=54.3, behavior_reference=ref,
+                  personal_boost=0, user_product_boost=0) for it in db_items]
+    rep = _report(items)
+    for r in rep["rows"]:
+        if r["section"] not in ("picks", "others"):
+            continue
+        s = r["score"]
+        assert s["ranking_mode"] == "no_behavior" and s["behavior_applied"] is False
+        assert s["ranking_matches"] is True and s["main_matches"] is True
+        assert s["behavior_reference_only"] is True
+        assert s["main_boosts"]["mode_boost"] == 0 and s["main_boosts"]["product_boost"] == 0
+        assert s["behavior_reference"]["product_boost"] == 3
+        assert any("행동 가점" in x["field"] for x in s["excluded"])
+    assert rep["summary"]["behavior_applied"] == 0 and rep["summary"]["score_mismatch"] == 0
+    wrong = [dict(items[0], ranking_base_score=60.0, adaptive_score=61.0)] + items[1:]
+    assert _row(_report(wrong), "경북 사과 2kg")["score"]["ranking_matches"] is False
+
+
+def test_main_ranks_without_behavior_by_default():
+    import app.main as m
+
+    assert m.RANKING_USE_BEHAVIOR is False
+    fb = inspect.getsource(m.db_fallback_recommendations)
+    assert "ORDER BY ranking_base_score DESC, r.product_url" in fb
+    assert "AS ranking_base_score" in fb and "behavior_reference" in fb
+    assert 'elif base_priority == "exploration" and use_behavior' in fb
+    assert 'elif base_priority == "discovery" and use_behavior' in fb
