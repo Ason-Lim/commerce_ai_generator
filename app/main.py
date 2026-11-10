@@ -429,6 +429,9 @@ def natural_language_recommendations(
             )
 
 
+    # 2026-11-10: 모든 정렬 끝에 r.product_url을 둔다. 동점이 많아(상위 10 결과 63개 중 55개)
+    # DB가 정한 임의 순서로 LIMIT 10에 드는 상품이 바뀌었다. 아래 Python 정렬은 안정 정렬이라
+    # 이 순서를 그대로 이어받는다.
     if use_adaptive_sort:
         order_by_clause = """
             ORDER BY
@@ -436,7 +439,8 @@ def natural_language_recommendations(
                     r.final_recommendation_score
                     + COALESCE(mb.mode_boost, 0)
                     + COALESCE(pb.product_boost, 0)
-                ) DESC
+                ) DESC,
+                r.product_url
         """
 
     elif base_priority == "discovery":
@@ -451,7 +455,8 @@ def natural_language_recommendations(
                 END,
                 COALESCE(r.ctr_pct, 0) DESC,
                 COALESCE(r.click_count, 0) DESC,
-                r.final_recommendation_score DESC
+                r.final_recommendation_score DESC,
+                r.product_url
         """
 
     elif base_priority == "exploration":
@@ -463,12 +468,13 @@ def natural_language_recommendations(
                     ELSE 2
                 END,
                 COALESCE(r.ctr_pct, 0) DESC,
-                r.final_recommendation_score DESC
+                r.final_recommendation_score DESC,
+                r.product_url
         """
 
     else:
         order_by_clause = """
-            ORDER BY r.final_recommendation_score DESC
+            ORDER BY r.final_recommendation_score DESC, r.product_url
         """
 
     sql = text(f"""
@@ -528,20 +534,9 @@ def natural_language_recommendations(
                 s.price_per_100g,
                 s.weight_g
             FROM online_food_price_snapshot s
-            WHERE
-                (
-                    s.product_url = r.product_url
-                    OR s.product_name = r.product_name
-                )
-                AND (
-                    s.mall_name = r.seller_name
-                    OR s.mall_name = r.platform_name
-                    OR r.seller_name ILIKE '%' || s.mall_name || '%'
-                    OR s.mall_name ILIKE '%' || r.seller_name || '%'
-                    OR r.platform_name ILIKE '%' || s.mall_name || '%'
-                    OR s.mall_name ILIKE '%' || r.platform_name || '%'
-                    OR s.product_name = r.product_name
-                )
+            -- 2026-11-10: URL이 같은 스냅샷만 붙인다. 이전에는 상품명만 같아도 붙어
+            -- 다른 판매처 가격이 결합됐다(294건 중 12건). 없으면 뷰 가격·계산값을 쓴다.
+            WHERE s.product_url = r.product_url
             ORDER BY s.collected_at DESC NULLS LAST, s.id DESC
             LIMIT 1
         ) s ON TRUE
