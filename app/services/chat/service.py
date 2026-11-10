@@ -852,6 +852,27 @@ _KIND_EXCLUDE = {
 }
 
 
+# 2026-11-10: 검색어를 품은 '다른 품목' 이름 — '망고' 검색에 '샤인머스켓 망고포도'(포도 품종)·'망고스틴'이 섞였다.
+# 상품명 속 검색어가 모두 이런 이름 안에서만 나오면 관련 없는 상품으로 본다 (띄어 쓴 '망고 포도'도 같은 이름으로 봄).
+_LOOKALIKE = {
+    "망고": ("망고포도", "망고스틴", "망고샤인"),
+    "사과": ("사과대추",),
+    "레몬": ("레몬그라스", "레몬밤"),
+}
+
+
+def _only_lookalike(word: str, title: str) -> bool:
+    names = _LOOKALIKE.get(word)
+    if not names:
+        return False
+    flat = re.sub(r"\s+", "", title or "")
+    if word not in flat:
+        return False
+    for name in names:
+        flat = flat.replace(name, "")
+    return word not in flat
+
+
 def _single_char_hit(char: str, title: str) -> bool:
     """한 글자 품목('배'·'귤'·'굴'·'김')은 낱말로만 찾는다 — '무료배송'의 '배'는 아니다."""
     return bool(re.search(rf"(?<![가-힣]){char}|{char}(?=\s|\d|$|[\]),/])", title or ""))
@@ -862,6 +883,8 @@ def relevant(title: str, terms: list[str]) -> bool:
     have = _bigrams(title)
     for term in terms:
         word = re.sub(r"\s+", "", term or "")
+        if _only_lookalike(word, title):
+            continue
         if len(word) == 1:
             if _single_char_hit(word, title):
                 return True

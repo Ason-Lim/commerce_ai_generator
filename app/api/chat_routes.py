@@ -19,7 +19,7 @@ import logging
 import os
 import threading
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import RedirectResponse, Response
 from pydantic import BaseModel, Field
 
@@ -209,8 +209,19 @@ def recipe_image(recipe_id: str = Query(..., max_length=64), v: str = Query(...,
     return Response(content=data, media_type=mime, headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
+def _click_query(request: Request | None) -> str:
+    """클릭 기록의 query 값. 관리자로 로그인한 브라우저(운영자 본인 시험)는 'chat_internal' 로 따로 남긴다
+    (2026-11-10 R0 — 행동 신호 재도입 조건 2: 우리 테스트 세션을 걸러 낸다)."""
+    try:
+        from app.admin.auth import request_ok
+
+        return "chat_internal" if request is not None and request_ok(request) else "chat"
+    except Exception:  # noqa: BLE001
+        return "chat"
+
+
 @router.post("/api/click", status_code=204)
-def click(body: ClickIn, service: ChatService = Depends(get_chat_service)):
+def click(body: ClickIn, request: Request, service: ChatService = Depends(get_chat_service)):
     """바로 이동 링크(네이버 쇼핑커넥트)의 클릭 기록 (2026-11-02).
 
     링크는 브라우저가 발급 주소 그대로 연다 — 이 호출은 이동과 무관한 기록용(sendBeacon)이다.
@@ -220,7 +231,7 @@ def click(body: ClickIn, service: ChatService = Depends(get_chat_service)):
         try:
             from app.services.analytics_logger import log_product_click
 
-            log_product_click(session_id=body.session_id, query="chat", product={
+            log_product_click(session_id=body.session_id, query=_click_query(request), product={
                 "product_url": item["url"], "product_name": item.get("title"), "mall_name": item.get("mall"),
                 "rank": body.rank, "selected_section": "chat_direct", "recommendation_mode": "ranking"})
         except Exception:  # noqa: BLE001 — 기록 실패가 화면에 영향을 주지 않는다
@@ -229,21 +240,22 @@ def click(body: ClickIn, service: ChatService = Depends(get_chat_service)):
 
 
 @router.get("/go/{sid}/k/{key}")
-def go_key(sid: str, key: str, service: ChatService = Depends(get_chat_service)):
-    return _redirect(sid, service.resolve_go_key(sid, key), shown=service.seen_card(sid, key))
+def go_key(sid: str, key: str, request: Request, service: ChatService = Depends(get_chat_service)):
+    return _redirect(sid, service.resolve_go_key(sid, key), shown=service.seen_card(sid, key), request=request)
 
 
 @router.get("/go/s/{owner}/{key}")
-def go_saved(owner: str, key: str, service: ChatService = Depends(get_chat_service)):
-    return _redirect(owner, service.resolve_saved_go(owner, key), section="saved")
+def go_saved(owner: str, key: str, request: Request, service: ChatService = Depends(get_chat_service)):
+    return _redirect(owner, service.resolve_saved_go(owner, key), section="saved", request=request)
 
 
 @router.get("/go/{sid}/{rank}")
-def go(sid: str, rank: int, service: ChatService = Depends(get_chat_service)):
-    return _redirect(sid, service.resolve_go(sid, rank), shown=service.shown_item(sid, rank))
+def go(sid: str, rank: int, request: Request, service: ChatService = Depends(get_chat_service)):
+    return _redirect(sid, service.resolve_go(sid, rank), shown=service.shown_item(sid, rank), request=request)
 
 
-def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | None = None):
+def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | None = None,
+              request: Request | None = None):
     if url is None:
         return RedirectResponse("/")
     try:
@@ -253,7 +265,7 @@ def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | No
         # 클릭 기록까지 되돌려졌다 — 채팅 /go 클릭이 하나도 남지 않은 원인. 보여 준 상품의 이름·판매처를 넘기고,
         # 모르면 URL 을 이름 자리에 둔다.
         shown = shown if shown and shown.get("url") == url else {}
-        log_product_click(session_id=sid, query="chat", product={
+        log_product_click(session_id=sid, query=_click_query(request), product={
             "product_url": url, "product_name": shown.get("title") or url, "mall_name": shown.get("mall"),
             "rank": shown.get("rank"), "selected_section": section, "recommendation_mode": "ranking"})
     except Exception:  # noqa: BLE001 — logging must not block the redirect

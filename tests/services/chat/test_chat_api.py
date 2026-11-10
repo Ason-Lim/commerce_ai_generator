@@ -84,6 +84,19 @@ def test_go_click_log_carries_the_shown_product_name(client, monkeypatch):
     assert product["rank"] == 1 and product["selected_section"] == "chat"
 
 
+def test_admin_browser_clicks_are_marked_internal(client, monkeypatch):
+    """2026-11-10 (R0): 관리자로 로그인한 브라우저의 클릭은 query='chat_internal' 로 따로 남긴다."""
+    logged = []
+    import app.services.analytics_logger as al
+    monkeypatch.setattr(al, "log_product_click", lambda **kw: logged.append(kw))
+    monkeypatch.setattr("app.admin.auth.expected_token", lambda: "test-admin-token")
+    sid = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()["session_id"]
+    client.get(f"/go/{sid}/1", follow_redirects=False)
+    assert logged[-1]["query"] == "chat"
+    client.get(f"/go/{sid}/1", follow_redirects=False, headers={"X-Access-Token": "test-admin-token"})
+    assert logged[-1]["query"] == "chat_internal"
+
+
 def test_go_redirects_only_to_items_shown_in_that_session(client):
     sid = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()["session_id"]
     r = client.get(f"/go/{sid}/1", follow_redirects=False)
