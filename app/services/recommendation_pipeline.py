@@ -246,6 +246,25 @@ def enrich_response_compatibility(item: dict, query: str, priority: str) -> dict
     return result
 
 
+def canonical_score_detail(score) -> dict:
+    """RecommendationScoreResult → 근거 화면용 dict (있는 근거·실제 가중치·설정 가중치)."""
+    from app.services.recommendation.scoring import get_priority_weights
+
+    components = score.components
+    available = components.available
+    mapping = components.as_mapping()
+    names = sorted(available) if available is not None else sorted(mapping)
+    return {
+        "final_score": score.final_score,
+        "priority": getattr(score.priority, "value", str(score.priority)),
+        "components": {name: mapping.get(name) for name in names},
+        "weights": dict(score.weights),
+        "configured": sorted(get_priority_weights(score.priority)),
+        "warnings": list(score.warnings),
+        "version": score.version,
+    }
+
+
 def canonical_result_to_compatibility_response(
     result: RecommendationResult,
     *,
@@ -274,6 +293,9 @@ def canonical_result_to_compatibility_response(
         cross_border = candidate.metadata.get("cross_border")
         if cross_border:
             item["cross_border"] = dict(cross_border)
+
+        # 2026-11-10 (1단계 근거 화면): 순위를 정한 canonical 점수의 구성. 고객 카드는 읽지 않는 키.
+        item["canonical_score"] = canonical_score_detail(candidate.score)
 
         # Compatibility enrichment must not replace the canonical rank.
         item["rank"] = candidate.rank

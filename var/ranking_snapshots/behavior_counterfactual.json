@@ -1,0 +1,5170 @@
+{
+ "run_at": "2026-11-10T07:18:50+00:00",
+ "results": [
+  {
+   "query": "감귤",
+   "mode": "ranking",
+   "candidates": 19,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~6",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "감귤",
+   "mode": "trust",
+   "candidates": 19,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~6",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "감귤",
+   "mode": "quality",
+   "candidates": 19,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~6",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "감귤",
+   "mode": "price",
+   "candidates": 19,
+   "same": true,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11725772694",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11678315321"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11725772694",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11678315321"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "감귤",
+   "mode": "trust_adaptive",
+   "candidates": 19,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/10392836181",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/11329943260",
+    "https://smartstore.naver.com/main/products/11443231652",
+    "https://smartstore.naver.com/main/products/11450146273",
+    "https://smartstore.naver.com/main/products/11494540559",
+    "https://smartstore.naver.com/main/products/11639051868",
+    "https://smartstore.naver.com/main/products/11678315321",
+    "https://smartstore.naver.com/main/products/11725772694"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~6",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "딸기",
+   "mode": "ranking",
+   "candidates": 21,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "딸기",
+   "mode": "trust",
+   "candidates": 21,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "딸기",
+   "mode": "quality",
+   "candidates": 21,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "딸기",
+   "mode": "price",
+   "candidates": 21,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11951418304",
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11951418304",
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "딸기",
+   "mode": "trust_adaptive",
+   "candidates": 21,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12006522460",
+    "https://smartstore.naver.com/main/products/9620443742",
+    "https://affiliate.homeplus.co.kr/external/bridge?channelId=1000006&targetUrl=https%3A%2F%2Ffront.homeplus.co.kr%2Fitem%3FitemNo%3D000985031%26storeType%3DHYPER",
+    "https://shopping.naver.com/outlink/itemdetail/1000155259",
+    "https://shopping.naver.com/outlink/itemdetail/8377489797",
+    "https://smartstore.naver.com/main/products/11090374472",
+    "https://smartstore.naver.com/main/products/11374654409",
+    "https://smartstore.naver.com/main/products/11634856658",
+    "https://smartstore.naver.com/main/products/11693695996",
+    "https://smartstore.naver.com/main/products/11951418304"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "망고",
+   "mode": "ranking",
+   "candidates": 95,
+   "same": false,
+   "cur_keys": [
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024",
+    "https://smartstore.naver.com/main/products/10084879296",
+    "https://smartstore.naver.com/main/products/10099721202",
+    "https://smartstore.naver.com/main/products/10302641759",
+    "https://smartstore.naver.com/main/products/10493062194"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입",
+     "now": 4,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3",
+     "now": 5,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상",
+     "now": 6,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "제주 애플 망고 3kg 고당도 특품 프리미엄 선물세트 ",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "항공수입 고당도 망고 남독마이 캄보디아 생망고 애플망고",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "골드 망고 태국 무지개 망고 애플 마하차녹 고당도 항공",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 페루 브라질 대만 무지개 태",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "태국산 고당도 씨암 망고 2종",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특",
+     "now": 3,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "(신선집중) 10%/ 고당도 마하차녹 무지개 망고 대과",
+     "now": 7,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 8,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 9,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "프리미엄 고당도 피치 망고",
+     "now": 10,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 5
+  },
+  {
+   "query": "망고",
+   "mode": "trust",
+   "candidates": 95,
+   "same": false,
+   "cur_keys": [
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024",
+    "https://smartstore.naver.com/main/products/10084879296",
+    "https://smartstore.naver.com/main/products/10099721202",
+    "https://smartstore.naver.com/main/products/10302641759",
+    "https://smartstore.naver.com/main/products/10493062194"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입",
+     "now": 4,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3",
+     "now": 5,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상",
+     "now": 6,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "제주 애플 망고 3kg 고당도 특품 프리미엄 선물세트 ",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공수입 고당도 망고 남독마이 캄보디아 생망고 애플망고",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "골드 망고 태국 무지개 망고 애플 마하차녹 고당도 항공",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 페루 브라질 대만 무지개 태",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "태국산 고당도 씨암 망고 2종",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특",
+     "now": 3,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "(신선집중) 10%/ 고당도 마하차녹 무지개 망고 대과",
+     "now": 7,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 8,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 9,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "프리미엄 고당도 피치 망고",
+     "now": 10,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 5
+  },
+  {
+   "query": "망고",
+   "mode": "quality",
+   "candidates": 95,
+   "same": false,
+   "cur_keys": [
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024",
+    "https://smartstore.naver.com/main/products/10084879296",
+    "https://smartstore.naver.com/main/products/10099721202",
+    "https://smartstore.naver.com/main/products/10302641759",
+    "https://smartstore.naver.com/main/products/10493062194"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입",
+     "now": 4,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3",
+     "now": 5,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상",
+     "now": 6,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "제주 애플 망고 3kg 고당도 특품 프리미엄 선물세트 ",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공수입 고당도 망고 남독마이 캄보디아 생망고 애플망고",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "골드 망고 태국 무지개 망고 애플 마하차녹 고당도 항공",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 페루 브라질 대만 무지개 태",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "태국산 고당도 씨암 망고 2종",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특",
+     "now": 3,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "(신선집중) 10%/ 고당도 마하차녹 무지개 망고 대과",
+     "now": 7,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 8,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 9,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "프리미엄 고당도 피치 망고",
+     "now": 10,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 5
+  },
+  {
+   "query": "망고",
+   "mode": "price",
+   "candidates": 95,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://smartstore.naver.com/main/products/10000980024"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10493062194",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://smartstore.naver.com/main/products/10084879296",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://smartstore.naver.com/main/products/10000980024",
+    "https://smartstore.naver.com/main/products/10099721202",
+    "https://smartstore.naver.com/main/products/10302641759"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3",
+     "now": 5,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상",
+     "now": 6,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입",
+     "now": 7,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "항공직송 고당도 애플 망고 페루 브라질 대만 무지개 태",
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "제주 애플 망고 3kg 고당도 특품 프리미엄 선물세트 ",
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "항공수입 고당도 망고 남독마이 캄보디아 생망고 애플망고",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "골드 망고 태국 무지개 망고 애플 마하차녹 고당도 항공",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "(신선집중) 10%/ 고당도 마하차녹 무지개 망고 대과",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 8,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "태국산 고당도 씨암 망고 2종",
+     "now": 9,
+     "without": 7,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "프리미엄 고당도 피치 망고",
+     "now": 10,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 5
+  },
+  {
+   "query": "망고",
+   "mode": "trust_adaptive",
+   "candidates": 95,
+   "same": false,
+   "cur_keys": [
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/13401859375",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=2416857971&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10000980024",
+    "https://smartstore.naver.com/main/products/10084879296",
+    "https://smartstore.naver.com/main/products/10099721202",
+    "https://smartstore.naver.com/main/products/10302641759",
+    "https://smartstore.naver.com/main/products/10493062194"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입",
+     "now": 4,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3",
+     "now": 5,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상",
+     "now": 6,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "제주 애플 망고 3kg 고당도 특품 프리미엄 선물세트 ",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공수입 고당도 망고 남독마이 캄보디아 생망고 애플망고",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "골드 망고 태국 무지개 망고 애플 마하차녹 고당도 항공",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "항공직송 고당도 애플 망고 페루 브라질 대만 무지개 태",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "태국산 고당도 씨암 망고 2종",
+     "now": 1,
+     "without": 3,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특",
+     "now": 3,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "(신선집중) 10%/ 고당도 마하차녹 무지개 망고 대과",
+     "now": 7,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 8,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 9,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "프리미엄 고당도 피치 망고",
+     "now": 10,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 5
+  },
+  {
+   "query": "멜론",
+   "mode": "ranking",
+   "candidates": 7,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "멜론",
+   "mode": "trust",
+   "candidates": 7,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "멜론",
+   "mode": "quality",
+   "candidates": 7,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "멜론",
+   "mode": "price",
+   "candidates": 7,
+   "same": true,
+   "cur_keys": [
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+    "https://smartstore.naver.com/main/products/12422905318"
+   ],
+   "cf_keys": [
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+    "https://smartstore.naver.com/main/products/12422905318"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "멜론",
+   "mode": "trust_adaptive",
+   "candidates": 7,
+   "same": true,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/12422905318",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 0
+  },
+  {
+   "query": "배",
+   "mode": "ranking",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 5kg (",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "나주배대장 가정용 5kg 6-8과 고당도 가정용 알뜰배",
+     "now": 9,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 10,
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "배",
+   "mode": "trust",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 5kg (",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "나주배대장 가정용 5kg 6-8과 고당도 가정용 알뜰배",
+     "now": 9,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 10,
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "배",
+   "mode": "quality",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 5kg (",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "나주배대장 가정용 5kg 6-8과 고당도 가정용 알뜰배",
+     "now": 9,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 10,
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "배",
+   "mode": "price",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs"
+   ],
+   "cf_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 5,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 4,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "배",
+   "mode": "trust_adaptive",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 5kg (",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "신고배 신고 배 가정용 15kg(26-30과) 고당도배",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "나주배대장 가정용 5kg 6-8과 고당도 가정용 알뜰배",
+     "now": 9,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 10,
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "사과",
+   "mode": "ranking",
+   "candidates": 56,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/5988163500",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "https://smartstore.naver.com/main/products/3501370371",
+    "https://smartstore.naver.com/main/products/6310419850",
+    "https://smartstore.naver.com/main/products/9180281241",
+    "https://smartstore.naver.com/main/products/9380057523",
+    "https://smartstore.naver.com/main/products/9566709327",
+    "https://smartstore.naver.com/main/products/12324216201",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/12832668753"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/5176547050",
+    "https://smartstore.naver.com/main/products/10206580008",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10592758967",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/11044587810"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠",
+     "now": 1,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 2,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우",
+     "now": 3,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "now": 4,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황",
+     "now": 5,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "now": 6,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난",
+     "now": 7,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "now": 8,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍",
+     "now": 10,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 ",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "사과 4kg 20과 애플리데이 세척 사과 고당도 가정용",
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "시나노골드 햇 경북 가정용 노란 사과 황금 사과 고당도",
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": -5.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "고당도 사과 세척사과 과일",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "부사 엔비사과 고당도 꿀사과 감홍 홍로 시나노골드 엔부",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "프리미엄 재즈 사과 4kg, 고당도 미니황옥 사과 4k",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 ",
+     "now": 9,
+     "without": 3,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 3.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 10
+  },
+  {
+   "query": "사과",
+   "mode": "trust",
+   "candidates": 56,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/5988163500",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "https://smartstore.naver.com/main/products/3501370371",
+    "https://smartstore.naver.com/main/products/6310419850",
+    "https://smartstore.naver.com/main/products/9180281241",
+    "https://smartstore.naver.com/main/products/9380057523",
+    "https://smartstore.naver.com/main/products/9566709327",
+    "https://smartstore.naver.com/main/products/12324216201",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/12832668753"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/5176547050",
+    "https://smartstore.naver.com/main/products/10206580008",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10592758967",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/11044587810"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠",
+     "now": 1,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 2,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우",
+     "now": 3,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "now": 4,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황",
+     "now": 5,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "now": 6,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난",
+     "now": 7,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "now": 8,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍",
+     "now": 10,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 ",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "사과 4kg 20과 애플리데이 세척 사과 고당도 가정용",
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "시나노골드 햇 경북 가정용 노란 사과 황금 사과 고당도",
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": -5.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 사과 세척사과 과일",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "부사 엔비사과 고당도 꿀사과 감홍 홍로 시나노골드 엔부",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "프리미엄 재즈 사과 4kg, 고당도 미니황옥 사과 4k",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 ",
+     "now": 9,
+     "without": 3,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 3.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 10
+  },
+  {
+   "query": "사과",
+   "mode": "quality",
+   "candidates": 56,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/5988163500",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "https://smartstore.naver.com/main/products/3501370371",
+    "https://smartstore.naver.com/main/products/6310419850",
+    "https://smartstore.naver.com/main/products/9180281241",
+    "https://smartstore.naver.com/main/products/9380057523",
+    "https://smartstore.naver.com/main/products/9566709327",
+    "https://smartstore.naver.com/main/products/12324216201",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/12832668753"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/5176547050",
+    "https://smartstore.naver.com/main/products/10206580008",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10592758967",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/11044587810"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠",
+     "now": 1,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 2,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우",
+     "now": 3,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "now": 4,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황",
+     "now": 5,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "now": 6,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난",
+     "now": 7,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "now": 8,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍",
+     "now": 10,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 ",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "사과 4kg 20과 애플리데이 세척 사과 고당도 가정용",
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "시나노골드 햇 경북 가정용 노란 사과 황금 사과 고당도",
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": -5.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도 사과 세척사과 과일",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "부사 엔비사과 고당도 꿀사과 감홍 홍로 시나노골드 엔부",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "프리미엄 재즈 사과 4kg, 고당도 미니황옥 사과 4k",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 ",
+     "now": 9,
+     "without": 3,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 3.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 10
+  },
+  {
+   "query": "사과",
+   "mode": "price",
+   "candidates": 56,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/9180281241",
+    "https://smartstore.naver.com/main/products/9566709327",
+    "https://smartstore.naver.com/main/products/3501370371",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "https://smartstore.naver.com/main/products/9380057523",
+    "https://smartstore.naver.com/main/products/5988163500",
+    "https://smartstore.naver.com/main/products/12324216201",
+    "https://smartstore.naver.com/main/products/6310419850",
+    "https://smartstore.naver.com/main/products/12832668753"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/11044587810",
+    "https://shopping.naver.com/outlink/itemdetail/5176547050",
+    "https://smartstore.naver.com/main/products/10206580008",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10592758967"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황",
+     "now": 1,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난",
+     "now": 2,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우",
+     "now": 3,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 5,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "now": 6,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠",
+     "now": 7,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "now": 8,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "now": 9,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍",
+     "now": 10,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 ",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇",
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "프리미엄 재즈 사과 4kg, 고당도 미니황옥 사과 4k",
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "사과 4kg 20과 애플리데이 세척 사과 고당도 가정용",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "시나노골드 햇 경북 가정용 노란 사과 황금 사과 고당도",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": -5.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도 사과 세척사과 과일",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "부사 엔비사과 고당도 꿀사과 감홍 홍로 시나노골드 엔부",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [],
+   "with_behavior_in_top10": 10
+  },
+  {
+   "query": "사과",
+   "mode": "trust_adaptive",
+   "candidates": 56,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/5988163500",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "https://smartstore.naver.com/main/products/3501370371",
+    "https://smartstore.naver.com/main/products/6310419850",
+    "https://smartstore.naver.com/main/products/9180281241",
+    "https://smartstore.naver.com/main/products/9380057523",
+    "https://smartstore.naver.com/main/products/9566709327",
+    "https://smartstore.naver.com/main/products/12324216201",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/12832668753"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=1898683352&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/5176547050",
+    "https://smartstore.naver.com/main/products/10206580008",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10592758967",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/11044587810"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠",
+     "now": 1,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 2,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우",
+     "now": 3,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "now": 4,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황",
+     "now": 5,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "now": 6,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난",
+     "now": 7,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "now": 8,
+     "boosts": {
+      "click": 15.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍",
+     "now": 10,
+     "boosts": {
+      "click": 5.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "털보네사과 고당도 꿀사과 9kg   맛있는 털보네 부사",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 ",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "사과 4kg 20과 애플리데이 세척 사과 고당도 가정용",
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "시나노골드 햇 경북 가정용 노란 사과 황금 사과 고당도",
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": -5.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 사과 세척사과 과일",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "부사 엔비사과 고당도 꿀사과 감홍 홍로 시나노골드 엔부",
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇",
+     "without": 9,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "프리미엄 재즈 사과 4kg, 고당도 미니황옥 사과 4k",
+     "without": 10,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 ",
+     "now": 9,
+     "without": 3,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 3.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 10
+  },
+  {
+   "query": "샤인머스캣",
+   "mode": "ranking",
+   "candidates": 64,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "cf_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10628319652",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "김천 고당도 샤인머스켓 2kg",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "포도 샤인머스켓 1kg 특(1등급) 고당도 2024햇 ",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 총 1kg 내외 (950g~1.1kg",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 2kg 3 4 5송이 안전포장",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 프리미엄 2kg",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "샤인머스캣",
+   "mode": "trust",
+   "candidates": 64,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "cf_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10628319652",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "김천 고당도 샤인머스켓 2kg",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "포도 샤인머스켓 1kg 특(1등급) 고당도 2024햇 ",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 총 1kg 내외 (950g~1.1kg",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 2kg 3 4 5송이 안전포장",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 프리미엄 2kg",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "샤인머스캣",
+   "mode": "quality",
+   "candidates": 64,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "cf_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10628319652",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "김천 고당도 샤인머스켓 2kg",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "포도 샤인머스켓 1kg 특(1등급) 고당도 2024햇 ",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 총 1kg 내외 (950g~1.1kg",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 2kg 3 4 5송이 안전포장",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 프리미엄 2kg",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "샤인머스캣",
+   "mode": "price",
+   "candidates": 64,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://smartstore.naver.com/main/products/10792114005",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020"
+   ],
+   "cf_keys": [
+    "https://smartstore.naver.com/main/products/10628319652",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://smartstore.naver.com/main/products/10792114005",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "김천 고당도 샤인머스켓 2kg",
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "샤인머스캣",
+   "mode": "trust_adaptive",
+   "candidates": 64,
+   "same": false,
+   "cur_keys": [
+    "https://smartstore.naver.com/main/products/12270862147",
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "cf_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=A566957889&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4478087419&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://shopping.naver.com/outlink/itemdetail/11238826315",
+    "https://shopping.naver.com/outlink/itemdetail/5043197610",
+    "https://shopping.naver.com/outlink/itemdetail/9174586216",
+    "https://smartstore.naver.com/main/products/10588863904",
+    "https://smartstore.naver.com/main/products/10628319652",
+    "https://smartstore.naver.com/main/products/10691306562",
+    "https://smartstore.naver.com/main/products/10763890554",
+    "https://smartstore.naver.com/main/products/10792114005"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 ",
+     "now": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "김천 고당도 샤인머스켓 2kg",
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "포도 샤인머스켓 1kg 특(1등급) 고당도 2024햇 ",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 총 1kg 내외 (950g~1.1kg",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도샤인머스켓 수출용 프리미엄 선물용 샤인머스캣 망고",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 2kg 3 4 5송이 안전포장",
+     "now": 5,
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "수출용 고당도 샤인머스켓 농장 망고포도 선물세트 4kg",
+     "now": 6,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 샤인머스켓 프리미엄 2kg",
+     "now": 7,
+     "without": 6,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "고당도 사과",
+   "mode": "ranking",
+   "candidates": 8,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+    "https://smartstore.naver.com/main/products/9171987704"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://smartstore.naver.com/main/products/9171987704",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "now": 7,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "고당도 사과 (품종 부사)",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 8
+  },
+  {
+   "query": "고당도 사과",
+   "mode": "trust",
+   "candidates": 8,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+    "https://smartstore.naver.com/main/products/9171987704"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://smartstore.naver.com/main/products/9171987704",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "now": 7,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 사과 (품종 부사)",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 8
+  },
+  {
+   "query": "고당도 사과",
+   "mode": "quality",
+   "candidates": 8,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+    "https://smartstore.naver.com/main/products/9171987704"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://smartstore.naver.com/main/products/9171987704",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "now": 7,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "고당도 사과 (품종 부사)",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 8
+  },
+  {
+   "query": "고당도 사과",
+   "mode": "price",
+   "candidates": 8,
+   "same": true,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://smartstore.naver.com/main/products/9171987704"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://smartstore.naver.com/main/products/9171987704"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [],
+   "with_behavior_in_top10": 8
+  },
+  {
+   "query": "고당도 사과",
+   "mode": "trust_adaptive",
+   "candidates": 8,
+   "same": false,
+   "cur_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+    "https://smartstore.naver.com/main/products/9171987704"
+   ],
+   "cf_keys": [
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://smartstore.naver.com/main/products/10444139230",
+    "https://smartstore.naver.com/main/products/10703469102",
+    "https://smartstore.naver.com/main/products/3828201469",
+    "https://smartstore.naver.com/main/products/5198306073",
+    "https://smartstore.naver.com/main/products/9171987704",
+    "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236"
+   ],
+   "same_set": true,
+   "left": [],
+   "entered": [],
+   "moves": [
+    {
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "now": 7,
+     "without": 8,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": 0.0,
+      "product": -3.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "고당도 사과 (품종 부사)",
+     "now": 8,
+     "without": 7,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": -5.0,
+      "ctr_feedback": -5.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 8
+  },
+  {
+   "query": "선물용 배",
+   "mode": "ranking",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 3.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "선물용 배",
+   "mode": "trust",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "선물용 배",
+   "mode": "quality",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "선물용 배",
+   "mode": "price",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs"
+   ],
+   "cf_keys": [
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 5,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 4,
+     "without": 5,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 1.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  },
+  {
+   "query": "선물용 배",
+   "mode": "trust_adaptive",
+   "candidates": 74,
+   "same": false,
+   "cur_keys": [
+    "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "cf_keys": [
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=F308370363&sub-id=1&service-code=10000003",
+    "https://link.gmarket.co.kr/gate/pcs?item-no=4271648516&sub-id=1003&service-code=10000003&lcd=100000020",
+    "http://emart.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&ckwhere=naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989742&vodFlag=N&prdseqnum=1016989742&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+    "http://www.ssg.com/item/itemView.ssg?itemId=1000798617098&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+    "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003"
+   ],
+   "same_set": false,
+   "left": [
+    {
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15b",
+     "now": 1,
+     "boosts": {
+      "click": 10.0,
+      "ctr": 0.0,
+      "rank_ctr": 5.0,
+      "ctr_feedback": 0.0,
+      "product": 5.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "entered": [
+    {
+     "name": "배7.5kg 맛있는 과일 안성배 고당도 진한 과육 명절",
+     "without": 4,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "moves": [
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 2,
+     "without": 1,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "now": 3,
+     "without": 2,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    },
+    {
+     "name": "나주배 신고배 특품 가정용 고당도 배 산지직송 5kg ",
+     "now": 4,
+     "without": 3,
+     "boosts": {
+      "click": 0.0,
+      "ctr": 0.0,
+      "rank_ctr": 0.0,
+      "ctr_feedback": 0.0,
+      "product": 0.0,
+      "mode": 0.0
+     }
+    }
+   ],
+   "with_behavior_in_top10": 1
+  }
+ ],
+ "repro_fail": []
+}

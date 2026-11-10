@@ -230,7 +230,7 @@ def click(body: ClickIn, service: ChatService = Depends(get_chat_service)):
 
 @router.get("/go/{sid}/k/{key}")
 def go_key(sid: str, key: str, service: ChatService = Depends(get_chat_service)):
-    return _redirect(sid, service.resolve_go_key(sid, key))
+    return _redirect(sid, service.resolve_go_key(sid, key), shown=service.seen_card(sid, key))
 
 
 @router.get("/go/s/{owner}/{key}")
@@ -240,17 +240,22 @@ def go_saved(owner: str, key: str, service: ChatService = Depends(get_chat_servi
 
 @router.get("/go/{sid}/{rank}")
 def go(sid: str, rank: int, service: ChatService = Depends(get_chat_service)):
-    return _redirect(sid, service.resolve_go(sid, rank))
+    return _redirect(sid, service.resolve_go(sid, rank), shown=service.shown_item(sid, rank))
 
 
-def _redirect(sid: str, url: str | None, section: str = "chat"):
+def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | None = None):
     if url is None:
         return RedirectResponse("/")
     try:
         from app.services.analytics_logger import log_product_click
 
+        # 2026-11-10 (R0): 상품명이 없으면 같은 트랜잭션의 user_product_preference(상품명 NOT NULL)가 실패해
+        # 클릭 기록까지 되돌려졌다 — 채팅 /go 클릭이 하나도 남지 않은 원인. 보여 준 상품의 이름·판매처를 넘기고,
+        # 모르면 URL 을 이름 자리에 둔다.
+        shown = shown if shown and shown.get("url") == url else {}
         log_product_click(session_id=sid, query="chat", product={
-            "product_url": url, "selected_section": section, "recommendation_mode": "ranking"})
+            "product_url": url, "product_name": shown.get("title") or url, "mall_name": shown.get("mall"),
+            "rank": shown.get("rank"), "selected_section": section, "recommendation_mode": "ranking"})
     except Exception:  # noqa: BLE001 — logging must not block the redirect
         log.warning("click log failed")
     return RedirectResponse(url)

@@ -36,7 +36,13 @@ def test_metadata_does_not_change_products_ranks_roles_or_reasons():
     result = search_products(SearchRequest(text="사과 추천해줘"), shopping=lambda *args: {
         "items": [dict(it, score=99, adaptive_score=100) for it in ITEMS],
         "recommendation_path": "db_fallback"})
-    assert svc_sig(result) == svc_sig(base)
+    # 2026-11-10: DB 예비 경로는 가격 확인 시각이 없으면 가격 우위 문구를 제한한다(price_claims) —
+    # 비교 기준도 같은 경로·점수 없는 결과로 잡아 '점수 메타데이터가 결과를 바꾸지 않음'만 본다.
+    base_db = search_products(SearchRequest(text="사과 추천해줘"), shopping=lambda *args: {
+        "items": [dict(it) for it in ITEMS], "recommendation_path": "db_fallback"})
+    assert svc_sig(result) == svc_sig(base_db)
+    # 상품·순위·역할은 경로와 무관하게 같다 (문구만 다를 수 있음)
+    assert [s[:6] for s in svc_sig(result)] == [s[:6] for s in svc_sig(base)]
     assert all(i.score.fallback_used is True for i in result.items)
 
 

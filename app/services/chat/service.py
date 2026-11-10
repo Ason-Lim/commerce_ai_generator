@@ -296,6 +296,17 @@ class ChatService:
         found = saved_mod.find_seen(state, key)
         return _safe_url(found[1].get("url")) if found else None
 
+    def seen_card(self, session_id: str, key: str) -> dict | None:
+        """/go/{sid}/k/{key} 의 상품 (클릭 기록용 이름·판매처). 없으면 None."""
+        if not SESSION_RE.fullmatch(session_id or "") or not re.fullmatch(r"[0-9a-f]{12}", key or ""):
+            return None
+        try:
+            state, _rev, _ = self._load(session_id)
+        except Exception:  # noqa: BLE001
+            return None
+        found = saved_mod.find_seen(state, key)
+        return dict(found[1]) if found else None
+
     def resolve_saved_go(self, owner: str, key: str) -> str | None:
         """/go/s/{owner}/{key} — 관심 상품 보관함에 담긴 상품의 링크."""
         if not SESSION_RE.fullmatch(owner or "") or not re.fullmatch(r"[0-9a-f]{12}", key or "") or self.db is None:
@@ -534,6 +545,10 @@ class ChatService:
         for warning in audit_cards(picks + others):
             blocks.append(B.notice(warning, "warn"))
         line = explain.criteria_line(picks, budget if not picked["budget_miss"] else None)
+        from app.services.commerce.price_claims import criteria_note
+
+        if line and (note := criteria_note(picks)):        # 2026-11-10: 과거 확인 가격이면 기준 줄에도 알린다
+            line = f"{line} · {note}"
         if line:
             blocks.append(B.text(f"**고른 기준** {line}"))
         blocks.append(B.product_list([_public(c, go=go(c)) for c in picks]))
@@ -733,7 +748,7 @@ class ChatService:
         elif len(blocks) == len(lead_blocks or []):
             blocks.append(B.text(f"'{query}' 조건에 맞는 상품을 찾지 못했어요."))
         state = dict(state, mode="shopping", last_items=items, pending=pending)
-        state = _log_turn(state, text, "shopping")
+        state = _log_turn(state, text, "shopping", path=got.get("recommendation_path"))
         try:
             self._commit(sid, state, revision, [], persist)
         except Exception:  # noqa: BLE001 — results are still shown; /go may not resolve
@@ -1065,10 +1080,13 @@ def _looks_like_shopping(text: str) -> bool:
                           text)) and not parsing.is_recipe_request(text)
 
 
-def _log_turn(state: dict, text: str, stage: str) -> dict:
+def _log_turn(state: dict, text: str, stage: str, path: str | None = None) -> dict:
     state = dict(state)
     turns = list(state.get("turns") or [])
-    turns.append({"text": (text or "")[:200], "stage": stage})
+    turn = {"text": (text or "")[:200], "stage": stage}
+    if path:                    # 2026-11-10 (R0): 쇼핑 대화의 추천 경로(canonical_provider / db_fallback)
+        turn["path"] = path
+    turns.append(turn)
     state["turns"] = turns[-MAX_TURNS:]
     return state
 

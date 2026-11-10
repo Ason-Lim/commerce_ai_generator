@@ -229,6 +229,29 @@ def _db():
     return engine_db()
 
 
+# ── 추천 근거 (1단계, 2026-11-10) — 고객 화면과 같은 선택을 읽기만 하고 근거를 나눠 보여 준다 ──
+@router.get("/admin/evidence")
+def admin_evidence(request: Request):
+    return _page(request, WEB / "evidence.html")
+
+
+@router.get("/admin/api/evidence", dependencies=[api])
+def evidence_report(q: str = Query(..., min_length=1, max_length=200),
+                    path: str = Query("db", pattern="^(db|auto)$"),
+                    priority: str | None = Query(None, pattern="^[a-z_]{1,30}$")):
+    """path=db: DB 예비 경로만 (외부 API 호출 없음) · path=auto: 고객과 같은 경로 (쿠팡 API 실시간 호출)."""
+    from app.admin.ops import evidence
+
+    if path == "db":
+        shopping, extractor = evidence.forced_db_shopping(), None
+    else:
+        from app.api.chat_routes import get_chat_service
+
+        svc = get_chat_service()
+        shopping, extractor = svc.shopping, svc.keyword_extractor
+    return evidence.build_report(q, shopping=shopping, keyword_extractor=extractor, priority=priority)
+
+
 @router.get("/admin/api/conversations", dependencies=[api])
 def conversations(limit: int = Query(50, ge=1, le=200)):
     from app.admin.ops.conversations import list_sessions
