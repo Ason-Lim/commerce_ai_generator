@@ -29,7 +29,8 @@ PATH_LABEL = {
 SECTION_LABEL = {"picks": "추천", "others": "다른 후보", "partner_list": "업체 제공", "connect": "쇼핑커넥트"}
 
 # 가격 우위를 말하는 문구 — 근거가 약할 때 나오면 검사 경고
-PER100G_WORDS = re.compile(r"100g당|가성비|양이 가장 많")
+PER100G_WORDS = re.compile(r"100g당 ?(가장|[\d,]+원)|가성비|양이 가장 많")
+PRICE_ROLE_LABELS = {"가성비", "최저가", "넉넉한 양"}
 PRICE_WORDS = re.compile(r"가장 저렴|가장 낮|최저|가성비|저렴해요")
 
 # 2026-11-10: DB 뷰 점수에서 상수로 바꾼 입력 (sql/migrations/2026-11-10_view_unverified_signal_exclusion.sql)
@@ -173,8 +174,31 @@ def db_score(raw: dict) -> dict:
          "note": f"가격 하락: 가격 스냅샷 기준(마지막 수집 2026-07-16) · CTR 피드백: {BEHAVIOR_LABEL}", "behavior": True},
     ]
     view_final = None if v3 is None else round(min(100.0, v3 + pd + cf), 1)
-    boosts = {k: _num(raw.get(k)) or 0.0 for k in MAIN_BOOSTS}
+    ref = raw.get("behavior_reference") if isinstance(raw.get("behavior_reference"), dict) else None
     shown = _num(raw.get("adaptive_score"))
+    if ref is not None:
+        # 2026-11-10 결정 이후: 순위 = 행동 가점 없는 점수(trust_first + 가격 하락) + 문맥 가산. 행동 가점은 참고만
+        ranking = _num(raw.get("ranking_base_score"))
+        expected_ranking = None if tf is None else round(min(100.0, tf + pd), 1)
+        boosts = {k: (_num(raw.get(k)) or 0.0) if k == "context_boost" else 0.0 for k in MAIN_BOOSTS}
+        main_recomputed = None if ranking is None else round(ranking + boosts["context_boost"], 3)
+        reference = {k: _num(v) for k, v in ref.items()}
+        return {"kind": "db_fallback", "available": final is not None, "steps": steps,
+                "view_recomputed": view_final, "view_matches": _close(view_final, final),
+                "ranking_mode": "no_behavior", "ranking_base_score": ranking,
+                "ranking_matches": _close(expected_ranking, ranking),
+                "main_boosts": boosts, "main_recomputed": main_recomputed, "adaptive_score": shown,
+                "main_matches": _close(main_recomputed, shown, 0.001),
+                "behavior_reference": reference, "behavior_applied": False,
+                "behavior_reference_only": any(v for k, v in reference.items() if k != "final_recommendation_score")
+                                            or any((st.get("delta") or 0) for st in steps[1:2])
+                                            or any(v for v in (_num(raw.get("view_ctr_boost")),
+                                                               _num(raw.get("view_rank_ctr_boost")), cf) if v),
+                "excluded": DB_EXCLUDED + [{"field": "행동 가점 6종 · 세션 행동 개인화",
+                                            "reason": "방문·클릭은 순위에 넣지 않고 참고로만 표시", "decided": "2026-11-10"}],
+                "note": "정렬 키: ranking_base_score(= trust_first + 가격 하락) → 일반 모드는 + 문맥 가산, 가격 모드는 100g당 가격 먼저. 동점은 product_url 순. "
+                        "위 단계의 클릭·CTR 값은 뷰가 계산한 참고값(순위 미반영)"}
+    boosts = {k: _num(raw.get(k)) or 0.0 for k in MAIN_BOOSTS}
     main_recomputed = None if final is None else round(final + sum(boosts.values()), 3)
     return {"kind": "db_fallback", "available": final is not None, "steps": steps,
             "view_recomputed": view_final, "view_matches": _close(view_final, final),
@@ -210,6 +234,8 @@ def rating_info(raw: dict) -> dict:
 def checks(card: dict, price: dict, per100g: dict) -> list[str]:
     texts = " ".join(str(w.get("text") if isinstance(w, dict) else w) for w in card.get("why") or [])
     out = []
+    if card.get("role_label") in PRICE_ROLE_LABELS and price["status"] in ("missing", "stale"):
+        out.append(f"가격이 {price['label'].split(' —')[0]}인데 '{card['role_label']}' 배지가 붙음")
     if PER100G_WORDS.search(texts) and not per100g["comparable"]:
         out.append("100g당 비교 불가인데 100g당·가성비 문구가 있음")
     if PRICE_WORDS.search(texts) and price["status"] in ("missing", "stale"):
@@ -250,7 +276,8 @@ def build_report(text: str, *, shopping: Callable, keyword_extractor: Callable |
             score = {"kind": section, "available": False, "note": "순위 비교에 넣지 않는 목록"}
         rows.append({
             "display_rank": display_rank, "section": section, "section_label": SECTION_LABEL[section],
-            "role": card.get("role_label"), "why": [w.get("text") if isinstance(w, dict) else w for w in card.get("why") or []],
+            "role": card.get("role_label"), "role_key": card.get("role"),
+            "price_claims_restricted": card.get("price_claims_restricted"), "why": [w.get("text") if isinstance(w, dict) else w for w in card.get("why") or []],
             "upstream_rank": si.score.upstream_rank, "upstream_scores": si.score.upstream_scores,
             "title": card.get("title"), "mall": card.get("mall"), "url": si.offer.product_url,
             "price": price, "per100g": per, "score": score,
@@ -276,7 +303,9 @@ def build_report(text: str, *, shopping: Callable, keyword_extractor: Callable |
             "behavior_applied": sum(1 for r in rows if r["score"].get("behavior_applied")),
             "score_mismatch": sum(1 for r in rows if r["score"].get("matches") is False
                                   or r["score"].get("view_matches") is False
+                                  or r["score"].get("ranking_matches") is False
                                   or r["score"].get("main_matches") is False),
+            "behavior_reference_only": sum(1 for r in rows if r["score"].get("behavior_reference_only")),
         },
     }
 

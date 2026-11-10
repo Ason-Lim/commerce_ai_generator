@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 SNAP = ROOT / "var" / "ranking_snapshots"
 EXTRA = ["고당도 사과", "선물용 배", "3만원 이하 샤인머스캣", "부모님 선물 망고"]
 COUNTS = ("count", "price_missing", "price_stale", "per100g_not_comparable", "check_warnings", "score_mismatch",
-          "behavior_applied")
+          "behavior_applied", "behavior_reference_only")
 
 
 def _setup():
@@ -56,7 +56,8 @@ def capture(label):
             rep = evidence.build_report(q, shopping=evidence.forced_db_shopping())
         out["queries"][q] = {
             "path": rep["path"], "summary": rep["summary"], "error": rep["error"], "audit": rep["audit"],
-            "rows": [{"rank": r["display_rank"], "section": r["section"], "role": r["role"], "url": r["url"],
+            "rows": [{"rank": r["display_rank"], "section": r["section"], "role": r["role"],
+                      "role_key": r.get("role_key"), "url": r["url"],
                       "title": r["title"][:40], "checks": r["checks"],
                       "score_ok": None if not r["score"].get("available") else
                       (r["score"].get("view_matches") is not False and r["score"].get("main_matches") is not False)}
@@ -86,21 +87,34 @@ def capture(label):
 
 
 def compare(a, b):
+    """순서·후보(구역+URL+역할 키)와 배지 문구를 나눠 비교한다 — 문구만 바꾼 변경은 '순서 같음 · 문구 다름'."""
     A = json.loads((SNAP / f"display_{a}.json").read_text(encoding="utf-8"))
     B = json.loads((SNAP / f"display_{b}.json").read_text(encoding="utf-8"))
-    same, diff = 0, []
+    same, label_only, diff, label_changes = 0, [], [], {}
     for q in sorted(set(A["queries"]) | set(B["queries"])):
-        ra = [(r["section"], r["role"], r["url"]) for r in A["queries"].get(q, {}).get("rows", [])]
-        rb = [(r["section"], r["role"], r["url"]) for r in B["queries"].get(q, {}).get("rows", [])]
-        if ra == rb:
-            same += 1
-        else:
+        ra = A["queries"].get(q, {}).get("rows", [])
+        rb = B["queries"].get(q, {}).get("rows", [])
+        oa = [(r["section"], r["url"], r.get("role_key")) for r in ra]
+        ob = [(r["section"], r["url"], r.get("role_key")) for r in rb]
+        if [x[:2] for x in oa] != [x[:2] for x in ob] or (
+                all(x[2] is not None for x in oa + ob) and oa != ob):
             diff.append(q)
-    L = [f"# 채팅 최종 표시 순위 비교: {a} → {b}", "", f"- 같음 {same} · 다름 {len(diff)}", ""]
-    L += [f"- 다름: {q}" for q in diff]
+            continue
+        changes = [(x["role"], y["role"]) for x, y in zip(ra, rb) if x["role"] != y["role"]]
+        for c in changes:
+            label_changes[c] = label_changes.get(c, 0) + 1
+        if changes:
+            label_only.append(q)
+        else:
+            same += 1
+    L = [f"# 채팅 최종 표시 순위 비교: {a} → {b}", "",
+         f"- 순서·후보 같음 {same + len(label_only)} (그중 배지 문구만 다름 {len(label_only)}) · **순서·후보 다름 {len(diff)}**", ""]
+    L += [f"- 순서·후보 다름: {q}" for q in diff]
+    if label_changes:
+        L += ["", "## 배지 문구 변화", ""] + [f"- {x or '없음'} → {y or '없음'}: {n}건" for (x, y), n in label_changes.items()]
     md = ROOT / "docs" / "claude" / f"stage1_display_{a}_vs_{b}.md"
     md.write_text("\n".join(L) + "\n", encoding="utf-8")
-    print(f"저장: {md}  (같음 {same}, 다름 {len(diff)})")
+    print(f"저장: {md}  (순서·후보 같음 {same + len(label_only)}, 그중 문구만 다름 {len(label_only)}, 순서·후보 다름 {len(diff)})")
 
 
 if __name__ == "__main__":

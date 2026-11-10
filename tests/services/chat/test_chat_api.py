@@ -70,6 +70,20 @@ def test_chip_payload_is_treated_as_message(client):
     assert r["stage"] == "recipe_answer"
 
 
+def test_go_click_log_carries_the_shown_product_name(client, monkeypatch):
+    """2026-11-10 (R0): 상품명 없이 기록하면 user_product_preference(NOT NULL)가 실패해 클릭까지 되돌려졌다."""
+    logged = []
+    import app.services.analytics_logger as al
+    monkeypatch.setattr(al, "log_product_click", lambda **kw: logged.append(kw))
+    sid = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()["session_id"]
+    r = client.get(f"/go/{sid}/1", follow_redirects=False)
+    assert r.headers["location"] == "https://shop.example.com/a"
+    product = logged[-1]["product"]
+    assert product["product_url"] == "https://shop.example.com/a"
+    assert product["product_name"] and product["product_name"] != product["product_url"]
+    assert product["rank"] == 1 and product["selected_section"] == "chat"
+
+
 def test_go_redirects_only_to_items_shown_in_that_session(client):
     sid = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()["session_id"]
     r = client.get(f"/go/{sid}/1", follow_redirects=False)

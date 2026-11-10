@@ -144,6 +144,10 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     picked = None
     if cards:
         picked = explain.choose(cards, budget=budget, ask=text)
+        # 2026-11-10: 오래된·확인 시각 없는 가격으로는 가격 우위 문구를 내지 않는다 (선택·순서는 그대로)
+        from app.services.commerce import price_claims
+
+        price_claims.restrict(picked, raw, recommendation_path)
         if annotate_prices:                     # _result_blocks 와 같은 순서: 고른 뒤 시세 참고 한 줄
             kamis.annotate(picked["picks"] + picked["others"])
         for c in picked["picks"] + picked["others"]:
