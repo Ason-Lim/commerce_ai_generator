@@ -184,6 +184,19 @@ def ambiguous_materials(message: str, materials: list[dict]) -> tuple[str, list[
     return None
 
 
+# 2026-11-10 (customer check): "귤 10kg 박스로 사려는데 크기별로 뭐가 맛있어?" was read as a stock sentence —
+# '맛있어' contains '있어', and '10kg' is an amount. '있어' means "I have" only when it is not part of
+# 맛있어·멋있어·재미있어·상관있어·의미있어·관계있어·…수 있어, and a buying sentence is never a stock sentence.
+HAVE_RE = re.compile(r"(?<![맛멋수])(?<!재미)(?<!상관)(?<!의미)(?<!관계)(?<!수\s)있어|남았|남아")
+BUYING_RE = re.compile(r"사\s*려|살\s*까|사고\s*싶|사\s*야|구매|구입|주문|장\s*보")
+
+
+def says_have(message: str) -> bool:
+    """'우유 200mL 있어요' / '버터 남았어' — the person tells what they have (not 맛있어, not 사려는데)."""
+    text = message or ""
+    return bool(HAVE_RE.search(text)) and not BUYING_RE.search(text)
+
+
 # 2026-11-01 (customer check): "카다이프 보유량 얼마로 기록돼 있어요?" was answered with the requirement.
 # A question about the *recorded* amount is answered with the stored amount first.
 STOCK_QUERY_RE = re.compile(

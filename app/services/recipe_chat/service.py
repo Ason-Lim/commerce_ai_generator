@@ -264,7 +264,7 @@ class RecipeChat:
 
         if entry is None:
             # no recipe selected: a stock sentence still belongs here
-            if parsing.amounts(text) and any(k in text for k in ("있어", "남았", "남아")):
+            if parsing.amounts(text) and parsing.says_have(text):
                 state["mode"] = "recipe"
                 return RecipeTurn([B.text("어떤 요리에 쓸 재료인가요? 먼저 만들 요리를 알려 주시면 보유량을 그 레시피에 맞춰 기록할게요."),
                                    B.chips(["크림파스타 만드는 법"])], state, "recipe_needed")
@@ -314,7 +314,7 @@ class RecipeChat:
         finding = self.resolver.find(text)
         if finding.kind == "card":
             return self._show_recipe(finding.recipe, state, finding.alternatives, db, recipe_sid)
-        if named and any(k in text for k in ("있어", "남았", "남아")):
+        if named and parsing.says_have(text):
             if self.stock_interpreter:
                 return self._stock_llm(entry, text, state, recipe_sid, db)
             # 2026-10-30: no interpreter (no key / turned off) — stay in the recipe, never fall into shopping
