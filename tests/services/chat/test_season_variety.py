@@ -75,6 +75,12 @@ def test_answer_comes_first_then_products_by_variety(sqlite_db):
     assert "가짜품종 품종은 상품명에 품종이 적힌 상품을 찾지 못해" in text   # 지어낸 품종은 상품 묶음 없음
     assert sorted(shop.calls) == sorted(["설향 딸기", "금실 딸기", "가짜품종 딸기"])
     assert res["blocks"][0]["data"].get("affiliate") is True        # 제휴 고지 맨 위
+    # 품종별 상품 전체를 한 표에서 견주는 비교 카드 (2026-11-11 — 빠졌던 것)
+    cta = [b for b in res["blocks"] if b["type"] == "compare_cta"]
+    assert len(cta) == 1 and cta[0]["data"]["label"] == "딸기 상품 3개, 한눈에 비교하기"
+    table = _svc(sqlite_db, shop).handle(res["session_id"], chip=cta[0]["data"]["send"])
+    rows = [b for b in table["blocks"] if b["type"] == "product_compare"][0]["data"]["rows"]
+    assert {r["title"] for r in rows} == {"논산 설향 딸기 500g", "설향딸기 1kg", "금실 딸기 500g"}
     for b in res["blocks"]:
         for i in (b["data"].get("items") or []) if b["type"] == "product_list" else []:
             assert all(isinstance(w, dict) and w.get("text") for w in i.get("why") or [])

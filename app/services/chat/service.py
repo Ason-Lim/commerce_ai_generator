@@ -761,6 +761,12 @@ class ChatService:
         blocks = list(lead)
         blocks.append(B.text(f"**품종별 상품** — 품종 이름이 상품명에 적힌 상품만 골랐어요. 품종마다 같은 기준(100g당 가격 등)으로 견준 순서예요."))
         blocks += sections
+        # 2026-11-11: 품종별로 보여 준 상품 전체를 한 표에서 견주는 비교 카드 (일반 상품 목록과 같게 — 빠져 있었다)
+        if len(shown) >= 2:
+            from app.services.chat import product_compare
+
+            state = saved_mod.push_seen(state, label, shown, None)
+            blocks.append(product_compare.cta(label, len(shown), None))
         if missing:
             blocks.append(B.notice(f"{', '.join(missing)} 품종은 상품명에 품종이 적힌 상품을 찾지 못해 보여 드리지 않았어요."))
         blocks.append(B.notice("평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 지어내지 않고 각 상품의 "
