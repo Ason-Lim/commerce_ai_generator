@@ -28,6 +28,17 @@ class LLMConfigError(ValueError):
     """Raised when the LLM provider is not configured correctly."""
 
 
+# 2026-11-11: DeepSeek 생각 모드를 작업마다 정한다 (생각 켬/끔 20문항×2회 비교 — llm_food_compare 문서).
+#   켬: 한 번 만들어 저장해 여러 고객에게 다시 쓰는 답·생성·검토 — 느린 건 처음 한 번, 끔일 때 다른 과일 품종을 섞는 오류가 나왔다
+#   끔: 이름·검색어·양·의도처럼 주어진 글을 정리만 하는 일 — 추론이 필요 없고, 켜면 몇 배 느리다 (제목 정리 41초 → 3.4초)
+# 우선순위: LLMClient(thinking=) > .env DEEPSEEK_THINKING(on/off, 실험용 전체 덮어쓰기) > 이 표 > (없으면 보내지 않음 = DeepSeek 기본)
+THINKING_BY_TASK: dict[str, bool] = {
+    "food_knowledge": True, "ai_recipe": True, "ai_recipe_check": True, "recipe_supplement": True, "recipe_consult": True,
+    "shop_keyword": False, "dish_amounts": False, "recipe_servings": False, "food_nlu": False, "ai_recipe_identify": False,
+    "recipe_easy_view": False, "recipe_discover": False, "trend_cause": False, "stock_chat": False,
+}
+
+
 class LLMClient:
     def __init__(
         self,
@@ -98,7 +109,10 @@ class LLMClient:
         if self.thinking is not None:
             return self.thinking
         v = self._get("DEEPSEEK_THINKING").strip().lower()
-        return {"on": True, "1": True, "true": True, "off": False, "0": False, "false": False}.get(v)
+        forced = {"on": True, "1": True, "true": True, "off": False, "0": False, "false": False}.get(v)
+        if forced is not None:
+            return forced
+        return THINKING_BY_TASK.get(self.task or "")
 
     def _model_name(self) -> str:
         if self.provider == "deepseek":

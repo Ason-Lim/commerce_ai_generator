@@ -237,6 +237,11 @@ def openai_generator(api_key: str, model: str, quality: str, size: str, client_f
     return generate
 
 
+# 2026-11-11 실측: gpt-image-2.5-flare · medium · 1536x1024 → 13.8초, WebP 233KB. low 1024x1024 은 출력 196토큰(약 $0.006).
+DEFAULT_MODEL = "gpt-image-2.5-flare"
+RETIRED = frozenset({"gpt-image-1", "gpt-image-1-mini"})
+
+
 def from_env(env=None, statement_factory=None) -> AiImages:
     """RECIPE_AI_IMAGE = on (default when OPENAI_API_KEY is set) | off."""
     import os
@@ -244,7 +249,11 @@ def from_env(env=None, statement_factory=None) -> AiImages:
     source = os.environ if env is None else env
     mode = (source.get("RECIPE_AI_IMAGE") or "on").strip().lower()
     key = (source.get("OPENAI_API_KEY") or "").strip()
-    model = (source.get("RECIPE_AI_IMAGE_MODEL") or "gpt-image-1").strip()
+    model = (source.get("RECIPE_AI_IMAGE_MODEL") or DEFAULT_MODEL).strip()
+    if model in RETIRED:
+        # 2026-11-11: gpt-image-1 은 2026-10-23 서비스 종료 — 400 'does not exist' 로 AI 이미지가 하나도 만들어지지 않았다
+        log.warning("RECIPE_AI_IMAGE_MODEL=%s 는 종료된 모델이라 %s 로 만듭니다 (.env 를 고쳐 주세요)", model, DEFAULT_MODEL)
+        model = DEFAULT_MODEL
     generator = None
     if mode == "on" and key:
         generator = openai_generator(key, model, (source.get("RECIPE_AI_IMAGE_QUALITY") or "medium").strip(),

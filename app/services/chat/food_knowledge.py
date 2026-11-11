@@ -11,6 +11,7 @@ from collections.abc import Callable
 
 from app.services.ai import cache as ai_cache
 from app.services.chat import food_tips
+from app.services.reference import variety_crops
 
 TASK = "food_knowledge"
 # 검토 기준이 바뀌면 올린다 — 예전 기준으로 검토해 저장한 답은 다음에 꺼낼 때 새 기준으로 다시 검토한다
@@ -99,7 +100,9 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
         from app.services.ai import usage
 
         usage.record(TASK, hit.get("model"), cached=True)       # 저장본을 다시 써서 부르지 않은 호출
-        return {"got": got, "food": got.pop("_food", None) or food, "review": rev,
+        name = got.pop("_food", None) or food
+        got, _dropped = variety_crops.clean(name, got)          # 예전에 저장된 답에도 같은 규칙
+        return {"got": got, "food": name, "review": rev,
                 "saved_at": hit["created_at"], "from_cache": True, "safety": is_safety(text),
                 "cross_on": review is not None}
     raw = generate(text) if generate is not None else None
@@ -107,6 +110,8 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
     name = ((raw or {}).get("food") or "").strip() if isinstance(raw, dict) else ""
     if not (name and re.sub(r"\s+", "", name) in re.sub(r"\s+", "", text) and 2 <= len(name) <= 20):
         name = food                                     # 문장에 실제로 있는 식품 이름일 때만 바꾼다
+    # 2026-11-11: 다른 작물의 품종(복숭아 답의 '설향')은 규칙으로 뺀다 — 검토·저장 전에
+    got, _dropped = variety_crops.clean(name, got)
     rev = None
     safety = is_safety(text)
     if got["tips"] or got.get("season") or got.get("varieties"):

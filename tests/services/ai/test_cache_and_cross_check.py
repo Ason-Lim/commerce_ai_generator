@@ -109,4 +109,22 @@ def test_deepseek_thinking_is_sent_only_when_asked(monkeypatch):
     LLMClient("s", provider="deepseek", env=env, openai_factory=Fake).chat_json("a")
     LLMClient("s", provider="deepseek", env=env, openai_factory=Fake, thinking=False).chat_json("a")
     LLMClient("s", provider="deepseek", env={**env, "DEEPSEEK_THINKING": "off"}, openai_factory=Fake).chat_json("a")
-    assert seen == [None, {"thinking": {"type": "disabled"}}, {"thinking": {"type": "disabled"}}]
+    LLMClient("s", provider="deepseek", env=env, openai_factory=Fake, task="food_knowledge").chat_json("a")
+    LLMClient("s", provider="deepseek", env=env, openai_factory=Fake, cache="shop_keyword").chat_json("b")
+    LLMClient("s", provider="deepseek", env={**env, "DEEPSEEK_THINKING": "on"}, openai_factory=Fake, cache="shop_keyword").chat_json("c")
+    on, off = {"thinking": {"type": "enabled"}}, {"thinking": {"type": "disabled"}}
+    assert seen == [None, off, off, on, off, on]
+
+
+def test_every_tagged_deepseek_task_has_a_thinking_choice():
+    """새 작업을 만들면 생각 모드 켬/끔을 표에 정한다 (정하지 않으면 DeepSeek 기본 = 생각 켬, 느리고 비쌈)."""
+    import re
+    from pathlib import Path
+
+    from app.services.nlu.llm_client import THINKING_BY_TASK
+
+    names = set()
+    for p in Path("app").rglob("*.py"):
+        for m in re.finditer(r"LLMClient\([^)]*?(?:cache|task)=['\"]([a-z_]+)['\"]", p.read_text(encoding="utf-8"), re.S):
+            names.add(m.group(1))
+    assert names and names <= set(THINKING_BY_TASK), names - set(THINKING_BY_TASK)
