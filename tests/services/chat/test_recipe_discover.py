@@ -190,9 +190,11 @@ def test_the_trace_reaches_the_api_only_in_dev_mode(make, monkeypatch):
 
     svc, _http = make({"news": TREND_NEWS})
     res = svc.handle(None, message="요즘 유행하는 요리 알려줘")
-    monkeypatch.delenv("CHAT_DEV_TRACE", raising=False)
+    # 2026-11-11: dev_trace_on()은 저장소 .env 의 CHAT_DEV_TRACE 를 환경변수보다 우선한다.
+    # .env 에 CHAT_DEV_TRACE=0 이 있으면 setenv 가 무시돼 실패했으므로, 개발 모드 켜짐/꺼짐을 직접 지정한다.
+    monkeypatch.setattr(chat_routes, "dev_trace_on", lambda: False)
     assert "trace" not in json.dumps(chat_routes.public(res))
-    monkeypatch.setenv("CHAT_DEV_TRACE", "1")
+    monkeypatch.setattr(chat_routes, "dev_trace_on", lambda: True)
     assert chat_routes.public(res)["blocks"][0]["data"]["trace"]["search"][0]["api"] == "openapi.naver.com/v1/search/news.json"
 
 

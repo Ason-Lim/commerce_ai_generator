@@ -17,6 +17,7 @@
 ## 타입 검사 (ty, 베타)
 - `uv run ty check app` 결과는 참고용 경고다. 커밋을 막는 조건으로 쓰지 않는다.
 
-## 테스트 기준선 (2026-11-11)
-- `uv run pytest -q` → 5544 통과 · 5 건너뜀 · 7 실패 (전환 전부터 실패하던 7건, 목록은 docs/claude/uv_migration_2026-11-11.md)
-- 변경 후 실패가 이 7건보다 늘어나면 원인을 먼저 확인한다.
+## 테스트 기준선 (2026-11-11 갱신)
+- `uv run pytest -q` → **5549 통과 · 5 건너뜀 · 0 실패**
+- 실패가 하나라도 생기면 원인을 먼저 확인한다. 채팅 답변 골든 파일(tests/services/chat/fixtures/golden_reselect.json)은
+  의도한 변경일 때만 `UPDATE_GOLDEN=1 uv run pytest tests/services/chat/test_reselect_golden.py` 로 다시 만든다.

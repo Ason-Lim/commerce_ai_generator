@@ -45,3 +45,12 @@
 ## 추가 수정 (2026-11-11 10:30)
 - Mac 에 Python 3.15 도 설치돼 있어 uv 가 3.15 를 골랐고, pyarrow(streamlit 의존) 가 3.15용 빌드 파일이 없어 설치 실패 → `.python-version` = 3.14, `requires-python = ">=3.14,<3.15"` 로 고정
 - 이 과정에서 기존 .venv 는 uv 가 지우고 새로 만들었음 (패키지는 uv.lock 으로 그대로 복원됨)
+
+## 실패 7건 정리 (2026-11-11 11시) → 5549 통과 · 5 건너뜀 · 0 실패
+| 테스트 | 원인 | 처리 |
+|---|---|---|
+| recipe_discover trace | dev_trace_on()이 .env 의 CHAT_DEV_TRACE=0 을 환경변수보다 우선 → 테스트의 setenv 무시 | 테스트에서 dev_trace_on 을 직접 지정 |
+| reselect_golden | 상품에 `partner` 필드, "상품 5개 한눈에 비교하기"(compare_cta) 블록이 추가된 뒤 골든 미갱신. 순서·가격·문구 변화 없음 확인 | 골든 파일 재생성 |
+| tracx at_48 | 커밋 전 git status 에 새 파일 2개만 있는지 보던 일회성 검사 | 삭제 |
+| seafood 순서 2건 | 이후 등록된 sauce·compound_seasoning 미반영 | 기대 순서 갱신 |
+| i5b DDL 2건 | ensure_collector_v2_columns 는 8ae055c 에서 수집기 밖으로 분리됨 | "분리 유지" 확인 테스트 1개로 교체 |
