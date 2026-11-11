@@ -176,7 +176,10 @@ export function ProductList({ block }: { block: ProductListBlock }) {
   if (collapsed) {
     return (
       <details className="my-3 rounded-2xl border border-line bg-surface/60 px-4 py-2">
-        <summary className="cursor-pointer select-none py-1.5 text-sm font-semibold text-ink2">{title ?? "다른 후보"} 펼치기</summary>
+        <summary className="cursor-pointer select-none py-1.5 text-sm font-semibold text-ink2">
+          {/* 2026-11-11: '냉동 상품 N개 따로 보기'처럼 제목이 이미 '보기'로 끝나면 '펼치기'를 붙이지 않는다 */}
+          {title?.endsWith("보기") ? title : `${title ?? "다른 후보"} 펼치기`}
+        </summary>
         {note && <p className="mb-2 text-xs text-ink3">{note}</p>}
         <div className="mb-2 mt-2 flex flex-col gap-3">{cards}</div>
       </details>

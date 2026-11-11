@@ -142,6 +142,20 @@ def weight_note(title: str) -> dict | None:
     return None
 
 
+# 2026-11-11: 냉동 상품 — 생과·생물과 쓰임새가 달라 같은 기준(100g당·가성비)으로 견주지 않는다.
+# '무냉동'·'비냉동'·'냉동 아님'·'냉동실 보관'은 냉동 상품이 아니다.
+_FROZEN_RE = re.compile(r"(?<![무비])냉동(?!\s*(?:아님|안\s*함|X(?![A-Za-z])|x(?![A-Za-z])|실|보관))")
+
+
+def is_frozen(title: str) -> bool:
+    return bool(_FROZEN_RE.search(title or ""))
+
+
+def wants_frozen(text: str) -> bool:
+    """고객이 냉동을 찾을 때는 나누지 않는다 ('냉동 블루베리', '냉동 딸기 추천')."""
+    return "냉동" in (text or "")
+
+
 WEIGHT_SOURCE = {"single": "title", "multiplied": "title_multiplied", "ambiguous": "title_ambiguous", "bonus": "title_bonus",
                  "count_unclear": "title_count_unclear", "multiply_unclear": "title_multiply_unclear"}
 UNUSABLE_TITLE_KINDS = ("ambiguous", "bonus", "count_unclear", "multiply_unclear")   # 중량 표기는 있으나 총중량 확정 불가

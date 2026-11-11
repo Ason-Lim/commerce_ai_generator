@@ -110,7 +110,7 @@ class Disclosure(_Model):
 
 
 class ShoppingItem(_Model):
-    section: Literal["picks", "others", "partner_list", "connect"]
+    section: Literal["picks", "others", "partner_list", "frozen_list", "connect"]   # frozen_list: 2026-11-11
     product: Product
     offer: Offer
     score: ScoreDetail

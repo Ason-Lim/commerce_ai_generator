@@ -21,6 +21,7 @@ from app.domain.commerce.requests import SearchRequest
 log = logging.getLogger(__name__)
 
 ENGINE = "chat.explain.choose"
+FROZEN_NOTE = "냉동 상품이라 생과·생물 후보와 같은 기준으로 견주지 않았어요"
 PREVIEW_WARNING = "미리 보기: 업체 상품은 허락 전 예시 데이터예요. 실제 상품·가격이 아니에요."
 
 
@@ -85,7 +86,7 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     extra_cards (p47, 연결 검증용 · 앱 경로는 넘기지 않음): (query, terms) → 이미 만든 카드들 (예: UCP cards_from).
     쇼핑 카드와 같은 enrich · 관련성 필터 · choose 를 지난다.  실패하면 그 출처만 빠진다 (쇼핑 결과는 그대로).
 
-    Returns {"query", "label", "terms", "priority", "budget", "picked", "partner_list", "connect", "raw", "error",
+    Returns {"query", "label", "terms", "priority", "budget", "picked", "partner_list", "frozen_list", "connect", "raw", "error",
              "preview", "found", "recommendation_path"}
     """
     from app.services.chat import explain
@@ -127,6 +128,12 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
             log.exception("extra card source failed")
     if terms:
         cards = [c for c in cards if relevant(c["title"], terms)]
+    # 2026-11-11: 냉동 상품은 고객이 냉동을 찾지 않았으면 따로 보기로 나눈다 (생과와 같은 기준으로 견주지 않음).
+    # 냉동이 아닌 후보가 하나도 없으면 나누지 않는다.
+    frozen_list: list[dict] = []
+    if not explain.wants_frozen(text) and any(not explain.is_frozen(c["title"]) for c in cards):
+        frozen_list = [dict(c, frozen=True) for c in cards if explain.is_frozen(c["title"])]
+        cards = [c for c in cards if not explain.is_frozen(c["title"])]
 
     partner_terms = terms or _content_tokens(label)
     partner_cards = [ChatService._partner_card(it, query) for it in
@@ -156,12 +163,15 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         start = max([c["rank"] for c in picked["picks"] + picked["others"]] or [0])
         partner_list = [dict(c, rank=start + n, why=[c["partner_note"]]) for n, c in enumerate(partner_list, 1)]
         start = max([start] + [c["rank"] for c in partner_list])
+        frozen_list = [dict(c, rank=start + n, why=[FROZEN_NOTE]) for n, c in enumerate(frozen_list, 1)]
+        start = max([start] + [c["rank"] for c in frozen_list])
         connect = [dict(c, rank=start + n) for n, c in enumerate(connect, 1)]
     else:
         partner_list = []                       # 웹도 쿠팡 결과가 없으면 업체 목록을 보여 주지 않는다
+        frozen_list = []
         connect = [dict(c, rank=n) for n, c in enumerate(connect, 1)]
     return dict(query=query, label=label, terms=terms, priority=priority, budget=budget, picked=picked,
-                partner_list=partner_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
+                partner_list=partner_list, frozen_list=frozen_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
                 recommendation_path=recommendation_path)
 
 
@@ -356,6 +366,7 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
         items += [to_item(c, "picks", raw.get(c["key"]), got["recommendation_path"]) for c in picked["picks"]]
         items += [to_item(c, "others", raw.get(c["key"]), got["recommendation_path"]) for c in picked["others"]]
     items += [to_item(c, "partner_list") for c in got["partner_list"]]
+    items += [to_item(c, "frozen_list") for c in got["frozen_list"]]
     items += [to_item(c, "connect") for c in got["connect"]]
 
     warnings = ["평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 판매처 페이지에서 확인해 주세요."]
@@ -366,6 +377,8 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
     if picked and any(c.get("ucp") for c in picked["picks"] + picked["others"]):
         warnings.append("UCP 판매처 가격은 카탈로그 값이에요 — 판매처 결제 화면 가격이 기준이고, 판매자 단위가격은 "
                         "다른 판매처와 견주지 않았어요.")
+    if got["frozen_list"]:
+        warnings.append(f"냉동 상품 {len(got['frozen_list'])}개는 생과·생물과 쓰임새가 달라 따로 두었어요 (같은 기준으로 견주지 않음).")
     if got["connect"]:
         warnings.append("쇼핑커넥트 등록 상품은 위 후보와 같은 기준으로 견주지 않았고, 가격은 등록 시점 값이에요.")
     warnings += selection_audit(items)

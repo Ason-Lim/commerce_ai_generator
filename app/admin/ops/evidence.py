@@ -260,7 +260,8 @@ def build_report(text: str, *, shopping: Callable, keyword_extractor: Callable |
     sections = []
     if picked:
         sections += [("picks", c) for c in picked["picks"]] + [("others", c) for c in picked["others"]]
-    sections += [("partner_list", c) for c in got["partner_list"]] + [("connect", c) for c in got["connect"]]
+    sections += [("partner_list", c) for c in got["partner_list"]] + [("frozen_list", c) for c in got.get("frozen_list") or []]
+    sections += [("connect", c) for c in got["connect"]]
     for display_rank, (section, card) in enumerate(sections, start=1):
         raw = raw_by_key.get(card.get("key")) or {}
         si = to_item(card, section, raw if section in ("picks", "others") else None,

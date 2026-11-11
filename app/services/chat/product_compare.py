@@ -95,7 +95,9 @@ def _price(card: dict) -> int | None:
 def build(name: str, seen_set: dict, need: dict | None, go_for) -> dict:
     """seen_set: {'query','at','cards'}.  go_for(card) -> '/go/…' path.  Returns the product_compare block data."""
     # 업체 제공 상품(partner)은 같은 기준으로 견주지 않는다고 안내한 상품이라 비교 표에서 뺀다
-    cards = [dict(c) for c in seen_set.get("cards") or [] if c.get("title") and not c.get("partner")]
+    cards = [dict(c) for c in seen_set.get("cards") or [] if c.get("title") and not c.get("partner")
+             and not c.get("frozen")]                 # 2026-11-11: 냉동 상품도 같은 기준으로 견주지 않는다
+    frozen_n = sum(1 for c in seen_set.get("cards") or [] if c.get("frozen"))
     dropped_line = None
     if need:
         cards, dropped_line = pack_fit.arrange(cards, need)
@@ -151,6 +153,8 @@ def build(name: str, seen_set: dict, need: dict | None, go_for) -> dict:
         notes.append("'깐굴' 표기가 없는 상품은 껍질 무게가 섞였을 수 있어 100g당 가격을 그대로 견주기 어려워요.")
     if any(r["seller_claims"] for r in rows):
         notes.append("판매자 표기(프리미엄·최상급 등)는 판매자 주장이며 확인하지 않았어요.")
+    if frozen_n:
+        notes.append(f"냉동 상품 {frozen_n}개는 생과·생물과 쓰임새가 달라 이 표에서 뺐어요.")
     notes.append("평점·후기·도착일은 판매처 검색 API가 주지 않아 비교하지 않았어요. 판매처 페이지에서 확인해 주세요.")
     if dropped_line and "뺐어요" in dropped_line:
         notes.append("같은 재료로 볼 수 없는 상품은 비교에서 뺐어요.")

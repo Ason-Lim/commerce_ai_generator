@@ -525,7 +525,7 @@ class ChatService:
         except Exception:  # noqa: BLE001
             log.warning("chat state not saved")
 
-    def _result_blocks(self, sid, query, picked, budget, found, rechecked=False):
+    def _result_blocks(self, sid, query, picked, budget, found, rechecked=False, frozen: list | None = None):
         picks, others = picked["picks"], picked["others"]
         go = lambda c: f"/go/{sid}/k/{c['key']}"  # noqa: E731
         head = (f"예산 **{budget['label']}** 에 맞춰 앞서 찾은 '{query}' 후보 {found}개를 다시 견줬어요."
@@ -554,6 +554,11 @@ class ChatService:
         blocks.append(B.product_list([_public(c, go=go(c)) for c in picks]))
         if others:
             blocks.append(B.product_list([_public(c, go=go(c)) for c in others], title=f"다른 후보 {len(others)}개",
+                                         collapsed=True))
+        if frozen:                              # 2026-11-11: 냉동 상품은 따로 보기 (같은 기준으로 견주지 않음)
+            blocks.append(B.product_list([_public(c, go=go(c)) for c in frozen], title=f"냉동 상품 {len(frozen)}개 따로 보기",
+                                         note="생과·생물과 쓰임새가 달라 위 후보와 같은 기준(100g당 가격·가성비)으로 "
+                                              "견주지 않았어요. 냉동을 찾으시면 '냉동 " + query + "'처럼 말씀해 주세요.",
                                          collapsed=True))
         # 2026-11-09 A안: 일반 상품 추천에도 목록 끝 비교 카드 (같은 검색 후보 2개 이상)
         if len(picks) + len(others) >= 2:
@@ -695,6 +700,7 @@ class ChatService:
                       annotate_prices=False)      # 시세 참고 한 줄은 _result_blocks 가 붙인다 (기존 순서)
         query, terms, label, budget = got["query"], got["terms"], got["label"], got["budget"]
         picked, partner_list, connect = got["picked"], got["partner_list"], got["connect"]
+        frozen_list = got.get("frozen_list") or []
         blocks: list = list(lead_blocks or [])
         if got["error"] is not None:
             blocks.append(B.notice(f"'{query}' 상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", "warn"))
@@ -705,12 +711,13 @@ class ChatService:
         items: list = []
         pending = None
         if picked:
-            blocks += self._result_blocks(sid, label, picked, budget, got["found"])
+            blocks += self._result_blocks(sid, label, picked, budget, got["found"], frozen=frozen_list)
             all_cards = picked["picks"] + picked["others"]
             items = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in all_cards]
             # 2026-11-09: 업체 제공 상품도 같은 묶음으로 저장한다 — 따로 저장하면 같은 검색어 묶음을 덮어써
             # 위 쿠팡 후보의 /go 링크가 풀리지 않았다. 비교 표에서는 업체 상품을 빼고 견준다 (partner 표시).
-            state = saved_mod.push_seen(state, label, all_cards + list(partner_list or []),
+            # 2026-11-11: 냉동 상품도 같은 묶음에 저장 (/go 링크) — 비교 표에서는 frozen 표시로 뺀다
+            state = saved_mod.push_seen(state, label, all_cards + list(partner_list or []) + list(frozen_list),
                                         budget["label"] if budget else None)
             if partner_list:
                 blocks.append(B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in partner_list],
@@ -718,6 +725,8 @@ class ChatService:
                                              note="업체가 보내 준 정보예요. 위 후보와 같은 기준으로 견주지 않았어요."))
                 items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
                           for c in partner_list]
+            items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
+                      for c in frozen_list]
             if connect:
                 # 2026-11-02: 쇼핑커넥트 등록 링크는 쿠팡 결과가 있어도 별도 목록으로 함께 보여 준다 (순위 비교에는 넣지 않음)
                 blocks.append(B.product_list(connect, title=f"네이버 쇼핑커넥트 등록 상품 {len(connect)}개",
