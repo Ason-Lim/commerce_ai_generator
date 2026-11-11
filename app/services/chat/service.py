@@ -679,9 +679,17 @@ class ChatService:
             know = {"got": food_tips_mod.validated(None, text), "food": query, "review": None,
                     "saved_at": None, "from_cache": False}
         query = know["food"] or query
-        got = know["got"]
+        # 2026-11-11: 출처로 확인한 사실(app/services/ai/verified_facts.json)이 있으면 AI 답 대신 그 내용을 쓴다
+        from app.services.ai import facts as facts_mod
+
+        got, verified = facts_mod.apply(query, know["got"])
         flags = {(f["kind"], f["i"]): f["note"] for f in (know["review"] or {}).get("flags") or []}
-        warn = lambda kind, i: f" _(Claude 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""  # noqa: E731
+        know = dict(know, verified=len(verified), shown_flags=len([k for k in flags if k not in verified]))
+
+        def warn(kind, i):
+            if (kind, i) in verified:             # 확인된 사실 — Claude 의견 대신 출처
+                return f" _(출처 확인 · {verified[(kind, i)]['source_name']})_"
+            return f" _(Claude 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""
         lead: list = []
         # 2026-11-11: 제철·품종을 물었으면 그 답을 먼저 (일반 정보 · AI 정리 표시는 같다)
         answer: list[str] = []
@@ -1195,10 +1203,12 @@ def _looks_like_shopping(text: str) -> bool:
 
 
 def _knowledge_note(know: dict) -> str:
-    """식품 지식 출처 한 줄 — 교차 확인 여부 · 저장해 둔 정보면 정리한 날."""
+    """식품 지식 출처 한 줄 — 출처 확인 · 교차 확인 여부 · 저장해 둔 정보면 정리한 날."""
     parts = []
+    if know.get("verified"):
+        parts.append(f"{know['verified']}곳은 출처로 확인한 내용이라 출처를 함께 적었어요")
     if know.get("review"):
-        n = len(know["review"].get("flags") or [])
+        n = know.get("shown_flags", len(know["review"].get("flags") or []))
         parts.append("DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요"
                      + (f" — 두 AI 의 생각이 다른 {n}곳은 그 줄에 Claude 의견을 함께 적었어요" if n else ""))
     if know.get("from_cache") and know.get("saved_at"):

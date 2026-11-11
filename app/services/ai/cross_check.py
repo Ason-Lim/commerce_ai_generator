@@ -40,7 +40,7 @@ def model() -> str:
     return _env("CROSS_CHECK_MODEL") or _env("ANTHROPIC_MODEL", "claude-sonnet-5-5")
 
 
-def _call_claude(system: str, user: str, post: Callable | None = None) -> dict:
+def _call_claude(system: str, user: str, post: Callable | None = None, task: str = "cross_check") -> dict:
     import httpx
 
     from app.services.nlu.llm_client import LLMClient
@@ -52,7 +52,12 @@ def _call_claude(system: str, user: str, post: Callable | None = None) -> dict:
              json={"model": model(), "max_tokens": 1500,          # 최신 Claude 모델은 temperature 를 받지 않는다
                    "system": system, "messages": [{"role": "user", "content": user}]})
     r.raise_for_status()
-    text = "".join(b.get("text", "") for b in (r.json().get("content") or []))
+    body = r.json()
+    from app.services.ai import usage
+
+    u = body.get("usage") or {}
+    usage.record(task, f"anthropic:{model()}", u.get("input_tokens"), u.get("output_tokens"))
+    text = "".join(b.get("text", "") for b in (body.get("content") or []))
     return LLMClient._safe_json(text)
 
 
@@ -66,7 +71,7 @@ def review(task: str, context: str, items: list[str], *, instruction: str = "",
     system = PROMPT + (f"\n- 이번 검토의 기준: {instruction}" if instruction else "")
     user = json.dumps({"context": context, "items": [{"i": i, "text": t} for i, t in enumerate(items)]},
                       ensure_ascii=False)
-    ask = (lambda u: call(system, u)) if call else (lambda u: _call_claude(system, u))
+    ask = (lambda u: call(system, u)) if call else (lambda u: _call_claude(system, u, task=f"cross_check:{task}"))
     try:
         raw = ai_cache.cached_call(f"cross_check:{task}", ask, user, parts=(model(), system),
                                    days=DAYS, model=f"anthropic:{model()}")

@@ -113,7 +113,7 @@ def build_default_service() -> ChatService:
         from app.services.chat import food_tips as food_tips_mod
         from app.services.nlu.llm_client import LLMClient
 
-        tips_client = LLMClient(food_tips_mod.PROMPT, provider="deepseek")
+        tips_client = LLMClient(food_tips_mod.PROMPT, provider="deepseek", task="food_knowledge")   # 저장은 food_knowledge 가
         food_tips = lambda text: tips_client.chat_json(text, temperature=0.2)  # noqa: E731
     # 2026-11-11: 고급 작업 교차 확인 — 식품 지식(저장해 다시 쓰는 답)은 Claude 가 한 번 더 검토 (ANTHROPIC_API_KEY · AI_CROSS_CHECK)
     from app.services.ai import cross_check

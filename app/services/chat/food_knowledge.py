@@ -87,6 +87,9 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
             rev = _review(got.get("_food") or food, text, got, review)
             if rev is not None:
                 ai_cache.set_review(TASK, key, rev)
+        from app.services.ai import usage
+
+        usage.record(TASK, hit.get("model"), cached=True)       # 저장본을 다시 써서 부르지 않은 호출
         return {"got": got, "food": got.pop("_food", None) or food, "review": rev,
                 "saved_at": hit["created_at"], "from_cache": True}
     raw = generate(text) if generate is not None else None

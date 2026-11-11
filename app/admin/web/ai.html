@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 비용 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,select,input,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
+.logout{margin-top:18px;background:transparent;border:1px solid #23364a;color:#c3d1de;border-radius:10px;padding:7px 11px;cursor:pointer;width:100%}
+main{padding:22px 26px;min-width:0;display:grid;gap:22px;align-content:start}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-width:0}
+h2{font-size:17px;margin:0 0 2px} .lede{color:var(--ink2);margin:0 0 12px;font-size:13.5px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12.5px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap;background:#fafbfc;position:sticky;top:0}
+td small{display:block;color:var(--ink3);font-size:12px}
+tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{background:var(--acc-s)}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p-ok{background:var(--ok-s);color:var(--ok)} .p-off{background:#eef1f4;color:var(--ink3)} .p-err{background:var(--ex-s);color:var(--ex)} .p-hold{background:var(--hold-s);color:var(--hold)}
+.detail{margin-top:14px;display:grid;gap:12px}
+.turns{display:grid;gap:6px;font-size:13.5px} .turn{display:flex;gap:10px} .turn span{color:var(--ink3);font-size:12px;min-width:120px}
+.k{font-size:12px;color:var(--ink3);font-weight:600;margin:0 0 4px}
+.err{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:10px 12px}
+.note{font-size:12.5px;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.sum span{border:1px solid var(--line);border-radius:10px;padding:4px 10px;font-size:12.5px;background:#fafbfc}
+.sum b{font-variant-numeric:tabular-nums}
+.cards{display:grid;gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
+.card h3{font-size:14.5px;margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h3 .rk{font-variant-numeric:tabular-nums;color:var(--ink3);font-weight:600;min-width:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.box{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;min-width:0}
+.box .k{margin:0 0 2px}
+.box ul{margin:4px 0 0;padding-left:16px}
+.warn{background:var(--hold-s);color:var(--hold);border-radius:10px;padding:8px 10px;font-size:13px}
+.bad{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:8px 10px;font-size:13px}
+.mono{font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--ink2);font-size:12.5px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:6px 0 4px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafbfc}
+.kpi .k{margin:0} .kpi b{font-size:20px;font-variant-numeric:tabular-nums;display:block}
+.kpi small{color:var(--ink3);font-size:12px}
+.kpi.save b{color:var(--ok)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} th.n{text-align:right}
+.bars{display:grid;gap:4px;font-size:12.5px}
+.bar{display:grid;grid-template-columns:86px 1fr 92px;gap:8px;align-items:center}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--acc);min-width:2px}
+.bar span{font-variant-numeric:tabular-nums;color:var(--ink2)} .bar span:last-child{text-align:right}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai" aria-current="page">AI</a><a href="/admin/b2b">B2B</a></nav>
+  <nav aria-label="AI 메뉴"><a href="#cost">비용</a><a href="#tasks">작업별</a><a href="#models">모델·요금</a><a href="#saved">저장된 결과</a><a href="#facts">확인된 사실</a></nav>
+  <div class="railnote">일상 답변은 DeepSeek, 고급 작업은 Claude 가 교차 확인해요. AI 가 만든 결과는 저장해 다시 쓰고, 출처로 확인한 사실은 기한 없이 AI 답보다 우선해요.<br><br>비용은 호출마다 기록한 토큰 × 요금표로 계산한 값이에요. 실제 청구액은 각 회사 콘솔에서 확인해 주세요.</div>
+  <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
+</aside>
+<main>
+  <section id="cost" aria-labelledby="cost-h">
+    <h2 id="cost-h">AI 비용</h2>
+    <p class="lede">서비스 안에서 AI 를 부른 횟수와 비용, 저장해 둔 결과를 다시 써서 부르지 않은 횟수예요.</p>
+    <form class="row" id="f"><label for="days" class="note">기간</label>
+      <select id="days"><option value="1">오늘 포함 1일</option><option value="7">7일</option><option value="30" selected>30일</option><option value="90">90일</option><option value="365">1년</option></select>
+      <span class="note" id="rate"></span></form>
+    <div id="err" class="err" hidden></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="bars" id="daily" style="margin-top:14px"></div>
+  </section>
+  <section id="tasks" aria-labelledby="tasks-h">
+    <h2 id="tasks-h">작업별</h2>
+    <p class="lede">아낀 비용은 같은 작업의 평균 비용 × 재사용 횟수로 어림한 값이에요. 요금표에 없는 모델은 비용을 비워 두었어요.</p>
+    <div class="scroll"><table><thead><tr><th>작업</th><th class="n">호출</th><th class="n">재사용</th><th class="n">토큰 입력 / 출력</th><th class="n">비용</th><th class="n">아낀 비용</th><th>모델</th></tr></thead><tbody id="taskrows"></tbody></table></div>
+  </section>
+  <section id="models" aria-labelledby="models-h">
+    <h2 id="models-h">모델·요금</h2>
+    <p class="lede">요금은 100만 토큰당 USD (입력 / 출력). .env 의 AI_PRICES 로 바꿀 수 있어요.</p>
+    <div class="scroll"><table><thead><tr><th>모델</th><th class="n">호출</th><th class="n">토큰 입력 / 출력</th><th class="n">비용</th><th class="n">요금 (입력 / 출력)</th></tr></thead><tbody id="modelrows"></tbody></table></div>
+  </section>
+  <section id="saved" aria-labelledby="saved-h">
+    <h2 id="saved-h">저장된 AI 결과</h2>
+    <p class="lede" id="savedlede">같은 질문이 다시 오면 AI 를 부르지 않고 이 결과를 써요.</p>
+    <div class="scroll"><table><thead><tr><th>작업</th><th class="n">저장</th><th class="n">재사용</th><th class="n">교차 확인됨</th></tr></thead><tbody id="cacherows"></tbody></table></div>
+  </section>
+  <section id="facts" aria-labelledby="facts-h">
+    <h2 id="facts-h">확인된 사실</h2>
+    <p class="lede">출처로 확인한 내용이에요. 고객 답에서 AI 내용 대신 쓰이고 출처가 함께 표시돼요. 고칠 때는 app/services/ai/verified_facts.json 을 고쳐요.</p>
+    <div class="scroll"><table><thead><tr><th>식품 · 대상</th><th>내용</th><th>기한</th><th>출처</th></tr></thead><tbody id="factrows"></tbody></table></div>
+  </section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>Number(v||0).toLocaleString("ko-KR");
+const krw=v=>v==null?"—":"₩"+Math.round(v).toLocaleString("ko-KR");
+const usd=v=>"$"+Number(v||0).toFixed(Number(v)<1?4:2);
+async function api(url){const r=await fetch(url);if(r.status===401){location.href="/admin/login?next=/admin/ai";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{m=(await r.json()).detail||m}catch{}throw new Error(m)}return r.json()}
+function showErr(e){const b=$("#err");b.hidden=false;b.textContent="불러오지 못했어요: "+e.message}
+
+async function loadCost(){
+  $("#err").hidden=true;
+  let d; try{d=await api("/admin/api/ai/cost?days="+$("#days").value)}catch(e){if(e.message!=="auth")showErr(e);return}
+  const t=d.total;
+  $("#rate").textContent=`원 환산 1달러 = ${num(d.usd_krw)}원${d.usd_krw_assumed?" (가정 — .env 의 USD_KRW 로 바꿀 수 있어요)":""}`;
+  $("#kpis").innerHTML=`
+    <div class="kpi"><p class="k">비용</p><b>${krw(t.krw)}</b><small>${usd(t.usd)}</small></div>
+    <div class="kpi"><p class="k">AI 호출</p><b>${num(t.calls)}회</b><small>실제로 부른 횟수</small></div>
+    <div class="kpi save"><p class="k">저장본 재사용</p><b>${num(t.reused)}회</b><small>부르지 않은 횟수</small></div>
+    <div class="kpi save"><p class="k">아낀 비용 (어림)</p><b>${krw(t.saved_krw)}</b><small>${usd(t.saved_usd)}</small></div>`;
+  const max=Math.max(...d.days_series.map(x=>x.krw),0.0001);
+  $("#daily").innerHTML=d.days_series.length?'<p class="k">날짜별 비용</p>'+d.days_series.map(x=>
+    `<div class="bar"><span>${esc(x.day.slice(5))}</span><i style="width:${Math.max(1,x.krw/max*100)}%" title="호출 ${x.calls}회 · 재사용 ${x.reused}회"></i><span>${krw(x.krw)}</span></div>`).join("")
+    :'<p class="note">이 기간에 기록된 AI 호출이 없어요.</p>';
+  $("#taskrows").innerHTML=d.tasks.length?d.tasks.map(x=>`<tr><td>${esc(x.label)}<small>${esc(x.task)}</small></td>
+    <td class="n">${num(x.calls)}</td><td class="n">${num(x.reused)}</td><td class="n">${num(x.tokens_in)} / ${num(x.tokens_out)}</td>
+    <td class="n">${x.unpriced&&!x.usd?'<span class="pill p-hold">요금 미등록</span>':krw(x.krw)}</td><td class="n">${x.reused?krw(x.saved_krw):"—"}</td>
+    <td><small>${esc(x.models.join(", "))}</small></td></tr>`).join(""):'<tr><td colspan="7" class="note">기록 없음</td></tr>';
+  $("#modelrows").innerHTML=d.models.length?d.models.map(m=>`<tr><td>${esc(m.model)}</td><td class="n">${num(m.calls)}</td>
+    <td class="n">${num(m.tokens_in)} / ${num(m.tokens_out)}</td><td class="n">${m.priced?krw(m.krw):'<span class="pill p-hold">요금 미등록</span>'}</td>
+    <td class="n">${m.price?("$"+m.price[0]+" / $"+m.price[1]):"—"}</td></tr>`).join(""):'<tr><td colspan="5" class="note">기록 없음</td></tr>';
+}
+async function loadKnowledge(){
+  let k; try{k=await api("/admin/api/ai/knowledge")}catch(e){if(e.message!=="auth")showErr(e);return}
+  $("#savedlede").textContent=k.cache_on?"같은 질문이 다시 오면 AI 를 부르지 않고 이 결과를 써요.":"저장·재사용이 꺼져 있어요 (.env 의 AI_CACHE=0).";
+  $("#cacherows").innerHTML=k.cache.length?k.cache.map(c=>`<tr><td>${esc(c.label)}<small>${esc(c.task)}</small></td><td class="n">${num(c.entries)}</td><td class="n">${num(c.reused)}</td><td class="n">${num(c.reviewed)}</td></tr>`).join(""):'<tr><td colspan="4" class="note">아직 저장된 결과가 없어요</td></tr>';
+  $("#factrows").innerHTML=k.facts.length?k.facts.map(f=>`<tr><td><b>${esc(f.food)}</b>${f.subject?" · "+esc(f.subject):""}<small>${esc(f.attribute)}</small></td>
+    <td>${esc(f.statement)}</td>
+    <td>${f.kind==="intrinsic"?'<span class="pill p-ok">영구</span>':(f.current?'<span class="pill p-ok">'+esc(f.review_after)+'까지</span>':'<span class="pill p-err">재확인 필요</span>')}<small>${esc(f.verified_at)} 확인 · ${f.method==="human"?"사람 확인":"출처 대조"}</small></td>
+    <td><a href="${esc(f.source_url)}" target="_blank" rel="noopener">${esc(f.source_name)}</a></td></tr>`).join(""):'<tr><td colspan="4" class="note">확인된 사실이 없어요</td></tr>';
+}
+$("#days").addEventListener("change",loadCost);
+$("#f").addEventListener("submit",e=>e.preventDefault());
+loadCost();loadKnowledge();
+</script>
+</body>
+</html>

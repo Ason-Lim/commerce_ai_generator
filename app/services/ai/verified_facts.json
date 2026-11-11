@@ -1,0 +1,17 @@
+{
+ "_about": "출처로 확인한 식품 사실 (2026-11-11~). kind=intrinsic(품종 고유 특성·기본 정보)은 기한 없음, kind=seasonal(제철·출하 시기·시장 정보)은 review_after 까지. 확인된 사실은 AI 답보다 우선한다. 고칠 때는 이 파일을 고치고 verified_at·source 를 새로 적는다.",
+ "facts": [
+  {"id": "strawberry-geumsil-traits", "food": "딸기", "subject": "금실", "attribute": "특성", "kind": "intrinsic",
+   "statement": "과육이 단단한 편(경도 우수)이고 저장성이 좋아 수출 주력이 된 품종이에요. 당도가 높고 기형과가 적어요.",
+   "source_name": "경남도농업기술원 육성 · 경남일보 보도", "source_url": "https://www.gnnews.co.kr/news/articleView.html?idxno=624737",
+   "method": "source", "verified_at": "2026-11-11", "review_after": null},
+  {"id": "strawberry-maehyang-traits", "food": "딸기", "subject": "매향", "attribute": "특성", "kind": "intrinsic",
+   "statement": "과육이 단단한 편(경도 13.5g/mm², 설향 11.0)이라 수출용으로 많이 쓰인 품종이에요.",
+   "source_name": "원예과학기술지 '홍실' 품종 육성 논문의 대조 품종 측정값", "source_url": "https://koreascience.kr/article/JAKO201815661859148.pdf",
+   "method": "source", "verified_at": "2026-11-11", "review_after": null},
+  {"id": "strawberry-seolhyang-traits", "food": "딸기", "subject": "설향", "attribute": "특성", "kind": "intrinsic",
+   "statement": "과육이 비교적 무른 편(경도 11.0g/mm², 매향 13.5)이고 수량이 많은 품종이에요.",
+   "source_name": "원예과학기술지 '홍실' 품종 육성 논문의 대조 품종 측정값", "source_url": "https://koreascience.kr/article/JAKO201815661859148.pdf",
+   "method": "source", "verified_at": "2026-11-11", "review_after": null}
+ ]
+}

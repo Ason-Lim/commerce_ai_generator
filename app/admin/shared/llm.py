@@ -17,6 +17,13 @@ class LLMUnavailable(RuntimeError):
     pass
 
 
+def _record(provider: str, model: str, u, tin: str, tout: str) -> None:
+    """2026-11-11: 관리자·B2B AI 호출 비용 기록 (관리자 'AI 비용' 화면)."""
+    from app.services.ai import usage
+
+    usage.record("admin_llm", f"{provider}:{model}", getattr(u, tin, 0) if u else 0, getattr(u, tout, 0) if u else 0)
+
+
 class LLMClient:
     def __init__(self, settings: Settings | None = None):
         self.s = settings or get_settings()
@@ -50,6 +57,7 @@ class LLMClient:
                 model=self.s.openai_model, temperature=temperature, max_tokens=max_tokens,
                 messages=[{"role": "system", "content": system},
                           {"role": "user", "content": user}], **kw)
+            _record("openai", self.s.openai_model, getattr(resp, "usage", None), "prompt_tokens", "completion_tokens")
             return resp.choices[0].message.content or ""
         if p == "anthropic":
             import anthropic  # 지연 import
@@ -59,6 +67,7 @@ class LLMClient:
                 model=self.s.anthropic_model, max_tokens=max_tokens,
                 system=system + ("\n반드시 JSON 하나만 출력." if json_mode else ""),
                 messages=[{"role": "user", "content": user}])
+            _record("anthropic", self.s.anthropic_model, getattr(msg, "usage", None), "input_tokens", "output_tokens")
             return "".join(getattr(b, "text", "") for b in msg.content)
         raise LLMUnavailable("LLM_PROVIDER=none")
 
@@ -77,7 +86,7 @@ class LLMClient:
             # commerce 공용 클라이언트 (DEEPSEEK_API_KEY · DEEPSEEK_MODEL, 공식 API 주소만)
             from app.services.nlu.llm_client import LLMClient as DeepSeekClient
 
-            return DeepSeekClient(system, provider="deepseek").chat_json(user, kw.get("temperature", 0.0))
+            return DeepSeekClient(system, provider="deepseek", task="admin_llm").chat_json(user, kw.get("temperature", 0.0))
         return safe_json(self.chat(system, user, json_mode=True, **kw))
 
 

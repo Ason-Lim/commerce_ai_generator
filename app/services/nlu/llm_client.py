@@ -40,6 +40,7 @@ class LLMClient:
         timeout: float = 30.0,
         cache: str | None = None,
         cache_days: float = 30.0,
+        task: str | None = None,
     ):
         self.system = system_prompt
         # 2026-11-01: a long title list made DeepSeek think for 20–35 s; callers that need it may wait longer
@@ -51,6 +52,9 @@ class LLMClient:
         # 2026-11-11: AI 결과 저장·재사용 — 작업 이름을 주면 같은 (모델·프롬프트·입력·온도)는 다시 부르지 않는다
         self.cache = cache
         self.cache_days = cache_days
+        # 2026-11-11: AI 비용 기록용 작업 이름 (없으면 cache 이름) — 관리자 'AI 비용' 화면
+        self.task = task or cache
+        self._usage: tuple[int, int] | None = None
 
     # ── settings ──────────────────────────────────────────
     def _get(self, name: str, default: str = "") -> str:
@@ -76,6 +80,14 @@ class LLMClient:
                                         days=self.cache_days, model=f"{self.provider}:{model}")
         return self._chat_json(user_text, temperature)
 
+    def _record(self) -> None:
+        if self._usage is None:
+            return
+        from app.services.ai import usage
+
+        usage.record(self.task or "untagged", f"{self.provider}:{self._model_name()}", *self._usage)
+        self._usage = None
+
     def _model_name(self) -> str:
         if self.provider == "deepseek":
             return self._get("DEEPSEEK_MODEL").strip()
@@ -92,6 +104,7 @@ class LLMClient:
             raw = self._ollama(user_text, temperature)
         else:
             raise LLMConfigError("지원하지 않는 LLM_PROVIDER")
+        self._record()
 
         return self._safe_json(raw)
 
@@ -129,6 +142,9 @@ class LLMClient:
                 {"role": "user", "content": user_text},
             ],
         )
+        u = getattr(response, "usage", None)
+        if u is not None:
+            self._usage = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0)
         if not response.choices or not response.choices[0].message.content:
             raise ValueError("DeepSeek 빈 응답")
         return response.choices[0].message.content
@@ -172,6 +188,9 @@ class LLMClient:
                 {"role": "user",   "content": user_text},
             ],
         )
+        u = getattr(resp, "usage", None)
+        if u is not None:
+            self._usage = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0)
         return resp.choices[0].message.content
 
     # ── JSON 방어 파서 ────────────────────────────────────

@@ -134,6 +134,9 @@ def cached_call(task: str, fn, user_text: str, *, parts: tuple, days: float, mod
     key = make_key(*parts, user_text)
     hit = get(task, key)
     if hit is not None:
+        from app.services.ai import usage
+
+        usage.record(task, model, cached=True)          # 부르지 않은 호출 (AI 비용 화면의 '아낀 호출')
         return hit["value"]
     value = fn(user_text)
     if isinstance(value, dict) and value:

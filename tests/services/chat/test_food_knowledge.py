@@ -83,3 +83,31 @@ def test_answers_reviewed_by_an_older_rule_are_reviewed_again_once():
     calls = []
     K.answer("딸기 품종 알려줘", "딸기", Gen(), lambda c, items: calls.append(1) or [])
     assert calls == []                                                   # 새 기준으로 검토한 뒤로는 다시 부르지 않는다
+
+
+def test_verified_facts_replace_ai_lines_and_show_their_source(sqlite_db, tmp_path, monkeypatch):
+    import json
+
+    from app.services.ai import facts
+
+    f = tmp_path / "facts.json"
+    f.write_text(json.dumps({"facts": [
+        {"id": "g", "food": "딸기", "subject": "금실", "attribute": "특성", "kind": "intrinsic",
+         "statement": "과육이 단단하고 저장성이 좋아요.", "source_name": "경남도농업기술원", "source_url": "https://x",
+         "method": "source", "verified_at": "2026-11-11", "review_after": None},
+        {"id": "s", "food": "딸기", "subject": "", "attribute": "제철", "kind": "seasonal",
+         "statement": "옛 제철 정보", "source_name": "옛 자료", "review_after": "2020-01-01"}]}, ensure_ascii=False),
+        encoding="utf-8")
+    monkeypatch.setenv("VERIFIED_FACTS_FILE", str(f))
+    assert facts.find("딸기", "금 실", "특성")["id"] == "g" and facts.find("딸기", "", "제철") is None   # 재확인일 지남
+
+    items = [{"product_name": "금실 딸기 500g", "price": 19900, "product_url": "https://www.coupang.com/g", "is_coupang": True}]
+    svc = ChatService(sqlite_db, shopping=FakeShopping(items=items), recipe_chat=RecipeChat(statement_factory=str),
+                      food_tips=Gen(), food_review=review_flagging_geumsil)
+    res = svc.handle(None, message="딸기 언제부터 맛있어? 품종별 차이 알려줘")
+    text = md(res)
+    assert "- **금실**: 과육이 단단하고 저장성이 좋아요. _(출처 확인 · 경남도농업기술원)_" in text
+    assert "Claude 의견" not in text                          # 확인된 줄에는 Claude 의견 대신 출처
+    assert "1곳은 출처로 확인한 내용이라 출처를 함께 적었어요" in text and "보통 12월부터" in text
+    notes = [b["data"].get("note") or "" for b in res["blocks"] if b["type"] == "product_list"]
+    assert any(n.startswith("과육이 단단하고 저장성이 좋아요.") for n in notes)   # 품종별 상품 안내도 확인된 내용
