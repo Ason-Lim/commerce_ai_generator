@@ -30,6 +30,10 @@ def test_frozen_goes_to_its_own_list(sqlite_db, shopping):
     assert len(frozen) == 1 and frozen[0]["data"]["collapsed"] is True
     assert frozen[0]["data"]["title"] == "냉동 상품 1개 따로 보기"
     assert [i["title"] for i in frozen[0]["data"]["items"]] == ["감미인 국내산 딸기 (냉동), 1kg"]
+    # 화면 WhyList 는 why 줄마다 {"text", "basis"} 를 읽는다 — 문자열이면 화면이 멈춘다
+    for b in lists:
+        for it in b["data"]["items"]:
+            assert all(isinstance(w, dict) and w.get("text") and w.get("basis") for w in it.get("why") or []), it["title"]
     others = [i["title"] for b in lists if b is not frozen[0] for i in b["data"]["items"]]
     assert not any("냉동" in t for t in others)                       # 가성비 등 비교 후보에 없다
     assert "후보 3개" in res["blocks"][1]["data"]["md"] or any("후보 3개" in (b["data"].get("md") or "")

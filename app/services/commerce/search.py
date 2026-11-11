@@ -163,7 +163,9 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         start = max([c["rank"] for c in picked["picks"] + picked["others"]] or [0])
         partner_list = [dict(c, rank=start + n, why=[c["partner_note"]]) for n, c in enumerate(partner_list, 1)]
         start = max([start] + [c["rank"] for c in partner_list])
-        frozen_list = [dict(c, rank=start + n, why=[FROZEN_NOTE]) for n, c in enumerate(frozen_list, 1)]
+        # why 줄은 다른 카드와 같은 모양 {"text", "basis"} — 문자열로 넣었더니 화면(WhyList)이 멈췄다 (2026-11-11)
+        frozen_list = [dict(c, rank=start + n, why=[{"text": FROZEN_NOTE, "basis": "calc"}])
+                       for n, c in enumerate(frozen_list, 1)]
         start = max([start] + [c["rank"] for c in frozen_list])
         connect = [dict(c, rank=start + n) for n, c in enumerate(connect, 1)]
     else:

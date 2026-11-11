@@ -1,5 +1,5 @@
 import { Calculator, Heart, Landmark, Lightbulb, MessageCircle, Store, TrendingUp, type LucideIcon } from "lucide-react";
-import type { Candidate, ProductListBlock, SponsoredListBlock, WhyBasis } from "../types/blocks";
+import type { Candidate, ProductListBlock, SponsoredListBlock, WhyBasis, WhyLine } from "../types/blocks";
 import { cardToCandidate } from "../api/adapt";
 import { cx } from "../lib/format";
 import { useSaved } from "../state/saved";
@@ -36,16 +36,19 @@ const BASIS_LOOK: Record<WhyBasis, { icon: LucideIcon; dot: string; pill: string
 
 /** 사유 속 숫자(가격·100g당·%·kg)를 굵게 — 근거가 되는 값이 먼저 보이게 */
 function Emph({ text }: { text: string }) {
+  // 2026-11-11: 사유 줄이 비어 오거나 모양이 다르면 화면 전체가 멈추지 않게 (냉동 목록 why 가 문자열로 와서 빈 화면이 됐다)
+  if (typeof text !== "string") return null;
   const parts = text.split(/(\d[\d,.]*\s?(?:원\/100g|원|%|kg|g|개|배)?)/g);
   return <>{parts.map((p, i) => (i % 2 === 1 && /\d/.test(p) ? <strong key={i} className="font-semibold text-ink">{p}</strong> : <span key={i}>{p}</span>))}</>;
 }
 
 /** 왜 추천했나요 — 첫 사유를 크게, 사유마다 근거 종류 아이콘·라벨 */
 export function WhyList({ c }: { c: Candidate }) {
-  if (!c.why?.length) return null;
-  const [lead, ...rest] = c.why;
+  const why = (c.why ?? []).filter((w) => w && typeof w === "object" && typeof w.text === "string");
+  if (!why.length) return null;
+  const [lead, ...rest] = why;
   const look = (b: WhyBasis) => BASIS_LOOK[b] ?? BASIS_LOOK.mall;
-  const Row = ({ w, main }: { w: (typeof c.why)[number]; main?: boolean }) => {
+  const Row = ({ w, main }: { w: WhyLine; main?: boolean }) => {
     const { icon: Icon, dot, pill } = look(w.basis);
     return (
       <li className="flex items-start gap-2.5">
