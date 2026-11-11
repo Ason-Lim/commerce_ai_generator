@@ -41,6 +41,7 @@ class LLMClient:
         cache: str | None = None,
         cache_days: float = 30.0,
         task: str | None = None,
+        thinking: bool | None = None,
     ):
         self.system = system_prompt
         # 2026-11-01: a long title list made DeepSeek think for 20–35 s; callers that need it may wait longer
@@ -55,6 +56,9 @@ class LLMClient:
         # 2026-11-11: AI 비용 기록용 작업 이름 (없으면 cache 이름) — 관리자 'AI 비용' 화면
         self.task = task or cache
         self._usage: tuple[int, int] | None = None
+        # 2026-11-11: deepseek-flash 는 기본이 '생각 모드' — 제목 목록에서 이름 뽑기에 출력 5,710토큰 중 대부분이
+        # 추론이었고 41초 걸렸다(끄면 같은 일 2초대). None 이면 .env DEEPSEEK_THINKING(on/off), 그것도 없으면 보내지 않는다.
+        self.thinking = thinking
 
     # ── settings ──────────────────────────────────────────
     def _get(self, name: str, default: str = "") -> str:
@@ -89,6 +93,12 @@ class LLMClient:
         usage.record(self.task or "untagged", f"{self.provider}:{self._model_name()}", tin, tout, hit=hit,
                      served=served if isinstance(served, str) else None)
         self._usage = None
+
+    def _thinking(self) -> bool | None:
+        if self.thinking is not None:
+            return self.thinking
+        v = self._get("DEEPSEEK_THINKING").strip().lower()
+        return {"on": True, "1": True, "true": True, "off": False, "0": False, "false": False}.get(v)
 
     def _model_name(self) -> str:
         if self.provider == "deepseek":
@@ -135,6 +145,10 @@ class LLMClient:
             timeout=self.timeout,
             max_retries=0,
         )
+        extra = {}
+        think = self._thinking()
+        if think is not None:
+            extra["extra_body"] = {"thinking": {"type": "enabled" if think else "disabled"}}
         response = client.chat.completions.create(
             model=cfg["model"],
             temperature=temperature,
@@ -143,6 +157,7 @@ class LLMClient:
                 {"role": "system", "content": self.system},
                 {"role": "user", "content": user_text},
             ],
+            **extra,
         )
         u = getattr(response, "usage", None)
         if u is not None:     # 입력 중 캐시 적중 토큰·실제 처리 모델까지 (요금이 다르다, 2026-11-11)

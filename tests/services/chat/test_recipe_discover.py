@@ -617,3 +617,22 @@ def test_youtube_thumbnail_comes_only_from_the_api_and_ytimg():
                                             "thumbnails": ok}}], "pageInfo": {"totalResults": 1}}
     hits, _total = YouTubeSearch("k", http_get=http_get).search("굴전 만들기")
     assert hits[0].thumb == "https://i.ytimg.com/vi/nj5nhxaQx98/mqdefault.jpg"
+
+
+@pytest.mark.parametrize("text,subject", [
+    ("인기 샌드위치 레시피", "샌드위치"), ("유행하는 떡볶이 레시피 알려줘", "떡볶이"), ("인기 김밥을 만드는 법", "김밥"),
+    ("요즘 유행하는 요리 알려줘", ""), ("요즘 인기 있는 레시피 뭐예요?", ""), ("화제가 된 음식 알려줘", ""),
+    ("인기 있는 디저트 레시피", ""), ("핫한 요리가 뭐가 있어요", ""),
+])
+def test_a_trend_question_that_names_a_dish_keeps_the_dish(text, subject):
+    assert D.trend_subject(text) == subject
+
+
+def test_popular_named_dish_gets_its_recipes_not_the_general_trend_list(make):
+    # 2026-11-11 (customer check): '인기 샌드위치 레시피' ran the whole trend search (50 s) and the screen gave up at 30 s
+    svc, http = make({"news": TREND_NEWS, "blog": [blog("샌드위치 레시피", "https://blog.naver.com/s/1")]},
+                     llm=lambda p, x: {"dish": "샌드위치", "full_name": None, "query": "샌드위치 레시피"})
+    res = svc.handle(None, message="인기 샌드위치 레시피")
+    assert res["stage"] != "recipe_trend"
+    assert "news" not in {k for _q, k in http.calls}
+    assert md(res).startswith("'샌드위치' 레시피를 보여 드려요. 어느 레시피가 더 인기 있는지는 따로 재지 않았어요.")

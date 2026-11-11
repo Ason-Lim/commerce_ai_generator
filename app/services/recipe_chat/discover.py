@@ -72,6 +72,30 @@ def is_trend_request(text: str) -> bool:
     return bool(TREND_RE.search(t) and TREND_DISH_RE.search(t) and not NOT_TREND_RE.search(t))
 
 
+# 2026-11-11: '인기 샌드위치 레시피' 는 요즘 유행 요리 전체 목록이 아니라 샌드위치 레시피를 묻는다
+_TREND_FILLER = re.compile(
+    r"^(?:요즘|최근|요새|올해|이번|가장|제일|진짜|많이|많은|좀|된|되는|하는|요리|레시피|음식|메뉴|디저트|간식|만드는|만들|만들기|"
+    r"법|방법|알려\s*줘|알려\s*주세요|알려줘요|추천|추천해\s*줘|추천해\s*주세요|해\s*줘|주세요|뭐|뭐야|뭐예요|뭐가|뭘|"
+    r"있어|있는|있나요|있어요|어떤|sns|SNS|틱톡|유튜브|인스타|인스타그램|해먹기|해\s*먹는|먹는|거|것|걸)"
+    r"(?:이|가|은|는|을|를|도|요)?$")
+_PARTICLE = re.compile(r"(?<=..)(?:은|는|을|를|의|도|으로|에서)$")     # '떡볶이'·'김밥이' 의 '이'는 건드리지 않는다
+
+
+def trend_subject(text: str) -> str:
+    """유행 질문 속 요리 이름 ('인기 샌드위치 레시피' → '샌드위치'). 없으면 '' — 그때만 전체 유행 목록."""
+    keep = []
+    for tok in re.split(r"[\s?!.,~]+", text or ""):
+        if not tok or TREND_RE.match(tok):          # 인기·유행하는·핫한 …
+            continue
+        if _TREND_FILLER.match(tok):
+            continue
+        bare = _PARTICLE.sub("", tok)
+        if not bare or _TREND_FILLER.match(bare) or TREND_DISH_RE.fullmatch(bare):
+            continue
+        keep.append(bare)
+    return " ".join(keep)
+
+
 def find_url(text: str) -> str | None:
     m = URL_RE.search(text or "")
     return m.group(0).rstrip(".,)") if m else None
@@ -399,9 +423,11 @@ def from_env(env=None):
         def interpreter(system: str, payload: dict) -> dict:
             if system not in clients:
                 # the headline list makes the model think long (21 s measured, >30 s at times): wait up to 75 s
+                # 2026-11-11: 생각 모드 끔 — 이름 뽑기는 추론이 필요 없고, 켜져 있으면 41초(화면은 30초에 포기)
                 clients[system] = LLMClient(system, provider="deepseek", env=source,
                                             timeout=75.0 if system == TREND_PROMPT else 30.0,
-                                            cache="recipe_discover", cache_days=7)   # 2026-11-11: 같은 뉴스·목록이면 다시 쓰기
+                                            cache="recipe_discover", cache_days=7,   # 2026-11-11: 같은 뉴스·목록이면 다시 쓰기
+                                            thinking=False)
             return clients[system].chat_json(json.dumps(payload, ensure_ascii=False), temperature=0)
     return Discovery(provider, interpreter, video=video, social=social, surge=surge_reader, cafe=True, signals=True,
                      history=history)

@@ -232,6 +232,9 @@ class RecipeChat:
             if url:
                 return self._discover_link(url, state)
             if discover_mod.is_trend_request(text) and self.resolver.find(text).kind != "card":
+                subject = discover_mod.trend_subject(text)
+                if subject:
+                    return self._popular_dish(subject, state, recipe_sid, db)
                 return self._discover_trend(state)
 
         # an explicit recipe request ("…만드는 법", "…요리방법") always wins
@@ -439,6 +442,14 @@ class RecipeChat:
         same = next((t for t in titles if re.sub(r"\s+", "", t) == flat_name), None)
         related = [t for t in dict.fromkeys(titles) if t != same][:2]
         return same, related
+
+    def _popular_dish(self, subject, state, recipe_sid, db):
+        """2026-11-11: '인기 샌드위치 레시피' — 그 요리의 레시피로 답하고, 인기 순위는 재지 않았다고 말한다."""
+        turn = self._handle(f"{subject} 레시피", None, state, recipe_sid, db, force_recipe=True)
+        if turn is not None:
+            turn.blocks = [B.notice(f"'{subject}' 레시피를 보여 드려요. 어느 레시피가 더 인기 있는지는 따로 재지 않았어요. "
+                                    "요즘 유행하는 요리 전체가 궁금하면 '요즘 유행하는 요리 알려줘'라고 물어봐 주세요.")] + list(turn.blocks)
+        return turn
 
     def _discover_trend(self, state):
         state.update(mode="recipe", pending=None)

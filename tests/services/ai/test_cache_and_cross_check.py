@@ -88,3 +88,25 @@ def test_admin_llm_is_not_cached_and_b2b_review_is_not_saved(monkeypatch):
     cross_check.review("b2b_polish", "x", ["원문: a\n다듬은 문장: b"],
                        call=lambda s, u: {"items": [{"i": 0, "ok": True}]}, cache=False)
     assert C.stats() == []
+
+
+def test_deepseek_thinking_is_sent_only_when_asked(monkeypatch):
+    from app.services.nlu.llm_client import LLMClient
+
+    seen = []
+
+    class Fake:
+        def __init__(self, **kw):
+            self.chat = self
+            self.completions = self
+
+        def create(self, **kw):
+            seen.append(kw.get("extra_body"))
+            msg = type("M", (), {"content": '{"ok": 1}'})
+            return type("R", (), {"choices": [type("C", (), {"message": msg})], "usage": None, "model": "deepseek-flash"})
+
+    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "deepseek-flash"}
+    LLMClient("s", provider="deepseek", env=env, openai_factory=Fake).chat_json("a")
+    LLMClient("s", provider="deepseek", env=env, openai_factory=Fake, thinking=False).chat_json("a")
+    LLMClient("s", provider="deepseek", env={**env, "DEEPSEEK_THINKING": "off"}, openai_factory=Fake).chat_json("a")
+    assert seen == [None, {"thinking": {"type": "disabled"}}, {"thinking": {"type": "disabled"}}]
