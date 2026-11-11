@@ -120,6 +120,8 @@ export interface ApiCard {
   per100g?: number | null;
   /** 2026-11-11: 중량 옵션·증정분 안내 — 상세페이지를 열기 전에 알 수 있게 */
   weight_note?: WeightNote | null;
+  /** 2026-11-11: 상품명에 품종이 2개 이상 — "여러 품종 구성 · 금실 · 킹스베리" */
+  variety_mix?: VarietyMix | null;
   per_unit?: number | null;
   rocket?: boolean | null;
   free_shipping?: boolean | null;
@@ -326,6 +328,7 @@ export interface ProductCompareRow {
   per100g: number | null;
   /** 2026-11-11: 포장 용량 대신 — 중량 옵션이 있어요 · 증정분이 있어요 */
   weight_note?: WeightNote | null;
+  variety_mix?: VarietyMix | null;
   fit?: "fits" | "partial" | "unknown" | "bulk" | null;
   fit_text?: string | null;
   /** 손질 상태 표기 (굴: 깐굴 표기 · 껍질째 표기 · 손질 상태 미표기) */
@@ -393,6 +396,12 @@ export interface WeightNote {
   detail: string;    // "2kg · 5kg · 10kg" · "3kg + 1kg 증정" · "1+1 구성"
 }
 
+/** 2026-11-11: 여러 품종을 섞어 파는 상품 */
+export interface VarietyMix {
+  label: string;     // "여러 품종 구성"
+  detail: string;    // "금실 · 킹스베리"
+}
+
 /* ───────── 화면용 뷰 모델 ───────── */
 
 export interface Candidate {
@@ -408,6 +417,7 @@ export interface Candidate {
   weightLabel?: string | null;  // "1.2kg"
   per100g?: number | null;      // 100g당 가격
   weightNote?: WeightNote | null; // 중량 옵션·증정분 안내 (2026-11-11)
+  varietyMix?: VarietyMix | null; // 여러 품종 구성 (2026-11-11)
   unitLabel?: string | null;    // "개당 약 4,635원"
   delivery?: { label: string; verified: boolean } | null;
   reasons: string[];            // 선택 이유

@@ -3,7 +3,7 @@ import type { ProductCompareBlock, ProductCompareRow } from "../types/blocks";
 import { goHref, logDirectClick } from "../api/client";
 import { useChatActions } from "./ChatActions";
 import { cx, won } from "../lib/format";
-import { WeightNoteTag } from "./ui";
+import { VarietyMixTag, WeightNoteTag } from "./ui";
 
 /** 상품명 앞의 [빨간특기] 같은 대괄호 태그를 제거한다. */
 const cleanTitle = (t: string) => t.replace(/^\s*(\[[^\]]*\]\s*)+/, "").trim() || t;
@@ -75,6 +75,7 @@ function Row({ r, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
             className="line-clamp-2 font-semibold leading-snug text-ink hover:underline">{name}</a>
         ) : <span className="line-clamp-2 font-semibold leading-snug">{name}</span>}
         {r.mall && <div className="mt-0.5 text-xs text-ink3">{r.mall}</div>}
+        {r.variety_mix && <div className="mt-1"><VarietyMixTag mix={r.variety_mix} /></div>}
       </th>
       <td className="whitespace-nowrap px-3 py-2.5">
         <span className={cx("font-bold", bestTotal && "text-accent")}>{won(r.total)}</span>
@@ -168,6 +169,7 @@ function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: 
         <div className="min-w-0">
           <div className="line-clamp-2 font-semibold leading-snug">{name}</div>
           {r.mall && <div className="mt-0.5 text-xs text-ink3">{r.mall}</div>}
+        {r.variety_mix && <div className="mt-1"><VarietyMixTag mix={r.variety_mix} /></div>}
         </div>
       </div>
       <div className="mt-3">

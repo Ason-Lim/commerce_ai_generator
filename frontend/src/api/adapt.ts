@@ -34,6 +34,7 @@ export function cardToCandidate(c: ApiCard): Candidate {
     weightLabel: weightLabel(g),
     per100g: c.per100g !== undefined ? c.per100g : serverWeighed ? null : per100g(total, g),
     weightNote: c.weight_note ?? null,
+    varietyMix: c.variety_mix ?? null,
     unitLabel: c.unit_price && c.unit_count ? `${c.unit_count}개 · 개당 약 ${won(c.unit_price)}` : null,
     delivery: c.delivery_terms ? { label: c.delivery_terms, verified: true }
       : c.rocket ? { label: "로켓배송 표시", verified: true } : null,

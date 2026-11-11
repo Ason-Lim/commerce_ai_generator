@@ -1,6 +1,6 @@
 /** 작은 공용 조각: 썸네일 · 가격 · 근거/미확인 태그 · 출처 */
 import { useState } from "react";
-import type { Candidate, WeightNote } from "../types/blocks";
+import type { Candidate, VarietyMix, WeightNote } from "../types/blocks";
 import { cx, won } from "../lib/format";
 
 export function Thumb({ c, size = "md" }: { c: Pick<Candidate, "image" | "title">; size?: "sm" | "md" | "lg" }) {
@@ -45,6 +45,16 @@ export function WeightNoteTag({ note, withDetail = true }: { note?: WeightNote |
   return (
     <span className="tag bg-warnSoft text-warn" title={hint}>
       {note.label}{withDetail && note.detail ? ` · ${note.detail}` : ""}
+    </span>
+  );
+}
+
+/** 2026-11-11: 여러 품종 구성 — 상품명에 품종이 2개 이상 */
+export function VarietyMixTag({ mix }: { mix?: VarietyMix | null }) {
+  if (!mix) return null;
+  return (
+    <span className="tag bg-chip text-ink2" title="상품명에 품종이 여러 개 적혀 있어요. 구성과 비율은 판매처에서 확인해 주세요.">
+      {mix.label}{mix.detail ? ` · ${mix.detail}` : ""}
     </span>
   );
 }

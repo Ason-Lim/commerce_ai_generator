@@ -127,6 +127,7 @@ def build(name: str, seen_set: dict, need: dict | None, go_for) -> dict:
             "pack": pack_fit.size_text(pack) if pack else None,
             # 2026-11-11: 옵션 목록·증정분이면 '용량 미확인' 대신 그 사실을 알린다
             "weight_note": note,
+            "variety_mix": c.get("variety_mix"),          # 2026-11-11: 여러 품종 구성
             "per100g": per100, "per100g_unit": "100g" if per100 is not None else None,
             "fit": fit, "fit_text": fit_text,
             "prep": _prep(name, c.get("title") or ""),

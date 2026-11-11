@@ -103,3 +103,13 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
         ai_cache.put(TASK, key, dict(got, _food=name), days=DAYS, label=label, review=rev,
                      model="deepseek" + (f" · 검토 {rev['by']}" if rev else ""))
     return {"got": got, "food": name, "review": rev, "saved_at": None, "from_cache": False}
+
+
+def variety_mix(title: str, names: list[str]) -> dict | None:
+    """2026-11-11: 상품명에 품종 이름이 2개 이상이면 '여러 품종 구성' — 예: '설향딸기 금실딸기 킹스베리딸기'.
+    names 는 이 답에 나온 품종 + 확인된 사실의 품종. 나온 순서대로 detail 에 적는다."""
+    flat = re.sub(r"\s+", "", title or "")
+    found = sorted({n for n in names if n and n in flat}, key=flat.index)
+    if len(found) < 2:
+        return None
+    return {"label": "여러 품종 구성", "detail": " · ".join(found)}

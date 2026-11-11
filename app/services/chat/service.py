@@ -733,6 +733,13 @@ class ChatService:
 
         label = _label(food)
         sections, missing, items, shown = [], [], [], []
+        # 2026-11-11: 여러 품종을 섞어 파는 상품 표시용 품종 이름 — 이 답의 품종 + 확인된 사실의 품종
+        from app.services.ai import facts as facts_mod
+        from app.services.chat import food_knowledge
+
+        known_names = list(dict.fromkeys([v["name"] for v in varieties] + [
+            f["subject"] for f in facts_mod.all_facts()
+            if f.get("subject") and re.sub(r"\s+", "", f["food"]) == re.sub(r"\s+", "", food)]))
         for v in varieties[:VARIETY_MAX]:
             name = v["name"]
             try:
@@ -746,6 +753,7 @@ class ChatService:
             cards = [c for c in (picked["picks"] + picked["others"] if picked else [])
                      if name in re.sub(r"\s+", "", c.get("title") or "") and not c.get("partner")]
             cards = [c for c in cards if c.get("key") not in {k.get("key") for k in shown}][:VARIETY_PER]
+            cards = [dict(c, variety_mix=food_knowledge.variety_mix(c.get("title") or "", known_names)) for c in cards]
             if not cards:
                 missing.append(name)
                 continue

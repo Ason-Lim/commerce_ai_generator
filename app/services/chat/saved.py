@@ -22,7 +22,8 @@ KEEP = ("key", "rank", "title", "image", "price", "shipping_fee", "total", "mall
         "delivery_hint", "affiliate", "affiliate_program", "role", "role_label", "why", "reason",
         "partner",                                   # 2026-11-09: 업체 제공 상품 표시 (비교 표에서 제외)
         "weight_note",                               # 2026-11-11: 중량 옵션·증정분 안내
-        "frozen")                                    # 2026-11-11: 냉동 상품 (비교 표에서 제외)
+        "frozen",                                    # 2026-11-11: 냉동 상품 (비교 표에서 제외)
+        "variety_mix")                               # 2026-11-11: 여러 품종 구성 표시
 
 
 def now_label() -> str:

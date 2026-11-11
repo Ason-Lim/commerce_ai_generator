@@ -125,3 +125,27 @@ def test_without_the_registry_file_nothing_is_marked(sqlite_db, tmp_path, monkey
     shop = ByQuery({"설향": [it("논산 설향 딸기 500g", 15900)]})
     text = md(_svc(sqlite_db, shop).handle(None, message=Q))
     assert "확인되지 않은 이름" not in text and "맞춰 봤어요" not in text
+
+
+
+def test_mixed_variety_products_get_a_tag():
+    from app.services.chat import food_knowledge as K
+
+    names = ["설향", "금실", "킹스베리", "매향"]
+    assert K.variety_mix("설향딸기 금실딸기 킹스베리딸기", names) == {"label": "여러 품종 구성", "detail": "설향 · 금실 · 킹스베리"}
+    assert K.variety_mix("맛가득 프리미엄 금실, 죽향 킹스베리 500g", names)["detail"] == "금실 · 킹스베리"
+    assert K.variety_mix("논산 설향 딸기 500g", names) is None
+
+
+def test_variety_sections_and_compare_table_show_the_mix_tag(sqlite_db):
+    shop = ByQuery({"설향": [it("논산 설향 딸기 500g", 15900), it("설향딸기 금실딸기 킹스베리딸기", 37200)],
+                    "금실": [it("금실 딸기 500g", 19900)]})
+    res = _svc(sqlite_db, shop).handle(None, message=Q)
+    cards = {i["title"]: i for b in res["blocks"] if b["type"] == "product_list" for i in b["data"]["items"]}
+    # 이 답의 품종은 설향·금실·가짜품종 — 답에 없는 킹스베리는 세지 않는다
+    assert cards["설향딸기 금실딸기 킹스베리딸기"]["variety_mix"]["detail"] == "설향 · 금실"
+    assert cards["논산 설향 딸기 500g"]["variety_mix"] is None
+    cta = [b for b in res["blocks"] if b["type"] == "compare_cta"][0]
+    table = _svc(sqlite_db, shop).handle(res["session_id"], chip=cta["data"]["send"])
+    rows = {r["title"]: r for b in table["blocks"] if b["type"] == "product_compare" for r in b["data"]["rows"]}
+    assert rows["설향딸기 금실딸기 킹스베리딸기"]["variety_mix"]["label"] == "여러 품종 구성"
