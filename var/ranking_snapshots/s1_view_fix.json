@@ -1,0 +1,5106 @@
+{
+ "meta": {
+  "label": "s1_view_fix",
+  "run_at": "2026-11-10T05:17:03+00:00",
+  "head": "1926036",
+  "app_uncommitted": true,
+  "queries": [
+   "감귤",
+   "딸기",
+   "망고",
+   "멜론",
+   "배",
+   "사과",
+   "샤인머스캣",
+   "고당도 사과",
+   "선물용 배",
+   "샤인머스캣"
+  ],
+  "priorities": [
+   "ranking",
+   "trust",
+   "quality",
+   "price",
+   "discovery",
+   "exploration",
+   "trust_adaptive"
+  ],
+  "with_pipeline": false
+ },
+ "pipeline": {},
+ "db_fallback": {
+  "감귤|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~60과) 대용량",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 448.5,
+     "price": 17940.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/10392836181",
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 682.5,
+     "price": 13650.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/13233917807",
+     "name": "고당도 귤 만다린 미국 썬키스트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/12678255419",
+     "name": "고당도 만다린귤 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 763.33,
+     "price": 22900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/11725772694",
+     "name": "고당도 미국산 큐티스 할로스 만다린 귤 2kg 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 1045.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8493081559",
+     "name": "고당도 큐티스 만다린귤 미국 수입 귤 감귤 오렌지 썬키스트 필즈",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/13398080217",
+     "name": "캘리포니아 세척 고당도 만다린 귤 감귤 3kg 5kg 10kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 226.67,
+     "price": 6800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/13321451541",
+     "name": "큐티스 만다린 감귤 고당도 미국 큐티 귤 5kg, 1개",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 712.0,
+     "price": 35600.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로 고당도 귤 감귤",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 489.5,
+     "price": 19580.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/4022181707",
+     "name": "26년 미국산 고당도 만다린 귤 캘리포니아 1.5kg 3kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 926.67,
+     "price": 13900.0
+    }
+   ]
+  },
+  "감귤|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~60과) 대용량",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 448.5,
+     "price": 17940.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/10392836181",
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 682.5,
+     "price": 13650.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/13233917807",
+     "name": "고당도 귤 만다린 미국 썬키스트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/12678255419",
+     "name": "고당도 만다린귤 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 763.33,
+     "price": 22900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/11725772694",
+     "name": "고당도 미국산 큐티스 할로스 만다린 귤 2kg 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 1045.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8493081559",
+     "name": "고당도 큐티스 만다린귤 미국 수입 귤 감귤 오렌지 썬키스트 필즈",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/13398080217",
+     "name": "캘리포니아 세척 고당도 만다린 귤 감귤 3kg 5kg 10kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 226.67,
+     "price": 6800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/13321451541",
+     "name": "큐티스 만다린 감귤 고당도 미국 큐티 귤 5kg, 1개",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 712.0,
+     "price": 35600.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로 고당도 귤 감귤",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 489.5,
+     "price": 19580.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/4022181707",
+     "name": "26년 미국산 고당도 만다린 귤 캘리포니아 1.5kg 3kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 926.67,
+     "price": 13900.0
+    }
+   ]
+  },
+  "감귤|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~60과) 대용량",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 448.5,
+     "price": 17940.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/10392836181",
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 682.5,
+     "price": 13650.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/13233917807",
+     "name": "고당도 귤 만다린 미국 썬키스트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/12678255419",
+     "name": "고당도 만다린귤 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 763.33,
+     "price": 22900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/11725772694",
+     "name": "고당도 미국산 큐티스 할로스 만다린 귤 2kg 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1045.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8493081559",
+     "name": "고당도 큐티스 만다린귤 미국 수입 귤 감귤 오렌지 썬키스트 필즈",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/13398080217",
+     "name": "캘리포니아 세척 고당도 만다린 귤 감귤 3kg 5kg 10kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 226.67,
+     "price": 6800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/13321451541",
+     "name": "큐티스 만다린 감귤 고당도 미국 큐티 귤 5kg, 1개",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 712.0,
+     "price": 35600.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로 고당도 귤 감귤",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 489.5,
+     "price": 19580.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/4022181707",
+     "name": "26년 미국산 고당도 만다린 귤 캘리포니아 1.5kg 3kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 926.67,
+     "price": 13900.0
+    }
+   ]
+  },
+  "감귤|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/13398080217",
+     "name": "캘리포니아 세척 고당도 만다린 귤 감귤 3kg 5kg 10kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 226.67,
+     "price": 6800.0
+    },
+    {
+     "rank": 2,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~60과) 대용량",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 448.5,
+     "price": 17940.0
+    },
+    {
+     "rank": 3,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로 고당도 귤 감귤",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 489.5,
+     "price": 19580.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/10392836181",
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 682.5,
+     "price": 13650.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/13321451541",
+     "name": "큐티스 만다린 감귤 고당도 미국 큐티 귤 5kg, 1개",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 712.0,
+     "price": 35600.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/12678255419",
+     "name": "고당도 만다린귤 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 763.33,
+     "price": 22900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/4022181707",
+     "name": "26년 미국산 고당도 만다린 귤 캘리포니아 1.5kg 3kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 926.67,
+     "price": 13900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/11725772694",
+     "name": "고당도 미국산 큐티스 할로스 만다린 귤 2kg 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1045.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/13233917807",
+     "name": "고당도 귤 만다린 미국 썬키스트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/8493081559",
+     "name": "고당도 큐티스 만다린귤 미국 수입 귤 감귤 오렌지 썬키스트 필즈",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    }
+   ]
+  },
+  "감귤|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/13398080217",
+     "name": "캘리포니아 세척 고당도 만다린 귤 감귤 3kg 5kg 10kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 226.67,
+     "price": 6800.0
+    },
+    {
+     "rank": 2,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~60과) 대용량",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 448.5,
+     "price": 17940.0
+    }
+   ]
+  },
+  "감귤|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/10392836181",
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 682.5,
+     "price": 13650.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12678255419",
+     "name": "고당도 만다린귤 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 763.33,
+     "price": 22900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/11725772694",
+     "name": "고당도 미국산 큐티스 할로스 만다린 귤 2kg 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1045.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/8493081559",
+     "name": "고당도 큐티스 만다린귤 미국 수입 귤 감귤 오렌지 썬키스트 필즈",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/13321451541",
+     "name": "큐티스 만다린 감귤 고당도 미국 큐티 귤 5kg, 1개",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 712.0,
+     "price": 35600.0
+    },
+    {
+     "rank": 6,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로 고당도 귤 감귤",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 489.5,
+     "price": 19580.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/4022181707",
+     "name": "26년 미국산 고당도 만다린 귤 캘리포니아 1.5kg 3kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 926.67,
+     "price": 13900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/13233917807",
+     "name": "고당도 귤 만다린 미국 썬키스트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/13398080217",
+     "name": "캘리포니아 세척 고당도 만다린 귤 감귤 3kg 5kg 10kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 226.67,
+     "price": 6800.0
+    },
+    {
+     "rank": 10,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~60과) 대용량",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 448.5,
+     "price": 17940.0
+    }
+   ]
+  },
+  "감귤|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4577306829&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "(신선집중) 직수입 고당도 만다린 귤 4kg(40과~60과) 대용량",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 448.5,
+     "price": 17940.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/10392836181",
+     "name": "썬리지 미국 캘리포니아 고당도 만다린 로열과 2kg 4kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 682.5,
+     "price": 13650.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/13233917807",
+     "name": "고당도 귤 만다린 미국 썬키스트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/12678255419",
+     "name": "고당도 만다린귤 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 763.33,
+     "price": 22900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/11725772694",
+     "name": "고당도 미국산 큐티스 할로스 만다린 귤 2kg 3kg 5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 1045.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8493081559",
+     "name": "고당도 큐티스 만다린귤 미국 수입 귤 감귤 오렌지 썬키스트 필즈",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/13398080217",
+     "name": "캘리포니아 세척 고당도 만다린 귤 감귤 3kg 5kg 10kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 226.67,
+     "price": 6800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/13321451541",
+     "name": "큐티스 만다린 감귤 고당도 미국 큐티 귤 5kg, 1개",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 712.0,
+     "price": 35600.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4373268483&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "감귤 만다린 4kg내외 수입 썬키스트 큐티스 필즈 할로 고당도 귤 감귤",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 489.5,
+     "price": 19580.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/4022181707",
+     "name": "26년 미국산 고당도 만다린 귤 캘리포니아 1.5kg 3kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 926.67,
+     "price": 13900.0
+    }
+   ]
+  },
+  "딸기|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/9620443742",
+     "name": "설향 딸기 논산 산지직송 가정용 프리미엄 고당도 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12006522460",
+     "name": "GAP 고당도 설향 만년설 하얀딸기 흰딸기 신데렐라 딸기 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 40000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/8078720156",
+     "name": "[대왕 딸기] 논산 킹스베리 딸기 1kg 제철 생딸기 농장 택배 선물세트",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 3950.0,
+     "price": 39500.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/6085103121",
+     "name": "농장직송 산청 딸기 설향 금실 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 0.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/6048362801",
+     "name": "딸기 설향 산지직송 프리미엄 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/5939413894",
+     "name": "생딸기 산청 금실 설향 딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5493303851",
+     "name": "2026년 산딸기 제철 생산딸기1kg 500g",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 6960.0,
+     "price": 34800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5501206745",
+     "name": "2026년 제철 생산딸기 1kg/500g 특품 산지지송 프리미엄 노지 하",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 4180.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5391348969",
+     "name": "딸기 설향 금실 산청 산지직송 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/6205693541",
+     "name": "설향딸기 못난이 생딸기 1.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 853.333,
+     "price": 12800.0
+    }
+   ]
+  },
+  "딸기|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/9620443742",
+     "name": "설향 딸기 논산 산지직송 가정용 프리미엄 고당도 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12006522460",
+     "name": "GAP 고당도 설향 만년설 하얀딸기 흰딸기 신데렐라 딸기 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 40000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/8078720156",
+     "name": "[대왕 딸기] 논산 킹스베리 딸기 1kg 제철 생딸기 농장 택배 선물세트",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 3950.0,
+     "price": 39500.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/6085103121",
+     "name": "농장직송 산청 딸기 설향 금실 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/6048362801",
+     "name": "딸기 설향 산지직송 프리미엄 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/5939413894",
+     "name": "생딸기 산청 금실 설향 딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5493303851",
+     "name": "2026년 산딸기 제철 생산딸기1kg 500g",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 6960.0,
+     "price": 34800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5501206745",
+     "name": "2026년 제철 생산딸기 1kg/500g 특품 산지지송 프리미엄 노지 하",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 4180.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5391348969",
+     "name": "딸기 설향 금실 산청 산지직송 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/6205693541",
+     "name": "설향딸기 못난이 생딸기 1.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 853.333,
+     "price": 12800.0
+    }
+   ]
+  },
+  "딸기|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/9620443742",
+     "name": "설향 딸기 논산 산지직송 가정용 프리미엄 고당도 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12006522460",
+     "name": "GAP 고당도 설향 만년설 하얀딸기 흰딸기 신데렐라 딸기 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 40000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/8078720156",
+     "name": "[대왕 딸기] 논산 킹스베리 딸기 1kg 제철 생딸기 농장 택배 선물세트",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 3950.0,
+     "price": 39500.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/6085103121",
+     "name": "농장직송 산청 딸기 설향 금실 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/6048362801",
+     "name": "딸기 설향 산지직송 프리미엄 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/5939413894",
+     "name": "생딸기 산청 금실 설향 딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5493303851",
+     "name": "2026년 산딸기 제철 생산딸기1kg 500g",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 6960.0,
+     "price": 34800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5501206745",
+     "name": "2026년 제철 생산딸기 1kg/500g 특품 산지지송 프리미엄 노지 하",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 4180.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5391348969",
+     "name": "딸기 설향 금실 산청 산지직송 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/6205693541",
+     "name": "설향딸기 못난이 생딸기 1.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 853.333,
+     "price": 12800.0
+    }
+   ]
+  },
+  "딸기|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/6205693541",
+     "name": "설향딸기 못난이 생딸기 1.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 853.333,
+     "price": 12800.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/8078720156",
+     "name": "[대왕 딸기] 논산 킹스베리 딸기 1kg 제철 생딸기 농장 택배 선물세트",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 3950.0,
+     "price": 39500.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/5501206745",
+     "name": "2026년 제철 생산딸기 1kg/500g 특품 산지지송 프리미엄 노지 하",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 4180.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5493303851",
+     "name": "2026년 산딸기 제철 생산딸기1kg 500g",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 6960.0,
+     "price": 34800.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/9620443742",
+     "name": "설향 딸기 논산 산지직송 가정용 프리미엄 고당도 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/12006522460",
+     "name": "GAP 고당도 설향 만년설 하얀딸기 흰딸기 신데렐라 딸기 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 40000.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/6085103121",
+     "name": "농장직송 산청 딸기 설향 금실 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/6048362801",
+     "name": "딸기 설향 산지직송 프리미엄 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5939413894",
+     "name": "생딸기 산청 금실 설향 딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/5391348969",
+     "name": "딸기 설향 금실 산청 산지직송 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    }
+   ]
+  },
+  "딸기|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": []
+  },
+  "딸기|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/9620443742",
+     "name": "설향 딸기 논산 산지직송 가정용 프리미엄 고당도 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12006522460",
+     "name": "GAP 고당도 설향 만년설 하얀딸기 흰딸기 신데렐라 딸기 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 40000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/8078720156",
+     "name": "[대왕 딸기] 논산 킹스베리 딸기 1kg 제철 생딸기 농장 택배 선물세트",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 3950.0,
+     "price": 39500.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/6085103121",
+     "name": "농장직송 산청 딸기 설향 금실 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/6048362801",
+     "name": "딸기 설향 산지직송 프리미엄 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/5939413894",
+     "name": "생딸기 산청 금실 설향 딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5493303851",
+     "name": "2026년 산딸기 제철 생산딸기1kg 500g",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 6960.0,
+     "price": 34800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5501206745",
+     "name": "2026년 제철 생산딸기 1kg/500g 특품 산지지송 프리미엄 노지 하",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 4180.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5391348969",
+     "name": "딸기 설향 금실 산청 산지직송 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/6205693541",
+     "name": "설향딸기 못난이 생딸기 1.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 853.333,
+     "price": 12800.0
+    }
+   ]
+  },
+  "딸기|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/9620443742",
+     "name": "설향 딸기 논산 산지직송 가정용 프리미엄 고당도 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12006522460",
+     "name": "GAP 고당도 설향 만년설 하얀딸기 흰딸기 신데렐라 딸기 생딸기",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 40000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/8078720156",
+     "name": "[대왕 딸기] 논산 킹스베리 딸기 1kg 제철 생딸기 농장 택배 선물세트",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 3950.0,
+     "price": 39500.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/6085103121",
+     "name": "농장직송 산청 딸기 설향 금실 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/6048362801",
+     "name": "딸기 설향 산지직송 프리미엄 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 8900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/5939413894",
+     "name": "생딸기 산청 금실 설향 딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5493303851",
+     "name": "2026년 산딸기 제철 생산딸기1kg 500g",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 6960.0,
+     "price": 34800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5501206745",
+     "name": "2026년 제철 생산딸기 1kg/500g 특품 산지지송 프리미엄 노지 하",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 4180.0,
+     "price": 20900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5391348969",
+     "name": "딸기 설향 금실 산청 산지직송 생딸기",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/6205693541",
+     "name": "설향딸기 못난이 생딸기 1.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 853.333,
+     "price": 12800.0
+    }
+   ]
+  },
+  "망고|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+     "name": "태국산 고당도 씨암 망고 2종",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 0.0,
+     "price": 9990.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3kg이상(6입/특품",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 1734.78,
+     "price": 39900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상(6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 1782.14,
+     "price": 49900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 1995.0,
+     "price": 39900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/13401859375",
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특대과 5kg 2.5",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 498.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/4902437029",
+     "name": "고당도 골드 망고 무지개 망고 피치 마하차녹 태국 베트남 항공직수입 선물",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 12800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/11844059216",
+     "name": "프리미엄 애플 망고 고당도 골드 망고 그린 망고",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 16290.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/13337623517",
+     "name": "[에이치엔비팜스토리] 태국 항공직송 고당도 프리미엄 골드 망고 특대 12",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 10900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/13301426427",
+     "name": "[산지직송] 페루산 애플 망고 산지직송 항공직송 프리미엄 고당도 후숙 망",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 1040.0,
+     "price": 20800.0
+    }
+   ]
+  },
+  "망고|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+     "name": "태국산 고당도 씨암 망고 2종",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 9990.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3kg이상(6입/특품",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1734.78,
+     "price": 39900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상(6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1782.14,
+     "price": 49900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1995.0,
+     "price": 39900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/13401859375",
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특대과 5kg 2.5",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 498.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/4902437029",
+     "name": "고당도 골드 망고 무지개 망고 피치 마하차녹 태국 베트남 항공직수입 선물",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 12800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/11844059216",
+     "name": "프리미엄 애플 망고 고당도 골드 망고 그린 망고",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 16290.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/13337623517",
+     "name": "[에이치엔비팜스토리] 태국 항공직송 고당도 프리미엄 골드 망고 특대 12",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 10900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/13301426427",
+     "name": "[산지직송] 페루산 애플 망고 산지직송 항공직송 프리미엄 고당도 후숙 망",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 1040.0,
+     "price": 20800.0
+    }
+   ]
+  },
+  "망고|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+     "name": "태국산 고당도 씨암 망고 2종",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 9990.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3kg이상(6입/특품",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1734.78,
+     "price": 39900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상(6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1782.14,
+     "price": 49900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1995.0,
+     "price": 39900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/13401859375",
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특대과 5kg 2.5",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 498.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/4902437029",
+     "name": "고당도 골드 망고 무지개 망고 피치 마하차녹 태국 베트남 항공직수입 선물",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 12800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/11844059216",
+     "name": "프리미엄 애플 망고 고당도 골드 망고 그린 망고",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 16290.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/13337623517",
+     "name": "[에이치엔비팜스토리] 태국 항공직송 고당도 프리미엄 골드 망고 특대 12",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 10900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/13301426427",
+     "name": "[산지직송] 페루산 애플 망고 산지직송 항공직송 프리미엄 고당도 후숙 망",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1040.0,
+     "price": 20800.0
+    }
+   ]
+  },
+  "망고|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/13401859375",
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특대과 5kg 2.5",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 498.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/13301426427",
+     "name": "[산지직송] 페루산 애플 망고 산지직송 항공직송 프리미엄 고당도 후숙 망",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1040.0,
+     "price": 20800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3kg이상(6입/특품",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1734.78,
+     "price": 39900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상(6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1782.14,
+     "price": 49900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1995.0,
+     "price": 39900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+     "name": "태국산 고당도 씨암 망고 2종",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 9990.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/4902437029",
+     "name": "고당도 골드 망고 무지개 망고 피치 마하차녹 태국 베트남 항공직수입 선물",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 12800.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/11844059216",
+     "name": "프리미엄 애플 망고 고당도 골드 망고 그린 망고",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 16290.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/13337623517",
+     "name": "[에이치엔비팜스토리] 태국 항공직송 고당도 프리미엄 골드 망고 특대 12",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 10900.0
+    }
+   ]
+  },
+  "망고|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1995.0,
+     "price": 39900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+     "name": "태국산 고당도 씨암 망고 2종",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 9990.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3kg이상(6입/특품",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1734.78,
+     "price": 39900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상(6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1782.14,
+     "price": 49900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    }
+   ]
+  },
+  "망고|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/13401859375",
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특대과 5kg 2.5",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 498.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000237",
+     "name": "항공직송 고당도 애플 망고 선물세트 1.7kg이상(4입/특품)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1758.82,
+     "price": 29900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/11515272071",
+     "name": "프리미엄 항공직송 고당도 골드 망고 2.5kg 5kg 남독마이 망고 태국",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1072.0,
+     "price": 26800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/10691306562",
+     "name": "샤인머스캣 고당도 씨 없는 망고포도 프리미엄 선물용 실속형 2kg 4kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1240.0,
+     "price": 24800.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000241",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 1.6kg이상(4입/특품",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1868.75,
+     "price": 29900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1995.0,
+     "price": 39900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3kg이상(6입/특품",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1734.78,
+     "price": 39900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상(6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 1782.14,
+     "price": 49900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+     "name": "태국산 고당도 씨암 망고 2종",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 9990.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    }
+   ]
+  },
+  "망고|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://redirect.kurly.com/entry?utm_source=NaverShopping&utm_medium=2001&utm_term=5012652&no=5012652&kfpartnerID=1000000",
+     "name": "태국산 고당도 씨암 망고 2종",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 9990.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000242",
+     "name": "항공직송 고당도 애플 망고 &태국 망고 선물세트 2.3kg이상(6입/특품",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1734.78,
+     "price": 39900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23235000987",
+     "name": "항공직송 고당도 대왕 애플 망고 선물세트 2.8kg이상(6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1782.14,
+     "price": 49900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000238",
+     "name": "항공직송 고당도 애플 망고 선물세트 2kg이상(4-6입/특품)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 1995.0,
+     "price": 39900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/13401859375",
+     "name": "태국 무지개 망고 마하차녹 항공직송 고당도 생 망고 특대과 5kg 2.5",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 498.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/4902437029",
+     "name": "고당도 골드 망고 무지개 망고 피치 마하차녹 태국 베트남 항공직수입 선물",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 12800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/11844059216",
+     "name": "프리미엄 애플 망고 고당도 골드 망고 그린 망고",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 16290.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/13337623517",
+     "name": "[에이치엔비팜스토리] 태국 항공직송 고당도 프리미엄 골드 망고 특대 12",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 10900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/13301426427",
+     "name": "[산지직송] 페루산 애플 망고 산지직송 항공직송 프리미엄 고당도 후숙 망",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 1040.0,
+     "price": 20800.0
+    }
+   ]
+  },
+  "멜론|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12422905318",
+     "name": "고당도 프리미엄 메론 4수",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 52000.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+     "name": "프리미엄 과일 선물 세트 11종 에메랄드3호 (멜론,혼합망고) 5.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 1743.64,
+     "price": 95900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+     "name": "프리미엄 과일 선물 세트 12종 로열그린 (멜론,혼합망고) 8.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 1445.78,
+     "price": 120000.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+     "name": "프리미엄 과일 선물 세트 8종 올리브3호 (멜론,혼합망고) 3.9kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 1792.31,
+     "price": 69900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 6,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 7,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+     "name": "프리미엄 과일 선물 세트 6종 라임2호 (멜론,혼합망고) 3.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 47.5,
+     "price_per_100g": 2118.18,
+     "price": 69900.0
+    }
+   ]
+  },
+  "멜론|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12422905318",
+     "name": "고당도 프리미엄 메론 4수",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 52000.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+     "name": "프리미엄 과일 선물 세트 11종 에메랄드3호 (멜론,혼합망고) 5.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 1743.64,
+     "price": 95900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+     "name": "프리미엄 과일 선물 세트 12종 로열그린 (멜론,혼합망고) 8.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 1445.78,
+     "price": 120000.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+     "name": "프리미엄 과일 선물 세트 8종 올리브3호 (멜론,혼합망고) 3.9kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 1792.31,
+     "price": 69900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 6,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 7,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+     "name": "프리미엄 과일 선물 세트 6종 라임2호 (멜론,혼합망고) 3.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 2118.18,
+     "price": 69900.0
+    }
+   ]
+  },
+  "멜론|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12422905318",
+     "name": "고당도 프리미엄 메론 4수",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 52000.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+     "name": "프리미엄 과일 선물 세트 11종 에메랄드3호 (멜론,혼합망고) 5.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1743.64,
+     "price": 95900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+     "name": "프리미엄 과일 선물 세트 12종 로열그린 (멜론,혼합망고) 8.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1445.78,
+     "price": 120000.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+     "name": "프리미엄 과일 선물 세트 8종 올리브3호 (멜론,혼합망고) 3.9kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1792.31,
+     "price": 69900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 6,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 7,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+     "name": "프리미엄 과일 선물 세트 6종 라임2호 (멜론,혼합망고) 3.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2118.18,
+     "price": 69900.0
+    }
+   ]
+  },
+  "멜론|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+     "name": "프리미엄 과일 선물 세트 12종 로열그린 (멜론,혼합망고) 8.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1445.78,
+     "price": 120000.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+     "name": "프리미엄 과일 선물 세트 11종 에메랄드3호 (멜론,혼합망고) 5.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1743.64,
+     "price": 95900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+     "name": "프리미엄 과일 선물 세트 8종 올리브3호 (멜론,혼합망고) 3.9kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1792.31,
+     "price": 69900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 5,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 6,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+     "name": "프리미엄 과일 선물 세트 6종 라임2호 (멜론,혼합망고) 3.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2118.18,
+     "price": 69900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/12422905318",
+     "name": "고당도 프리미엄 메론 4수",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 52000.0
+    }
+   ]
+  },
+  "멜론|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": []
+  },
+  "멜론|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12422905318",
+     "name": "고당도 프리미엄 메론 4수",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 52000.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+     "name": "프리미엄 과일 선물 세트 11종 에메랄드3호 (멜론,혼합망고) 5.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1743.64,
+     "price": 95900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+     "name": "프리미엄 과일 선물 세트 12종 로열그린 (멜론,혼합망고) 8.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1445.78,
+     "price": 120000.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+     "name": "프리미엄 과일 선물 세트 8종 올리브3호 (멜론,혼합망고) 3.9kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 1792.31,
+     "price": 69900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 6,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 7,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+     "name": "프리미엄 과일 선물 세트 6종 라임2호 (멜론,혼합망고) 3.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 45.5,
+     "price_per_100g": 2118.18,
+     "price": 69900.0
+    }
+   ]
+  },
+  "멜론|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12422905318",
+     "name": "고당도 프리미엄 메론 4수",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 52000.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000228",
+     "name": "프리미엄 과일 선물 세트 11종 에메랄드3호 (멜론,혼합망고) 5.5kg",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 1743.64,
+     "price": 95900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000227",
+     "name": "프리미엄 과일 선물 세트 12종 로열그린 (멜론,혼합망고) 8.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 1445.78,
+     "price": 120000.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000230",
+     "name": "프리미엄 과일 선물 세트 8종 올리브3호 (멜론,혼합망고) 3.9kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 1792.31,
+     "price": 69900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EA%B0%90%EA%B7%A4",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 6,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3",
+     "name": "+3천원쿠폰 담기 샛별배송 [KF365] 머스크멜론 1.6kg (후숙 필",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 2103.23,
+     "price": 33651.626
+    },
+    {
+     "rank": 7,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P24472001398",
+     "name": "프리미엄 과일 선물 세트 6종 라임2호 (멜론,혼합망고) 3.3kg이상",
+     "final_recommendation_score": 44.5,
+     "adaptive_score": 44.5,
+     "price_per_100g": 2118.18,
+     "price": 69900.0
+    }
+   ]
+  },
+  "배|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 76.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    }
+   ]
+  },
+  "배|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 73.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    }
+   ]
+  },
+  "배|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 74.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    }
+   ]
+  },
+  "배|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 2,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 74.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 4,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 5,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    }
+   ]
+  },
+  "배|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 73.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    }
+   ]
+  },
+  "배|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 2,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 7,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    },
+    {
+     "rank": 10,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EB%B0%B0",
+     "name": "+10%쿠폰 담기 샛별배송 [음성명작]500m 고랭지에서 수확한 사과1.",
+     "final_recommendation_score": 39.5,
+     "adaptive_score": 40.5,
+     "price_per_100g": 8077.02,
+     "price": 105001.325
+    }
+   ]
+  },
+  "배|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 73.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    }
+   ]
+  },
+  "사과|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5988163500",
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠집 사과 GAP 2",
+     "final_recommendation_score": 73.3,
+     "adaptive_score": 81.3,
+     "price_per_100g": 1198.0,
+     "price": 59900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 76.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/9566709327",
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난이 사과 꿀 흠집 ",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 71.3,
+     "price_per_100g": 359.0,
+     "price": 35900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/9380057523",
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 71.3,
+     "price_per_100g": 1193.3,
+     "price": 35800.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/3501370371",
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우스 산지직송 선물세",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 71.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/9180281241",
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황금 시나노골드 가정",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 71.3,
+     "price_per_100g": 336.0,
+     "price": 33600.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/6310419850",
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 71.3,
+     "price_per_100g": 0.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12324216201",
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "final_recommendation_score": 59.5,
+     "adaptive_score": 67.5,
+     "price_per_100g": 1326.67,
+     "price": 19900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 64.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/12832668753",
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍로 감홍 아오리 썸",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 29900.0
+    }
+   ]
+  },
+  "사과|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5988163500",
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠집 사과 GAP 2",
+     "final_recommendation_score": 73.3,
+     "adaptive_score": 78.3,
+     "price_per_100g": 1198.0,
+     "price": 59900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 73.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/9566709327",
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난이 사과 꿀 흠집 ",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 359.0,
+     "price": 35900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/9380057523",
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 1193.3,
+     "price": 35800.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/3501370371",
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우스 산지직송 선물세",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/9180281241",
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황금 시나노골드 가정",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 336.0,
+     "price": 33600.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/6310419850",
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 0.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12324216201",
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "final_recommendation_score": 59.5,
+     "adaptive_score": 64.5,
+     "price_per_100g": 1326.67,
+     "price": 19900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/12832668753",
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍로 감홍 아오리 썸",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 29900.0
+    }
+   ]
+  },
+  "사과|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5988163500",
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠집 사과 GAP 2",
+     "final_recommendation_score": 73.3,
+     "adaptive_score": 79.3,
+     "price_per_100g": 1198.0,
+     "price": 59900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 74.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/9566709327",
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난이 사과 꿀 흠집 ",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 359.0,
+     "price": 35900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/9380057523",
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 1193.3,
+     "price": 35800.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/3501370371",
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우스 산지직송 선물세",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/9180281241",
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황금 시나노골드 가정",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 336.0,
+     "price": 33600.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/6310419850",
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 0.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12324216201",
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "final_recommendation_score": 59.5,
+     "adaptive_score": 65.5,
+     "price_per_100g": 1326.67,
+     "price": 19900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 62.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/12832668753",
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍로 감홍 아오리 썸",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 29900.0
+    }
+   ]
+  },
+  "사과|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/9180281241",
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황금 시나노골드 가정",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 336.0,
+     "price": 33600.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/9566709327",
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난이 사과 꿀 흠집 ",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 359.0,
+     "price": 35900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/3501370371",
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우스 산지직송 선물세",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 62.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 5,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 74.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/9380057523",
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 1193.3,
+     "price": 35800.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5988163500",
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠집 사과 GAP 2",
+     "final_recommendation_score": 73.3,
+     "adaptive_score": 79.3,
+     "price_per_100g": 1198.0,
+     "price": 59900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12324216201",
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "final_recommendation_score": 59.5,
+     "adaptive_score": 65.5,
+     "price_per_100g": 1326.67,
+     "price": 19900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/6310419850",
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 0.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/12832668753",
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍로 감홍 아오리 썸",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 29900.0
+    }
+   ]
+  },
+  "사과|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5988163500",
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠집 사과 GAP 2",
+     "final_recommendation_score": 73.3,
+     "adaptive_score": 78.3,
+     "price_per_100g": 1198.0,
+     "price": 59900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 73.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    }
+   ]
+  },
+  "사과|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/9180281241",
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황금 시나노골드 가정",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 336.0,
+     "price": 33600.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/9566709327",
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난이 사과 꿀 흠집 ",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 359.0,
+     "price": 35900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/6310419850",
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 0.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/12832668753",
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍로 감홍 아오리 썸",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 29900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12000507129",
+     "name": "세척 사과 껍질째먹는 고당도 부사 시나노골드 햇 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 46.3,
+     "price_per_100g": 0.0,
+     "price": 29900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/10444139230",
+     "name": "고당도 사과 세척사과 과일",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 46.3,
+     "price_per_100g": 0.0,
+     "price": 23900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/3501370371",
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우스 산지직송 선물세",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 69.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/3828201469",
+     "name": "[김가네과일촌] 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 46.3,
+     "price_per_100g": 0.0,
+     "price": 23800.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 62.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/5986290124",
+     "name": "영동 미니사과 천홍 최고급 프리미엄 작은 고당도 꼬마 껍질째먹는 한입사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 52.3,
+     "price_per_100g": 0.0,
+     "price": 9920.0
+    }
+   ]
+  },
+  "사과|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5988163500",
+     "name": "경북 고당도 안동 꿀 부사 시나노골드 노무라 못난이 흠집 사과 GAP 2",
+     "final_recommendation_score": 73.3,
+     "adaptive_score": 78.3,
+     "price_per_100g": 1198.0,
+     "price": 59900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 73.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/3501370371",
+     "name": "사과 프리미엄 고당도 햇 꿀사과 가정용 시나노골드 하우스 산지직송 선물세",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/9566709327",
+     "name": "밀양 얼음골 사과 햇 부사 5kg 10kg 맛있는 못난이 사과 꿀 흠집 ",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 359.0,
+     "price": 35900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/6310419850",
+     "name": "햇 사과 부사 고당도 가정용 경북 사과",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 0.0,
+     "price": 24900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/9380057523",
+     "name": "안동사과 3kg 5kg 부사 못난이사과 고당도",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 1193.3,
+     "price": 35800.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/9180281241",
+     "name": "사과 부사 청송 문경 경북사과 5kg 10kg 노란 황금 시나노골드 가정",
+     "final_recommendation_score": 63.3,
+     "adaptive_score": 68.3,
+     "price_per_100g": 336.0,
+     "price": 33600.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12324216201",
+     "name": "14brix이상 못생겨도 맛있는 사과 1.5kg",
+     "final_recommendation_score": 59.5,
+     "adaptive_score": 64.5,
+     "price_per_100g": 1326.67,
+     "price": 19900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/12832668753",
+     "name": "산지직송 선별 고당도사과 경북 꿀사과 못난이 햇부사 홍로 감홍 아오리 썸",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 29900.0
+    }
+   ]
+  },
+  "샤인머스캣|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12316173409",
+     "name": "머루포도 캠벨 포도 씨없는 고당도 영동 샤인머스켓 거봉 세레단",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/6277634064",
+     "name": "샤인머스켓 고당도 수출용 망고포도 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 19900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5085027420",
+     "name": "샤인머스켓 2kg 망고포도 고당도 씨없는 포도 3kg 4kg 애플 청포도",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 647.5,
+     "price": 25900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12738692539",
+     "name": "국내산 경북 고당도 씨없는 샤인머스켓 1kg 2-3수 350~500g",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 2960.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/12518118501",
+     "name": "우수농가 산지직송 고당도 샤인머스켓 영천 망고포도 제철과일 임산부선물 씨",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 11500.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5718248645",
+     "name": "고당도 샤인머스켓 샤인머스캣 선물용 2KG 4KG 1박스",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 397.5,
+     "price": 15900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5945690296",
+     "name": "샤인머스켓 고당도 프리미엄 제철 선물세트 말랭이 GAP 망고포도 농장직영",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5777989118",
+     "name": "고당도 샤인머스켓 프리미엄 청포도 망고포도 추석 명절 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 15900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/5016642603",
+     "name": "고당도 레드 샤인머스켓 망고 포도 마이하트 바이올렛킹 캠밸 씨없는 거봉 ",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 0.0,
+     "price": 26900.0
+    }
+   ]
+  },
+  "샤인머스캣|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12316173409",
+     "name": "머루포도 캠벨 포도 씨없는 고당도 영동 샤인머스켓 거봉 세레단",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/6277634064",
+     "name": "샤인머스켓 고당도 수출용 망고포도 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 19900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5085027420",
+     "name": "샤인머스켓 2kg 망고포도 고당도 씨없는 포도 3kg 4kg 애플 청포도",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 647.5,
+     "price": 25900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12738692539",
+     "name": "국내산 경북 고당도 씨없는 샤인머스켓 1kg 2-3수 350~500g",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 2960.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/12518118501",
+     "name": "우수농가 산지직송 고당도 샤인머스켓 영천 망고포도 제철과일 임산부선물 씨",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 11500.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5718248645",
+     "name": "고당도 샤인머스켓 샤인머스캣 선물용 2KG 4KG 1박스",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 397.5,
+     "price": 15900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5945690296",
+     "name": "샤인머스켓 고당도 프리미엄 제철 선물세트 말랭이 GAP 망고포도 농장직영",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5777989118",
+     "name": "고당도 샤인머스켓 프리미엄 청포도 망고포도 추석 명절 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 15900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/5016642603",
+     "name": "고당도 레드 샤인머스켓 망고 포도 마이하트 바이올렛킹 캠밸 씨없는 거봉 ",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 26900.0
+    }
+   ]
+  },
+  "샤인머스캣|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12316173409",
+     "name": "머루포도 캠벨 포도 씨없는 고당도 영동 샤인머스켓 거봉 세레단",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/6277634064",
+     "name": "샤인머스켓 고당도 수출용 망고포도 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 19900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5085027420",
+     "name": "샤인머스켓 2kg 망고포도 고당도 씨없는 포도 3kg 4kg 애플 청포도",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 647.5,
+     "price": 25900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12738692539",
+     "name": "국내산 경북 고당도 씨없는 샤인머스켓 1kg 2-3수 350~500g",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 2960.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/12518118501",
+     "name": "우수농가 산지직송 고당도 샤인머스켓 영천 망고포도 제철과일 임산부선물 씨",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 11500.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5718248645",
+     "name": "고당도 샤인머스켓 샤인머스캣 선물용 2KG 4KG 1박스",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 397.5,
+     "price": 15900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5945690296",
+     "name": "샤인머스켓 고당도 프리미엄 제철 선물세트 말랭이 GAP 망고포도 농장직영",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5777989118",
+     "name": "고당도 샤인머스켓 프리미엄 청포도 망고포도 추석 명절 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 15900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/5016642603",
+     "name": "고당도 레드 샤인머스켓 망고 포도 마이하트 바이올렛킹 캠밸 씨없는 거봉 ",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 26900.0
+    }
+   ]
+  },
+  "샤인머스캣|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5718248645",
+     "name": "고당도 샤인머스켓 샤인머스캣 선물용 2KG 4KG 1박스",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 397.5,
+     "price": 15900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/5085027420",
+     "name": "샤인머스켓 2kg 망고포도 고당도 씨없는 포도 3kg 4kg 애플 청포도",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 647.5,
+     "price": 25900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/12738692539",
+     "name": "국내산 경북 고당도 씨없는 샤인머스켓 1kg 2-3수 350~500g",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 2960.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12316173409",
+     "name": "머루포도 캠벨 포도 씨없는 고당도 영동 샤인머스켓 거봉 세레단",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/6277634064",
+     "name": "샤인머스켓 고당도 수출용 망고포도 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 19900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/12518118501",
+     "name": "우수농가 산지직송 고당도 샤인머스켓 영천 망고포도 제철과일 임산부선물 씨",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 11500.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5945690296",
+     "name": "샤인머스켓 고당도 프리미엄 제철 선물세트 말랭이 GAP 망고포도 농장직영",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5777989118",
+     "name": "고당도 샤인머스켓 프리미엄 청포도 망고포도 추석 명절 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 15900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/5016642603",
+     "name": "고당도 레드 샤인머스켓 망고 포도 마이하트 바이올렛킹 캠밸 씨없는 거봉 ",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 26900.0
+    }
+   ]
+  },
+  "샤인머스캣|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    }
+   ]
+  },
+  "샤인머스캣|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12518118501",
+     "name": "우수농가 산지직송 고당도 샤인머스켓 영천 망고포도 제철과일 임산부선물 씨",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 11500.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12738692539",
+     "name": "국내산 경북 고당도 씨없는 샤인머스켓 1kg 2-3수 350~500g",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 2960.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/10691306562",
+     "name": "샤인머스캣 고당도 씨 없는 망고포도 프리미엄 선물용 실속형 2kg 4kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1240.0,
+     "price": 24800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/12391579848",
+     "name": "고당도 샤인머스켓 JT 당도선별 프리미엄 가정용 선물용 답례품 명절",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 0.0,
+     "price": 13500.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12380015592",
+     "name": "[수플린] 프리미엄 고당도 샤인머스켓 650g (1입)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 3061.54,
+     "price": 19900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/9100708689",
+     "name": "산지직송 씨없는 고당도 샤인머스켓 1.5kg",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 1866.67,
+     "price": 28000.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/12875343740",
+     "name": "DC 샤인머스켓 2kg 4수 고당도샤인머스켓 샤인머스캣선물",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 892.5,
+     "price": 17850.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/10628319652",
+     "name": "김천 고당도 샤인머스켓 2kg",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 695.0,
+     "price": 13900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/11183430520",
+     "name": "고당도 샤인머스켓 수출용 프리미엄 선물용 고당도 2kg",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 900.0,
+     "price": 18000.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    }
+   ]
+  },
+  "샤인머스캣|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/12270862147",
+     "name": "고당도 샤인머스켓 망고포도 샤인머스켓 농장 제철 거봉 2kg",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 645.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/12316173409",
+     "name": "머루포도 캠벨 포도 씨없는 고당도 영동 샤인머스켓 거봉 세레단",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/6277634064",
+     "name": "샤인머스켓 고당도 수출용 망고포도 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 19900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5085027420",
+     "name": "샤인머스켓 2kg 망고포도 고당도 씨없는 포도 3kg 4kg 애플 청포도",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 647.5,
+     "price": 25900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/12738692539",
+     "name": "국내산 경북 고당도 씨없는 샤인머스켓 1kg 2-3수 350~500g",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 2960.0,
+     "price": 14800.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/12518118501",
+     "name": "우수농가 산지직송 고당도 샤인머스켓 영천 망고포도 제철과일 임산부선물 씨",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 11500.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/5718248645",
+     "name": "고당도 샤인머스켓 샤인머스캣 선물용 2KG 4KG 1박스",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 397.5,
+     "price": 15900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/5945690296",
+     "name": "샤인머스켓 고당도 프리미엄 제철 선물세트 말랭이 GAP 망고포도 농장직영",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/5777989118",
+     "name": "고당도 샤인머스켓 프리미엄 청포도 망고포도 추석 명절 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 15900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/5016642603",
+     "name": "고당도 레드 샤인머스켓 망고 포도 마이하트 바이올렛킹 캠밸 씨없는 거봉 ",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 0.0,
+     "price": 26900.0
+    }
+   ]
+  },
+  "고당도 사과|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 67.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/5198306073",
+     "name": "농장직송 부사 나린농원 강원도 양구 펀치볼 고랭지 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 51.3,
+     "price_per_100g": 0.0,
+     "price": 85000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/3828201469",
+     "name": "[김가네과일촌] 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 51.3,
+     "price_per_100g": 0.0,
+     "price": 23800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 51.3,
+     "price_per_100g": 1830.0,
+     "price": 54900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10444139230",
+     "name": "고당도 사과 세척사과 과일",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 51.3,
+     "price_per_100g": 0.0,
+     "price": 23900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 털보네 부사",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 51.3,
+     "price_per_100g": 591.8,
+     "price": 47340.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/10703469102",
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 51.3,
+     "price_per_100g": 970.0,
+     "price": 38800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/9171987704",
+     "name": "고당도 사과 (품종 부사)",
+     "final_recommendation_score": 43.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    }
+   ]
+  },
+  "고당도 사과|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 64.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/5198306073",
+     "name": "농장직송 부사 나린농원 강원도 양구 펀치볼 고랭지 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 0.0,
+     "price": 85000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/3828201469",
+     "name": "[김가네과일촌] 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 0.0,
+     "price": 23800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 1830.0,
+     "price": 54900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10444139230",
+     "name": "고당도 사과 세척사과 과일",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 0.0,
+     "price": 23900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 털보네 부사",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 591.8,
+     "price": 47340.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/10703469102",
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 970.0,
+     "price": 38800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/9171987704",
+     "name": "고당도 사과 (품종 부사)",
+     "final_recommendation_score": 43.3,
+     "adaptive_score": 46.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    }
+   ]
+  },
+  "고당도 사과|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 65.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/5198306073",
+     "name": "농장직송 부사 나린농원 강원도 양구 펀치볼 고랭지 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 85000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/3828201469",
+     "name": "[김가네과일촌] 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 23800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 1830.0,
+     "price": 54900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10444139230",
+     "name": "고당도 사과 세척사과 과일",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 23900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 털보네 부사",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 591.8,
+     "price": 47340.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/10703469102",
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 970.0,
+     "price": 38800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/9171987704",
+     "name": "고당도 사과 (품종 부사)",
+     "final_recommendation_score": 43.3,
+     "adaptive_score": 47.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    }
+   ]
+  },
+  "고당도 사과|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 털보네 부사",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 591.8,
+     "price": 47340.0
+    },
+    {
+     "rank": 2,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 65.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/10703469102",
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 970.0,
+     "price": 38800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 1830.0,
+     "price": 54900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/5198306073",
+     "name": "농장직송 부사 나린농원 강원도 양구 펀치볼 고랭지 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 85000.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/3828201469",
+     "name": "[김가네과일촌] 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 23800.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/10444139230",
+     "name": "고당도 사과 세척사과 과일",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 23900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/9171987704",
+     "name": "고당도 사과 (품종 부사)",
+     "final_recommendation_score": 43.3,
+     "adaptive_score": 47.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    }
+   ]
+  },
+  "고당도 사과|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": []
+  },
+  "고당도 사과|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5198306073",
+     "name": "농장직송 부사 나린농원 강원도 양구 펀치볼 고랭지 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 85000.0
+    },
+    {
+     "rank": 2,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 1830.0,
+     "price": 54900.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/10703469102",
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 970.0,
+     "price": 38800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/10444139230",
+     "name": "고당도 사과 세척사과 과일",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 23900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 털보네 부사",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 591.8,
+     "price": 47340.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/3828201469",
+     "name": "[김가네과일촌] 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 49.3,
+     "price_per_100g": 0.0,
+     "price": 23800.0
+    },
+    {
+     "rank": 7,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 65.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/9171987704",
+     "name": "고당도 사과 (품종 부사)",
+     "final_recommendation_score": 43.3,
+     "adaptive_score": 47.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    }
+   ]
+  },
+  "고당도 사과|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4192876274&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 4kg 맛있는 털보네 부사",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 64.3,
+     "price_per_100g": 634.8,
+     "price": 25390.0
+    },
+    {
+     "rank": 2,
+     "key": "https://smartstore.naver.com/main/products/5198306073",
+     "name": "농장직송 부사 나린농원 강원도 양구 펀치볼 고랭지 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 0.0,
+     "price": 85000.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/3828201469",
+     "name": "[김가네과일촌] 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 0.0,
+     "price": 23800.0
+    },
+    {
+     "rank": 4,
+     "key": "https://www.onbrix.co.kr/shop/product/product_view?product_cd=P23034000236",
+     "name": "고당도 사과 선물세트 3kg이상(10-12입/특품)",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 1830.0,
+     "price": 54900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10444139230",
+     "name": "고당도 사과 세척사과 과일",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 0.0,
+     "price": 23900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://link.gmarket.co.kr/gate/pcs?item-no=4514939852&sub-id=1003&service-code=10000003&lcd=100000020",
+     "name": "주왕산 털보네 고당도 사과 가정용 흠과 8kg 맛있는 털보네 부사",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 591.8,
+     "price": 47340.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/10703469102",
+     "name": "[김가네과일촌] 4kg 씻어나온 맛있는 세척사과 꿀 햇 고당도 사과",
+     "final_recommendation_score": 48.3,
+     "adaptive_score": 48.3,
+     "price_per_100g": 970.0,
+     "price": 38800.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/9171987704",
+     "name": "고당도 사과 (품종 부사)",
+     "final_recommendation_score": 43.3,
+     "adaptive_score": 46.3,
+     "price_per_100g": 0.0,
+     "price": 9900.0
+    }
+   ]
+  },
+  "선물용 배|ranking": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 81.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 61.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    },
+    {
+     "rank": 10,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 56.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    }
+   ]
+  },
+  "선물용 배|trust": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 78.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    },
+    {
+     "rank": 10,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    }
+   ]
+  },
+  "선물용 배|quality": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 79.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    },
+    {
+     "rank": 10,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    }
+   ]
+  },
+  "선물용 배|price": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 2,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 3,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 79.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 4,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 5,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 10,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    }
+   ]
+  },
+  "선물용 배|discovery": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 78.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    }
+   ]
+  },
+  "선물용 배|exploration": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 2,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 6,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 7,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 59.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    },
+    {
+     "rank": 9,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 54.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    },
+    {
+     "rank": 10,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EB%B0%B0",
+     "name": "+10%쿠폰 담기 샛별배송 [음성명작]500m 고랭지에서 수확한 사과1.",
+     "final_recommendation_score": 39.5,
+     "adaptive_score": 40.5,
+     "price_per_100g": 8077.02,
+     "price": 105001.325
+    }
+   ]
+  },
+  "선물용 배|trust_adaptive": {
+   "path": "db_fallback",
+   "error": null,
+   "items": [
+    {
+     "rank": 1,
+     "key": "https://www.kurly.com/search?sword=%EA%B3%A0%EB%8B%B9%EB%8F%84+%EC%82%AC%EA%B3%BC",
+     "name": "+10%쿠폰 담기 샛별배송 [MD's pick] 15brix 고당도사과1",
+     "final_recommendation_score": 68.3,
+     "adaptive_score": 78.3,
+     "price_per_100g": 676.77,
+     "price": 10151.516
+    },
+    {
+     "rank": 2,
+     "key": "http://www.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6001&salestrNo=6005&ckwhere=ssg_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 3,
+     "key": "http://shinsegaemall.ssg.com/item/itemView.ssg?itemId=1000754031236&siteNo=6004&salestrNo=6005&ckwhere=s_naver&appPopYn=n&utm_medium=PCS&utm_source=naver&utm_campaign=naver_pcs",
+     "name": "몽프루이 고당도 배 3kg (대과/3-4입)",
+     "final_recommendation_score": 58.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 717.33,
+     "price": 21520.0
+    },
+    {
+     "rank": 4,
+     "key": "https://smartstore.naver.com/main/products/5178518312",
+     "name": "나주배 고당도 신고 원황 추황배 가정용 꿀배 5kg 3kg 7.5kg 선",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 378.0,
+     "price": 18900.0
+    },
+    {
+     "rank": 5,
+     "key": "https://smartstore.naver.com/main/products/10499768834",
+     "name": "고당도 신고배 가정용 선물세트 업소용 나주배 햇배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 7700.0
+    },
+    {
+     "rank": 6,
+     "key": "https://smartstore.naver.com/main/products/8848859130",
+     "name": "전남 나주 배 고당도 프리미엄 나주배",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 12900.0
+    },
+    {
+     "rank": 7,
+     "key": "https://www.lotteon.com/p/product/LO2638290576?sitmNo=LO2638290576_2638290577&ch_no=100065&ch_dtl_no=1000030&entryPoint=pcs&dp_infw_cd=CHT",
+     "name": "[온누리상품] 나주 배 고당도 배 신고배 프리미엄 배 선물용 과일",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 17970.0
+    },
+    {
+     "rank": 8,
+     "key": "https://smartstore.naver.com/main/products/12584379127",
+     "name": "나주배 고당도 햇 신고배 국내산 가정용 선물용",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 14900.0
+    },
+    {
+     "rank": 9,
+     "key": "https://smartstore.naver.com/main/products/7363527612",
+     "name": "고당도 나주배 가정용 선물세트",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 58.3,
+     "price_per_100g": 0.0,
+     "price": 9000.0
+    },
+    {
+     "rank": 10,
+     "key": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
+     "name": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
+     "final_recommendation_score": 53.3,
+     "adaptive_score": 53.3,
+     "price_per_100g": 487.67,
+     "price": 14630.0
+    }
+   ]
+  }
+ }
+}
