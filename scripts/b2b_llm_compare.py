@@ -62,6 +62,19 @@ PROPOSAL_PROMPT = """너는 공공기관·기업 임직원 선물 입찰 제안�
 - 후보 상품의 관측 가격은 확정 단가가 아니다 — 조건(온라인가 하한 등)을 충족한다고 단정하지 않는다.
 - 공고 조건(인원·단가·VAT·기한·정산)은 그대로 반영한다. 공공 제안서 문체(…합니다)."""
 
+# 2026-11-11 v2: 사용자 블라인드 평가 — C(가격 근거 구분이 가장 정확)와 B(운영 구체성)의 강점을 합치고, 단가 구성(이윤·관리비·택배·창고)을 넣는다
+PROPOSAL_PROMPT_V2 = PROPOSAL_PROMPT.replace('"questions": ["발주기관에 확인할 사항"]}', '''"price_structure": [["단가 구성 항목", "포함 여부", "산출 근거·확정 시점"]],
+ "evidence_table": [["후보 상품", "관측 소매가(일자)", "온라인 최저가 검증", "확정 공급단가", "판단"]], "questions": ["발주기관에 확인할 사항"]}''') + """
+- 가격 근거를 세 가지로 나눠 쓴다: ① 관측 소매가(조사 일자) ② 온라인 최저가 검증(제출 시점 화면·일시 증빙) ③ 확정 공급단가(공급사 견적).
+  관측가만으로 조건 충족을 '충족'이라 쓰지 않는다 — '관측 기준 이상, 검증 전'처럼 쓴다. 공급사 견적은 공급단가 근거일 뿐 온라인 최저가 근거가 아니다.
+- 온라인 최저가가 1인 예산보다 높아도 모순이 아니다 (대량 공급가는 소매가보다 낮을 수 있다). 확인할 것은 조달 가능성과 비용 구조다.
+- 외부 판매처 가격을 통제한다고 쓰지 않는다 — '가격 모니터링 후 조건 미충족 시 대체·승인 절차'로 쓴다.
+- 운영은 구체적으로: 대상자 명부 기반 계정 발급·인증, 1인 1개 선택 제한과 중복 주문 차단, 상품별 확보 수량과 선택 쏠림 대응, 출고 전 검수,
+  기한(구축·배송·교환) 알림과 지연 사전 보고, 주문·배송·교환 데이터와 정산 증빙 연결, 개인정보 수집·파기.
+- 1인 단가는 '예산 상한'이다. 정산 단가를 예산과 같다고 확정해 쓰지 않는다.
+- 단가 구성은 상품 매입·포장·물류창고(입고·보관·출고)·택배·교환반품 예비·운영CS·폐쇄몰 구축·일반관리비·이윤을 모두 넣되,
+  금액은 견적·계약 전이면 "[확인 필요: 견적]". 내부 이익률·마진 숫자는 쓰지 않는다. 제출 마감 일시를 정확히 쓴다."""
+
 PROFILE = json.loads((ROOT / "app/admin/b2b/data/company_profile.json").read_text(encoding="utf-8"))
 PROFILE.pop("_comment", None)
 CANDIDATES = {
@@ -76,6 +89,8 @@ CANDIDATES = {
            {"name": "[가상] 홍삼정 스틱 30포", "category": "건강기능식품", "observed_price": 33000, "price_kind": "public_retail", "observed": "2026-11-08"},
            {"name": "[가상] 전통 한과 세트", "category": "가공식품", "observed_price": 38000, "price_kind": "public_retail", "observed": "2026-11-02"}],
 }
+MAX_TOKENS = 6000      # Claude 출력 상한 (PPT 코드처럼 긴 출력은 늘린다)
+CLAUDE_EXTRA: dict = {}  # 예: {"output_config": {"effort": "medium"}} — Claude 5.5 는 기본으로 생각(추론)하며 출력 상한을 거기에 쓴다
 CORE = ["bid_id", "agency", "headcount", "budget_per_person", "vat_included", "total_budget", "categories", "min_online_price",
         "setup_days", "delivery_business_days", "exchange_business_days", "deadline", "actual_qty_settlement"]
 
@@ -90,8 +105,8 @@ def call(model_key: str, system: str, user: str) -> dict:
         r = httpx.post("https://api.anthropic.com/v1/messages", timeout=170,
                        headers={"x-api-key": ENV["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01",
                                 "content-type": "application/json"},
-                       json={"model": model, "max_tokens": 6000, "system": system + "\n반드시 JSON 하나만 출력.",
-                             "messages": [{"role": "user", "content": user}]})
+                       json={"model": model, "max_tokens": MAX_TOKENS, "system": system + "\n반드시 JSON 하나만 출력.",
+                             "messages": [{"role": "user", "content": user}], **CLAUDE_EXTRA})
         r.raise_for_status()
         body = r.json()
         text = "".join(b.get("text", "") for b in body.get("content") or [])
@@ -240,11 +255,11 @@ def run(task: str, only: list[str], workers: int) -> None:
                                         "score": score_extract(got, n)})
     else:
         inputs = {}
-        for nid in CANDIDATES:
+        for nid in (["N1"] if task == "proposal2" else CANDIDATES):
             key = dict(notices[nid]["key"])
             inputs[nid] = json.dumps({"공고 조건": key, "공고 원문": notices[nid]["text"], "회사 정보": PROFILE,
                                       "후보 상품 (관측 가격 — 확정 단가 아님)": CANDIDATES[nid]}, ensure_ascii=False)
-        system = PROPOSAL_PROMPT
+        system = PROPOSAL_PROMPT_V2 if task == "proposal2" else PROPOSAL_PROMPT
     jobs = [(m, i) for m in only for i in inputs if (m, i) not in done]
     print(f"{task}: {len(jobs)}건 호출")
 
@@ -305,7 +320,7 @@ def report() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("task", choices=["extract", "proposal", "report"])
+    ap.add_argument("task", choices=["extract", "proposal", "proposal2", "report"])
     ap.add_argument("--only", default=",".join(MODELS))
     ap.add_argument("--workers", type=int, default=12)
     a = ap.parse_args()

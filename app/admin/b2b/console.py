@@ -32,6 +32,8 @@ class Workspace:
     evals: list[Evaluation] = field(default_factory=list)
     cost_inputs: dict = field(default_factory=dict)
     mall_build_total: int | None = None
+    admin_rate: float | None = None          # 일반관리비 = 공급가액 × 비율 (2026-11-11)
+    target_margin: float | None = None       # 목표 이익률 → 최대 매입가
     cost: costing.CostAnalysis | None = None
     docs: dict = field(default_factory=dict)
     template_id: str | None = None
@@ -97,7 +99,7 @@ class Console:
                 {"type": "actions", "items": ["나라장터 공고 수집해줘", "입찰중 공고 보여줘", "입찰 트렌드 분석해줘",
                                               "공고 목록 보여줘", "IBK서비스-2026008 분석해줘",
                                               "직원 500명 1인당 5만원 식품 2종 생활용품 1종 3영업일 배송 조건 분석",
-                                              "매입가 36000 포장 1500 배송 3500 운영 800 구축비 300만원으로 비용 계산",
+                                              "매입가 36000 포장 1500 창고 700(가정) 택배 3500(가정) 반품 300 운영 800 기타 0 관리비 5% 이윤 10% 구축비 300만원으로 비용 계산",
                                               "견적 요청서 만들어줘", "제안서 작성해줘"]}]
 
     def _list_bids(self, w, p, today):
@@ -195,7 +197,7 @@ class Console:
             self._cand_block(w.evals),
             self._cost_block(w.cost),
             {"type": "actions", "items": ["견적 요청서 만들어줘", "분석 리포트 열어줘", "제안서 작성해줘",
-                                          "매입가 36000 포장 1500 배송 3500 운영 800 구축비 300만원으로 비용 계산"]},
+                                          "매입가 36000 포장 1500 창고 700(가정) 택배 3500(가정) 반품 300 운영 800 기타 0 관리비 5% 이윤 10% 구축비 300만원으로 비용 계산"]},
         ]
         return blocks
 
@@ -300,15 +302,26 @@ class Console:
 
     def _cost(self, w, p, today):
         t = p.replace(",", "")
-        keymap = {"supply": r"(?:매입가|매입|공급가|상품비)", "packaging": r"포장", "shipping": r"배송",
-                  "ops_cs": r"(?:운영|CS)", "other": r"기타"}
+        # 2026-11-11: 물류창고·택배·교환반품 예비·일반관리비·목표 이익률. 금액 뒤 '(가정)'·'(견적)'·'(계약)' 또는 문장에 '가정'이 있으면 그 근거로
+        whole = None
+        keymap = {"supply": r"(?:매입가|매입|공급가|상품비)", "packaging": r"포장", "warehouse": r"(?:물류\s*창고|창고|물류)",
+                  "shipping": r"(?:택배|배송)", "return_reserve": r"(?:교환|반품)(?:\s*예비(?:비)?)?",
+                  "ops_cs": r"(?:운영|CS)", "admin_overhead": r"(?:일반\s*)?관리비", "other": r"기타"}
         for k, rx in keymap.items():
-            if m := re.search(rx + r"\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(만)?\s*원?", t):
-                w.cost_inputs[k] = int(float(m.group(1)) * (10000 if m.group(2) else 1))
+            if m := re.search(rx + r"(?:비)?\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(만)?\s*원?(?![\d.]*\s*%)\s*(?:\((가정|견적|계약)\))?", t):
+                amt = int(float(m.group(1)) * (10000 if m.group(2) else 1))
+                basis = m.group(3) or whole
+                w.cost_inputs[k] = {"amount": amt, "basis": basis} if basis else amt
+        if m := re.search(r"관리비\s*[:=]?\s*(\d+(?:\.\d+)?)\s*%", t):
+            w.admin_rate = float(m.group(1)) / 100
+            w.cost_inputs.pop("admin_overhead", None)
+        if m := re.search(r"(?:이윤|이익|마진)(?:률|율)?\s*[:=]?\s*(\d+(?:\.\d+)?)\s*%", t):
+            w.target_margin = float(m.group(1)) / 100
         if m := re.search(r"구축(?:비)?\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(만)?\s*원?", t):
             w.mall_build_total = int(float(m.group(1)) * (10000 if m.group(2) else 1))
         w.cost = self._calc_cost(w)
-        return [{"type": "text", "md": "비용 구조를 다시 계산했어요. 입력하지 않은 항목은 '미확인'으로 남겨 잔여액을 확정하지 않습니다."},
+        return [{"type": "text", "md": "비용 구조를 다시 계산했어요. 입력하지 않은 항목은 '미확인'으로 남겨 이익을 확정하지 않습니다. "
+                                       "'(가정)'으로 넣은 값이 있으면 이익은 추정이에요."},
                 self._cost_block(w.cost)]
 
     def _rfq(self, w, p, today):
@@ -394,7 +407,8 @@ class Console:
         proxies = [e.candidate for e in w.evals if e.decision == "HOLD" and e.candidate.observed_price
                    and e.candidate.observed_price >= floor and not e.candidate.is_sample
                    and e.candidate.price_kind in ("public_retail", "public_option_unconfirmed")][:4]
-        return costing.analyze(w.req, w.cost_inputs, proxies, w.mall_build_total)
+        return costing.analyze(w.req, w.cost_inputs, proxies, w.mall_build_total, admin_rate=w.admin_rate,
+                               target_margin_rate=w.target_margin)
 
     @staticmethod
     def _cand_block(evals: list[Evaluation]) -> dict:
@@ -419,6 +433,9 @@ class Console:
             return {"type": "notice", "md": "비용 분석 없음"}
         return {"type": "cost", "budget": cost.budget_per_person, "lines": [l.model_dump() for l in cost.lines],
                 "known_total": cost.known_total, "unknown": cost.unknown, "residual": cost.residual,
+                "net_budget": cost.net_budget, "margin_rate": cost.margin_rate, "total_profit": cost.total_profit,
+                "status": cost.status, "assumed": cost.assumed, "target_margin_rate": cost.target_margin_rate,
+                "max_supply_for_target": cost.max_supply_for_target,
                 "scenarios": cost.scenarios, "notes": cost.notes}
 
     @staticmethod

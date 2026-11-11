@@ -207,7 +207,10 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             ["예정 총액", won(total), f"{req.headcount:,}명 기준, 실제 지급수량 정산" if req.headcount else "실제 지급수량 정산"],
         ]),
         Element(kind="para", text="도서산간 추가 배송비와 교환 비용은 단가에 포함하며 별도 청구하지 않는 것을 원칙으로 합니다. [확인 필요: 공급사 견적 확인 후 확정]"),
-    ]))
+    ] + ([Element(kind="table", headers=["단가 구성 (1인, VAT 별도)", "포함 여부", "산출 근거"], rows=[
+            [l.label, "포함", l.basis if l.basis in ("견적", "계약") else "[확인 필요: 견적·계약]"]
+            for l in cost.lines if l.key != "other"] + [["이윤", "포함", "[확인 필요: 확정 단가 산출 후]"]])]
+         if cost else [])))
 
     # 8. 품질·리스크
     S.append(Section(id="risk", title="8. 품질·리스크 관리", elements=[
@@ -245,11 +248,20 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
                     rows=[[k, ", ".join(sorted(v))[:160]] for k, v in qs.items()] or [["없음", "-"]]),
         ]))
         if cost:
-            crow = [[l.label, won(l.amount) if l.amount is not None else "미확인", l.basis] for l in cost.lines]
-            els2 = [Element(kind="table", headers=["비용 항목(1인)", "금액", "근거"], rows=crow),
+            crow = [["1인 공급가액 (VAT 제외)" if cost.vat_included else "1인 예산", won(cost.net_budget), "공고 단가 기준"]]
+            crow += [[l.label, won(l.amount) if l.amount is not None else "미확인", l.basis] for l in cost.lines]
+            if cost.residual is not None:
+                crow.append(["1인 이익 (이윤)", won(cost.residual), f"이익률 {cost.margin_rate:.1%} · {cost.status}"])
+                if cost.total_profit is not None:
+                    crow.append(["총 이익 (예정 인원 기준)", won(cost.total_profit), "실제 지급수량에 따라 달라짐"])
+            if cost.max_supply_for_target is not None:
+                crow.append([f"목표 이익률 {cost.target_margin_rate:.0%}의 최대 매입가", won(cost.max_supply_for_target), "소싱 기준"])
+            els2 = [Element(kind="table", headers=["비용·이익 (1인, VAT 별도)", "금액", "근거"], rows=crow),
                     Element(kind="callout", tone="warn",
-                            text=("잔여액 " + won(cost.residual) + " (입력값 기준 — 견적 확정 전)") if cost.residual is not None
-                            else f"미확인 {len(cost.unknown)}개 항목이 있어 잔여액(마진)을 확정하지 않습니다. 미확인 ≠ 0원.")]
+                            text=(f"1인 이익 {won(cost.residual)} · 이익률 {cost.margin_rate:.1%} — {cost.status}"
+                                  + (" (가정값 포함: " + ", ".join(cost.assumed) + ")" if cost.assumed else ""))
+                            if cost.residual is not None
+                            else f"미확인 {len(cost.unknown)}개 항목이 있어 이익(마진)을 확정하지 않습니다. 미확인 ≠ 0원.")]
             if cost.scenarios:
                 els2.append(Element(kind="table", headers=["가정(공개가=매입가)", "가정 매입가", "추가비용 전 차액", "판단"],
                                     rows=[[s["candidate"], won(s["assumed_supply"]), won(s["gap_before_other_costs"]), s["verdict"]]
