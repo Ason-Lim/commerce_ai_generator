@@ -3,6 +3,7 @@ import type { ProductCompareBlock, ProductCompareRow } from "../types/blocks";
 import { goHref, logDirectClick } from "../api/client";
 import { useChatActions } from "./ChatActions";
 import { cx, won } from "../lib/format";
+import { WeightNoteTag } from "./ui";
 
 /** 상품명 앞의 [빨간특기] 같은 대괄호 태그를 제거한다. */
 const cleanTitle = (t: string) => t.replace(/^\s*(\[[^\]]*\]\s*)+/, "").trim() || t;
@@ -80,7 +81,7 @@ function Row({ r, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
         {bestTotal && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}
         <div className="text-[11px] text-ink3">{r.shipping_included ? "배송비 포함" : "배송비 미확인"}</div>
       </td>
-      <td className="whitespace-nowrap px-3 py-2.5">{r.pack ?? <span className="text-warn">용량 미확인</span>}</td>
+      <td className="whitespace-nowrap px-3 py-2.5">{r.pack ?? (r.weight_note ? <WeightNoteTag note={r.weight_note} /> : <span className="text-warn">용량 미확인</span>)}</td>
       <td className="whitespace-nowrap px-3 py-2.5">
         {r.per100g != null
           ? <><span className={cx(bestPer && "font-semibold text-accent")}>{won(r.per100g)}</span>
@@ -175,7 +176,7 @@ function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: 
           {bestTotal && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}
           <div className="text-[11px] text-ink3">{r.shipping_included ? "배송비 포함" : "배송비 미확인"}</div>
         </>)}
-        {line("포장 용량", r.pack ?? <span className="text-warn">용량 미확인</span>)}
+        {line("포장 용량", r.pack ?? (r.weight_note ? <WeightNoteTag note={r.weight_note} /> : <span className="text-warn">용량 미확인</span>))}
         {line("100g당", r.per100g != null
           ? <><span className={cx(bestPer && "font-semibold text-accent")}>{won(r.per100g)}</span>
               {bestPer && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}</>

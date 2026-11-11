@@ -223,6 +223,11 @@ def _evidence(card: dict, item: dict | None) -> list[Evidence]:
         ev.append(Evidence(field="weight_g", value=None, unit="g", method="title_parse", status="conflict",
                            source="총중량 불명확 (개당·전체 중량 표기 없음)",
                            raw_text=", ".join(card.get("weight_found") or []) or None))
+    elif src == "title_bonus":
+        # 2026-11-11: 증정분 표기('3kg+1kg', '1kg 증정', '1+1') — 증정 조건을 상품명만으로 알 수 없어 중량을 쓰지 않는다
+        ev.append(Evidence(field="weight_g", value=None, unit="g", method="title_parse", status="conflict",
+                           source="상품명에 증정분 표기 (증정 조건 확인 필요 — 100g당 계산 안 함)",
+                           raw_text=", ".join(card.get("weight_found") or []) or None))
     elif src == "title_ambiguous":
         # p32: 상품명에 서로 다른 중량이 여러 개(옵션 목록) → 어느 옵션 가격인지 몰라 중량을 쓰지 않는다
         found = card.get("weight_found") or []

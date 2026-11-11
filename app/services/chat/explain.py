@@ -26,12 +26,39 @@ from app.services.chat.budget import fits
 
 # app.admin.shared.markets.base.parse_units 와 같은 규칙 — 대화 서비스가 관리자 패키지(pydantic)를 불러오지 않도록 옮겨 둠
 _UNIT_RE = re.compile(r"(\d+)\s*(?:개입|개|입|팩|봉|구)\b")
-_WEIGHT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(kg|g)\b", re.IGNORECASE)
+# 2026-11-11: '\b' 대신 '영문자가 뒤따르지 않음' — '4kg내외'·'10kg박스'처럼 한글이 바로 붙어도 읽는다
+_WEIGHT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(kg|g)(?![A-Za-z])", re.IGNORECASE)
 
 
-_MULTIPLY_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(kg|g)\s*[x×X*]\s*(\d+(?:\.\d+)?)(?!\s*(?:kg|g)\b)", re.IGNORECASE)
+_MULTIPLY_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(kg|g)\s*[x×X*]\s*(\d+(?:\.\d+)?)(?!\s*(?:kg|g)(?![A-Za-z]))", re.IGNORECASE)
 # 2026-11-03 p34: 곱한 수 뒤에 또 곱하기가 이어지면('500g × 2팩 × 3세트') 일부만 계산하지 않는다
 _CHAINED_RE = re.compile(r"\s*[가-힣A-Za-z]{0,4}\s*[x×X*]\s*\d")
+
+# 2026-11-11: 증정분 — '3kg+1kg', '5kg (+500g 증정)', '1kg 증정', '1+1'.  옵션 목록과 다르게 "증정분이 있어요"로 알린다.
+#   증정분이 실제로 함께 오는지(선착순·조건)는 상품명만으로 알 수 없어 100g당은 계산하지 않는다.
+_BONUS_PLUS_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(kg|g)\s*\(?\s*\+\s*(\d+(?:\.\d+)?)\s*(kg|g)(?![A-Za-z])", re.IGNORECASE)
+_BONUS_WORD_RE = re.compile(
+    r"(?:(?:증정|덤|서비스|추가\s*증정)\s*(\d+(?:\.\d+)?)\s*(kg|g)(?![A-Za-z])|(\d+(?:\.\d+)?)\s*(kg|g)\s*\)?\s*(?:증정|덤|더\s*드림|서비스|추가\s*증정))",
+    re.IGNORECASE)
+_BONUS_COUNT_RE = re.compile(r"(?<![\d.])([1-9])\s*\+\s*([1-9])(?![\d.])(?!\s*(?:kg|g)(?![A-Za-z]))", re.IGNORECASE)
+
+
+def _bonus(text: str) -> dict | None:
+    """증정분 표기 → {'base': '3kg'|None, 'extra': '1kg'|None, 'count': '1+1'|None}"""
+    m = _BONUS_PLUS_RE.search(text)
+    if m:
+        return {"base": _wtext(_grams(m.group(1), m.group(2))), "extra": _wtext(_grams(m.group(3), m.group(4))),
+                "count": None}
+    m = _BONUS_WORD_RE.search(text)
+    if m:
+        amount, unit = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        extra = _grams(amount, unit)
+        others = [_grams(a, u) for a, u in _WEIGHT_RE.findall(text) if round(_grams(a, u), 6) != round(extra, 6)]
+        return {"base": _wtext(others[0]) if others else None, "extra": _wtext(extra), "count": None}
+    m = _BONUS_COUNT_RE.search(text)
+    if m:
+        return {"base": None, "extra": None, "count": f"{m.group(1)}+{m.group(2)}"}
+    return None
 
 
 def _grams(amount: str, unit: str) -> float:
@@ -52,8 +79,13 @@ def parse_weight(title: str) -> dict:
       'count_unclear' 곱하기 없이 개수가 붙음 ('100g 10팩') → weight = None (개당·전체 불명, p33)
       'multiply_unclear' 소수 수량·여러 번 곱하기 ('500g × 2.5팩', '500g × 2팩 × 3세트') → weight = None (p34)
       'none'       중량 표기 없음                                     → weight = None
+      'bonus'      증정분 표기 ('3kg+1kg', '1kg 증정', '1+1')           → weight = None, bonus = {...} (2026-11-11)
     곱하기 결과와 나머지 표기가 모두 같은 값이면('500g x 2 총 1kg') 그 값으로 본다."""
     text = title or ""
+    bonus = _bonus(text)
+    if bonus:
+        found = [_wtext(_grams(a, u)) for a, u in _WEIGHT_RE.findall(text)] + ([bonus["count"]] if bonus["count"] else [])
+        return {"weight": None, "kind": "bonus", "formula": None, "found": found, "bonus": bonus}
     totals, formulas, spans = [], [], []
     for m in _MULTIPLY_RE.finditer(text):
         # p34: 소수 수량('× 2.5팩')·여러 번 곱하기('× 2팩 × 3세트')는 지원하지 않음 → 일부만 계산하지 않고 보류
@@ -92,16 +124,34 @@ def parse_units(title: str) -> tuple[int | None, float | None]:
     return unit, parse_weight(title)["weight"]
 
 
-WEIGHT_SOURCE = {"single": "title", "multiplied": "title_multiplied", "ambiguous": "title_ambiguous",
+def weight_note(title: str) -> dict | None:
+    """상세페이지를 열기 전에 알 수 있게 — 중량 옵션·증정분 안내 (2026-11-11).
+    {'kind': 'options'|'bonus', 'label': '중량 옵션이 있어요', 'detail': '2kg · 5kg · 10kg'}"""
+    parsed = parse_weight(title or "")
+    if parsed["kind"] == "ambiguous":
+        return {"kind": "options", "label": "중량 옵션이 있어요", "detail": " · ".join(dict.fromkeys(parsed["found"]))}
+    if parsed["kind"] == "bonus":
+        b = parsed["bonus"]
+        if b["count"]:
+            detail = f"{b['count']} 구성"
+        elif b["base"]:
+            detail = f"{b['base']} + {b['extra']} 증정"
+        else:
+            detail = f"{b['extra']} 증정"
+        return {"kind": "bonus", "label": "증정분이 있어요", "detail": detail}
+    return None
+
+
+WEIGHT_SOURCE = {"single": "title", "multiplied": "title_multiplied", "ambiguous": "title_ambiguous", "bonus": "title_bonus",
                  "count_unclear": "title_count_unclear", "multiply_unclear": "title_multiply_unclear"}
-UNUSABLE_TITLE_KINDS = ("ambiguous", "count_unclear", "multiply_unclear")   # 중량 표기는 있으나 총중량 확정 불가
+UNUSABLE_TITLE_KINDS = ("ambiguous", "bonus", "count_unclear", "multiply_unclear")   # 중량 표기는 있으나 총중량 확정 불가
 UNUSABLE_SOURCES = tuple(WEIGHT_SOURCE[k] for k in UNUSABLE_TITLE_KINDS)
 
 # 2026-11-03 p39: 개수의 적용 범위가 불명확한 표기 — 개당 가격을 계산하지 않는다.
 #   'ambiguous'(옵션 목록 '1kg … 2개, 500g')·'multiply_unclear'(소수·여러 번 곱하기)는 가격이 어느 구성의 것인지 모른다.
 #   개수 표기가 서로 다른 값으로 여러 개('2개 … 3개')여도 같다.
 #   'count_unclear'('100g 10팩')는 중량이 개당인지 전체인지가 불명확할 뿐, 개수는 상품명에 하나로 적혀 있어 개당 가격은 계산한다.
-UNIT_UNCLEAR_KINDS = ("ambiguous", "multiply_unclear")
+UNIT_UNCLEAR_KINDS = ("ambiguous", "bonus", "multiply_unclear")
 
 
 def unit_scope(title: str) -> dict:
@@ -229,6 +279,7 @@ def enrich(card: dict, item: dict) -> dict:
         rocket=rocket,
         free_shipping=free,
         seller_claims=seller_claims(card.get("title") or ""),
+        weight_note=weight_note(card.get("title") or ""),   # 2026-11-11: 중량 옵션·증정분 안내 (화면에 나감)
         check_at_mall=True,
         delivery_hint="로켓배송 표시" if rocket else ("무료배송 표시" if free else None),
     )
@@ -240,7 +291,7 @@ def _blocked(card: dict) -> dict:
     p47: 상품명 개수(unit_count)도 비운다 — 공통 모델 근거에서 '상품명 표기 기준 비교 허용'으로 나가지 않게."""
     if card.get("price_compare_blocked"):
         card.update(weight_g=None, per100g=None, per_unit=None, weight_source=None, weight_formula=None,
-                    weight_found=None, unit_count=None)
+                    weight_found=None, unit_count=None, weight_note=None)
     return card
 
 
@@ -262,6 +313,7 @@ def reweigh(card: dict) -> dict:
     basis = _basis(out)
     out["per100g"] = round(basis / weight * 100) if weight and basis else None
     out["per_unit"] = per_unit_price(out, unit)   # p39: 저장 카드의 예전 개당 가격도 남기지 않는다
+    out["weight_note"] = weight_note(card.get("title") or "")   # 2026-11-11
     return _blocked(out)
 
 

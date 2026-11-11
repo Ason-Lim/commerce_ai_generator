@@ -4,7 +4,7 @@ import { cardToCandidate } from "../api/adapt";
 import { cx } from "../lib/format";
 import { useSaved } from "../state/saved";
 import { useChatActions } from "./ChatActions";
-import { MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags } from "./ui";
+import { MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags, WeightNoteTag } from "./ui";
 
 /** 사유의 근거 종류 — 화면에 그대로 보여 준다 (2026-11-01) */
 export const BASIS: Record<WhyBasis, { label: string; title: string }> = {
@@ -134,7 +134,7 @@ function ProductCard({ c, sponsored }: { c: Candidate; sponsored?: boolean }) {
         <Thumb c={c} />
       </button>
       <div className="min-w-0 flex-1 space-y-2">
-        {(sponsored || c.affiliate || tags.length > 0 || c.roleLabel || c.cardKey) && (
+        {(sponsored || c.affiliate || tags.length > 0 || c.roleLabel || c.cardKey || c.weightNote) && (
           <div className="flex flex-wrap items-center gap-1">
             {!sponsored && <RoleBadge c={c} />}
             {sponsored && <span className="tag bg-sponsorSoft text-sponsor">유료 소개</span>}
@@ -144,6 +144,7 @@ function ProductCard({ c, sponsored }: { c: Candidate; sponsored?: boolean }) {
               </span>
             )}
             {tags.map((t) => <span key={t} className="tag bg-chip text-ink2">{t}</span>)}
+            <WeightNoteTag note={c.weightNote} />
             {!sponsored && <span className="ml-auto"><SaveButton c={c} /></span>}
           </div>
         )}

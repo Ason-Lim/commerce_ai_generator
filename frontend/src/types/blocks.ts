@@ -118,6 +118,8 @@ export interface ApiCard {
   /** 판매자가 상품명에 적은 문구 (고당도·등급·국내산 …) — 확인되지 않음, 사유·순서에 쓰지 않음 */
   seller_claims?: string[];
   per100g?: number | null;
+  /** 2026-11-11: 중량 옵션·증정분 안내 — 상세페이지를 열기 전에 알 수 있게 */
+  weight_note?: WeightNote | null;
   per_unit?: number | null;
   rocket?: boolean | null;
   free_shipping?: boolean | null;
@@ -322,6 +324,8 @@ export interface ProductCompareRow {
   /** 제목에 적힌 포장 용량 ('1kg', '1kg×2 (총 2kg)') — 없으면 null */
   pack: string | null;
   per100g: number | null;
+  /** 2026-11-11: 포장 용량 대신 — 중량 옵션이 있어요 · 증정분이 있어요 */
+  weight_note?: WeightNote | null;
   fit?: "fits" | "partial" | "unknown" | "bulk" | null;
   fit_text?: string | null;
   /** 손질 상태 표기 (굴: 깐굴 표기 · 껍질째 표기 · 손질 상태 미표기) */
@@ -382,6 +386,13 @@ export interface ChatRequest {
   chip?: string;
 }
 
+/** 2026-11-11: 상품명에 중량이 여러 개(옵션 목록)이거나 증정분이 적힌 경우 — 100g당 가격은 계산하지 않는다 */
+export interface WeightNote {
+  kind: "options" | "bonus";
+  label: string;     // "중량 옵션이 있어요" · "증정분이 있어요"
+  detail: string;    // "2kg · 5kg · 10kg" · "3kg + 1kg 증정" · "1+1 구성"
+}
+
 /* ───────── 화면용 뷰 모델 ───────── */
 
 export interface Candidate {
@@ -396,6 +407,7 @@ export interface Candidate {
   total: number | null;         // null = 배송비 미확인으로 확정 불가
   weightLabel?: string | null;  // "1.2kg"
   per100g?: number | null;      // 100g당 가격
+  weightNote?: WeightNote | null; // 중량 옵션·증정분 안내 (2026-11-11)
   unitLabel?: string | null;    // "개당 약 4,635원"
   delivery?: { label: string; verified: boolean } | null;
   reasons: string[];            // 선택 이유

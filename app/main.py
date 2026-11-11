@@ -124,126 +124,25 @@ def safe_float(value, default: float = 0.0) -> float:
 
 
 def estimate_weight_grams(product_name: str) -> float:
-    """상품명에서 대표 중량을 g 단위로 추정합니다."""
-    import re
+    """상품명에서 중량(g)을 읽는다 — 채팅과 같은 규칙 (app/services/chat/explain.parse_weight, 2026-11-11).
 
-    product_name = product_name or ""
+    중량이 여러 개(옵션 목록 '2kg 5kg 10kg')이거나 증정분('3kg+1kg', '1+1')이면 어느 구성의 가격인지 몰라 0.
+    (2026-11-11 전: 같은 이름의 함수가 두 번 정의돼 있었고 실제로는 '여러 중량 중 마지막 값'을 썼다.)"""
+    from app.services.chat.explain import parse_weight
 
-    matches = re.findall(
-        r"(\d+(?:\.\d+)?)\s*(kg|g)",
-        product_name,
-        re.IGNORECASE,
-    )
+    weight = parse_weight(product_name or "")["weight"]
+    return float(weight) if weight and 50 <= weight <= 50000 else 0
 
-    if not matches:
-        return 0
 
-    candidates = []
+def weight_note(product_name: str) -> dict | None:
+    """중량 옵션·증정분 안내 — {'kind','label','detail'} (채팅 카드와 같은 문구, 2026-11-11)."""
+    from app.services.chat.explain import weight_note as _note
 
-    for value, unit in matches:
-        try:
-            value = float(value)
-        except Exception:
-            continue
-
-        unit = unit.lower()
-        grams = value * 1000 if unit == "kg" else value
-
-        if 50 <= grams <= 50000:
-            candidates.append(grams)
-
-    if not candidates:
-        return 0
-
-    # 여러 중량이 섞인 경우 가장 큰 값은 옵션/검색어 노이즈일 수 있어 제외합니다.
-    # 예: "10kg ... 2kg" 상품은 실제 대표 옵션이 2kg일 가능성이 높습니다.
-    if len(candidates) >= 2:
-        return min(candidates)
-
-    return candidates[0]
+    return _note(product_name or "")
 
 
 def calculate_price_per_100g(item: dict) -> float:
-    """상품 가격과 중량을 기준으로 100g당 가격을 계산합니다."""
-    price = (
-        item.get("effective_price")
-        or item.get("final_price")
-        or item.get("sale_price")
-        or item.get("price")
-    )
-
-    try:
-        price = float(price or 0)
-    except Exception:
-        return 0
-
-    if price <= 0:
-        return 0
-
-    unit_price_per_kg = (
-        item.get("unit_price_per_kg")
-        or item.get("price_per_kg")
-    )
-
-    try:
-        if unit_price_per_kg:
-            return float(unit_price_per_kg) / 10
-    except Exception:
-        pass
-
-    weight_g = estimate_weight_grams(
-        item.get("product_name") or ""
-    )
-
-    if weight_g <= 0:
-        return 0
-
-    return price / (weight_g / 100)
-
-
-def estimate_weight_grams(product_name: str) -> float:
-    """상품명에서 대표 중량을 g 단위로 추정합니다."""
-    import re
-
-    product_name = product_name or ""
-
-    # 10키로, 10kg, 2kg, 500g 모두 인식
-    matches = re.findall(
-        r"(\d+(?:\.\d+)?)\s*(kg|g|키로|킬로)",
-        product_name,
-        re.IGNORECASE,
-    )
-
-    if not matches:
-        return 0
-
-    candidates = []
-
-    for value, unit in matches:
-        try:
-            value = float(value)
-        except Exception:
-            continue
-
-        unit = unit.lower()
-
-        if unit in ["kg", "키로", "킬로"]:
-            grams = value * 1000
-        else:
-            grams = value
-
-        if 50 <= grams <= 50000:
-            candidates.append(grams)
-
-    if not candidates:
-        return 0
-
-    # 여러 중량이 섞이면 마지막 중량을 대표 옵션으로 사용
-    # 예: "... 10kg 2kg" -> 2kg
-    return candidates[-1]
-
-
-def calculate_price_per_100g(item: dict) -> float:
+    """상품 가격과 중량을 기준으로 100g당 가격을 계산합니다. 계산할 수 없으면 0."""
     price = (
         item.get("effective_price")
         or item.get("final_price")
@@ -759,6 +658,8 @@ def db_fallback_recommendations(
         else:
             price_per_100g = calculate_price_per_100g(item)
         item["price_per_100g"] = price_per_100g
+        # 2026-11-11: 상품명에 중량 옵션·증정분이 있으면 안내 (DB 100g당이 있어도 고객에게는 알린다)
+        item["weight_note"] = weight_note(item.get("product_name") or "")
         
         item["personal_boost"] = personal_boost
         

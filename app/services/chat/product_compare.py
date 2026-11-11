@@ -16,6 +16,7 @@ import math
 import re
 from decimal import Decimal
 
+from app.services.chat import explain
 from app.services.recipe_chat import pack_fit
 
 COMPARE_RE = re.compile(r"^\s*(.{1,20}?)\s*상품\s*(후보\s*)?비교(\s*해\s*(줘|주세요)|\s*하기)?\s*[.?!]?\s*$")
@@ -103,7 +104,9 @@ def build(name: str, seen_set: dict, need: dict | None, go_for) -> dict:
         want = Decimal(str(need["amount"]))
     rows = []
     for c in cards:
-        pack = pack_fit.package(c.get("title") or "")
+        # 2026-11-11: 옵션 목록·증정분('500g 1+1' 등)은 채팅 카드와 같게 용량·100g당을 쓰지 않고 그 사실을 알린다
+        note = explain.weight_note(c.get("title") or "")
+        pack = None if note else pack_fit.package(c.get("title") or "")
         price = _price(c)
         per100 = None
         if pack and price and pack["unit"] == "g" and pack["total"] > 0:
@@ -120,6 +123,8 @@ def build(name: str, seen_set: dict, need: dict | None, go_for) -> dict:
             "affiliate": bool(c.get("affiliate")), "affiliate_program": c.get("affiliate_program"),
             "total": price, "shipping_included": c.get("total") is not None, "free_shipping": c.get("free_shipping"),
             "pack": pack_fit.size_text(pack) if pack else None,
+            # 2026-11-11: 옵션 목록·증정분이면 '용량 미확인' 대신 그 사실을 알린다
+            "weight_note": note,
             "per100g": per100, "per100g_unit": "100g" if per100 is not None else None,
             "fit": fit, "fit_text": fit_text,
             "prep": _prep(name, c.get("title") or ""),
@@ -133,9 +138,15 @@ def build(name: str, seen_set: dict, need: dict | None, go_for) -> dict:
     per_pool = [r for r in rows if r["per100g"] is not None]
     best_per = min(per_pool, key=lambda r: r["per100g"])["key"] if len(per_pool) > 1 else None
     notes = []
-    unknown = sum(1 for r in rows if r["pack"] is None)
+    unknown = sum(1 for r in rows if r["pack"] is None and not r["weight_note"])
+    options = sum(1 for r in rows if r["pack"] is None and (r["weight_note"] or {}).get("kind") == "options")
+    bonus = sum(1 for r in rows if r["pack"] is None and (r["weight_note"] or {}).get("kind") == "bonus")
     if unknown:
         notes.append(f"제목에 용량이 없는 {unknown}개는 100g당 가격을 계산하지 않았어요.")
+    if options:
+        notes.append(f"중량 옵션이 있는 {options}개는 고르는 옵션에 따라 가격이 달라 100g당 가격을 계산하지 않았어요.")
+    if bonus:
+        notes.append(f"증정분이 있는 {bonus}개는 증정 조건(선착순·기간 등)을 상품명만으로 알 수 없어 100g당 가격을 계산하지 않았어요. 판매처에서 확인해 주세요.")
     if any(r["prep"] == "손질 상태 미표기" for r in rows):
         notes.append("'깐굴' 표기가 없는 상품은 껍질 무게가 섞였을 수 있어 100g당 가격을 그대로 견주기 어려워요.")
     if any(r["seller_claims"] for r in rows):

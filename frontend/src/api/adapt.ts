@@ -16,7 +16,10 @@ export const toChip = (c: string | ChipItem): ChipItem => (typeof c === "string"
 export function cardToCandidate(c: ApiCard): Candidate {
   const ship = c.shipping_fee ?? null;
   const total = c.total ?? (ship != null ? c.price + ship : null);
-  const g = c.weight_g ?? parseWeightFromTitle(c.title);
+  // 2026-11-11: 서버가 중량·100g당을 내려 주면(값이 null 이어도) 그대로 쓴다 — 옵션 목록·증정분처럼 서버가 일부러
+  // 비운 값을 화면이 상품명 첫 중량으로 다시 채우지 않게. 필드가 아예 없는 예전 응답에만 상품명 추정을 쓴다.
+  const serverWeighed = c.weight_g !== undefined || c.weight_note != null;
+  const g = serverWeighed ? (c.weight_g ?? null) : parseWeightFromTitle(c.title);
   const reasons = c.why?.length ? c.why.map((w) => w.text) : [c.reasoning || c.reason].filter((x): x is string => !!x);
   return {
     rank: c.rank,
@@ -29,7 +32,8 @@ export function cardToCandidate(c: ApiCard): Candidate {
     shippingFee: ship,
     total,
     weightLabel: weightLabel(g),
-    per100g: c.per100g ?? per100g(total, g),
+    per100g: c.per100g !== undefined ? c.per100g : serverWeighed ? null : per100g(total, g),
+    weightNote: c.weight_note ?? null,
     unitLabel: c.unit_price && c.unit_count ? `${c.unit_count}개 · 개당 약 ${won(c.unit_price)}` : null,
     delivery: c.delivery_terms ? { label: c.delivery_terms, verified: true }
       : c.rocket ? { label: "로켓배송 표시", verified: true } : null,

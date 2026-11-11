@@ -52,6 +52,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/3",
        "weight_g": 1000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",
@@ -97,6 +98,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "weight_g": 300.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "mall",
@@ -148,6 +150,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/5",
        "weight_g": 2000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "you",
@@ -183,6 +186,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "weight_g": 500.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "you",
@@ -220,6 +224,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/4",
        "weight_g": 1200.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "you",
@@ -311,6 +316,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/5",
        "weight_g": 2000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",
@@ -348,6 +354,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "weight_g": 300.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "mall",
@@ -387,6 +394,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/3",
        "weight_g": 1000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",
@@ -430,6 +438,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "weight_g": 500.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",
@@ -479,6 +488,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/4",
        "weight_g": 1200.0,
+       "weight_note": null,
        "why": []
       }
      ],
@@ -572,6 +582,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/4",
        "weight_g": 1200.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",
@@ -623,6 +634,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/5",
        "weight_g": 2000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "you",
@@ -660,6 +672,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "weight_g": 300.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "you",
@@ -695,6 +708,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "weight_g": 500.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "you",
@@ -730,6 +744,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/3",
        "weight_g": 1000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "you",
@@ -812,6 +827,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/5",
        "weight_g": 2000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",
@@ -853,6 +869,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "weight_g": 300.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "mall",
@@ -896,6 +913,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "weight_g": 500.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",
@@ -947,6 +965,7 @@
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/11",
        "weight_g": 5000.0,
+       "weight_note": null,
        "why": [
         {
          "basis": "calc",

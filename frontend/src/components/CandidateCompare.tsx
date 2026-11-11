@@ -1,6 +1,6 @@
 import type { Candidate, CandidateCompareBlock } from "../types/blocks";
 import { useChatActions } from "./ChatActions";
-import { EvidenceTags, MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags } from "./ui";
+import { EvidenceTags, MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags, WeightNoteTag } from "./ui";
 import { cx, won } from "../lib/format";
 
 /** 상품명 앞의 [빨간특기] 같은 대괄호 태그를 제거한다. */
@@ -56,7 +56,7 @@ export function CandidateCompare({ block }: { block: CandidateCompareBlock }) {
                   className="line-clamp-2 block text-left text-base font-bold leading-snug hover:underline">{cleanTitle(c.title)}</button>
                 <div className="mt-1.5"><TotalPrice c={c} best={isBestTotal(c)} /></div>
                 <div className="mt-1 text-xs text-ink2">
-                  {c.weightLabel ?? <span className="text-warn">중량 표기 없음</span>}
+                  {c.weightLabel ?? (c.weightNote ? <WeightNoteTag note={c.weightNote} /> : <span className="text-warn">중량 표기 없음</span>)}
                   {c.per100g != null && <span className={cx("ml-1.5", c.per100g === minPer ? "font-semibold text-accent" : "")}>100g당 {won(c.per100g)}</span>}
                 </div>
               </div>
