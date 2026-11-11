@@ -52,4 +52,5 @@ uv run python scripts/llm_food_compare.py --only deepseek,claude  # 일부 모�
 - 1만 건: DeepSeek 약 $2 · Claude 약 $45. 제철·품종 답을 식품별로 한 번 만들어 저장해 다시 쓰면 Claude 도 1회 비용만 든다.
 
 ## 결정 (2026-11-11)
-- 식품 상담은 DeepSeek 로 계속 쓴다 (사용자 판단: "딥시크만 써도 될 듯").
+- 식품 상담 등 일상 답변은 지금처럼 DeepSeek 로 쓴다 (현재 상태 유지).
+- 고급 작업에서만 다른 모델(Claude 등)로 교차 확인한다 — 어떤 작업을 '고급'으로 볼지는 그때 정한다.
