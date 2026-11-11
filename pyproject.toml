@@ -9,7 +9,7 @@
 name = "commerce-ai-generator"
 version = "0.1.0"
 description = "commerce_ai 추천 서비스 (FastAPI 백엔드 · 관리자 · B2B · MCP)"
-requires-python = ">=3.14"
+requires-python = ">=3.14,<3.15"   # 3.15 는 pyarrow(streamlit) 등 미리 빌드된 파일이 아직 없음 (2026-11-11)
 dependencies = [
     # 웹·API
     "fastapi>=0.136.1",

@@ -41,3 +41,7 @@
 2. `uv sync` — 기존 .venv 를 uv.lock 에 맞춤 (lock 에 없는 tiktoken·regex·pip 등은 제거됨. 남기려면 `uv sync --inexact`)
 3. 보관 스크립트를 돌릴 때만 `uv sync --inexact --group legacy-scrapers`
 4. Mac mini: 저장소 clone → `uv sync --no-dev` → `uv run playwright install chromium`
+
+## 추가 수정 (2026-11-11 10:30)
+- Mac 에 Python 3.15 도 설치돼 있어 uv 가 3.15 를 골랐고, pyarrow(streamlit 의존) 가 3.15용 빌드 파일이 없어 설치 실패 → `.python-version` = 3.14, `requires-python = ">=3.14,<3.15"` 로 고정
+- 이 과정에서 기존 .venv 는 uv 가 지우고 새로 만들었음 (패키지는 uv.lock 으로 그대로 복원됨)
