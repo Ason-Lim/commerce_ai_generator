@@ -12,6 +12,8 @@ PY=.venv/bin/python
     echo ".venv 가 없어요 — 저장소에서 uv sync 를 먼저 실행해 주세요."
     exit 1
   fi
-  PYTHONUNBUFFERED=1 "$PY" scripts/warm_food_knowledge.py
+  # 도는 동안만 잠자기를 막는다 (caffeinate -i). 끝나면 맥의 '잠자기' 설정대로 다시 잠든다.
+  KEEP=""; command -v caffeinate >/dev/null 2>&1 && KEEP="caffeinate -i"
+  PYTHONUNBUFFERED=1 $KEEP "$PY" scripts/warm_food_knowledge.py
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') 끝 (종료 코드 $?)"
 } >>"$LOG" 2>&1
