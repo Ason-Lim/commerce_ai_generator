@@ -8,7 +8,7 @@
   uv run python scripts/warm_food_knowledge.py                 # 기본 목록 (혼잡 시간이면 멈춤)
   uv run python scripts/warm_food_knowledge.py --dry-run       # 무엇을 만들지만 보기
   uv run python scripts/warm_food_knowledge.py --foods 딸기,사과 --now   # 혼잡 시간이라도 지금
-매일 한가한 시간에 (예: 새벽 3시) cron: 0 3 * * * cd ~/commerce_ai_generator && uv run python scripts/warm_food_knowledge.py
+매일 새벽 3시 자동 실행 (launchd): ./ops/launchd/install_warm_food.sh  (해제: --remove)
 DeepSeek 혼잡 시간(정가) = 한국 시간 평일 10–13시·15–19시.
 """
 from __future__ import annotations

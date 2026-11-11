@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 매일 새벽 3시: 자주 묻는 식품 답 미리 만들기 (scripts/warm_food_knowledge.py). 설치: ops/launchd/install_warm_food.sh -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.commerce_ai.warm_food_knowledge</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/scripts/run_warm_food_knowledge.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>3</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__REPO__/var/log/warm_food_knowledge.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/var/log/warm_food_knowledge.launchd.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>Nice</key>
+  <integer>10</integer>
+</dict>
+</plist>

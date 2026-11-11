@@ -188,7 +188,7 @@ uv run python scripts/llm_food_compare.py --only ds_think,ds_fast --runs 2 --wor
    - 우선순위: 코드의 thinking= > `.env DEEPSEEK_THINKING`(on/off, 실험용 전체 덮어쓰기) > 표. 새 작업은 표에 넣어야 테스트가 통과한다.
 2. **미리 만들어 두기** `scripts/warm_food_knowledge.py` — 자주 묻는 식품 20개 × 질문 모양 5개(제철·제철+품종·품종·보관·고르기),
    서비스와 같은 경로(검증·다른 작물 품종 빼기·Claude 검토·저장 규칙). 이미 저장된 것은 부르지 않고, 혼잡 시간이면 멈춘다(--now 로 무시).
-   예: 매일 새벽 3시 cron `0 3 * * * cd ~/commerce_ai_generator && uv run python scripts/warm_food_knowledge.py`
+   매일 새벽 3시 자동 실행: launchd — `./ops/launchd/install_warm_food.sh` (해제 `--remove`), 기록 `var/log/warm_food_knowledge.log`.
 3. **다른 작물의 품종 빼기** `app/services/reference/variety_crops.{py,json}` — 품종 이름 → 작물(소속만, 특성 없음) + 확인된 사실의 품종.
    복숭아 답에 '설향'이 오면 그 품종 설명과 그 이름이 나온 팁·제철 줄을 뺀다. 저장 전과 저장본을 꺼낼 때 모두.
    '유명·일품·대지·신고'처럼 보통 낱말로도 쓰이는 이름은 팁 문장에서는 찾지 않는다. 목록에 없는 식품은 판단하지 않는다.
