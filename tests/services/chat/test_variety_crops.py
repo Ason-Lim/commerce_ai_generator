@@ -29,12 +29,32 @@ def test_answers_are_cleaned_before_saving_and_when_read_back():
     assert again["from_cache"] and [v["name"] for v in again["got"]["varieties"]] == ["백도"]
 
 
-def test_warm_script_skips_variety_questions_for_foods_without_a_variety_list():
+def _warm():
     import importlib.util
     from pathlib import Path
 
     spec = importlib.util.spec_from_file_location("warm", Path("scripts/warm_food_knowledge.py"))
     warm = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(warm)
+    return warm
+
+
+def test_warm_script_skips_variety_questions_for_foods_without_a_variety_list():
+    warm = _warm()
     qs = [q for _f, q in warm.jobs(["딸기", "굴"], ["제철", "품종"])]
     assert qs == ["딸기 제철 언제야?", "딸기 품종별 차이 알려줘", "굴 제철 언제야?"]
+    assert [q for _f, q in warm.jobs([("김치", "processed")])] == ["김치 보관 어떻게 해?"]
+
+
+def test_ranking_keywords_become_foods_only_when_the_name_is_in_the_keyword():
+    warm = _warm()
+    kws = ["빼빼로", "쌀20kg", "오메가3", "조선호텔김치", "생굴", "굴", "대봉감"]
+    answer = {"items": [{"keyword": "빼빼로", "kind": "skip", "food": None},
+                        {"keyword": "쌀20kg", "kind": "fresh", "food": "쌀"},
+                        {"keyword": "오메가3", "kind": "fresh", "food": "고등어"},          # 키워드에 없는 이름 → 버림
+                        {"keyword": "조선호텔김치", "kind": "processed", "food": "김치"},
+                        {"keyword": "생굴", "kind": "fresh", "food": "굴"},
+                        {"keyword": "굴", "kind": "fresh", "food": "굴"},                  # 같은 식품은 한 번만
+                        {"keyword": "대봉감", "kind": "fresh", "food": "대봉감"}]}
+    got = warm.ranked_foods(kws, lambda _t: answer, top=3)
+    assert got == [("쌀20kg", "쌀", "fresh"), ("조선호텔김치", "김치", "processed"), ("생굴", "굴", "fresh")]

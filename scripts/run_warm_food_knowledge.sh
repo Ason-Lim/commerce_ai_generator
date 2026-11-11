@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# launchd 가 매일 새벽 3시에 부른다 (ops/launchd/com.commerce_ai.warm_food_knowledge.plist, 2026-11-11).
+# launchd 가 매주 일요일 새벽 3시에 부른다 (ops/launchd/com.commerce_ai.warm_food_knowledge.plist, 2026-11-11).
 # 자주 묻는 식품 답을 DeepSeek 한가한 시간에 미리 만들어 저장. 기록: var/log/warm_food_knowledge.log
 set -uo pipefail
 cd "$(dirname "$0")/.."

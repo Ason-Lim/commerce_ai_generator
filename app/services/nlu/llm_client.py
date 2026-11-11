@@ -36,6 +36,7 @@ THINKING_BY_TASK: dict[str, bool] = {
     "food_knowledge": True, "ai_recipe": True, "ai_recipe_check": True, "recipe_supplement": True, "recipe_consult": True,
     "shop_keyword": False, "dish_amounts": False, "recipe_servings": False, "food_nlu": False, "ai_recipe_identify": False,
     "recipe_easy_view": False, "recipe_discover": False, "trend_cause": False, "stock_chat": False,
+    "warm_classify": False,   # scripts/warm_food_knowledge.py — 순위 키워드 분류
 }
 
 
