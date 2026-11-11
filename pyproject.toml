@@ -1,0 +1,101 @@
+# commerce_ai_generator — Python 의존성 정의 (2026-11-11, 0단계 기준선: uv 전환)
+#   설치·동기화 : uv sync                  (개발용 pytest·ruff·ty 포함)
+#   운영 설치   : uv sync --no-dev
+#   보관 스크립트(스크래핑, 사용 안 함) : uv sync --group legacy-scrapers
+#   실제 버전은 uv.lock 이 기준이다. 아래 하한은 2026-11-11 MacBook .venv 에 설치돼 있던 버전.
+#   requirements.txt 는 uv 가 없는 환경을 위해 남겨 두며, uv export 로 다시 만든다.
+
+[project]
+name = "commerce-ai-generator"
+version = "0.1.0"
+description = "commerce_ai 추천 서비스 (FastAPI 백엔드 · 관리자 · B2B · MCP)"
+requires-python = ">=3.14"
+dependencies = [
+    # 웹·API
+    "fastapi>=0.136.1",
+    "uvicorn>=0.46.0",
+    "pydantic>=2.13.3",
+    "python-dotenv>=1.2.2",
+    "python-multipart>=0.0.27",       # 로그인 · 파일 업로드 폼
+    "httpx>=0.28.1",                  # 결제 · 배송대행 어댑터 (키 없으면 비활성)
+    "requests>=2.33.1",
+    # DB·데이터
+    "sqlalchemy>=2.0.49",
+    "psycopg2-binary>=2.9.12",
+    "pandas>=3.0.2",
+    "PyYAML>=6.0.3,<7.0",
+    "openpyxl>=3.1.5",                # 입찰 모니터 엑셀 내보내기
+    "xlrd>=2.0.1",                    # 국세청 .xls 읽기 (app/services/nts_excel.py) — 2026-11-11 추가
+    # AI·MCP
+    "openai>=2.33.0",
+    "mcp>=2.3.0",                     # MCP 서버 (app/mcp_adapter/server.py) — 2026-11-11 추가
+    # 제안서 생성 (B2B)
+    "python-docx>=1.2.0",             # Word
+    "python-pptx>=1.0.2",             # PowerPoint
+    "python-hwpx>=6.10.0",            # HWPX
+    "pypdf>=5.0",                     # B2B 공고문 PDF 텍스트 추출 (gift_monitor/collectors.py) — 2026-11-11 추가
+    "Pillow>=12.2.0",                 # 템플릿 레퍼런스 이미지 색 추출
+    "playwright>=1.60.0",             # PDF (최초 1회: uv run playwright install chromium)
+    # UCP
+    "jsonschema>=4.26.0",             # 판매자 응답·프로필 스키마 검증
+    "referencing>=0.37.0",            # schema 참조($ref) 해석
+    # 레거시 화면 (app/ui/streamlit_app.py)
+    "streamlit>=1.57.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.14",
+    "ty>=0.0.1a1",
+]
+# LLM_PROVIDER=anthropic 으로 바꿀 때만 필요 (app/admin/shared/llm.py)
+llm-anthropic = [
+    "anthropic>=0.70",
+]
+# 2026-11-02 결정: 페이지 스크래핑 수집 스크립트는 보관만 하고 쓰지 않는다. 기본 설치에서 제외.
+legacy-scrapers = [
+    "selenium>=4.43.0",
+    "webdriver-manager>=4.0.2",
+    "beautifulsoup4>=4.14.3",
+    "lxml>=6.1.0",
+]
+
+[tool.uv]
+package = false            # 배포용 패키지가 아니라 애플리케이션
+default-groups = ["dev"]
+
+# ---------------------------------------------------------------------------
+# ruff — 기존 코드 전체를 한 번에 고치지 않는다 (2026-11-11 기준 659건, 포맷 대상 501개 파일).
+#   · 수정하는 파일만 검사·포맷한다:  uv run ruff check <파일>  /  uv run ruff format <파일>
+#   · 전체 검사는 "버그 후보" 규칙만:  uv run ruff check app tests --select F821,F811,F841,E722
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+extend-exclude = [
+    "*_backups", "backups", "Claude outputs", "venison_repository_evidence",
+    "goat_operational_evidence", "context_intelligence_md_python_package*",
+    "commerce_ai_generator_governance_bundle", "commerce_ai_local_ocr",
+    "foundation documents", "ocr_results", "frontend", "var", "data",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B006", "B008"]
+# 기존 코드 습관이라 지금은 막지 않는 규칙 (한 줄 여러 문장, 파일 중간 import)
+ignore = ["E701", "E702", "E402", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401", "F403"]
+"tests/**" = ["F401", "F811", "F841"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+# ---------------------------------------------------------------------------
+# ty — 베타. 커밋을 막지 않고 경고로만 본다:  uv run ty check app
+# ---------------------------------------------------------------------------
+[tool.ty.environment]
+python-version = "3.14"
+
+# pytest 설정은 pytest.ini 에 있다 (pythonpath = . · testpaths = tests)
