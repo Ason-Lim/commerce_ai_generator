@@ -126,3 +126,9 @@ def _no_kamis_network(monkeypatch):
     monkeypatch.setenv("NAVER_CONNECT_ON_SITE", "1")
     monkeypatch.setenv("PARTNER_PREVIEW", "0")
     monkeypatch.setenv("PARTNER_DATA_DIR", "/nonexistent-partner-dir")   # 실제 data/partners 가 테스트에 섞이지 않게
+
+
+@pytest.fixture(autouse=True)
+def _no_seed_registry(monkeypatch, tmp_path):
+    """대화 테스트는 실제 내려받은 국립종자원 품종 목록(data/reference)에 기대지 않는다 — 필요한 테스트만 따로 지정."""
+    monkeypatch.setenv("SEED_VARIETY_FILE", str(tmp_path / "no_seed_varieties.json"))

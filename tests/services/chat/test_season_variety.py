@@ -88,3 +88,34 @@ def test_no_variety_products_falls_back_to_the_usual_list(sqlite_db):
     assert not any((t or "").endswith("상품 1개") and "없는품종" in t for t in titles)
     assert any(b["type"] == "product_list" for b in res["blocks"])   # 평소 목록
     assert "1~3월이 가장 맛있어요" in md(res)
+
+
+def test_variety_names_are_checked_against_the_seed_registry(sqlite_db, tmp_path, monkeypatch):
+    import json
+
+    from app.services.reference import seed_varieties
+
+    reg = tmp_path / "seed_varieties.json"
+    reg.write_text(json.dumps({"rows": [{"VAR_CD": "1", "VAR_NM_KOR": "설향", "VAR_NM_ENG": "Seolhyang"},
+                                        {"VAR_CD": "2", "VAR_NM_KOR": "금실", "VAR_NM_ENG": "Geumsil"}]}),
+                   encoding="utf-8")
+    monkeypatch.setenv("SEED_VARIETY_FILE", str(reg))
+    assert seed_varieties.known("설 향") is True and seed_varieties.known("가짜품종") is False
+    shop = ByQuery({"설향": [it("논산 설향 딸기 500g", 15900)], "금실": [it("금실 딸기 500g", 19900)]})
+    res = _svc(sqlite_db, shop).handle(None, message=Q)
+    text = md(res)
+    assert "- **설향**: 과즙이 많고 부드러워요\n" in text
+    assert "- **가짜품종**: 지어낸 품종이에요 _(국립종자원 품종 목록에서 확인되지 않은 이름)_" in text
+    assert "국립종자원 품종코드 목록과 맞춰 봤어요" in text
+    notes = [b["data"].get("note") or "" for b in res["blocks"] if b["type"] == "product_list"]
+    assert all(n.endswith("국립종자원 등록 품종") for n in notes)
+
+
+def test_without_the_registry_file_nothing_is_marked(sqlite_db, tmp_path, monkeypatch):
+    from app.services.reference import seed_varieties
+
+    monkeypatch.setenv("SEED_VARIETY_FILE", str(tmp_path / "none.json"))
+    assert seed_varieties.known("설향") is None
+    shop = ByQuery({"설향": [it("논산 설향 딸기 500g", 15900)]})
+    text = md(_svc(sqlite_db, shop).handle(None, message=Q))
+    assert "확인되지 않은 이름" not in text and "맞춰 봤어요" not in text

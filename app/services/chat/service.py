@@ -682,7 +682,18 @@ class ChatService:
         if got.get("season"):
             answer.append(f"**언제 맛있나요 (제철)** {got['season']}")
         if got.get("varieties"):
-            answer.append("**품종별 차이**\n" + "\n".join(f"- **{v['name']}**: {v['note']}" for v in got["varieties"]))
+            # 2026-11-11: 품종 이름을 국립종자원 품종코드 목록과 맞춰 본다 (목록 파일이 없으면 표시 없이 예전처럼)
+            from app.services.reference import seed_varieties
+
+            lines, checked = [], False
+            for v in got["varieties"]:
+                hit = seed_varieties.known(v["name"])
+                v["registered"] = hit
+                checked = checked or hit is not None
+                mark = " _(국립종자원 품종 목록에서 확인되지 않은 이름)_" if hit is False else ""
+                lines.append(f"- **{v['name']}**: {v['note']}{mark}")
+            tail = f"\n\n품종 이름은 {seed_varieties.SOURCE} 목록과 맞춰 봤어요." if checked else ""
+            answer.append("**품종별 차이**\n" + "\n".join(lines) + tail)
         if got["tips"]:
             answer.append("\n".join(f"- {t}" for t in got["tips"]))
         if answer:
@@ -728,7 +739,8 @@ class ChatService:
             state = saved_mod.push_seen(state, f"{label} {name}", cards, None)
             sections.append(B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in cards],
                                            title=f"{name} 상품 {len(cards)}개",
-                                           note=f"{v['note']} (일반 정보 · AI 정리)"))
+                                           note=f"{v['note']} (일반 정보 · AI 정리)"
+                                                + (" · 국립종자원 등록 품종" if v.get("registered") else "")))
             items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in cards]
         if not sections:
             return None
