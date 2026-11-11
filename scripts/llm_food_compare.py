@@ -6,6 +6,7 @@
 
   uv run python scripts/llm_food_compare.py                       # 기본: .env 의 모델
   uv run python scripts/llm_food_compare.py --gpt-model gpt-4.1   # GPT 모델 바꾸기
+  uv run python scripts/llm_food_compare.py --only ds_think,ds_fast --runs 2   # DeepSeek 생각 모드 켬/끔 비교 (2026-11-11)
 결과: var/llm_compare/food_compare_<시각>.json   (키·비밀값은 기록하지 않음)
 """
 from __future__ import annotations
@@ -53,14 +54,25 @@ def _env(name, default=""):
     return v or default
 
 
-def call_openai_compatible(base_url, key, model, system, user):
+LAST: dict = {}   # 스레드별 마지막 호출의 추가 정보 (추론 토큰·실제 모델)
+
+
+def call_openai_compatible(base_url, key, model, system, user, thinking=None):
+    import threading
+
     from openai import OpenAI
 
-    client = OpenAI(api_key=key, base_url=base_url, timeout=90, max_retries=0)
+    client = OpenAI(api_key=key, base_url=base_url, timeout=150, max_retries=0)
+    extra = {} if thinking is None else {"extra_body": {"thinking": {"type": "enabled" if thinking else "disabled"}}}
     t = time.time()
     r = client.chat.completions.create(model=model, temperature=0.2, response_format={"type": "json_object"},
-                                       messages=[{"role": "system", "content": system}, {"role": "user", "content": user}])
+                                       messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+                                       **extra)
     u = r.usage
+    det = getattr(u, "completion_tokens_details", None)
+    LAST[threading.get_ident()] = {"served": getattr(r, "model", None),
+                                   "reasoning_tokens": getattr(det, "reasoning_tokens", None) if det else None,
+                                   "hit_tokens": getattr(u, "prompt_cache_hit_tokens", None)}
     return (r.choices[0].message.content or ""), time.time() - t, getattr(u, "prompt_tokens", None), getattr(u, "completion_tokens", None)
 
 
@@ -85,7 +97,9 @@ def main() -> int:
     ap.add_argument("--gpt-model", default=_env("OPENAI_COMPARE_MODEL") or _env("OPENAI_MODEL") or _env("OPENAI_RECIPE_EVAL_MODEL", "gpt-4.1-mini"))
     ap.add_argument("--deepseek-model", default=_env("DEEPSEEK_MODEL", "deepseek-chat"))
     ap.add_argument("--claude-model", default=_env("ANTHROPIC_MODEL", "claude-sonnet-5-5"))
-    ap.add_argument("--only", help="쉼표로: deepseek,gpt,claude")
+    ap.add_argument("--only", help="쉼표로: deepseek,gpt,claude,ds_think,ds_fast")
+    ap.add_argument("--runs", type=int, default=1, help="같은 질문을 몇 번 (실행마다 답이 달라지는 정도를 함께 본다)")
+    ap.add_argument("--workers", type=int, default=6)
     args = ap.parse_args()
 
     from app.services.chat import food_tips
@@ -97,13 +111,18 @@ def main() -> int:
         "deepseek": (args.deepseek_model, lambda s, u: call_openai_compatible(ds_base, _env("DEEPSEEK_API_KEY"), args.deepseek_model, s, u)),
         "gpt": (args.gpt_model, lambda s, u: call_openai_compatible(None, _env("OPENAI_API_KEY"), args.gpt_model, s, u)),
         "claude": (args.claude_model, lambda s, u: call_anthropic(_env("ANTHROPIC_API_KEY"), args.claude_model, s, u)),
+        # 2026-11-11: deepseek-flash 는 기본이 생각 모드 — 켬/끔을 명시해 비교
+        "ds_think": (args.deepseek_model + " (생각 켬)", lambda s, u: call_openai_compatible(
+            ds_base, _env("DEEPSEEK_API_KEY"), args.deepseek_model, s, u, thinking=True)),
+        "ds_fast": (args.deepseek_model + " (생각 끔)", lambda s, u: call_openai_compatible(
+            ds_base, _env("DEEPSEEK_API_KEY"), args.deepseek_model, s, u, thinking=False)),
     }
-    if args.only:
-        models = {k: v for k, v in models.items() if k in args.only.split(",")}
+    models = {k: v for k, v in models.items() if k in (args.only or "deepseek,gpt,claude").split(",")}
 
     def run(job):
-        name, (model, fn), (cat, q) = job
-        rec = {"model_key": name, "model": model, "category": cat, "question": q}
+        name, (model, fn), (cat, q), run_no = job
+        rec = {"model_key": name, "model": model, "category": cat, "question": q, "run": run_no,
+               "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
         try:
             text, sec, tin, tout = fn(food_tips.PROMPT, q)
             raw = LLMClient._safe_json(text) if hasattr(LLMClient, "_safe_json") else json.loads(text)
@@ -114,14 +133,17 @@ def main() -> int:
                        shown={"tips": got["tips"], "season": got.get("season"), "varieties": kinds,
                               "buy_with": got["buy_with"], "food": (raw or {}).get("food") if isinstance(raw, dict) else None},
                        dropped_tips=max(0, raw_n - len(got["tips"])))
+            import threading
+
+            rec.update(LAST.pop(threading.get_ident(), {}))
         except Exception as e:  # noqa: BLE001 — 실패도 결과로 남긴다
             rec.update(ok=False, error=f"{type(e).__name__}: {str(e)[:200]}")
         print(f"  {name:8} {'OK ' if rec.get('ok') else 'ERR'} {q[:28]}")
         return rec
 
-    jobs = [(n, m, q) for q in QUESTIONS for n, m in models.items()]
+    jobs = [(n, m, q, k) for k in range(1, args.runs + 1) for q in QUESTIONS for n, m in models.items()]
     print(f"질문 {len(QUESTIONS)}개 × 모델 {len(models)}개 = {len(jobs)}번 호출 — {', '.join(f'{k}:{v[0]}' for k, v in models.items())}")
-    with ThreadPoolExecutor(max_workers=6) as ex:
+    with ThreadPoolExecutor(max_workers=args.workers) as ex:
         results = list(ex.map(run, jobs))
     out_dir = ROOT / "var" / "llm_compare"
     out_dir.mkdir(parents=True, exist_ok=True)
