@@ -38,6 +38,8 @@ COMPARE_SAVED_RE = re.compile(r"(관심|찜)\s*(상품|목록|한\s*(거|것|상
 SESSION_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 MAX_TURNS = 12
 MAX_PRODUCTS = 10
+VARIETY_MAX = 3          # 2026-11-11: 품종별 상품 — 품종 수(검색 횟수) 한도
+VARIETY_PER = 3          # 품종마다 보여 줄 상품 수
 
 PRIORITY_RULES = (
     ("price", re.compile(r"최저가|제일\s*싼|가장\s*싼|저렴|싸게")),
@@ -675,8 +677,16 @@ class ChatService:
             query = food                       # 문장에 실제로 있는 식품 이름일 때만 검색어로 쓴다
         got = food_tips_mod.validated(raw, text)
         lead: list = []
+        # 2026-11-11: 제철·품종을 물었으면 그 답을 먼저 (일반 정보 · AI 정리 표시는 같다)
+        answer: list[str] = []
+        if got.get("season"):
+            answer.append(f"**언제 맛있나요 (제철)** {got['season']}")
+        if got.get("varieties"):
+            answer.append("**품종별 차이**\n" + "\n".join(f"- **{v['name']}**: {v['note']}" for v in got["varieties"]))
         if got["tips"]:
-            lead.append(B.text(f"**{_label(query)}** 질문에 대한 일반 정보예요.\n" + "\n".join(f"- {t}" for t in got["tips"])))
+            answer.append("\n".join(f"- {t}" for t in got["tips"]))
+        if answer:
+            lead.append(B.text(f"**{_label(query)}** 질문에 대한 일반 정보예요.\n\n" + "\n\n".join(answer)))
             lead.append(B.notice(food_tips_mod.LABEL))
         else:
             lead.append(B.notice(f"**{_label(query)}** 보관·손질 같은 일반 정보는 지금 답하지 못했어요. "
@@ -684,7 +694,61 @@ class ChatService:
         if got["buy_with"]:
             lead.append(B.text("**같이 사면 좋은 것** (일반 정보 · AI 정리)"))
             lead.append(B.chips([f"{b} 추천해줘" for b in got["buy_with"]]))
+        if got.get("varieties"):
+            turn = self._variety_turn(sid, query, got["varieties"], lead, state, revision, persist)
+            if turn is not None:
+                return turn
         return self._shopping_turn(sid, query, state, revision, persist, {}, lead_blocks=lead)
+
+    def _variety_turn(self, sid, food, varieties, lead, state, revision, persist):
+        """2026-11-11: 품종별 상품 — 품종마다 '품종 식품'으로 따로 찾고, 상품명에 그 품종 이름이 실제로 있는 상품만 보여 준다.
+        (AI가 말한 품종이라도 상품이 없으면 묶음을 만들지 않는다.)  찾은 품종이 하나도 없으면 None → 평소 상품 목록."""
+        from app.domain.commerce.requests import SearchRequest
+        from app.services.commerce.search import collect
+
+        label = _label(food)
+        sections, missing, items, shown = [], [], [], []
+        for v in varieties[:VARIETY_MAX]:
+            name = v["name"]
+            try:
+                got = collect(SearchRequest(text=f"{name} {food}", priority="ranking", session_id=sid, limit=MAX_PRODUCTS),
+                              shopping=self.shopping, keyword_extractor=None, annotate_prices=False)
+            except Exception:  # noqa: BLE001 — 한 품종이 실패해도 나머지는 보여 준다
+                log.warning("variety search failed: %s", name)
+                missing.append(name)
+                continue
+            picked = got["picked"]
+            cards = [c for c in (picked["picks"] + picked["others"] if picked else [])
+                     if name in re.sub(r"\s+", "", c.get("title") or "") and not c.get("partner")]
+            cards = [c for c in cards if c.get("key") not in {k.get("key") for k in shown}][:VARIETY_PER]
+            if not cards:
+                missing.append(name)
+                continue
+            shown += cards
+            state = saved_mod.push_seen(state, f"{label} {name}", cards, None)
+            sections.append(B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in cards],
+                                           title=f"{name} 상품 {len(cards)}개",
+                                           note=f"{v['note']} (일반 정보 · AI 정리)"))
+            items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in cards]
+        if not sections:
+            return None
+        blocks = list(lead)
+        blocks.append(B.text(f"**품종별 상품** — 품종 이름이 상품명에 적힌 상품만 골랐어요. 품종마다 같은 기준(100g당 가격 등)으로 견준 순서예요."))
+        blocks += sections
+        if missing:
+            blocks.append(B.notice(f"{', '.join(missing)} 품종은 상품명에 품종이 적힌 상품을 찾지 못해 보여 드리지 않았어요."))
+        blocks.append(B.notice("평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 지어내지 않고 각 상품의 "
+                               "판매처 페이지에서 확인하도록 안내해 드려요."))
+        nav = naver_search_block(label, label, shown)
+        if nav:
+            blocks.append(nav)
+        state = dict(state, mode="shopping", last_items=items, pending=None)
+        state = _log_turn(state, f"{food} 품종별", "shopping")
+        try:
+            self._commit(sid, state, revision, [], persist)
+        except Exception:  # noqa: BLE001
+            log.warning("chat state not saved for variety turn")
+        return self._response(sid, "shopping", blocks)
 
     def _shopping_turn(self, sid, text, state, revision, persist, memo, lead_blocks: list | None = None):
         # 2026-11-02 (3단계): 검색·선택은 공통 서비스(services/commerce/search.collect)가 하고, 여기서는 화면 블록·상태만 만든다.
