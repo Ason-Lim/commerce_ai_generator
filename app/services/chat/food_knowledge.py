@@ -13,6 +13,8 @@ from app.services.ai import cache as ai_cache
 from app.services.chat import food_tips
 
 TASK = "food_knowledge"
+# 검토 기준이 바뀌면 올린다 — 예전 기준으로 검토해 저장한 답은 다음에 꺼낼 때 새 기준으로 다시 검토한다
+REVIEW_VERSION = 3        # 2026-11-11 v2: '다르게 알고 있으면 의견' · v3: 예시 문장을 검토 대상과 무관하게 (예시를 베끼지 않게)
 DAYS = 180                # 제철·품종·손질 같은 일반 지식은 자주 바뀌지 않는다
 
 TOPIC_RES = {
@@ -69,7 +71,7 @@ def _review(food: str, text: str, got: dict, review: Callable | None) -> dict | 
     verdicts = review(f"식품: {food} · 고객 질문: {text}", [t for _k, _i, t in lines])
     if not verdicts:
         return None
-    return {"by": "claude", "flags": [{"kind": k, "i": i, "note": v["note"]}
+    return {"by": "claude", "v": REVIEW_VERSION, "flags": [{"kind": k, "i": i, "note": v["note"]}
                                       for (k, i, _t), v in zip(lines, verdicts) if not v["ok"]]}
 
 
@@ -80,7 +82,8 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
     if hit is not None:
         got = dict(hit["value"])
         rev = hit["review"]
-        if rev is None and review is not None:          # 예전에 검토 없이 저장된 답 — 이번에 검토해 남긴다
+        stale = rev is None or rev.get("v") != REVIEW_VERSION
+        if stale and review is not None:                # 검토 없이 저장됐거나 예전 기준 검토 — 이번에 검토해 남긴다
             rev = _review(got.get("_food") or food, text, got, review)
             if rev is not None:
                 ai_cache.set_review(TASK, key, rev)

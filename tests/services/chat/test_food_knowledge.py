@@ -66,8 +66,20 @@ def test_chat_shows_review_notes_and_where_the_answer_came_from(sqlite_db):
     svc = ChatService(sqlite_db, shopping=FakeShopping(items=items), recipe_chat=RecipeChat(statement_factory=str),
                       food_tips=gen, food_review=review_flagging_geumsil)
     text = md(svc.handle(None, message="딸기 언제부터 맛있어? 품종별 차이 알려줘"))
-    assert "- **금실**: 과육이 부드러워요 _(검토 AI 의견: 금실은 과육이 단단한 편이에요)_" in text
+    assert "- **금실**: 과육이 부드러워요 _(Claude 의견: 금실은 과육이 단단한 편이에요)_" in text
     assert "- **설향**: 과즙이 많고 부드러워요\n" in text
-    assert "DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요 (검토 의견 1건은 해당 줄에 적었어요)" in text
+    assert "DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요 — 두 AI 의 생각이 다른 1곳은 그 줄에 Claude 의견을 함께 적었어요" in text
     text2 = md(svc.handle(None, message="딸기 제철 언제야? 품종 차이도 알려줘"))
     assert gen.calls == 1 and "에 정리해 저장한 정보예요" in text2
+
+
+def test_answers_reviewed_by_an_older_rule_are_reviewed_again_once():
+    from app.services.ai import cache as C
+
+    key, label = K.key_of("딸기", "딸기 품종 알려줘")
+    C.put(K.TASK, key, dict(ANSWER, _food="딸기"), days=1, label=label, review={"by": "claude", "flags": []})   # 예전 기준
+    got = K.answer("딸기 품종 알려줘", "딸기", Gen(), review_flagging_geumsil)
+    assert got["review"]["v"] == K.REVIEW_VERSION and got["review"]["flags"][0]["note"].startswith("금실은")
+    calls = []
+    K.answer("딸기 품종 알려줘", "딸기", Gen(), lambda c, items: calls.append(1) or [])
+    assert calls == []                                                   # 새 기준으로 검토한 뒤로는 다시 부르지 않는다

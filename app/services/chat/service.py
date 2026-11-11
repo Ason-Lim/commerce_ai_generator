@@ -681,7 +681,7 @@ class ChatService:
         query = know["food"] or query
         got = know["got"]
         flags = {(f["kind"], f["i"]): f["note"] for f in (know["review"] or {}).get("flags") or []}
-        warn = lambda kind, i: f" _(검토 AI 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""  # noqa: E731
+        warn = lambda kind, i: f" _(Claude 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""  # noqa: E731
         lead: list = []
         # 2026-11-11: 제철·품종을 물었으면 그 답을 먼저 (일반 정보 · AI 정리 표시는 같다)
         answer: list[str] = []
@@ -1200,7 +1200,7 @@ def _knowledge_note(know: dict) -> str:
     if know.get("review"):
         n = len(know["review"].get("flags") or [])
         parts.append("DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요"
-                     + (f" (검토 의견 {n}건은 해당 줄에 적었어요)" if n else ""))
+                     + (f" — 두 AI 의 생각이 다른 {n}곳은 그 줄에 Claude 의견을 함께 적었어요" if n else ""))
     if know.get("from_cache") and know.get("saved_at"):
         parts.append(f"{str(know['saved_at'])[:10]}에 정리해 저장한 정보예요")
     return (" " + ". ".join(parts) + ".") if parts else ""
