@@ -400,7 +400,8 @@ def from_env(env=None):
             if system not in clients:
                 # the headline list makes the model think long (21 s measured, >30 s at times): wait up to 75 s
                 clients[system] = LLMClient(system, provider="deepseek", env=source,
-                                            timeout=75.0 if system == TREND_PROMPT else 30.0)
+                                            timeout=75.0 if system == TREND_PROMPT else 30.0,
+                                            cache="recipe_discover", cache_days=7)   # 2026-11-11: 같은 뉴스·목록이면 다시 쓰기
             return clients[system].chat_json(json.dumps(payload, ensure_ascii=False), temperature=0)
     return Discovery(provider, interpreter, video=video, social=social, surge=surge_reader, cafe=True, signals=True,
                      history=history)

@@ -4,6 +4,7 @@ LLM_PROVIDER=none 이면 호출하지 않는다. 모든 호출부는 LLM 없이�
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any
 
@@ -53,14 +54,25 @@ class LLMClient:
         if p == "anthropic":
             import anthropic  # 지연 import
 
+            # 2026-11-11: 최신 Claude 모델은 temperature 를 받지 않는다 (400 'temperature is deprecated')
             msg = anthropic.Anthropic().messages.create(
-                model=self.s.anthropic_model, max_tokens=max_tokens, temperature=temperature,
+                model=self.s.anthropic_model, max_tokens=max_tokens,
                 system=system + ("\n반드시 JSON 하나만 출력." if json_mode else ""),
                 messages=[{"role": "user", "content": user}])
             return "".join(getattr(b, "text", "") for b in msg.content)
         raise LLMUnavailable("LLM_PROVIDER=none")
 
     def chat_json(self, system: str, user: str, **kw) -> dict:
+        """2026-11-11: 같은 (모델·지시문·입력)은 저장해 둔 결과를 다시 쓴다 (AI_CACHE=0 이면 끔)."""
+        from app.services.ai import cache as ai_cache
+
+        p = self.s.llm_provider
+        model = {"openai": self.s.openai_model, "anthropic": self.s.anthropic_model,
+                 "ollama": self.s.ollama_model}.get(p) or os.getenv("DEEPSEEK_MODEL", "")
+        return ai_cache.cached_call("admin_llm", lambda u: self._chat_json(system, u, **kw), user,
+                                    parts=(p, model, system, kw.get("temperature", 0.0)), days=30, model=f"{p}:{model}")
+
+    def _chat_json(self, system: str, user: str, **kw) -> dict:
         if self.s.llm_provider == "deepseek":
             # commerce 공용 클라이언트 (DEEPSEEK_API_KEY · DEEPSEEK_MODEL, 공식 API 주소만)
             from app.services.nlu.llm_client import LLMClient as DeepSeekClient

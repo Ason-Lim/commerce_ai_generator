@@ -91,11 +91,12 @@ def build_default_service() -> ChatService:
     if ready:
         from app.services.nlu.llm_client import LLMClient
 
-        reader = LLMClient(consult.PROMPT, provider="deepseek", timeout=60.0)
+        reader = LLMClient(consult.PROMPT, provider="deepseek", timeout=60.0, cache="recipe_consult", cache_days=30)
         # 2026-11-06: '굴국밥 1인분에 굴 몇 g' — used only when no public recipe gives the amount (labelled AI 추정)
         from app.services.recipe_chat import dish_shopping
 
-        amounts = LLMClient(dish_shopping.AMOUNT_PROMPT, provider="deepseek", timeout=40.0)
+        amounts = LLMClient(dish_shopping.AMOUNT_PROMPT, provider="deepseek", timeout=40.0,
+                            cache="dish_amounts", cache_days=90)
         recipe.amount_estimator = lambda text: amounts.chat_json(text, temperature=0)
         recipe.consultant = consult.Consultant(lambda text: reader.chat_json(text, temperature=0.2),
                                                recipe.resolver.catalog, search=getattr(recipe.discovery, "provider", None),
@@ -105,7 +106,7 @@ def build_default_service() -> ChatService:
         from app.services.chat.service import SHOP_KEYWORD_PROMPT
         from app.services.nlu.llm_client import LLMClient
 
-        client = LLMClient(SHOP_KEYWORD_PROMPT, provider="deepseek")
+        client = LLMClient(SHOP_KEYWORD_PROMPT, provider="deepseek", cache="shop_keyword", cache_days=90)
         keyword_extractor = lambda text: client.chat_json(text, temperature=0)  # noqa: E731
     food_tips = None
     if ready:      # 2026-11-04: 보관·손질·먹는 법 질문 — 일반 정보 짧게 (AI 정리로 표시, 서비스에서 검증)
@@ -114,8 +115,12 @@ def build_default_service() -> ChatService:
 
         tips_client = LLMClient(food_tips_mod.PROMPT, provider="deepseek")
         food_tips = lambda text: tips_client.chat_json(text, temperature=0.2)  # noqa: E731
+    # 2026-11-11: 고급 작업 교차 확인 — 식품 지식(저장해 다시 쓰는 답)은 Claude 가 한 번 더 검토 (ANTHROPIC_API_KEY · AI_CROSS_CHECK)
+    from app.services.ai import cross_check
+
+    food_review = cross_check.reviewer("food_knowledge") if food_tips is not None else None
     return ChatService(db, nlu_loader=load_food_nlu, recipe_chat=recipe, keyword_extractor=keyword_extractor,
-                       food_tips=food_tips)
+                       food_tips=food_tips, food_review=food_review)
 
 
 def get_chat_service() -> ChatService:

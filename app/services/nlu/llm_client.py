@@ -38,6 +38,8 @@ class LLMClient:
         openai_factory: Callable[..., Any] | None = None,
         http_post: Callable[..., Any] | None = None,
         timeout: float = 30.0,
+        cache: str | None = None,
+        cache_days: float = 30.0,
     ):
         self.system = system_prompt
         # 2026-11-01: a long title list made DeepSeek think for 20–35 s; callers that need it may wait longer
@@ -46,6 +48,9 @@ class LLMClient:
         self.provider = (provider or self._get("LLM_PROVIDER") or "ollama").lower()
         self._openai_factory = openai_factory
         self._http_post = http_post
+        # 2026-11-11: AI 결과 저장·재사용 — 작업 이름을 주면 같은 (모델·프롬프트·입력·온도)는 다시 부르지 않는다
+        self.cache = cache
+        self.cache_days = cache_days
 
     # ── settings ──────────────────────────────────────────
     def _get(self, name: str, default: str = "") -> str:
@@ -62,6 +67,23 @@ class LLMClient:
 
     # ── 공용 진입점 ────────────────────────────────────────
     def chat_json(self, user_text: str, temperature: float = 0.0) -> dict:
+        if self.cache:
+            from app.services.ai import cache as ai_cache
+
+            model = self._model_name()
+            return ai_cache.cached_call(self.cache, lambda t: self._chat_json(t, temperature), user_text,
+                                        parts=(self.provider, model, self.system, temperature),
+                                        days=self.cache_days, model=f"{self.provider}:{model}")
+        return self._chat_json(user_text, temperature)
+
+    def _model_name(self) -> str:
+        if self.provider == "deepseek":
+            return self._get("DEEPSEEK_MODEL").strip()
+        if self.provider == "openai":
+            return self._get("OPENAI_MODEL", "gpt-4o-mini") or "gpt-4o-mini"
+        return self._get("OLLAMA_MODEL", "qwen2.5:7b")
+
+    def _chat_json(self, user_text: str, temperature: float) -> dict:
         if self.provider == "deepseek":
             raw = self._deepseek(user_text, temperature)
         elif self.provider == "openai":

@@ -391,9 +391,10 @@ def from_env(env=None, db=None, statement_factory=None) -> AiRecipes:
     if (source.get("DEEPSEEK_API_KEY") or "").strip() and (source.get("DEEPSEEK_MODEL") or "").strip():
         from app.services.nlu.llm_client import LLMClient
 
-        client = LLMClient(PROMPT, provider="deepseek", env=source)
-        checker = LLMClient(IDENTIFY_PROMPT, provider="deepseek", env=source)
-        reviewer = LLMClient(DESCRIPTION_CHECK_PROMPT, provider="deepseek", env=source)
+        client = LLMClient(PROMPT, provider="deepseek", env=source, cache="ai_recipe", cache_days=90)
+        checker = LLMClient(IDENTIFY_PROMPT, provider="deepseek", env=source, cache="ai_recipe_identify", cache_days=90)
+        reviewer = LLMClient(DESCRIPTION_CHECK_PROMPT, provider="deepseek", env=source, cache="ai_recipe_check",
+                             cache_days=90)
         generator = lambda text: client.chat_json(text, temperature=0.3)  # noqa: E731
         identifier = lambda text: checker.chat_json(text, temperature=0)  # noqa: E731
         described = lambda text: reviewer.chat_json(text, temperature=0)  # noqa: E731

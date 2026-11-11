@@ -289,7 +289,28 @@ def _polish(lines: list[str]) -> list[str]:
     src = set().union(*(nums(x) for x in lines))
     if len(out) != len(lines) or any(not nums(x) <= src for x in out):
         return lines  # 새 숫자가 생기면 폐기
-    return out
+    return _cross_checked(lines, out)
+
+
+def _cross_checked(lines: list[str], out: list[str]) -> list[str]:
+    """2026-11-11 고급 작업 교차 확인: 다듬은 문장을 Claude 가 원문과 견줘, 사실·의미가 바뀐 줄은 원문으로 되돌린다.
+    검토가 꺼져 있거나 실패하면 다듬은 문장을 그대로 쓴다 (숫자 검사는 위에서 이미 통과)."""
+    from app.services.ai import cross_check
+
+    changed = [i for i, (a, b) in enumerate(zip(lines, out)) if a != b]
+    if not changed:
+        return out
+    verdicts = cross_check.review(
+        "b2b_polish", "공공·기업 제안서 문장 다듬기 검토",
+        [f"원문: {lines[i]}\n다듬은 문장: {out[i]}" for i in changed],
+        instruction="원문과 다듬은 문장을 견줘 사실·자격·조건·약속의 의미가 바뀌었거나 원문에 없는 주장이 생겼으면 ok=false.")
+    if not verdicts:
+        return out
+    keep = list(out)
+    for i, v in zip(changed, verdicts):
+        if not v["ok"]:
+            keep[i] = lines[i]
+    return keep
 
 
 # ── 렌더러 ────────────────────────────────────────────────────

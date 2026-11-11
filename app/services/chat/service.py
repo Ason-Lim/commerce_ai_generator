@@ -131,12 +131,15 @@ class ChatService:
     def __init__(self, db: Db | None = None, *, shopping: Callable | None = None,
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
                  keyword_extractor: Callable | None = None, food_tips: Callable | None = None,
+                 food_review: Callable | None = None,
                  trend_report: Callable | None = None):
         self.db = db
         # trend_report() -> 오늘의 급상승 리포트 (surge.load, 2026-11-06) — '요즘 뜨는 식품' 답변
         self.trend_report = trend_report
         # food_tips(text) -> {"food", "tips": [...], "buy_with": [...]} (DeepSeek, 2026-11-04); validated before shown
         self.food_tips = food_tips
+        # 2026-11-11: 교차 확인 — (context, lines) → [{"ok","note"}] | None (Claude). 없으면 검토 없이 저장
+        self.food_review = food_review
         self.shopping = shopping or default_shopping
         self.nlu_loader = nlu_loader
         # keyword_extractor(text) -> {"keyword": str} (DeepSeek); only for long shopping sentences, validated
@@ -666,39 +669,42 @@ class ChatService:
     def _food_question_turn(self, sid, text, state, revision, persist):
         """식품 상담: 일반 정보(AI 정리, 표시) + 그 식품의 상품 후보 (평소 쇼핑 답변과 같은 순위·고지)."""
         query, _terms = shopping_terms(text, self.keyword_extractor)
-        raw = None
-        if self.food_tips is not None:
-            try:
-                raw = self.food_tips(text)
-            except Exception:  # noqa: BLE001 — 답하지 못해도 상품 후보는 보여 준다
-                log.warning("food tips unavailable")
-        food = ((raw or {}).get("food") or "").strip() if isinstance(raw, dict) else ""
-        if food and re.sub(r"\s+", "", food) in re.sub(r"\s+", "", text) and 2 <= len(food) <= 20:
-            query = food                       # 문장에 실제로 있는 식품 이름일 때만 검색어로 쓴다
-        got = food_tips_mod.validated(raw, text)
+        # 2026-11-11: 저장된 식품 지식이 있으면 AI 를 부르지 않고 다시 쓴다. 새로 만든 답은 Claude 가 검토(교차 확인)해 저장.
+        from app.services.chat import food_knowledge
+
+        try:
+            know = food_knowledge.answer(text, query, self.food_tips, self.food_review)
+        except Exception:  # noqa: BLE001 — 답하지 못해도 상품 후보는 보여 준다
+            log.warning("food tips unavailable")
+            know = {"got": food_tips_mod.validated(None, text), "food": query, "review": None,
+                    "saved_at": None, "from_cache": False}
+        query = know["food"] or query
+        got = know["got"]
+        flags = {(f["kind"], f["i"]): f["note"] for f in (know["review"] or {}).get("flags") or []}
+        warn = lambda kind, i: f" _(검토 AI 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""  # noqa: E731
         lead: list = []
         # 2026-11-11: 제철·품종을 물었으면 그 답을 먼저 (일반 정보 · AI 정리 표시는 같다)
         answer: list[str] = []
         if got.get("season"):
-            answer.append(f"**언제 맛있나요 (제철)** {got['season']}")
+            answer.append(f"**언제 맛있나요 (제철)** {got['season']}{warn('season', 0)}")
         if got.get("varieties"):
             # 2026-11-11: 품종 이름을 국립종자원 품종코드 목록과 맞춰 본다 (목록 파일이 없으면 표시 없이 예전처럼)
             from app.services.reference import seed_varieties
 
             lines, checked = [], False
-            for v in got["varieties"]:
+            for vi, v in enumerate(got["varieties"]):
                 hit = seed_varieties.known(v["name"])
                 v["registered"] = hit
                 checked = checked or hit is not None
                 mark = " _(국립종자원 품종 목록에서 확인되지 않은 이름)_" if hit is False else ""
-                lines.append(f"- **{v['name']}**: {v['note']}{mark}")
+                lines.append(f"- **{v['name']}**: {v['note']}{mark}{warn('variety', vi)}")
             tail = f"\n\n품종 이름은 {seed_varieties.SOURCE} 목록과 맞춰 봤어요." if checked else ""
             answer.append("**품종별 차이**\n" + "\n".join(lines) + tail)
         if got["tips"]:
-            answer.append("\n".join(f"- {t}" for t in got["tips"]))
+            answer.append("\n".join(f"- {t}{warn('tip', ti)}" for ti, t in enumerate(got["tips"])))
         if answer:
             lead.append(B.text(f"**{_label(query)}** 질문에 대한 일반 정보예요.\n\n" + "\n\n".join(answer)))
-            lead.append(B.notice(food_tips_mod.LABEL))
+            lead.append(B.notice(food_tips_mod.LABEL + _knowledge_note(know)))
         else:
             lead.append(B.notice(f"**{_label(query)}** 보관·손질 같은 일반 정보는 지금 답하지 못했어요. "
                                  "상품 후보와 판매처 안내를 함께 확인해 주세요."))
@@ -1186,6 +1192,18 @@ def _looks_like_shopping(text: str) -> bool:
     # 2026-11-04: '사과를 검색해줘'가 레시피 대화 안에서 '무엇을 원하시는지 모르겠어요'로 빠졌다 → 검색·찾기·주문 말도 쇼핑
     return bool(re.search(r"추천|최저가|가격|얼마|사고|구매|선물|검색|찾아|보여\s*줘|주문|살\s*수|사\s*줘|어디서\s*사|팔아",
                           text)) and not parsing.is_recipe_request(text)
+
+
+def _knowledge_note(know: dict) -> str:
+    """식품 지식 출처 한 줄 — 교차 확인 여부 · 저장해 둔 정보면 정리한 날."""
+    parts = []
+    if know.get("review"):
+        n = len(know["review"].get("flags") or [])
+        parts.append("DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요"
+                     + (f" (검토 의견 {n}건은 해당 줄에 적었어요)" if n else ""))
+    if know.get("from_cache") and know.get("saved_at"):
+        parts.append(f"{str(know['saved_at'])[:10]}에 정리해 저장한 정보예요")
+    return (" " + ". ".join(parts) + ".") if parts else ""
 
 
 def _log_turn(state: dict, text: str, stage: str, path: str | None = None) -> dict:

@@ -451,7 +451,7 @@ def from_env(env=None, statement_factory=None) -> EasyViews:
     # same provider rule as the stock interpreter: DeepSeek, key only from the server environment
     ready = bool((source.get("DEEPSEEK_API_KEY") or "").strip() and (source.get("DEEPSEEK_MODEL") or "").strip())
     if mode == "on" and ready:
-        client = LLMClient(SYSTEM_PROMPT, provider="deepseek", env=source)
+        client = LLMClient(SYSTEM_PROMPT, provider="deepseek", env=source, cache="recipe_easy_view", cache_days=180)
         generator = lambda text: client.chat_json(text, temperature=0.2)  # noqa: E731
     model = (source.get("DEEPSEEK_MODEL") or "").strip() or None
     return EasyViews(generator, statement_factory=statement_factory, mode=mode, model=model)
