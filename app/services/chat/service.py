@@ -690,11 +690,24 @@ class ChatService:
             if (kind, i) in verified:             # 확인된 사실 — Claude 의견 대신 출처
                 return f" _(출처 확인 · {verified[(kind, i)]['source_name']})_"
             return f" _(Claude 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""
+
+        # 2026-11-11 (검토 반영): 안전 질문은 검토를 못 했으면 AI 줄을 빼고, 두 AI 판단이 다른 줄은 확정하지 않는다
+        safety, unreviewed = bool(know.get("safety")), know.get("review") is None
+        if safety:                                # 안전 질문은 의견 대신 '확정하지 않음' — 안내 줄 문구도 맞춘다
+            know = dict(know, shown_flags=0, held=len([k for k in flags if k not in verified]))
+
+        def held(kind, i):
+            return safety and (kind, i) not in verified and (unreviewed or (kind, i) in flags)
+
+        def line(kind, i, head, body):
+            if not held(kind, i):
+                return f"{head}{body}{warn(kind, i)}"
+            return None if unreviewed else f"{head}_({SAFETY_HOLD})_"
         lead: list = []
         # 2026-11-11: 제철·품종을 물었으면 그 답을 먼저 (일반 정보 · AI 정리 표시는 같다)
         answer: list[str] = []
-        if got.get("season"):
-            answer.append(f"**언제 맛있나요 (제철)** {got['season']}{warn('season', 0)}")
+        if got.get("season") and (row := line("season", 0, "**언제 맛있나요 (제철)** ", got["season"])):
+            answer.append(row)
         if got.get("varieties"):
             # 2026-11-11: 품종 이름을 국립종자원 품종코드 목록과 맞춰 본다 (목록 파일이 없으면 표시 없이 예전처럼)
             from app.services.reference import seed_varieties
@@ -705,15 +718,23 @@ class ChatService:
                 v["registered"] = hit
                 checked = checked or hit is not None
                 mark = " _(국립종자원 품종 목록에서 확인되지 않은 이름)_" if hit is False else ""
-                lines.append(f"- **{v['name']}**: {v['note']}{mark}{warn('variety', vi)}")
+                if row := line("variety", vi, f"- **{v['name']}**: ", f"{v['note']}{mark}"):
+                    lines.append(row)
             tail = f"\n\n품종 이름은 {seed_varieties.SOURCE} 목록과 맞춰 봤어요." if checked else ""
-            answer.append("**품종별 차이**\n" + "\n".join(lines) + tail)
-        if got["tips"]:
-            answer.append("\n".join(f"- {t}{warn('tip', ti)}" for ti, t in enumerate(got["tips"])))
+            if lines:
+                answer.append("**품종별 차이**\n" + "\n".join(lines) + tail)
+        tips = [row for ti, t in enumerate(got["tips"]) if (row := line("tip", ti, "- ", t))]
+        if tips:
+            answer.append("\n".join(tips))
+        withheld = safety and unreviewed
+        if withheld:
+            lead.append(B.notice(f"**{_label(query)}** 안전과 관련된 질문이라 다른 AI 의 검토를 마친 답만 드려요. 지금은 검토를 하지 "
+                                 "못해 AI 가 정리한 내용은 확정해 드리지 않을게요. 제품 표시사항과 판매처 안내를 먼저 확인하시고, "
+                                 "건강과 관련되면 의사·약사 등 전문가와 상의해 주세요.", "warn"))
         if answer:
             lead.append(B.text(f"**{_label(query)}** 질문에 대한 일반 정보예요.\n\n" + "\n\n".join(answer)))
             lead.append(B.notice(food_tips_mod.LABEL + _knowledge_note(know)))
-        else:
+        elif not withheld:
             lead.append(B.notice(f"**{_label(query)}** 보관·손질 같은 일반 정보는 지금 답하지 못했어요. "
                                  "상품 후보와 판매처 안내를 함께 확인해 주세요."))
         if got["buy_with"]:
@@ -1216,6 +1237,10 @@ def _looks_like_shopping(text: str) -> bool:
                           text)) and not parsing.is_recipe_request(text)
 
 
+SAFETY_HOLD = ("두 AI 의 판단이 달라 이 부분은 확정하지 않아요. 제품 표시사항·판매처 안내를 확인하고, "
+               "건강과 관련되면 의사·약사 등 전문가와 상의해 주세요")
+
+
 def _knowledge_note(know: dict) -> str:
     """식품 지식 출처 한 줄 — 출처 확인 · 교차 확인 여부 · 저장해 둔 정보면 정리한 날."""
     parts = []
@@ -1223,8 +1248,12 @@ def _knowledge_note(know: dict) -> str:
         parts.append(f"{know['verified']}곳은 출처로 확인한 내용이라 출처를 함께 적었어요")
     if know.get("review"):
         n = know.get("shown_flags", len(know["review"].get("flags") or []))
+        if know.get("held"):
+            parts.append(f"두 AI 의 판단이 다른 {know['held']}곳은 확정하지 않았어요")
         parts.append("DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요"
                      + (f" — 두 AI 의 생각이 다른 {n}곳은 그 줄에 Claude 의견을 함께 적었어요" if n else ""))
+    elif know.get("cross_on"):
+        parts.append("아직 다른 AI 의 검토 전이에요")
     if know.get("from_cache") and know.get("saved_at"):
         parts.append(f"{str(know['saved_at'])[:10]}에 정리해 저장한 정보예요")
     return (" " + ". ".join(parts) + ".") if parts else ""

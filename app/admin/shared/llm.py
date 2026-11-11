@@ -4,7 +4,6 @@ LLM_PROVIDER=none 이면 호출하지 않는다. 모든 호출부는 LLM 없이�
 from __future__ import annotations
 
 import json
-import os
 import re
 from typing import Any
 
@@ -72,14 +71,9 @@ class LLMClient:
         raise LLMUnavailable("LLM_PROVIDER=none")
 
     def chat_json(self, system: str, user: str, **kw) -> dict:
-        """2026-11-11: 같은 (모델·지시문·입력)은 저장해 둔 결과를 다시 쓴다 (AI_CACHE=0 이면 끔)."""
-        from app.services.ai import cache as ai_cache
-
-        p = self.s.llm_provider
-        model = {"openai": self.s.openai_model, "anthropic": self.s.anthropic_model,
-                 "ollama": self.s.ollama_model}.get(p) or os.getenv("DEEPSEEK_MODEL", "")
-        return ai_cache.cached_call("admin_llm", lambda u: self._chat_json(system, u, **kw), user,
-                                    parts=(p, model, system, kw.get("temperature", 0.0)), days=30, model=f"{p}:{model}")
+        """관리자·B2B 호출은 저장해 다시 쓰지 않는다 (2026-11-11 검토 반영) — 공고·제안서·셀러 자료는 권한·판본이 다르고
+        결과 본문에 연락처 같은 개인정보가 들어갈 수 있다. 비용 기록(_record · DeepSeek 클라이언트)은 그대로 한다."""
+        return self._chat_json(system, user, **kw)
 
     def _chat_json(self, system: str, user: str, **kw) -> dict:
         if self.s.llm_provider == "deepseek":

@@ -29,6 +29,15 @@ TOPIC_RES = {
 }
 
 
+# 2026-11-11 (검토 반영): 안전과 관련된 질문 — 검토를 마치지 못했거나 두 AI 판단이 다르면 확정적인 답을 보류한다
+SAFETY_RE = re.compile(r"해동|생식|날\s*(?:로|것)|회로|익혀\s*(?:야|먹)|덜\s*익|알레르기|알러지|아기|영유아|유아|이유식|임산부|임신|"
+                       r"수유|상했|상한|상하|쉬었|변질|유통\s*기한|소비\s*기한|식중독|곰팡이|먹어도\s*(?:돼|되|괜찮)")
+
+
+def is_safety(text: str) -> bool:
+    return bool(SAFETY_RE.search(text or ""))
+
+
 def topics(text: str) -> list[str]:
     t = text or ""
     found = [name for name, rx in TOPIC_RES.items() if re.search(rx, t)]
@@ -91,18 +100,24 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
 
         usage.record(TASK, hit.get("model"), cached=True)       # 저장본을 다시 써서 부르지 않은 호출
         return {"got": got, "food": got.pop("_food", None) or food, "review": rev,
-                "saved_at": hit["created_at"], "from_cache": True}
+                "saved_at": hit["created_at"], "from_cache": True, "safety": is_safety(text),
+                "cross_on": review is not None}
     raw = generate(text) if generate is not None else None
     got = food_tips.validated(raw, text)
     name = ((raw or {}).get("food") or "").strip() if isinstance(raw, dict) else ""
     if not (name and re.sub(r"\s+", "", name) in re.sub(r"\s+", "", text) and 2 <= len(name) <= 20):
         name = food                                     # 문장에 실제로 있는 식품 이름일 때만 바꾼다
     rev = None
+    safety = is_safety(text)
     if got["tips"] or got.get("season") or got.get("varieties"):
         rev = _review(name, text, got, review)
-        ai_cache.put(TASK, key, dict(got, _food=name), days=DAYS, label=label, review=rev,
-                     model="deepseek" + (f" · 검토 {rev['by']}" if rev else ""))
-    return {"got": got, "food": name, "review": rev, "saved_at": None, "from_cache": False}
+        # 저장 규칙 (2026-11-11 검토 반영): 검토를 켜 두었는데 실패했거나, 안전 질문인데 검토가 없으면 저장하지 않는다
+        # → 다음에 다시 만들고 검토한다. 검토를 아예 끈 경우(키 없음)의 일반 질문만 미검토로 저장.
+        if rev is not None or (review is None and not safety):
+            ai_cache.put(TASK, key, dict(got, _food=name), days=DAYS, label=label, review=rev,
+                         model="deepseek" + (f" · 검토 {rev['by']}" if rev else ""))
+    return {"got": got, "food": name, "review": rev, "saved_at": None, "from_cache": False, "safety": safety,
+            "cross_on": review is not None}
 
 
 def variety_mix(title: str, names: list[str]) -> dict | None:

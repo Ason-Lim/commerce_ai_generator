@@ -251,7 +251,7 @@ def ai_knowledge():
 
     return {"cache": [dict(x, label=pricing.TASK_LABELS.get(x["task"].split(":")[0], x["task"])) for x in ai_cache.stats()],
             "cache_on": ai_cache.enabled(), "facts": [dict(f, current=facts.current(f)) for f in facts.all_facts()],
-            "prices": {k: list(v) for k, v in pricing._table().items()}}
+            "prices": pricing._table(), "prices_checked": pricing.CHECKED}
 
 
 # ── 추천 근거 (1단계, 2026-11-10) — 고객 화면과 같은 선택을 읽기만 하고 근거를 나눠 보여 준다 ──

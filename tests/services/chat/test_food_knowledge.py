@@ -94,6 +94,7 @@ def test_verified_facts_replace_ai_lines_and_show_their_source(sqlite_db, tmp_pa
     f.write_text(json.dumps({"facts": [
         {"id": "g", "food": "딸기", "subject": "금실", "attribute": "특성", "kind": "intrinsic",
          "statement": "과육이 단단하고 저장성이 좋아요.", "source_name": "경남도농업기술원", "source_url": "https://x",
+         "source_quote": ["우수한 경도"], "status": "active",
          "method": "source", "verified_at": "2026-11-11", "review_after": None},
         {"id": "s", "food": "딸기", "subject": "", "attribute": "제철", "kind": "seasonal",
          "statement": "옛 제철 정보", "source_name": "옛 자료", "review_after": "2020-01-01"}]}, ensure_ascii=False),
@@ -111,3 +112,56 @@ def test_verified_facts_replace_ai_lines_and_show_their_source(sqlite_db, tmp_pa
     assert "1곳은 출처로 확인한 내용이라 출처를 함께 적었어요" in text and "보통 12월부터" in text
     notes = [b["data"].get("note") or "" for b in res["blocks"] if b["type"] == "product_list"]
     assert any(n.startswith("과육이 단단하고 저장성이 좋아요.") for n in notes)   # 품종별 상품 안내도 확인된 내용
+
+
+# ── 2026-11-11 검토 반영: 안전 질문 · 검토 실패 규칙 ─────────────────────────
+THAW = {"food": "블루베리", "tips": ["냉장실에서 6~8시간 해동해요", "전자레인지 해동은 30초씩 나눠요"]}
+
+
+def test_safety_questions_are_recognised():
+    for t in ("냉동 블루베리 해동 어떻게 해?", "굴 날로 먹어도 돼?", "아기 이유식에 딸기 써도 돼?", "우유 유통기한 지났는데 먹어도 돼?"):
+        assert K.is_safety(t), t
+    for t in ("딸기 언제부터 맛있어?", "사과 품종 알려줘", "아보카도 후숙 며칠 해야 돼?"):
+        assert not K.is_safety(t), t
+
+
+def test_safety_answer_is_withheld_and_not_saved_when_review_fails(sqlite_db):
+    gen = Gen(THAW)
+    svc = ChatService(sqlite_db, shopping=FakeShopping(items=[]), recipe_chat=RecipeChat(statement_factory=str),
+                      food_tips=gen, food_review=lambda ctx, items: None)            # 검토 실패
+    text = md(svc.handle(None, message="냉동 블루베리 해동 어떻게 해?"))
+    assert "6~8시간" not in text and "안전과 관련된 질문이라 다른 AI 의 검토를 마친 답만 드려요" in text
+    svc.handle(None, message="냉동 블루베리 해동 어떻게 해?")
+    assert gen.calls == 2                                                           # 저장하지 않아 다시 만든다
+
+
+def test_safety_lines_with_disagreement_are_not_stated(sqlite_db):
+    review = lambda ctx, items: [{"ok": "전자레인지" not in t, "note": "" if "전자레인지" not in t else "다르게 알아요"}  # noqa: E731
+                                 for t in items]
+    svc = ChatService(sqlite_db, shopping=FakeShopping(items=[]), recipe_chat=RecipeChat(statement_factory=str),
+                      food_tips=Gen(THAW), food_review=review)
+    text = md(svc.handle(None, message="냉동 블루베리 해동 어떻게 해?"))
+    assert "- 냉장실에서 6~8시간 해동해요" in text
+    assert "30초씩" not in text and "두 AI 의 판단이 달라 이 부분은 확정하지 않아요" in text
+    assert "Claude 의견" not in text
+
+
+def test_general_answer_is_marked_unreviewed_and_not_saved_when_review_fails(sqlite_db):
+    gen = Gen()
+    svc = ChatService(sqlite_db, shopping=FakeShopping(items=[]), recipe_chat=RecipeChat(statement_factory=str),
+                      food_tips=gen, food_review=lambda ctx, items: None)
+    text = md(svc.handle(None, message="딸기 언제부터 맛있어? 품종별 차이 알려줘"))
+    assert "보통 12월부터" in text and "아직 다른 AI 의 검토 전이에요" in text
+    svc.handle(None, message="딸기 언제부터 맛있어? 품종별 차이 알려줘")
+    assert gen.calls == 2                                     # 검토 실패 답은 저장하지 않는다
+
+
+def test_without_cross_check_general_answers_are_still_saved():
+    gen = Gen()
+    K.answer("딸기 언제부터 맛있어?", "딸기", gen, None)
+    K.answer("딸기 언제부터 맛있어?", "딸기", gen, None)
+    assert gen.calls == 1                                     # 검토 기능이 꺼져 있으면 미검토로 저장
+    gen2 = Gen(THAW)
+    K.answer("냉동 블루베리 해동 어떻게 해?", "블루베리", gen2, None)
+    K.answer("냉동 블루베리 해동 어떻게 해?", "블루베리", gen2, None)
+    assert gen2.calls == 2                                    # 안전 질문은 검토 없이는 저장하지 않는다

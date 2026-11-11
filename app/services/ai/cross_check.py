@@ -62,8 +62,9 @@ def _call_claude(system: str, user: str, post: Callable | None = None, task: str
 
 
 def review(task: str, context: str, items: list[str], *, instruction: str = "",
-           call: Callable[[str, str], dict] | None = None) -> list[dict] | None:
-    """items 를 한 줄씩 검토. call(system, user) → dict 는 테스트용 (없으면 Claude API)."""
+           call: Callable[[str, str], dict] | None = None, cache: bool = True) -> list[dict] | None:
+    """items 를 한 줄씩 검토. call(system, user) → dict 는 테스트용 (없으면 Claude API).
+    cache=False: 검토 결과를 저장하지 않는다 (B2B 처럼 권한·판본·개인정보가 걸린 자료)."""
     if not items or (call is None and not enabled()):
         return None
     from app.services.ai import cache as ai_cache
@@ -73,8 +74,8 @@ def review(task: str, context: str, items: list[str], *, instruction: str = "",
                       ensure_ascii=False)
     ask = (lambda u: call(system, u)) if call else (lambda u: _call_claude(system, u, task=f"cross_check:{task}"))
     try:
-        raw = ai_cache.cached_call(f"cross_check:{task}", ask, user, parts=(model(), system),
-                                   days=DAYS, model=f"anthropic:{model()}")
+        raw = (ai_cache.cached_call(f"cross_check:{task}", ask, user, parts=(model(), system),
+                                    days=DAYS, model=f"anthropic:{model()}") if cache else ask(user))
     except Exception as e:  # noqa: BLE001 — 검토가 안 돼도 원래 결과는 쓴다
         log.warning("cross check failed (%s): %s", task, type(e).__name__)
         return None

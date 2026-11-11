@@ -303,7 +303,8 @@ def _cross_checked(lines: list[str], out: list[str]) -> list[str]:
     verdicts = cross_check.review(
         "b2b_polish", "공공·기업 제안서 문장 다듬기 검토",
         [f"원문: {lines[i]}\n다듬은 문장: {out[i]}" for i in changed],
-        instruction="원문과 다듬은 문장을 견줘 사실·자격·조건·약속의 의미가 바뀌었거나 원문에 없는 주장이 생겼으면 ok=false.")
+        instruction="원문과 다듬은 문장을 견줘 사실·자격·조건·약속의 의미가 바뀌었거나 원문에 없는 주장이 생겼으면 ok=false.",
+        cache=False)        # 제안서 문장은 저장하지 않는다 (권한·판본·개인정보)
     if not verdicts:
         return out
     keep = list(out)

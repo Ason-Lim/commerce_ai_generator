@@ -68,8 +68,23 @@ def test_cross_check_is_off_without_a_key(monkeypatch):
 def test_b2b_polish_reverts_lines_the_reviewer_rejects(monkeypatch):
     from app.admin.b2b import proposal
 
-    monkeypatch.setattr(cross_check, "review", lambda task, ctx, items, instruction="": [
+    monkeypatch.setattr(cross_check, "review", lambda task, ctx, items, instruction="", cache=True: [
         {"ok": False, "note": "원문에 없는 수상 실적"}, {"ok": True, "note": ""}])
     lines = ["납품 3일 안에 합니다", "교환은 7일 안에 됩니다", "같음"]
     polished = ["업계 1위 업체로서 3일 안에 납품합니다", "교환은 7영업일 이내 가능합니다", "같음"]
     assert proposal._cross_checked(lines, polished) == [lines[0], polished[1], "같음"]
+
+
+def test_admin_llm_is_not_cached_and_b2b_review_is_not_saved(monkeypatch):
+    from app.admin.shared import llm as admin_llm
+    from app.services.ai import cache as C
+
+    calls = []
+    monkeypatch.setattr(admin_llm.LLMClient, "_chat_json", lambda self, s, u, **kw: calls.append(u) or {"lines": ["a"]})
+    c = admin_llm.LLMClient()
+    c.chat_json("지시", "공고 원문")
+    c.chat_json("지시", "공고 원문")
+    assert len(calls) == 2 and C.stats() == []               # 관리자 호출은 저장·재사용 안 함
+    cross_check.review("b2b_polish", "x", ["원문: a\n다듬은 문장: b"],
+                       call=lambda s, u: {"items": [{"i": 0, "ok": True}]}, cache=False)
+    assert C.stats() == []

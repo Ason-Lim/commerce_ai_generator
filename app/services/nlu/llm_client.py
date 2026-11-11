@@ -85,7 +85,9 @@ class LLMClient:
             return
         from app.services.ai import usage
 
-        usage.record(self.task or "untagged", f"{self.provider}:{self._model_name()}", *self._usage)
+        tin, tout, hit, served = self._usage
+        usage.record(self.task or "untagged", f"{self.provider}:{self._model_name()}", tin, tout, hit=hit,
+                     served=served if isinstance(served, str) else None)
         self._usage = None
 
     def _model_name(self) -> str:
@@ -143,8 +145,9 @@ class LLMClient:
             ],
         )
         u = getattr(response, "usage", None)
-        if u is not None:
-            self._usage = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0)
+        if u is not None:     # 입력 중 캐시 적중 토큰·실제 처리 모델까지 (요금이 다르다, 2026-11-11)
+            self._usage = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0,
+                           getattr(u, "prompt_cache_hit_tokens", 0) or 0, getattr(response, "model", None))
         if not response.choices or not response.choices[0].message.content:
             raise ValueError("DeepSeek 빈 응답")
         return response.choices[0].message.content
@@ -190,7 +193,8 @@ class LLMClient:
         )
         u = getattr(resp, "usage", None)
         if u is not None:
-            self._usage = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0)
+            self._usage = (getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0, 0,
+                           getattr(resp, "model", None))
         return resp.choices[0].message.content
 
     # ── JSON 방어 파서 ────────────────────────────────────
