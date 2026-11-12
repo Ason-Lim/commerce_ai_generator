@@ -59,3 +59,4 @@ import pytest as _pytest  # noqa: E402
 def _isolated_ai_cache(monkeypatch, tmp_path):
     monkeypatch.setenv("AI_CACHE_DB", str(tmp_path / "ai_cache.sqlite3"))
     monkeypatch.delenv("AI_CROSS_CHECK", raising=False)
+    monkeypatch.setenv("B2B_PROPOSAL_AI", "0")      # 2026-11-12: 제안서 AI 본문(Claude·GPT 실제 호출)은 테스트에서 끈다

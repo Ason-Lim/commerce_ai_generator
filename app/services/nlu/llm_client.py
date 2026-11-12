@@ -37,6 +37,8 @@ THINKING_BY_TASK: dict[str, bool] = {
     "shop_keyword": False, "dish_amounts": False, "recipe_servings": False, "food_nlu": False, "ai_recipe_identify": False,
     "recipe_easy_view": False, "recipe_discover": False, "trend_cause": False, "stock_chat": False,
     "warm_classify": False,   # scripts/warm_food_knowledge.py — 순위 키워드 분류
+    # DeepSeek 가 아닌 작업(표에만 둔다): B2B 제안서 본문 작성(Claude) · 검증(GPT)
+    "b2b_proposal_write": True, "b2b_proposal_verify": True,
 }
 
 
@@ -54,6 +56,7 @@ class LLMClient:
         cache_days: float = 30.0,
         task: str | None = None,
         thinking: bool | None = None,
+        model: str | None = None,
     ):
         self.system = system_prompt
         # 2026-11-01: a long title list made DeepSeek think for 20–35 s; callers that need it may wait longer
@@ -71,6 +74,8 @@ class LLMClient:
         # 2026-11-11: deepseek-flash 는 기본이 '생각 모드' — 제목 목록에서 이름 뽑기에 출력 5,710토큰 중 대부분이
         # 추론이었고 41초 걸렸다(끄면 같은 일 2초대). None 이면 .env DEEPSEEK_THINKING(on/off), 그것도 없으면 보내지 않는다.
         self.thinking = thinking
+        # 2026-11-12: provider="anthropic" (Claude) — 모델은 이 값, 없으면 ANTHROPIC_MODEL (레시피 작성은 claude-sonnet-5-5)
+        self.model = model
 
     # ── settings ──────────────────────────────────────────
     def _get(self, name: str, default: str = "") -> str:
@@ -116,6 +121,10 @@ class LLMClient:
         return THINKING_BY_TASK.get(self.task or "")
 
     def _model_name(self) -> str:
+        if self.model:
+            return self.model
+        if self.provider == "anthropic":
+            return self._get("ANTHROPIC_MODEL", "claude-sonnet-5-5").strip() or "claude-sonnet-5-5"
         if self.provider == "deepseek":
             return self._get("DEEPSEEK_MODEL").strip()
         if self.provider == "openai":
@@ -123,7 +132,9 @@ class LLMClient:
         return self._get("OLLAMA_MODEL", "qwen2.5:7b")
 
     def _chat_json(self, user_text: str, temperature: float) -> dict:
-        if self.provider == "deepseek":
+        if self.provider == "anthropic":
+            raw = self._anthropic(user_text)
+        elif self.provider == "deepseek":
             raw = self._deepseek(user_text, temperature)
         elif self.provider == "openai":
             raw = self._openai(user_text, temperature)
@@ -182,6 +193,32 @@ class LLMClient:
             raise ValueError("DeepSeek 빈 응답")
         return response.choices[0].message.content
 
+    # ── Anthropic (Claude) ────────────────────────────────
+    def _anthropic(self, user_text: str) -> str:
+        """Claude 5.5 는 temperature 를 받지 않고, 기본으로 생각(추론)한 뒤 답한다 — 출력 상한은 생각까지 포함해 넉넉히."""
+        key = self._get("ANTHROPIC_API_KEY").strip()
+        if not key:
+            raise LLMConfigError("ANTHROPIC_API_KEY 미설정")
+        post = self._http_post
+        if post is None:
+            import httpx
+
+            post = httpx.post
+        body = {"model": self._model_name(), "max_tokens": int(self._get("ANTHROPIC_MAX_TOKENS", "8000") or 8000),
+                "system": self.system + "\n반드시 JSON 하나만 출력한다.",
+                "messages": [{"role": "user", "content": user_text}]}
+        r = post("https://api.anthropic.com/v1/messages", json=body, timeout=self.timeout,
+                 headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
+        r.raise_for_status()
+        data = r.json()
+        u = data.get("usage") or {}
+        self._usage = (u.get("input_tokens") or 0, u.get("output_tokens") or 0, u.get("cache_read_input_tokens") or 0,
+                       data.get("model"))
+        text = "".join(b.get("text", "") for b in data.get("content") or [] if b.get("type") == "text")
+        if not text:
+            raise ValueError(f"Claude 빈 응답 ({data.get('stop_reason')})")
+        return text
+
     # ── Ollama ────────────────────────────────────────────
     def _ollama(self, user_text: str, temperature: float) -> str:
         url = self._get("OLLAMA_BASE_URL", "http://localhost:11434") + "/api/chat"
@@ -212,9 +249,12 @@ class LLMClient:
         if api_key:
             kwargs["api_key"] = api_key
         client = self._openai_client(**kwargs)
+        model = self._model_name()
+        # 2026-11-12: GPT-5·6 계열·o 계열은 temperature 를 기본값만 받는다 (0 을 보내면 400)
+        temp = {} if re.match(r"(?:gpt-[56]|o\d)", model) else {"temperature": temperature}
         resp = client.chat.completions.create(
-            model=self._get("OPENAI_MODEL", "gpt-4o-mini") or "gpt-4o-mini",
-            temperature=temperature,
+            model=model,
+            **temp,
             response_format={"type": "json_object"},  # ★ JSON 모드
             messages=[
                 {"role": "system", "content": self.system},

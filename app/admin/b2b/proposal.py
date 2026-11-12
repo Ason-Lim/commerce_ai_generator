@@ -25,6 +25,7 @@ from app.admin.shared.config import get_settings
 from app.admin.shared.llm import LLMClient
 
 Mode = Literal["external", "internal"]
+OFFICE_FONT = "Pretendard"   # 2026-11-12 — proposal_templates.Template.font_office 와 같게
 TODO = re.compile(r"\[확인 필요[^\]]*\]")
 
 
@@ -77,7 +78,7 @@ def _todo(v: Any, label: str) -> str:
 
 def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None = None,
           cost: CostAnalysis | None = None, mode: Mode = "internal", today: date | None = None,
-          polish: bool = False, source_status: str | None = None) -> Proposal:
+          polish: bool = False, source_status: str | None = None, ai: dict | None = None) -> Proposal:
     """source_status: 공고 출처가 확인되지 않았을 때 그 상태 이름 (예: '원문 대조 전'). 확인된 공고면 None."""
     pf = profile if profile is not None else load_profile()
     today = today or date.today()
@@ -269,6 +270,8 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             els2.append(Element(kind="bullets", items=cost.notes))
             S.append(Section(id="appendix_cost", title="부록 B. 비용 구조 (내부용)", internal_only=True, elements=els2))
 
+    if ai:
+        S = _apply_ai(S, ai)
     prop = Proposal(title=title, subtitle="임직원 선물 공급 제안서" + (" — 내부 검토본" if mode == "internal" else " — 제출본 초안"),
                     bid_id=req.bid_id, agency=agency, company=company, created=today, mode=mode, sections=S)
     prop.facts = {
@@ -280,6 +283,63 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
     }
     prop.todo_count = sum(len(TODO.findall(_flat(s))) for s in S if not s.internal_only)
     return prop
+
+
+def _apply_ai(S: list[Section], body: dict) -> list[Section]:
+    """2026-11-12: AI 본문(proposal_ai — Claude 작성·GPT 검증, 문제 문장은 [확인 필요] 표시)을 템플릿 장에 끼운다.
+    표·조건 대응표·가격표 같은 사실 중심 장은 템플릿 그대로 두고, 서술·전략·평가 대응·운영·일정·질의를 AI 본문으로."""
+    def rows(key):
+        return [[str(c) for c in r] for r in body.get(key) or [] if isinstance(r, list) and r]
+
+    def items(key):
+        return [str(x) for x in body.get(key) or [] if isinstance(x, str) and x.strip()]
+
+    out: list[Section] = []
+    for sec in S:
+        if sec.id == "understanding" and isinstance(body.get("understanding"), str):
+            els = list(sec.elements)
+            k = next((i for i, e in enumerate(els) if e.kind == "para"), None)
+            if k is not None:
+                els[k] = Element(kind="para", text=body["understanding"])
+            sec = Section(id=sec.id, title=sec.title, elements=els, internal_only=sec.internal_only)
+        if sec.id == "products" and rows("evidence_table"):
+            sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only, elements=list(sec.elements) + [
+                Element(kind="para", text="■ 상품별 가격 근거 (관측 소매가 · 온라인 최저가 검증 · 확정 공급단가)"),
+                Element(kind="table", headers=["후보 상품", "관측 소매가(일자)", "온라인 최저가 검증", "확정 공급단가", "판단"],
+                        rows=rows("evidence_table"))])
+        if sec.id == "risk" and items("risks"):
+            sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only,
+                          elements=list(sec.elements) + [Element(kind="bullets", items=items("risks"))])
+        if sec.id == "price" and rows("price_structure") and not any(
+                e.kind == "table" and e.headers and e.headers[0].startswith("단가 구성") for e in sec.elements):
+            sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only, elements=list(sec.elements) + [
+                Element(kind="table", headers=["단가 구성 항목", "포함 여부", "산출 근거·확정 시점"], rows=rows("price_structure"))])
+        out.append(sec)
+        if sec.id == "understanding":
+            if items("strategy"):
+                out.append(Section(id="strategy", title="0. 추진 전략", elements=[Element(kind="bullets", items=items("strategy"))]))
+            ev = rows("evaluation")
+            if ev or items("differentiation"):
+                els = ([Element(kind="table", headers=["평가 항목(배점)", "평가위원이 확인할 것", "우리 제안의 대응·근거"], rows=ev)]
+                       if ev else [])
+                if items("differentiation"):
+                    els.append(Element(kind="bullets", items=items("differentiation")))
+                out.append(Section(id="evaluation", title="0. 평가 항목별 대응·차별화", elements=els))
+        if sec.id == "delivery":
+            ops = items("operations") + items("quality")
+            if ops:
+                out.append(Section(id="operations", title="0. 운영 방안", elements=[Element(kind="bullets", items=ops)]))
+            if rows("schedule"):
+                out.append(Section(id="schedule", title="0. 수행 일정", elements=[
+                    Element(kind="table", headers=["단계", "기한", "내용"], rows=rows("schedule"))]))
+        if sec.id == "risk" and items("questions"):
+            out.append(Section(id="questions", title="0. 발주기관 확인 사항", elements=[Element(kind="bullets", items=items("questions"))]))
+    n = 0
+    for sec in out:                                   # 장 번호 다시 매기기 (부록 제외)
+        if re.match(r"\d+\. ", sec.title):
+            n += 1
+            sec.title = re.sub(r"^\d+\. ", f"{n}. ", sec.title)
+    return out
 
 
 def _flat(s: Section) -> str:
@@ -389,8 +449,8 @@ def to_docx(p: Proposal, path: Path) -> Path:
 
     doc = Document()
     st = doc.styles["Normal"]
-    st.font.name = "Malgun Gothic"
-    st.element.rPr.rFonts.set(qn("w:eastAsia"), "Malgun Gothic")
+    st.font.name = OFFICE_FONT
+    st.element.rPr.rFonts.set(qn("w:eastAsia"), OFFICE_FONT)
     st.font.size = Pt(10.5)
 
     def runs(par, text: str):
@@ -594,4 +654,21 @@ def to_hwpx(p: Proposal, path: Path) -> Path:
 
     path.parent.mkdir(parents=True, exist_ok=True)
     doc.save_to_path(str(path))
+    _hwpx_font(path, OFFICE_FONT)
     return path
+
+
+def _hwpx_font(path: Path, face: str) -> None:
+    """python-hwpx 기본 글꼴(함초롬돋움·함초롬바탕)을 제안서 글꼴로 바꾼다 (header.xml 의 글꼴 이름만)."""
+    import shutil
+    import tempfile
+    import zipfile
+
+    tmp = Path(tempfile.mkstemp(suffix=".hwpx")[1])
+    with zipfile.ZipFile(path) as src, zipfile.ZipFile(tmp, "w") as dst:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename == "Contents/header.xml":
+                data = re.sub(rb'face="(?:\xed\x95\xa8\xec\xb4\x88\xeb\xa1\xac[^"]*)"', f'face="{face}"'.encode(), data)
+            dst.writestr(item, data)
+    shutil.move(str(tmp), path)

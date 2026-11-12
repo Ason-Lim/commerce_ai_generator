@@ -19,7 +19,8 @@ from app.admin.b2b.proposal import TODO, Element, Proposal
 
 KICKER = {"summary": "PROPOSAL SUMMARY", "understanding": "PROJECT UNDERSTANDING", "compliance": "REQUIREMENTS",
           "products": "PRODUCT LINE-UP", "mall": "CLOSED MALL", "delivery": "DELIVERY · CS", "price": "PRICE",
-          "risk": "RISK MANAGEMENT", "company": "ABOUT US", "appendix_check": "INTERNAL CHECKLIST",
+          "risk": "RISK MANAGEMENT", "strategy": "STRATEGY", "evaluation": "EVALUATION RESPONSE",
+          "operations": "OPERATIONS", "schedule": "SCHEDULE", "questions": "Q&A", "company": "ABOUT US", "appendix_check": "INTERNAL CHECKLIST",
           "appendix_cost": "INTERNAL COST"}
 MAX_UNITS = 9.5      # 한 장에 넣는 분량 (대략 줄 수)
 ROWS_PER = 7         # 일반 표 한 장 최대 행

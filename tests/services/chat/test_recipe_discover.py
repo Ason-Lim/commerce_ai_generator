@@ -374,7 +374,7 @@ def test_ai_recipe_runs_the_card_servings_stock_shortage_and_products(make_ai, s
     svc, calls = make_ai()
     sid, res = open_ai(svc)
     card = next(b for b in res["blocks"] if b["type"] == "recipe_card")["data"]
-    assert card["recipe_id"] == AI.recipe_id("두쫀쿠") and card["recipe_id"].endswith("-v2")
+    assert card["recipe_id"] == AI.recipe_id("두쫀쿠") and card["recipe_id"].endswith("-v3")
     assert card["source"]["level"] == "ai_suggestion"
     assert card["source"]["label"] == "AI 제안 레시피 · 원문 아님" and card["hero"] is None and card["easy"] is None
     assert md(res).startswith("**두쫀쿠**의 AI 제안 레시피예요. 일반 조리 지식으로 만든 제안이라 특정 블로그·유명인의 레시피가 아니고")

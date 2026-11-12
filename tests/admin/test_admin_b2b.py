@@ -133,3 +133,19 @@ def test_candidate_records_evidence_coverage():
     assert ev.candidate.rankability in ("DETERMINATE", "INDETERMINATE", "UNKNOWN")
     hold = evidence.evaluate(_full(shipping_cost=None), req, TODAY)
     assert hold.candidate.missing_terms
+
+
+def test_proposal_files_use_pretendard(tmp_path):
+    """2026-11-12: 제안서 글꼴 Pretendard (SIL OFL — 상업 사용 가능)."""
+    import re
+    import zipfile
+
+    from app.admin.b2b import proposal_templates
+
+    req = parse(IBK)
+    p = proposal.build(req, [evidence.evaluate(_full(), req, TODAY)], profile={}, mode="external", today=TODAY)
+    h = zipfile.ZipFile(proposal.to_hwpx(p, tmp_path / "p.hwpx")).read("Contents/header.xml").decode()
+    assert set(re.findall(r'face="([^"]+)"', h)) == {"Pretendard"}
+    d = zipfile.ZipFile(proposal.to_docx(p, tmp_path / "p.docx")).read("word/styles.xml").decode()
+    assert "Pretendard" in d and "Malgun" not in d
+    assert proposal_templates.Template.model_fields["font_office"].default == "Pretendard"

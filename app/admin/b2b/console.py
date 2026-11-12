@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
+from app.admin.b2b import proposal_ai
 from app.admin.b2b import bids as bidstore
 from app.admin.b2b import costing, domeggook, evidence, proposal, report, rfq, sourcing, suppliers
 from app.admin.b2b import proposal_deck, proposal_export, proposal_templates
@@ -350,9 +351,17 @@ class Console:
             market = None
         items, errors, todo, prop = [], [], 0, None
         pdf_jobs, pdf_fallback, pdf_meta = [], {}, []
+        # 2026-11-12: AI 본문 — 1차 Claude Sonnet 작성, 2차 GPT-6.1 Sol 검증 ('템플릿만'이라고 하면 끈다)
+        ai = None
+        if "템플릿만" not in p and proposal_ai.enabled():
+            try:
+                ai = proposal_ai.run(w.req, w.evals, pf, w.cost)
+            except Exception as e:  # noqa: BLE001 — AI 가 안 되면 템플릿 제안서로
+                errors.append(f"AI 본문을 만들지 못해 템플릿 문장으로 만들었어요 ({type(e).__name__}).")
         for mode, label in (("internal", "내부 검토본"), ("external", "제출본 초안")):
             prop = proposal.build(w.req, w.evals, profile=pf, cost=w.cost, mode=mode, today=today,
-                                  polish="다듬" in p or "polish" in p, source_status=src_status)
+                                  polish="다듬" in p or "polish" in p, source_status=src_status,
+                                  ai=ai["body"] if ai else None)
             todo = prop.todo_count
             base = f"{w.id}_proposal_{mode}"
             deck = proposal_deck.render(prop, tpl, market)
@@ -392,6 +401,11 @@ class Console:
         blocks = [{"type": "text", "md": f"**{tpl.name}** 템플릿으로 제안서를 만들었어요. 확인되지 않은 값은 지어내지 않고 "
                                           f"**[확인 필요]** {todo}곳으로 남겼어요 (노란 표시)."},
                   {"type": "outline", "items": outline},
+                  *([{"type": "notice", "tone": "warn" if ai["flagged"] else "info",
+                      "md": f"본문은 **{ai['writer']}** 가 쓰고 **{ai['verifier']}** 가 문장별로 검증했어요"
+                            + ("" if ai["verified"] else " (검증 AI 응답 없음 — 자동 검사만 했어요)")
+                            + f". 검토 의견이 붙은 문장 **{ai['flagged']}곳**은 [확인 필요]로 표시했어요 — 사람이 확인한 뒤 제출하세요."}]
+                    if ai else []),
                   {"type": "docs", "items": items, "template": proposal_templates.public(tpl)}]
         for e in errors:
             blocks.append({"type": "notice", "tone": "warn", "md": e})
