@@ -138,3 +138,20 @@ commerce_ai 의 기존 화면 기술(React)로 '/mall/{공고}' 를 만들 수 �
 YouTube Data API `videos.list part=statistics` 로 조회수·좋아요·댓글 수를 받을 수 있다 (확인: 굴국밥 영상 5개 — 5,426~797,063회).
 search 는 호출당 할당량 100, videos.list 는 50개 묶음 1 — 검색 결과 영상의 통계를 한 번에 붙이면 된다.
 점수에는 조회수 그대로보다 '게시 후 일수로 나눈 하루 평균 조회수'와 좋아요 비율을 쓰고(오래된 영상 편향 줄임), 로그 척도로 상한을 둔다.
+
+## 2026-11-12 — 블라인드 평가 3자 결과 (GPT · Gemini · 사용자)
+라벨 → 모델 (원래 '제안서 블라인드' N1, '레시피 블라인드'):
+- 제안서 N1: A=GPT-6 Astra, B=DeepSeek Flash, C=GPT-6.1 Sol, D=Claude Sonnet 5.5, E=DeepSeek V4 Pro, F=Claude Opus 5.5
+- 굴국밥: A=DeepSeek Flash, B=Claude Sonnet, C=GPT-6.1 Sol, D=Claude Opus · 두바이 쫀득쿠키: A=Claude Opus, B=GPT-6.1 Sol, C=DeepSeek Flash, D=Claude Sonnet
+- 떡갈비 샌드위치: A=DeepSeek Flash, B=Claude Sonnet, C=GPT-6.1 Sol, D=Claude Opus · 감바스: A=GPT-6.1 Sol, B=Claude Opus, C=DeepSeek Flash, D=Claude Sonnet
+
+| 평가자 | 제안서 | 레시피 |
+|---|---|---|
+| GPT | C (GPT Sol) > A (GPT Astra) > B (DeepSeek Flash) | 굴국밥 B (Claude Sonnet) |
+| Gemini | B (DeepSeek Flash) · D (Claude Sonnet) | 굴국밥 D (Opus)·B (Sonnet), 쫀득쿠키 D (Sonnet), 떡갈비 C (GPT)·D (Opus), 감바스 D (Sonnet) |
+| 사용자 | B (DeepSeek Flash: 평가위원 관점 차별화) · D (Claude Sonnet: 현실 분석) | 굴국밥 D (Opus: '가장자리가 오므라들 때까지'), 쫀득쿠키 B (GPT Sol: 가정에서 현실적), 감바스 D (Sonnet: 새우 손질·물기·마늘), 떡갈비 B (Sonnet)는 빵·고기 굽는 순서가 반대 |
+
+- GPT 평가자는 GPT 모델을 1·2위로 골랐다 — 같은 회사 모델 선호 가능성. Gemini 와 사용자는 같은 두 안(DeepSeek Flash·Claude Sonnet)을 골랐다.
+- 레시피는 Claude 두 모델이 가장 많이 뽑혔고, DeepSeek 은 한 번도 뽑히지 않았다.
+- 사용자가 짚은 '해 본 사람만 아는 지식'(굴 가장자리, 새우 물기, 마늘 태우지 않기, 빵 먼저 굽기)은 우리 자동 검사로는 못 잡는다 → 레시피 검토 항목으로.
+- Gemini 지적: 쫀득쿠키 B(GPT Sol) 화이트초콜릿을 녹인 뒤 섞는 단계가 없음, 감바스 C(DeepSeek) 새우 물기 제거 누락, 떡갈비 C(GPT) 손 씻기·중심온도 75℃.
