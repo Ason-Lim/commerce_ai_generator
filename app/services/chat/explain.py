@@ -382,14 +382,48 @@ def _flag(item: dict, *names) -> bool | None:
     return None
 
 
+# 2026-11-13 배송비 원칙(설계 v2, 사용자 11-11 결정): 배송비는 멤버십·주문 금액·판매 업체·배송지에 따라 달라 검색 단계에서
+#   확정하지 않는다. 상태로만 기록한다 —
+#     confirmed  주문 단계에서 판매자가 배송지 기준으로 계산한 금액 (지금은 이런 출처 없음 — 자리만 둔다)
+#     free_label 판매처가 '무료배송'이라고 표시 (조건은 모름 — 0원으로 바꾸지 않음)
+#     fee_label  판매처·업체가 적은 배송비 금액 (주문 때 달라질 수 있음)
+#     unknown    정보 없음
+#   총액(total)은 confirmed 일 때만. 최저가·예산·100g당은 그 외에는 상품가 기준.
+SHIPPING_STATUSES = ("confirmed", "free_label", "fee_label", "unknown")
+
+
+def shipping_fields(card: dict, free: bool | None) -> dict:
+    """card 의 shipping_fee·free 표시로 {shipping_status, shipping_fee, total} 을 정한다."""
+    if card.get("shipping_status") == "confirmed" and card.get("total") is not None:
+        return {"shipping_status": "confirmed", "shipping_fee": card.get("shipping_fee"), "total": card["total"]}
+    fee = card.get("shipping_fee")
+    try:
+        fee = None if fee in (None, "") else int(float(fee))
+    except (TypeError, ValueError):
+        fee = None
+    if free is True or fee == 0:          # 예전 저장 카드(무료 표시를 0원으로 바꿔 둔 것)도 여기로
+        return {"shipping_status": "free_label", "shipping_fee": None, "total": None}
+    if fee is not None and fee > 0:
+        return {"shipping_status": "fee_label", "shipping_fee": fee, "total": None}
+    return {"shipping_status": "unknown", "shipping_fee": None, "total": None}
+
+
+def shipping_note(card: dict) -> str:
+    """예산·비교 문구 뒤에 붙이는 배송비 상태 한 마디."""
+    st = card.get("shipping_status") or "unknown"
+    if st == "free_label":
+        return "무료배송 표시 (조건은 판매처에서 확인)"
+    if st == "fee_label" and card.get("shipping_fee"):
+        return f"배송비 {won(card['shipping_fee'])} 표시 (주문 때 확인)"
+    return "배송비는 미확인"
+
+
 def enrich(card: dict, item: dict) -> dict:
     """사실만 붙인다: 키 · 중량/개수 · 100g당 · 로켓/무료배송 표시 · 판매자 문구 · 판매처 확인 안내."""
     weight, unit, weight_source = _amount(card, item)
     rocket = _flag(item, "is_rocket", "isRocket")
     free = _flag(item, "is_free_shipping", "isFreeShipping")
-    if free is True and card.get("shipping_fee") is None:
-        card["shipping_fee"] = 0
-        card["total"] = card.get("price")
+    card.update(shipping_fields(card, free))   # 2026-11-13: 무료배송 표시를 0원·총액으로 바꾸지 않는다
     card.update(
         key=card_key(card),
         weight_g=weight,
@@ -431,6 +465,8 @@ def reweigh(card: dict) -> dict:
     (p32: 옵션 목록·곱하기) 예전 값이 남지 않게.  상위 weight_g('upstream')로 기록된 카드는 지금도 허용 조건
     (CHAT_TRUST_UPSTREAM_WEIGHT=1 + weight_verified)을 만족할 때만 그대로 두고, 아니면 상품명으로 다시 계산한다 (p34)."""
     # p34: 저장된 상위 중량도 지금의 허용 조건(설정 켬 + 행별 확인 표시)을 다시 확인한다 — 아니면 상품명으로 재계산
+    if not card.get("shipping_status") and (card.get("free_shipping") is True or card.get("shipping_fee") == 0):
+        card = dict(card, **shipping_fields(card, card.get("free_shipping")))   # 2026-11-13: 예전 저장 카드의 '무료=0원' 정리
     if card.get("weight_source") == "upstream" and trust_upstream_weight() and card.get("weight_verified") is True:
         return card
     unit, w = parse_units(card.get("title") or "")
@@ -684,10 +720,10 @@ def choose(cards: list[dict], *, budget: dict | None = None, ask: str = "") -> d
     for p in picks:
         extra = []
         if budget and not budget.get("none") and not budget_miss:
-            if p.get("total") is not None:
+            if p.get("shipping_status") == "confirmed" and p.get("total") is not None:
                 extra.append({"text": f"예산 {budget['label']} 안이에요 (배송비 포함 {won(p['total'])})", "basis": "you"})
             else:
-                extra.append({"text": f"상품가 기준 예산 {budget['label']} 안이에요 · 배송비는 미확인", "basis": "you"})
+                extra.append({"text": f"상품가 기준 예산 {budget['label']} 안이에요 · {shipping_note(p)}", "basis": "you"})
         if p.get("weight_g") and p["role"] not in ("value", "ample", "house"):
             per = f", 100g당 {won(p['per100g'])}" if p.get("per100g") else ""
             basis_note = (f"상품명 표기 {p['weight_formula']} 계산" if p.get("weight_formula") else "상품명 표기 기준")
@@ -699,7 +735,7 @@ def choose(cards: list[dict], *, budget: dict | None = None, ask: str = "") -> d
         if p.get("rocket") and p["role"] != "fast":
             extra.append({"text": "쿠팡 로켓배송 표시 상품", "basis": "mall"})
         if p.get("free_shipping") and not p.get("rocket"):
-            extra.append({"text": "무료배송 표시 상품", "basis": "mall"})
+            extra.append({"text": "무료배송 표시 상품 (조건은 판매처에서 확인)", "basis": "mall"})
         p["why"] = (p["why"] + extra)[:3]
         p["reason"] = p["why"][0]["text"]
         p["evidence"] = []          # 근거 없는 설명 문구(판매 주장 포함)는 ✓ 근거로 내보내지 않는다
@@ -711,7 +747,8 @@ def choose(cards: list[dict], *, budget: dict | None = None, ask: str = "") -> d
             continue
         why = []
         if budget and not budget.get("none") and not budget_miss and not fits(_basis(c), budget):
-            why = [{"text": f"예산 {budget['label']} 밖이에요 ({won(_basis(c))})", "basis": "you"}]
+            basis_word = "" if c.get("shipping_status") == "confirmed" and c.get("total") is not None else "상품가 "
+            why = [{"text": f"예산 {budget['label']} 밖이에요 ({basis_word}{won(_basis(c))})", "basis": "you"}]
         if c["key"] in blemish_keys:
             why = why + [{"text": "선물을 찾으셔서 흠과·못난이 표기 상품은 먼저 고르지 않았어요 (판매자 표기)", "basis": "you"}]
         if c["key"] in bulk_keys:

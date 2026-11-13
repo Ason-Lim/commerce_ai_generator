@@ -7,6 +7,9 @@
  *   → 백엔드가 아직 내려주지 않으면 api/adapt.ts 가 기존 블록에서 만들어 준다.
  */
 
+/** 2026-11-13 배송비 상태 */
+export type ShippingStatus = "confirmed" | "free_label" | "fee_label" | "unknown";
+
 export type ChipMode = "chip" | "message";
 
 export interface ChipItem {
@@ -71,6 +74,8 @@ export interface ApiCard {
   price: number;
   shipping_fee?: number | null;
   total?: number | null;
+  /** 2026-11-13 배송비 상태 — confirmed(주문 단계 계산)·free_label(무료 표시)·fee_label(적힌 금액)·unknown */
+  shipping_status?: ShippingStatus | null;
   original_price?: number | null;
   unit_price?: number | null;
   unit_count?: number | null;
@@ -328,6 +333,8 @@ export interface ProductCompareRow {
   total: number | null;
   shipping_included: boolean;
   free_shipping?: boolean | null;
+  shipping_status?: ShippingStatus | null;   // 2026-11-13
+  shipping_fee?: number | null;
   /** 제목에 적힌 포장 용량 ('1kg', '1kg×2 (총 2kg)') — 없으면 null */
   pack: string | null;
   per100g: number | null;
@@ -421,6 +428,7 @@ export interface Candidate {
   price: number;
   shippingFee: number | null;   // null = 미확인 (0원과 다름)
   total: number | null;         // null = 배송비 미확인으로 확정 불가
+  shippingStatus?: ShippingStatus | null;  // 2026-11-13: 무료 '표시'는 0원 확정이 아님
   weightLabel?: string | null;  // "1.2kg"
   per100g?: number | null;      // 100g당 가격
   per100ml?: number | null;     // 100ml당 가격 (액체, 2026-11-12)

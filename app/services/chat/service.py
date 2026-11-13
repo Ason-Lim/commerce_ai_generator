@@ -106,7 +106,7 @@ def item_to_card(item: dict, rank: int) -> dict:
         "image": item.get("thumbnail_url") or item.get("image_url") or item.get("image"),
         "price": price,
         "shipping_fee": ship,
-        "total": price + ship if ship is not None else None,
+        "total": None,     # 2026-11-13: 총액은 배송비가 '확정'일 때만 (explain.shipping_fields)
         "reason": str(reason) if reason else "",
         "evidence": [str(x) for x in (item.get("recommendation_reason_1"), item.get("recommendation_reason_2")) if x],
         "source": str(item.get("seller_name") or mall or "판매처"),
@@ -439,7 +439,7 @@ class ChatService:
         if not data["rows"]:
             return self._response(sid, "product_compare", [B.text(
                 f"비교할 **{name}** 상품 후보가 없어요. 먼저 상품을 찾아 주세요.")])
-        head = (f"**{name} 추천 상품 {len(data['rows'])}개 비교** — 방금 보여 드린 후보를 같은 기준(총가격·포장 용량·100g당 가격"
+        head = (f"**{name} 추천 상품 {len(data['rows'])}개 비교** — 방금 보여 드린 후보를 같은 기준(가격·포장 용량·100g당 가격"
                 + ("·필요량" if need else "") + ")으로 견줬어요. 새로 검색하지 않았어요.")
         blocks = [B.text(head), {"type": "product_compare", "data": data}]
         chips = []

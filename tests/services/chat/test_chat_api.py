@@ -21,6 +21,14 @@ def client(sqlite_db, shopping):
         main.app.dependency_overrides.pop(chat_routes.get_chat_service, None)
 
 
+def _ranks(client):
+    """(세션, 'A'(정상 링크)의 순위, 'B'(javascript: 링크)의 순위) — 2026-11-13 순서가 상품가 기준으로 바뀜."""
+    body = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()
+    items = [i for b in body["blocks"] if b["type"] == "product_list" for i in b["data"]["items"]]
+    rank = {i["title"]: i["rank"] for i in items}
+    return body["session_id"], rank["테스트 사과 A"], rank["테스트 사과 B"]
+
+
 def test_shopping_request_keeps_existing_recommendation_flow(client, shopping):
     r = client.post("/api/chat", json={"session_id": None, "message": "사과 추천해줘"})
     assert r.status_code == 200
@@ -29,9 +37,12 @@ def test_shopping_request_keeps_existing_recommendation_flow(client, shopping):
     assert shopping.calls == [("사과", "ranking", body["session_id"])]   # 2026-11-02: 상품어만 검색
     lists = [b for b in body["blocks"] if b["type"] == "product_list"]
     assert len(lists) == 1
-    a, b = lists[0]["data"]["items"]
-    assert (a["rank"], a["title"], a["price"], a["shipping_fee"], a["total"]) == (1, "테스트 사과 A", 12000, None, None)
-    assert (b["rank"], b["price"], b["shipping_fee"], b["total"]) == (2, 9900, 3000, 12900)
+    by = {i["title"]: i for i in lists[0]["data"]["items"]}
+    a, b = by["테스트 사과 A"], by["테스트 사과 B"]
+    assert (a["price"], a["shipping_fee"], a["total"], a["shipping_status"]) == (12000, None, None, "unknown")
+    # 2026-11-13 (S5): 적힌 배송비는 '표시'로만 — 총액으로 합치지 않고, 순서는 상품가 기준 (B 9,900원 < A 12,000원)
+    assert (b["price"], b["shipping_fee"], b["total"], b["shipping_status"]) == (9900, 3000, None, "fee_label")
+    assert (b["rank"], a["rank"]) == (1, 2)
 
 
 def test_priority_words_are_passed_through(client, shopping):
@@ -75,13 +86,13 @@ def test_go_click_log_carries_the_shown_product_name(client, monkeypatch):
     logged = []
     import app.services.analytics_logger as al
     monkeypatch.setattr(al, "log_product_click", lambda **kw: logged.append(kw))
-    sid = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()["session_id"]
-    r = client.get(f"/go/{sid}/1", follow_redirects=False)
+    sid, ra, rb = _ranks(client)
+    r = client.get(f"/go/{sid}/{ra}", follow_redirects=False)
     assert r.headers["location"] == "https://shop.example.com/a"
     product = logged[-1]["product"]
     assert product["product_url"] == "https://shop.example.com/a"
     assert product["product_name"] and product["product_name"] != product["product_url"]
-    assert product["rank"] == 1 and product["selected_section"] == "chat"
+    assert product["rank"] == ra and product["selected_section"] == "chat"
 
 
 def test_admin_browser_clicks_are_marked_internal(client, monkeypatch):
@@ -90,18 +101,18 @@ def test_admin_browser_clicks_are_marked_internal(client, monkeypatch):
     import app.services.analytics_logger as al
     monkeypatch.setattr(al, "log_product_click", lambda **kw: logged.append(kw))
     monkeypatch.setattr("app.admin.auth.expected_token", lambda: "test-admin-token")
-    sid = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()["session_id"]
-    client.get(f"/go/{sid}/1", follow_redirects=False)
+    sid, ra, rb = _ranks(client)
+    client.get(f"/go/{sid}/{ra}", follow_redirects=False)
     assert logged[-1]["query"] == "chat"
-    client.get(f"/go/{sid}/1", follow_redirects=False, headers={"X-Access-Token": "test-admin-token"})
+    client.get(f"/go/{sid}/{ra}", follow_redirects=False, headers={"X-Access-Token": "test-admin-token"})
     assert logged[-1]["query"] == "chat_internal"
 
 
 def test_go_redirects_only_to_items_shown_in_that_session(client):
-    sid = client.post("/api/chat", json={"message": "사과 추천해줘"}).json()["session_id"]
-    r = client.get(f"/go/{sid}/1", follow_redirects=False)
+    sid, ra, rb = _ranks(client)
+    r = client.get(f"/go/{sid}/{ra}", follow_redirects=False)
     assert r.status_code in (302, 307) and r.headers["location"] == "https://shop.example.com/a"
-    r = client.get(f"/go/{sid}/2", follow_redirects=False)  # javascript: URL rejected
+    r = client.get(f"/go/{sid}/{rb}", follow_redirects=False)  # javascript: URL rejected
     assert r.headers["location"] == "/"
     r = client.get(f"/go/{sid}/9", follow_redirects=False)
     assert r.headers["location"] == "/"

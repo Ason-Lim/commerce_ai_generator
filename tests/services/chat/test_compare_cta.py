@@ -21,7 +21,7 @@ def test_result_blocks_end_with_the_compare_card(sqlite_db, shopping):
     types = [b["type"] for b in blocks]
     i = types.index("compare_cta")
     assert i > max(n for n, t in enumerate(types) if t == "product_list")
-    assert blocks[i]["data"] == {"label": "휘태커스초콜릿 상품 3개, 한눈에 비교하기", "sub": "총가격 · 100g당 가격",
+    assert blocks[i]["data"] == {"label": "휘태커스초콜릿 상품 3개, 한눈에 비교하기", "sub": "가격 · 100g당 가격",
                                  "send": "휘태커스초콜릿 상품 비교"}
 
 

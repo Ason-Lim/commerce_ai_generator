@@ -17,7 +17,7 @@ KST = timezone(timedelta(hours=9))
 MAX_SEEN_SETS = 5
 MAX_SAVED = 30
 # 2026-11-12: 액체 100ml당 — 값이 있을 때만 저장 (기존 저장 카드 모양 유지)
-OPTIONAL_KEEP = ("volume_ml", "volume_formula", "per100ml")
+OPTIONAL_KEEP = ("volume_ml", "volume_formula", "per100ml", "shipping_status")
 KEEP = ("key", "rank", "title", "image", "price", "shipping_fee", "total", "mall", "source", "url", "weight_g",
         "weight_source", "weight_formula", "weight_found", "weight_verified",   # p31·p32·p34: 중량 출처·근거
         "unit_count", "per100g", "per_unit", "rocket", "free_shipping", "seller_claims", "check_at_mall",

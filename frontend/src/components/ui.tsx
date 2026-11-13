@@ -16,6 +16,17 @@ export function Thumb({ c, size = "md" }: { c: Pick<Candidate, "image" | "title"
   );
 }
 
+/** 2026-11-13: 배송비 상태별 한 줄 — 무료 '표시'·적힌 금액은 조건부라 총액으로 합치지 않는다 */
+export function shippingLine(c: Candidate) {
+  switch (c.shippingStatus) {
+    case "confirmed": return <>상품가 {won(c.price)} + 배송비 {c.shippingFee ? won(c.shippingFee) : "0원"} (주문 단계 계산)</>;
+    case "free_label": return <>상품가 · 무료배송 표시 <span className="text-ink3">(조건은 판매처에서 확인)</span></>;
+    case "fee_label": return <>상품가 {won(c.price)} + 배송비 {won(c.shippingFee ?? 0)} 표시 <span className="text-ink3">(주문 때 확인)</span></>;
+    case "unknown": return <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>;
+    default: return null;
+  }
+}
+
 /** 총가격 = 배송비 포함. 배송비를 모르면 '확정 불가'로 보여 준다 (0원으로 가정하지 않음) */
 export function TotalPrice({ c, best, size = "md" }: { c: Candidate; best?: boolean; size?: "md" | "lg" }) {
   return (
@@ -28,9 +39,9 @@ export function TotalPrice({ c, best, size = "md" }: { c: Candidate; best?: bool
         {best && <span className="tag bg-accentSoft text-accent">최저</span>}
       </div>
       <div className="text-xs text-ink2">
-        {c.shippingFee == null
+        {shippingLine(c) ?? (c.shippingFee == null
           ? <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>
-          : c.shippingFee === 0 ? <>무료배송 포함</> : <>상품가 {won(c.price)} + 배송비 {won(c.shippingFee)}</>}
+          : c.shippingFee === 0 ? <>무료배송 포함</> : <>상품가 {won(c.price)} + 배송비 {won(c.shippingFee)}</>)}
       </div>
     </div>
   );

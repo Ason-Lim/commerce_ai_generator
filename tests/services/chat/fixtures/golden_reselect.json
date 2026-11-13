@@ -46,10 +46,11 @@
        "role": "value",
        "role_label": "가성비",
        "seller_claims": [],
-       "shipping_fee": 0,
+       "shipping_fee": null,
+       "shipping_status": "free_label",
        "source": "쿠팡",
        "title": "호주산 소고기 등심 1kg",
-       "total": 45000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/3",
        "variety_mix": null,
@@ -62,11 +63,11 @@
         },
         {
          "basis": "you",
-         "text": "예산 5만원 이하 안이에요 (배송비 포함 45,000원)"
+         "text": "상품가 기준 예산 5만원 이하 안이에요 · 무료배송 표시 (조건은 판매처에서 확인)"
         },
         {
          "basis": "mall",
-         "text": "무료배송 표시 상품"
+         "text": "무료배송 표시 상품 (조건은 판매처에서 확인)"
         }
        ]
       },
@@ -94,10 +95,11 @@
        "seller_claims": [
         "등급 표기"
        ],
-       "shipping_fee": 0,
+       "shipping_fee": null,
+       "shipping_status": "free_label",
        "source": "쿠팡",
        "title": "한우 1++ 등심 구이용 300g",
-       "total": 39000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "variety_mix": null,
@@ -110,7 +112,7 @@
         },
         {
          "basis": "you",
-         "text": "예산 5만원 이하 안이에요 (배송비 포함 39,000원)"
+         "text": "상품가 기준 예산 5만원 이하 안이에요 · 무료배송 표시 (조건은 판매처에서 확인)"
         },
         {
          "basis": "calc",
@@ -143,12 +145,13 @@
        "per_unit": null,
        "price": 59000,
        "rank": 3,
-       "reason": "예산 5만원 이하 밖이에요 (59,000원)",
+       "reason": "예산 5만원 이하 밖이에요 (상품가 59,000원)",
        "rocket": null,
        "role": null,
        "role_label": null,
        "seller_claims": [],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "미국산 척아이롤 2kg 대용량",
        "total": null,
@@ -160,7 +163,7 @@
        "why": [
         {
          "basis": "you",
-         "text": "예산 5만원 이하 밖이에요 (59,000원)"
+         "text": "예산 5만원 이하 밖이에요 (상품가 59,000원)"
         }
        ]
       },
@@ -177,19 +180,20 @@
        "key": "821c6704660c",
        "mall": "쿠팡",
        "partner": null,
-       "per100g": 11000,
+       "per100g": 10400,
        "per_unit": null,
        "price": 52000,
        "rank": 4,
-       "reason": "예산 5만원 이하 밖이에요 (55,000원)",
+       "reason": "예산 5만원 이하 밖이에요 (상품가 52,000원)",
        "rocket": null,
        "role": null,
        "role_label": null,
        "seller_claims": [],
        "shipping_fee": 3000,
+       "shipping_status": "fee_label",
        "source": "쿠팡",
        "title": "한우 등심 500g 냉장",
-       "total": 55000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "variety_mix": null,
@@ -198,7 +202,7 @@
        "why": [
         {
          "basis": "you",
-         "text": "예산 5만원 이하 밖이에요 (55,000원)"
+         "text": "예산 5만원 이하 밖이에요 (상품가 52,000원)"
         }
        ]
       },
@@ -219,7 +223,7 @@
        "per_unit": null,
        "price": 129000,
        "rank": 5,
-       "reason": "예산 5만원 이하 밖이에요 (129,000원)",
+       "reason": "예산 5만원 이하 밖이에요 (상품가 129,000원)",
        "rocket": null,
        "role": null,
        "role_label": null,
@@ -227,6 +231,7 @@
         "선물용·세트 표기"
        ],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "한우 등심 선물세트 1.2kg 보자기 포장",
        "total": null,
@@ -238,7 +243,7 @@
        "why": [
         {
          "basis": "you",
-         "text": "예산 5만원 이하 밖이에요 (129,000원)"
+         "text": "예산 5만원 이하 밖이에요 (상품가 129,000원)"
         }
        ]
       }
@@ -251,7 +256,7 @@
     "data": {
      "label": "소고기 등심 상품 5개, 한눈에 비교하기",
      "send": "소고기 등심 상품 비교",
-     "sub": "총가격 · 100g당 가격"
+     "sub": "가격 · 100g당 가격"
     },
     "type": "compare_cta"
    },
@@ -321,6 +326,7 @@
        "role_label": "가성비",
        "seller_claims": [],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "미국산 척아이롤 2kg 대용량",
        "total": null,
@@ -360,10 +366,11 @@
        "seller_claims": [
         "등급 표기"
        ],
-       "shipping_fee": 0,
+       "shipping_fee": null,
+       "shipping_status": "free_label",
        "source": "쿠팡",
        "title": "한우 1++ 등심 구이용 300g",
-       "total": 39000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "variety_mix": null,
@@ -402,10 +409,11 @@
        "role": "alt",
        "role_label": "다른 선택",
        "seller_claims": [],
-       "shipping_fee": 0,
+       "shipping_fee": null,
+       "shipping_status": "free_label",
        "source": "쿠팡",
        "title": "호주산 소고기 등심 1kg",
-       "total": 45000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/3",
        "variety_mix": null,
@@ -422,7 +430,7 @@
         },
         {
          "basis": "mall",
-         "text": "무료배송 표시 상품"
+         "text": "무료배송 표시 상품 (조건은 판매처에서 확인)"
         }
        ]
       },
@@ -439,19 +447,20 @@
        "key": "821c6704660c",
        "mall": "쿠팡",
        "partner": null,
-       "per100g": 11000,
+       "per100g": 10400,
        "per_unit": null,
        "price": 52000,
        "rank": 4,
-       "reason": "100g당 11,000원으로 가성비 상품보다 100g당 8,050원 비싸요",
+       "reason": "100g당 10,400원으로 가성비 상품보다 100g당 7,450원 비싸요",
        "rocket": null,
        "role": "alt",
        "role_label": "다른 선택",
        "seller_claims": [],
        "shipping_fee": 3000,
+       "shipping_status": "fee_label",
        "source": "쿠팡",
        "title": "한우 등심 500g 냉장",
-       "total": 55000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "variety_mix": null,
@@ -460,11 +469,11 @@
        "why": [
         {
          "basis": "calc",
-         "text": "100g당 11,000원으로 가성비 상품보다 100g당 8,050원 비싸요"
+         "text": "100g당 10,400원으로 가성비 상품보다 100g당 7,450원 비싸요"
         },
         {
          "basis": "calc",
-         "text": "500g, 100g당 11,000원 (상품명 표기 기준)"
+         "text": "500g, 100g당 10,400원 (상품명 표기 기준)"
         }
        ]
       }
@@ -501,6 +510,7 @@
         "선물용·세트 표기"
        ],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "한우 등심 선물세트 1.2kg 보자기 포장",
        "total": null,
@@ -520,7 +530,7 @@
     "data": {
      "label": "소고기 등심 상품 5개, 한눈에 비교하기",
      "send": "소고기 등심 상품 비교",
-     "sub": "총가격 · 100g당 가격"
+     "sub": "가격 · 100g당 가격"
     },
     "type": "compare_cta"
    },
@@ -597,6 +607,7 @@
         "선물용·세트 표기"
        ],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "한우 등심 선물세트 1.2kg 보자기 포장",
        "total": null,
@@ -645,12 +656,13 @@
        "per_unit": null,
        "price": 59000,
        "rank": 2,
-       "reason": "예산 10만원대 밖이에요 (59,000원)",
+       "reason": "예산 10만원대 밖이에요 (상품가 59,000원)",
        "rocket": null,
        "role": null,
        "role_label": null,
        "seller_claims": [],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "미국산 척아이롤 2kg 대용량",
        "total": null,
@@ -662,7 +674,7 @@
        "why": [
         {
          "basis": "you",
-         "text": "예산 10만원대 밖이에요 (59,000원)"
+         "text": "예산 10만원대 밖이에요 (상품가 59,000원)"
         }
        ]
       },
@@ -683,17 +695,18 @@
        "per_unit": null,
        "price": 39000,
        "rank": 3,
-       "reason": "예산 10만원대 밖이에요 (39,000원)",
+       "reason": "예산 10만원대 밖이에요 (상품가 39,000원)",
        "rocket": true,
        "role": null,
        "role_label": null,
        "seller_claims": [
         "등급 표기"
        ],
-       "shipping_fee": 0,
+       "shipping_fee": null,
+       "shipping_status": "free_label",
        "source": "쿠팡",
        "title": "한우 1++ 등심 구이용 300g",
-       "total": 39000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "variety_mix": null,
@@ -702,7 +715,7 @@
        "why": [
         {
          "basis": "you",
-         "text": "예산 10만원대 밖이에요 (39,000원)"
+         "text": "예산 10만원대 밖이에요 (상품가 39,000원)"
         }
        ]
       },
@@ -719,19 +732,20 @@
        "key": "821c6704660c",
        "mall": "쿠팡",
        "partner": null,
-       "per100g": 11000,
+       "per100g": 10400,
        "per_unit": null,
        "price": 52000,
        "rank": 4,
-       "reason": "예산 10만원대 밖이에요 (55,000원)",
+       "reason": "예산 10만원대 밖이에요 (상품가 52,000원)",
        "rocket": null,
        "role": null,
        "role_label": null,
        "seller_claims": [],
        "shipping_fee": 3000,
+       "shipping_status": "fee_label",
        "source": "쿠팡",
        "title": "한우 등심 500g 냉장",
-       "total": 55000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "variety_mix": null,
@@ -740,7 +754,7 @@
        "why": [
         {
          "basis": "you",
-         "text": "예산 10만원대 밖이에요 (55,000원)"
+         "text": "예산 10만원대 밖이에요 (상품가 52,000원)"
         }
        ]
       },
@@ -761,15 +775,16 @@
        "per_unit": null,
        "price": 45000,
        "rank": 5,
-       "reason": "예산 10만원대 밖이에요 (45,000원)",
+       "reason": "예산 10만원대 밖이에요 (상품가 45,000원)",
        "rocket": null,
        "role": null,
        "role_label": null,
        "seller_claims": [],
-       "shipping_fee": 0,
+       "shipping_fee": null,
+       "shipping_status": "free_label",
        "source": "쿠팡",
        "title": "호주산 소고기 등심 1kg",
-       "total": 45000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/3",
        "variety_mix": null,
@@ -778,7 +793,7 @@
        "why": [
         {
          "basis": "you",
-         "text": "예산 10만원대 밖이에요 (45,000원)"
+         "text": "예산 10만원대 밖이에요 (상품가 45,000원)"
         }
        ]
       }
@@ -791,7 +806,7 @@
     "data": {
      "label": "소고기 등심 상품 5개, 한눈에 비교하기",
      "send": "소고기 등심 상품 비교",
-     "sub": "총가격 · 100g당 가격"
+     "sub": "가격 · 100g당 가격"
     },
     "type": "compare_cta"
    },
@@ -852,6 +867,7 @@
        "seen_at": "<MM/DD hh:mm>",
        "seller_claims": [],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "미국산 척아이롤 2kg 대용량",
        "total": null,
@@ -895,10 +911,11 @@
        "seller_claims": [
         "등급 표기"
        ],
-       "shipping_fee": 0,
+       "shipping_fee": null,
+       "shipping_status": "free_label",
        "source": "쿠팡",
        "title": "한우 1++ 등심 구이용 300g",
-       "total": 39000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/1",
        "variety_mix": null,
@@ -928,12 +945,12 @@
        "key": "821c6704660c",
        "mall": "쿠팡",
        "partner": null,
-       "per100g": 11000,
+       "per100g": 10400,
        "per_unit": null,
        "price": 52000,
        "query": "소고기 등심",
        "rank": 3,
-       "reason": "100g당 11,000원으로 가성비 상품보다 100g당 8,050원 비싸요",
+       "reason": "100g당 10,400원으로 가성비 상품보다 100g당 7,450원 비싸요",
        "rocket": null,
        "role": "alt",
        "role_label": "다른 선택",
@@ -942,9 +959,10 @@
        "seen_at": "<MM/DD hh:mm>",
        "seller_claims": [],
        "shipping_fee": 3000,
+       "shipping_status": "fee_label",
        "source": "쿠팡",
        "title": "한우 등심 500g 냉장",
-       "total": 55000,
+       "total": null,
        "unit_count": null,
        "url": "https://www.coupang.com/vp/products/2",
        "variety_mix": null,
@@ -953,11 +971,11 @@
        "why": [
         {
          "basis": "calc",
-         "text": "100g당 11,000원으로 가성비 상품보다 100g당 8,050원 비싸요"
+         "text": "100g당 10,400원으로 가성비 상품보다 100g당 7,450원 비싸요"
         },
         {
          "basis": "calc",
-         "text": "500g, 100g당 11,000원 (상품명 표기 기준)"
+         "text": "500g, 100g당 10,400원 (상품명 표기 기준)"
         }
        ]
       }
@@ -996,6 +1014,7 @@
        "seen_at": "<MM/DD hh:mm>",
        "seller_claims": [],
        "shipping_fee": null,
+       "shipping_status": "unknown",
        "source": "쿠팡",
        "title": "꿀사과 3kg",
        "total": null,

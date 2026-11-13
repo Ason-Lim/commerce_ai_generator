@@ -14,8 +14,10 @@ import { parseWeightFromTitle, per100g, volumeLabel, weightLabel, won } from "..
 export const toChip = (c: string | ChipItem): ChipItem => (typeof c === "string" ? { label: c } : c);
 
 export function cardToCandidate(c: ApiCard): Candidate {
+  // 2026-11-13: 서버가 배송비 상태를 주면 총액은 'confirmed' 일 때만. 무료 표시·적힌 배송비는 총액으로 합치지 않는다.
+  const status = c.shipping_status ?? null;
   const ship = c.shipping_fee ?? null;
-  const total = c.total ?? (ship != null ? c.price + ship : null);
+  const total = status ? (status === "confirmed" ? c.total ?? null : null) : c.total ?? (ship != null ? c.price + ship : null);
   // 2026-11-11: 서버가 중량·100g당을 내려 주면(값이 null 이어도) 그대로 쓴다 — 옵션 목록·증정분처럼 서버가 일부러
   // 비운 값을 화면이 상품명 첫 중량으로 다시 채우지 않게. 필드가 아예 없는 예전 응답에만 상품명 추정을 쓴다.
   const serverWeighed = c.weight_g !== undefined || c.weight_note != null;
@@ -31,8 +33,9 @@ export function cardToCandidate(c: ApiCard): Candidate {
     price: c.price,
     shippingFee: ship,
     total,
+    shippingStatus: status,
     weightLabel: weightLabel(g) ?? volumeLabel(c.volume_ml),
-    per100g: c.per100g !== undefined ? c.per100g : serverWeighed ? null : per100g(total, g),
+    per100g: c.per100g !== undefined ? c.per100g : serverWeighed ? null : per100g(total ?? c.price, g),
     per100ml: c.per100ml ?? null,
     weightNote: c.weight_note ?? null,
     varietyMix: c.variety_mix ?? null,

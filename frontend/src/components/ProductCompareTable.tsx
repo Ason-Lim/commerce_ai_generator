@@ -10,7 +10,7 @@ const cleanTitle = (t: string) => t.replace(/^\s*(\[[^\]]*\]\s*)+/, "").trim() |
 
 /**
  * 추천 상품 비교 (2026-11-06 p35) — '굴 상품 비교' 칩.
- * 방금 보여 준 후보를 총가격·포장 용량·100g당 가격·필요량·손질 표기·판매자 표기로 한 표에 견준다.
+ * 방금 보여 준 후보를 가격·포장 용량·100g당 가격·필요량·손질 표기·판매자 표기로 한 표에 견준다.
  * 판매처 이동은 일반 상품 카드와 같은 링크(/go/… 또는 쇼핑커넥트 발급 링크)로, 최상위 새 탭에서만 연다.
  * 넓은 화면은 표, 모바일(md 미만)은 옆으로 넘기는 카드 (같은 값·같은 링크).
  */
@@ -35,7 +35,7 @@ export function ProductCompareTable({ block }: { block: ProductCompareBlock }) {
           <thead className="bg-chip text-xs text-ink3">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">상품</th>
-              <th scope="col" className="px-3 py-2 font-medium">총가격</th>
+              <th scope="col" className="px-3 py-2 font-medium">가격</th>
               <th scope="col" className="px-3 py-2 font-medium">포장 용량</th>
               <th scope="col" className="px-3 py-2 font-medium">100g당</th>
               {hasNeed && <th scope="col" className="px-3 py-2 font-medium">필요량 대비</th>}
@@ -53,7 +53,7 @@ export function ProductCompareTable({ block }: { block: ProductCompareBlock }) {
       </div>
       <ul className="mt-2 space-y-0.5 text-xs leading-snug text-ink3">
         {seen_at && <li>· 가격은 {seen_at}에 확인한 값이에요. 지금은 다를 수 있어요.</li>}
-        <li>· '최저'는 이 표 안에서 같은 기준끼리 견준 결과예요{hasNeed ? " (총가격은 필요량을 채우는 상품끼리)" : ""}. 제휴 여부는 반영하지 않았어요.</li>
+        <li>· '최저'는 이 표 안에서 같은 기준끼리 견준 결과예요{hasNeed ? " (가격은 필요량을 채우는 상품끼리)" : ""}. 제휴 여부는 반영하지 않았어요.</li>
         {notes.map((n) => <li key={n}>· {n}</li>)}
       </ul>
     </section>
@@ -80,7 +80,7 @@ function Row({ r, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
       <td className="whitespace-nowrap px-3 py-2.5">
         <span className={cx("font-bold", bestTotal && "text-accent")}>{won(r.total)}</span>
         {bestTotal && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}
-        <div className="text-[11px] text-ink3">{r.shipping_included ? "배송비 포함" : "배송비 미확인"}</div>
+        <div className="text-[11px] text-ink3">{shipNote(r)}</div>
       </td>
       <td className="whitespace-nowrap px-3 py-2.5">{r.pack ?? (r.weight_note ? <WeightNoteTag note={r.weight_note} /> : <span className="text-warn">용량 미확인</span>)}</td>
       <td className="whitespace-nowrap px-3 py-2.5">
@@ -145,6 +145,14 @@ function MobileCards({ rows, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
   );
 }
 
+/** 2026-11-13 (S5): 배송비 상태 한 마디 — 무료 '표시'·적힌 금액은 조건부라 총액에 넣지 않았다 */
+function shipNote(r: ProductCompareRow): string {
+  if (r.shipping_included) return "배송비 포함";
+  if (r.shipping_status === "free_label") return "상품가 · 무료배송 표시";
+  if (r.shipping_status === "fee_label" && r.shipping_fee) return `상품가 · 배송비 ${won(r.shipping_fee)} 표시`;
+  return "상품가 · 배송비 미확인";
+}
+
 function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
   r: ProductCompareRow; n: number; total: number; sid: string | null; hasNeed: boolean; hasPrep: boolean;
   bestTotal: boolean; bestPer: boolean;
@@ -173,10 +181,10 @@ function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: 
         </div>
       </div>
       <div className="mt-3">
-        {line("총가격", <>
+        {line("가격", <>
           <b className={cx("text-base", bestTotal && "text-accent")}>{won(r.total)}</b>
           {bestTotal && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}
-          <div className="text-[11px] text-ink3">{r.shipping_included ? "배송비 포함" : "배송비 미확인"}</div>
+          <div className="text-[11px] text-ink3">{shipNote(r)}</div>
         </>)}
         {line("포장 용량", r.pack ?? (r.weight_note ? <WeightNoteTag note={r.weight_note} /> : <span className="text-warn">용량 미확인</span>))}
         {line("100g당", r.per100g != null

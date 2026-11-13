@@ -34,7 +34,7 @@ def cta(name: str, count: int, need: dict | None) -> dict:
     from app.services.chat import blocks as B
 
     key = re.sub(r"\s+", "", name)
-    parts = ["총가격", "100g당 가격"]
+    parts = ["가격", "100g당 가격"]      # 2026-11-13: 배송비가 확정되지 않아 '총가격'이라 하지 않음
     if need and need.get("display"):
         parts.append(f"필요량 {need['display']} 대비")
     if key in PREP_CTA:
@@ -124,6 +124,8 @@ def build(name: str, seen_set: dict, need: dict | None, go_for) -> dict:
             "mall": c.get("mall") or c.get("source"), "go": go_for(c), "url": c.get("url"), "direct": bool(c.get("direct")),
             "affiliate": bool(c.get("affiliate")), "affiliate_program": c.get("affiliate_program"),
             "total": price, "shipping_included": c.get("total") is not None, "free_shipping": c.get("free_shipping"),
+            # 2026-11-13 (S5): 배송비 상태 — 무료 표시·적힌 금액은 '표시'로만 알린다
+            "shipping_status": c.get("shipping_status"), "shipping_fee": c.get("shipping_fee"),
             "pack": pack_fit.size_text(pack) if pack else None,
             # 2026-11-11: 옵션 목록·증정분이면 '용량 미확인' 대신 그 사실을 알린다
             "weight_note": note,

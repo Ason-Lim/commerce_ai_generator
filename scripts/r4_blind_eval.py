@@ -34,6 +34,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import os
 import random
 import re
 import sys
@@ -66,6 +67,9 @@ def _setup():
         load_dotenv(ROOT / ".env")
     except ImportError:
         pass
+    # 2026-11-13: 평가지 만들기는 시험 — .env 에 COUPANG_TEST_SUB_ID(예: test)가 있으면 그 채널로 보낸다 (실적에서 분리)
+    if os.getenv("COUPANG_TEST_SUB_ID"):
+        os.environ["COUPANG_SUB_ID"] = os.environ["COUPANG_TEST_SUB_ID"]
     from sqlalchemy import create_engine
 
     import app.main as m

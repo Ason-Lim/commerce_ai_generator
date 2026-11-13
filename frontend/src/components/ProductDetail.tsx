@@ -182,8 +182,11 @@ function PurchaseConfirm({ c }: { c: Candidate }) {
   const [opt, setOpt] = useState(opts[0].id);
   const [qty, setQty] = useState(1);
   const o = opts.find((x) => x.id === opt) ?? opts[0];
-  const ship = c.shippingFee;
+  // 2026-11-13: 배송비 상태가 있으면 'confirmed' 일 때만 결제 예상 금액을 계산 (무료 표시·적힌 금액은 조건부)
+  const ship = c.shippingStatus && c.shippingStatus !== "confirmed" ? null : c.shippingFee;
   const total = ship == null ? null : o.price * qty + ship;
+  const shipLabel = c.shippingStatus === "free_label" ? "무료배송 표시 · 조건은 판매처에서 확인"
+    : c.shippingStatus === "fee_label" ? `${won(c.shippingFee ?? 0)} 표시 · 주문 때 확인` : "판매처에서 확인 필요";
   return (
     <section className="space-y-5">
       <div>
@@ -209,7 +212,7 @@ function PurchaseConfirm({ c }: { c: Candidate }) {
       <dl className="space-y-1.5 rounded-2xl bg-chip px-4 py-3 text-sm">
         <div className="flex justify-between"><dt className="text-ink2">상품가</dt><dd>{won(o.price)} × {qty}</dd></div>
         <div className="flex justify-between"><dt className="text-ink2">배송비</dt>
-          <dd className={cx(ship == null && "font-semibold text-warn")}>{ship == null ? "판매처에서 확인 필요" : ship === 0 ? "무료" : won(ship)}</dd></div>
+          <dd className={cx(ship == null && "font-semibold text-warn")}>{ship == null ? shipLabel : ship === 0 ? "무료" : won(ship)}</dd></div>
         <div className="flex justify-between border-t border-line pt-1.5 text-base font-extrabold">
           <dt>결제 예상 금액</dt><dd>{total == null ? "확정 불가" : won(total)}</dd></div>
       </dl>

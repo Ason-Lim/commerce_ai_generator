@@ -68,7 +68,7 @@ def test_amounts_recipes_and_products_come_together(sqlite_db, shopping):
     types = [b["type"] for b in res["blocks"]]
     cta = res["blocks"][-1]
     assert cta["type"] == "compare_cta" and types.index("compare_cta") > max(i for i, t in enumerate(types) if t == "product_list")
-    assert cta["data"] == {"label": "굴 상품 2개, 한눈에 비교하기", "sub": "총가격 · 100g당 가격 · 필요량 360g 대비 · 깐굴 표기",
+    assert cta["data"] == {"label": "굴 상품 2개, 한눈에 비교하기", "sub": "가격 · 100g당 가격 · 필요량 360g 대비 · 깐굴 표기",
                            "send": "굴 상품 비교"}
     # recalculated on the same basis (no second estimate)
     res = svc.handle(res["session_id"], message="4인분씩으로 다시 계산")
