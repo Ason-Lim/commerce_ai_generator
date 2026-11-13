@@ -1,10 +1,10 @@
 import { Calculator, Heart, Landmark, Lightbulb, MessageCircle, Store, TrendingUp, type LucideIcon } from "lucide-react";
-import type { Candidate, ProductListBlock, SponsoredListBlock, WhyBasis } from "../types/blocks";
+import type { Candidate, ProductListBlock, SponsoredListBlock, WhyBasis, WhyLine } from "../types/blocks";
 import { cardToCandidate } from "../api/adapt";
 import { cx } from "../lib/format";
 import { useSaved } from "../state/saved";
 import { useChatActions } from "./ChatActions";
-import { MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags } from "./ui";
+import { MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags, VarietyMixTag, WeightNoteTag } from "./ui";
 
 /** 사유의 근거 종류 — 화면에 그대로 보여 준다 (2026-11-01) */
 export const BASIS: Record<WhyBasis, { label: string; title: string }> = {
@@ -18,6 +18,8 @@ export const BASIS: Record<WhyBasis, { label: string; title: string }> = {
 const ROLE_TONE: Record<string, string> = {
   value: "bg-accentSoft text-accent", lowest: "bg-accentSoft text-accent", fast: "bg-[#fdecea] text-[#c62828]",
   ample: "bg-chip text-ink", gift: "bg-sponsorSoft text-sponsor", alt: "bg-chip text-ink2",
+  // 2026-11-13: 가정용 양은 가성비와 같은 계열, 당도 표기는 판매자 표기(선물용)와 같은 계열 — 판매자 주장임을 색으로도 구분
+  house: "bg-accentSoft text-accent", sweet: "bg-sponsorSoft text-sponsor",
 };
 
 export function RoleBadge({ c }: { c: Pick<Candidate, "role" | "roleLabel"> }) {
@@ -36,16 +38,19 @@ const BASIS_LOOK: Record<WhyBasis, { icon: LucideIcon; dot: string; pill: string
 
 /** 사유 속 숫자(가격·100g당·%·kg)를 굵게 — 근거가 되는 값이 먼저 보이게 */
 function Emph({ text }: { text: string }) {
+  // 2026-11-11: 사유 줄이 비어 오거나 모양이 다르면 화면 전체가 멈추지 않게 (냉동 목록 why 가 문자열로 와서 빈 화면이 됐다)
+  if (typeof text !== "string") return null;
   const parts = text.split(/(\d[\d,.]*\s?(?:원\/100g|원|%|kg|g|개|배)?)/g);
   return <>{parts.map((p, i) => (i % 2 === 1 && /\d/.test(p) ? <strong key={i} className="font-semibold text-ink">{p}</strong> : <span key={i}>{p}</span>))}</>;
 }
 
 /** 왜 추천했나요 — 첫 사유를 크게, 사유마다 근거 종류 아이콘·라벨 */
 export function WhyList({ c }: { c: Candidate }) {
-  if (!c.why?.length) return null;
-  const [lead, ...rest] = c.why;
+  const why = (c.why ?? []).filter((w) => w && typeof w === "object" && typeof w.text === "string");
+  if (!why.length) return null;
+  const [lead, ...rest] = why;
   const look = (b: WhyBasis) => BASIS_LOOK[b] ?? BASIS_LOOK.mall;
-  const Row = ({ w, main }: { w: (typeof c.why)[number]; main?: boolean }) => {
+  const Row = ({ w, main }: { w: WhyLine; main?: boolean }) => {
     const { icon: Icon, dot, pill } = look(w.basis);
     return (
       <li className="flex items-start gap-2.5">
@@ -78,7 +83,7 @@ export function SellerClaims({ c }: { c: Candidate }) {
   if (!c.sellerClaims?.length) return null;
   return (
     <p className="text-xs text-ink3" title="판매자가 상품명에 적은 문구예요. 확인되지 않았고 추천 순서에 쓰지 않았어요.">
-      <span className="font-semibold text-ink2">판매자 표기</span> {c.sellerClaims.join(" · ")} <span className="text-ink3">(확인 안 됨)</span>
+      <span className="font-semibold text-ink2">판매자 표기</span> {c.sellerClaims.join(" · ")} <span className="text-ink3">(판매자 주장 · 우리가 확인하지 않음)</span>
     </p>
   );
 }
@@ -134,7 +139,7 @@ function ProductCard({ c, sponsored }: { c: Candidate; sponsored?: boolean }) {
         <Thumb c={c} />
       </button>
       <div className="min-w-0 flex-1 space-y-2">
-        {(sponsored || c.affiliate || tags.length > 0 || c.roleLabel || c.cardKey) && (
+        {(sponsored || c.affiliate || tags.length > 0 || c.roleLabel || c.cardKey || c.weightNote || c.varietyMix) && (
           <div className="flex flex-wrap items-center gap-1">
             {!sponsored && <RoleBadge c={c} />}
             {sponsored && <span className="tag bg-sponsorSoft text-sponsor">유료 소개</span>}
@@ -144,6 +149,8 @@ function ProductCard({ c, sponsored }: { c: Candidate; sponsored?: boolean }) {
               </span>
             )}
             {tags.map((t) => <span key={t} className="tag bg-chip text-ink2">{t}</span>)}
+            <WeightNoteTag note={c.weightNote} />
+            <VarietyMixTag mix={c.varietyMix} />
             {!sponsored && <span className="ml-auto"><SaveButton c={c} /></span>}
           </div>
         )}
@@ -175,7 +182,10 @@ export function ProductList({ block }: { block: ProductListBlock }) {
   if (collapsed) {
     return (
       <details className="my-3 rounded-2xl border border-line bg-surface/60 px-4 py-2">
-        <summary className="cursor-pointer select-none py-1.5 text-sm font-semibold text-ink2">{title ?? "다른 후보"} 펼치기</summary>
+        <summary className="cursor-pointer select-none py-1.5 text-sm font-semibold text-ink2">
+          {/* 2026-11-11: '냉동 상품 N개 따로 보기'처럼 제목이 이미 '보기'로 끝나면 '펼치기'를 붙이지 않는다 */}
+          {title?.endsWith("보기") ? title : `${title ?? "다른 후보"} 펼치기`}
+        </summary>
         {note && <p className="mb-2 text-xs text-ink3">{note}</p>}
         <div className="mb-2 mt-2 flex flex-col gap-3">{cards}</div>
       </details>

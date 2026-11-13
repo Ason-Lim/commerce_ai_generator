@@ -49,3 +49,14 @@ def _denied_create_engine(url: Any, *args: Any, **kwargs: Any) -> _DeniedPersist
 sqlalchemy.create_engine = _denied_create_engine
 sqlalchemy.engine.create_engine = _denied_create_engine
 sqlalchemy.engine.create.create_engine = _denied_create_engine
+
+
+# 2026-11-11: AI 결과 저장소(app/services/ai/cache.py)는 테스트마다 임시 파일 — 실제 data/ai_cache 를 건드리지 않는다
+import pytest as _pytest  # noqa: E402
+
+
+@_pytest.fixture(autouse=True)
+def _isolated_ai_cache(monkeypatch, tmp_path):
+    monkeypatch.setenv("AI_CACHE_DB", str(tmp_path / "ai_cache.sqlite3"))
+    monkeypatch.delenv("AI_CROSS_CHECK", raising=False)
+    monkeypatch.setenv("B2B_PROPOSAL_AI", "0")      # 2026-11-12: 제안서 AI 본문(Claude·GPT 실제 호출)은 테스트에서 끈다

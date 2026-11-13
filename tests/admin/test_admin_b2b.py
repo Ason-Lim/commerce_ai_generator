@@ -48,9 +48,36 @@ def test_real_bundle_items_all_hold_or_excluded():
 def test_cost_unknown_is_not_zero():
     req = BidRequirement(budget_per_person=44000, headcount=2090)
     a = costing.analyze(req, {"supply": 36000})
-    assert a.residual is None and len(a.unknown) == 5
-    b = costing.analyze(req, dict(supply=36000, packaging=1500, shipping=3500, ops_cs=800, other=0), mall_build_total=3_000_000)
+    assert a.residual is None and len(a.unknown) == 8 and a.status == "산출 불가"
+    b = costing.analyze(req, dict(supply=36000, packaging=1500, warehouse=0, shipping=3500, return_reserve=0, ops_cs=800,
+                                  admin_overhead=0, other=0), mall_build_total=3_000_000)
     assert b.residual == 44000 - 36000 - 1500 - 3500 - 800 - round(3_000_000 / 2090)
+
+
+def test_profit_uses_net_of_vat_and_marks_assumptions():
+    """2026-11-11: 이윤·일반관리비·택배·물류창고 → 1인 이익·이익률·총 이익. 협력사가 없어 가정값이면 '추정'."""
+    req = BidRequirement(budget_per_person=55000, vat_included=True, headcount=1000)
+    c = costing.analyze(req, {"supply": {"amount": 32000, "basis": "견적"}, "packaging": {"amount": 1000, "basis": "견적"},
+                              "warehouse": {"amount": 700, "basis": "가정"}, "shipping": {"amount": 3500, "basis": "가정"},
+                              "return_reserve": 300, "ops_cs": 800, "other": 0}, mall_build_total=2_000_000,
+                        admin_rate=0.05, target_margin_rate=0.10)
+    assert c.net_budget == 50000 and c.lines[-2].amount == 2500           # 관리비 = 공급가액 5%
+    assert c.residual == 50000 - 32000 - 1000 - 700 - 3500 - 300 - 800 - 2000 - 2500 - 0 == 7200
+    assert c.margin_rate == 0.144 and c.total_profit == 7_200_000 and c.status == "추정"
+    assert c.assumed == ["물류창고 (입고·보관·피킹·출고 작업)", "택배 (도서산간 포함)"]
+    assert c.max_supply_for_target == 45000 - (50000 - 32000 - 7200) == 34200     # 이익률 10%를 남기는 최대 매입가
+    sure = costing.analyze(req, {k: {"amount": 0, "basis": "계약"} for k, _ in costing.COMPONENTS})
+    assert sure.status == "확정"
+
+
+def test_console_reads_warehouse_courier_overhead_and_target_margin():
+    from app.admin.b2b.console import Console, Workspace
+
+    w = Workspace(id="t")
+    w.req = BidRequirement(budget_per_person=55000, vat_included=True, headcount=1000)
+    w.evals = []
+    Console()._cost(w, "매입가 32000(견적) 포장 1000 창고 700(가정) 택배 3500(가정) 반품 300 운영 800 기타 0 관리비 5% 이윤 10% 구축비 200만원", None)
+    assert w.cost.residual == 7200 and w.cost.status == "추정" and w.cost.max_supply_for_target == 34200
 
 
 def test_external_proposal_has_no_internal_appendix():
@@ -106,3 +133,19 @@ def test_candidate_records_evidence_coverage():
     assert ev.candidate.rankability in ("DETERMINATE", "INDETERMINATE", "UNKNOWN")
     hold = evidence.evaluate(_full(shipping_cost=None), req, TODAY)
     assert hold.candidate.missing_terms
+
+
+def test_proposal_files_use_pretendard(tmp_path):
+    """2026-11-12: 제안서 글꼴 Pretendard (SIL OFL — 상업 사용 가능)."""
+    import re
+    import zipfile
+
+    from app.admin.b2b import proposal_templates
+
+    req = parse(IBK)
+    p = proposal.build(req, [evidence.evaluate(_full(), req, TODAY)], profile={}, mode="external", today=TODAY)
+    h = zipfile.ZipFile(proposal.to_hwpx(p, tmp_path / "p.hwpx")).read("Contents/header.xml").decode()
+    assert set(re.findall(r'face="([^"]+)"', h)) == {"Pretendard"}
+    d = zipfile.ZipFile(proposal.to_docx(p, tmp_path / "p.docx")).read("word/styles.xml").decode()
+    assert "Pretendard" in d and "Malgun" not in d
+    assert proposal_templates.Template.model_fields["font_office"].default == "Pretendard"

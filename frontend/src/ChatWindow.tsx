@@ -12,6 +12,8 @@ import type { Message } from './types';
 import type { Candidate } from './types/blocks';
 import { API_MODE, sendChat } from './api/client';
 import { pageTitle } from './lib/pageTitle';
+import { BusyStatus } from './components/BusyStatus';
+import { BUSY_TIMEOUT_MS, TIMEOUT_MESSAGE, busyKind, type BusyKind } from './lib/busyStages';
 
 // ── 홈 화면 예시 질문: src/data/trend_examples_YYYY-MM-DD.json 중 최신 파일을 읽는다 ──
 // 파일은 commerce_ai_generator/scripts/update_trend_examples.py가 매일 10시에 만든다.
@@ -112,6 +114,7 @@ export default function ChatWindow() {
     const [sessionId, setSessionIdState] = useState<string | null>(loadSession);
     const setSessionId = (sid: string | null) => { setSessionIdState(sid); saveSession(sid); };
     const [busy, setBusy] = useState(false);
+    const [waitKind, setWaitKind] = useState<BusyKind>('shopping');
     const [error, setError] = useState('');
     const [detail, setDetail] = useState<Candidate | null>(null);
     const [purchasing, setPurchasing] = useState(false);
@@ -216,19 +219,24 @@ export default function ChatWindow() {
         locked.current = true;
         setBusy(true);
         setError('');
+        // 첫 화면에서 보낸 질문은 손님이 볼 수 없는 지난 레시피에 이어 읽히지 않게 (2026-11-12 '4인분' → 지난 레시피 인분 답변)
+        const fresh = messages.length === 0;
         const shown = userText ?? payload.message?.trim();
         if (shown) setMessages(prev => [...prev, { id: newId(), role: 'user', text: shown }]);
+        // 2026-11-12: 레시피는 작성 + 다른 AI 검토로 30초를 넘길 수 있다 — 종류별 안내 문구와 기다리는 시간
+        const kind = busyKind(shown ?? payload.message ?? payload.chip);
+        setWaitKind(kind);
         const current = new AbortController();
         controller.current = current;
-        const timeout = window.setTimeout(() => current.abort('timeout'), 30000);
+        const timeout = window.setTimeout(() => current.abort('timeout'), BUSY_TIMEOUT_MS[kind]);
         try {
-            const response = await sendChat({ session_id: sessionId, ...payload }, current.signal);
+            const response = await sendChat({ session_id: sessionId, ...payload, ...(fresh ? { fresh: true } : {}) }, current.signal);
             if (current.signal.aborted) return;
             setSessionId(response.session_id);
             setMessages(prev => [...prev, { id: newId(), role: 'assistant', blocks: response.blocks, stage: response.stage }]);
         } catch (e) {
             if (current.signal.reason !== 'cancelled')
-                setError(current.signal.aborted ? '응답 시간이 초과됐어요.' : e instanceof Error ? e.message : '응답 오류');
+                setError(current.signal.aborted ? TIMEOUT_MESSAGE[kind] : e instanceof Error ? e.message : '응답 오류');
         } finally {
             clearTimeout(timeout);
             locked.current = false;
@@ -342,7 +350,7 @@ export default function ChatWindow() {
                                 )}
                             </section>
                         ))}
-                        <div role="status" aria-live="polite">{busy && <p className="animate-pulse text-sm text-stone-500">조건을 살펴보고 있어요…</p>}</div>
+                        <div role="status">{busy && <BusyStatus kind={waitKind} />}</div>
                     </div>
                 )}
                 {error && <div role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}

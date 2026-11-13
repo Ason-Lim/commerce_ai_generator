@@ -5,6 +5,7 @@
   트렌드 탭 /admin/trends          검색량 급상승 리포트 (데이터랩 급상승 → 블로그 탐지 → 구글 트렌드 → 교차 확인)
                                    · 블로그 초안(applesodda 임시저장용 텍스트) — 2026-10-31
                                    · 쇼핑커넥트 발급 요청 목록(발급 완료·건너뛰기) — 2026-11-02
+  AI 탭     /admin/ai              AI 비용 (작업별·모델별, 저장본 재사용으로 아낀 호출) · 확인된 사실 — 2026-11-11
   B2B 탭    /admin/b2b             B2B 콘솔 (자연어 지시 → 공고 분석 · 후보 · 원가 · 견적요청서 · 제안서)
             /admin/b2b/monitor     선물 입찰 모니터 · 트렌드 · 평가표 · 엑셀
             /admin/b2b/evidence    공급사 근거 (commerce 의 /b2b/suppliers · /b2b/products)
@@ -227,6 +228,30 @@ def _db():
     from app.services.chat.service import engine_db
 
     return engine_db()
+
+
+# ── AI 비용 (2026-11-11) — 작업별·모델별 비용, 저장본 재사용으로 아낀 호출, 확인된 사실 ──
+@router.get("/admin/ai")
+def admin_ai(request: Request):
+    return _page(request, WEB / "ai.html")
+
+
+@router.get("/admin/api/ai/cost", dependencies=[api])
+def ai_cost(days: int = Query(30, ge=1, le=365)):
+    from app.services.ai import usage
+
+    return usage.report(days)
+
+
+@router.get("/admin/api/ai/knowledge", dependencies=[api])
+def ai_knowledge():
+    from app.services.ai import cache as ai_cache
+    from app.services.ai import facts
+    from app.services.ai import pricing
+
+    return {"cache": [dict(x, label=pricing.TASK_LABELS.get(x["task"].split(":")[0], x["task"])) for x in ai_cache.stats()],
+            "cache_on": ai_cache.enabled(), "facts": [dict(f, current=facts.current(f)) for f in facts.all_facts()],
+            "prices": pricing._table(), "prices_checked": pricing.CHECKED}
 
 
 # ── 추천 근거 (1단계, 2026-11-10) — 고객 화면과 같은 선택을 읽기만 하고 근거를 나눠 보여 준다 ──

@@ -3,6 +3,7 @@ import type { ProductCompareBlock, ProductCompareRow } from "../types/blocks";
 import { goHref, logDirectClick } from "../api/client";
 import { useChatActions } from "./ChatActions";
 import { cx, won } from "../lib/format";
+import { VarietyMixTag, WeightNoteTag } from "./ui";
 
 /** 상품명 앞의 [빨간특기] 같은 대괄호 태그를 제거한다. */
 const cleanTitle = (t: string) => t.replace(/^\s*(\[[^\]]*\]\s*)+/, "").trim() || t;
@@ -74,13 +75,14 @@ function Row({ r, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
             className="line-clamp-2 font-semibold leading-snug text-ink hover:underline">{name}</a>
         ) : <span className="line-clamp-2 font-semibold leading-snug">{name}</span>}
         {r.mall && <div className="mt-0.5 text-xs text-ink3">{r.mall}</div>}
+        {r.variety_mix && <div className="mt-1"><VarietyMixTag mix={r.variety_mix} /></div>}
       </th>
       <td className="whitespace-nowrap px-3 py-2.5">
         <span className={cx("font-bold", bestTotal && "text-accent")}>{won(r.total)}</span>
         {bestTotal && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}
         <div className="text-[11px] text-ink3">{r.shipping_included ? "배송비 포함" : "배송비 미확인"}</div>
       </td>
-      <td className="whitespace-nowrap px-3 py-2.5">{r.pack ?? <span className="text-warn">용량 미확인</span>}</td>
+      <td className="whitespace-nowrap px-3 py-2.5">{r.pack ?? (r.weight_note ? <WeightNoteTag note={r.weight_note} /> : <span className="text-warn">용량 미확인</span>)}</td>
       <td className="whitespace-nowrap px-3 py-2.5">
         {r.per100g != null
           ? <><span className={cx(bestPer && "font-semibold text-accent")}>{won(r.per100g)}</span>
@@ -96,7 +98,7 @@ function Row({ r, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
       )}
       {hasPrep && <td className={cx("whitespace-nowrap px-3 py-2.5", r.prep !== "깐굴 표기" && "text-warn")}>{r.prep ?? "—"}</td>}
       <td className="px-3 py-2.5 text-xs text-ink2">
-        {r.seller_claims.length ? <>{r.seller_claims.join(" · ")} <span className="text-ink3">(확인 안 됨)</span></> : "—"}
+        {r.seller_claims.length ? <>{r.seller_claims.join(" · ")} <span className="text-ink3">(판매자 주장 · 확인 안 됨)</span></> : "—"}
       </td>
     </tr>
   );
@@ -167,6 +169,7 @@ function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: 
         <div className="min-w-0">
           <div className="line-clamp-2 font-semibold leading-snug">{name}</div>
           {r.mall && <div className="mt-0.5 text-xs text-ink3">{r.mall}</div>}
+        {r.variety_mix && <div className="mt-1"><VarietyMixTag mix={r.variety_mix} /></div>}
         </div>
       </div>
       <div className="mt-3">
@@ -175,7 +178,7 @@ function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: 
           {bestTotal && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}
           <div className="text-[11px] text-ink3">{r.shipping_included ? "배송비 포함" : "배송비 미확인"}</div>
         </>)}
-        {line("포장 용량", r.pack ?? <span className="text-warn">용량 미확인</span>)}
+        {line("포장 용량", r.pack ?? (r.weight_note ? <WeightNoteTag note={r.weight_note} /> : <span className="text-warn">용량 미확인</span>))}
         {line("100g당", r.per100g != null
           ? <><span className={cx(bestPer && "font-semibold text-accent")}>{won(r.per100g)}</span>
               {bestPer && <span className="tag ml-1 bg-accentSoft text-accent">최저</span>}</>
@@ -183,7 +186,7 @@ function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: 
         {hasNeed && line("필요량 대비", <span className={cx(r.fit === "fits" ? "text-accent" : r.fit === "unknown" || r.fit === "bulk" ? "text-warn" : "")}>{r.fit_text ?? "—"}</span>)}
         {hasPrep && line("손질 표기", <span className={cx(r.prep !== "깐굴 표기" && "text-warn")}>{r.prep ?? "—"}</span>)}
         {line("판매자 표기", r.seller_claims.length
-          ? <span className="text-xs">{r.seller_claims.join(" · ")} <span className="text-ink3">(확인 안 됨)</span></span> : "—")}
+          ? <span className="text-xs">{r.seller_claims.join(" · ")} <span className="text-ink3">(판매자 주장 · 확인 안 됨)</span></span> : "—")}
       </div>
       {href ? (
         <a href={href} target="_blank" rel={r.affiliate ? "sponsored noopener" : "noopener"}

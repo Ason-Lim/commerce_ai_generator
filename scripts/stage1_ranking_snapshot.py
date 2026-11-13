@@ -61,7 +61,7 @@ def _queries(m):
         fruits = [r[0] for r in c.execute(text(
             "SELECT DISTINCT fruit_name FROM vw_ai_recommendation_final "
             "WHERE fruit_name IS NOT NULL ORDER BY 1"))]
-    return fruits + EXTRA_QUERIES
+    return list(dict.fromkeys(fruits + EXTRA_QUERIES))      # 같은 질의 중복 제거 (예: 과일 이름 '샤인머스캣')
 
 
 def _call(m, q, priority, force_fallback):
@@ -155,7 +155,8 @@ def compare(a: str, b: str):
     L = [f"# 최종 표시 순위 비교: {a} → {b}", "",
          f"- {a}: {A['meta']['run_at']} HEAD `{A['meta']['head']}`" + (" +미커밋" if A['meta']['app_uncommitted'] else ""),
          f"- {b}: {B['meta']['run_at']} HEAD `{B['meta']['head']}`" + (" +미커밋" if B['meta']['app_uncommitted'] else ""),
-         f"- 질의 {len(A['meta']['queries'])}개 × 모드 {len(A['meta']['priorities'])}개, 각 상위 10, session_id 없음", ""]
+         f"- 질의 {len(set(A['meta']['queries']))}개 × 모드 {len(A['meta']['priorities'])}개 = {len(set(A['meta']['queries'])) * len(A['meta']['priorities'])}, "
+         f"각 상위 10, session_id 없음 (질의: {', '.join(dict.fromkeys(A['meta']['queries']))})", ""]
     for path in ("pipeline", "db_fallback"):
         if not A[path] or not B[path]:
             continue

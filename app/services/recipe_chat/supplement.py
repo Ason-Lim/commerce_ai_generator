@@ -141,7 +141,7 @@ def from_env(env=None, statement_factory=None) -> Supplements:
     ready = bool((source.get("DEEPSEEK_API_KEY") or "").strip() and (source.get("DEEPSEEK_MODEL") or "").strip())
     generator = None
     if mode == "on" and ready:
-        client = LLMClient(SYSTEM_PROMPT, provider="deepseek", env=source)
+        client = LLMClient(SYSTEM_PROMPT, provider="deepseek", env=source, cache="recipe_supplement", cache_days=180)
         generator = lambda text: client.chat_json(text, temperature=0.2)  # noqa: E731
     model = (source.get("DEEPSEEK_MODEL") or "").strip() or None
     return Supplements(generator, statement_factory=statement_factory, mode=mode, model=model)

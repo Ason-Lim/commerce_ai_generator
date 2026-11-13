@@ -72,6 +72,30 @@ def is_trend_request(text: str) -> bool:
     return bool(TREND_RE.search(t) and TREND_DISH_RE.search(t) and not NOT_TREND_RE.search(t))
 
 
+# 2026-11-11: '인기 샌드위치 레시피' 는 요즘 유행 요리 전체 목록이 아니라 샌드위치 레시피를 묻는다
+_TREND_FILLER = re.compile(
+    r"^(?:요즘|최근|요새|올해|이번|가장|제일|진짜|많이|많은|좀|된|되는|하는|요리|레시피|음식|메뉴|디저트|간식|만드는|만들|만들기|"
+    r"법|방법|알려\s*줘|알려\s*주세요|알려줘요|추천|추천해\s*줘|추천해\s*주세요|해\s*줘|주세요|뭐|뭐야|뭐예요|뭐가|뭘|"
+    r"있어|있는|있나요|있어요|어떤|sns|SNS|틱톡|유튜브|인스타|인스타그램|해먹기|해\s*먹는|먹는|거|것|걸)"
+    r"(?:이|가|은|는|을|를|도|요)?$")
+_PARTICLE = re.compile(r"(?<=..)(?:은|는|을|를|의|도|으로|에서)$")     # '떡볶이'·'김밥이' 의 '이'는 건드리지 않는다
+
+
+def trend_subject(text: str) -> str:
+    """유행 질문 속 요리 이름 ('인기 샌드위치 레시피' → '샌드위치'). 없으면 '' — 그때만 전체 유행 목록."""
+    keep = []
+    for tok in re.split(r"[\s?!.,~]+", text or ""):
+        if not tok or TREND_RE.match(tok):          # 인기·유행하는·핫한 …
+            continue
+        if _TREND_FILLER.match(tok):
+            continue
+        bare = _PARTICLE.sub("", tok)
+        if not bare or _TREND_FILLER.match(bare) or TREND_DISH_RE.fullmatch(bare):
+            continue
+        keep.append(bare)
+    return " ".join(keep)
+
+
 def find_url(text: str) -> str | None:
     m = URL_RE.search(text or "")
     return m.group(0).rstrip(".,)") if m else None
@@ -79,6 +103,125 @@ def find_url(text: str) -> str | None:
 
 def flat(text: str) -> str:
     return re.sub(r"[\s·\-_/|()\[\]{}'\"“”‘’!?.,~]+", "", (text or "").lower())
+
+
+# 2026-11-12 (사용자): '생새우부추전' 은 이름 그대로인 글이 거의 없고 유튜브에는 '새우부추전'이 많다 — 비슷한 요리도 보여 준다.
+# 앞말(생·제철·김장용 …)을 뗀 이름, 또는 '재료 + 요리 종류(두 글자 이상)'가 제목에 따로 있으면 '비슷한 레시피'로 표시한다.
+NAME_PREFIXES = ("김장용", "김장", "제철", "햇", "생")
+# '생'은 재료 앞에서만 뗀다 — 생강·생선·생크림·생일은 한 낱말 (생강차 → 강차가 되면 안 된다)
+RAW_FOODS = ("새우", "굴", "오징어", "문어", "낙지", "전복", "연어", "갈치", "고등어", "참치", "광어", "우럭", "대구", "명태",
+             "꽃게", "게", "멸치", "미역", "다시마", "김", "표고", "돼지", "소고기", "닭", "고기")
+DISH_TAILS = ("부추전", "파전", "김치전", "감자전", "호박전", "동그랑땡", "계란찜", "달걀찜", "비빔밥", "볶음밥", "덮밥",
+              "국밥", "칼국수", "수제비", "무국", "미역국", "된장국", "콩나물국", "찌개", "전골", "볶음", "무침", "조림",
+              "구이", "튀김", "샐러드", "파스타", "리조또", "솥밥", "죽")
+
+
+def similar_names(dish: str) -> list[str]:
+    """'생새우부추전' → ['새우부추전'] (앞말을 뗀 이름, 두 글자 이상 남을 때만)."""
+    d = flat(dish)
+    out, changed = [], True
+    while changed:
+        changed = False
+        for p in NAME_PREFIXES:
+            if d.startswith(p) and len(d) - len(p) >= 2 and (p != "생" or d[1:].startswith(RAW_FOODS)):
+                d, changed = d[len(p):], True
+                out.append(d)
+    return out
+
+
+def dish_parts(dish: str) -> tuple[str, str] | None:
+    """'생새우부추전' → ('새우', '부추전') — 재료와 요리 종류가 제목에 떨어져 있어도('새우 듬뿍 부추전') 비슷한 요리로 본다."""
+    names = similar_names(dish) or [flat(dish)]
+    d = names[-1]
+    for tail in sorted(DISH_TAILS, key=len, reverse=True):
+        if d.endswith(tail) and len(d) - len(tail) >= 2:
+            return d[:-len(tail)], tail
+    return None
+
+
+# 채소 하나를 더한 요리는 그 채소를 뺀 기본 요리와 비슷하다 — '생새우부추전'은 '생새우전'에 부추만 넣은 것 (2026-11-12 사용자)
+BASE_KIND = {"부추전": "전", "파전": "전", "호박전": "전", "김치전": "전", "감자전": "전",
+             "무국": "국", "미역국": "국", "콩나물국": "국", "된장국": "국"}
+
+
+def base_names(dish: str) -> list[str]:
+    """'생새우부추전' → ['생새우전', '새우전'] (재료 + 기본 요리 종류)."""
+    parts = dish_parts(dish)
+    if not parts or parts[1] not in BASE_KIND:
+        return []
+    kind = BASE_KIND[parts[1]]
+    d = flat(dish)
+    head_full = d[: len(d) - len(parts[1])]            # 앞말 포함 ('생새우')
+    return list(dict.fromkeys([head_full + kind, parts[0] + kind]))
+
+
+# 2026-11-12 (사용자): 유튜브는 '생새우', '김장용 생새우', '김장용 생새우 활용법'처럼 다양한 말로 찾아야 나온다.
+# 요리 이름 → 이름 그대로 · 비슷한 이름 · 기본 요리 · (주재료) 요리·활용법 · (맥락: 김장용 생새우) 전·활용법 …
+RECIPE_ISH_RE = re.compile(r"레시피|만들기|만드는|만들어|부치기|부침|끓이기|끓이는|볶기|굽기|활용|요리|하는\s*법|황금")
+
+
+KIND_TAILS = DISH_TAILS + ("전", "국", "찜", "탕", "밥")      # 재료를 떼어 낼 때만 (한 글자 종류는 비슷한 요리 판정에 안 씀)
+VEG_INFIX = ("부추", "양파", "감자", "호박", "김치", "무", "파")   # '방어무조림' → 재료 '방어' + 기본 요리 '방어조림'
+
+
+def _split_kind(dish: str) -> tuple[str, str] | None:
+    d = flat(dish)
+    for p in ("김장용", "김장", "제철", "햇"):
+        d = d.removeprefix(p)
+    for tail in sorted(KIND_TAILS, key=len, reverse=True):
+        if d.endswith(tail):      # 가장 긴 종류에서 멈춘다 ('굴국밥' → 굴 + 국밥, '굴국' + 밥 이 아니라)
+            return (d[: -len(tail)], tail) if len(d) - len(tail) >= 2 else None
+    return None
+
+
+def main_ingredient(dish: str) -> str | None:
+    """'생새우부추전' → '생새우' · '김장용 생새우 전' → '생새우' · '방어무조림' → '방어' · 모르면 None."""
+    sp = _split_kind(dish)
+    if not sp:
+        return None
+    head, tail = sp
+    for veg in VEG_INFIX:
+        if head.endswith(veg) and len(head) - len(veg) >= 2:
+            return head[: -len(veg)]
+    if tail in BASE_KIND:        # '생새우부추전' 은 꼬리가 '부추전' — 재료는 '생새우'
+        return head
+    return head if len(head) >= 2 else None
+
+
+def _kind_of(dish: str) -> str | None:
+    sp = _split_kind(dish)
+    if not sp:
+        return None
+    head, tail = sp
+    ing = main_ingredient(dish)
+    if ing and head != ing and head.startswith(ing):       # '방어무' + '조림' → '조림'
+        return tail
+    return BASE_KIND.get(tail, tail)
+
+
+def search_words(dish: str, context: str | None = None, limit: int = 6) -> list[str]:
+    """검색에 쓸 말들, 가까운 것부터. context = 고객이 말한 재료 이름('김장용 생새우')."""
+    base, sims = base_names(dish), similar_names(dish)
+    ingredient = main_ingredient(dish)
+    kind = _kind_of(dish)
+    if not context and re.search(r"김장", dish):
+        context = f"김장용 {ingredient}" if ingredient else None
+    # 순서 = 검색 순서: 이름 그대로 → 기본 요리 → (맥락) 재료+종류·활용법 → 나머지 비슷한 이름 → 재료 요리
+    words = [dish] + base[:1]
+    if context:
+        words += ([f"{context} {kind}"] if kind else []) + [f"{context} 활용법"]
+    words += base[1:] + sims
+    if context:
+        words += [f"{context} 요리"]
+    if ingredient:
+        words += ([f"{ingredient}{kind}"] if kind else []) + [f"{ingredient} 요리"]
+    out, seen = [], set()
+    for w in words:
+        key = flat(w)
+        if key and key not in seen:
+            seen.add(key)
+            out.append(w)
+    return out[:limit]
 
 
 def clean(text: str) -> str:
@@ -399,8 +542,11 @@ def from_env(env=None):
         def interpreter(system: str, payload: dict) -> dict:
             if system not in clients:
                 # the headline list makes the model think long (21 s measured, >30 s at times): wait up to 75 s
+                # 2026-11-11: 생각 모드 끔 — 이름 뽑기는 추론이 필요 없고, 켜져 있으면 41초(화면은 30초에 포기)
                 clients[system] = LLMClient(system, provider="deepseek", env=source,
-                                            timeout=75.0 if system == TREND_PROMPT else 30.0)
+                                            timeout=75.0 if system == TREND_PROMPT else 30.0,
+                                            cache="recipe_discover", cache_days=7,   # 2026-11-11: 같은 뉴스·목록이면 다시 쓰기
+                                            thinking=False)
             return clients[system].chat_json(json.dumps(payload, ensure_ascii=False), temperature=0)
     return Discovery(provider, interpreter, video=video, social=social, surge=surge_reader, cafe=True, signals=True,
                      history=history)
@@ -648,54 +794,97 @@ class Discovery:
             query = f"{query} 레시피"
         return {"dish": dish, "full_name": full, "query": query, "by": "ai"}
 
-    def dish(self, text: str, fallback: str, *, with_signals: bool = True) -> dict:
+    def dish(self, text: str, fallback: str, *, with_signals: bool = True, context: str | None = None) -> dict:
         trace: dict = {"search": [], "llm": []}
         name = self.name_of(text, fallback, trace["llm"])
         base = {**name, "searched_at": self.searched_at(), "provider": "naver", "trace": trace}
         if self.provider is None:
             return {**base, "status": "unavailable", "candidates": []}
-        try:
-            hits = self.provider.search(name["query"], kind="blog", display=30, sort="sim", trace=trace["search"])
-        except SearchError as exc:
-            return {**base, "status": "search_failed", "candidates": [], "error": str(exc)}
         names = [flat(name["dish"])] + ([flat(name["full_name"])] if name["full_name"] else [])
-        # never link a look-alike: the title must name this dish (or the full name) and be a recipe post
-        hits = group_hits([h for h in hits if any(n in flat(h.title) for n in names)])
+        sims = [n for n in dict.fromkeys(base_names(name["dish"]) + similar_names(name["dish"])) if n not in names]
+        parts = dish_parts(name["dish"])
+        ingredient = main_ingredient(name["dish"])
+        words = search_words(name["dish"], context)
+        trace["words"] = words
+
+        def match(title: str) -> str | None:
+            """'same' (이 요리 이름) · 'similar' (앞말을 뗀 이름, 기본 요리, 재료 + 요리 종류) ·
+            'related' (주재료가 제목에 있는 요리·활용법 글 — '김장용 생새우 활용 요리') · None (다른 요리)"""
+            t = flat(title)
+            if any(n in t for n in names):
+                return "same"
+            if any(n in t for n in sims) or (parts and parts[0] in t and parts[1] in t):
+                return "similar"
+            if ingredient and ingredient in t and RECIPE_ISH_RE.search(title):
+                return "related"
+            return None
+        rank = {"same": 2, "similar": 1, "related": 0}
+        # never link a look-alike as the same dish: the title must name this dish (or the full name) — a similar dish
+        # is shown labelled '비슷한 레시피'
+        queries = [name["query"]] + [w if re.search(r"활용|요리$", w) else f"{w} 레시피" for w in words[1:]]
+        hits = []
+        try:
+            for q in queries:
+                found = [h for h in self.provider.search(q, kind="blog", display=30, sort="sim", trace=trace["search"])
+                         if match(h.title)]
+                hits += [h for h in found if h.link not in {x.link for x in hits}]
+                if any(match(h.title) == "same" for h in hits) or \
+                        len([h for h in hits if match(h.title) != "related"]) >= 3 or len(hits) >= 6:
+                    break
+        except SearchError as exc:
+            if not hits:
+                return {**base, "status": "search_failed", "candidates": [], "error": str(exc)}
+        hits = group_hits(hits)
         alias_ok = bool(name["full_name"]) and len({h.group for h in hits if flat(name["full_name"]) in flat(h.title)
                                                     and flat(name["dish"]) in flat(h.title)}) >= 1
-        recipes = [h for h in hits if RECIPE_WORD_RE.search(h.title) and not NOT_RECIPE_RE.search(h.title)]
-        # titles that say 레시피 first, then the newest
-        recipes.sort(key=lambda h: ("레시피" in h.title, h.date or ""), reverse=True)
+        recipes = [h for h in hits if (RECIPE_WORD_RE.search(h.title) or RECIPE_ISH_RE.search(h.title))
+                   and not NOT_RECIPE_RE.search(h.title)]
+        # 이름이 같은 글 → 비슷한 요리 → 관련 글, 그 안에서 '레시피'라고 쓴 글, 최신 순
+        recipes.sort(key=lambda h: (rank[match(h.title)], "레시피" in h.title, h.date or ""), reverse=True)
         picked, seen = [], set()
+
+        def card(h):
+            m = match(h.title)
+            return {**asdict(h), "match": m, "similar": m != "same"}
         for h in recipes:
             if h.group in seen:
                 continue
             seen.add(h.group)
-            picked.append(asdict(h))
+            picked.append(card(h))
             if len(picked) == 3:
                 break
         # 2026-11-01: café posts and videos — the same rules (the name in the title, a recipe, not a product/review)
         def ok(h):
-            return any(n in flat(h.title) for n in names) and (RECIPE_WORD_RE.search(h.title) or "만들" in h.title) \
+            return bool(match(h.title)) and (RECIPE_WORD_RE.search(h.title) or RECIPE_ISH_RE.search(h.title)) \
                 and not NOT_RECIPE_RE.search(h.title)
         if self.cafe:
             try:
                 cafe = [h for h in self.provider.search(name["query"], kind="cafearticle", display=30, sort="sim",
                                                         trace=trace["search"]) if ok(h)]
-                picked += [asdict(h) for h in group_hits(cafe)[:1]]
+                cafe.sort(key=lambda h: rank[match(h.title)], reverse=True)
+                picked += [card(h) for h in group_hits(cafe)[:1]]
             except SearchError:
                 trace["cafe"] = "검색 실패"
         if self.video is not None:
             try:
                 # recent videos first (2026-11-02 real run: the card said '최근 30일 영상 10개 이상' but showed January
                 # videos); only when there is none in 60 days, any date
-                vids = [h for h in self.video.search(f"{name['dish']} 만들기", days=60, max_results=15,
-                                                     trace=trace["search"])[0] if ok(h)]
-                if not vids:
-                    vids = [h for h in self.video.search(f"{name['dish']} 만들기", max_results=15,
-                                                         trace=trace["search"])[0] if ok(h)]
-                vids.sort(key=lambda h: h.date or "", reverse=True)
-                picked += [asdict(h) for h in group_hits(vids)[:2]]
+                # 2026-11-12: 여러 말로 찾는다 — 생새우부추전 → 생새우전 → … → 김장용 생새우 활용법 (사용자 요청).
+                # 검색 한 번이 할당량 100(하루 1만)이라 최근 60일은 첫 말만, 나머지는 기간 없이, 영상 2개가 모이면 멈춘다.
+                vids, seen_links = [], set()
+                for n, word in enumerate(words[:4]):
+                    q = word if re.search(r"활용|요리$", word) else f"{word} 만들기"
+                    got = []
+                    if n == 0:
+                        got = [h for h in self.video.search(q, days=60, max_results=15, trace=trace["search"])[0] if ok(h)]
+                    if not got:
+                        got = [h for h in self.video.search(q, max_results=15, trace=trace["search"])[0] if ok(h)]
+                    vids += [h for h in got if h.link not in seen_links]
+                    seen_links |= {h.link for h in got}
+                    if len([h for h in vids if match(h.title) != "related"]) >= 2 or len(vids) >= 4:
+                        break
+                vids.sort(key=lambda h: (rank[match(h.title)], h.date or ""), reverse=True)
+                picked += [card(h) for h in group_hits(vids)[:2]]
             except SearchError:
                 trace["video"] = "검색 실패"
         signals = self.signals_for(name["dish"], trace) if self.signals and with_signals else None

@@ -115,7 +115,7 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
 <div class="app">
 <aside>
   <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b" aria-current="page">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b" aria-current="page">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
   <h2>현재 작업</h2><div class="ws" id="ws"><b>선택된 공고 없음</b>프롬프트로 시작하세요</div>
   <h2>공고</h2><div id="bids"></div>
   <label class="up">공고 파일 올리기 (CSV·JSON)<input type="file" id="file" accept=".csv,.json" hidden></label>
@@ -266,14 +266,15 @@ function candPanel(rows){
 }
 
 function costPanel(b){
-  const p=panel("1인 비용 구조",b.budget?`예산 ${won(b.budget)}`:"");
-  const max=b.budget||Math.max(1,...b.lines.map(l=>l.amount||0));let acc=0;
+  const p=panel("1인 비용·이익 구조",b.budget?`예산 ${won(b.budget)}${b.net_budget&&b.net_budget!==b.budget?` · 공급가액 ${won(b.net_budget)} (VAT 제외)`:""}`:"");
+  const max=b.net_budget||b.budget||Math.max(1,...b.lines.map(l=>l.amount||0));let acc=0;
   const wf=document.createElement("div");wf.className="wf";
   b.lines.forEach(l=>{const known=l.amount!=null;const left=acc/max*100;const w=known?l.amount/max*100:6;if(known)acc+=l.amount;
-    wf.insertAdjacentHTML("beforeend",`<div class="wfrow"><span>${esc(l.label)}</span><div class="wfbar"><i class="${known?"":"unk"}" style="left:${Math.min(left,100)}%;width:${w}%"></i></div><span class="num">${known?won(l.amount):'<span style="color:var(--hold)">미확인</span>'}</span></div>`)});
+    wf.insertAdjacentHTML("beforeend",`<div class="wfrow"><span>${esc(l.label)}</span><div class="wfbar"><i class="${known?"":"unk"}" style="left:${Math.min(left,100)}%;width:${w}%"></i></div><span class="num">${known?won(l.amount)+(l.basis==="가정"?' <small style="color:var(--hold)">가정</small>':""):'<span style="color:var(--hold)">미확인</span>'}</span></div>`)});
   p.append(wf);
-  p.insertAdjacentHTML("beforeend",b.residual!=null?`<div class="residual">잔여액 ${won(b.residual)} (모든 항목 입력됨 — 입력값 기준, 견적 확정 아님)</div>`
-    :`<div class="residual unk">잔여액 확정 불가 — 미확인 ${b.unknown.length}개 (미확인 ≠ 0원) · 확인된 합계 ${won(b.known_total)}</div>`);
+  p.insertAdjacentHTML("beforeend",b.residual!=null?`<div class="residual${b.residual<0?" unk":""}">1인 이익 ${won(b.residual)} · 이익률 ${(b.margin_rate*100).toFixed(1)}%${b.total_profit!=null?` · 총 ${won(b.total_profit)}`:""} — ${esc(b.status)}${b.assumed&&b.assumed.length?` (가정값: ${b.assumed.map(esc).join(", ")})`:""}</div>`
+    :`<div class="residual unk">이익 산출 불가 — 미확인 ${b.unknown.length}개 (미확인 ≠ 0원) · 확인된 합계 ${won(b.known_total)}</div>`);
+  if(b.max_supply_for_target!=null)p.insertAdjacentHTML("beforeend",`<div class="residual">목표 이익률 ${Math.round(b.target_margin_rate*100)}%를 남기려면 매입가 ${won(b.max_supply_for_target)} 이하</div>`);
   if(b.scenarios.length)p.insertAdjacentHTML("beforeend",`<table style="margin-top:10px"><thead><tr><th>가정: 공개가 = 매입가</th><th class=num>가정 매입가</th><th class=num>추가비용 전 차액</th><th>판단</th></tr></thead><tbody>${
     b.scenarios.map(s=>`<tr><td>${esc(s.candidate)}</td><td class=num>${won(s.assumed_supply)}</td><td class="num ${s.gap_before_other_costs<0?"neg":""}">${s.gap_before_other_costs>0?"+":""}${won(s.gap_before_other_costs)}</td><td class=q>${esc(s.verdict)}</td></tr>`).join("")}</tbody></table>`);
   if(b.notes.length)p.insertAdjacentHTML("beforeend",`<ul class="q" style="margin:10px 0 0;padding-left:18px">${b.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`);

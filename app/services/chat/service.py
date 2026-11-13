@@ -38,6 +38,8 @@ COMPARE_SAVED_RE = re.compile(r"(관심|찜)\s*(상품|목록|한\s*(거|것|상
 SESSION_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 MAX_TURNS = 12
 MAX_PRODUCTS = 10
+VARIETY_MAX = 3          # 2026-11-11: 품종별 상품 — 품종 수(검색 횟수) 한도
+VARIETY_PER = 3          # 품종마다 보여 줄 상품 수
 
 PRIORITY_RULES = (
     ("price", re.compile(r"최저가|제일\s*싼|가장\s*싼|저렴|싸게")),
@@ -125,16 +127,34 @@ def item_to_card(item: dict, rank: int) -> dict:
     return card
 
 
+# 2026-11-12: 첫 화면에서 보낸 질문 — 손님이 볼 수 없는 지난 맥락(열린 레시피·되묻기·직전 계산)은 닫는다.
+# 보유량 기록(recipe 세션 저장소)·관심 상품·지난 카드의 이동 링크(last_items)는 그대로 둔다.
+CONTEXT_KEYS = ("recipe_id", "pending", "last_stock_ingredient_id", "cup_ml", "servings", "dish_purchase", "menu_plan",
+                "consult", "discover")
+
+
+def close_context(state: dict) -> dict:
+    out = dict(state)
+    for k in CONTEXT_KEYS:
+        if k in out:
+            out[k] = None
+    out["mode"] = None
+    return out
+
+
 class ChatService:
     def __init__(self, db: Db | None = None, *, shopping: Callable | None = None,
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
                  keyword_extractor: Callable | None = None, food_tips: Callable | None = None,
+                 food_review: Callable | None = None,
                  trend_report: Callable | None = None):
         self.db = db
         # trend_report() -> 오늘의 급상승 리포트 (surge.load, 2026-11-06) — '요즘 뜨는 식품' 답변
         self.trend_report = trend_report
         # food_tips(text) -> {"food", "tips": [...], "buy_with": [...]} (DeepSeek, 2026-11-04); validated before shown
         self.food_tips = food_tips
+        # 2026-11-11: 교차 확인 — (context, lines) → [{"ok","note"}] | None (Claude). 없으면 검토 없이 저장
+        self.food_review = food_review
         self.shopping = shopping or default_shopping
         self.nlu_loader = nlu_loader
         # keyword_extractor(text) -> {"keyword": str} (DeepSeek); only for long shopping sentences, validated
@@ -143,12 +163,15 @@ class ChatService:
 
     # ── public ────────────────────────────────────────────
     def handle(self, session_id: str | None, message: str | None = None,
-               answers: dict | None = None, chip: str | None = None, owner: str | None = None) -> dict:
+               answers: dict | None = None, chip: str | None = None, owner: str | None = None,
+               fresh: bool = False) -> dict:
         sid = session_id if isinstance(session_id, str) and SESSION_RE.fullmatch(session_id) else str(uuid.uuid4())
         recipe_sid = "recipe:" + sid
         text = (message or chip or "").strip()
 
         state, revision, persist = self._load(sid)
+        if fresh:
+            state = close_context(state)
 
         if not text and not answers:
             return self._response(sid, "empty", [B.text("무엇을 도와드릴까요?")])
@@ -525,12 +548,16 @@ class ChatService:
         except Exception:  # noqa: BLE001
             log.warning("chat state not saved")
 
-    def _result_blocks(self, sid, query, picked, budget, found, rechecked=False):
+    def _result_blocks(self, sid, query, picked, budget, found, rechecked=False, frozen: list | None = None):
         picks, others = picked["picks"], picked["others"]
         go = lambda c: f"/go/{sid}/k/{c['key']}"  # noqa: E731
         head = (f"예산 **{budget['label']}** 에 맞춰 앞서 찾은 '{query}' 후보 {found}개를 다시 견줬어요."
                 if rechecked else f"'{query}' 후보 {found}개를 같은 기준으로 견줘서 {len(picks)}개를 골랐어요.")
         blocks = [B.text(head)]
+        if picked.get("bulk_held"):
+            # 2026-11-12: 대용량은 요청할 때만 — 뒤로 둔 것을 숨기지 않고 알린다
+            blocks.append(B.notice(f"대용량 상품 {picked['bulk_held']}개는 업소·대가족용으로 보고 다른 후보 맨 뒤에 두었어요. "
+                                   f"대용량이 필요하면 '대용량 {query}'라고 말씀해 주세요."))
         if picked["budget_miss"]:
             blocks.append(B.notice(f"예산 {budget['label']} 안에 드는 후보가 없어요. 가격이 낮은 순으로 보여 드려요. "
                                    f"새로 찾아볼까요? 예: '{budget['label']} {query}'", "warn"))
@@ -554,6 +581,11 @@ class ChatService:
         blocks.append(B.product_list([_public(c, go=go(c)) for c in picks]))
         if others:
             blocks.append(B.product_list([_public(c, go=go(c)) for c in others], title=f"다른 후보 {len(others)}개",
+                                         collapsed=True))
+        if frozen:                              # 2026-11-11: 냉동 상품은 따로 보기 (같은 기준으로 견주지 않음)
+            blocks.append(B.product_list([_public(c, go=go(c)) for c in frozen], title=f"냉동 상품 {len(frozen)}개 따로 보기",
+                                         note="생과·생물과 쓰임새가 달라 위 후보와 같은 기준(100g당 가격·가성비)으로 "
+                                              "견주지 않았어요. 냉동을 찾으시면 '냉동 " + query + "'처럼 말씀해 주세요.",
                                          collapsed=True))
         # 2026-11-09 A안: 일반 상품 추천에도 목록 끝 비교 카드 (같은 검색 후보 2개 이상)
         if len(picks) + len(others) >= 2:
@@ -659,27 +691,147 @@ class ChatService:
     def _food_question_turn(self, sid, text, state, revision, persist):
         """식품 상담: 일반 정보(AI 정리, 표시) + 그 식품의 상품 후보 (평소 쇼핑 답변과 같은 순위·고지)."""
         query, _terms = shopping_terms(text, self.keyword_extractor)
-        raw = None
-        if self.food_tips is not None:
-            try:
-                raw = self.food_tips(text)
-            except Exception:  # noqa: BLE001 — 답하지 못해도 상품 후보는 보여 준다
-                log.warning("food tips unavailable")
-        food = ((raw or {}).get("food") or "").strip() if isinstance(raw, dict) else ""
-        if food and re.sub(r"\s+", "", food) in re.sub(r"\s+", "", text) and 2 <= len(food) <= 20:
-            query = food                       # 문장에 실제로 있는 식품 이름일 때만 검색어로 쓴다
-        got = food_tips_mod.validated(raw, text)
+        # 2026-11-11: 저장된 식품 지식이 있으면 AI 를 부르지 않고 다시 쓴다. 새로 만든 답은 Claude 가 검토(교차 확인)해 저장.
+        from app.services.chat import food_knowledge
+
+        try:
+            know = food_knowledge.answer(text, query, self.food_tips, self.food_review)
+        except Exception:  # noqa: BLE001 — 답하지 못해도 상품 후보는 보여 준다
+            log.warning("food tips unavailable")
+            know = {"got": food_tips_mod.validated(None, text), "food": query, "review": None,
+                    "saved_at": None, "from_cache": False}
+        query = know["food"] or query
+        # 2026-11-11: 출처로 확인한 사실(app/services/ai/verified_facts.json)이 있으면 AI 답 대신 그 내용을 쓴다
+        from app.services.ai import facts as facts_mod
+
+        got, verified = facts_mod.apply(query, know["got"])
+        flags = {(f["kind"], f["i"]): f["note"] for f in (know["review"] or {}).get("flags") or []}
+        know = dict(know, verified=len(verified), shown_flags=len([k for k in flags if k not in verified]))
+
+        def warn(kind, i):
+            if (kind, i) in verified:             # 확인된 사실 — Claude 의견 대신 출처
+                return f" _(출처 확인 · {verified[(kind, i)]['source_name']})_"
+            return f" _(Claude 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""
+
+        # 2026-11-11 (검토 반영): 안전 질문은 검토를 못 했으면 AI 줄을 빼고, 두 AI 판단이 다른 줄은 확정하지 않는다
+        safety, unreviewed = bool(know.get("safety")), know.get("review") is None
+        if safety:                                # 안전 질문은 의견 대신 '확정하지 않음' — 안내 줄 문구도 맞춘다
+            know = dict(know, shown_flags=0, held=len([k for k in flags if k not in verified]))
+
+        def held(kind, i):
+            return safety and (kind, i) not in verified and (unreviewed or (kind, i) in flags)
+
+        def line(kind, i, head, body):
+            if not held(kind, i):
+                return f"{head}{body}{warn(kind, i)}"
+            return None if unreviewed else f"{head}_({SAFETY_HOLD})_"
         lead: list = []
-        if got["tips"]:
-            lead.append(B.text(f"**{_label(query)}** 질문에 대한 일반 정보예요.\n" + "\n".join(f"- {t}" for t in got["tips"])))
-            lead.append(B.notice(food_tips_mod.LABEL))
-        else:
+        # 2026-11-11: 제철·품종을 물었으면 그 답을 먼저 (일반 정보 · AI 정리 표시는 같다)
+        answer: list[str] = []
+        if got.get("season") and (row := line("season", 0, "**언제 맛있나요 (제철)** ", got["season"])):
+            answer.append(row)
+        if got.get("varieties"):
+            # 2026-11-11: 품종 이름을 국립종자원 품종코드 목록과 맞춰 본다 (목록 파일이 없으면 표시 없이 예전처럼)
+            from app.services.reference import seed_varieties
+
+            lines, checked = [], False
+            for vi, v in enumerate(got["varieties"]):
+                hit = seed_varieties.known(v["name"])
+                v["registered"] = hit
+                checked = checked or hit is not None
+                mark = " _(국립종자원 품종 목록에서 확인되지 않은 이름)_" if hit is False else ""
+                if row := line("variety", vi, f"- **{v['name']}**: ", f"{v['note']}{mark}"):
+                    lines.append(row)
+            tail = f"\n\n품종 이름은 {seed_varieties.SOURCE} 목록과 맞춰 봤어요." if checked else ""
+            if lines:
+                answer.append("**품종별 차이**\n" + "\n".join(lines) + tail)
+        tips = [row for ti, t in enumerate(got["tips"]) if (row := line("tip", ti, "- ", t))]
+        if tips:
+            answer.append("\n".join(tips))
+        withheld = safety and unreviewed
+        if withheld:
+            lead.append(B.notice(f"**{_label(query)}** 안전과 관련된 질문이라 다른 AI 의 검토를 마친 답만 드려요. 지금은 검토를 하지 "
+                                 "못해 AI 가 정리한 내용은 확정해 드리지 않을게요. 제품 표시사항과 판매처 안내를 먼저 확인하시고, "
+                                 "건강과 관련되면 의사·약사 등 전문가와 상의해 주세요.", "warn"))
+        if answer:
+            lead.append(B.text(f"**{_label(query)}** 질문에 대한 일반 정보예요.\n\n" + "\n\n".join(answer)))
+            lead.append(B.notice(food_tips_mod.LABEL + _knowledge_note(know)))
+        elif not withheld:
             lead.append(B.notice(f"**{_label(query)}** 보관·손질 같은 일반 정보는 지금 답하지 못했어요. "
                                  "상품 후보와 판매처 안내를 함께 확인해 주세요."))
         if got["buy_with"]:
             lead.append(B.text("**같이 사면 좋은 것** (일반 정보 · AI 정리)"))
             lead.append(B.chips([f"{b} 추천해줘" for b in got["buy_with"]]))
+        if got.get("varieties"):
+            turn = self._variety_turn(sid, query, got["varieties"], lead, state, revision, persist)
+            if turn is not None:
+                return turn
         return self._shopping_turn(sid, query, state, revision, persist, {}, lead_blocks=lead)
+
+    def _variety_turn(self, sid, food, varieties, lead, state, revision, persist):
+        """2026-11-11: 품종별 상품 — 품종마다 '품종 식품'으로 따로 찾고, 상품명에 그 품종 이름이 실제로 있는 상품만 보여 준다.
+        (AI가 말한 품종이라도 상품이 없으면 묶음을 만들지 않는다.)  찾은 품종이 하나도 없으면 None → 평소 상품 목록."""
+        from app.domain.commerce.requests import SearchRequest
+        from app.services.commerce.search import collect
+
+        label = _label(food)
+        sections, missing, items, shown = [], [], [], []
+        # 2026-11-11: 여러 품종을 섞어 파는 상품 표시용 품종 이름 — 이 답의 품종 + 확인된 사실의 품종
+        from app.services.ai import facts as facts_mod
+        from app.services.chat import food_knowledge
+
+        known_names = list(dict.fromkeys([v["name"] for v in varieties] + [
+            f["subject"] for f in facts_mod.all_facts()
+            if f.get("subject") and re.sub(r"\s+", "", f["food"]) == re.sub(r"\s+", "", food)]))
+        for v in varieties[:VARIETY_MAX]:
+            name = v["name"]
+            try:
+                got = collect(SearchRequest(text=f"{name} {food}", priority="ranking", session_id=sid, limit=MAX_PRODUCTS),
+                              shopping=self.shopping, keyword_extractor=None, annotate_prices=False)
+            except Exception:  # noqa: BLE001 — 한 품종이 실패해도 나머지는 보여 준다
+                log.warning("variety search failed: %s", name)
+                missing.append(name)
+                continue
+            picked = got["picked"]
+            cards = [c for c in (picked["picks"] + picked["others"] if picked else [])
+                     if name in re.sub(r"\s+", "", c.get("title") or "") and not c.get("partner")]
+            cards = [c for c in cards if c.get("key") not in {k.get("key") for k in shown}][:VARIETY_PER]
+            cards = [dict(c, variety_mix=food_knowledge.variety_mix(c.get("title") or "", known_names)) for c in cards]
+            if not cards:
+                missing.append(name)
+                continue
+            shown += cards
+            state = saved_mod.push_seen(state, f"{label} {name}", cards, None)
+            sections.append(B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in cards],
+                                           title=f"{name} 상품 {len(cards)}개",
+                                           note=f"{v['note']} (일반 정보 · AI 정리)"
+                                                + (" · 국립종자원 등록 품종" if v.get("registered") else "")))
+            items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in cards]
+        if not sections:
+            return None
+        blocks = list(lead)
+        blocks.append(B.text(f"**품종별 상품** — 품종 이름이 상품명에 적힌 상품만 골랐어요. 품종마다 같은 기준(100g당 가격 등)으로 견준 순서예요."))
+        blocks += sections
+        # 2026-11-11: 품종별로 보여 준 상품 전체를 한 표에서 견주는 비교 카드 (일반 상품 목록과 같게 — 빠져 있었다)
+        if len(shown) >= 2:
+            from app.services.chat import product_compare
+
+            state = saved_mod.push_seen(state, label, shown, None)
+            blocks.append(product_compare.cta(label, len(shown), None))
+        if missing:
+            blocks.append(B.notice(f"{', '.join(missing)} 품종은 상품명에 품종이 적힌 상품을 찾지 못해 보여 드리지 않았어요."))
+        blocks.append(B.notice("평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 지어내지 않고 각 상품의 "
+                               "판매처 페이지에서 확인하도록 안내해 드려요."))
+        nav = naver_search_block(label, label, shown)
+        if nav:
+            blocks.append(nav)
+        state = dict(state, mode="shopping", last_items=items, pending=None)
+        state = _log_turn(state, f"{food} 품종별", "shopping")
+        try:
+            self._commit(sid, state, revision, [], persist)
+        except Exception:  # noqa: BLE001
+            log.warning("chat state not saved for variety turn")
+        return self._response(sid, "shopping", blocks)
 
     def _shopping_turn(self, sid, text, state, revision, persist, memo, lead_blocks: list | None = None):
         # 2026-11-02 (3단계): 검색·선택은 공통 서비스(services/commerce/search.collect)가 하고, 여기서는 화면 블록·상태만 만든다.
@@ -695,6 +847,7 @@ class ChatService:
                       annotate_prices=False)      # 시세 참고 한 줄은 _result_blocks 가 붙인다 (기존 순서)
         query, terms, label, budget = got["query"], got["terms"], got["label"], got["budget"]
         picked, partner_list, connect = got["picked"], got["partner_list"], got["connect"]
+        frozen_list = got.get("frozen_list") or []
         blocks: list = list(lead_blocks or [])
         if got["error"] is not None:
             blocks.append(B.notice(f"'{query}' 상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", "warn"))
@@ -705,12 +858,13 @@ class ChatService:
         items: list = []
         pending = None
         if picked:
-            blocks += self._result_blocks(sid, label, picked, budget, got["found"])
+            blocks += self._result_blocks(sid, label, picked, budget, got["found"], frozen=frozen_list)
             all_cards = picked["picks"] + picked["others"]
             items = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in all_cards]
             # 2026-11-09: 업체 제공 상품도 같은 묶음으로 저장한다 — 따로 저장하면 같은 검색어 묶음을 덮어써
             # 위 쿠팡 후보의 /go 링크가 풀리지 않았다. 비교 표에서는 업체 상품을 빼고 견준다 (partner 표시).
-            state = saved_mod.push_seen(state, label, all_cards + list(partner_list or []),
+            # 2026-11-11: 냉동 상품도 같은 묶음에 저장 (/go 링크) — 비교 표에서는 frozen 표시로 뺀다
+            state = saved_mod.push_seen(state, label, all_cards + list(partner_list or []) + list(frozen_list),
                                         budget["label"] if budget else None)
             if partner_list:
                 blocks.append(B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in partner_list],
@@ -718,6 +872,8 @@ class ChatService:
                                              note="업체가 보내 준 정보예요. 위 후보와 같은 기준으로 견주지 않았어요."))
                 items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
                           for c in partner_list]
+            items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
+                      for c in frozen_list]
             if connect:
                 # 2026-11-02: 쇼핑커넥트 등록 링크는 쿠팡 결과가 있어도 별도 목록으로 함께 보여 준다 (순위 비교에는 넣지 않음)
                 blocks.append(B.product_list(connect, title=f"네이버 쇼핑커넥트 등록 상품 {len(connect)}개",
@@ -804,6 +960,21 @@ def _query_words(text: str) -> str:
     return " ".join(out)
 
 
+# 2026-11-12 (점수 연구 e1): 상황·용도를 말하는 낱말이 품목처럼 쓰여 엉뚱한 상품이 통과했다 —
+#   '굴국밥 재료 굴'에 '…해초류 재료' 매생이, '자취생 간편식 닭가슴살'에 '자취혼밥 간편식 계란밥'.
+#   품목 낱말이 따로 있으면, 아래 낱말은 '결과가 겹쳐야 하는 말'에서 뺀다 (상품을 고르는 근거가 아님).
+_SEARCH_DROP = frozenset({"재료", "자취생", "자취", "혼밥", "집밥", "요리"})        # 검색어에서도 뺌
+_TERM_DROP = frozenset({"간편식", "가정용", "1인용", "업소용", "대용량", "소포장"})  # 검색어에는 두고 겹침 판정에서만 뺌
+
+
+def _context_word(tok: str, tokens: list[str]) -> bool:
+    if tok in _SEARCH_DROP or tok in _TERM_DROP:
+        return True
+    if len(tok) > 2 and tok.endswith("용"):                     # '감바스용' — 용도
+        return True
+    return any(o != tok and len(o) < len(tok) and o in tok for o in tokens)   # '굴국밥'에 '굴'이 따로 있음 — 요리 이름
+
+
 def shopping_terms(text: str, extractor: Callable | None = None) -> tuple[str, list[str] | None]:
     """(search word, words every result must share) — a short request is searched as it always was (no filter)."""
     tokens = _content_tokens(text)
@@ -812,6 +983,12 @@ def shopping_terms(text: str, extractor: Callable | None = None) -> tuple[str, l
     if len((text or "").split()) <= 3:
         # 2026-11-02: '사과를 추천해 줘' 를 문장째 검색하면 '종이소녀상만들기' 같은 상품이 섞였다 →
         # 상품어만 검색하고, 결과는 그 말(또는 같은 부류의 말)과 겹쳐야 보여 준다
+        items = [t for t in tokens if not _context_word(t, tokens)]
+        if items and len(items) < len(tokens):
+            dish = {t for t in tokens if any(o != t and len(o) < len(t) and o in t for o in tokens)}
+            query = " ".join(w for w in (_query_words(text) or " ".join(tokens)).split()
+                             if w not in _SEARCH_DROP and w not in dish)
+            return query or " ".join(items), items
         return _query_words(text) or " ".join(tokens), tokens
     m = re.match(r"\s*(.{2,30}?)\s*중(?:에서|에)?\s", text)
     if m and _content_tokens(m.group(1)):
@@ -852,6 +1029,27 @@ _KIND_EXCLUDE = {
 }
 
 
+# 2026-11-10: 검색어를 품은 '다른 품목' 이름 — '망고' 검색에 '샤인머스켓 망고포도'(포도 품종)·'망고스틴'이 섞였다.
+# 상품명 속 검색어가 모두 이런 이름 안에서만 나오면 관련 없는 상품으로 본다 (띄어 쓴 '망고 포도'도 같은 이름으로 봄).
+_LOOKALIKE = {
+    "망고": ("망고포도", "망고스틴", "망고샤인"),
+    "사과": ("사과대추",),
+    "레몬": ("레몬그라스", "레몬밤"),
+}
+
+
+def _only_lookalike(word: str, title: str) -> bool:
+    names = _LOOKALIKE.get(word)
+    if not names:
+        return False
+    flat = re.sub(r"\s+", "", title or "")
+    if word not in flat:
+        return False
+    for name in names:
+        flat = flat.replace(name, "")
+    return word not in flat
+
+
 def _single_char_hit(char: str, title: str) -> bool:
     """한 글자 품목('배'·'귤'·'굴'·'김')은 낱말로만 찾는다 — '무료배송'의 '배'는 아니다."""
     return bool(re.search(rf"(?<![가-힣]){char}|{char}(?=\s|\d|$|[\]),/])", title or ""))
@@ -862,6 +1060,8 @@ def relevant(title: str, terms: list[str]) -> bool:
     have = _bigrams(title)
     for term in terms:
         word = re.sub(r"\s+", "", term or "")
+        if _only_lookalike(word, title):
+            continue
         if len(word) == 1:
             if _single_char_hit(word, title):
                 return True
@@ -1080,6 +1280,28 @@ def _looks_like_shopping(text: str) -> bool:
                           text)) and not parsing.is_recipe_request(text)
 
 
+SAFETY_HOLD = ("두 AI 의 판단이 달라 이 부분은 확정하지 않아요. 제품 표시사항·판매처 안내를 확인하고, "
+               "건강과 관련되면 의사·약사 등 전문가와 상의해 주세요")
+
+
+def _knowledge_note(know: dict) -> str:
+    """식품 지식 출처 한 줄 — 출처 확인 · 교차 확인 여부 · 저장해 둔 정보면 정리한 날."""
+    parts = []
+    if know.get("verified"):
+        parts.append(f"{know['verified']}곳은 출처로 확인한 내용이라 출처를 함께 적었어요")
+    if know.get("review"):
+        n = know.get("shown_flags", len(know["review"].get("flags") or []))
+        if know.get("held"):
+            parts.append(f"두 AI 의 판단이 다른 {know['held']}곳은 확정하지 않았어요")
+        parts.append("DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요"
+                     + (f" — 두 AI 의 생각이 다른 {n}곳은 그 줄에 Claude 의견을 함께 적었어요" if n else ""))
+    elif know.get("cross_on"):
+        parts.append("아직 다른 AI 의 검토 전이에요")
+    if know.get("from_cache") and know.get("saved_at"):
+        parts.append(f"{str(know['saved_at'])[:10]}에 정리해 저장한 정보예요")
+    return (" " + ". ".join(parts) + ".") if parts else ""
+
+
 def _log_turn(state: dict, text: str, stage: str, path: str | None = None) -> dict:
     state = dict(state)
     turns = list(state.get("turns") or [])
@@ -1109,7 +1331,7 @@ def _safe_url(url) -> str | None:
     return url
 
 
-PRIVATE_CARD_KEYS = frozenset({"_q", "weight_source", "weight_formula", "weight_found", "weight_verified"})   # 서버 기록용 (화면 응답에서 뺌)
+PRIVATE_CARD_KEYS = frozenset({"_q", "weight_source", "weight_formula", "weight_found", "weight_verified", "volume_formula"})   # 서버 기록용 (화면 응답에서 뺌)
 
 
 def _public(card: dict, *, go: str | None = None, saved: bool = False) -> dict:

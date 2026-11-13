@@ -160,7 +160,9 @@ def test_from_env_uses_server_openai_key_only():
     assert ai_image.from_env({}).generator is None
     assert ai_image.from_env({"OPENAI_API_KEY": "k", "RECIPE_AI_IMAGE": "off"}).generator is None
     imgs = ai_image.from_env({"OPENAI_API_KEY": "k", "RECIPE_AI_IMAGE_DAILY_LIMIT": "5"})
-    assert imgs.generator is not None and imgs.daily_limit == 5 and imgs.model == "gpt-image-1"
+    assert imgs.generator is not None and imgs.daily_limit == 5 and imgs.model == "gpt-image-2.5-flare"
+    # gpt-image-1 은 2026-10-23 종료 — .env 에 남아 있어도 지금 모델로 만든다
+    assert ai_image.from_env({"OPENAI_API_KEY": "k", "RECIPE_AI_IMAGE_MODEL": "gpt-image-1"}).model == "gpt-image-2.5-flare"
 
 
 def test_openai_generator_requests_webp_and_decodes():

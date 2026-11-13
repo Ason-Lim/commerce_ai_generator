@@ -1,5 +1,6 @@
 from .score_engine import (
     calculate_ai_scores,
+    calculate_hidden_gem_score,
     get_brix_value,
 )
 from .claim_source import brix_claim_source

@@ -21,6 +21,7 @@ from app.domain.commerce.requests import SearchRequest
 log = logging.getLogger(__name__)
 
 ENGINE = "chat.explain.choose"
+FROZEN_NOTE = "냉동 상품이라 생과·생물 후보와 같은 기준으로 견주지 않았어요"
 PREVIEW_WARNING = "미리 보기: 업체 상품은 허락 전 예시 데이터예요. 실제 상품·가격이 아니에요."
 
 
@@ -85,7 +86,7 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     extra_cards (p47, 연결 검증용 · 앱 경로는 넘기지 않음): (query, terms) → 이미 만든 카드들 (예: UCP cards_from).
     쇼핑 카드와 같은 enrich · 관련성 필터 · choose 를 지난다.  실패하면 그 출처만 빠진다 (쇼핑 결과는 그대로).
 
-    Returns {"query", "label", "terms", "priority", "budget", "picked", "partner_list", "connect", "raw", "error",
+    Returns {"query", "label", "terms", "priority", "budget", "picked", "partner_list", "frozen_list", "connect", "raw", "error",
              "preview", "found", "recommendation_path"}
     """
     from app.services.chat import explain
@@ -127,6 +128,16 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
             log.exception("extra card source failed")
     if terms:
         cards = [c for c in cards if relevant(c["title"], terms)]
+        # 2026-11-12: Jev 관련성 보조 — 기본 꺼짐(RELEVANCE_ASSIST=off). 실패·지연이면 카드 그대로 (규칙이 기본)
+        from app.services.commerce import relevance_assist
+
+        cards = relevance_assist.apply(query, cards)
+    # 2026-11-11: 냉동 상품은 고객이 냉동을 찾지 않았으면 따로 보기로 나눈다 (생과와 같은 기준으로 견주지 않음).
+    # 냉동이 아닌 후보가 하나도 없으면 나누지 않는다.
+    frozen_list: list[dict] = []
+    if not explain.wants_frozen(text) and any(not explain.is_frozen(c["title"]) for c in cards):
+        frozen_list = [dict(c, frozen=True) for c in cards if explain.is_frozen(c["title"])]
+        cards = [c for c in cards if not explain.is_frozen(c["title"])]
 
     partner_terms = terms or _content_tokens(label)
     partner_cards = [ChatService._partner_card(it, query) for it in
@@ -156,12 +167,17 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         start = max([c["rank"] for c in picked["picks"] + picked["others"]] or [0])
         partner_list = [dict(c, rank=start + n, why=[c["partner_note"]]) for n, c in enumerate(partner_list, 1)]
         start = max([start] + [c["rank"] for c in partner_list])
+        # why 줄은 다른 카드와 같은 모양 {"text", "basis"} — 문자열로 넣었더니 화면(WhyList)이 멈췄다 (2026-11-11)
+        frozen_list = [dict(c, rank=start + n, why=[{"text": FROZEN_NOTE, "basis": "calc"}])
+                       for n, c in enumerate(frozen_list, 1)]
+        start = max([start] + [c["rank"] for c in frozen_list])
         connect = [dict(c, rank=start + n) for n, c in enumerate(connect, 1)]
     else:
         partner_list = []                       # 웹도 쿠팡 결과가 없으면 업체 목록을 보여 주지 않는다
+        frozen_list = []
         connect = [dict(c, rank=n) for n, c in enumerate(connect, 1)]
     return dict(query=query, label=label, terms=terms, priority=priority, budget=budget, picked=picked,
-                partner_list=partner_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
+                partner_list=partner_list, frozen_list=frozen_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
                 recommendation_path=recommendation_path)
 
 
@@ -223,12 +239,22 @@ def _evidence(card: dict, item: dict | None) -> list[Evidence]:
         ev.append(Evidence(field="weight_g", value=None, unit="g", method="title_parse", status="conflict",
                            source="총중량 불명확 (개당·전체 중량 표기 없음)",
                            raw_text=", ".join(card.get("weight_found") or []) or None))
+    elif src == "title_bonus":
+        # 2026-11-11: 증정분 표기('3kg+1kg', '1kg 증정', '1+1') — 증정 조건을 상품명만으로 알 수 없어 중량을 쓰지 않는다
+        ev.append(Evidence(field="weight_g", value=None, unit="g", method="title_parse", status="conflict",
+                           source="상품명에 증정분 표기 (증정 조건 확인 필요 — 100g당 계산 안 함)",
+                           raw_text=", ".join(card.get("weight_found") or []) or None))
     elif src == "title_ambiguous":
         # p32: 상품명에 서로 다른 중량이 여러 개(옵션 목록) → 어느 옵션 가격인지 몰라 중량을 쓰지 않는다
         found = card.get("weight_found") or []
         ev.append(Evidence(field="weight_g", value=None, unit="g", method="title_parse", status="conflict",
                            source="상품명에 중량 여러 개 (옵션 목록 — 가격이 어느 옵션인지 모름)",
                            raw_text=", ".join(found) or None))
+    if card.get("volume_ml"):
+        # 2026-11-12: 액체 용량 — 상품명 표기 (곱하기·'용량, 수량' 표기는 계산식을 원문으로)
+        ev.append(Evidence(field="volume_ml", value=_exact(card["volume_ml"]), unit="ml", method="title_parse",
+                           source=(f"상품명 표기 {card['volume_formula']} 계산" if card.get("volume_formula")
+                                   else "상품명 표기"), raw_text=card.get("volume_formula")))
     if card.get("unit_count"):
         scope = explain.unit_scope(card.get("title") or "")
         if scope["clear"]:
@@ -322,11 +348,13 @@ def to_item(card: dict, section: str, item: dict | None = None,
         section=section,
         product=Product(product_id=card.get("pid"), key=key, title=card.get("title") or "",
                         image_url=policies.safe_url(card.get("image")), weight_g=card.get("weight_g"),
+                        volume_ml=card.get("volume_ml"),
                         unit_count=card.get("unit_count"), seller_claims=list(card.get("seller_claims") or [])),
         offer=Offer(platform=str(card.get("mall") or ""), merchant=merchant,
                     product_url=policies.safe_url(card.get("url")), price_krw=_int(card.get("price")) or 0,
                     shipping_krw=_int(card.get("shipping_fee")), total_krw=_int(card.get("total")),
-                    per100g_krw=_int(card.get("per100g")), per_unit_krw=_int(card.get("per_unit")),
+                    per100g_krw=_int(card.get("per100g")), per100ml_krw=_int(card.get("per100ml")),
+                    per_unit_krw=_int(card.get("per_unit")),
                     rocket=card.get("rocket"), free_shipping=card.get("free_shipping"), link_type=link_type,
                     affiliate_program=card.get("affiliate_program"), opens_directly=bool(card.get("direct")),
                     seen_at=card.get("seen_at")),
@@ -351,6 +379,7 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
         items += [to_item(c, "picks", raw.get(c["key"]), got["recommendation_path"]) for c in picked["picks"]]
         items += [to_item(c, "others", raw.get(c["key"]), got["recommendation_path"]) for c in picked["others"]]
     items += [to_item(c, "partner_list") for c in got["partner_list"]]
+    items += [to_item(c, "frozen_list") for c in got["frozen_list"]]
     items += [to_item(c, "connect") for c in got["connect"]]
 
     warnings = ["평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 판매처 페이지에서 확인해 주세요."]
@@ -361,6 +390,10 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
     if picked and any(c.get("ucp") for c in picked["picks"] + picked["others"]):
         warnings.append("UCP 판매처 가격은 카탈로그 값이에요 — 판매처 결제 화면 가격이 기준이고, 판매자 단위가격은 "
                         "다른 판매처와 견주지 않았어요.")
+    if got["picked"] and got["picked"].get("bulk_held"):
+        warnings.append(f"대용량 상품 {got['picked']['bulk_held']}개는 업소·대가족용으로 보고 추천에서 뺐어요 (요청하면 함께 견줌).")
+    if got["frozen_list"]:
+        warnings.append(f"냉동 상품 {len(got['frozen_list'])}개는 생과·생물과 쓰임새가 달라 따로 두었어요 (같은 기준으로 견주지 않음).")
     if got["connect"]:
         warnings.append("쇼핑커넥트 등록 상품은 위 후보와 같은 기준으로 견주지 않았고, 가격은 등록 시점 값이에요.")
     warnings += selection_audit(items)

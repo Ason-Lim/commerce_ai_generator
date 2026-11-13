@@ -1,0 +1,2969 @@
+{
+ "run_at": "2026-11-10T07:39:28+00:00",
+ "runs": [
+  {
+   "query": "사과",
+   "mode": "ranking",
+   "error": null,
+   "seconds": 0.9,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "[로켓프레시] 영주마실 사과 소과 5~6개입",
+     "mall": "쿠팡",
+     "price": 5910,
+     "canonical_score": {
+      "final_score": 69.5,
+      "priority": "mix",
+      "components": {
+       "price": 100.0,
+       "quality": 44.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "[품질보장] 국내산 사과 고당도 부사사과",
+     "mall": "쿠팡",
+     "price": 8630,
+     "canonical_score": {
+      "final_score": 68.4,
+      "priority": "mix",
+      "components": {
+       "price": 85.7,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "[제철산지직송] 못난이 부사 사과 초특가",
+     "mall": "쿠팡",
+     "price": 9800,
+     "canonical_score": {
+      "final_score": 58.1,
+      "priority": "mix",
+      "components": {
+       "price": 71.4,
+       "quality": 47.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "고산지 재배 당도선별 사과",
+     "mall": "쿠팡",
+     "price": 10060,
+     "canonical_score": {
+      "final_score": 53.8,
+      "priority": "mix",
+      "components": {
+       "price": 57.1,
+       "quality": 51.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "[24시간특가] 하루50박스만 꿀범벅 초고당도 꿀사과",
+     "mall": "쿠팡",
+     "price": 10900,
+     "canonical_score": {
+      "final_score": 47.3,
+      "priority": "mix",
+      "components": {
+       "price": 42.9,
+       "quality": 51.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "[초특가파격할인] 고당도 시나노골드 사과 황금사과",
+     "mall": "쿠팡",
+     "price": 12800,
+     "canonical_score": {
+      "final_score": 42.5,
+      "priority": "mix",
+      "components": {
+       "price": 28.6,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "특가판매 초고당도 경북 햇 부사 사과",
+     "mall": "쿠팡",
+     "price": 19900,
+     "canonical_score": {
+      "final_score": 32.7,
+      "priority": "mix",
+      "components": {
+       "price": 0.0,
+       "quality": 60.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "경북 주스용 사과 랜덤과",
+     "mall": "쿠팡",
+     "price": 12890,
+     "canonical_score": {
+      "final_score": 30.5,
+      "priority": "mix",
+      "components": {
+       "price": 14.3,
+       "quality": 44.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 9,
+     "name": "부사 사과",
+     "mall": "쿠팡",
+     "price": 19900,
+     "canonical_score": {
+      "final_score": 26.2,
+      "priority": "mix",
+      "components": {
+       "price": 0.0,
+       "quality": 48.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "사과",
+   "mode": "price",
+   "error": null,
+   "seconds": 0.7,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "[로켓프레시] 영주마실 사과 소과 5~6개입",
+     "mall": "쿠팡",
+     "price": 5910,
+     "canonical_score": {
+      "final_score": 91.4,
+      "priority": "price",
+      "components": {
+       "price": 100.0,
+       "quality": 44.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "[품질보장] 국내산 사과 고당도 부사사과",
+     "mall": "쿠팡",
+     "price": 8630,
+     "canonical_score": {
+      "final_score": 80.8,
+      "priority": "price",
+      "components": {
+       "price": 85.7,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "[제철산지직송] 못난이 부사 사과 초특가",
+     "mall": "쿠팡",
+     "price": 9800,
+     "canonical_score": {
+      "final_score": 67.6,
+      "priority": "price",
+      "components": {
+       "price": 71.4,
+       "quality": 47.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "고산지 재배 당도선별 사과",
+     "mall": "쿠팡",
+     "price": 10060,
+     "canonical_score": {
+      "final_score": 56.2,
+      "priority": "price",
+      "components": {
+       "price": 57.1,
+       "quality": 51.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "[24시간특가] 하루50박스만 꿀범벅 초고당도 꿀사과",
+     "mall": "쿠팡",
+     "price": 10900,
+     "canonical_score": {
+      "final_score": 44.1,
+      "priority": "price",
+      "components": {
+       "price": 42.9,
+       "quality": 51.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "[초특가파격할인] 고당도 시나노골드 사과 황금사과",
+     "mall": "쿠팡",
+     "price": 12800,
+     "canonical_score": {
+      "final_score": 32.5,
+      "priority": "price",
+      "components": {
+       "price": 28.6,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "경북 주스용 사과 랜덤과",
+     "mall": "쿠팡",
+     "price": 12890,
+     "canonical_score": {
+      "final_score": 18.9,
+      "priority": "price",
+      "components": {
+       "price": 14.3,
+       "quality": 44.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "특가판매 초고당도 경북 햇 부사 사과",
+     "mall": "쿠팡",
+     "price": 19900,
+     "canonical_score": {
+      "final_score": 9.2,
+      "priority": "price",
+      "components": {
+       "price": 0.0,
+       "quality": 60.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 9,
+     "name": "부사 사과",
+     "mall": "쿠팡",
+     "price": 19900,
+     "canonical_score": {
+      "final_score": 7.4,
+      "priority": "price",
+      "components": {
+       "price": 0.0,
+       "quality": 48.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "샤인머스캣",
+   "mode": "ranking",
+   "error": null,
+   "seconds": 0.8,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "[로켓프레시] 모아바이오팜 당도선별 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 6330,
+     "canonical_score": {
+      "final_score": 74.9,
+      "priority": "mix",
+      "components": {
+       "price": 100.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "당도선별 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 7890,
+     "canonical_score": {
+      "final_score": 65.8,
+      "priority": "mix",
+      "components": {
+       "price": 80.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "[로켓프레시] 다조은 비파괴당도선별 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 7890,
+     "canonical_score": {
+      "final_score": 65.8,
+      "priority": "mix",
+      "components": {
+       "price": 80.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "[충북맘카페1위] 긴급특가 유명산지직송 팡팡망고즙 고당도샤인머스켓 ",
+     "mall": "쿠팡",
+     "price": 9990,
+     "canonical_score": {
+      "final_score": 56.7,
+      "priority": "mix",
+      "components": {
+       "price": 60.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "[최대21브릭스] 초고당도선별 특품 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 15800,
+     "canonical_score": {
+      "final_score": 53.8,
+      "priority": "mix",
+      "components": {
+       "price": 20.0,
+       "quality": 82.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "중화농협 상주 고당도 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 13990,
+     "canonical_score": {
+      "final_score": 47.6,
+      "priority": "mix",
+      "components": {
+       "price": 40.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "[로켓프레시] 명실상주 고당도 샤인머스켓",
+     "mall": "쿠팡",
+     "price": 13990,
+     "canonical_score": {
+      "final_score": 42.7,
+      "priority": "mix",
+      "components": {
+       "price": 40.0,
+       "quality": 45.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "18brix 고당도선별 샤인머스켓 산지직송",
+     "mall": "쿠팡",
+     "price": 21150,
+     "canonical_score": {
+      "final_score": 24.5,
+      "priority": "mix",
+      "components": {
+       "price": 0.0,
+       "quality": 45.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "샤인머스캣",
+   "mode": "price",
+   "error": null,
+   "seconds": 0.9,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "[로켓프레시] 모아바이오팜 당도선별 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 6330,
+     "canonical_score": {
+      "final_score": 92.9,
+      "priority": "price",
+      "components": {
+       "price": 100.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "당도선별 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 7890,
+     "canonical_score": {
+      "final_score": 76.0,
+      "priority": "price",
+      "components": {
+       "price": 80.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "[로켓프레시] 다조은 비파괴당도선별 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 7890,
+     "canonical_score": {
+      "final_score": 76.0,
+      "priority": "price",
+      "components": {
+       "price": 80.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "[충북맘카페1위] 긴급특가 유명산지직송 팡팡망고즙 고당도샤인머스켓 ",
+     "mall": "쿠팡",
+     "price": 9990,
+     "canonical_score": {
+      "final_score": 59.1,
+      "priority": "price",
+      "components": {
+       "price": 60.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "중화농협 상주 고당도 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 13990,
+     "canonical_score": {
+      "final_score": 42.2,
+      "priority": "price",
+      "components": {
+       "price": 40.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "[로켓프레시] 명실상주 고당도 샤인머스켓",
+     "mall": "쿠팡",
+     "price": 13990,
+     "canonical_score": {
+      "final_score": 40.8,
+      "priority": "price",
+      "components": {
+       "price": 40.0,
+       "quality": 45.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "[최대21브릭스] 초고당도선별 특품 샤인머스캣",
+     "mall": "쿠팡",
+     "price": 15800,
+     "canonical_score": {
+      "final_score": 29.5,
+      "priority": "price",
+      "components": {
+       "price": 20.0,
+       "quality": 82.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "18brix 고당도선별 샤인머스켓 산지직송",
+     "mall": "쿠팡",
+     "price": 21150,
+     "canonical_score": {
+      "final_score": 6.9,
+      "priority": "price",
+      "components": {
+       "price": 0.0,
+       "quality": 45.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "한우 등심",
+   "mode": "ranking",
+   "error": null,
+   "seconds": 0.7,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "[꿈에그린한우] 한우 1++등급 등심 구이용 (냉장)",
+     "mall": "쿠팡",
+     "price": 27200,
+     "canonical_score": {
+      "final_score": 75.5,
+      "priority": "mix",
+      "components": {
+       "price": 100.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "[로켓프레시] 농협안심한우 숙성등심 1등급 구이용 (냉장)",
+     "mall": "쿠팡",
+     "price": 27560,
+     "canonical_score": {
+      "final_score": 66.4,
+      "priority": "mix",
+      "components": {
+       "price": 80.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "냉장 한우 1등급 꽃등심 국내산",
+     "mall": "쿠팡",
+     "price": 28900,
+     "canonical_score": {
+      "final_score": 57.3,
+      "priority": "mix",
+      "components": {
+       "price": 60.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "한우 선물세트 소고기 꽃등심 암소한우 등심 1등급 구이용",
+     "mall": "쿠팡",
+     "price": 35000,
+     "canonical_score": {
+      "final_score": 50.9,
+      "priority": "mix",
+      "components": {
+       "price": 40.0,
+       "quality": 60.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "우마왕 한우 등심 소고기 구이용 1++ 투뿔",
+     "mall": "쿠팡",
+     "price": 44900,
+     "canonical_score": {
+      "final_score": 39.1,
+      "priority": "mix",
+      "components": {
+       "price": 20.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "생생한우 1등급 숙성등심 구이용 (냉장)",
+     "mall": "쿠팡",
+     "price": 53460,
+     "canonical_score": {
+      "final_score": 30.0,
+      "priority": "mix",
+      "components": {
+       "price": 0.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "한우 등심",
+   "mode": "price",
+   "error": null,
+   "seconds": 0.6,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "[꿈에그린한우] 한우 1++등급 등심 구이용 (냉장)",
+     "mall": "쿠팡",
+     "price": 27200,
+     "canonical_score": {
+      "final_score": 93.1,
+      "priority": "price",
+      "components": {
+       "price": 100.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "[로켓프레시] 농협안심한우 숙성등심 1등급 구이용 (냉장)",
+     "mall": "쿠팡",
+     "price": 27560,
+     "canonical_score": {
+      "final_score": 76.2,
+      "priority": "price",
+      "components": {
+       "price": 80.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "냉장 한우 1등급 꽃등심 국내산",
+     "mall": "쿠팡",
+     "price": 28900,
+     "canonical_score": {
+      "final_score": 59.2,
+      "priority": "price",
+      "components": {
+       "price": 60.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "한우 선물세트 소고기 꽃등심 암소한우 등심 1등급 구이용",
+     "mall": "쿠팡",
+     "price": 35000,
+     "canonical_score": {
+      "final_score": 43.1,
+      "priority": "price",
+      "components": {
+       "price": 40.0,
+       "quality": 60.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "우마왕 한우 등심 소고기 구이용 1++ 투뿔",
+     "mall": "쿠팡",
+     "price": 44900,
+     "canonical_score": {
+      "final_score": 25.4,
+      "priority": "price",
+      "components": {
+       "price": 20.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "생생한우 1등급 숙성등심 구이용 (냉장)",
+     "mall": "쿠팡",
+     "price": 53460,
+     "canonical_score": {
+      "final_score": 8.5,
+      "priority": "price",
+      "components": {
+       "price": 0.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "고등어",
+   "mode": "ranking",
+   "error": null,
+   "seconds": 0.7,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "안동맛자반 맛자반 안동순살간고등어(80gX10팩)가성비 생선>>자반고등어",
+     "mall": "쿠팡",
+     "price": 14900,
+     "canonical_score": {
+      "final_score": 75.5,
+      "priority": "mix",
+      "components": {
+       "price": 100.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "순천만수산 믿고 먹는 국내산 손질 고등어 HACCP위생설비생산 신선한 대",
+     "mall": "쿠팡",
+     "price": 15900,
+     "canonical_score": {
+      "final_score": 72.6,
+      "priority": "mix",
+      "components": {
+       "price": 88.9,
+       "quality": 59.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "[다대포수산] 국내산 손질 고등어 12미 자반고등어 국산 손질완료 후 직",
+     "mall": "쿠팡",
+     "price": 17900,
+     "canonical_score": {
+      "final_score": 65.4,
+      "priority": "mix",
+      "components": {
+       "price": 77.8,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "[재구매율 1위] 고등어 삼형제 맛있는 집반찬 국내산 자반 손질 간고등어",
+     "mall": "쿠팡",
+     "price": 20800,
+     "canonical_score": {
+      "final_score": 55.3,
+      "priority": "mix",
+      "components": {
+       "price": 55.6,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "[로켓프레시] 가시제거연구소 고등어밥상 오렌지라벨 4~5입 (냉동)",
+     "mall": "쿠팡",
+     "price": 18900,
+     "canonical_score": {
+      "final_score": 54.9,
+      "priority": "mix",
+      "components": {
+       "price": 66.7,
+       "quality": 45.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "국산 간편 순살 안동 간고등어 손질 자반 고등어",
+     "mall": "쿠팡",
+     "price": 20900,
+     "canonical_score": {
+      "final_score": 50.2,
+      "priority": "mix",
+      "components": {
+       "price": 44.4,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "국내산 특대 안동간고등어",
+     "mall": "쿠팡",
+     "price": 21800,
+     "canonical_score": {
+      "final_score": 45.1,
+      "priority": "mix",
+      "components": {
+       "price": 33.3,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "곰곰 노르웨이 간고등어살",
+     "mall": "쿠팡",
+     "price": 24000,
+     "canonical_score": {
+      "final_score": 40.1,
+      "priority": "mix",
+      "components": {
+       "price": 22.2,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 9,
+     "name": "[2차 선별] 국내산 손질 고등어 특대 뚱보 자반고등어 국산 천일염 산지",
+     "mall": "쿠팡",
+     "price": 27600,
+     "canonical_score": {
+      "final_score": 35.0,
+      "priority": "mix",
+      "components": {
+       "price": 11.1,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 10,
+     "name": "별난선장 없어서 못 파는 노르웨이 프리미엄 고등어",
+     "mall": "쿠팡",
+     "price": 27900,
+     "canonical_score": {
+      "final_score": 32.7,
+      "priority": "mix",
+      "components": {
+       "price": 0.0,
+       "quality": 60.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "고등어",
+   "mode": "price",
+   "error": null,
+   "seconds": 0.7,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "안동맛자반 맛자반 안동순살간고등어(80gX10팩)가성비 생선>>자반고등어",
+     "mall": "쿠팡",
+     "price": 14900,
+     "canonical_score": {
+      "final_score": 93.1,
+      "priority": "price",
+      "components": {
+       "price": 100.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "순천만수산 믿고 먹는 국내산 손질 고등어 HACCP위생설비생산 신선한 대",
+     "mall": "쿠팡",
+     "price": 15900,
+     "canonical_score": {
+      "final_score": 84.3,
+      "priority": "price",
+      "components": {
+       "price": 88.9,
+       "quality": 59.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "[다대포수산] 국내산 손질 고등어 12미 자반고등어 국산 손질완료 후 직",
+     "mall": "쿠팡",
+     "price": 17900,
+     "canonical_score": {
+      "final_score": 74.3,
+      "priority": "price",
+      "components": {
+       "price": 77.8,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "[로켓프레시] 가시제거연구소 고등어밥상 오렌지라벨 4~5입 (냉동)",
+     "mall": "쿠팡",
+     "price": 18900,
+     "canonical_score": {
+      "final_score": 63.4,
+      "priority": "price",
+      "components": {
+       "price": 66.7,
+       "quality": 45.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "[재구매율 1위] 고등어 삼형제 맛있는 집반찬 국내산 자반 손질 간고등어",
+     "mall": "쿠팡",
+     "price": 20800,
+     "canonical_score": {
+      "final_score": 55.5,
+      "priority": "price",
+      "components": {
+       "price": 55.6,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "국산 간편 순살 안동 간고등어 손질 자반 고등어",
+     "mall": "쿠팡",
+     "price": 20900,
+     "canonical_score": {
+      "final_score": 46.0,
+      "priority": "price",
+      "components": {
+       "price": 44.4,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "국내산 특대 안동간고등어",
+     "mall": "쿠팡",
+     "price": 21800,
+     "canonical_score": {
+      "final_score": 36.6,
+      "priority": "price",
+      "components": {
+       "price": 33.3,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "곰곰 노르웨이 간고등어살",
+     "mall": "쿠팡",
+     "price": 24000,
+     "canonical_score": {
+      "final_score": 27.2,
+      "priority": "price",
+      "components": {
+       "price": 22.2,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 9,
+     "name": "[2차 선별] 국내산 손질 고등어 특대 뚱보 자반고등어 국산 천일염 산지",
+     "mall": "쿠팡",
+     "price": 27600,
+     "canonical_score": {
+      "final_score": 17.9,
+      "priority": "price",
+      "components": {
+       "price": 11.1,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 10,
+     "name": "별난선장 없어서 못 파는 노르웨이 프리미엄 고등어",
+     "mall": "쿠팡",
+     "price": 27900,
+     "canonical_score": {
+      "final_score": 9.2,
+      "priority": "price",
+      "components": {
+       "price": 0.0,
+       "quality": 60.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "귤",
+   "mode": "ranking",
+   "error": null,
+   "seconds": 0.7,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "곰곰 고당도 12.5brix 감귤",
+     "mall": "쿠팡",
+     "price": 10900,
+     "canonical_score": {
+      "final_score": 86.4,
+      "priority": "mix",
+      "components": {
+       "price": 100.0,
+       "quality": 75.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "[마지막초특가] 산지직송 고당도 제주 감귤",
+     "mall": "쿠팡",
+     "price": 11900,
+     "canonical_score": {
+      "final_score": 70.9,
+      "priority": "mix",
+      "components": {
+       "price": 87.5,
+       "quality": 57.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "[로켓프레시] 귤탐 당도선별 11Brix 감귤",
+     "mall": "쿠팡",
+     "price": 12990,
+     "canonical_score": {
+      "final_score": 65.0,
+      "priority": "mix",
+      "components": {
+       "price": 62.5,
+       "quality": 67.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "귤로장생 당도선별 10Brix 감귤 로열과",
+     "mall": "쿠팡",
+     "price": 12800,
+     "canonical_score": {
+      "final_score": 64.1,
+      "priority": "mix",
+      "components": {
+       "price": 75.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "특가판매 초고당도 타이벡 귤 제주 감귤",
+     "mall": "쿠팡",
+     "price": 12800,
+     "canonical_score": {
+      "final_score": 63.5,
+      "priority": "mix",
+      "components": {
+       "price": 75.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "[귤드림] 고당도 타이벡감귤 귤 제주 감귤 12브릭스 당도보장",
+     "mall": "쿠팡",
+     "price": 13590,
+     "canonical_score": {
+      "final_score": 55.2,
+      "priority": "mix",
+      "components": {
+       "price": 37.5,
+       "quality": 70.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "[하루100박스] 15brix 고당도 제주감귤",
+     "mall": "쿠팡",
+     "price": 13880,
+     "canonical_score": {
+      "final_score": 53.9,
+      "priority": "mix",
+      "components": {
+       "price": 25.0,
+       "quality": 78.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "고당도 귤 제주 감귤",
+     "mall": "쿠팡",
+     "price": 13500,
+     "canonical_score": {
+      "final_score": 52.2,
+      "priority": "mix",
+      "components": {
+       "price": 50.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 9,
+     "name": "귤담원 제주 제철 감귤",
+     "mall": "쿠팡",
+     "price": 14050,
+     "canonical_score": {
+      "final_score": 31.9,
+      "priority": "mix",
+      "components": {
+       "price": 12.5,
+       "quality": 48.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 10,
+     "name": "프리미엄 고당도 제주 감귤 S-M",
+     "mall": "쿠팡",
+     "price": 15890,
+     "canonical_score": {
+      "final_score": 31.6,
+      "priority": "mix",
+      "components": {
+       "price": 0.0,
+       "quality": 58.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "귤",
+   "mode": "price",
+   "error": null,
+   "seconds": 0.7,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "곰곰 고당도 12.5brix 감귤",
+     "mall": "쿠팡",
+     "price": 10900,
+     "canonical_score": {
+      "final_score": 96.2,
+      "priority": "price",
+      "components": {
+       "price": 100.0,
+       "quality": 75.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "[마지막초특가] 산지직송 고당도 제주 감귤",
+     "mall": "쿠팡",
+     "price": 11900,
+     "canonical_score": {
+      "final_score": 82.8,
+      "priority": "price",
+      "components": {
+       "price": 87.5,
+       "quality": 57.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "귤로장생 당도선별 10Brix 감귤 로열과",
+     "mall": "쿠팡",
+     "price": 12800,
+     "canonical_score": {
+      "final_score": 71.9,
+      "priority": "price",
+      "components": {
+       "price": 75.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "특가판매 초고당도 타이벡 귤 제주 감귤",
+     "mall": "쿠팡",
+     "price": 12800,
+     "canonical_score": {
+      "final_score": 71.8,
+      "priority": "price",
+      "components": {
+       "price": 75.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "[로켓프레시] 귤탐 당도선별 11Brix 감귤",
+     "mall": "쿠팡",
+     "price": 12990,
+     "canonical_score": {
+      "final_score": 63.2,
+      "priority": "price",
+      "components": {
+       "price": 62.5,
+       "quality": 67.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "고당도 귤 제주 감귤",
+     "mall": "쿠팡",
+     "price": 13500,
+     "canonical_score": {
+      "final_score": 50.6,
+      "priority": "price",
+      "components": {
+       "price": 50.0,
+       "quality": 54.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "[귤드림] 고당도 타이벡감귤 귤 제주 감귤 12브릭스 당도보장",
+     "mall": "쿠팡",
+     "price": 13590,
+     "canonical_score": {
+      "final_score": 42.5,
+      "priority": "price",
+      "components": {
+       "price": 37.5,
+       "quality": 70.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "[하루100박스] 15brix 고당도 제주감귤",
+     "mall": "쿠팡",
+     "price": 13880,
+     "canonical_score": {
+      "final_score": 33.2,
+      "priority": "price",
+      "components": {
+       "price": 25.0,
+       "quality": 78.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 9,
+     "name": "귤담원 제주 제철 감귤",
+     "mall": "쿠팡",
+     "price": 14050,
+     "canonical_score": {
+      "final_score": 18.0,
+      "priority": "price",
+      "components": {
+       "price": 12.5,
+       "quality": 48.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 10,
+     "name": "프리미엄 고당도 제주 감귤 S-M",
+     "mall": "쿠팡",
+     "price": 15890,
+     "canonical_score": {
+      "final_score": 8.9,
+      "priority": "price",
+      "components": {
+       "price": 0.0,
+       "quality": 58.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "우유",
+   "mode": "ranking",
+   "error": null,
+   "seconds": 0.6,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "서울우유 목장의 신선함이 살아있는 우유",
+     "mall": "쿠팡",
+     "price": 2810,
+     "canonical_score": {
+      "final_score": 75.5,
+      "priority": "mix",
+      "components": {
+       "price": 100.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "곰곰 신선한 1A 우유",
+     "mall": "쿠팡",
+     "price": 3690,
+     "canonical_score": {
+      "final_score": 69.0,
+      "priority": "mix",
+      "components": {
+       "price": 85.7,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "남양유업 맛있는 우유 GT",
+     "mall": "쿠팡",
+     "price": 4980,
+     "canonical_score": {
+      "final_score": 62.5,
+      "priority": "mix",
+      "components": {
+       "price": 71.4,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "[로켓프레시] 서울우유 나 100% 우유",
+     "mall": "쿠팡",
+     "price": 5940,
+     "canonical_score": {
+      "final_score": 56.0,
+      "priority": "mix",
+      "components": {
+       "price": 57.1,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "서울우유 1급A우유",
+     "mall": "쿠팡",
+     "price": 7570,
+     "canonical_score": {
+      "final_score": 49.5,
+      "priority": "mix",
+      "components": {
+       "price": 42.9,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "서울우유 멸균 흰우유",
+     "mall": "쿠팡",
+     "price": 17400,
+     "canonical_score": {
+      "final_score": 43.0,
+      "priority": "mix",
+      "components": {
+       "price": 28.6,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "덴마크 소화가 잘되는 우유 락토프리",
+     "mall": "쿠팡",
+     "price": 17480,
+     "canonical_score": {
+      "final_score": 36.5,
+      "priority": "mix",
+      "components": {
+       "price": 14.3,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "믈레코비타 3.5퍼센트 멸균우유",
+     "mall": "쿠팡",
+     "price": 19470,
+     "canonical_score": {
+      "final_score": 30.0,
+      "priority": "mix",
+      "components": {
+       "price": 0.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.5454545454545454,
+       "price": 0.45454545454545453
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  },
+  {
+   "query": "우유",
+   "mode": "price",
+   "error": null,
+   "seconds": 0.7,
+   "warnings": null,
+   "items": [
+    {
+     "rank": 1,
+     "name": "서울우유 목장의 신선함이 살아있는 우유",
+     "mall": "쿠팡",
+     "price": 2810,
+     "canonical_score": {
+      "final_score": 93.1,
+      "priority": "price",
+      "components": {
+       "price": 100.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 2,
+     "name": "곰곰 신선한 1A 우유",
+     "mall": "쿠팡",
+     "price": 3690,
+     "canonical_score": {
+      "final_score": 81.0,
+      "priority": "price",
+      "components": {
+       "price": 85.7,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 3,
+     "name": "남양유업 맛있는 우유 GT",
+     "mall": "쿠팡",
+     "price": 4980,
+     "canonical_score": {
+      "final_score": 68.9,
+      "priority": "price",
+      "components": {
+       "price": 71.4,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 4,
+     "name": "[로켓프레시] 서울우유 나 100% 우유",
+     "mall": "쿠팡",
+     "price": 5940,
+     "canonical_score": {
+      "final_score": 56.8,
+      "priority": "price",
+      "components": {
+       "price": 57.1,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 5,
+     "name": "서울우유 1급A우유",
+     "mall": "쿠팡",
+     "price": 7570,
+     "canonical_score": {
+      "final_score": 44.8,
+      "priority": "price",
+      "components": {
+       "price": 42.9,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 6,
+     "name": "서울우유 멸균 흰우유",
+     "mall": "쿠팡",
+     "price": 17400,
+     "canonical_score": {
+      "final_score": 32.7,
+      "priority": "price",
+      "components": {
+       "price": 28.6,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 7,
+     "name": "덴마크 소화가 잘되는 우유 락토프리",
+     "mall": "쿠팡",
+     "price": 17480,
+     "canonical_score": {
+      "final_score": 20.6,
+      "priority": "price",
+      "components": {
+       "price": 14.3,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    },
+    {
+     "rank": 8,
+     "name": "믈레코비타 3.5퍼센트 멸균우유",
+     "mall": "쿠팡",
+     "price": 19470,
+     "canonical_score": {
+      "final_score": 8.5,
+      "priority": "price",
+      "components": {
+       "price": 0.0,
+       "quality": 55.0
+      },
+      "weights": {
+       "quality": 0.15384615384615385,
+       "price": 0.8461538461538461
+      },
+      "configured": [
+       "identity",
+       "market",
+       "popularity",
+       "price",
+       "quality",
+       "trust"
+      ],
+      "warnings": [],
+      "version": "canonical-v8"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -297,3 +297,31 @@ def test_naver_search_links_also_when_coupang_has_nothing_and_can_be_switched_of
     assert block and block["links"][0]["url"].startswith("https://search.shopping.naver.com/search/all?query=")
     monkeypatch.setenv("NAVER_SEARCH_LINKS", "0")
     assert _search_block(svc.handle(None, message="과메기 추천해줘")) is None
+
+
+def test_sweetness_and_taste_promises_are_seller_claims():
+    """2026-11-12 사용자: '당도 보장' 같은 문구는 판매자 주장이라고 쓴다 — 우리가 직접 먹어 볼 수 없다. 순위에는 쓰지 않는다."""
+    from app.services.chat.explain import seller_claims
+    cases = {
+        "[최대21브릭스] 초고당도선별 특품 샤인머스캣, 1박스, 2kg": ["당도 표기", "프리미엄"],
+        "[로켓프레시] 다조은 비파괴당도선별 샤인머스캣": ["당도 표기"],
+        "[로켓프레시] 새벽에 고른 고당도 15brix 감귤 로얄과": ["당도 표기", "프리미엄"],
+        "[고당도만선별] 맛없으면환불 초고당도 제주 감귤": ["당도 표기", "맛 보장·환불 표기"],
+        "당도 보장 나주배 5kg": ["당도 표기"],
+        "부사 사과 5kg": [],
+    }
+    for title, want in cases.items():
+        assert seller_claims(title) == want, title
+
+
+def test_context_words_do_not_count_as_the_item():
+    """2026-11-12 (점수 연구 e1): '재료'·'간편식'·'자취생'·'~용'·요리 이름은 품목이 아니다 — 매생이·계란밥이 통과하던 문제."""
+    from app.services.chat.service import relevant, shopping_terms
+    assert shopping_terms("굴국밥 재료 굴") == ("굴", ["굴"])
+    assert shopping_terms("자취생 간편식 닭가슴살") == ("간편식 닭가슴살", ["닭가슴살"])
+    assert shopping_terms("감바스용 새우") == ("감바스용 새우", ["새우"])
+    assert shopping_terms("한우 등심") == ("한우 등심", ["한우", "등심"])     # 품목 낱말만 있으면 그대로
+    assert shopping_terms("굴국밥") == ("굴국밥", ["굴국밥"])                 # 요리 이름뿐이면 그대로
+    assert not relevant("국내산 매생이 5봉 국물요리 해초류 재료", ["굴"])
+    assert not relevant("쉐프엄지 자취혼밥 간편식 간장버터계란밥 300g x 20개", ["닭가슴살"])
+    assert relevant("미트리 자이언트 닭가슴살 볶음밥 3종 혼합", ["닭가슴살"])

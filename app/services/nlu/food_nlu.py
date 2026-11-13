@@ -61,7 +61,7 @@ def load_food_nlu(engine_getter=None, *, env=None) -> FoodNLU | None:
                     from app.db.engine_provider import get_engine as engine_getter
                 with engine_getter().connect() as conn:
                     resources = NLUResources.from_connection(conn)
-            nlu = FoodNLU(resources, LLMClient(resources.build_system_prompt(), env=source))
+            nlu = FoodNLU(resources, LLMClient(resources.build_system_prompt(), env=source, cache="food_nlu", cache_days=30))
         except Exception as e:  # noqa: BLE001
             log.warning("food NLU 비활성 (사전 로드 실패): %s", type(e).__name__)
         _cache["nlu"] = nlu

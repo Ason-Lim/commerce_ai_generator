@@ -20,7 +20,14 @@ from tests.services.chat.conftest import FakeShopping
     ("사과 경북 청송 안동 가정용 못난이 부사 5kg 10kg", None, "ambiguous", None),
     ("사과유명한곳 사과10키로 햇 부사 선물용 5kg 3kg 충주", None, "ambiguous", None),
     ("삼겹살 500g x 2 총 1.2kg", None, "ambiguous", None),               # 곱한 값과 총량이 다르면 모름
-    ("닭가슴살 100g 10팩", None, "count_unclear", None),                 # p33: 개당·전체 불명 → 쓰지 않음
+    ("닭가슴살 100g 10팩", 1000, "multiplied", "100g×10"),              # 2026-11-12 사용자 결정: 포장 단위 수는 곱함
+    ("닭가슴살 100g 10개", None, "count_unclear", None),                 # 쉼표 없는 '개'는 낱알일 수 있어 곱하지 않음
+    ("토마토, 1kg, 2개", 2000, "multiplied", "1kg×2"),                   # 쿠팡 '중량, 수량'
+    ("통영 깐 대굴, 2개, 1kg", 2000, "multiplied", "1kg×2"),            # 쿠팡 '수량, 중량'
+    ("고구마 3kg 2박스", 6000, "multiplied", "3kg×2"),
+    ("사과 2kg, 1박스", 2000, "single", None),
+    ("만두 500g 10개입", None, "count_unclear", None),                    # 개입(낱알 수)은 곱하지 않음
+    ("사과 3kg 10과", 3000, "single", None),
     ("삼겹살 500g 1팩", 500, "single", None),                             # 1개면 그대로
     ("닭가슴살 1kg (100g x 10팩)", 1000, "multiplied", "100g×10"),       # 곱한 값과 총량이 같음
     ("우유 900ml x 2개", None, "none", None),
@@ -76,13 +83,13 @@ def test_saved_cards_from_before_are_recomputed_with_the_new_rule():
 
 
 def test_count_unclear_titles_keep_per_pack_price_but_no_weight_comparison():
-    items = [it(1, "닭가슴살 100g 10팩", 15000), it(2, "닭가슴살 1kg", 16000), it(3, "닭가슴살 500g", 9000)]
+    items = [it(1, "닭가슴살 100g 10개", 15000), it(2, "닭가슴살 1kg", 16000), it(3, "닭가슴살 500g", 9000)]
     res = search_products(SearchRequest(text="닭가슴살 추천"), shopping=FakeShopping(items=items))
-    packs = next(i for i in res.items if i.product.title == "닭가슴살 100g 10팩")
+    packs = next(i for i in res.items if i.product.title == "닭가슴살 100g 10개")
     assert packs.product.weight_g is None and packs.offer.per100g_krw is None
     assert packs.offer.per_unit_krw == 1500                       # 개당 가격은 그대로 (100g 해석과 무관)
     ev = next(e for e in packs.evidence if e.field == "weight_g")
-    assert ev.status == "conflict" and ev.raw_text == "100g, 10팩" and "총중량 불명확" in ev.source
+    assert ev.status == "conflict" and ev.raw_text == "100g, 10개" and "총중량 불명확" in ev.source
     assert packs.score.role not in ("value", "ample")
 
 

@@ -54,8 +54,9 @@ def test_amounts_recipes_and_products_come_together(sqlite_db, shopping):
     res = svc.handle(None, message="제철 굴로 굴전이랑 굴국밥 하려면 몇 kg 사야 해?")
     text = md(res)
     assert res["stage"] == "recipe_dish_purchase" and "사야 요리" not in text
-    assert "- **굴전**: 굴 **200g** — 공공 레시피가 없어 일반 조리 기준 AI 추정 · 원문 아님 (깐 굴 기준) · 참고로 다른 요리인 " \
+    assert "- **굴전**: 굴 **200g** — 일반 조리 기준 AI 추정 · 원문 아님 (깐 굴 기준) · 참고: 다른 요리인 " \
            "공공 레시피 달래굴파전 2인분 80g" in text                       # a different dish is a reference, never the amount
+    assert "공공 레시피 없음" not in text and "공공 레시피가 없어" not in text   # 2026-11-12: 없으면 말하지 않는다
     assert "**합계 약 360g**" in text and calls[0] == {"재료": "굴", "요리": ["굴전", "굴국밥"]}
     assert [q for q, _p, _s in shopping.calls] == ["굴"]
     titles = [it["title"] for b in res["blocks"] if b["type"] == "product_list" for it in b["data"]["items"]]
@@ -74,10 +75,18 @@ def test_amounts_recipes_and_products_come_together(sqlite_db, shopping):
     assert "굴 **400g**" in md(res) and "**합계 약 720g**" in md(res) and len(calls) == 1
 
 
-def test_a_public_recipe_of_the_same_name_gives_the_amount(sqlite_db, shopping):
+def test_a_public_recipe_of_the_same_name_is_only_the_last_basis(sqlite_db, shopping):
+    """2026-11-12: 공공 레시피는 참고 — AI 추정이 없을 때만 그 분량을 쓰고, 참고라고 밝힌다."""
     svc, calls = make(sqlite_db, shopping, {})
     res = svc.handle(None, message="굴로 굴무침 하려면 몇 g 사야 해?")
-    assert "- **굴무침**: 굴 **300g** — 공공 레시피 '굴무침' 2인분 300g 기준" in md(res) and calls == []
+    assert "- **굴무침**: 굴 **300g** — 참고: 공공 레시피 '굴무침' 2인분 300g 기준" in md(res)
+    assert calls[0]["요리"] == ["굴무침"]                      # AI 추정을 먼저 물었다
+
+
+def test_an_ai_estimate_comes_before_the_public_recipe(sqlite_db, shopping):
+    svc, _calls = make(sqlite_db, shopping, {"굴무침": 120})
+    text = md(svc.handle(None, message="굴로 굴무침 하려면 몇 g 사야 해?"))
+    assert "- **굴무침**: 굴 **240g** — 일반 조리 기준 AI 추정 · 원문 아님 (깐 굴 기준) · 참고: 공공 레시피 굴무침 2인분 300g" in text
 
 
 def test_shown_products_are_compared_in_one_table(sqlite_db, shopping):

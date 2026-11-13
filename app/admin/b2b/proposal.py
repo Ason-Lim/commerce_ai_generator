@@ -25,6 +25,7 @@ from app.admin.shared.config import get_settings
 from app.admin.shared.llm import LLMClient
 
 Mode = Literal["external", "internal"]
+OFFICE_FONT = "Pretendard"   # 2026-11-12 — proposal_templates.Template.font_office 와 같게
 TODO = re.compile(r"\[확인 필요[^\]]*\]")
 
 
@@ -77,7 +78,7 @@ def _todo(v: Any, label: str) -> str:
 
 def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None = None,
           cost: CostAnalysis | None = None, mode: Mode = "internal", today: date | None = None,
-          polish: bool = False, source_status: str | None = None) -> Proposal:
+          polish: bool = False, source_status: str | None = None, ai: dict | None = None) -> Proposal:
     """source_status: 공고 출처가 확인되지 않았을 때 그 상태 이름 (예: '원문 대조 전'). 확인된 공고면 None."""
     pf = profile if profile is not None else load_profile()
     today = today or date.today()
@@ -207,7 +208,10 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             ["예정 총액", won(total), f"{req.headcount:,}명 기준, 실제 지급수량 정산" if req.headcount else "실제 지급수량 정산"],
         ]),
         Element(kind="para", text="도서산간 추가 배송비와 교환 비용은 단가에 포함하며 별도 청구하지 않는 것을 원칙으로 합니다. [확인 필요: 공급사 견적 확인 후 확정]"),
-    ]))
+    ] + ([Element(kind="table", headers=["단가 구성 (1인, VAT 별도)", "포함 여부", "산출 근거"], rows=[
+            [l.label, "포함", l.basis if l.basis in ("견적", "계약") else "[확인 필요: 견적·계약]"]
+            for l in cost.lines if l.key != "other"] + [["이윤", "포함", "[확인 필요: 확정 단가 산출 후]"]])]
+         if cost else [])))
 
     # 8. 품질·리스크
     S.append(Section(id="risk", title="8. 품질·리스크 관리", elements=[
@@ -245,11 +249,20 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
                     rows=[[k, ", ".join(sorted(v))[:160]] for k, v in qs.items()] or [["없음", "-"]]),
         ]))
         if cost:
-            crow = [[l.label, won(l.amount) if l.amount is not None else "미확인", l.basis] for l in cost.lines]
-            els2 = [Element(kind="table", headers=["비용 항목(1인)", "금액", "근거"], rows=crow),
+            crow = [["1인 공급가액 (VAT 제외)" if cost.vat_included else "1인 예산", won(cost.net_budget), "공고 단가 기준"]]
+            crow += [[l.label, won(l.amount) if l.amount is not None else "미확인", l.basis] for l in cost.lines]
+            if cost.residual is not None:
+                crow.append(["1인 이익 (이윤)", won(cost.residual), f"이익률 {cost.margin_rate:.1%} · {cost.status}"])
+                if cost.total_profit is not None:
+                    crow.append(["총 이익 (예정 인원 기준)", won(cost.total_profit), "실제 지급수량에 따라 달라짐"])
+            if cost.max_supply_for_target is not None:
+                crow.append([f"목표 이익률 {cost.target_margin_rate:.0%}의 최대 매입가", won(cost.max_supply_for_target), "소싱 기준"])
+            els2 = [Element(kind="table", headers=["비용·이익 (1인, VAT 별도)", "금액", "근거"], rows=crow),
                     Element(kind="callout", tone="warn",
-                            text=("잔여액 " + won(cost.residual) + " (입력값 기준 — 견적 확정 전)") if cost.residual is not None
-                            else f"미확인 {len(cost.unknown)}개 항목이 있어 잔여액(마진)을 확정하지 않습니다. 미확인 ≠ 0원.")]
+                            text=(f"1인 이익 {won(cost.residual)} · 이익률 {cost.margin_rate:.1%} — {cost.status}"
+                                  + (" (가정값 포함: " + ", ".join(cost.assumed) + ")" if cost.assumed else ""))
+                            if cost.residual is not None
+                            else f"미확인 {len(cost.unknown)}개 항목이 있어 이익(마진)을 확정하지 않습니다. 미확인 ≠ 0원.")]
             if cost.scenarios:
                 els2.append(Element(kind="table", headers=["가정(공개가=매입가)", "가정 매입가", "추가비용 전 차액", "판단"],
                                     rows=[[s["candidate"], won(s["assumed_supply"]), won(s["gap_before_other_costs"]), s["verdict"]]
@@ -257,6 +270,8 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             els2.append(Element(kind="bullets", items=cost.notes))
             S.append(Section(id="appendix_cost", title="부록 B. 비용 구조 (내부용)", internal_only=True, elements=els2))
 
+    if ai:
+        S = _apply_ai(S, ai)
     prop = Proposal(title=title, subtitle="임직원 선물 공급 제안서" + (" — 내부 검토본" if mode == "internal" else " — 제출본 초안"),
                     bid_id=req.bid_id, agency=agency, company=company, created=today, mode=mode, sections=S)
     prop.facts = {
@@ -268,6 +283,63 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
     }
     prop.todo_count = sum(len(TODO.findall(_flat(s))) for s in S if not s.internal_only)
     return prop
+
+
+def _apply_ai(S: list[Section], body: dict) -> list[Section]:
+    """2026-11-12: AI 본문(proposal_ai — Claude 작성·GPT 검증, 문제 문장은 [확인 필요] 표시)을 템플릿 장에 끼운다.
+    표·조건 대응표·가격표 같은 사실 중심 장은 템플릿 그대로 두고, 서술·전략·평가 대응·운영·일정·질의를 AI 본문으로."""
+    def rows(key):
+        return [[str(c) for c in r] for r in body.get(key) or [] if isinstance(r, list) and r]
+
+    def items(key):
+        return [str(x) for x in body.get(key) or [] if isinstance(x, str) and x.strip()]
+
+    out: list[Section] = []
+    for sec in S:
+        if sec.id == "understanding" and isinstance(body.get("understanding"), str):
+            els = list(sec.elements)
+            k = next((i for i, e in enumerate(els) if e.kind == "para"), None)
+            if k is not None:
+                els[k] = Element(kind="para", text=body["understanding"])
+            sec = Section(id=sec.id, title=sec.title, elements=els, internal_only=sec.internal_only)
+        if sec.id == "products" and rows("evidence_table"):
+            sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only, elements=list(sec.elements) + [
+                Element(kind="para", text="■ 상품별 가격 근거 (관측 소매가 · 온라인 최저가 검증 · 확정 공급단가)"),
+                Element(kind="table", headers=["후보 상품", "관측 소매가(일자)", "온라인 최저가 검증", "확정 공급단가", "판단"],
+                        rows=rows("evidence_table"))])
+        if sec.id == "risk" and items("risks"):
+            sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only,
+                          elements=list(sec.elements) + [Element(kind="bullets", items=items("risks"))])
+        if sec.id == "price" and rows("price_structure") and not any(
+                e.kind == "table" and e.headers and e.headers[0].startswith("단가 구성") for e in sec.elements):
+            sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only, elements=list(sec.elements) + [
+                Element(kind="table", headers=["단가 구성 항목", "포함 여부", "산출 근거·확정 시점"], rows=rows("price_structure"))])
+        out.append(sec)
+        if sec.id == "understanding":
+            if items("strategy"):
+                out.append(Section(id="strategy", title="0. 추진 전략", elements=[Element(kind="bullets", items=items("strategy"))]))
+            ev = rows("evaluation")
+            if ev or items("differentiation"):
+                els = ([Element(kind="table", headers=["평가 항목(배점)", "평가위원이 확인할 것", "우리 제안의 대응·근거"], rows=ev)]
+                       if ev else [])
+                if items("differentiation"):
+                    els.append(Element(kind="bullets", items=items("differentiation")))
+                out.append(Section(id="evaluation", title="0. 평가 항목별 대응·차별화", elements=els))
+        if sec.id == "delivery":
+            ops = items("operations") + items("quality")
+            if ops:
+                out.append(Section(id="operations", title="0. 운영 방안", elements=[Element(kind="bullets", items=ops)]))
+            if rows("schedule"):
+                out.append(Section(id="schedule", title="0. 수행 일정", elements=[
+                    Element(kind="table", headers=["단계", "기한", "내용"], rows=rows("schedule"))]))
+        if sec.id == "risk" and items("questions"):
+            out.append(Section(id="questions", title="0. 발주기관 확인 사항", elements=[Element(kind="bullets", items=items("questions"))]))
+    n = 0
+    for sec in out:                                   # 장 번호 다시 매기기 (부록 제외)
+        if re.match(r"\d+\. ", sec.title):
+            n += 1
+            sec.title = re.sub(r"^\d+\. ", f"{n}. ", sec.title)
+    return out
 
 
 def _flat(s: Section) -> str:
@@ -289,7 +361,29 @@ def _polish(lines: list[str]) -> list[str]:
     src = set().union(*(nums(x) for x in lines))
     if len(out) != len(lines) or any(not nums(x) <= src for x in out):
         return lines  # 새 숫자가 생기면 폐기
-    return out
+    return _cross_checked(lines, out)
+
+
+def _cross_checked(lines: list[str], out: list[str]) -> list[str]:
+    """2026-11-11 고급 작업 교차 확인: 다듬은 문장을 Claude 가 원문과 견줘, 사실·의미가 바뀐 줄은 원문으로 되돌린다.
+    검토가 꺼져 있거나 실패하면 다듬은 문장을 그대로 쓴다 (숫자 검사는 위에서 이미 통과)."""
+    from app.services.ai import cross_check
+
+    changed = [i for i, (a, b) in enumerate(zip(lines, out)) if a != b]
+    if not changed:
+        return out
+    verdicts = cross_check.review(
+        "b2b_polish", "공공·기업 제안서 문장 다듬기 검토",
+        [f"원문: {lines[i]}\n다듬은 문장: {out[i]}" for i in changed],
+        instruction="원문과 다듬은 문장을 견줘 사실·자격·조건·약속의 의미가 바뀌었거나 원문에 없는 주장이 생겼으면 ok=false.",
+        cache=False)        # 제안서 문장은 저장하지 않는다 (권한·판본·개인정보)
+    if not verdicts:
+        return out
+    keep = list(out)
+    for i, v in zip(changed, verdicts):
+        if not v["ok"]:
+            keep[i] = lines[i]
+    return keep
 
 
 # ── 렌더러 ────────────────────────────────────────────────────
@@ -355,8 +449,8 @@ def to_docx(p: Proposal, path: Path) -> Path:
 
     doc = Document()
     st = doc.styles["Normal"]
-    st.font.name = "Malgun Gothic"
-    st.element.rPr.rFonts.set(qn("w:eastAsia"), "Malgun Gothic")
+    st.font.name = OFFICE_FONT
+    st.element.rPr.rFonts.set(qn("w:eastAsia"), OFFICE_FONT)
     st.font.size = Pt(10.5)
 
     def runs(par, text: str):
@@ -560,4 +654,21 @@ def to_hwpx(p: Proposal, path: Path) -> Path:
 
     path.parent.mkdir(parents=True, exist_ok=True)
     doc.save_to_path(str(path))
+    _hwpx_font(path, OFFICE_FONT)
     return path
+
+
+def _hwpx_font(path: Path, face: str) -> None:
+    """python-hwpx 기본 글꼴(함초롬돋움·함초롬바탕)을 제안서 글꼴로 바꾼다 (header.xml 의 글꼴 이름만)."""
+    import shutil
+    import tempfile
+    import zipfile
+
+    tmp = Path(tempfile.mkstemp(suffix=".hwpx")[1])
+    with zipfile.ZipFile(path) as src, zipfile.ZipFile(tmp, "w") as dst:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename == "Contents/header.xml":
+                data = re.sub(rb'face="(?:\xed\x95\xa8\xec\xb4\x88\xeb\xa1\xac[^"]*)"', f'face="{face}"'.encode(), data)
+            dst.writestr(item, data)
+    shutil.move(str(tmp), path)

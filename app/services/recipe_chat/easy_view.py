@@ -327,11 +327,13 @@ class EasyViewStore:
         return None if row is None else json.loads(row["view_json"])
 
     def put(self, recipe_id: str, content_hash: str, view: dict, model: str | None = None,
-            version: str = PROMPT_VERSION) -> bool:
+            version: str = PROMPT_VERSION, replace: bool = False) -> bool:
+        # replace: AI 레시피를 규칙에 맞게 다시 만든 경우 저장본을 바꾼다 (2026-11-12). 쉽게 보기는 그대로 '처음 것 유지'
+        on_conflict = ("DO UPDATE SET view_json = excluded.view_json, model = excluded.model" if replace else "DO NOTHING")
         result = self.conn.execute(self.sql(
             "INSERT INTO recipe_easy_view (recipe_id, content_hash, prompt_version, view_json, model) "
             "VALUES (:recipe_id, :content_hash, :version, :view_json, :model) "
-            "ON CONFLICT (recipe_id, content_hash, prompt_version) DO NOTHING"),
+            f"ON CONFLICT (recipe_id, content_hash, prompt_version) {on_conflict}"),
             dict(recipe_id=recipe_id, content_hash=content_hash, version=version, model=model,
                  view_json=json.dumps(view, ensure_ascii=False, allow_nan=False)))
         return result.rowcount == 1
@@ -451,7 +453,7 @@ def from_env(env=None, statement_factory=None) -> EasyViews:
     # same provider rule as the stock interpreter: DeepSeek, key only from the server environment
     ready = bool((source.get("DEEPSEEK_API_KEY") or "").strip() and (source.get("DEEPSEEK_MODEL") or "").strip())
     if mode == "on" and ready:
-        client = LLMClient(SYSTEM_PROMPT, provider="deepseek", env=source)
+        client = LLMClient(SYSTEM_PROMPT, provider="deepseek", env=source, cache="recipe_easy_view", cache_days=180)
         generator = lambda text: client.chat_json(text, temperature=0.2)  # noqa: E731
     model = (source.get("DEEPSEEK_MODEL") or "").strip() or None
     return EasyViews(generator, statement_factory=statement_factory, mode=mode, model=model)

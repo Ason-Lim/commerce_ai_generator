@@ -94,13 +94,15 @@ def render(req: BidRequirement, evals: list[Evaluation], cov: list[dict], cost: 
     cost_html = ""
     if cost:
         crow = "".join(f"<tr><th>{E(l.label)}</th><td class='num'>{f'{l.amount:,}원' if l.amount is not None else '<span class=unkt>미확인</span>'}</td><td>{E(l.basis)}</td></tr>" for l in cost.lines)
-        res = (f"<b>{cost.residual:,}원</b> (모든 항목 입력됨 — 입력값 기준)" if cost.residual is not None
+        res = (f"<b>{cost.residual:,}원</b> · 이익률 {cost.margin_rate:.1%} · {E(cost.status)}"
+               + (f" · 총 {cost.total_profit:,}원" if cost.total_profit is not None else "") if cost.residual is not None
                else f"<b class='unkt'>확정 불가</b> — 미확인 {len(cost.unknown)}개 (미확인 ≠ 0원)")
         scen = "".join(f"<tr><td>{E(s['candidate'])}</td><td class='num'>{s['assumed_supply']:,}원</td>"
                        f"<td class='num {'neg' if s['gap_before_other_costs'] < 0 else ''}'>{s['gap_before_other_costs']:+,}원</td><td>{E(s['verdict'])}</td></tr>"
                        for s in cost.scenarios)
         cost_html = f"""<section><h2>⑤ 1인 비용 구조</h2>
-<p class="formula">{f'{cost.budget_per_person:,}원' if cost.budget_per_person else '1인 예산'} − 매입 − 포장 − 배송 − 운영·CS − 구축비 배분 − 기타 = 잔여액 → {res}</p>
+<p class="formula">{f'{cost.net_budget:,}원' if cost.net_budget else '1인 예산'}{' (VAT 제외)' if cost.vat_included else ''} − 매입 − 포장 − 물류창고 − 택배 − 교환·반품 예비 − 운영·CS − 구축비 배분 − 일반관리비 − 기타 = 1인 이익 → {res}</p>
+{f'<p class="formula">목표 이익률 {cost.target_margin_rate:.0%}를 남기려면 매입가 <b>{cost.max_supply_for_target:,}원 이하</b></p>' if cost.max_supply_for_target is not None else ''}
 <table><tbody>{crow}</tbody></table>
 {f'<h3>가정 시나리오: 공개 판매가를 매입가로 가정</h3><table><thead><tr><th>후보</th><th>가정 매입가</th><th>추가비용 전 차액</th><th>판단</th></tr></thead><tbody>{scen}</tbody></table>' if scen else ''}
 <ul class="notes">{''.join(f'<li>{E(x)}</li>' for x in cost.notes)}</ul></section>"""

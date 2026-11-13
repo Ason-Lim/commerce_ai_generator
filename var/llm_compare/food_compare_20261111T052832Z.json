@@ -1,0 +1,2261 @@
+{
+ "run_at": "20261111T052832Z",
+ "prompt": "app/services/chat/food_tips.PROMPT",
+ "models": {
+  "deepseek": "deepseek-v4-flash",
+  "gpt": "gpt-4.1-mini",
+  "claude": "claude-sonnet-5-5"
+ },
+ "seed_registry": false,
+ "results": [
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "딸기 언제부터 맛있어? 품종별 차이 알려줘",
+   "ok": true,
+   "seconds": 5.83,
+   "tokens_in": 489,
+   "tokens_out": 554,
+   "raw": {
+    "food": "딸기",
+    "tips": [
+     "겨울~초봄(12~4월)이 가장 달고, 노지 딸기는 5월이 제철이다.",
+     "꼭지 주변이 붉게 올라오고 윤기가 도는 것이 잘 익은 것이다.",
+     "씻을 때는 꼭지를 떼지 말고 흐르는 물에 재빨리 헹군다.",
+     "먹기 직전에 씻고, 남은 것은 키친타월 깔고 냉장 보관한다."
+    ],
+    "buy_with": [],
+    "season": "12월~4월이 맛있고, 노지 딸기는 5월이 제철",
+    "varieties": [
+     {
+      "name": "설향",
+      "note": "과육 부드럽고 즙 많으며 단맛 강하고 신맛 적음"
+     },
+     {
+      "name": "금실",
+      "note": "단단해 저장성 좋고 단맛·신맛 조화가 좋음"
+     },
+     {
+      "name": "킹스베리",
+      "note": "알이 크고 향이 좋으며 단맛이 강함"
+     },
+     {
+      "name": "매향",
+      "note": "향이 진하고 신맛이 적어 부드러운 편"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "겨울~초봄(12~4월)이 가장 달고, 노지 딸기는 5월이 제철이다.",
+     "꼭지 주변이 붉게 올라오고 윤기가 도는 것이 잘 익은 것이다.",
+     "씻을 때는 꼭지를 떼지 말고 흐르는 물에 재빨리 헹군다.",
+     "먹기 직전에 씻고, 남은 것은 키친타월 깔고 냉장 보관한다."
+    ],
+    "season": "12월~4월이 맛있고, 노지 딸기는 5월이 제철",
+    "varieties": [
+     {
+      "name": "설향",
+      "note": "과육 부드럽고 즙 많으며 단맛 강하고 신맛 적음",
+      "registered": null
+     },
+     {
+      "name": "금실",
+      "note": "단단해 저장성 좋고 단맛·신맛 조화가 좋음",
+      "registered": null
+     },
+     {
+      "name": "킹스베리",
+      "note": "알이 크고 향이 좋으며 단맛이 강함",
+      "registered": null
+     },
+     {
+      "name": "매향",
+      "note": "향이 진하고 신맛이 적어 부드러운 편",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "딸기"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "딸기 언제부터 맛있어? 품종별 차이 알려줘",
+   "ok": true,
+   "seconds": 4.54,
+   "tokens_in": 398,
+   "tokens_out": 162,
+   "raw": {
+    "food": "딸기",
+    "tips": [
+     "딸기는 신선할 때 바로 먹는 것이 가장 맛있어요",
+     "깨끗이 씻어 꼭지를 제거한 후 섭취하세요",
+     "냉장 보관 시 2~3일 내에 먹는 것이 좋아요"
+    ],
+    "buy_with": [],
+    "season": "딸기는 보통 12월부터 5월까지 제철입니다",
+    "varieties": [
+     {
+      "name": "설향",
+      "note": "달고 향이 진한 대표 품종"
+     },
+     {
+      "name": "금실",
+      "note": "과즙이 많고 부드러운 식감"
+     },
+     {
+      "name": "매향",
+      "note": "크고 단맛이 강한 품종"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "딸기는 신선할 때 바로 먹는 것이 가장 맛있어요",
+     "깨끗이 씻어 꼭지를 제거한 후 섭취하세요",
+     "냉장 보관 시 2~3일 내에 먹는 것이 좋아요"
+    ],
+    "season": "딸기는 보통 12월부터 5월까지 제철입니다",
+    "varieties": [
+     {
+      "name": "설향",
+      "note": "달고 향이 진한 대표 품종",
+      "registered": null
+     },
+     {
+      "name": "금실",
+      "note": "과즙이 많고 부드러운 식감",
+      "registered": null
+     },
+     {
+      "name": "매향",
+      "note": "크고 단맛이 강한 품종",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "딸기"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "딸기 언제부터 맛있어? 품종별 차이 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "사과 제철이 언제야? 품종별 맛 차이도 알려줘",
+   "ok": true,
+   "seconds": 3.59,
+   "tokens_in": 490,
+   "tokens_out": 255,
+   "raw": {
+    "food": "사과",
+    "tips": [
+     "제철 사과는 단단하고 꼭지가 초록빛인 것을 고른다",
+     "껍질째 먹을 땐 흐르는 물에 문질러 씻는다",
+     "냉장 보관하면 보통 2~4주간 신선도가 유지된다",
+     "상온에 두면 후숙되어 식감이 물러질 수 있다"
+    ],
+    "buy_with": [],
+    "season": "국내 사과는 보통 9~11월이 제철, 저장 사과는 연중 출하",
+    "varieties": [
+     {
+      "name": "부사",
+      "note": "단단하고 당도 높아 저장·후식용으로 좋다"
+     },
+     {
+      "name": "홍로",
+      "note": "아삭하고 과즙 많아 추석 무렵 인기"
+     },
+     {
+      "name": "시나노골드",
+      "note": "노란빛에 산미 적고 달콤한 편"
+     },
+     {
+      "name": "감홍",
+      "note": "향 좋고 단맛 진해 후식용으로 인기"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "제철 사과는 단단하고 꼭지가 초록빛인 것을 고른다",
+     "껍질째 먹을 땐 흐르는 물에 문질러 씻는다",
+     "냉장 보관하면 보통 2~4주간 신선도가 유지된다",
+     "상온에 두면 후숙되어 식감이 물러질 수 있다"
+    ],
+    "season": "국내 사과는 보통 9~11월이 제철, 저장 사과는 연중 출하",
+    "varieties": [
+     {
+      "name": "부사",
+      "note": "단단하고 당도 높아 저장·후식용으로 좋다",
+      "registered": null
+     },
+     {
+      "name": "홍로",
+      "note": "아삭하고 과즙 많아 추석 무렵 인기",
+      "registered": null
+     },
+     {
+      "name": "시나노골드",
+      "note": "노란빛에 산미 적고 달콤한 편",
+      "registered": null
+     },
+     {
+      "name": "감홍",
+      "note": "향 좋고 단맛 진해 후식용으로 인기",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "사과"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "사과 제철이 언제야? 품종별 맛 차이도 알려줘",
+   "ok": true,
+   "seconds": 4.79,
+   "tokens_in": 399,
+   "tokens_out": 163,
+   "raw": {
+    "food": "사과",
+    "tips": [
+     "서늘한 곳에 보관하면 신선함 유지에 좋아요",
+     "흠집 없는 단단한 사과를 고르세요",
+     "씻은 후 바로 드세요"
+    ],
+    "buy_with": [],
+    "season": "사과는 가을부터 겨울(9월~12월)이 제철입니다",
+    "varieties": [
+     {
+      "name": "홍로",
+      "note": "달고 아삭한 식감"
+     },
+     {
+      "name": "부사",
+      "note": "달콤하고 즙이 많음"
+     },
+     {
+      "name": "후지",
+      "note": "아삭하고 단맛 강함"
+     },
+     {
+      "name": "감홍",
+      "note": "새콤달콤한 맛"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "서늘한 곳에 보관하면 신선함 유지에 좋아요",
+     "흠집 없는 단단한 사과를 고르세요",
+     "씻은 후 바로 드세요"
+    ],
+    "season": "사과는 가을부터 겨울(9월~12월)이 제철입니다",
+    "varieties": [
+     {
+      "name": "홍로",
+      "note": "달고 아삭한 식감",
+      "registered": null
+     },
+     {
+      "name": "부사",
+      "note": "달콤하고 즙이 많음",
+      "registered": null
+     },
+     {
+      "name": "후지",
+      "note": "아삭하고 단맛 강함",
+      "registered": null
+     },
+     {
+      "name": "감홍",
+      "note": "새콤달콤한 맛",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "사과"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "사과 제철이 언제야? 품종별 맛 차이도 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "한라봉 천혜향 레드향 같은 귤 종류별 차이 알려줘",
+   "ok": true,
+   "seconds": 8.96,
+   "tokens_in": 491,
+   "tokens_out": 1292,
+   "raw": {
+    "food": "귤",
+    "tips": [
+     "한라봉은 껍질이 울퉁불퉁하고 단맛이 부드러워요",
+     "천혜향은 껍질이 얇고 향이 청량해요",
+     "레드향은 껍질에 붉은빛이 돌고 단맛이 진해요"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "한라봉",
+      "note": "껍질이 울퉁불퉁하고 과육이 부드럽고 달아요"
+     },
+     {
+      "name": "천혜향",
+      "note": "껍질이 얇고 향이 좋으며 산미가 청량해요"
+     },
+     {
+      "name": "레드향",
+      "note": "껍질에 붉은빛이 돌고 단맛이 진한 편이에요"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "한라봉은 껍질이 울퉁불퉁하고 단맛이 부드러워요",
+     "천혜향은 껍질이 얇고 향이 청량해요",
+     "레드향은 껍질에 붉은빛이 돌고 단맛이 진해요"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "한라봉",
+      "note": "껍질이 울퉁불퉁하고 과육이 부드럽고 달아요",
+      "registered": null
+     },
+     {
+      "name": "천혜향",
+      "note": "껍질이 얇고 향이 좋으며 산미가 청량해요",
+      "registered": null
+     },
+     {
+      "name": "레드향",
+      "note": "껍질에 붉은빛이 돌고 단맛이 진한 편이에요",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "귤"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "한라봉 천혜향 레드향 같은 귤 종류별 차이 알려줘",
+   "ok": true,
+   "seconds": 3.85,
+   "tokens_in": 400,
+   "tokens_out": 141,
+   "raw": {
+    "food": "귤",
+    "tips": [
+     "껍질이 얇고 부드러워 손쉽게 깔 수 있어요",
+     "신선한 귤은 껍질이 탄탄하고 윤기나요",
+     "냉장 보관하면 1~2주 정도 신선해요"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "한라봉",
+      "note": "과즙 많고 달콤하며 향이 진해요"
+     },
+     {
+      "name": "천혜향",
+      "note": "달콤하고 부드러운 맛이 특징이에요"
+     },
+     {
+      "name": "레드향",
+      "note": "새콤달콤하고 진한 향이 납니다"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "껍질이 얇고 부드러워 손쉽게 깔 수 있어요",
+     "신선한 귤은 껍질이 탄탄하고 윤기나요",
+     "냉장 보관하면 1~2주 정도 신선해요"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "한라봉",
+      "note": "과즙 많고 달콤하며 향이 진해요",
+      "registered": null
+     },
+     {
+      "name": "천혜향",
+      "note": "달콤하고 부드러운 맛이 특징이에요",
+      "registered": null
+     },
+     {
+      "name": "레드향",
+      "note": "새콤달콤하고 진한 향이 납니다",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "귤"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "한라봉 천혜향 레드향 같은 귤 종류별 차이 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "포도 품종별 차이 알려줘",
+   "ok": true,
+   "seconds": 2.06,
+   "tokens_in": 480,
+   "tokens_out": 207,
+   "raw": {
+    "food": "포도",
+    "tips": [
+     "품종마다 알 크기·껍질 두께·씨 유무가 달라요",
+     "송이 아랫알부터 먹으면 보관이 오래가요",
+     "껍질에 흰 가루는 과분이라 씻으면 사라져요"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "거봉",
+      "note": "알이 크고 씨 있으며 단단한 식감"
+     },
+     {
+      "name": "샤인머스캣",
+      "note": "씨 없고 향긋하며 아삭한 식감"
+     },
+     {
+      "name": "캠벨얼리",
+      "note": "껍질째 먹기 좋고 부드러운 과육"
+     },
+     {
+      "name": "자옥",
+      "note": "씨 없고 알이 크며 달콤한 맛"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "품종마다 알 크기·껍질 두께·씨 유무가 달라요",
+     "송이 아랫알부터 먹으면 보관이 오래가요",
+     "껍질에 흰 가루는 과분이라 씻으면 사라져요"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "거봉",
+      "note": "알이 크고 씨 있으며 단단한 식감",
+      "registered": null
+     },
+     {
+      "name": "샤인머스캣",
+      "note": "씨 없고 향긋하며 아삭한 식감",
+      "registered": null
+     },
+     {
+      "name": "캠벨얼리",
+      "note": "껍질째 먹기 좋고 부드러운 과육",
+      "registered": null
+     },
+     {
+      "name": "자옥",
+      "note": "씨 없고 알이 크며 달콤한 맛",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "포도"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "포도 품종별 차이 알려줘",
+   "ok": true,
+   "seconds": 2.37,
+   "tokens_in": 391,
+   "tokens_out": 175,
+   "raw": {
+    "food": "포도",
+    "tips": [
+     "서늘하고 통풍 잘 되는 곳에 보관하세요.",
+     "씻을 때는 흐르는 물에 부드럽게 세척하세요.",
+     "껍질째 먹으면 영양소를 더 섭취할 수 있어요."
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "캠벨얼리",
+      "note": "달고 새콤한 맛이 조화로움"
+     },
+     {
+      "name": "거봉",
+      "note": "과육이 크고 달콤함"
+     },
+     {
+      "name": "샤인머스캣",
+      "note": "씨 없고 향긋하며 당도가 높음"
+     },
+     {
+      "name": "머스캣",
+      "note": "향이 강하고 달콤함"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "서늘하고 통풍 잘 되는 곳에 보관하세요.",
+     "씻을 때는 흐르는 물에 부드럽게 세척하세요.",
+     "껍질째 먹으면 영양소를 더 섭취할 수 있어요."
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "캠벨얼리",
+      "note": "달고 새콤한 맛이 조화로움",
+      "registered": null
+     },
+     {
+      "name": "거봉",
+      "note": "과육이 크고 달콤함",
+      "registered": null
+     },
+     {
+      "name": "샤인머스캣",
+      "note": "씨 없고 향긋하며 당도가 높음",
+      "registered": null
+     },
+     {
+      "name": "머스캣",
+      "note": "향이 강하고 달콤함",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "포도"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "포도 품종별 차이 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "배 제철이 언제야? 품종 차이도 알려줘",
+   "ok": true,
+   "seconds": 2.51,
+   "tokens_in": 486,
+   "tokens_out": 182,
+   "raw": {
+    "food": "배",
+    "tips": [
+     "껍질째 먹으면 식감이 더 아삭하다",
+     "흠집 없는 것, 꼭지가 마르지 않은 것을 고른다",
+     "냉장 보관하면 2~3주는 두고 먹을 수 있다"
+    ],
+    "buy_with": [],
+    "season": "9~11월이 제철, 저장하면 겨울까지 맛있다",
+    "varieties": [
+     {
+      "name": "신고",
+      "note": "크고 단단하며 수분 많고 달다"
+     },
+     {
+      "name": "원황",
+      "note": "부드럽고 즙이 많아 여름부터 나온다"
+     },
+     {
+      "name": "황금배",
+      "note": "향이 좋고 살이 부드럽다"
+     },
+     {
+      "name": "감천배",
+      "note": "단맛이 강하고 식감이 부드럽다"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "껍질째 먹으면 식감이 더 아삭하다",
+     "흠집 없는 것, 꼭지가 마르지 않은 것을 고른다",
+     "냉장 보관하면 2~3주는 두고 먹을 수 있다"
+    ],
+    "season": "9~11월이 제철, 저장하면 겨울까지 맛있다",
+    "varieties": [
+     {
+      "name": "신고",
+      "note": "크고 단단하며 수분 많고 달다",
+      "registered": null
+     },
+     {
+      "name": "원황",
+      "note": "부드럽고 즙이 많아 여름부터 나온다",
+      "registered": null
+     },
+     {
+      "name": "황금배",
+      "note": "향이 좋고 살이 부드럽다",
+      "registered": null
+     },
+     {
+      "name": "감천배",
+      "note": "단맛이 강하고 식감이 부드럽다",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "배"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "배 제철이 언제야? 품종 차이도 알려줘",
+   "ok": true,
+   "seconds": 1.82,
+   "tokens_in": 396,
+   "tokens_out": 151,
+   "raw": {
+    "food": "배",
+    "tips": [
+     "서늘한 곳에 보관하면 1~2주 신선함 유지",
+     "껍질에 흠집 없도록 조심히 다루기",
+     "과즙이 많고 단단한 것이 신선함의 표시"
+    ],
+    "buy_with": [],
+    "season": "배는 8월부터 10월까지가 제철입니다",
+    "varieties": [
+     {
+      "name": "신고",
+      "note": "과즙 많고 아삭한 식감"
+     },
+     {
+      "name": "원황",
+      "note": "달고 부드러운 맛"
+     },
+     {
+      "name": "추황",
+      "note": "향이 진하고 단맛 강함"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "서늘한 곳에 보관하면 1~2주 신선함 유지",
+     "껍질에 흠집 없도록 조심히 다루기",
+     "과즙이 많고 단단한 것이 신선함의 표시"
+    ],
+    "season": "배는 8월부터 10월까지가 제철입니다",
+    "varieties": [
+     {
+      "name": "신고",
+      "note": "과즙 많고 아삭한 식감",
+      "registered": null
+     },
+     {
+      "name": "원황",
+      "note": "달고 부드러운 맛",
+      "registered": null
+     },
+     {
+      "name": "추황",
+      "note": "향이 진하고 단맛 강함",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "배"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "배 제철이 언제야? 품종 차이도 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "참외 언제가 제일 맛있어?",
+   "ok": true,
+   "seconds": 4.05,
+   "tokens_in": 481,
+   "tokens_out": 515,
+   "raw": {
+    "food": "참외",
+    "tips": [
+     "보통 6~8월 참외가 가장 달고 향이 좋아요.",
+     "제철 참외는 껍질 노란빛이 선명하고 향이 풍부해요."
+    ],
+    "buy_with": [],
+    "season": "보통 6월~8월이 제철이에요.",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "보통 6~8월 참외가 가장 달고 향이 좋아요.",
+     "제철 참외는 껍질 노란빛이 선명하고 향이 풍부해요."
+    ],
+    "season": "보통 6월~8월이 제철이에요.",
+    "varieties": [],
+    "buy_with": [],
+    "food": "참외"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "참외 언제가 제일 맛있어?",
+   "ok": true,
+   "seconds": 1.51,
+   "tokens_in": 392,
+   "tokens_out": 89,
+   "raw": {
+    "food": "참외",
+    "tips": [
+     "서늘한 곳에 보관하면 신선도 유지에 좋아요",
+     "껍질이 노랗고 표면이 매끄러우면 잘 익은 상태입니다",
+     "먹기 전에 깨끗이 씻어주세요"
+    ],
+    "buy_with": [],
+    "season": "참외는 6월부터 8월까지가 제철로 가장 맛있어요",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "서늘한 곳에 보관하면 신선도 유지에 좋아요",
+     "껍질이 노랗고 표면이 매끄러우면 잘 익은 상태입니다",
+     "먹기 전에 깨끗이 씻어주세요"
+    ],
+    "season": "참외는 6월부터 8월까지가 제철로 가장 맛있어요",
+    "varieties": [],
+    "buy_with": [],
+    "food": "참외"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "참외 언제가 제일 맛있어?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "고구마 종류별 차이 알려줘",
+   "ok": true,
+   "seconds": 4.34,
+   "tokens_in": 480,
+   "tokens_out": 505,
+   "raw": {
+    "food": "고구마",
+    "tips": [
+     "밤고구마는 포슬포슬하고 단맛이 적어 밤 맛이 난다",
+     "호박고구마는 수분 많고 부드러워 구우면 달콤하다",
+     "꿀고구마는 저장하며 당도가 올라가 촉촉하고 달다",
+     "자색고구마는 색이 진하고 단맛이 은은해 샐러드에 좋다",
+     "찌는 용도면 밤고구마, 굽는 용도면 호박·꿀고구마가 무난하다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "밤고구마",
+      "note": "포슬포슬하고 밤처럼 고소하며 단맛은 적다"
+     },
+     {
+      "name": "호박고구마",
+      "note": "수분 많고 부드러워 구우면 달콤해진다"
+     },
+     {
+      "name": "꿀고구마",
+      "note": "저장하면 당도가 올라 촉촉하고 달다"
+     },
+     {
+      "name": "자색고구마",
+      "note": "보라색이 진하고 단맛이 은은하다"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "밤고구마는 포슬포슬하고 단맛이 적어 밤 맛이 난다",
+     "호박고구마는 수분 많고 부드러워 구우면 달콤하다",
+     "꿀고구마는 저장하며 당도가 올라가 촉촉하고 달다",
+     "자색고구마는 색이 진하고 단맛이 은은해 샐러드에 좋다",
+     "찌는 용도면 밤고구마, 굽는 용도면 호박·꿀고구마가 무난하다"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "밤고구마",
+      "note": "포슬포슬하고 밤처럼 고소하며 단맛은 적다",
+      "registered": null
+     },
+     {
+      "name": "호박고구마",
+      "note": "수분 많고 부드러워 구우면 달콤해진다",
+      "registered": null
+     },
+     {
+      "name": "꿀고구마",
+      "note": "저장하면 당도가 올라 촉촉하고 달다",
+      "registered": null
+     },
+     {
+      "name": "자색고구마",
+      "note": "보라색이 진하고 단맛이 은은하다",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "고구마"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "고구마 종류별 차이 알려줘",
+   "ok": true,
+   "seconds": 1.74,
+   "tokens_in": 391,
+   "tokens_out": 137,
+   "raw": {
+    "food": "고구마",
+    "tips": [
+     "서늘하고 건조한 곳에 보관하세요",
+     "껍질은 깨끗이 씻어 조리하세요",
+     "익히면 단맛이 더 강해집니다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "호박고구마",
+      "note": "부드럽고 달콤한 맛"
+     },
+     {
+      "name": "밤고구마",
+      "note": "단단하고 밤처럼 고소함"
+     },
+     {
+      "name": "황금고구마",
+      "note": "촉촉하고 달콤한 식감"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "서늘하고 건조한 곳에 보관하세요",
+     "껍질은 깨끗이 씻어 조리하세요",
+     "익히면 단맛이 더 강해집니다"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "호박고구마",
+      "note": "부드럽고 달콤한 맛",
+      "registered": null
+     },
+     {
+      "name": "밤고구마",
+      "note": "단단하고 밤처럼 고소함",
+      "registered": null
+     },
+     {
+      "name": "황금고구마",
+      "note": "촉촉하고 달콤한 식감",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "고구마"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "고구마 종류별 차이 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "감자 품종별 차이 알려줘",
+   "ok": true,
+   "seconds": 5.97,
+   "tokens_in": 480,
+   "tokens_out": 681,
+   "raw": {
+    "food": "감자",
+    "tips": [
+     "분질은 포슬포슬해 찌기·튀김·으깨기에, 점질은 삶아도 덜 부서져 샐러드·조림에 좋아요.",
+     "품종 차이는 대개 전분 함량과 수분량에서 생겨요.",
+     "겉이 매끈하고 싹·녹색이 없는 것을 고르세요.",
+     "싹이 난 부분은 잘라내고 서늘한 그늘에 보관하세요."
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "수미",
+      "note": "가장 흔함, 전분 많아 포슬포슬한 분질"
+     },
+     {
+      "name": "대지",
+      "note": "수분 있어 점점하고 부드러운 편"
+     },
+     {
+      "name": "하령",
+      "note": "점질이라 삶아도 덜 부서져 샐러드용"
+     },
+     {
+      "name": "추백",
+      "note": "분질이 강해 으깨기·퓨레에 적합"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "분질은 포슬포슬해 찌기·튀김·으깨기에, 점질은 삶아도 덜 부서져 샐러드·조림에 좋아요.",
+     "품종 차이는 대개 전분 함량과 수분량에서 생겨요.",
+     "겉이 매끈하고 싹·녹색이 없는 것을 고르세요.",
+     "싹이 난 부분은 잘라내고 서늘한 그늘에 보관하세요."
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "수미",
+      "note": "가장 흔함, 전분 많아 포슬포슬한 분질",
+      "registered": null
+     },
+     {
+      "name": "대지",
+      "note": "수분 있어 점점하고 부드러운 편",
+      "registered": null
+     },
+     {
+      "name": "하령",
+      "note": "점질이라 삶아도 덜 부서져 샐러드용",
+      "registered": null
+     },
+     {
+      "name": "추백",
+      "note": "분질이 강해 으깨기·퓨레에 적합",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "감자"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "감자 품종별 차이 알려줘",
+   "ok": true,
+   "seconds": 2.21,
+   "tokens_in": 391,
+   "tokens_out": 133,
+   "raw": {
+    "food": "감자",
+    "tips": [
+     "서늘하고 건조한 곳에 보관하세요",
+     "흙이 묻어있으면 흐르는 물에 씻으세요",
+     "껍질째 조리해도 좋습니다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "수미",
+      "note": "부드럽고 맛이 진함"
+     },
+     {
+      "name": "대지",
+      "note": "단단하고 전분 함량 높음"
+     },
+     {
+      "name": "참감자",
+      "note": "식감이 쫄깃하고 고소함"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "서늘하고 건조한 곳에 보관하세요",
+     "흙이 묻어있으면 흐르는 물에 씻으세요",
+     "껍질째 조리해도 좋습니다"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "수미",
+      "note": "부드럽고 맛이 진함",
+      "registered": null
+     },
+     {
+      "name": "대지",
+      "note": "단단하고 전분 함량 높음",
+      "registered": null
+     },
+     {
+      "name": "참감자",
+      "note": "식감이 쫄깃하고 고소함",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "감자"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "감자 품종별 차이 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "복숭아 몇 월에 사야 맛있어? 품종별로 알려줘",
+   "ok": true,
+   "seconds": 11.24,
+   "tokens_in": 491,
+   "tokens_out": 1569,
+   "raw": {
+    "food": "복숭아",
+    "tips": [
+     "향이 진하고 꼭지 주변이 노란빛이면 잘 익은 복숭아입니다.",
+     "단단한 복숭아는 실온 1~2일 두면 부드러워집니다.",
+     "품종별로 익는 시기가 달라 7월엔 유명, 8월엔 황도가 좋습니다."
+    ],
+    "buy_with": [],
+    "season": "보통 7~8월이 가장 맛있고 늦품종은 9월까지 나옵니다.",
+    "varieties": [
+     {
+      "name": "유명",
+      "note": "과즙 많고 부드러운 대표 백도"
+     },
+     {
+      "name": "미백",
+      "note": "향 진하고 당도 높은 흰 살 백도"
+     },
+     {
+      "name": "수봉",
+      "note": "육질 단단하고 씹는 맛 좋은 백도"
+     },
+     {
+      "name": "장호원황도",
+      "note": "노란 살에 달콤하고 단단한 식감"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "향이 진하고 꼭지 주변이 노란빛이면 잘 익은 복숭아입니다.",
+     "단단한 복숭아는 실온 1~2일 두면 부드러워집니다.",
+     "품종별로 익는 시기가 달라 7월엔 유명, 8월엔 황도가 좋습니다."
+    ],
+    "season": "보통 7~8월이 가장 맛있고 늦품종은 9월까지 나옵니다.",
+    "varieties": [
+     {
+      "name": "유명",
+      "note": "과즙 많고 부드러운 대표 백도",
+      "registered": null
+     },
+     {
+      "name": "미백",
+      "note": "향 진하고 당도 높은 흰 살 백도",
+      "registered": null
+     },
+     {
+      "name": "수봉",
+      "note": "육질 단단하고 씹는 맛 좋은 백도",
+      "registered": null
+     },
+     {
+      "name": "장호원황도",
+      "note": "노란 살에 달콤하고 단단한 식감",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "복숭아"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "복숭아 몇 월에 사야 맛있어? 품종별로 알려줘",
+   "ok": true,
+   "seconds": 2.17,
+   "tokens_in": 401,
+   "tokens_out": 140,
+   "raw": {
+    "food": "복숭아",
+    "tips": [
+     "서늘한 곳에 보관하면 신선함 유지",
+     "흠집 없는 단단한 복숭아가 신선함의 기준",
+     "상온에서 숙성시키면 더 달콤해짐"
+    ],
+    "buy_with": [],
+    "season": "복숭아는 7월부터 9월까지가 제철입니다.",
+    "varieties": [
+     {
+      "name": "천중도",
+      "note": "달고 부드러운 식감"
+     },
+     {
+      "name": "백도",
+      "note": "흰 과육으로 달콤함이 강함"
+     },
+     {
+      "name": "황도",
+      "note": "노란 과육, 상큼한 맛이 특징"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "서늘한 곳에 보관하면 신선함 유지",
+     "흠집 없는 단단한 복숭아가 신선함의 기준",
+     "상온에서 숙성시키면 더 달콤해짐"
+    ],
+    "season": "복숭아는 7월부터 9월까지가 제철입니다.",
+    "varieties": [
+     {
+      "name": "천중도",
+      "note": "달고 부드러운 식감",
+      "registered": null
+     },
+     {
+      "name": "백도",
+      "note": "흰 과육으로 달콤함이 강함",
+      "registered": null
+     },
+     {
+      "name": "황도",
+      "note": "노란 과육, 상큼한 맛이 특징",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "복숭아"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "복숭아 몇 월에 사야 맛있어? 품종별로 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "토마토 종류 알려줘",
+   "ok": true,
+   "seconds": 8.11,
+   "tokens_in": 477,
+   "tokens_out": 1121,
+   "raw": {
+    "food": "토마토",
+    "tips": [
+     "종류마다 단맛·식감이 달라 용도에 맞게 고른다",
+     "완숙토마토는 소스·요리, 방울·대추는 간식에 무난하다",
+     "찰토마토는 단단해 썰어 먹기 좋은 편이다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "완숙토마토",
+      "note": "과육이 부드럽고 소스·샐러드에 무난"
+     },
+     {
+      "name": "찰토마토",
+      "note": "단단해 썰어 먹기 좋고 식감이 아삭"
+     },
+     {
+      "name": "대추토마토",
+      "note": "작고 길쭉해 간식·샐러드에 편함"
+     },
+     {
+      "name": "방울토마토",
+      "note": "알이 작고 달큰해 간식으로 좋음"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "종류마다 단맛·식감이 달라 용도에 맞게 고른다",
+     "완숙토마토는 소스·요리, 방울·대추는 간식에 무난하다",
+     "찰토마토는 단단해 썰어 먹기 좋은 편이다"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "완숙토마토",
+      "note": "과육이 부드럽고 소스·샐러드에 무난",
+      "registered": null
+     },
+     {
+      "name": "찰토마토",
+      "note": "단단해 썰어 먹기 좋고 식감이 아삭",
+      "registered": null
+     },
+     {
+      "name": "대추토마토",
+      "note": "작고 길쭉해 간식·샐러드에 편함",
+      "registered": null
+     },
+     {
+      "name": "방울토마토",
+      "note": "알이 작고 달큰해 간식으로 좋음",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "토마토"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "토마토 종류 알려줘",
+   "ok": true,
+   "seconds": 2.0,
+   "tokens_in": 388,
+   "tokens_out": 170,
+   "raw": {
+    "food": "토마토",
+    "tips": [
+     "보통 실온에서 보관하며 냉장 시 맛이 떨어질 수 있음",
+     "익을수록 붉은색이 진해지고 단맛이 강해짐",
+     "씻을 때는 흐르는 물에 부드럽게 세척",
+     "샐러드나 요리에 생으로 활용하면 맛있음"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "대추토마토",
+      "note": "작고 달콤한 맛이 특징"
+     },
+     {
+      "name": "방울토마토",
+      "note": "작고 아삭한 식감"
+     },
+     {
+      "name": "일반토마토",
+      "note": "중간 크기에 균형 잡힌 맛"
+     },
+     {
+      "name": "로마토마토",
+      "note": "과육이 단단해 조리에 적합"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "보통 실온에서 보관하며 냉장 시 맛이 떨어질 수 있음",
+     "익을수록 붉은색이 진해지고 단맛이 강해짐",
+     "씻을 때는 흐르는 물에 부드럽게 세척",
+     "샐러드나 요리에 생으로 활용하면 맛있음"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "대추토마토",
+      "note": "작고 달콤한 맛이 특징",
+      "registered": null
+     },
+     {
+      "name": "방울토마토",
+      "note": "작고 아삭한 식감",
+      "registered": null
+     },
+     {
+      "name": "일반토마토",
+      "note": "중간 크기에 균형 잡힌 맛",
+      "registered": null
+     },
+     {
+      "name": "로마토마토",
+      "note": "과육이 단단해 조리에 적합",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "토마토"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "토마토 종류 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "쌀 품종별 맛 차이 알려줘",
+   "ok": true,
+   "seconds": 6.29,
+   "tokens_in": 482,
+   "tokens_out": 791,
+   "raw": {
+    "food": "쌀",
+    "tips": [
+     "품종마다 단맛·찰기·식감이 달라 밥맛 차이가 나요",
+     "같은 품종도 도정도와 물 양, 조리법에 따라 맛이 달라져요",
+     "찰진 밥을 좋아하면 윤기와 찰기가 강한 품종이 잘 맞아요"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "삼광",
+      "note": "윤기와 찰기가 좋고 단맛이 은은해요"
+     },
+     {
+      "name": "일미",
+      "note": "구수한 향과 부드러운 식감이 특징이에요"
+     },
+     {
+      "name": "추청",
+      "note": "밥알이 크고 윤기가 좋아 찰진 식감이에요"
+     },
+     {
+      "name": "고시히카리",
+      "note": "단맛과 찰기가 강해 밥맛이 또렷해요"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "품종마다 단맛·찰기·식감이 달라 밥맛 차이가 나요",
+     "같은 품종도 도정도와 물 양, 조리법에 따라 맛이 달라져요",
+     "찰진 밥을 좋아하면 윤기와 찰기가 강한 품종이 잘 맞아요"
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "삼광",
+      "note": "윤기와 찰기가 좋고 단맛이 은은해요",
+      "registered": null
+     },
+     {
+      "name": "일미",
+      "note": "구수한 향과 부드러운 식감이 특징이에요",
+      "registered": null
+     },
+     {
+      "name": "추청",
+      "note": "밥알이 크고 윤기가 좋아 찰진 식감이에요",
+      "registered": null
+     },
+     {
+      "name": "고시히카리",
+      "note": "단맛과 찰기가 강해 밥맛이 또렷해요",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "쌀"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "쌀 품종별 맛 차이 알려줘",
+   "ok": true,
+   "seconds": 2.45,
+   "tokens_in": 392,
+   "tokens_out": 187,
+   "raw": {
+    "food": "쌀",
+    "tips": [
+     "쌀은 보관 시 서늘하고 건조한 곳에 두세요.",
+     "씻을 때는 물이 맑아질 때까지 헹구는 게 좋아요.",
+     "밥 짓기 전 30분 정도 불리면 맛이 좋아집니다."
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": [
+     {
+      "name": "고시히카리",
+      "note": "단맛과 찰기가 뛰어남"
+     },
+     {
+      "name": "신동진",
+      "note": "밥이 고슬고슬하고 식감이 좋음"
+     },
+     {
+      "name": "추청",
+      "note": "찹쌀에 가까운 찰기와 쫄깃함"
+     },
+     {
+      "name": "일품",
+      "note": "밥맛이 부드럽고 고소함"
+     }
+    ]
+   },
+   "shown": {
+    "tips": [
+     "쌀은 보관 시 서늘하고 건조한 곳에 두세요.",
+     "씻을 때는 물이 맑아질 때까지 헹구는 게 좋아요.",
+     "밥 짓기 전 30분 정도 불리면 맛이 좋아집니다."
+    ],
+    "season": null,
+    "varieties": [
+     {
+      "name": "고시히카리",
+      "note": "단맛과 찰기가 뛰어남",
+      "registered": null
+     },
+     {
+      "name": "신동진",
+      "note": "밥이 고슬고슬하고 식감이 좋음",
+      "registered": null
+     },
+     {
+      "name": "추청",
+      "note": "찹쌀에 가까운 찰기와 쫄깃함",
+      "registered": null
+     },
+     {
+      "name": "일품",
+      "note": "밥맛이 부드럽고 고소함",
+      "registered": null
+     }
+    ],
+    "buy_with": [],
+    "food": "쌀"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "쌀 품종별 맛 차이 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "품종·제철",
+   "question": "단감 제철 언제야?",
+   "ok": true,
+   "seconds": 4.78,
+   "tokens_in": 476,
+   "tokens_out": 630,
+   "raw": {
+    "food": "단감",
+    "tips": [
+     "단감은 10~12월에 가장 맛있어요.",
+     "늦가을부터 초겨울이 제철로 단맛이 좋아요."
+    ],
+    "buy_with": [],
+    "season": "10~12월, 늦가을부터 초겨울이 제철이에요.",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "단감은 10~12월에 가장 맛있어요.",
+     "늦가을부터 초겨울이 제철로 단맛이 좋아요."
+    ],
+    "season": "10~12월, 늦가을부터 초겨울이 제철이에요.",
+    "varieties": [],
+    "buy_with": [],
+    "food": "단감"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "품종·제철",
+   "question": "단감 제철 언제야?",
+   "ok": true,
+   "seconds": 1.68,
+   "tokens_in": 389,
+   "tokens_out": 89,
+   "raw": {
+    "food": "단감",
+    "tips": [
+     "서늘한 곳에 보관하면 1~2주 신선함 유지",
+     "껍질은 깨끗이 씻어 먹는 것이 좋음",
+     "단단할 때는 숙성 후 먹으면 더 달콤함"
+    ],
+    "buy_with": [],
+    "season": "단감은 가을부터 겨울(10월~12월)이 제철입니다",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "서늘한 곳에 보관하면 1~2주 신선함 유지",
+     "껍질은 깨끗이 씻어 먹는 것이 좋음",
+     "단단할 때는 숙성 후 먹으면 더 달콤함"
+    ],
+    "season": "단감은 가을부터 겨울(10월~12월)이 제철입니다",
+    "varieties": [],
+    "buy_with": [],
+    "food": "단감"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "품종·제철",
+   "question": "단감 제철 언제야?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "대봉감 홍시 만들려면 며칠 두고 어떻게 보관해?",
+   "ok": true,
+   "seconds": 3.1,
+   "tokens_in": 488,
+   "tokens_out": 317,
+   "raw": {
+    "food": "대봉감",
+    "tips": [
+     "키친타월 깐 상자에 서로 닿지 않게 한 겹으로 놓고 실온 보관",
+     "실온에서 보통 7~15일이면 말랑해져 홍시가 된다",
+     "사과·바나나와 같이 두면 숙성이 빨라진다",
+     "과육이 물렁하고 꼭지 쪽이 붉게 물들면 다 익은 것",
+     "완전히 익은 뒤엔 냉장고에 두고 3~4일 안에 먹는다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "키친타월 깐 상자에 서로 닿지 않게 한 겹으로 놓고 실온 보관",
+     "실온에서 보통 7~15일이면 말랑해져 홍시가 된다",
+     "사과·바나나와 같이 두면 숙성이 빨라진다",
+     "과육이 물렁하고 꼭지 쪽이 붉게 물들면 다 익은 것",
+     "완전히 익은 뒤엔 냉장고에 두고 3~4일 안에 먹는다"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "대봉감"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "대봉감 홍시 만들려면 며칠 두고 어떻게 보관해?",
+   "ok": true,
+   "seconds": 1.59,
+   "tokens_in": 400,
+   "tokens_out": 84,
+   "raw": {
+    "food": "대봉감",
+    "tips": [
+     "대봉감을 실온에서 3~5일 두어 홍시로 숙성",
+     "숙성 중에는 통풍 잘 되는 그늘에 보관",
+     "홍시가 되면 냉장 보관해 신선도 유지",
+     "홍시는 부드러워지면 바로 섭취 권장"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "대봉감을 실온에서 3~5일 두어 홍시로 숙성",
+     "숙성 중에는 통풍 잘 되는 그늘에 보관",
+     "홍시가 되면 냉장 보관해 신선도 유지",
+     "홍시는 부드러워지면 바로 섭취 권장"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "대봉감"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "대봉감 홍시 만들려면 며칠 두고 어떻게 보관해?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "과메기 처음 사보는데 비린내 없이 먹는 법이랑 같이 살 거 알려줘",
+   "ok": true,
+   "seconds": 2.42,
+   "tokens_in": 492,
+   "tokens_out": 224,
+   "raw": {
+    "food": "과메기",
+    "tips": [
+     "먹기 전 껍질과 가시를 발라내고 한 번 헹궈 물기를 뺀다",
+     "손질 후 참기름과 깨를 살짝 버무리면 비린내가 줄어든다",
+     "매운 고추나 마늘, 생강을 곁들이면 잡내가 잡힌다",
+     "먹을 만큼만 꺼내고 남은 건 밀봉해 냉동 보관한다",
+     "냉동 상태는 흐르는 물에 살짝만 녹여야 식감이 산다"
+    ],
+    "buy_with": [
+     "쌈배추",
+     "김",
+     "쪽파",
+     "초고추장"
+    ],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "먹기 전 껍질과 가시를 발라내고 한 번 헹궈 물기를 뺀다",
+     "손질 후 참기름과 깨를 살짝 버무리면 비린내가 줄어든다",
+     "매운 고추나 마늘, 생강을 곁들이면 잡내가 잡힌다",
+     "먹을 만큼만 꺼내고 남은 건 밀봉해 냉동 보관한다",
+     "냉동 상태는 흐르는 물에 살짝만 녹여야 식감이 산다"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [
+     "쌈배추",
+     "김",
+     "쪽파",
+     "초고추장"
+    ],
+    "food": "과메기"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "과메기 처음 사보는데 비린내 없이 먹는 법이랑 같이 살 거 알려줘",
+   "ok": true,
+   "seconds": 1.49,
+   "tokens_in": 403,
+   "tokens_out": 94,
+   "raw": {
+    "food": "과메기",
+    "tips": [
+     "먹기 전 냉장 해동 후 찬물에 살짝 헹구면 비린내 감소",
+     "파, 마늘, 고추와 함께 먹으면 맛과 향이 좋아짐",
+     "적당히 숙성된 과메기가 맛이 부드럽고 비린내 적음"
+    ],
+    "buy_with": [
+     "파",
+     "마늘",
+     "고추",
+     "초장"
+    ],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "먹기 전 냉장 해동 후 찬물에 살짝 헹구면 비린내 감소",
+     "파, 마늘, 고추와 함께 먹으면 맛과 향이 좋아짐",
+     "적당히 숙성된 과메기가 맛이 부드럽고 비린내 적음"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [
+     "파",
+     "마늘",
+     "고추",
+     "초장"
+    ],
+    "food": "과메기"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "과메기 처음 사보는데 비린내 없이 먹는 법이랑 같이 살 거 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "굴 세척 어떻게 해?",
+   "ok": true,
+   "seconds": 2.63,
+   "tokens_in": 476,
+   "tokens_out": 225,
+   "raw": {
+    "food": "굴",
+    "tips": [
+     "굴은 껍데기째 흐르는 물에 굵은 소금을 풀어 문질러 씻는다",
+     "껍데기 틈의 이물질은 솔로 닦고 흐르는 물에 헹군다",
+     "껍질을 깐 굴은 옅은 소금물에 살살 흔들어 씻고 체에 밭친다",
+     "씻은 굴은 물에 오래 담가두지 말고 바로 조리한다",
+     "속살이 흐물흐물하거나 비린내가 심하면 버린다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "굴은 껍데기째 흐르는 물에 굵은 소금을 풀어 문질러 씻는다",
+     "껍데기 틈의 이물질은 솔로 닦고 흐르는 물에 헹군다",
+     "껍질을 깐 굴은 옅은 소금물에 살살 흔들어 씻고 체에 밭친다",
+     "씻은 굴은 물에 오래 담가두지 말고 바로 조리한다",
+     "속살이 흐물흐물하거나 비린내가 심하면 버린다"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "굴"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "굴 세척 어떻게 해?",
+   "ok": true,
+   "seconds": 1.1,
+   "tokens_in": 388,
+   "tokens_out": 68,
+   "raw": {
+    "food": "굴",
+    "tips": [
+     "흐르는 찬물에 여러 번 헹궈 이물질 제거",
+     "소금물에 잠시 담가 해감",
+     "껍데기 깨끗이 닦기",
+     "조리 전 신선도 확인"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "흐르는 찬물에 여러 번 헹궈 이물질 제거",
+     "소금물에 잠시 담가 해감",
+     "껍데기 깨끗이 닦기",
+     "조리 전 신선도 확인"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "굴"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "굴 세척 어떻게 해?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "한우 등심 맛있게 먹는 법 알려줘",
+   "ok": true,
+   "seconds": 2.16,
+   "tokens_in": 483,
+   "tokens_out": 204,
+   "raw": {
+    "food": "한우 등심",
+    "tips": [
+     "조리 30분 전 냉장고에서 꺼내 실온에 둔다",
+     "굽기 직전 소금만 살짝 뿌려 밑간한다",
+     "센 불에 겉면을 빠르게 지지고 안은 덜 익힌다",
+     "불에서 내려 2~3분 레스팅해 육즙을 잡는다",
+     "기름은 앞뒤 한 번씩만 발라 탄 맛을 줄인다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "조리 30분 전 냉장고에서 꺼내 실온에 둔다",
+     "굽기 직전 소금만 살짝 뿌려 밑간한다",
+     "센 불에 겉면을 빠르게 지지고 안은 덜 익힌다",
+     "불에서 내려 2~3분 레스팅해 육즙을 잡는다",
+     "기름은 앞뒤 한 번씩만 발라 탄 맛을 줄인다"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "한우 등심"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "한우 등심 맛있게 먹는 법 알려줘",
+   "ok": true,
+   "seconds": 1.39,
+   "tokens_in": 394,
+   "tokens_out": 83,
+   "raw": {
+    "food": "한우 등심",
+    "tips": [
+     "실온에 30분 정도 두어 고기 온도를 맞추세요",
+     "굽기 전 소금과 후추로 간을 하세요",
+     "중불에서 골고루 익히면 육즙이 살아나요",
+     "굽고 나서 5분 정도 휴지 시간을 주세요"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "실온에 30분 정도 두어 고기 온도를 맞추세요",
+     "굽기 전 소금과 후추로 간을 하세요",
+     "중불에서 골고루 익히면 육즙이 살아나요",
+     "굽고 나서 5분 정도 휴지 시간을 주세요"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "한우 등심"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "한우 등심 맛있게 먹는 법 알려줘",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "냉동 블루베리 해동 어떻게 해?",
+   "ok": true,
+   "seconds": 2.31,
+   "tokens_in": 480,
+   "tokens_out": 197,
+   "raw": {
+    "food": "냉동 블루베리",
+    "tips": [
+     "먹을 만큼만 덜어 냉장실에서 3~5시간 해동하면 즙 손실이 적어요",
+     "급할 땐 봉지째 흐르는 찬물에 10~15분 담가 두세요",
+     "전자레인지 해동은 과육이 물러지니 마지막 수단으로만 쓰세요",
+     "해동 후 물에 헹구지 말고 키친타월로 살짝 눌러 물기만 제거하세요",
+     "한 번 녹인 것은 다시 얼리지 말고 그날 안에 드세요"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "먹을 만큼만 덜어 냉장실에서 3~5시간 해동하면 즙 손실이 적어요",
+     "급할 땐 봉지째 흐르는 찬물에 10~15분 담가 두세요",
+     "전자레인지 해동은 과육이 물러지니 마지막 수단으로만 쓰세요",
+     "해동 후 물에 헹구지 말고 키친타월로 살짝 눌러 물기만 제거하세요",
+     "한 번 녹인 것은 다시 얼리지 말고 그날 안에 드세요"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "냉동 블루베리"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "냉동 블루베리 해동 어떻게 해?",
+   "ok": true,
+   "seconds": 1.51,
+   "tokens_in": 394,
+   "tokens_out": 74,
+   "raw": {
+    "food": "냉동 블루베리",
+    "tips": [
+     "냉장고에서 천천히 해동하세요",
+     "급할 땐 찬물에 담가 해동해도 됩니다",
+     "해동 후 바로 섭취하는 게 좋아요"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "냉장고에서 천천히 해동하세요",
+     "급할 땐 찬물에 담가 해동해도 됩니다",
+     "해동 후 바로 섭취하는 게 좋아요"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "냉동 블루베리"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "냉동 블루베리 해동 어떻게 해?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "아보카도 후숙 며칠 해야 돼?",
+   "ok": true,
+   "seconds": 2.42,
+   "tokens_in": 483,
+   "tokens_out": 222,
+   "raw": {
+    "food": "아보카도",
+    "tips": [
+     "실온에서 보통 3~5일, 단단하면 일주일까지 걸린다",
+     "사과나 바나나와 종이봉투에 넣으면 2~3일로 단축된다",
+     "꼭지 아래를 눌러 살짝 들어가면 먹기 좋은 상태다",
+     "익은 뒤에는 냉장고에 넣어 2~3일 안에 먹는다",
+     "자른 뒤에는 씨를 붙여두고 랩으로 밀착해 냉장 보관한다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "실온에서 보통 3~5일, 단단하면 일주일까지 걸린다",
+     "사과나 바나나와 종이봉투에 넣으면 2~3일로 단축된다",
+     "꼭지 아래를 눌러 살짝 들어가면 먹기 좋은 상태다",
+     "익은 뒤에는 냉장고에 넣어 2~3일 안에 먹는다",
+     "자른 뒤에는 씨를 붙여두고 랩으로 밀착해 냉장 보관한다"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "아보카도"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "아보카도 후숙 며칠 해야 돼?",
+   "ok": true,
+   "seconds": 1.18,
+   "tokens_in": 395,
+   "tokens_out": 71,
+   "raw": {
+    "food": "아보카도",
+    "tips": [
+     "상온에서 3~5일 후숙",
+     "종이봉투에 넣으면 빨리 익음",
+     "익으면 부드럽고 눌러서 약간 들어감",
+     "냉장 보관은 익은 후에만"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "상온에서 3~5일 후숙",
+     "종이봉투에 넣으면 빨리 익음",
+     "익으면 부드럽고 눌러서 약간 들어감",
+     "냉장 보관은 익은 후에만"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "아보카도"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "아보카도 후숙 며칠 해야 돼?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "전어 제철 언제야? 어떻게 먹어?",
+   "ok": true,
+   "seconds": 3.77,
+   "tokens_in": 480,
+   "tokens_out": 393,
+   "raw": {
+    "food": "전어",
+    "tips": [
+     "소금구이로 먹으면 기름진 맛을 살리기 좋아요.",
+     "회는 얇게 떠서 초고추장이나 쌈에 곁들여 먹어요.",
+     "무침·조림·구이 등으로도 다양하게 먹어요.",
+     "구울 때는 가시를 조심하고 살을 발라 먹어요."
+    ],
+    "buy_with": [],
+    "season": "보통 9~11월이 제철로 꼽혀요.",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "소금구이로 먹으면 기름진 맛을 살리기 좋아요.",
+     "회는 얇게 떠서 초고추장이나 쌈에 곁들여 먹어요.",
+     "무침·조림·구이 등으로도 다양하게 먹어요.",
+     "구울 때는 가시를 조심하고 살을 발라 먹어요."
+    ],
+    "season": "보통 9~11월이 제철로 꼽혀요.",
+    "varieties": [],
+    "buy_with": [],
+    "food": "전어"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "전어 제철 언제야? 어떻게 먹어?",
+   "ok": true,
+   "seconds": 1.93,
+   "tokens_in": 393,
+   "tokens_out": 100,
+   "raw": {
+    "food": "전어",
+    "tips": [
+     "신선한 전어는 광택이 있고 비린내가 적어요",
+     "깨끗이 씻어 회, 구이, 무침으로 즐겨요",
+     "뼈째 먹으면 고소한 맛이 좋아요"
+    ],
+    "buy_with": [
+     "깻잎",
+     "고추장",
+     "마늘"
+    ],
+    "season": "전어는 가을 9~11월이 제철로 가장 맛있어요",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "신선한 전어는 광택이 있고 비린내가 적어요",
+     "깨끗이 씻어 회, 구이, 무침으로 즐겨요",
+     "뼈째 먹으면 고소한 맛이 좋아요"
+    ],
+    "season": "전어는 가을 9~11월이 제철로 가장 맛있어요",
+    "varieties": [],
+    "buy_with": [],
+    "food": "전어"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "전어 제철 언제야? 어떻게 먹어?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  },
+  {
+   "model_key": "deepseek",
+   "model": "deepseek-v4-flash",
+   "category": "손질·보관·먹는 법",
+   "question": "꼬막 손질 어떻게 해?",
+   "ok": true,
+   "seconds": 2.04,
+   "tokens_in": 477,
+   "tokens_out": 143,
+   "raw": {
+    "food": "꼬막",
+    "tips": [
+     "소금물에 30분~1시간 담가 흙과 모래를 뺀다",
+     "껍데기끼리 문질러 이물질과 미끈거림을 씻는다",
+     "흐르는 물에 2~3번 헹군 뒤 바로 조리한다",
+     "데칠 때는 끓는 물에 넣고 입이 벌어지면 바로 건진다",
+     "삶은 꼬막은 찬물에 헹궈 모래 남은 것을 확인한다"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "소금물에 30분~1시간 담가 흙과 모래를 뺀다",
+     "껍데기끼리 문질러 이물질과 미끈거림을 씻는다",
+     "흐르는 물에 2~3번 헹군 뒤 바로 조리한다",
+     "데칠 때는 끓는 물에 넣고 입이 벌어지면 바로 건진다",
+     "삶은 꼬막은 찬물에 헹궈 모래 남은 것을 확인한다"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "꼬막"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "gpt",
+   "model": "gpt-4.1-mini",
+   "category": "손질·보관·먹는 법",
+   "question": "꼬막 손질 어떻게 해?",
+   "ok": true,
+   "seconds": 1.25,
+   "tokens_in": 390,
+   "tokens_out": 71,
+   "raw": {
+    "food": "꼬막",
+    "tips": [
+     "소금물에 2~3시간 담가 모래 빼기",
+     "깨끗이 씻어 이물질 제거",
+     "껍데기 문질러 세척",
+     "조리 전 찬물에 헹구기"
+    ],
+    "buy_with": [],
+    "season": "",
+    "varieties": []
+   },
+   "shown": {
+    "tips": [
+     "소금물에 2~3시간 담가 모래 빼기",
+     "깨끗이 씻어 이물질 제거",
+     "껍데기 문질러 세척",
+     "조리 전 찬물에 헹구기"
+    ],
+    "season": null,
+    "varieties": [],
+    "buy_with": [],
+    "food": "꼬막"
+   },
+   "dropped_tips": 0
+  },
+  {
+   "model_key": "claude",
+   "model": "claude-sonnet-5-5",
+   "category": "손질·보관·먹는 법",
+   "question": "꼬막 손질 어떻게 해?",
+   "ok": false,
+   "error": "HTTPStatusError: Client error '400 Bad Request' for url 'https://api.anthropic.com/v1/messages'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+  }
+ ]
+}

@@ -18,7 +18,11 @@ PERCENT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(%|퍼센트|프로)")
 CUP_RE = re.compile(r"(\d+(?:\.\d+)?|반|한|두|세)\s*(컵|큰술|작은술|스푼|숟가락|T\b|t\b)")
 
 RECIPE_REQUEST_RE = re.compile(
-    r"레시피|요리\s*방법|요리법|조리법|조리\s*방법|만드는\s*법|만드는\s*방법|만들어|만들\s*수\s*있|만들까|어떻게\s*만들|해\s*먹|해먹|끓이는\s*법|볶는\s*법")
+    r"레시피|요리\s*방법|요리법|조리법|조리\s*방법|만드는\s*법|만드는\s*방법|만들어|만들\s*수\s*있|만들까|어떻게\s*만들|해\s*먹|해먹|"
+    # 2026-11-12: '김치찌개 끓이는 방법과 상품을 추천해 주세요'가 상품만 나왔다 — 조리 동사 + 법·방법·순서 를 모두 레시피로
+    r"(?:끓이|끓여\s*먹|볶|구워\s*먹|굽|부치|부쳐\s*먹|무치|찌|쪄\s*먹|삶|튀기|담그|만들|만드|졸이|데치)는\s*(?:법|방법|순서|과정)|"
+    r"(?:끓이|볶|굽|부치|무치|담그|졸이)기\s*(?:방법|순서)?\s*(?:알려|가르쳐|보여)|"
+    r"어떻게\s*(?:끓|볶|굽|부치|무치|담그|졸|만드|요리|해\s*먹)|만들기")
 CORRECTION_RE = re.compile(r"^\s*(아니|아뇨|아니요|아니야|정정|수정|다시)|잘못|틀렸")
 PRODUCT_REQUEST_RE = re.compile(r"상품|구매|사고\s*싶|살래|살게|사야|주문|장보기|어디서\s*사|파는\s*곳")
 SHOW_RE = re.compile(r"보여|찾아|추천|알려|검색|볼래|줘")
@@ -182,6 +186,19 @@ def ambiguous_materials(message: str, materials: list[dict]) -> tuple[str, list[
         if len(hits) >= 2:
             return word, hits
     return None
+
+
+# 2026-11-10 (customer check): "귤 10kg 박스로 사려는데 크기별로 뭐가 맛있어?" was read as a stock sentence —
+# '맛있어' contains '있어', and '10kg' is an amount. '있어' means "I have" only when it is not part of
+# 맛있어·멋있어·재미있어·상관있어·의미있어·관계있어·…수 있어, and a buying sentence is never a stock sentence.
+HAVE_RE = re.compile(r"(?<![맛멋수])(?<!재미)(?<!상관)(?<!의미)(?<!관계)(?<!수\s)있어|남았|남아")
+BUYING_RE = re.compile(r"사\s*려|살\s*까|사고\s*싶|사\s*야|구매|구입|주문|장\s*보")
+
+
+def says_have(message: str) -> bool:
+    """'우유 200mL 있어요' / '버터 남았어' — the person tells what they have (not 맛있어, not 사려는데)."""
+    text = message or ""
+    return bool(HAVE_RE.search(text)) and not BUYING_RE.search(text)
 
 
 # 2026-11-01 (customer check): "카다이프 보유량 얼마로 기록돼 있어요?" was answered with the requirement.
