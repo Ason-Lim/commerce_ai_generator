@@ -39,6 +39,8 @@ class ChatIn(BaseModel):
     chip: str | None = Field(None, max_length=200)
     # 2026-11-01: 관심 상품 보관함 id (브라우저별, '새 대화'를 눌러도 유지)
     owner: str | None = Field(None, max_length=64)
+    # 2026-11-12: 첫 화면(지난 메시지가 안 보임)에서 보낸 질문 — 이전 레시피·되묻기 맥락을 닫는다
+    fresh: bool = False
 
 
 class ClickIn(BaseModel):
@@ -98,6 +100,26 @@ def build_default_service() -> ChatService:
         amounts = LLMClient(dish_shopping.AMOUNT_PROMPT, provider="deepseek", timeout=40.0,
                             cache="dish_amounts", cache_days=90)
         recipe.amount_estimator = lambda text: amounts.chat_json(text, temperature=0)
+        # 2026-11-12: '생새우로 4인분 저녁 메뉴' — 한 끼 요리 조합 (검증 못 넘으면 규칙 표 · AI 메뉴 제안으로 표시)
+        from app.services.recipe_chat import menu_plan
+
+        menus = LLMClient(menu_plan.MENU_PROMPT, provider="deepseek", timeout=40.0, cache="menu_plan", cache_days=90)
+        recipe.menu_picker = lambda text: menus.chat_json(text, temperature=0.2)
+        # 2026-11-12: 문장 뜻 읽기 — 요리 이름·레시피/상품 원함·상품 검색어 (DeepSeek, 같은 문장은 저장된 답)
+        from app.services.recipe_chat import intent as recipe_intent
+
+        intents = LLMClient(recipe_intent.INTENT_PROMPT, provider="deepseek", timeout=15.0, cache="chat_intent",
+                            cache_days=30, task="chat_intent", thinking=False)   # 빠르게 — 생각 모드 끔
+        recipe.intent_reader = lambda text: intents.chat_json(text, temperature=0)
+        shop_words = LLMClient(recipe_intent.SHOP_TERMS_PROMPT, provider="deepseek", timeout=15.0, cache="shop_terms",
+                               cache_days=60, task="shop_terms", thinking=False)
+        recipe.shop_terms = lambda text: shop_words.chat_json(text, temperature=0)
+        # 교차 확인: DeepSeek 가 짠 조합을 Claude 가 검토 (ANTHROPIC_API_KEY · AI_CROSS_CHECK, 없으면 '교차 확인 안 됨')
+        from app.services.ai import cross_check as menu_check
+
+        if menu_check.enabled():
+            recipe.menu_reviewer = lambda context, items: menu_check.review(
+                "menu_plan", context, items, instruction=menu_plan.REVIEW_INSTRUCTION)
         recipe.consultant = consult.Consultant(lambda text: reader.chat_json(text, temperature=0.2),
                                                recipe.resolver.catalog, search=getattr(recipe.discovery, "provider", None),
                                                kind_of=requested_kind)
@@ -166,7 +188,7 @@ def public(response: dict) -> dict:
 @router.post("/api/chat")
 def chat(body: ChatIn, service: ChatService = Depends(get_chat_service)):
     return public(service.handle(body.session_id, message=body.message, answers=body.answers, chip=body.chip,
-                                 owner=body.owner))
+                                 owner=body.owner, fresh=body.fresh))
 
 
 @router.get("/api/chat/saved")

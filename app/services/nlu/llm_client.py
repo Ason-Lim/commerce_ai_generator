@@ -37,8 +37,11 @@ THINKING_BY_TASK: dict[str, bool] = {
     "shop_keyword": False, "dish_amounts": False, "recipe_servings": False, "food_nlu": False, "ai_recipe_identify": False,
     "recipe_easy_view": False, "recipe_discover": False, "trend_cause": False, "stock_chat": False,
     "warm_classify": False,   # scripts/warm_food_knowledge.py — 순위 키워드 분류
+    # 2026-11-12 레시피 창: 메뉴 조합은 저장해 다시 쓰는 생성(켬) · 문장 뜻 읽기·상품 검색어는 정리만 하는 일(끔)
+    "menu_plan": True, "chat_intent": False, "shop_terms": False,
     # DeepSeek 가 아닌 작업(표에만 둔다): B2B 제안서 본문 작성(Claude) · 검증(GPT)
     "b2b_proposal_write": True, "b2b_proposal_verify": True,
+    "ai_recipe_review": True,   # 레시피 교차 검토(GPT) — 2026-11-12
 }
 
 

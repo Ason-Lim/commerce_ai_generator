@@ -73,3 +73,70 @@ def test_llm_client_calls_claude_without_temperature():
     c = LLMClient("s", provider="anthropic", env={"ANTHROPIC_API_KEY": "k"}, http_post=post, model="claude-sonnet-5-5")
     assert c.chat_json("x", temperature=0.3) == {"ok": 1}
     assert "temperature" not in sent and sent["model"] == "claude-sonnet-5-5"
+
+
+def test_kimchi_season_shrimp_is_used_whole():
+    """2026-11-12 (사용자): 김장용 생새우는 너무 작아 껍질·내장을 손질할 수 없다 — 통째로 넣는다.
+    추천 레시피 3개가 모두 '껍질 벗기고 내장 빼기'를 썼고, 예시 사진도 큰 새우였다."""
+    from app.services.recipe_chat import cook_knowledge as K
+
+    for dish in ("생새우부추전", "생새우무국", "김장용 생새우 전", "생새우달걀찜"):
+        assert any("통째로" in g for g in K.guidance(dish)), dish
+    assert not any("통째로" in g for g in K.guidance("새우튀김")) and not any("통째로" in g for g in K.guidance("감바스"))
+    bad = {"ingredients": [{"name": "생새우", "amount": "200g"}],
+           "steps": [{"text": "생새우는 껍질과 내장을 제거하고 찬물에 헹궈 주세요."}, {"text": "부쳐 주세요."}]}
+    cut = {"ingredients": [{"name": "생새우", "amount": "200g"}], "steps": ["도마 위에서 칼로 생새우를 2~3등분해 주세요."]}
+    good = {"ingredients": [{"name": "생새우", "amount": "200g"}],
+            "steps": ["생새우는 이물질을 골라내고 옅은 소금물에 흔들어 씻어 물기를 빼 주세요.", "반죽에 통째로 넣어 부쳐 주세요."]}
+    assert any("통째로" in p for p in K.problems(bad, "생새우부추전"))
+    assert any("통째로" in p for p in K.problems(cut, "김장용 생새우 전"))
+    assert not any("통째로" in p for p in K.problems(good, "생새우부추전"))
+    assert "NOT large peeled prawns" in K.image_hint("생새우부추전") and K.image_hint("새우튀김") == ""
+
+
+def test_a_stored_recipe_that_breaks_a_new_rule_is_made_again():
+    from app.services.recipe_chat import ai_recipe as AI
+
+    ai = AI.AiRecipes(None)
+    rid = AI.recipe_id("생새우부추전")
+    ai._memory.clear()
+
+    class Store:
+        pass
+    old = {"id": rid, "name": "생새우부추전", "ingredients": [{"name": "생새우", "amount": "200g"}],
+           "steps": [{"text": "생새우는 껍질과 내장을 제거해 주세요."}]}
+
+    class Db:
+        def read(self):
+            import contextlib
+            return contextlib.nullcontext(None)
+    import app.services.recipe_chat.easy_view as EV
+    real = EV.EasyViewStore
+    EV.EasyViewStore = lambda conn, sql: type("S", (), {"get": lambda self, *a: old})()
+    try:
+        ai.db = Db()
+        assert ai.get(rid) is None                     # 규칙을 어긴 저장본은 내보내지 않는다 → 다시 만든다
+    finally:
+        EV.EasyViewStore = real
+
+
+def test_image_hints_from_the_rs6_misleading_answers():
+    """2026-11-12 RS6: 김치찌개 '김치국으로 보임', 대게찜 '작게 잘라 덜 먹음직', 굴국밥 '굴이 애매' — 생김새를 짚어 준다."""
+    from types import SimpleNamespace
+
+    from app.services.recipe_chat import ai_image
+    from app.services.recipe_chat import cook_knowledge as K
+
+    kimchi = K.image_hint("김치찌개")
+    assert "NOT a thin, watery soup" in kimchi and "A Korean jjigae:" not in kimchi        # 일반 찌개 문장은 겹치지 않는다
+    assert "whole on a large platter" in K.image_hint("대게찜")
+    oyster = K.image_hint("굴국밥")
+    assert "Gukbap" in oyster and "oysters are the focus" in oyster
+    assert "NOT a clear soup" in K.image_hint("된장찌개") and K.image_hint("크림파스타") == ""
+
+    def recipe(title):
+        return SimpleNamespace(recipe_id="r", title=title, ingredients=[{"name": "x"}], content_hash=lambda: "abc",
+                               summary="", step_texts=lambda: ["담아 주세요."])
+    assert ai_image.AiImages.key(recipe("크림파스타"))[1] == "abc"                        # 안내 없는 요리 사진은 그대로
+    assert ai_image.AiImages.key(recipe("김치찌개"))[1].startswith("abc-h")                 # 안내가 붙은 요리만 새로
+    assert "ttukbaegi" in ai_image.image_prompt(recipe("김치찌개"))

@@ -61,6 +61,7 @@ class Product(_Model):
     title: str
     image_url: Optional[str] = None
     weight_g: Optional[float] = None
+    volume_ml: Optional[float] = None        # 2026-11-12: 액체 용량 (중량과 섞지 않음)
     unit_count: Optional[int] = None
     seller_claims: list[str] = Field(default_factory=list)   # 판매자 표기 (근거 아님)
 
@@ -73,6 +74,7 @@ class Offer(_Model):
     shipping_krw: Optional[int] = None       # None = 미확인
     total_krw: Optional[int] = None          # 배송비 미확인이면 None
     per100g_krw: Optional[int] = None
+    per100ml_krw: Optional[int] = None       # 2026-11-12
     per_unit_krw: Optional[int] = None
     rocket: Optional[bool] = None
     free_shipping: Optional[bool] = None

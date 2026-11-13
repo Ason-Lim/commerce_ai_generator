@@ -128,6 +128,10 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
             log.exception("extra card source failed")
     if terms:
         cards = [c for c in cards if relevant(c["title"], terms)]
+        # 2026-11-12: Jev 관련성 보조 — 기본 꺼짐(RELEVANCE_ASSIST=off). 실패·지연이면 카드 그대로 (규칙이 기본)
+        from app.services.commerce import relevance_assist
+
+        cards = relevance_assist.apply(query, cards)
     # 2026-11-11: 냉동 상품은 고객이 냉동을 찾지 않았으면 따로 보기로 나눈다 (생과와 같은 기준으로 견주지 않음).
     # 냉동이 아닌 후보가 하나도 없으면 나누지 않는다.
     frozen_list: list[dict] = []
@@ -246,6 +250,11 @@ def _evidence(card: dict, item: dict | None) -> list[Evidence]:
         ev.append(Evidence(field="weight_g", value=None, unit="g", method="title_parse", status="conflict",
                            source="상품명에 중량 여러 개 (옵션 목록 — 가격이 어느 옵션인지 모름)",
                            raw_text=", ".join(found) or None))
+    if card.get("volume_ml"):
+        # 2026-11-12: 액체 용량 — 상품명 표기 (곱하기·'용량, 수량' 표기는 계산식을 원문으로)
+        ev.append(Evidence(field="volume_ml", value=_exact(card["volume_ml"]), unit="ml", method="title_parse",
+                           source=(f"상품명 표기 {card['volume_formula']} 계산" if card.get("volume_formula")
+                                   else "상품명 표기"), raw_text=card.get("volume_formula")))
     if card.get("unit_count"):
         scope = explain.unit_scope(card.get("title") or "")
         if scope["clear"]:
@@ -339,11 +348,13 @@ def to_item(card: dict, section: str, item: dict | None = None,
         section=section,
         product=Product(product_id=card.get("pid"), key=key, title=card.get("title") or "",
                         image_url=policies.safe_url(card.get("image")), weight_g=card.get("weight_g"),
+                        volume_ml=card.get("volume_ml"),
                         unit_count=card.get("unit_count"), seller_claims=list(card.get("seller_claims") or [])),
         offer=Offer(platform=str(card.get("mall") or ""), merchant=merchant,
                     product_url=policies.safe_url(card.get("url")), price_krw=_int(card.get("price")) or 0,
                     shipping_krw=_int(card.get("shipping_fee")), total_krw=_int(card.get("total")),
-                    per100g_krw=_int(card.get("per100g")), per_unit_krw=_int(card.get("per_unit")),
+                    per100g_krw=_int(card.get("per100g")), per100ml_krw=_int(card.get("per100ml")),
+                    per_unit_krw=_int(card.get("per_unit")),
                     rocket=card.get("rocket"), free_shipping=card.get("free_shipping"), link_type=link_type,
                     affiliate_program=card.get("affiliate_program"), opens_directly=bool(card.get("direct")),
                     seen_at=card.get("seen_at")),
@@ -379,6 +390,8 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
     if picked and any(c.get("ucp") for c in picked["picks"] + picked["others"]):
         warnings.append("UCP 판매처 가격은 카탈로그 값이에요 — 판매처 결제 화면 가격이 기준이고, 판매자 단위가격은 "
                         "다른 판매처와 견주지 않았어요.")
+    if got["picked"] and got["picked"].get("bulk_held"):
+        warnings.append(f"대용량 상품 {got['picked']['bulk_held']}개는 업소·대가족용으로 보고 추천에서 뺐어요 (요청하면 함께 견줌).")
     if got["frozen_list"]:
         warnings.append(f"냉동 상품 {len(got['frozen_list'])}개는 생과·생물과 쓰임새가 달라 따로 두었어요 (같은 기준으로 견주지 않음).")
     if got["connect"]:

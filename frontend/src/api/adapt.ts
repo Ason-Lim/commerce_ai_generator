@@ -9,7 +9,7 @@
 import type {
   ApiCard, Block, Candidate, ChatResponse, ChipItem, ClarifyFormBlock, ClarifyQuestion,
 } from "../types/blocks";
-import { parseWeightFromTitle, per100g, weightLabel, won } from "../lib/format";
+import { parseWeightFromTitle, per100g, volumeLabel, weightLabel, won } from "../lib/format";
 
 export const toChip = (c: string | ChipItem): ChipItem => (typeof c === "string" ? { label: c } : c);
 
@@ -31,8 +31,9 @@ export function cardToCandidate(c: ApiCard): Candidate {
     price: c.price,
     shippingFee: ship,
     total,
-    weightLabel: weightLabel(g),
+    weightLabel: weightLabel(g) ?? volumeLabel(c.volume_ml),
     per100g: c.per100g !== undefined ? c.per100g : serverWeighed ? null : per100g(total, g),
+    per100ml: c.per100ml ?? null,
     weightNote: c.weight_note ?? null,
     varietyMix: c.variety_mix ?? null,
     unitLabel: c.unit_price && c.unit_count ? `${c.unit_count}개 · 개당 약 ${won(c.unit_price)}` : null,

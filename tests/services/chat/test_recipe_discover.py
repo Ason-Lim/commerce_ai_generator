@@ -306,14 +306,17 @@ def make_ai(sqlite_db, shopping):
                       "view_json TEXT, model TEXT, UNIQUE(recipe_id, content_hash, prompt_version));")
     raw.close()
 
-    def build(draft=AI_DRAFT, known=True, drafts=None, core=CORE, blog_titles=DISH_BLOG):
+    # known: True = AI 가 아는 요리(묻지 않고 바로 만든다, 2026-11-12) · False = 모르는 요리 ·
+    #        "described" = 고객이 설명해야 아는 요리 (설명 흐름을 시험하는 기존 시험의 기본값)
+    def build(draft=AI_DRAFT, known="described", drafts=None, core=CORE, blog_titles=DISH_BLOG):
         calls = []
         queue = list(drafts or [])
 
         def identify(text):
             calls.append(("identify", text))
+            knows = known is True or (known == "described" and '"고객 설명"' in text)
             return ({"known": True, "what": "피스타치오 카다이프를 마시멜로 피로 감싼 쿠키", "core_ingredients": core,
-                     "method": "굽지 않고 냉장 굳히기"} if known else
+                     "method": "굽지 않고 냉장 굳히기"} if knows else
                     {"known": False, "what": None, "question": "어떤 재료로 만드는 디저트인가요?"})
 
         def gen(text):
@@ -337,9 +340,10 @@ def open_ai(svc, sid=None, describe=DESCRIBE):
 
 
 def test_found_posts_are_compared_by_their_titles_only(make_ai):
-    svc, _calls = make_ai()
+    svc, _calls = make_ai(known=True)
     res = svc.handle(None, message="두쫀쿠 만드는 법")
-    assert chips(res)[:2] == ["두쫀쿠 AI 제안 레시피로 만들기", "두쫀쿠 레시피 후보 비교"]   # next actions
+    # 2026-11-12: 결과를 먼저 — AI 가 아는 요리는 묻지 않고 바로 추천 레시피, 찾은 글은 비교로 볼 수 있다
+    assert any(b["type"] == "recipe_card" for b in res["blocks"])
     text = md(svc.handle(res["session_id"], message="두쫀쿠 레시피 후보 비교"))
     assert text.startswith("**두쫀쿠 레시피 후보 비교** — 블로그 **제목·게시일만** 비교했어요. 본문(재료·분량·방법)은 이용 조건을 "
                            "확인하지 못해 가져오지 않았어요.")
@@ -347,20 +351,20 @@ def test_found_posts_are_compared_by_their_titles_only(make_ai):
     assert "제목 속 특징:" in text or "제목에 특징 표기 없음" in text
 
 
-def test_core_ingredients_not_confirmed_by_any_title_mean_one_question_first(make_ai):
-    """2026-11-01 customer check: the model 'knew' 두쫀쿠 and generated at once.  Its ingredients must be confirmed
-    (search titles / the customer) before anything is generated."""
-    svc, calls = make_ai()
-    sid = svc.handle(None, message="두쫀쿠 만드는 법")["session_id"]
-    res = svc.handle(sid, message="두쫀쿠 AI 제안 레시피로 만들기")
-    assert res["stage"] == "recipe_ai_question" and not any(b["type"] == "recipe_card" for b in res["blocks"])
-    assert "AI가 짐작한 피스타치오 페이스트, 카다이프, 마시멜로는 확인되지 않았어요" in md(res)
-    assert [c for c in calls if not isinstance(c, tuple)] == []          # nothing generated on a guess
+def test_a_known_dish_is_made_at_once_and_its_guessed_ingredients_are_named(make_ai):
+    """2026-11-12 (사용자): '바삭한 새우전 만들기'에 레시피 대신 질문이 나왔다 — 사람은 결과를 먼저 보고 싶어 한다.
+    AI 가 아는 요리는 바로 만들고, 제목으로 확인 못 한 재료는 'AI가 짐작한 재료'로 아래에 밝힌다."""
+    svc, calls = make_ai(known=True)
+    res = svc.handle(None, message="두쫀쿠 만드는 법")
+    types = [b["type"] for b in res["blocks"]]
+    assert res["stage"] != "recipe_ai_question" and types[0] == "recipe_card"        # 결과(카드)가 맨 위
+    assert "AI가 짐작한 재료: 피스타치오 페이스트, 카다이프, 마시멜로 — 검색 결과로는 확인하지 못했어요." in md(res)
+    assert len([c for c in calls if not isinstance(c, tuple)]) == 1                   # 한 번 만들었다
 
 
 def test_titles_that_name_the_core_ingredients_confirm_them(make_ai):
     titles = DISH_BLOG + [blog("두쫀쿠 레시피 피스타치오 카다이프 마시멜로로 만들기", "https://blog.naver.com/k/1", "K", "20261026")]
-    svc, calls = make_ai(blog_titles=titles)
+    svc, calls = make_ai(blog_titles=titles, known=True)
     sid = svc.handle(None, message="두쫀쿠 만드는 법")["session_id"]
     res = svc.handle(sid, message="두쫀쿠 AI 제안 레시피로 만들기")
     assert any(b["type"] == "recipe_card" for b in res["blocks"])
@@ -377,7 +381,8 @@ def test_ai_recipe_runs_the_card_servings_stock_shortage_and_products(make_ai, s
     assert card["recipe_id"] == AI.recipe_id("두쫀쿠") and card["recipe_id"].endswith("-v3")
     assert card["source"]["level"] == "ai_suggestion"
     assert card["source"]["label"] == "AI 제안 레시피 · 원문 아님" and card["hero"] is None and card["easy"] is None
-    assert md(res).startswith("**두쫀쿠**의 AI 제안 레시피예요. 일반 조리 지식으로 만든 제안이라 특정 블로그·유명인의 레시피가 아니고")
+    assert md(res).startswith("**두쫀쿠** 추천 레시피예요(AI 작성·검토). 일반 조리 지식으로 만든 제안이라 특정 블로그·유명인의 레시피가 아니에요.")
+    assert "공공 레시피" not in md(res)                              # 공공 레시피에 없으면 말하지 않는다
     assert "핵심 재료: 피스타치오 페이스트, 카다이프, 마시멜로(고객 설명)" in md(res)
     ident = [c for c in calls if isinstance(c, tuple)]
     assert '"정식 이름 후보": "두바이 쫀득 쿠키"' in ident[0][1] and '"고객 설명"' in ident[-1][1]
@@ -636,3 +641,200 @@ def test_popular_named_dish_gets_its_recipes_not_the_general_trend_list(make):
     assert res["stage"] != "recipe_trend"
     assert "news" not in {k for _q, k in http.calls}
     assert md(res).startswith("'샌드위치' 레시피를 보여 드려요. 어느 레시피가 더 인기 있는지는 따로 재지 않았어요.")
+
+
+# ── 2026-11-12: 추천 레시피(AI)가 먼저, 공공 레시피는 아래 참고로만 ─────────────────────────
+def test_a_public_dish_gets_the_recommended_recipe_first_and_the_public_one_below(make_ai):
+    svc, _calls = make_ai(known=True, core=[])
+    title = svc.recipe.resolver.title("EPIS:467")
+    res = svc.handle(None, message=f"{title} 만드는 법")
+    types = [b["type"] for b in res["blocks"]]
+    text = md(res)
+    if res["stage"] == "recipe_ai_question":                       # 제목으로 확인 못 하면 한 번 묻는다 — 그래도 참고는 붙는다
+        assert "recipe_card" not in types
+    else:
+        card = next(b for b in res["blocks"] if b["type"] == "recipe_card")["data"]
+        assert card["source"]["level"] == "ai_suggestion"
+    assert "**참고 · 공공 레시피**" in text and f"「{title}」" in text
+    assert f"{title} 공공 레시피 보기" in chips(res)
+    opened = svc.handle(res["session_id"], message=f"{title} 공공 레시피 보기")
+    card = next(b for b in opened["blocks"] if b["type"] == "recipe_card")["data"]
+    assert card["source"]["level"] != "ai_suggestion" and "참고용 공공 레시피예요" in md(opened)
+
+
+def test_when_the_recommended_recipe_fails_the_public_one_is_shown_as_reference(make_ai):
+    svc, _calls = make_ai(dict(AI_DRAFT, steps=["섞어 주세요."]))   # 검사를 못 넘는 초안
+    title = svc.recipe.resolver.title("EPIS:467")
+    sid = svc.handle(None, message=f"{title} 만드는 법")["session_id"]
+    res = svc.handle(sid, message="크림과 면으로 끓여 만드는 파스타예요")
+    if res["stage"] != "recipe_guide":
+        return                                                     # 식별 단계에서 멈춘 경우는 이 시험의 대상이 아니다
+    assert "참고용 공공 레시피를 대신 보여 드려요" in md(res)
+
+
+def test_after_the_recipe_one_question_offers_other_recipes(make_ai):
+    titles = DISH_BLOG + [blog("두쫀쿠 레시피 피스타치오 카다이프 마시멜로로 만들기", "https://blog.naver.com/k/1", "K", "20261026")]
+    svc, _calls = make_ai(blog_titles=titles, known=True)
+    res = svc.handle(None, message="두쫀쿠 만드는 법")
+    assert any(b["type"] == "recipe_card" for b in res["blocks"])
+    assert "네이버 블로그·카페·유튜브·인스타그램 레시피도 소개해 드릴까요?" in md(res)
+    assert "네, 두쫀쿠 다른 레시피도 보여 줘" in chips(res)
+    other = svc.handle(res["session_id"], message="네")                 # 짧은 답으로도 이어진다
+    form = next(b for b in other["blocks"] if b["type"] == "clarify_form")["data"]   # 예전처럼 '원문 보기' 카드
+    options = form["questions"][0]["options"]
+    assert other["stage"] == "recipe_other" and form["layout"] == "cards"
+    assert any(o["href"] == "https://blog.naver.com/k/1" for o in options)
+    assert "인스타그램은 아직 연결되지 않아" in md(other)
+    again = svc.handle(res["session_id"], message="네")                  # 질문은 한 번만 — 두 번째 '네'는 이어지지 않는다
+    assert again["stage"] != "recipe_other"
+
+
+
+def test_a_shopping_sentence_is_not_taken_as_the_dish_description(make_ai):
+    """2026-11-12 실제 화면: 요리 확인 질문 뒤 '가성비 생새우'가 요리 설명으로 읽혀 레시피가 만들어졌다."""
+    svc, calls = make_ai()
+    res = svc.handle(None, message="두쫀쿠 만드는 법")
+    assert res["stage"] == "recipe_ai_question"
+    res = svc.handle(res["session_id"], message="가성비 좋은 피스타치오")
+    assert res["stage"] != "recipe_guide" and [c for c in calls if not isinstance(c, tuple)] == []
+
+
+# ── 2026-11-12 화면 점검 후 수정 ─────────────────────────
+SHRIMP_DRAFT = {"title": "생새우무국", "summary": "무와 생새우로 끓인 맑은 국이에요.", "servings": "2인분",
+                "ingredients": [{"name": "생새우", "amount": "200g"}, {"name": "무", "amount": "300g"},
+                                {"name": "물", "amount": "1L"}, {"name": "국간장", "amount": "1큰술"}],
+                "tools": ["냄비"],
+                "steps": ["냄비에 무와 물을 넣고 중불에서 10분 끓여 주세요.",
+                          "생새우를 넣고 붉게 변할 때까지 3분 끓여 주세요.",
+                          "국간장으로 간을 맞추고 불을 꺼 주세요."],
+                "tips": ["생새우는 오래 끓이면 질겨져요."]}
+
+
+def test_a_dish_from_our_menu_needs_no_question_and_gets_an_example_image(make_ai):
+    svc, calls = make_ai(SHRIMP_DRAFT, core=["생새우", "무"], known=True)
+
+    class Images:
+        def ensure(self, recipe, db):
+            return "pending", None
+
+        def peek(self, recipe, db):
+            return "ready", "/api/recipe/image?x"
+    svc.recipe.ai_images = Images()
+    first = svc.handle(None, message="제철 김장용생새우로 4인분 저녁 메뉴 만들려면 뭐 사야 해?")
+    res = svc.handle(first["session_id"], message="생새우무국 만드는 법")
+    assert res["stage"] != "recipe_ai_question"                      # 메뉴에서 보인 재료(생새우·무)가 근거
+    card = next(b for b in res["blocks"] if b["type"] == "recipe_card")["data"]
+    assert "메뉴 제안" in md(res)
+    assert card["hero_status"] == "pending"                            # AI 레시피에도 예시 이미지를 만든다
+    ident = [c for c in calls if isinstance(c, tuple)][-1][1]
+    assert '"메뉴 제안 재료": ["생새우", "무", "대파"]' in ident
+
+
+def test_a_bulk_pack_is_a_caution_not_a_reason():
+    from app.services.recipe_chat import pack_fit
+
+    blocks = [{"type": "product_list", "data": {"items": [
+        {"title": "김장용 생새우 동백하, 1개, 10kg", "reason": "", "why": []},
+        {"title": "김장용 생새우 동백하 500g", "reason": "", "why": []}]}}]
+    out = pack_fit.apply(blocks, {"김장용 생새우": {"name": "김장용 생새우", "amount": "480", "unit": "g",
+                                                "display": "480g", "basis": "4인분"}})
+    items = next(b for b in out if b["type"] == "product_list")["data"]["items"]
+    bulk = next(i for i in items if "10kg" in i["title"])
+    assert bulk["why"] == [] and "가정에서 쓰기엔 많아요" in bulk["reason"] and "21배" in bulk["reason"]
+    small = next(i for i in items if "500g" in i["title"])
+    assert small["why"] and small["fit"] == "fits"
+
+
+def test_a_dish_with_few_exact_posts_shows_similar_ones_labelled():
+    """2026-11-12 실제 화면: '생새우부추전' 다른 레시피를 하나도 못 찾았다 (유튜브에는 '새우부추전'이 많다).
+    앞말 '생'을 뗀 이름·재료+요리 종류가 제목에 있으면 '비슷한 레시피'로 보여 준다. 생강·생선은 떼지 않는다."""
+    assert D.similar_names("생새우부추전") == ["새우부추전"] and D.dish_parts("생새우부추전") == ("새우", "부추전")
+    assert D.similar_names("생강차") == []
+    assert D.base_names("생새우부추전") == ["생새우전", "새우전"]               # 부추만 뺀 기본 요리 (사용자 예: 블로그의 '생새우 전')
+    titles = [blog("생새우 전 레시피 고소하게", "https://blog.naver.com/s/0", "R", "20261031"),
+              blog("새우부추전 레시피 바삭하게 부치기", "https://blog.naver.com/s/1", "S", "20261101"),
+              blog("새우 듬뿍 부추전 만들기 레시피", "https://blog.naver.com/s/2", "T", "20261102"),
+              blog("부추전 맛집 후기", "https://blog.naver.com/s/3", "U", "20261103")]
+    disc = D.Discovery(D.NaverSearch("id", "secret", http_get=FakeNaver({"blog": titles})), fake_llm, now=lambda: NOW)
+    r = disc.dish("생새우부추전 만드는 법", "생새우부추전", with_signals=False)
+    links = {c["link"]: c for c in r["candidates"]}
+    assert r["status"] == "ok" and "https://blog.naver.com/s/3" not in links      # 새우 없는 부추전 후기는 아님
+    assert links["https://blog.naver.com/s/0"]["similar"]                       # '생새우 전'도 비슷한 레시피
+    assert links["https://blog.naver.com/s/1"]["similar"] and links["https://blog.naver.com/s/2"]["similar"]
+
+
+def test_search_words_cover_the_ingredient_and_its_uses():
+    """2026-11-12 (사용자): 유튜브에서 '생새우', '김장용 생새우', '김장용 생새우 활용법' 등 다양하게 찾아야 한다 —
+    다른 요리도 제목의 연관 단어로."""
+    assert D.search_words("생새우부추전", "김장용 생새우") == ["생새우부추전", "생새우전", "김장용 생새우 전",
+                                                          "김장용 생새우 활용법", "새우전", "새우부추전"]
+    assert "김장용 생새우 활용법" in D.search_words("김장용 생새우 전")
+    assert D.search_words("방어무조림") == ["방어무조림", "방어조림", "방어 요리"]
+    assert D.search_words("굴국밥") == ["굴국밥"]                                 # '굴국 요리' 같은 잘못 자른 말은 없다
+    assert D.main_ingredient("두쫀쿠") is None and D.search_words("두쫀쿠") == ["두쫀쿠"]
+
+
+def test_videos_are_searched_with_related_words_and_labelled():
+    class Videos:
+        def __init__(self):
+            self.queries = []
+
+        def search(self, q, **kw):
+            self.queries.append(q)
+            table = {"생새우전 만들기": [D.Hit("김장철 별미 생새우전 만들기", "https://youtu.be/a", "채널A", "2020-08-22", "video")],
+                     "김장용 생새우 활용법": [D.Hit("김장용 생새우 활용 요리 3가지", "https://youtu.be/b", "채널B", "2025-11-20", "video")]}
+            return table.get(q, []), None
+    vids = Videos()
+    disc = D.Discovery(D.NaverSearch("id", "secret", http_get=FakeNaver({"blog": []})), fake_llm, now=lambda: NOW)
+    disc.video = vids
+    r = disc.dish("생새우부추전 만드는 법", "생새우부추전", with_signals=False, context="김장용 생새우")
+    got = {c["link"]: c["match"] for c in r["candidates"]}
+    assert got.get("https://youtu.be/a") == "similar"
+    assert vids.queries[:4] == ["생새우부추전 만들기", "생새우부추전 만들기", "생새우전 만들기", "김장용 생새우 전 만들기"] or \
+        "김장용 생새우 활용법" in vids.queries
+    assert vids.queries[0] == "생새우부추전 만들기" and "생새우전 만들기" in vids.queries
+    assert len(vids.queries) <= 5                                              # 할당량: 말은 최대 4개(첫 말만 두 번)
+
+
+def test_recipe_and_products_asked_together(make_ai):
+    """2026-11-12 실제 화면: '김치찌개 요리 레시피와 상품을 추천해 주세요' → "어떤 상품 요리를 만들까요?" (레시피만, 상품 없음).
+    이제 요리 이름은 김치찌개로 읽고, 추천 레시피 아래에 주재료 상품을 함께 보인다."""
+    from app.services.recipe_chat.service import RecipeChat
+
+    assert RecipeChat._dish_from("김치찌개 요리 레시피와 상품을 추천해 주세요.") == "김치찌개"
+    svc, _calls = make_ai(known=True)
+    res = svc.handle(None, message="두쫀쿠 레시피와 상품을 추천해 주세요")
+    assert any(b["type"] == "recipe_card" for b in res["blocks"])
+    queried = [q for q, _p, _s in svc.shopping.calls] if hasattr(svc, "shopping") else []
+    assert "주재료" in md(res) and "상품도 함께 보여 드려요" in md(res)
+    assert queried and len(queried) <= 3 and not set(queried) & {"물", "소금", "설탕"}
+
+
+def test_dish_name_stops_at_the_request_words():
+    """2026-11-12 실제 화면: '김치찌개 요리 방법과 상품을 보여주세요' 가 예전 '원문 레시피 고르기'로 빠졌다."""
+    from app.services.recipe_chat.service import RecipeChat as R
+
+    assert R._dish_from("김치찌개 요리 방법과 상품을 보여주세요.") == "김치찌개"
+    assert R._dish_from("김치찌개 끓이는 법 알려줘") == "김치찌개"
+    assert R._dish_from("김치 볶음밥 만드는 법") == "김치 볶음밥"          # 요리 이름 속 '볶음'은 끊지 않는다
+    assert R._dish_from("오이지 무침 만드는 법") == "오이지 무침"          # '…지'로 끝나는 요리 이름
+    assert R._dish_from("레시피 추천해 줘") is None
+
+
+def test_cooking_verb_phrasings_are_recipe_requests(make_ai):
+    """2026-11-12 실제 화면: '김치찌개 끓이는 방법과 상품을 추천해 주세요' → 상품만 (레시피 없음)."""
+    from app.services.recipe_chat import parsing as P
+    from app.services.recipe_chat.service import RecipeChat as R
+
+    for text, dish in [("김치찌개 끓이는 방법과 상품을 추천해 주세요.", "김치찌개"), ("된장찌개 끓이는 방법 알려줘", "된장찌개"),
+                       ("김치전 부치는 방법", "김치전"), ("깍두기 담그는 법", "깍두기"), ("고등어조림 졸이는 방법", "고등어조림"),
+                       ("김치찌개 어떻게 끓여요?", "김치찌개"), ("두쫀쿠 만들기", "두쫀쿠"), ("삶은계란 만드는 법", "삶은계란")]:
+        assert P.is_recipe_request(text) and R._dish_from(text) == dish, text
+    assert not P.is_recipe_request("김치 보관하는 방법")                       # 보관·손질은 레시피가 아니다
+    # 2026-11-12 실제 화면: '맛있게 라면 끓이는 방법' → "맛있게 라면 AI 제안 레시피를 만들기 전에 하나만 여쭤볼게요"
+    for text, dish in [("맛있게 라면 끓이는 방법", "라면"), ("라면 맛있게 끓이는 방법", "라면"),
+                       ("얼큰하게 된장찌개 끓이는 방법", "된장찌개"), ("꽃게탕 끓이는 방법", "꽃게탕")]:
+        assert R._dish_from(text) == dish, text
+    svc, _calls = make_ai(known=True)
+    res = svc.handle(None, message="두쫀쿠 끓이는 방법과 상품을 추천해 주세요.")
+    assert any(b["type"] == "recipe_card" for b in res["blocks"]) and "상품도 함께 보여 드려요" in md(res)

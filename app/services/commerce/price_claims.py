@@ -19,9 +19,9 @@ PRICE_ROLES = {"value", "lowest", "ample"}
 STALE_ROLE_LABEL = "과거 확인 가격"
 NO_TIME_ROLE_LABEL = "확인 시각 없는 가격"
 # 가격 우위·단가 문구 (이런 이유 줄은 뺀다)
-CLAIM = re.compile(r"가장 저렴|가장 낮|최저|가성비|저렴해요|비싸요|100g당 가격이 같아요|개당 가격이 가장|예산 .+ 안이에요")
+CLAIM = re.compile(r"가장 저렴|가장 낮|최저|가성비|저렴해요|비싸요|100(?:g|ml)당 가격이 같아요|개당 가격이 가장|예산 .+ 안이에요")
 # 이유 줄 안의 단가 조각 (줄은 남기고 조각만 뺀다): ', 100g당 1,000원' · '(…, 100g당 1,000원)'
-PER100G_PART = re.compile(r",?\s*100g당\s*[\d,]+원(/100g)?")
+PER100G_PART = re.compile(r",?\s*100(?:g|ml)당\s*[\d,]+원(/100(?:g|ml))?")
 FAST_TAIL = " 중 가장 저렴해요"
 
 

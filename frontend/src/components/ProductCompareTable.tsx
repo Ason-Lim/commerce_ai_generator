@@ -98,7 +98,7 @@ function Row({ r, sid, hasNeed, hasPrep, bestTotal, bestPer }: {
       )}
       {hasPrep && <td className={cx("whitespace-nowrap px-3 py-2.5", r.prep !== "깐굴 표기" && "text-warn")}>{r.prep ?? "—"}</td>}
       <td className="px-3 py-2.5 text-xs text-ink2">
-        {r.seller_claims.length ? <>{r.seller_claims.join(" · ")} <span className="text-ink3">(확인 안 됨)</span></> : "—"}
+        {r.seller_claims.length ? <>{r.seller_claims.join(" · ")} <span className="text-ink3">(판매자 주장 · 확인 안 됨)</span></> : "—"}
       </td>
     </tr>
   );
@@ -186,7 +186,7 @@ function MobileCard({ r, n, total, sid, hasNeed, hasPrep, bestTotal, bestPer }: 
         {hasNeed && line("필요량 대비", <span className={cx(r.fit === "fits" ? "text-accent" : r.fit === "unknown" || r.fit === "bulk" ? "text-warn" : "")}>{r.fit_text ?? "—"}</span>)}
         {hasPrep && line("손질 표기", <span className={cx(r.prep !== "깐굴 표기" && "text-warn")}>{r.prep ?? "—"}</span>)}
         {line("판매자 표기", r.seller_claims.length
-          ? <span className="text-xs">{r.seller_claims.join(" · ")} <span className="text-ink3">(확인 안 됨)</span></span> : "—")}
+          ? <span className="text-xs">{r.seller_claims.join(" · ")} <span className="text-ink3">(판매자 주장 · 확인 안 됨)</span></span> : "—")}
       </div>
       {href ? (
         <a href={href} target="_blank" rel={r.affiliate ? "sponsored noopener" : "noopener"}

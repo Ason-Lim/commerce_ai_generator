@@ -91,6 +91,9 @@ export interface ApiCard {
   missing_terms?: string[];
   /* 제안 필드 (백엔드 추가 요청) */
   weight_g?: number | null;
+  /** 2026-11-12: 액체 용량(ml)·100ml당 — 중량이 없을 때만 (g 와 섞지 않음) */
+  volume_ml?: number | null;
+  per100ml?: number | null;
   delivery_terms?: string | null;
   is_sponsored?: boolean;
   /** 수수료가 발생하는 제휴 링크 (쿠팡 파트너스 등) */
@@ -111,7 +114,7 @@ export interface ApiCard {
   /** 서버가 정한 판매처 이동 경로 (/go/{sid}/k/{key} · 관심 상품은 /go/s/{owner}/{key}) */
   go?: string | null;
   /** 역할: value 가성비 · lowest 최저가 · fast 빠른 배송 · ample 넉넉한 양 · gift 선물용 · alt 다른 선택 */
-  role?: "value" | "lowest" | "fast" | "ample" | "gift" | "alt" | null;
+  role?: "value" | "lowest" | "fast" | "ample" | "gift" | "sweet" | "house" | "alt" | null;
   role_label?: string | null;
   /** 왜 골랐는지 — basis: calc 후보끼리 계산 · mall 판매처 표시 · you 고객이 말한 조건 */
   why?: WhyLine[];
@@ -280,7 +283,9 @@ export interface RecipeCardBlock {
     source_gap?: string | null;
     /** AI 제안 레시피: 무엇을 언제 어떤 모델로 만들었는지 (원문 아님) */
     generated?: { at?: string | null; model?: string | null; servings?: string | null; ingredients: number; steps: number;
-      what?: string | null } | null;
+      what?: string | null;
+      /** 2026-11-12: 작성 모델과 다른 회사 모델(GPT)의 교차 검토 — notes 는 고쳐 쓴 뒤에도 남은 의견 */
+      review?: { by?: string | null; status: 'ok' | 'notes' | 'failed'; notes: string[] } | null } | null;
     /** AI가 보충한 단계 — 원문 아님, 검증 통과분만 */
     supplement?: RecipeSupplement | null;
     supplement_status?: RecipeEasyStatus;
@@ -387,6 +392,8 @@ export interface ChatRequest {
   message?: string;
   answers?: Record<string, string>;
   chip?: string;
+  /** 2026-11-12: 화면에 지난 메시지가 없을 때(첫 화면) — 서버가 이전 레시피·되묻기 맥락을 닫는다 (보유량 기록은 유지) */
+  fresh?: boolean;
 }
 
 /** 2026-11-11: 상품명에 중량이 여러 개(옵션 목록)이거나 증정분이 적힌 경우 — 100g당 가격은 계산하지 않는다 */
@@ -416,6 +423,7 @@ export interface Candidate {
   total: number | null;         // null = 배송비 미확인으로 확정 불가
   weightLabel?: string | null;  // "1.2kg"
   per100g?: number | null;      // 100g당 가격
+  per100ml?: number | null;     // 100ml당 가격 (액체, 2026-11-12)
   weightNote?: WeightNote | null; // 중량 옵션·증정분 안내 (2026-11-11)
   varietyMix?: VarietyMix | null; // 여러 품종 구성 (2026-11-11)
   unitLabel?: string | null;    // "개당 약 4,635원"

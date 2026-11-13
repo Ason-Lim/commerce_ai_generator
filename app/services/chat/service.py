@@ -127,6 +127,21 @@ def item_to_card(item: dict, rank: int) -> dict:
     return card
 
 
+# 2026-11-12: 첫 화면에서 보낸 질문 — 손님이 볼 수 없는 지난 맥락(열린 레시피·되묻기·직전 계산)은 닫는다.
+# 보유량 기록(recipe 세션 저장소)·관심 상품·지난 카드의 이동 링크(last_items)는 그대로 둔다.
+CONTEXT_KEYS = ("recipe_id", "pending", "last_stock_ingredient_id", "cup_ml", "servings", "dish_purchase", "menu_plan",
+                "consult", "discover")
+
+
+def close_context(state: dict) -> dict:
+    out = dict(state)
+    for k in CONTEXT_KEYS:
+        if k in out:
+            out[k] = None
+    out["mode"] = None
+    return out
+
+
 class ChatService:
     def __init__(self, db: Db | None = None, *, shopping: Callable | None = None,
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
@@ -148,12 +163,15 @@ class ChatService:
 
     # ── public ────────────────────────────────────────────
     def handle(self, session_id: str | None, message: str | None = None,
-               answers: dict | None = None, chip: str | None = None, owner: str | None = None) -> dict:
+               answers: dict | None = None, chip: str | None = None, owner: str | None = None,
+               fresh: bool = False) -> dict:
         sid = session_id if isinstance(session_id, str) and SESSION_RE.fullmatch(session_id) else str(uuid.uuid4())
         recipe_sid = "recipe:" + sid
         text = (message or chip or "").strip()
 
         state, revision, persist = self._load(sid)
+        if fresh:
+            state = close_context(state)
 
         if not text and not answers:
             return self._response(sid, "empty", [B.text("무엇을 도와드릴까요?")])
@@ -536,6 +554,10 @@ class ChatService:
         head = (f"예산 **{budget['label']}** 에 맞춰 앞서 찾은 '{query}' 후보 {found}개를 다시 견줬어요."
                 if rechecked else f"'{query}' 후보 {found}개를 같은 기준으로 견줘서 {len(picks)}개를 골랐어요.")
         blocks = [B.text(head)]
+        if picked.get("bulk_held"):
+            # 2026-11-12: 대용량은 요청할 때만 — 뒤로 둔 것을 숨기지 않고 알린다
+            blocks.append(B.notice(f"대용량 상품 {picked['bulk_held']}개는 업소·대가족용으로 보고 다른 후보 맨 뒤에 두었어요. "
+                                   f"대용량이 필요하면 '대용량 {query}'라고 말씀해 주세요."))
         if picked["budget_miss"]:
             blocks.append(B.notice(f"예산 {budget['label']} 안에 드는 후보가 없어요. 가격이 낮은 순으로 보여 드려요. "
                                    f"새로 찾아볼까요? 예: '{budget['label']} {query}'", "warn"))
@@ -938,6 +960,21 @@ def _query_words(text: str) -> str:
     return " ".join(out)
 
 
+# 2026-11-12 (점수 연구 e1): 상황·용도를 말하는 낱말이 품목처럼 쓰여 엉뚱한 상품이 통과했다 —
+#   '굴국밥 재료 굴'에 '…해초류 재료' 매생이, '자취생 간편식 닭가슴살'에 '자취혼밥 간편식 계란밥'.
+#   품목 낱말이 따로 있으면, 아래 낱말은 '결과가 겹쳐야 하는 말'에서 뺀다 (상품을 고르는 근거가 아님).
+_SEARCH_DROP = frozenset({"재료", "자취생", "자취", "혼밥", "집밥", "요리"})        # 검색어에서도 뺌
+_TERM_DROP = frozenset({"간편식", "가정용", "1인용", "업소용", "대용량", "소포장"})  # 검색어에는 두고 겹침 판정에서만 뺌
+
+
+def _context_word(tok: str, tokens: list[str]) -> bool:
+    if tok in _SEARCH_DROP or tok in _TERM_DROP:
+        return True
+    if len(tok) > 2 and tok.endswith("용"):                     # '감바스용' — 용도
+        return True
+    return any(o != tok and len(o) < len(tok) and o in tok for o in tokens)   # '굴국밥'에 '굴'이 따로 있음 — 요리 이름
+
+
 def shopping_terms(text: str, extractor: Callable | None = None) -> tuple[str, list[str] | None]:
     """(search word, words every result must share) — a short request is searched as it always was (no filter)."""
     tokens = _content_tokens(text)
@@ -946,6 +983,12 @@ def shopping_terms(text: str, extractor: Callable | None = None) -> tuple[str, l
     if len((text or "").split()) <= 3:
         # 2026-11-02: '사과를 추천해 줘' 를 문장째 검색하면 '종이소녀상만들기' 같은 상품이 섞였다 →
         # 상품어만 검색하고, 결과는 그 말(또는 같은 부류의 말)과 겹쳐야 보여 준다
+        items = [t for t in tokens if not _context_word(t, tokens)]
+        if items and len(items) < len(tokens):
+            dish = {t for t in tokens if any(o != t and len(o) < len(t) and o in t for o in tokens)}
+            query = " ".join(w for w in (_query_words(text) or " ".join(tokens)).split()
+                             if w not in _SEARCH_DROP and w not in dish)
+            return query or " ".join(items), items
         return _query_words(text) or " ".join(tokens), tokens
     m = re.match(r"\s*(.{2,30}?)\s*중(?:에서|에)?\s", text)
     if m and _content_tokens(m.group(1)):
@@ -1288,7 +1331,7 @@ def _safe_url(url) -> str | None:
     return url
 
 
-PRIVATE_CARD_KEYS = frozenset({"_q", "weight_source", "weight_formula", "weight_found", "weight_verified"})   # 서버 기록용 (화면 응답에서 뺌)
+PRIVATE_CARD_KEYS = frozenset({"_q", "weight_source", "weight_formula", "weight_found", "weight_verified", "volume_formula"})   # 서버 기록용 (화면 응답에서 뺌)
 
 
 def _public(card: dict, *, go: str | None = None, saved: bool = False) -> dict:

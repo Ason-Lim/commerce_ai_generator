@@ -16,6 +16,8 @@ from app.services.recipe_session.store import RevisionConflict
 KST = timezone(timedelta(hours=9))
 MAX_SEEN_SETS = 5
 MAX_SAVED = 30
+# 2026-11-12: 액체 100ml당 — 값이 있을 때만 저장 (기존 저장 카드 모양 유지)
+OPTIONAL_KEEP = ("volume_ml", "volume_formula", "per100ml")
 KEEP = ("key", "rank", "title", "image", "price", "shipping_fee", "total", "mall", "source", "url", "weight_g",
         "weight_source", "weight_formula", "weight_found", "weight_verified",   # p31·p32·p34: 중량 출처·근거
         "unit_count", "per100g", "per_unit", "rocket", "free_shipping", "seller_claims", "check_at_mall",
@@ -31,7 +33,9 @@ def now_label() -> str:
 
 
 def compact(card: dict) -> dict:
-    return {k: card.get(k) for k in KEEP}
+    out = {k: card.get(k) for k in KEEP}
+    out.update({k: card[k] for k in OPTIONAL_KEEP if card.get(k) is not None})   # 2026-11-12: 있을 때만
+    return out
 
 
 def push_seen(state: dict, query: str, cards: list[dict], budget_label: str | None = None) -> dict:

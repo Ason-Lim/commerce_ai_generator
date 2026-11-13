@@ -23,7 +23,7 @@ function Row({ card, note }: { card: ApiCard; note?: string | null }) {
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-1"><RoleBadge c={c} />{note && <span className="text-[11px] text-ink3">{note}</span>}</div>
         <button type="button" onClick={() => openDetail(c)} className="line-clamp-2 block text-left text-sm font-semibold leading-snug hover:underline">{c.title}</button>
-        <p className="text-sm font-bold">{won(c.total ?? c.price)}<span className="ml-1 text-[11px] font-normal text-ink3">{c.total == null ? "상품가 · 배송비 미확인" : "배송비 포함"}{c.per100g ? ` · 100g당 ${won(c.per100g)}` : ""}</span></p>
+        <p className="text-sm font-bold">{won(c.total ?? c.price)}<span className="ml-1 text-[11px] font-normal text-ink3">{c.total == null ? "상품가 · 배송비 미확인" : "배송비 포함"}{c.per100g ? ` · 100g당 ${won(c.per100g)}` : c.per100ml ? ` · 100ml당 ${won(c.per100ml)}` : ""}</span></p>
         <div className="flex items-center gap-2">
           <SaveButton c={c} />
           {href && <a href={href} target="_blank" rel={c.affiliate ? "sponsored noopener" : "noopener"} onClick={() => logDirectClick(c, sessionId)} className="text-xs font-semibold text-ink2 underline underline-offset-2">{c.source}에서 보기 ↗</a>}

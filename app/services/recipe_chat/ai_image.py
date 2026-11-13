@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import base64
 import datetime as dt
+import hashlib
 import logging
 import threading
 import time
@@ -33,14 +34,28 @@ MAX_BYTES = 4_000_000
 def image_prompt(recipe) -> str:
     names = [i["name"] for i in recipe.ingredients][:10]
     last = recipe.step_texts()[-1] if recipe.step_texts() else ""
+    about = (getattr(recipe, "summary", "") or "")[:120]
+    from app.services.recipe_chat import cook_knowledge
+
+    hint = cook_knowledge.image_hint(recipe.title, " ".join(names))
     return (
         f"Appetizing, realistic food photograph of the finished Korean home-cooked dish \"{recipe.title}\". "
+        + (f"About the dish: {about} " if about else "") + (f"{hint} " if hint else "") +
         f"Main ingredients: {', '.join(names)}. "
         f"How it is served (from the recipe): {last[:160]} "
-        "Plated on a simple ceramic dish on a light wooden table, soft natural window light, "
+        "Served in the vessel Korean homes usually use for it (bowl, earthenware pot or plate) on a light wooden table, "
+        "soft natural window light, "
         "45-degree angle, shallow depth of field, homemade look, realistic portion. "
         "No text, no letters, no logos, no labels, no brand packaging, no people, no hands."
     )
+
+
+def image_version(recipe) -> str:
+    from app.services.recipe_chat import cook_knowledge
+
+    hint = cook_knowledge.image_hint(recipe.title, " ".join(i["name"] for i in recipe.ingredients[:10]))
+    base = recipe.content_hash()
+    return base if not hint else f"{base}-h{hashlib.sha256(hint.encode()).hexdigest()[:8]}"
 
 
 def image_url(recipe_id: str, content_hash: str) -> str:
@@ -110,7 +125,9 @@ class AiImages:
 
     @staticmethod
     def key(recipe) -> tuple:
-        return (recipe.recipe_id, recipe.content_hash(), PROMPT_VERSION)
+        """(레시피, 내용, 프롬프트 판). 생김새 안내(cook_knowledge.image_hint)가 붙는 요리는 그 안내까지 내용에 넣는다 —
+        안내를 고치면 그 요리 사진만 새로 만들고(하루 한도 안에서, 볼 때), 나머지 사진은 그대로 쓴다 (2026-11-12)."""
+        return (recipe.recipe_id, image_version(recipe), PROMPT_VERSION)
 
     def _known(self, key, db) -> bool:
         with self._lock:

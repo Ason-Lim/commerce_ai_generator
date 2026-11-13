@@ -18,6 +18,8 @@ export const BASIS: Record<WhyBasis, { label: string; title: string }> = {
 const ROLE_TONE: Record<string, string> = {
   value: "bg-accentSoft text-accent", lowest: "bg-accentSoft text-accent", fast: "bg-[#fdecea] text-[#c62828]",
   ample: "bg-chip text-ink", gift: "bg-sponsorSoft text-sponsor", alt: "bg-chip text-ink2",
+  // 2026-11-13: 가정용 양은 가성비와 같은 계열, 당도 표기는 판매자 표기(선물용)와 같은 계열 — 판매자 주장임을 색으로도 구분
+  house: "bg-accentSoft text-accent", sweet: "bg-sponsorSoft text-sponsor",
 };
 
 export function RoleBadge({ c }: { c: Pick<Candidate, "role" | "roleLabel"> }) {
@@ -81,7 +83,7 @@ export function SellerClaims({ c }: { c: Candidate }) {
   if (!c.sellerClaims?.length) return null;
   return (
     <p className="text-xs text-ink3" title="판매자가 상품명에 적은 문구예요. 확인되지 않았고 추천 순서에 쓰지 않았어요.">
-      <span className="font-semibold text-ink2">판매자 표기</span> {c.sellerClaims.join(" · ")} <span className="text-ink3">(확인 안 됨)</span>
+      <span className="font-semibold text-ink2">판매자 표기</span> {c.sellerClaims.join(" · ")} <span className="text-ink3">(판매자 주장 · 우리가 확인하지 않음)</span>
     </p>
   );
 }

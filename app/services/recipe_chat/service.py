@@ -58,6 +58,25 @@ log = logging.getLogger(__name__)
 
 COMPARE_RE = re.compile(r"^\s*(.{1,30}?)\s*레시피\s*후보\s*비교")
 AI_RECIPE_RE = re.compile(r"^\s*(.{1,30}?)\s*AI\s*제안\s*레시피")
+# 2026-11-12: 공공 레시피는 참고 — 추천 레시피 아래 '「제목」 공공 레시피 보기' 칩으로만 연다
+PUBLIC_VIEW_RE = re.compile(r"^\s*(.{1,40}?)\s*공공\s*레시피\s*(?:보기|보여\s*줘|열어\s*줘)\s*$")
+# 2026-11-12: 추천 레시피 뒤 "블로그·카페·유튜브·인스타그램 레시피도 소개해 드릴까요?" 에 대한 답
+OTHER_RECIPES_RE = re.compile(r"^\s*(?:네[,\s]*|응[,\s]*)?(.{1,30}?)\s*다른\s*레시피(?:도)?\s*(?:보여\s*줘|보기|소개해\s*줘|알려\s*줘)")
+YES_RE = re.compile(r"^\s*(?:네|예|응|어|좋아요?|그래요?|보여\s*줘|소개해\s*줘|부탁해요?)[\s.!~]*$")
+# 2026-11-12 실제 화면: 요리 확인 질문 뒤 '가성비 생새우'가 요리 설명으로 읽혀 레시피가 만들어졌다
+_SHOPPING_WORDS = re.compile(r"가성비|최저가|싼\s|저렴|가격|할인|무료배송|상품|구매|주문|추천해")
+# 2026-11-12: 레시피와 상품을 함께 물으면('김치찌개 레시피와 상품을 추천해 주세요') 레시피 아래에 주재료 상품도 보인다
+WANTS_PRODUCTS_RE = re.compile(r"상품|재료\s*(?:도|를|랑)?\s*(?:사|구매|주문|추천|같이|함께)|장보기|사야|구매|주문|살\s*(?:수|게|거)")
+RECIPE_PANTRY = {"물", "소금", "설탕", "후추", "후춧가루", "간장", "국간장", "진간장", "식용유", "참기름", "들기름", "식초",
+                 "다진마늘", "마늘", "고춧가루", "깨", "통깨", "맛술", "올리고당", "물엿", "밀가루", "부침가루"}
+# 요리 이름 끝이 동사·질문인지 — '오이지'·'바나나' 같은 요리 이름은 걸리지 않게 동사 끝만 (2026-11-12)
+_VERBISH = re.compile(r"(해|줘|요|까|봐|래)$")
+# 꾸밈말 — 요리 이름이 아니다 (2026-11-12: '맛있게 라면'을 요리 이름으로 읽어 AI 가 모르는 요리라며 되물었다)
+_ADVERB = re.compile(r"(?:하게|있게|없게|쉽게|맵게|짜게|르게|롭게|답게|지게)$")
+# 조리 동사 어간 — 낱말 전체가 같을 때만 끊는다 ('삶은계란'·'부추전'은 요리 이름)
+_VERB_STEMS = {"부치", "담그", "졸이", "삶", "튀기", "데치", "무치", "끓이", "볶", "굽", "찌", "만들", "만드", "손질하", "보관하"}
+# 요리 이름 뒤에 오는 요청 말 — 여기서 끊는다 ('김치찌개 요리 방법과 상품을 보여주세요' → '김치찌개')
+_REQUEST_HEAD = re.compile(r"^(?:레시피|요리|만드|만들|방법|조리|상품|재료|추천|보여|알려|장보|구매|주문|부탁|가르쳐|해먹|해\s*먹|끓이|끓여|볶는|볶아|굽는|구워|부치는|부쳐|무치는|담그는|찌는|삶는)")
 _TITLE_FEATURES = (
     ("대용량", r"대용량"), ("실패 없는 방법", r"실패\s*없"), ("덜 단 맛", r"달지\s*않|덜\s*달"), ("촉촉", r"촉촉"),
     ("바삭", r"바삭|파삭"), ("쫀득", r"쫀득"), ("간단", r"초간단|간단|쉬운|쉽게"), ("오븐 없이", r"오븐\s*없|노오븐"),
@@ -194,9 +213,18 @@ class RecipeChat:
         # 2026-10-30: compare the found recipe posts / an AI-suggested recipe (chips after a search)
         pending = state.get("pending") or {}
         if text and pending.get("type") == "ai_recipe_detail" and self.ai_recipes is not None \
-                and not COMPARE_RE.match(text) and not parsing.is_recipe_request(text):
+                and not COMPARE_RE.match(text) and not parsing.is_recipe_request(text) \
+                and not parsing.is_product_request(text) and not _SHOPPING_WORDS.search(text):
             return self._ai_recipe(pending["dish"], state, db, recipe_sid, detail=text)
         if text:
+            m = OTHER_RECIPES_RE.match(text)
+            if m:
+                return self._other_recipes(m.group(1).strip(), state)
+            if pending.get("type") == "other_recipes" and YES_RE.match(text):
+                return self._other_recipes(pending["dish"], state)
+            m = PUBLIC_VIEW_RE.match(text)
+            if m:
+                return self._public_view(m.group(1).strip(), state, db, recipe_sid)
             m = COMPARE_RE.match(text)
             if m and self.discovery is not None:
                 return self._compare_candidates(m.group(1).strip(), state)
@@ -213,6 +241,14 @@ class RecipeChat:
             if asked or again:
                 return self._dish_purchase(asked or dict(again, servings=int(re.search(r"(\d{1,2})\s*인분씩", text)
                                                                                 .group(1))), state)
+        # 2026-11-12: "김장용생새우로 4인분 저녁 메뉴 만들려면 뭐 사야 해?" — 요리 이름 없이 재료·인분·끼니만 말한 질문.
+        # 열린 레시피보다 먼저 본다 (직전 레시피의 '4인분' 질문으로 읽혀 "원문에 기준 인분이 없어요"로 끝났다)
+        if text and not discover_mod.find_url(text):
+            from app.services.recipe_chat import menu_plan as menu_mod
+
+            plan = menu_mod.parse(text)
+            if plan:
+                return self._menu_plan(plan, state)
         # 2026-11-01: the answer to the consultation's one question ('샌드위치 속이에요') continues it
         if text and pending.get("type") == "consult_followup" and self.consultant is not None \
                 and not parsing.is_recipe_request(text) and not parsing.is_product_request(text) \
@@ -237,8 +273,17 @@ class RecipeChat:
                     return self._popular_dish(subject, state, recipe_sid, db)
                 return self._discover_trend(state)
 
+        # 2026-11-12: 문장 뜻은 LLM 이 먼저 읽는다 (규칙이 레시피로 봤거나 조리 단서가 있을 때만 — 상품 문장은 묻지 않음)
+        from app.services.recipe_chat import intent as intent_mod
+
+        intent = None
+        if text and self._claude_first() and getattr(self, "intent_reader", None) is not None and (
+                parsing.is_recipe_request(text) or force_recipe or intent_mod.CUE_RE.search(text)):
+            intent = intent_mod.read(self.intent_reader, text)
+        llm_recipe = bool(intent and intent["wants_recipe"] and intent["dish"])
+
         # an explicit recipe request ("…만드는 법", "…요리방법") always wins
-        if parsing.is_recipe_request(text) or force_recipe:
+        if parsing.is_recipe_request(text) or force_recipe or llm_recipe:
             finding = self.resolver.find(text)
             serv = servings_mod.interpret(text, count=servings_mod.unit(entry.meta) != "인분") if entry else None
             if serv and serv["kind"] == "question" and not (
@@ -247,6 +292,14 @@ class RecipeChat:
                 # "지금 있는 재료로 1인분 만들 수 있을까요?" — about the current recipe, not a new dish
                 # (only a dish named in full in the message switches recipes here)
                 return self._servings_question(entry, serv, text, state, recipe_sid, db)
+            # 2026-11-12: 추천 레시피(Claude 작성 · GPT 검토)가 먼저, 공공 레시피는 아래 참고로만
+            dish = ((intent or {}).get("dish") or self._dish_from(text)) if self._claude_first() else None
+            if dish:
+                turn = self._recommended_recipe(dish, finding, state, db, recipe_sid)
+                wants = intent["wants_products"] if intent else bool(WANTS_PRODUCTS_RE.search(text))
+                if wants:
+                    turn = self._with_ingredient_products(turn, (intent or {}).get("product_query"))
+                return turn
             if self.discovery is not None:
                 found = self._discovered_name(text, state)
                 if found:
@@ -420,7 +473,7 @@ class RecipeChat:
         state["discover"] = {"kind": kind, "searched_at": record.get("searched_at"), "status": record.get("status"),
                              "dish": record.get("dish"), "full_name": record.get("full_name"),
                              "query": record.get("query") or record.get("queries"),
-                             "results": [{k: x.get(k) for k in ("name", "title", "link", "date", "source", "kind")}
+                             "results": [{k: x.get(k) for k in ("name", "title", "link", "date", "source", "kind", "thumb", "similar", "match")}
                                          for x in (record.get("dishes") or []) + (record.get("mentions") or [])
                                          + (record.get("candidates") or [])][:10]}
         log.info("discover %s %s: %s", kind, record.get("status"), state["discover"]["query"])
@@ -537,13 +590,20 @@ class RecipeChat:
         n = asked.get("servings") or 2
         known = asked.get("per") or {}           # 'N인분씩으로 다시 계산': the same per-serving basis, only multiplied
         state.update(mode="recipe", pending=None)
-        rows, missing, refs = [], [], {}
+        rows, missing, refs, public = [], [], {}, {}
         for dish in dishes:
             if dish in known:
                 k = known[dish]
                 rows.append({"dish": dish, "by": k["by"], "per": Decimal(k["per"]), "unit": k.get("unit", "g"),
                              "note": k.get("note"), "title": k.get("title"), "base": k.get("base"), "ref": k.get("ref"),
-                             "src_amount": Decimal(k["src"]) if k.get("src") else None})
+                             "src_amount": Decimal(k["src"]) if k.get("src") else None, "basis": k.get("basis")})
+                continue
+            # 2026-11-12: ① 이미 만든 추천 레시피(Claude) ② AI 추정 ③ 같은 이름 공공 레시피(참고) 순서
+            mine = self._stored_ai_recipe(dish)
+            got = dish_mod.amount_in(mine, ing, servings_mod.base, parsing.requirement_amount) if mine else None
+            if got:
+                rows.append({"dish": dish, "by": "claude", "per": got[0] / got[2], "unit": got[1], "src_amount": got[0],
+                             "base": got[2], "title": mine.title})
                 continue
             found = None
             finding = self.resolver.find(dish)
@@ -566,39 +626,53 @@ class RecipeChat:
                 if got and similar is None:
                     # another dish (달래굴파전 for 굴전) is a reference only — its amount is not this dish's amount
                     similar = f"{rec.title} {got[2]}인분 {dish_mod.fmt(got[0], got[1])}"
+            missing.append(dish)
             if found:
-                rows.append({"dish": dish, **found, "title": found["recipe"].title, "by": "same"})
-            else:
-                missing.append(dish)
-                if similar:
-                    refs[dish] = similar
-        guesses = dish_mod.estimate(getattr(self, "amount_estimator", None), missing, ing)
+                public[dish] = found
+                refs[dish] = f"공공 레시피 {found['recipe'].title} {found['base']}인분 {dish_mod.fmt(found['src_amount'], found['unit'])}"
+            elif similar:
+                refs[dish] = f"다른 요리인 공공 레시피 {similar}"
+        guesses = dish_mod.estimate(getattr(self, "amount_estimator", None), missing, ing, hint=asked.get("hint"))
+        for dish, g in (asked.get("fallback_per") or {}).items():
+            # 2026-11-12: 메뉴 제안이 함께 준 1인분 양 — 분량 추정이 없을 때만
+            if dish in missing and dish not in guesses and g:
+                guesses[dish] = {"grams": Decimal(str(g)), "note": "", "basis": asked.get("fallback_basis")}
         for dish in missing:
             g = guesses.get(dish)
-            rows.append({"dish": dish, "by": "ai", "per": g["grams"], "unit": "g", "note": g["note"], "ref": refs.get(dish)}
-                        if g else {"dish": dish, "by": "none", "ref": refs.get(dish)})
+            if g:
+                rows.append({"dish": dish, "by": "ai", "per": g["grams"], "unit": "g", "note": g["note"],
+                             "ref": refs.get(dish), "basis": g.get("basis")})
+            elif dish in public:          # 추정도 없을 때만 공공 레시피 분량을 쓴다 (참고라고 밝힌다)
+                f = public[dish]
+                rows.append({"dish": dish, "by": "same", "per": f["per"], "unit": f["unit"], "src_amount": f["src_amount"],
+                             "base": f["base"], "title": f["recipe"].title})
+            else:
+                rows.append({"dish": dish, "by": "none", "ref": refs.get(dish)})
         rows.sort(key=lambda r: dishes.index(r["dish"]))
         state["dish_purchase"] = {"dishes": dishes, "ingredient": ing, "per": {
             r["dish"]: {"by": r["by"], "per": str(r["per"]), "unit": r.get("unit", "g"), "note": r.get("note"),
                         "title": r.get("title"), "base": r.get("base"), "ref": r.get("ref"),
-                        "src": str(r["src_amount"]) if r.get("src_amount") is not None else None}
+                        "src": str(r["src_amount"]) if r.get("src_amount") is not None else None,
+                        "basis": r.get("basis")}
             for r in rows if r["by"] != "none"}}
         lines = [f"**{'·'.join(dishes)}에 쓸 {ing}** — 요리마다 **{n}인분**씩 만들 때 필요한 양이에요."]
         total, unit = Decimal(0), "g"
         for r in rows:
             if r["by"] == "none":
-                lines.append(f"- **{r['dish']}**: 공공 레시피와 일반 기준 모두에서 {ing} 양을 정하지 못했어요."
-                             + (f" 참고로 다른 요리인 공공 레시피 {r['ref']}" if r.get("ref") else ""))
+                lines.append(f"- **{r['dish']}**: {ing} 양을 정하지 못했어요."
+                             + (f" 참고: {r['ref']}" if r.get("ref") else ""))
                 continue
             need = dish_mod.round10(r["per"] * n)
             total += need
             unit = r.get("unit") or "g"
-            if r["by"] == "same":
-                why = f"공공 레시피 '{r['title']}' {r['base']}인분 {dish_mod.fmt(r['src_amount'], unit)} 기준"
+            if r["by"] == "claude":
+                why = f"추천 레시피(AI 작성·검토) {r['base']}인분 {dish_mod.fmt(r['src_amount'], unit)} 기준"
+            elif r["by"] == "same":
+                why = f"참고: 공공 레시피 '{r['title']}' {r['base']}인분 {dish_mod.fmt(r['src_amount'], unit)} 기준"
             else:
-                why = "공공 레시피가 없어 일반 조리 기준 AI 추정 · 원문 아님" + (f" ({r['note']})" if r.get("note") else "")
+                why = (r.get("basis") or "일반 조리 기준 AI 추정 · 원문 아님") + (f" ({r['note']})" if r.get("note") else "")
                 if r.get("ref"):
-                    why += f" · 참고로 다른 요리인 공공 레시피 {r['ref']}"
+                    why += f" · 참고: {r['ref']}"
             lines.append(f"- **{r['dish']}**: {ing} **{dish_mod.fmt(need, unit)}** — {why}")
         blocks, shopping, needs = [], [], {}
         if total > 0:
@@ -609,32 +683,90 @@ class RecipeChat:
             needs = {ing: {"name": ing, "amount": str(total), "unit": unit, "display": dish_mod.fmt(total, unit),
                            "basis": f"{'·'.join(dishes)} 각 {n}인분"}}
             state["dish_purchase"]["need"] = needs[ing]       # p35: '굴 상품 비교'가 같은 필요량으로 견준다
-        # the recipes, in the same answer: a public recipe, or the found recipe posts / videos (titles · links only)
+        # 2026-11-12: 레시피는 추천 레시피(Claude 작성 · GPT 검토)가 먼저. 공공 레시피는 있을 때만 참고로 이름을 적는다
         recipe_lines = []
         for r in rows:
-            if r["by"] == "same":
-                recipe_lines.append(f"- **{r['dish']}**: 공공 레시피 '{r['title']}' — '{r['dish']} 만드는 법'에서 재료표·순서를 볼 수 있어요")
-                continue
-            posts = []
-            if self.discovery is not None and getattr(self.discovery, "provider", None) is not None:
-                try:
-                    found = self.discovery.dish(f"{r['dish']} 만드는 법", r["dish"], with_signals=False)
-                    posts = found.get("candidates") or []
-                except Exception:  # noqa: BLE001 — the amounts and products still answer the question
-                    log.warning("dish purchase recipe search failed")
-            kinds = {"blog": "블로그", "cafearticle": "카페", "video": "유튜브"}
-            picked = ([p for p in posts if p.get("kind") != "video"][:1] + [p for p in posts if p.get("kind") == "video"][:1]) or posts[:2]
-            if picked:
-                links = " · ".join(f"[{md_label(p['title'][:30])}]({p['link']}) ({kinds.get(p.get('kind'), '블로그')})" for p in picked)
-                recipe_lines.append(f"- **{r['dish']}**: 공공 레시피 없음 · 찾은 레시피 글(제목 기준): {links}")
-            else:
-                recipe_lines.append(f"- **{r['dish']}**: 공공 레시피 없음 · '{r['dish']} 만드는 법'에서 레시피 후보와 AI 제안 레시피를 볼 수 있어요")
-        lines.append("**레시피**\n" + "\n".join(recipe_lines))
+            pub = public.get(r["dish"])
+            ref = f" · 참고 공공 레시피 「{pub['recipe'].title}」" if pub else ""
+            if self._claude_first():
+                made = "추천 레시피를 볼 수 있어요" if r["by"] == "claude" else "추천 레시피(AI 작성·검토)를 만들어 보여 드려요"
+                recipe_lines.append(f"- **{r['dish']}**: '{r['dish']} 만드는 법'에서 {made}{ref}")
+            elif pub:
+                recipe_lines.append(f"- **{r['dish']}**: '{r['dish']} 만드는 법'에서 공공 레시피 「{pub['recipe'].title}」를 볼 수 있어요")
+        if recipe_lines:
+            lines.append("**레시피**\n" + "\n".join(recipe_lines))
         if shopping:
             lines.append("상품은 필요량과 포장 용량을 견줘 아래에 정리했어요.")
         blocks.append(B.text("\n".join(lines)))
         chips = [f"{d} 만드는 법" for d in dishes] + [f"{k}인분씩으로 다시 계산" for k in (n * 2,) if n * 2 <= 30]
         blocks.append(B.chips(chips[:4]))
+        return RecipeTurn(blocks, state, "recipe_dish_purchase", shopping=shopping, shopping_needs=needs)
+
+    def _menu_plan(self, plan: dict, state: dict) -> RecipeTurn:
+        """한 끼 조합 → 주재료 필요량·레시피·상품(_dish_purchase) → 함께 살 재료 → 손질 주의."""
+        from app.services.recipe_chat import menu_plan as menu_mod
+
+        state.update(mode="recipe", pending=None, recipe_id=None)     # 새 주제: 열려 있던 레시피는 닫는다
+        core, label = plan["ingredient"], plan["label"]
+        n = plan.get("servings") or 2
+        dishes, source = menu_mod.pick(getattr(self, "menu_picker", None), plan)
+        if not dishes:
+            return RecipeTurn([B.text(f"**{label}**로 만들 요리를 아직 정하지 못했어요. 만들고 싶은 요리를 알려 주시면 "
+                                      f"{n}인분에 필요한 양과 상품을 함께 찾아 드릴게요."),
+                               B.chips([f"{core} 상품 보여줘"])], state, "recipe_menu_unknown")
+        names = [d["dish"] for d in dishes]
+        bought = [d["dish"] for d in dishes if not d.get("reuse")]      # 게딱지볶음밥처럼 앞 요리에서 이어 쓰는 요리는 장보기에서 뺀다
+        meal = plan.get("meal") or "한 끼"
+        # 2026-11-12: AI 조합은 Claude 가 한 번 더 본다(DeepSeek 작성 → Claude 검토). 생각이 다른 줄만 'Claude 의견'으로 표시
+        reviewed = None
+        reviewer = getattr(self, "menu_reviewer", None)
+        if source == "ai" and reviewer is not None:
+            try:
+                reviewed = reviewer(*menu_mod.review_items(dishes, plan))
+            except Exception:  # noqa: BLE001 — 검토가 안 돼도 제안은 보여 준다 (검토 안 됨으로 표시)
+                log.warning("menu review failed")
+                reviewed = None
+        for d, v in zip(dishes, reviewed or []):
+            if not v.get("ok", True) and v.get("note"):
+                d["review"] = v["note"]
+        why = "\n".join(f"- **{d['dish']}**" + (f" ({d['role']})" if d.get("role") else "")
+                        + (f" — {d['why']}" if d.get("why") else "")
+                        + (f" · {d['reuse']}에서 남은 것을 이어 써요" if d.get("reuse") else "")
+                        + (f"\n  - **검토 AI 의견**: {d['review']}" if d.get("review") else "") for d in dishes)
+        if source == "ai":
+            basis = "AI 작성·검토" if reviewed else "AI 작성 · 검토 안 됨"
+        else:
+            basis = "자주 먹는 조합"
+        head = (f"**{label}**로 **{n}인분 {meal}**이면 {len(dishes)}가지로 한 상을 차려 보세요. ({basis})"
+                + ("" if plan.get("servings") else f"\n인분을 말씀하지 않아 **{n}인분**으로 계산했어요.") + "\n" + why)
+        turn = self._dish_purchase({"ingredient": core, "dishes": bought, "servings": n,
+                                    "fallback_per": {d["dish"]: d.get("main_per_serving") for d in dishes},
+                                    "fallback_basis": ("AI 메뉴 제안" if source == "ai" else "일반 조리") + " 기준 추정 · 원문 아님",
+                                    "hint": menu_mod.HINTS.get(core)}, state)
+        state = turn.state
+        state["recipe_id"] = None
+        state["menu_plan"] = {"ingredient": core, "label": label, "meal": plan.get("meal"), "dishes": names,
+                              # 레시피를 만들 때 근거로 쓰는 재료 (메뉴에서 이미 보인 것)
+                              "ingredients": {d["dish"]: [core] + [x["name"] for x in d["sides"]] for d in dishes}}
+        blocks = [B.text(head)] + [b for b in turn.blocks if b.get("type") != "chips"]
+        sides = menu_mod.side_totals(dishes, n)
+        if sides:
+            rows = "\n".join(f"- {s['name']} 약 **{s['amount']}** ({'·'.join(s['dishes'])})" for s in sides)
+            blocks.append(B.text(f"**함께 살 재료** ({n}인분 합계 · 일반 조리 기준 추정, 원문 아님)\n{rows}\n"
+                                 "소금·간장·마늘·식용유 같은 기본양념은 집에 있다고 보고 뺐어요."))
+        notes = menu_mod.NOTES.get(core)
+        if notes:
+            blocks.append(B.notice("**손질·간 주의**\n" + "\n".join(f"- {x}" for x in notes)))
+        chips = [f"{d} 만드는 법" for d in names[:2]]
+        if sides:
+            chips.append(f"{sides[0]['name']} 상품 보여줘")
+        blocks.append(B.chips(chips[:3]))
+        # 상품 검색은 손님이 말한 이름으로 ('김장용 생새우'가 '생새우'보다 김장용 생물 상품을 잘 찾는다)
+        shopping, needs = turn.shopping, turn.shopping_needs
+        if shopping and label != core:
+            need = dict(needs.get(core) or {}, name=label)
+            shopping, needs = [label], {label: need}
+            state.setdefault("dish_purchase", {})["need"] = need
         return RecipeTurn(blocks, state, "recipe_dish_purchase", shopping=shopping, shopping_needs=needs)
 
     def _consult(self, text, state, answer_to: str | None = None):
@@ -703,7 +835,217 @@ class RecipeChat:
         text_block["data"]["trace"] = {"read": rd, "rows": r["rows"], "unconfirmed": r["unconfirmed"]}   # dev mode only
         return RecipeTurn([text_block] + ([B.chips(chips)] if chips else []), state, "recipe_consult")
 
-    def _ai_recipe(self, dish, state, db, recipe_sid, *, detail: str | None = None):
+    # ── 2026-11-12: 추천 레시피 먼저 · 공공 레시피는 참고 ─────────────────────────
+    def _claude_first(self) -> bool:
+        return self.ai_recipes is not None and getattr(self.ai_recipes, "generator", None) is not None
+
+    @staticmethod
+    def _dish_from(text: str) -> str | None:
+        """'생새우무국 만드는 법' → '생새우무국' · '새우 넣은 크림파스타 레시피' → '새우 넣은 크림파스타'.
+        요리 이름으로 읽을 수 없는 문장(동사·질문만 남음)은 None — 기존 흐름이 맡는다."""
+        from app.services.recipe_chat.catalog_store import terms
+
+        words = []
+        for w in terms(text):
+            if re.search(r"\d|인분", w):
+                continue
+            if _REQUEST_HEAD.match(w) or w in _VERB_STEMS or (words and _VERBISH.search(w)):
+                break
+            if _ADVERB.search(w):        # '맛있게 라면 끓이는 방법' → '라면' (꽃게·대게는 요리 이름)
+                continue
+            words.append(w)
+        dish = " ".join(words).strip()
+        flat = dish.replace(" ", "")
+        if not (2 <= len(flat) <= 20) or not re.fullmatch(r"[가-힣A-Za-z ]+", dish) or _VERBISH.search(flat):
+            return None
+        return dish
+
+    def _public_reference(self, dish: str, finding=None) -> tuple[object | None, list[dict]]:
+        """(같은 요리의 공공 레시피 | None, 아래에 붙일 블록).  공공 레시피에 없으면 아무것도 붙이지 않는다."""
+        f = finding if finding is not None and finding.kind in ("card", "choose") else self.resolver.find(dish)
+        if f.kind == "card" and f.recipe is not None:
+            recs = [f.recipe]
+        elif f.kind == "choose":
+            recs = [self.resolver.get(rid) for rid, _t in f.alternatives[:3]]
+        else:
+            return None, []
+        recs = [r for r in recs if r is not None and not str(r.recipe_id).startswith("ai-")
+                and getattr(r, "source_level", "") != "ai_suggestion"]
+        if not recs:
+            return None, []
+        lines = []
+        for r in recs:
+            serv = next((m for m in r.meta if "인분" in m), None)
+            lines.append(f"- 「{r.title}」 · {r.provider}" + (f" · {serv}" if serv else "") + f" · 재료 {len(r.ingredients)}개")
+        blocks = [B.text("**참고 · 공공 레시피**\n" + "\n".join(lines) + "\n위 추천 레시피와 재료·분량·순서가 다를 수 있어요."),
+                  B.chips([f"{r.title} 공공 레시피 보기" for r in recs])]
+        return (recs[0] if f.kind == "card" else None), blocks
+
+    def _recommended_recipe(self, dish, finding, state, db, recipe_sid):
+        from app.services.recipe_chat.ai_recipe import recipe_id
+
+        state.update(mode="recipe", pending=None)
+        if self.discovery is not None and self.ai_recipes.get(recipe_id(dish)) is None:
+            # 레시피 글 제목으로 핵심 재료를 확인하는 근거 (화면에는 목록을 내지 않는다 · '레시피 후보 비교'로 볼 수 있다)
+            try:
+                found = self.discovery.dish(f"{dish} 만드는 법", dish, with_signals=False,
+                                                context=self._search_context(dish, state))
+                if found.get("status") not in ("unavailable", "search_failed"):
+                    self._remember_discovery(state, "dish", found)
+            except Exception:  # noqa: BLE001 — 근거가 없으면 한 번 여쭤본다
+                log.warning("recipe title search failed")
+        plan = state.get("menu_plan") or {}
+        menu = (plan.get("ingredients") or {}).get(re.sub(r"\s+", "", dish))
+        turn = self._ai_recipe(dish, state, db, recipe_sid, menu=menu)
+        public, ref = self._public_reference(dish, finding)
+        if turn.stage == "recipe_ai_failed" and public is not None:
+            # 추천 레시피를 만들지 못했을 때만 공공 레시피를 바로 보인다 (참고라고 밝힌다)
+            alt = self._show_recipe(public, turn.state, [], db, recipe_sid)
+            alt.blocks.insert(0, B.notice(f"**{dish}** 추천 레시피를 지금 만들지 못해, 참고용 공공 레시피를 대신 보여 드려요.", "warn"))
+            return alt
+        turn.blocks.extend(ref)
+        if any(b["type"] == "recipe_card" for b in turn.blocks) and self.discovery is not None:
+            # 레시피 소개가 끝난 뒤 한 번 묻는다 — '네'만 답해도 이어진다
+            turn.blocks += [B.text("네이버 블로그·카페·유튜브·인스타그램 레시피도 소개해 드릴까요?"),
+                            B.chips([f"네, {dish} 다른 레시피도 보여 줘"])]
+            turn.state["pending"] = {"type": "other_recipes", "dish": dish}
+        return turn
+
+    @staticmethod
+    def _search_context(dish: str, state: dict) -> str | None:
+        """검색에 덧붙일 재료 이름 — 메뉴에서 고객이 말한 재료('김장용 생새우'), 또는 김장용 작은 새우 요리 (2026-11-12)."""
+        plan = state.get("menu_plan") or {}
+        flat_dish = re.sub(r"\s+", "", dish)
+        if plan.get("label") and flat_dish in {re.sub(r"\s+", "", d) for d in plan.get("dishes") or []}:
+            return plan["label"]
+        from app.services.recipe_chat import cook_knowledge
+
+        if "생새우" in flat_dish and cook_knowledge.image_hint(dish):
+            return "김장용 생새우"
+        return None
+
+    def _other_recipes(self, dish, state):
+        """블로그·카페·유튜브에서 찾은 레시피 글 — 제목·링크만 (본문은 가져오지 않는다). 인스타그램은 연결 전."""
+        state.update(mode="recipe", pending=None)
+        record = state.get("discover") or {}
+        same = re.sub(r"\s+", "", record.get("dish") or "") == re.sub(r"\s+", "", dish)
+        posts = [x for x in record.get("results") or [] if x.get("title") and x.get("link")] if same else []
+        failed = False
+        if not posts and self.discovery is not None:
+            try:
+                found = self.discovery.dish(f"{dish} 만드는 법", dish, with_signals=False,
+                                                context=self._search_context(dish, state))
+                failed = found.get("status") == "search_failed"
+                if found.get("status") not in ("unavailable", "search_failed"):
+                    self._remember_discovery(state, "dish", found)
+                    posts = [x for x in state["discover"]["results"] if x.get("title") and x.get("link")]
+            except Exception:  # noqa: BLE001
+                log.warning("other recipes search failed")
+                failed = True
+        insta = "인스타그램은 아직 연결되지 않아 이번에는 보여 드리지 못했어요."
+        if not posts and (state.get("discover") or {}).get("status") == "search_failed" or failed:
+            return RecipeTurn([B.notice(f"블로그·카페·유튜브 검색이 지금 응답하지 않아 **{dish}** 레시피 글을 가져오지 못했어요. "
+                                        "잠시 뒤 다시 눌러 주세요.", "warn"),
+                               B.chips([f"네, {dish} 다른 레시피도 보여 줘"])], state, "recipe_other")
+        if not posts:
+            return RecipeTurn([B.text(f"**{dish}** 레시피 글을 블로그·카페·유튜브에서 찾지 못했어요. {insta}")],
+                              state, "recipe_other")
+        # 2026-11-12: 예전처럼 카드로 — 사진·출처·게시일과 '원문 보기' (제목 기준, 본문은 가져오지 않음)
+        options = [{"label": p["title"] if len(p["title"]) <= 40 else p["title"][:39] + "…", "value": f"link:{n}",
+                    "desc": (f"{KIND_LABEL.get(p.get('kind') or 'blog', '블로그')} · {p.get('source') or ''}".rstrip(" ·")
+                             + ({"related": " · 관련 레시피", "similar": " · 비슷한 레시피"}.get(
+                                 p.get("match") or ("similar" if p.get("similar") else ""), ""))),
+                    "meta": p.get("date"), "href": p["link"], "image": p.get("thumb"), "source_kind": p.get("kind")}
+                   for n, p in enumerate(posts[:8])]
+        similar = any(p.get("similar") for p in posts[:8])
+        kinds = [KIND_LABEL[k] for k in ("blog", "cafearticle", "video") if k in {p.get("kind") or "blog" for p in posts}]
+        when = (state.get("discover") or {}).get("searched_at")
+        return RecipeTurn([
+            B.text(f"**{dish}** 다른 레시피예요. {'·'.join(kinds) or '블로그'}에서 찾은 **제목 기준** 후보라 재료·분량은 원문에서 "
+                   f"확인해 주세요."
+                   + (" 이름이 똑같은 글이 적어 비슷한 요리와 같은 재료의 요리·활용법 글도 함께 보여 드려요 — "
+                      "'비슷한 레시피'·'관련 레시피'로 표시했어요." if similar else "") + f" {insta}"),
+            B.clarify("web", f"{dish} 레시피 후보 (제목 기준)", options,
+                      why=f"네이버·유튜브 검색" + (f" · {when} 기준" if when else ""), layout="cards"),
+            B.chips([f"{dish} 레시피 후보 비교"]),
+        ], state, "recipe_other")
+
+    def _with_ingredient_products(self, turn: RecipeTurn, query: str | None = None) -> RecipeTurn:
+        """레시피 카드의 주재료(기본양념 뺀 앞의 3가지) 상품을 같은 답에 붙인다. 분량이 g·mL 로 적힌 재료는 포장 용량과 견준다."""
+        from app.services.recipe_chat import dish_shopping as dish_mod
+
+        card = next((b["data"] for b in turn.blocks if b.get("type") == "recipe_card"), None)
+        if not card:
+            return turn
+        # 손님이 말한 상품 검색어('매운 라면', '맛있는라면')가 먼저 — 꾸밈말은 상품 조건이라 그대로 검색한다
+        names, needs = ([query] if query else []), {}
+        # 핵심 재료(레시피를 만들 때 확인·짐작한 재료)를 먼저 — 두쫀쿠면 마시멜로·버터보다 카다이프·피스타치오
+        basis = (card.get("generated") or {}).get("basis") or {}
+        core = [re.sub(r"\s+", "", c) for c in (basis.get("core") or []) + (basis.get("guessed") or [])]
+        ings = sorted(card.get("ingredients") or [], key=lambda i: not any(
+            c and (c in re.sub(r"\s+", "", str(i.get("name") or "")) or re.sub(r"\s+", "", str(i.get("name") or "")) in c)
+            for c in core))
+        for ing in ings:
+            name = re.sub(r"\(.*?\)", "", str(ing.get("name") or "")).strip()
+            flat_name = re.sub(r"\s+", "", name)
+            if not name or flat_name in RECIPE_PANTRY or name in names or (
+                    query and flat_name in re.sub(r"\s+", "", query)):      # '매운 라면'을 찾으면 재료 '라면'은 겹친다
+                continue
+            names.append(name)
+            m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*(g|kg|ml|mL|L)\s*", str(ing.get("amount") or ""))
+            if m:
+                amount, unit = Decimal(m.group(1)), m.group(2)
+                if unit in ("kg", "L"):
+                    amount, unit = amount * 1000, "g" if unit == "kg" else "mL"
+                unit = "mL" if unit.lower() == "ml" else unit
+                serv = card.get("servings") or ""
+                needs[name] = {"name": name, "amount": str(amount), "unit": unit,
+                               "display": f"{dish_mod.fmt(amount, unit)}", "basis": serv or "레시피"}
+            if len(names) == 3:
+                break
+        if not names:
+            return turn
+        # 재료 이름을 요리에 맞는 검색어로 ('돼지고기' → '찌개용 돼지고기 앞다리살') — 손님이 말한 검색어는 그대로
+        from app.services.recipe_chat import intent as intent_mod
+
+        terms = intent_mod.shop_terms(getattr(self, "shop_terms", None), card.get("title") or "",
+                                      [n for n in names if n != query])
+        names = [terms.get(n, n) for n in names]
+        needs = {terms.get(k, k): dict(v, name=terms.get(k, k)) for k, v in needs.items()}
+        rest = [n for n in names if n != query]
+        lead = (f"찾으신 **{query}** 상품" + (f"과 레시피 주재료 **{'·'.join(rest)}** 상품도" if rest else "도")
+                if query else f"레시피에 들어가는 주재료 **{'·'.join(names)}** 상품도")
+        turn.blocks.append(B.text(f"{lead} 함께 보여 드려요. 기본양념(소금·간장·식용유 등)은 집에 있다고 보고 뺐어요."))
+        turn.shopping = names
+        # 검색어마다 한 칸씩(순서대로) — 필요량이 없는 검색어는 그대로 두라는 표시 (다른 재료 머리말이 붙지 않게)
+        turn.shopping_needs = ({n: needs.get(n) or {"name": n, "skip": True} for n in names}
+                               if any(n in needs for n in names) else None)
+        return turn
+
+    def _public_view(self, title, state, db, recipe_sid):
+        f = self.resolver.find(title)
+        recipe = f.recipe if f.kind == "card" else next(
+            (self.resolver.get(rid) for rid, t in f.alternatives if re.sub(r"\s+", "", t) == re.sub(r"\s+", "", title)), None)
+        if recipe is None or str(recipe.recipe_id).startswith("ai-"):
+            state["mode"] = "recipe"
+            return RecipeTurn([B.text(f"「{title}」 공공 레시피를 찾지 못했어요.")], state, "recipe_unavailable")
+        turn = self._show_recipe(recipe, state, [], db, recipe_sid)
+        turn.blocks.insert(0, B.notice("참고용 공공 레시피예요. 추천 레시피와 재료·분량·순서가 다를 수 있어요."))
+        return turn
+
+    def _stored_ai_recipe(self, dish: str):
+        """이미 만들어 둔 추천 레시피(Claude) — 장보기 분량의 첫 근거. 새로 만들지는 않는다."""
+        if self.ai_recipes is None:
+            return None
+        from app.services.recipe_chat.ai_recipe import recipe_id
+
+        try:
+            record = self.ai_recipes.get(recipe_id(dish))
+        except Exception:  # noqa: BLE001
+            return None
+        return self.resolver.get(record["id"]) if record else None
+
+    def _ai_recipe(self, dish, state, db, recipe_sid, *, detail: str | None = None, menu: list[str] | None = None):
         """2026-11-01 (customer check): the core ingredients and the cooking method must be confirmed before anything
         is generated — by the dish name / search titles, or by the customer's own description after one question.
         The generation follows that basis and is checked for contradictions (ai_recipe.consistency)."""
@@ -717,11 +1059,18 @@ class RecipeChat:
             same = found.get("kind") == "dish" and re.sub(r"\s+", "", found.get("dish") or "") == re.sub(r"\s+", "", dish)
             hints = {"정식 이름 후보": found.get("full_name") if same else None,
                      "참고 제목": [x["title"] for x in found.get("results") or [] if x.get("title")][:5] if same else None}
-            known = self.ai_recipes.identify(dish, hints, detail)
+            known = self.ai_recipes.identify(dish, hints, detail, menu=menu)
             if known.get("off"):
-                return RecipeTurn([B.notice(f"AI 해석 기능이 꺼져 있어 **{dish}** AI 제안 레시피를 보여 드리지 못했어요. "
-                                            "원문 후보 링크를 참고해 주세요.", "warn")], state, "recipe_ai_failed")
-            if not known.get("confirmed"):
+                return RecipeTurn([B.notice(f"AI 해석 기능이 꺼져 있어 **{dish}** 추천 레시피를 보여 드리지 못했어요.", "warn")],
+                                  state, "recipe_ai_failed")
+            # 2026-11-12 (사용자): 결과를 먼저 — AI 가 아는 요리면 묻지 않고 바로 만든다. 제목으로 확인 못 한 재료는
+            # 'AI가 짐작한 재료'로 레시피 아래에 밝힌다. AI 도 모르는 요리(또는 고객 설명이 맞지 않을 때)만 묻는다.
+            guessed_ok = known.get("known") and not detail and not known.get("confirmed")
+            if guessed_ok:
+                basis = dict(known.get("basis") or {})
+                basis["guessed"] = basis.get("unconfirmed") or []
+                known = dict(known, basis=basis)
+            if not known.get("confirmed") and not guessed_ok:
                 state["pending"] = {"type": "ai_recipe_detail", "dish": dish}
                 guess = known.get("core") or []
                 if detail:
@@ -744,19 +1093,28 @@ class RecipeChat:
             record, problems = self.ai_recipes.create(dish, what=known.get("what"), detail=detail, basis=known.get("basis"))
             if record is None:
                 reason = "AI 해석 기능이 꺼져 있어" if any("꺼짐" in p for p in problems) else "검증을 통과한 제안을 만들지 못해"
-                return RecipeTurn([B.notice(f"{reason} **{dish}** AI 제안 레시피를 보여 드리지 못했어요. 원문 후보 링크를 참고해 주세요.",
-                                            "warn")], state, "recipe_ai_failed")
+                return RecipeTurn([B.notice(f"{reason} **{dish}** 추천 레시피를 보여 드리지 못했어요.", "warn")],
+                                  state, "recipe_ai_failed")
         recipe = self.resolver.get(record["id"])
         turn = self._show_recipe(recipe, state, [], db, recipe_sid)
-        lead = (f"**{dish}**의 AI 제안 레시피예요. 일반 조리 지식으로 만든 제안이라 특정 블로그·유명인의 "
-                "레시피가 아니고, 분량·시간은 검증하지 않았어요. 부족한 재료는 '부족해요'를 누른 뒤 상품을 볼 수 있어요.")
+        review = (record.get("generated") or {}).get("review") or {}
+        checked = {"ok": " 다른 AI가 분량·익힘·순서를 검토했고 이견이 없었어요.",
+                   "notes": " 다른 AI가 검토했고, 남은 의견은 카드 아래에 적었어요."}.get(review.get("status"),
+                                                                                   " 분량·시간은 다른 AI로 검토하지 못했어요.")
+        lead = (f"**{dish}** 추천 레시피예요(AI 작성·검토). 일반 조리 지식으로 만든 제안이라 특정 블로그·유명인의 "
+                f"레시피가 아니에요.{checked} 부족한 재료는 '부족해요'를 누른 뒤 상품을 볼 수 있어요.")
         basis = (record.get("generated") or {}).get("basis") or {}
+        method = (f" · 조리 방식: {basis['method']}({basis.get('method_from') or 'AI 판단'})" if basis.get("method") else "")
         if basis.get("core"):
-            method = (f" · 조리 방식: {basis['method']}({basis.get('method_from') or 'AI 판단'})"
-                      if basis.get("method") else "")
             lead += (f"\n만들기 전에 확인한 기준 — 핵심 재료: {', '.join(basis['core'])}({basis.get('core_from') or '확인'}){method}. "
                      "재료·도구·단계·팁이 서로 어긋나지 않는지 검사했어요.")
-        turn.blocks.insert(0, B.notice(lead))
+        elif method:
+            lead += f"\n기준{method}. 재료·도구·단계·팁이 서로 어긋나지 않는지 검사했어요."
+        if basis.get("guessed"):
+            lead += f"\nAI가 짐작한 재료: {', '.join(basis['guessed'][:4])} — 검색 결과로는 확인하지 못했어요."
+        # 결과(카드)가 먼저, 설명은 그 아래 (2026-11-12 사용자: 결과를 먼저 보고 싶어 한다)
+        at = next((i + 1 for i, b in enumerate(turn.blocks) if b.get("type") == "recipe_card"), 0)
+        turn.blocks.insert(at, B.notice(lead))
         return turn
 
     @staticmethod
@@ -895,8 +1253,10 @@ class RecipeChat:
 
     def card_for(self, recipe, db, cup_ml=None, recipe_sid=None, servings=None) -> dict:
         generated = None
-        if recipe.source_level == "ai_suggestion":      # already AI text: nothing to edit, supplement or picture
-            (status, easy), (hero_status, hero), (supp_status, supp) = [("unavailable", None)] * 3
+        if recipe.source_level == "ai_suggestion":      # already AI text: nothing to edit or supplement
+            (status, easy), (supp_status, supp) = [("unavailable", None)] * 2
+            # 2026-11-12: 결과물을 미리 그려 볼 수 있게 AI 예시 이미지(백그라운드 생성 · 'AI 생성 예시 이미지' 표시)
+            hero_status, hero = self.hero(recipe, db)
             record = self.ai_recipes.get(recipe.recipe_id) if self.ai_recipes is not None else None
             generated = (record or {}).get("generated")
         else:

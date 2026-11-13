@@ -48,6 +48,84 @@ HOT = re.compile(r"페페론치노|청양고추|베트남\s*고추|크러시드\
 TASTE = re.compile(r"취향|기호|조절|가감|매운\s*맛")
 
 
+# 2026-11-12 (사용자): 김장용 생새우(동백하·젓새우)는 1~2cm로 너무 작아 껍질·내장을 손질할 수 없다 — 통째로 넣는다.
+# 추천 레시피 3개(생새우무국·생새우부추전·김장용 생새우 전)가 모두 '껍질 벗기고 내장 빼기'를 썼고, 예시 사진도 큰 새우였다.
+SMALL_SHRIMP_DISH = re.compile(r"김장|젓새우|동백하|생새우(?:무국|국|탕|찌개|전골|전|부추전|파전|부침|달걀찜|계란찜|찜|볶음|죽|밥)")
+SHRIMP_PREP = re.compile(r"(?:새우|껍질|내장|머리)[^.。]{0,20}(?:벗기|벗겨|제거|까서|까\s|빼\s|빼내|빼고|꺼내|발라)|"
+                         r"등[^.。]{0,8}(?:갈라|칼집)|이쑤시개|새우[^.。]{0,15}(?:등분|다져|다지|잘게\s*썰|송송)")
+
+
+def _small_shrimp(d: str, i: str, s: str) -> bool:
+    return bool(SMALL_SHRIMP_DISH.search(re.sub(r"\s+", "", d)) or re.search(r"김장용|동백하|젓새우", i))
+
+
+def _shrimp_whole(r: dict) -> str | None:
+    bad = next((x for x in _steps(r) if "새우" in x and SHRIMP_PREP.search(x)), None)
+    return ("김장용 작은 생새우는 껍질·내장을 손질하거나 썰 수 없음 — 이물질만 골라 씻어 물기를 빼고 통째로 넣어야 함"
+            if bad else None)
+
+
+# 2026-11-12 RS6(지인 3명) '오해 소지' 8건: 김치찌개 → "김치국으로 보임", 대게찜 → "작게 잘라 덜 먹음직", 굴국밥 → "굴이 애매"(2명),
+# 된장찌개 2명. 요리의 생김새를 짚어 준다 — 묶음마다 처음 맞는 하나만 (김치찌개에 '찌개' 일반 문장이 겹치지 않게).
+APPEARANCE: list[list[tuple[re.Pattern, str]]] = [
+    [   # 국물 요리의 모양
+        (re.compile(r"김치찌개"), "Kimchi jjigae: a thick, reduced, deep red-orange stew served bubbling in a small earthenware "
+                                "pot (ttukbaegi); the broth is low so chunks of kimchi, pork and tofu rise above it — NOT a thin, "
+                                "watery soup."),
+        (re.compile(r"된장찌개"), "Doenjang jjigae: a thick, cloudy brown soybean-paste stew in a ttukbaegi, tofu cubes, zucchini "
+                                "and onion visible above the broth — NOT a clear soup."),
+        (re.compile(r"찌개|전골"), "A Korean jjigae: thick and reduced, served in a ttukbaegi or shallow pot with ingredients "
+                                 "showing above the broth — NOT a thin soup."),
+        (re.compile(r"국밥"), "Gukbap: rice in hot broth in a deep earthenware bowl, the toppings clearly visible on the surface."),
+    ],
+    [   # 주재료가 잘 보이게
+        (re.compile(r"대게|홍게|킹크랩"), "A whole steamed crab with a bright red-orange shell and long legs intact, served whole on "
+                                       "a large platter — NOT small cut pieces."),
+        (re.compile(r"굴"), "The oysters are the focus: plump, glossy grey-white oysters clearly visible on top, several of them."),
+        (re.compile(r"꼬막"), "Small blood cockles: seasoned cockle meat clearly visible, some still on the half shell."),
+    ],
+    [   # 유행 디저트 — 사진만 보고 다른 과자로 오해하기 쉽다
+        (re.compile(r"두쫀쿠|두바이쫀득쿠키|두바이\s*쫀득"), "Dubai chewy cookie (두쫀쿠): a palm-sized round cookie with a soft, "
+            "chewy marshmallow-and-milk-powder shell dusted with cocoa powder; one cookie cut in half shows a thick filling of "
+            "toasted shredded kataifi mixed with green pistachio spread — NOT a flat crunchy biscuit or a chocolate bar."),
+    ],
+    [   # 조리 방식
+        (re.compile(r"조림"), "A Korean braise: the pieces coated in a glossy, reduced sauce, little liquid left."),
+    ],
+]
+
+
+# 2026-11-12 (사용자): 라면 레시피 재료에 '스프'만 있고 무슨 스프인지 없다 — 라면 스프는 따로도 판다(신라면·진라면 …).
+INSTANT_RAMYEON = re.compile(r"라면")
+NOT_INSTANT = re.compile(r"라멘|돈코츠|쇼유|미소라|탄탄")
+
+
+def _instant_ramyeon(d: str, i: str, s: str) -> bool:
+    name = re.sub(r"\s+", "", d)
+    return bool(INSTANT_RAMYEON.search(name)) and not NOT_INSTANT.search(name)
+
+
+def _ramyeon_soup_named(r: dict) -> str | None:
+    names = [re.sub(r"\s+", "", str(i.get("name") or "")) for i in r.get("ingredients") or []]
+    bare = [n for n in names if re.fullmatch(r"(?:분말|액상|건더기)?스프", n)]
+    return ("라면 스프가 어떤 것인지 없음 — '봉지라면 1봉지(면·스프 포함)'처럼 쓰고, 사리면만 쓸 때는 어떤 라면 스프인지 적어야 함"
+            if bare else None)
+
+
+def image_hint(dish: str, ingredients: str = "") -> str:
+    """AI 예시 사진에 덧붙일 말 — 결과물을 잘못 상상하게 하지 않도록 (RS6 '오해 소지')."""
+    out = []
+    if _small_shrimp(dish or "", ingredients or "", ""):
+        out.append("The shrimp are tiny whole Korean kimchi-season shrimp (about 1-2 cm, pale pink, unpeeled, many of them) "
+                   "scattered through the dish — NOT large peeled prawns.")
+    name = re.sub(r"\s+", "", dish or "")
+    for group in APPEARANCE:
+        hit = next((text for rx, text in group if rx.search(name)), None)
+        if hit:
+            out.append(hit)
+    return " ".join(out)
+
+
 def _seafood_in_hot_oil(d: str, i: str, s: str) -> bool:
     if re.search(r"감바스|튀김|튀기", d) and SEAFOOD.search(i):
         return True
@@ -102,6 +180,13 @@ def _hot_taste(r: dict) -> str | None:
 
 
 RULES = [
+    Rule("instant_ramyeon_soup", _instant_ramyeon,
+         "봉지라면 요리는 재료를 '봉지라면 1봉지(면·분말스프·건더기스프 포함)'처럼 쓴다. '라면 사리'와 '스프'를 따로 적지 않는다. "
+         "특정 상품 이름(신라면·진라면 등)을 정하지 않되, 사리면만 쓰는 경우에는 '라면 스프(사용하는 라면의 스프)'처럼 무슨 스프인지 "
+         "밝히고, 스프는 라면마다 맵기·짠맛이 달라 넣는 양을 맛보며 조절하라고 팁에 적는다.", _ramyeon_soup_named),
+    Rule("small_shrimp_whole", _small_shrimp,
+         "김장용 생새우(동백하·젓새우)는 1~2cm로 아주 작아 껍질을 벗기거나 내장을 뺄 수 없다 — 작은 게·꼴뚜기·해초 같은 이물질만 "
+         "골라내고 옅은 소금물에 흔들어 씻은 뒤 체에 밭쳐 물기를 빼 통째로 넣는다. 썰거나 다지지 않는다.", _shrimp_whole),
     Rule("seafood_dry", _seafood_in_hot_oil,
          "해산물을 뜨거운 기름에 넣기 전에 키친타월로 물기를 꼼꼼히 닦는다 (기름이 튀지 않게, 밑간도 그 뒤에).", _seafood_dry),
     Rule("garlic_low_heat", lambda d, i, s: bool("마늘" in i and GARLIC_OIL.search(s)),

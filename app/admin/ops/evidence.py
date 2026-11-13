@@ -26,7 +26,8 @@ PATH_LABEL = {
     "canonical_provider": "주 경로 (canonical · 쿠팡 파트너스 API 실시간)",
     "db_fallback": "DB 예비 경로 (vw_ai_recommendation_final)",
 }
-SECTION_LABEL = {"picks": "추천", "others": "다른 후보", "partner_list": "업체 제공", "connect": "쇼핑커넥트"}
+SECTION_LABEL = {"picks": "추천", "others": "다른 후보", "partner_list": "업체 제공",
+                 "frozen_list": "냉동 상품 (따로 둠)", "connect": "쇼핑커넥트"}
 
 # 가격 우위를 말하는 문구 — 근거가 약할 때 나오면 검사 경고
 PER100G_WORDS = re.compile(r"100g당 ?(가장|[\d,]+원)|가성비|양이 가장 많")
@@ -282,6 +283,7 @@ def build_report(text: str, *, shopping: Callable, keyword_extractor: Callable |
             "upstream_rank": si.score.upstream_rank, "upstream_scores": si.score.upstream_scores,
             "title": card.get("title"), "mall": card.get("mall"), "url": si.offer.product_url,
             "price": price, "per100g": per, "score": score,
+            "volume_ml": card.get("volume_ml"), "per100ml": card.get("per100ml"),   # 2026-11-12: 액체
             "rating": rating_info(raw) if raw else None,
             "evidence": [{"field": e.field, "value": e.value, "unit": e.unit, "method": e.method, "source": e.source,
                           "status": e.status, "collected_at": e.collected_at,
