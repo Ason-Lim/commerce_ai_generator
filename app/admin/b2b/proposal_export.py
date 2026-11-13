@@ -44,6 +44,13 @@ class _Pptx:
             self.prs.slide_width, self.prs.slide_height = Inches(13.333), Inches(7.5)
             self.layout = self.prs.slide_layouts[6]
             self.base = False
+        # 2026-11-14: 학습한 디자인 자산(아이콘·그림) — 장 주제·공고 품목에 맞춰 (없으면 빈 계획)
+        try:
+            from app.admin.b2b import design_assets
+
+            self.art = design_assets.for_proposal(p)
+        except Exception:  # noqa: BLE001 — 그림이 없어도 제안서는 만든다
+            self.art = {"cover": None, "closing": None, "sections": {}}
         self.sx = self.prs.slide_width / 1280
         self.sy = self.prs.slide_height / 720
 
@@ -161,11 +168,28 @@ class _Pptx:
             return ((txt, size, True, hi),)
         return ((" ".join(words[:-1]) + " ", size, True, self.pal.ink), (words[-1], size, True, hi))
 
-    def header(self, s, kicker: str, no: str, title: str, cont=False, internal=False):
+    def pic(self, s, asset: dict | None, x: float, y: float, w: float, h: float, align: str = "center") -> bool:
+        """자산 그림을 (x,y,w,h) 상자 안에 비율대로 (1280×720 좌표)."""
+        if not asset:
+            return False
+        try:
+            from app.admin.b2b import design_assets
+
+            pw, ph = design_assets.fit(asset["path"], w, h)
+            px = x + (w - pw) / 2 if align == "center" else (x + w - pw if align == "right" else x)
+            s.shapes.add_picture(asset["path"], self.X(px), self.Y(y + (h - ph) / 2), self.X(pw), self.Y(ph))
+            return True
+        except Exception:  # noqa: BLE001
+            return False
+
+    def header(self, s, kicker: str, no: str, title: str, cont=False, internal=False, sid: str | None = None):
         k = (f"{no}  —  " if no else "") + kicker + ("   · 내부용" if internal else "")
         self.text(s, 72, 52, 1000, 20, k, 10.5, True, self.pal.primary if no else self.pal.muted)
         segs = self.title_segs(title, 28) + ((("  (계속)", 14, False, self.pal.muted),) if cont else ())
-        self.text(s, 72, 76, 1136, 56, [segs])
+        icon = None if cont else (self.art.get("sections") or {}).get(sid or "")
+        self.text(s, 72, 76, 1040 if icon else 1136, 56, [segs])
+        if icon:
+            self.pic(s, icon, 1128, 34, 80, 80, "right")
 
     def footer(self, s, n: int, total: int):
         name = re.sub(r"\[확인 필요[^\]]*\]", "", self.p.company).strip() or "PROPOSAL"
@@ -186,6 +210,8 @@ class _Pptx:
             self.oval(s, 1000, 470, 260, None, pal.on_primary)
         else:
             self.box(s, 0, 0, 1280, 14, pal.primary, rounded=False)
+        if self.art.get("cover"):                      # 학습한 그림 — 오른쪽
+            self.pic(s, self.art["cover"], 830 if t.cover != "minimal" else 860, 150, 410, 420)
         if p.mode == "internal":
             self.box(s, 80, 40, 210, 26, "#2B2B2B")
             self.text(s, 80, 40, 210, 26, "INTERNAL DRAFT · 내부 검토본", 9, True, "#FFFFFF", align="center", anchor="middle")
@@ -300,6 +326,7 @@ class _Pptx:
         self.text(s, 72, 250, 1000, 20, "THANK YOU", 11, True, self.pal.muted)
         self.text(s, 72, 280, 1000, 90, "감사합니다", 54, True, self.pal.primary)
         self.text(s, 72, 380, 1100, 30, self.p.company + (" · " + who if who else ""), 14, False, self.pal.muted)
+        self.pic(s, self.art.get("closing"), 820, 170, 400, 400)
 
     # ── 섹션 본문 ──────────────────────────────────────────
     def body(self, s, sl: D.Slide):
@@ -487,7 +514,7 @@ class _Pptx:
                 self.market(s, sl.data)
             else:
                 no, txt = D.split_title(sl.title)
-                self.header(s, D.KICKER.get(sl.sid, ""), no, txt, sl.cont, sl.internal)
+                self.header(s, D.KICKER.get(sl.sid, ""), no, txt, sl.cont, sl.internal, sl.sid)
                 self.body(s, sl)
             self.footer(s, n, total)
 

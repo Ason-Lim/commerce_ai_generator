@@ -14,6 +14,7 @@ import math
 import re
 from dataclasses import dataclass, field
 
+from app.admin.b2b import design_assets
 from app.admin.b2b import proposal_templates as T
 from app.admin.b2b.proposal import TODO, Element, Proposal
 
@@ -248,8 +249,11 @@ def _cover(p: Proposal, tpl: T.Template, logo: str | None) -> str:
         f'<em>{html.escape(" ".join(words[-2:] if len(words) > 3 else words))}</em>'
     badge = '<div class="ribbon">INTERNAL DRAFT · 내부 검토본</div>' if p.mode == "internal" else ""
     lg = f'<img class="clogo rv" src="{logo}" alt="" style="--d:0">' if logo else ""
-    art = ('<div class="art" aria-hidden="true"><i class="o1"></i><i class="o2"></i><i class="o3"></i>'
-           '<div class="gift"><i class="lid"></i><i class="box"></i><i class="rib"></i></div></div>') if tpl.cover != "minimal" else ""
+    hero = (ART or {}).get("cover")
+    inner = (f'<img class="hero" src="{design_assets.data_uri(hero["path"], 760)}" alt="">' if hero else
+             '<div class="gift"><i class="lid"></i><i class="box"></i><i class="rib"></i></div>')
+    art = (f'<div class="art" aria-hidden="true"><i class="o1"></i><i class="o2"></i><i class="o3"></i>{inner}</div>'
+           if tpl.cover != "minimal" else (f'<div class="art-min" aria-hidden="true">{inner}</div>' if hero else ""))
     return (f'<div class="cover c-{tpl.cover}">{badge}{art}<div class="ctext">{lg}'
             f'<div class="kick rv" style="--d:1">PROPOSAL · {html.escape(p.subtitle)}</div>'
             f'<h1 class="rv" style="--d:2">{title}</h1>'
@@ -297,11 +301,21 @@ def _market(d: dict) -> str:
 def _closing(p: Proposal) -> str:
     c = (p.facts or {}).get("contact") or {}
     who = " · ".join(html.escape(str(v)) for v in (c.get("contact_name"), c.get("contact_phone"), c.get("contact_email")) if v)
+    end = (ART or {}).get("closing")
+    pic = f'<img class="cart rv" style="--d:3" src="{design_assets.data_uri(end["path"], 640)}" alt="">' if end else ""
     return (f'<div class="closing"><div class="kick rv" style="--d:0">THANK YOU</div><h1 class="rv" style="--d:1"><em>감사합니다</em></h1>'
-            f'<p class="rv" style="--d:2">{_m(p.company)}{(" · " + who) if who else ""}</p></div>')
+            f'<p class="rv" style="--d:2">{_m(p.company)}{(" · " + who) if who else ""}</p>{pic}</div>')
+
+
+ART: dict | None = None     # render() 가 한 부마다 정한다 (학습한 디자인 자산)
 
 
 def render(p: Proposal, tpl: T.Template | None = None, market: dict | None = None) -> str:
+    global ART
+    try:
+        ART = design_assets.for_proposal(p)
+    except Exception:  # noqa: BLE001
+        ART = None
     tpl = tpl or T.get(None)
     logo = T.logo_data_uri(tpl)
     slides = plan(p, market)
@@ -324,7 +338,9 @@ def render(p: Proposal, tpl: T.Template | None = None, market: dict | None = Non
                 body = _market(s.data) if s.kind == "market" else _numbers(p)
             label = (f"{no} " if no else "") + txt + (" (계속)" if s.cont else "")
             badge = '<span class="ibadge">내부용</span>' if s.internal else ""
-            inner = (f'<header class="rv" style="--d:0"><div class="kick">{f"<b>{no}</b>" if no else ""}{kick}{badge}</div>'
+            icon = None if (s.cont or s.kind != "section") else ((ART or {}).get("sections") or {}).get(s.sid)
+            ico = f'<img class="sicon" src="{design_assets.data_uri(icon["path"], 240)}" alt="">' if icon else ""
+            inner = (f'<header class="rv{" has-icon" if icon else ""}" style="--d:0">{ico}<div class="kick">{f"<b>{no}</b>" if no else ""}{kick}{badge}</div>'
                      f'<h2>{_title_html(txt)}{"<small> (계속)</small>" if s.cont else ""}</h2></header>'
                      f'<div class="body">{body}</div>')
         foot = _foot(p, tpl, n, total, logo) if s.kind != "cover" else ""
@@ -481,7 +497,13 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .c-minimal .ctext{max-width:1000px}.c-minimal h1{font-size:54px}
 .c-minimal .meta{border-top:2px solid var(--ink);padding-top:18px;max-width:none;grid-template-columns:repeat(4,auto)}
 .ribbon{position:absolute;top:26px;left:80px;z-index:3;background:#2b2b2b;color:#fff;font-size:12px;font-weight:700;letter-spacing:.06em;border-radius:6px;padding:4px 10px}
-.closing{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px}
+.closing{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;position:relative}
+.hero{position:absolute;right:70px;top:150px;width:400px;height:420px;object-fit:contain;filter:drop-shadow(0 18px 30px rgba(0,0,0,.18));animation:float 6s ease-in-out infinite}
+.art-min{position:absolute;right:60px;top:0;bottom:0;width:440px}
+header.has-icon{position:relative;padding-right:110px}
+.sicon{position:absolute;right:0;top:-6px;width:84px;height:84px;object-fit:contain}
+.cart{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:400px;height:400px;object-fit:contain}
+.still .hero{animation:none}
 .closing h1{font-size:76px;letter-spacing:-.04em;font-weight:800}.closing p{font-size:18px;color:var(--mu)}
 /* 등장 애니메이션 */
 .rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--d,0)*80ms + .1s)}
