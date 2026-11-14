@@ -42,10 +42,12 @@ class Slide:
 def layout_of(e: Element, sid: str = "") -> str:
     if e.kind == "table":
         h = e.headers
+        n = len(e.rows)
         if h and h[0] == "일정":
-            return "timeline"
+            return "timeline" if n <= 4 else ("path" if path_fits(e) else "table")
         if h and h[0] == "단계":
-            return "flow"
+            # 2026-11-14 자료 벤치마킹: 3단계는 원형 단계(화살표), 5개 이상은 굽이치는 타임라인
+            return "steps" if n == 3 else ("path" if 5 <= n <= 10 and path_fits(e) else ("flow" if n <= 4 else "table"))
         if h == ["리스크", "대응"]:
             return "cards"
         if h and h[0] == "구분" and "금액" in h:
@@ -54,7 +56,14 @@ def layout_of(e: Element, sid: str = "") -> str:
             return "kv"
         return "table"
     if e.kind == "bullets":
-        return "ncards" if sid == "summary" else "checks"
+        if sid in ("summary", "strategy"):
+            return "ncards"
+        n, longest = len(e.items), max((len(x) for x in e.items), default=0)
+        if n == 4 and longest <= 170:
+            return "icards"            # 2×2 아이콘 카드 (자료의 '4단 카드')
+        if n == 3 and longest <= 110:
+            return "trio"              # 원형 아이콘 3개 나란히
+        return "checks"
     if e.kind == "para" and e.text.startswith("■"):
         return "sub"
     return e.kind
@@ -62,8 +71,12 @@ def layout_of(e: Element, sid: str = "") -> str:
 
 def _units(e: Element, sid: str) -> float:
     lay = layout_of(e, sid)
-    if lay in ("timeline", "flow"):
+    if lay in ("timeline", "flow", "steps", "trio"):
         return 4.2
+    if lay == "path":
+        return sum(path_geom(e)[2]) / 52
+    if lay == "icards":
+        return 5.6
     if lay == "cards":
         return 2.3 * math.ceil(len(e.rows) / 3)
     if lay == "price":
@@ -79,6 +92,38 @@ def _units(e: Element, sid: str) -> float:
     if lay == "sub":
         return 0.7
     return 0.9 + len(e.text) // 105 * 0.55
+
+
+def _path_rows(n: int) -> int:
+    return 1 if n <= 4 else (2 if n <= 8 else 3)
+
+
+def path_geom(e: Element) -> tuple[int, int, list[float]]:
+    """굽이치는 타임라인의 (줄 수, 줄당 개수, 줄마다 높이 px) — 글 길이에 맞춰 줄 높이를 늘린다 (1280×720 기준)."""
+    n = len(e.rows)
+    rows = _path_rows(n)
+    per = math.ceil(n / rows)
+    c = (1136 - 92) / per - 12
+    cb, cs = max(6, int(c / 13.5)), max(6, int(c / 11.5))
+    rh = []
+    for ri in range(rows):
+        chunk = e.rows[ri * per:(ri + 1) * per]
+        if not chunk:
+            break
+        t = max(math.ceil(len(r[1] if len(r) > 1 else "") / cb) * 16
+                + (math.ceil(len(r[2]) / cs) * 14 + 4 if len(r) > 2 and r[2] else 0) for r in chunk)
+        rh.append(float(min(260, max(150, 104 + t))))
+    return rows, per, rh
+
+
+def path_fits(e: Element) -> bool:
+    return sum(path_geom(e)[2]) <= 480
+
+
+def split_head(t: str) -> tuple[str, str]:
+    """'폐쇄몰 구축: 7일 안에…' → ('폐쇄몰 구축', '7일 안에…'). 머리말이 없으면 ('', 원문)."""
+    m = re.match(r"^\s*([^:：—\-\n]{2,22}?)\s*(?:[:：]|\s—\s|\s-\s)\s*(.+)$", str(t), re.S)
+    return (m.group(1).strip(), m.group(2).strip()) if m else ("", str(t))
 
 
 def _split_tables(els: list[Element], sid: str) -> list[Element]:
@@ -155,9 +200,64 @@ def _won_short(v: int) -> tuple[int, str]:
 
 
 # ── 요소 렌더 ──────────────────────────────────────────────────
+def _ico(a: dict | None, cls: str = "ii", px: int = 200) -> str:
+    return f'<img class="{cls}" src="{design_assets.data_uri(a["path"], px)}" alt="">' if a else ""
+
+
+def _icons(texts: list[str], sid: str) -> list[dict | None]:
+    try:
+        return design_assets.item_icons(ART, [str(t) for t in texts], sid)
+    except Exception:  # noqa: BLE001 — 아이콘은 꾸밈일 뿐
+        return [None] * len(texts)
+
+
+def _path(e: Element, sid: str, i: int) -> str:
+    """굽이치는 타임라인 (자료 ti24516001e 벤치마킹) — 한 줄 4개까지, 줄 끝에서 반원으로 꺾어 반대 방향으로."""
+    n = len(e.rows)
+    rows, per, rh = path_geom(e)
+    icons = _icons([" ".join(r) for r in e.rows], sid)
+    C = f"((100% - 92px) / {per})"
+    out = []
+    for ri in range(rows):
+        chunk = list(enumerate(e.rows))[ri * per:(ri + 1) * per]
+        if not chunk:
+            break
+        rev, turn, cnt = ri % 2 == 1, ri < rows - 1 and (ri + 1) * per < n, len(chunk)
+        start = "46px" if ri > 0 else f"calc(46px + {C} * .5)"
+        end = "46px" if turn else f"calc(100% - 46px - {C} * {cnt - .5})"
+        left, right = (end, start) if rev else (start, end)
+        lis = "".join(
+            f'<li class="rv" style="--d:{i + k}"><span class="pc">{_m(r[0])}</span>'
+            f'<span class="pn">{_ico(icons[k], "pi", 160) or f"<b>{k + 1:02d}</b>"}</span>'
+            f'<b>{_m(r[1]) if len(r) > 1 else ""}</b><small>{_m(r[2]) if len(r) > 2 else ""}</small></li>' for k, r in chunk)
+        arc = f'<i class="arc {"l" if rev else "r"}"></i>' if turn else ""
+        out.append(f'<ol class="prow{" rev" if rev else ""}" style="--rh:{rh[ri]:.0f}px"><i class="prail" style="left:{left};right:{right}"></i>{arc}{lis}</ol>')
+    return f'<div class="path" style="--per:{per}">' + "".join(out) + "</div>"
+
+
 def _el(e: Element, sid: str, i: int) -> str:
     lay = layout_of(e, sid)
     d = f' style="--d:{i}"'
+    if lay == "path":
+        return _path(e, sid, i)
+    if lay in ("steps", "trio"):
+        if lay == "steps":
+            parts = [(r[0], r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in e.rows]
+        else:
+            parts = [("",) + split_head(x) for x in e.items]
+        icons = _icons([" ".join(x) for x in parts], sid)
+        return (f'<div class="steps{" arrows" if lay == "steps" else ""}">' + "".join(
+            f'<div class="st rv" style="--d:{i + k}">{f"<span class=sl>{_m(a)}</span>" if a else ""}'
+            f'<span class="sc">{_ico(icons[k], "si", 220) or f"<b>{k + 1}</b>"}<em>{k + 1:02d}</em></span>'
+            f'{f"<b>{_m(b)}</b>" if b else ""}<p>{_m(c)}</p></div>' for k, (a, b, c) in enumerate(parts)) + "</div>")
+    if lay == "icards":
+        icons = _icons(e.items, sid)
+        cards = []
+        for k, x in enumerate(e.items):
+            h, body = split_head(x)
+            cards.append(f'<div class="icard rv" style="--d:{i + k}"><span class="ic">{_ico(icons[k], "ci2", 200) or f"<b>{k + 1}</b>"}'
+                         f'<em>{k + 1:02d}</em></span><div class="it">{f"<b>{_m(h)}</b>" if h else ""}<p>{_m(body)}</p></div></div>')
+        return '<div class="icards">' + "".join(cards) + "</div>"
     if lay == "para":
         return f'<p class="para rv"{d}>{_m(e.text)}</p>'
     if lay == "sub":
@@ -165,8 +265,9 @@ def _el(e: Element, sid: str, i: int) -> str:
     if lay == "callout":
         return f'<div class="callout {html.escape(e.tone)} rv"{d}><span class="ci">{"!" if e.tone == "warn" else "i"}</span><div>{_m(e.text)}</div></div>'
     if lay == "ncards":
+        icons = _icons(e.items, sid)
         return '<div class="ncards">' + "".join(
-            f'<div class="card ncard rv" style="--d:{i + k}"><b class="no">{k + 1:02d}</b><p>{_m(x)}</p></div>'
+            f'<div class="card ncard rv" style="--d:{i + k}">{_ico(icons[k], "nico", 160)}<b class="no">{k + 1:02d}</b><p>{_m(x)}</p></div>'
             for k, x in enumerate(e.items)) + "</div>"
     if lay == "checks":
         return '<ul class="checks">' + "".join(
@@ -182,8 +283,9 @@ def _el(e: Element, sid: str, i: int) -> str:
             f'<div class="card step rv" style="--d:{i + k}"><span class="sn">{k + 1}</span><b>{_m(r[0])}</b>'
             f'<em>{_m(r[1])}</em><p>{_m(r[2]) if len(r) > 2 else ""}</p></div>' for k, r in enumerate(e.rows)) + "</div>"
     if lay == "cards":
+        icons = _icons([" ".join(r) for r in e.rows], sid)
         return '<div class="rcards">' + "".join(
-            f'<div class="card rcard rv" style="--d:{i + k}"><span class="rn">{k + 1:02d}</span><b>{_m(r[0])}</b><p>{_m(r[1])}</p></div>'
+            f'<div class="card rcard rv" style="--d:{i + k}">{_ico(icons[k], "nico", 160)}<span class="rn">{k + 1:02d}</span><b>{_m(r[0])}</b><p>{_m(r[1])}</p></div>'
             for k, r in enumerate(e.rows)) + "</div>"
     if lay == "price":
         cards = []
@@ -435,6 +537,36 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .step b{font-size:1.05em}.step em{font-style:normal;color:var(--p);font-weight:700;font-size:.92em}.step p{font-size:.86em;color:var(--mu)}
 .rcards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .rcard .rn{font-size:13px;font-weight:800;color:var(--p);letter-spacing:.08em}
+.ncard,.rcard{position:relative}.nico{position:absolute;right:14px;top:12px;width:52px;height:52px;object-fit:contain}
+.path{display:flex;flex-direction:column}
+.prow{position:relative;list-style:none;display:grid;grid-template-columns:repeat(var(--per),1fr);padding:0 46px;height:var(--rh,158px);margin:0}
+.prow.rev{direction:rtl}.prow.rev li{direction:ltr}
+.prail{position:absolute;top:58px;height:3px;background:var(--p);border-radius:2px}
+.arc{position:absolute;top:58px;width:46px;height:var(--rh,158px);border:3px solid var(--p);box-sizing:border-box}
+.arc.r{right:0;border-left:none;border-radius:0 80px 80px 0}.arc.l{left:0;border-right:none;border-radius:80px 0 0 80px}
+.prow li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:0 6px}
+.pc{font-size:12px;font-weight:800;color:var(--p);background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:2px 10px;height:22px;line-height:16px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pn{width:58px;height:58px;border-radius:50%;background:var(--bg);border:3px solid var(--p);display:grid;place-items:center;z-index:1;margin-top:2px;transition:transform .25s}
+.pn b{color:var(--p);font-weight:800}.pi{width:40px;height:40px;object-fit:contain}
+.prow li:hover .pn{transform:scale(1.1)}
+.prow li>b{font-size:.86em;line-height:1.35}
+.prow li small{font-size:.76em;color:var(--mu);line-height:1.35}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;align-items:start}
+.st{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.sl{font-size:.82em;font-weight:800;color:var(--p);letter-spacing:.02em;min-height:1.4em}
+.sc{position:relative;width:128px;height:128px;border-radius:50%;background:var(--sf);border:4px solid color-mix(in srgb,var(--p) 55%,var(--ln));display:grid;place-items:center;box-shadow:0 10px 24px -12px color-mix(in srgb,var(--p) 50%,transparent);transition:transform .25s}
+.st:hover .sc{transform:translateY(-4px)}
+.sc>b{font-size:40px;color:var(--p);font-weight:800}.si{width:84px;height:84px;object-fit:contain}
+.sc em,.ic em{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:800;color:var(--onp);background:var(--p);border-radius:999px;padding:2px 10px}
+.st>b{font-size:1.02em;margin-top:6px}.st p{font-size:.86em;color:var(--mu);line-height:1.5}
+.arrows .st:not(:last-child)::after{content:"";position:absolute;right:-30px;top:calc(1.4em + 72px);border-left:16px solid var(--p);border-top:10px solid transparent;border-bottom:10px solid transparent}
+.icards{display:grid;grid-template-columns:1fr 1fr;gap:22px 30px}
+.icard{display:flex;align-items:center;min-width:0}
+.ic{position:relative;flex:none;width:112px;height:112px;border-radius:50%;background:var(--bg);border:4px solid var(--p);display:grid;place-items:center;z-index:1;box-shadow:0 8px 20px -10px color-mix(in srgb,var(--p) 60%,transparent)}
+.ic>b{font-size:34px;color:var(--p);font-weight:800}.ci2{width:72px;height:72px;object-fit:contain}
+.it{flex:1;min-width:0;margin-left:-46px;padding:16px 24px 16px 62px;background:var(--sf);border:1px solid var(--ln);border-radius:20px 70px 70px 20px;min-height:112px;display:flex;flex-direction:column;justify-content:center;transition:transform .25s}
+.icard:hover .it{transform:translateX(4px)}
+.it b{font-size:1em;color:var(--ink);margin-bottom:4px}.it p{font-size:.86em;color:var(--mu);line-height:1.5}
 .rcard b{display:block;font-size:1.08em;margin:6px 0}.rcard p{font-size:.9em;color:var(--mu)}
 .pcards,.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 .lbl{font-size:.88em;color:var(--mu);font-weight:700}

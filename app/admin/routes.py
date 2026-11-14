@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote
 
@@ -398,6 +399,32 @@ def b2b_files(name: str, dl: bool = False):
     media = {".hwpx": "application/hwp+zip", ".pdf": "application/pdf"}.get(p.suffix)
     return FileResponse(p, media_type=media, headers={"Cache-Control": "no-store"},
                         filename=name if dl or p.suffix in (".docx", ".pptx", ".hwpx") else None)
+
+
+@router.get("/admin/b2b/assets/{pack}/{name}", dependencies=[api])
+def b2b_asset_thumb(pack: str, name: str, w: int = 160):
+    """학습한 제안서 그림의 썸네일 (그림 바꾸기 화면용 · 관리자만)."""
+    from app.admin.b2b import design_assets
+
+    root = design_assets.root().resolve()
+    p = (root / pack / name).resolve()
+    if root not in p.parents or not p.is_file() or p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp", ".gif"):
+        raise HTTPException(404)
+    data, media = _thumb(str(p), p.stat().st_mtime, max(48, min(w, 480)))
+    return Response(data, media_type=media, headers={"Cache-Control": "private, max-age=3600"})
+
+
+@lru_cache(maxsize=512)
+def _thumb(path: str, mtime: float, w: int) -> tuple[bytes, str]:
+    import io
+
+    from PIL import Image
+
+    with Image.open(path) as im:
+        im.thumbnail((w, w))
+        buf = io.BytesIO()
+        im.convert("RGBA").save(buf, "PNG", optimize=True)
+    return buf.getvalue(), "image/png"
 
 
 # ── 제안서 디자인 템플릿 ───────────────────────────────────────

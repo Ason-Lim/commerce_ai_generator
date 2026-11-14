@@ -350,6 +350,13 @@ class _Pptx:
             return sum(_lines(x, 80) * 22 + 12 for x in e.items)
         if lay == "timeline":
             return 160
+        if lay == "path":
+            return sum(D.path_geom(e)[2])
+        if lay in ("steps", "trio"):
+            return 262
+        if lay == "icards":
+            return sum(max(112, 30 + max(_lines(D.split_head(x)[1], 25) * 16 + 18 for x in e.items[i:i + 2]))
+                       for i in range(0, len(e.items), 2)) + 24
         if lay == "flow":
             return 190
         if lay == "cards":
@@ -364,9 +371,122 @@ class _Pptx:
         ws = _col_w(e)
         return 34 + sum(max(_lines(c, max(8, int(w / 13.5))) for c, w in zip(r, ws)) * 19 + 14 for r in e.rows)
 
+    def icons(self, texts: list[str], sid: str) -> list:
+        try:
+            from app.admin.b2b import design_assets
+
+            return design_assets.item_icons(self.art, [str(t) for t in texts], sid)
+        except Exception:  # noqa: BLE001
+            return [None] * len(texts)
+
+    def arc(self, s, x, y, w, h, right: bool):
+        """반원 선 (굽이치는 타임라인의 꺾임) — 오른쪽 반 또는 왼쪽 반."""
+        from pptx.enum.shapes import MSO_SHAPE
+        sh = s.shapes.add_shape(MSO_SHAPE.ARC, self.X(x), self.Y(y), self.X(w), self.Y(h))
+        sh.adjustments[0], sh.adjustments[1] = (162.0, 54.0) if right else (54.0, 162.0)   # 60000분의 1도 ÷ 100000
+        sh.fill.background()
+        sh.line.color.rgb = self.rgb(self.pal.primary)
+        sh.line.width = self.X(3)
+        sh.shadow.inherit = False
+        return sh
+
+    def badge(self, s, cx, y, text):
+        self.box(s, cx - 20, y, 40, 18, self.pal.primary, radius=0.5)
+        self.text(s, cx - 20, y, 40, 18, text, 8.5, True, self.pal.on_primary, align="center", anchor="middle")
+
+    def path(self, s, e: Element, sid: str, y: float) -> float:
+        pal, k = self.pal, self.k
+        n = len(e.rows)
+        rows, per, rh = D.path_geom(e)
+        C = (1136 - 92) / per
+        icons = self.icons([" ".join(r) for r in e.rows], sid)
+        for ri in range(rows):
+            chunk = list(enumerate(e.rows))[ri * per:(ri + 1) * per]
+            if not chunk:
+                break
+            yr, rev = y + sum(rh[:ri]), ri % 2 == 1
+            turn = ri < rows - 1 and (ri + 1) * per < n
+            cxs = [(72 + 1136 - 46 - C * (j + .5)) if rev else (72 + 46 + C * (j + .5)) for j in range(len(chunk))]
+            a = (72 + 46) if not rev and ri > 0 else (72 + 1136 - 46 if rev and ri > 0 else cxs[0])
+            b = ((72 + 46) if rev else (72 + 1136 - 46)) if turn else cxs[-1]
+            self.box(s, min(a, b), yr + 57.5, abs(b - a), 3, pal.primary, rounded=False)
+            if turn:
+                if rev:
+                    self.arc(s, 72, yr + 59, 92, rh[ri], right=False)
+                else:
+                    self.arc(s, 72 + 1136 - 92, yr + 59, 92, rh[ri], right=True)
+            for (j, (gi, r)), cx in zip(enumerate(chunk), cxs):
+                self.box(s, cx - C / 2 + 12, yr + 2, C - 24, 22, pal.surface, pal.line, radius=0.5)
+                self.text(s, cx - C / 2 + 12, yr + 2, C - 24, 22, r[0], 9.5, True, pal.primary, align="center", anchor="middle")
+                self.oval(s, cx - 29, yr + 30, 58, pal.bg, pal.primary)
+                if not self.pic(s, icons[gi], cx - 20, yr + 39, 40, 40):
+                    self.text(s, cx - 29, yr + 30, 58, 58, f"{gi + 1:02d}", 12, True, pal.primary, align="center", anchor="middle")
+                cb = max(6, int((C - 12) / 13.5))
+                hb = math.ceil(len(r[1] if len(r) > 1 else "") / cb) * 16
+                self.text(s, cx - C / 2 + 6, yr + 94, C - 12, hb, r[1] if len(r) > 1 else "", 10, True, align="center")
+                if len(r) > 2:
+                    self.text(s, cx - C / 2 + 6, yr + 98 + hb, C - 12, rh[ri] - 104 - hb, r[2], 8.5, False, pal.muted, align="center")
+        return y + sum(rh) - 8
+
+    def steps(self, s, parts: list[tuple[str, str, str]], sid: str, y: float, arrows: bool) -> float:
+        pal, k = self.pal, self.k
+        w = (1136 - 80) / 3
+        icons = self.icons([" ".join(x) for x in parts], sid)
+        for i, (lab, b, c) in enumerate(parts):
+            cx = 72 + i * (w + 40) + w / 2
+            if lab:
+                self.text(s, cx - w / 2, y, w, 20, lab, 10.5, True, pal.primary, align="center")
+            self.oval(s, cx - 64, y + 26, 128, pal.surface, pal.primary)
+            if not self.pic(s, icons[i], cx - 42, y + 48, 84, 84):
+                self.text(s, cx - 64, y + 26, 128, 128, str(i + 1), 30, True, pal.primary, align="center", anchor="middle")
+            self.badge(s, cx, y + 145, f"{i + 1:02d}")
+            if arrows and i < len(parts) - 1:
+                from pptx.enum.shapes import MSO_SHAPE
+                tri = s.shapes.add_shape(MSO_SHAPE.ISOSCELES_TRIANGLE, self.X(cx + w / 2 + 10), self.Y(y + 82), self.X(20), self.Y(16))
+                tri.rotation = 90
+                tri.fill.solid()
+                tri.fill.fore_color.rgb = self.rgb(pal.primary)
+                tri.line.fill.background()
+            yy = y + 174
+            if b:
+                self.text(s, cx - w / 2, yy, w, 24, b, 12.5 * k, True, align="center")
+                yy += 26
+            self.text(s, cx - w / 2 + 8, yy, w - 16, 262 - (yy - y), c, 10 * k, False, pal.muted, align="center")
+        return y + 262
+
+    def icards(self, s, items: list[str], sid: str, y: float) -> float:
+        pal = self.pal
+        w = (1136 - 30) / 2
+        icons = self.icons(items, sid)
+        parts = [D.split_head(x) for x in items]
+
+        def need(hb):
+            return 30 + (18 if hb[0] else 0) + _lines(hb[1], 25) * 16
+        rows = [max(112, *(need(parts[j]) for j in range(i, min(i + 2, len(items))))) for i in range(0, len(items), 2)]
+        for i, (head, body) in enumerate(parts):
+            h = rows[i // 2]
+            cx, cy = 72 + (i % 2) * (w + 30), y + sum(rows[:i // 2]) + (i // 2) * 24
+            self.box(s, cx + 66, cy, w - 66, h, pal.surface, pal.line, radius=0.3)
+            oy = cy + (h - 112) / 2
+            self.oval(s, cx, oy, 112, pal.bg, pal.primary)
+            if not self.pic(s, icons[i], cx + 20, oy + 20, 72, 72):
+                self.text(s, cx, oy, 112, 112, str(i + 1), 26, True, pal.primary, align="center", anchor="middle")
+            self.badge(s, cx + 56, oy + 102, f"{i + 1:02d}")
+            segs = ([((head, 12, True, pal.ink),)] if head else []) + [((body, 10, False, pal.muted),)]
+            self.text(s, cx + 130, cy + 12, w - 170, h - 24, segs, anchor="middle")
+        return y + sum(rows) + 24 * (len(rows) - 1)
+
     def el(self, s, e: Element, sid: str, y: float) -> float:
         pal, k = self.pal, self.k
         lay = D.layout_of(e, sid)
+        if lay == "path":
+            return self.path(s, e, sid, y)
+        if lay == "steps":
+            return self.steps(s, [(r[0], r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in e.rows], sid, y, True)
+        if lay == "trio":
+            return self.steps(s, [("",) + D.split_head(x) for x in e.items], sid, y, False)
+        if lay == "icards":
+            return self.icards(s, e.items, sid, y)
         if lay == "para":
             h = _lines(e.text, 70) * 24 * k
             self.text(s, 72, y, 1136, h, e.text, 13.5 * k)
@@ -382,9 +502,11 @@ class _Pptx:
             return y + h
         if lay == "ncards":
             w, h = (1136 - 32) / 3, 136 * k
+            icons = self.icons(e.items, sid)
             for i, x in enumerate(e.items):
                 cx, cy = 72 + (i % 3) * (w + 16), y + (i // 3) * (h + 14)
                 self.box(s, cx, cy, w, h, pal.surface, pal.line)
+                self.pic(s, icons[i], cx + w - 62, cy + 12, 48, 48, "right")
                 self.text(s, cx + 20, cy + 16, w - 40, 30, f"{i + 1:02d}", 22 * k, True, pal.primary)
                 self.text(s, cx + 20, cy + 52 * k, w - 40, h - 60 * k, x, 12 * k)
             return y + math.ceil(len(e.items) / 3) * (h + 14) - 14
@@ -422,9 +544,11 @@ class _Pptx:
             return y + 180 * k
         if lay == "cards":
             w, h = (1136 - 32) / 3, 100 * k
+            icons = self.icons([" ".join(r) for r in e.rows], sid)
             for i, r in enumerate(e.rows):
                 cx, cy = 72 + (i % 3) * (w + 16), y + (i // 3) * (h + 12)
                 self.box(s, cx, cy, w, h, pal.surface, pal.line)
+                self.pic(s, icons[i], cx + w - 58, cy + 10, 44, 44, "right")
                 self.text(s, cx + 18, cy + 12, w - 36, h - 20,
                           [((f"{i + 1:02d}", 10, True, pal.primary),), ((r[0], 13 * k, True, pal.ink),),
                            ((r[1], 10.5 * k, False, pal.muted),)])

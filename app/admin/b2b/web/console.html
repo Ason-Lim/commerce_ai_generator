@@ -82,6 +82,12 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
 .copy{float:right;border:1px solid var(--line);background:#fff;border-radius:8px;padding:2px 10px;font-size:12px;cursor:pointer}
 .docs a{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;margin:4px 6px 4px 0;text-decoration:none;color:var(--acc);font-weight:600}
 .outline{columns:2;font-size:13.5px;margin:0;padding-left:18px}
+.artrow{display:grid;grid-template-columns:150px 76px 1fr;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line,#e5e7eb)}
+.artrow:first-of-type{border-top:none}.artrow .lb{font-size:13px;font-weight:700;min-width:0}.artrow .lb small{display:block;font-weight:400;opacity:.65}
+.artcur,.artc{width:68px;height:68px;border-radius:10px;border:1px solid var(--line,#e5e7eb);background:#fff;display:grid;place-items:center;overflow:hidden;font-size:11px;opacity:.9}
+.artcur{border:2px solid var(--accent,#2563eb)}.artcur img,.artc img{max-width:60px;max-height:60px;object-fit:contain}
+.artcs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;min-width:0}.artc{flex:none;cursor:pointer;padding:0}.artc:hover{outline:2px solid var(--accent,#2563eb)}
+.artc.on{outline:2px solid var(--accent,#2563eb);opacity:.5}.artc.rm{font-size:11px;color:#b42318}
 .notice{font-size:13px;color:var(--ink2);background:var(--acc-s);border-radius:10px;padding:8px 12px;margin:8px 0}
 .notice.warn{background:var(--hold-s);color:var(--hold)}
 .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
@@ -219,12 +225,27 @@ function render(b){
     const det=document.createElement("details");det.innerHTML=`<summary><b>${esc(d.supplier)}</b> · 후보 ${d.items.length}개</summary><button class="copy" type="button">복사</button><pre>${esc(txt)}</pre>`;
     det.querySelector(".copy").onclick=e=>{navigator.clipboard?.writeText(txt);e.target.textContent="복사됨"};p.append(det)});return p}
   if(b.type==="docs"&&b.items.some(i=>i.mode))return propFiles(b);
+  if(b.type==="art")return artPanel(b);
   if(b.type==="docs"){const p=panel("생성 문서");const d=document.createElement("div");d.className="docs";
     b.items.forEach(i=>{d.insertAdjacentHTML("beforeend",`<a href="${esc(i.href)}" target="_blank" rel="noopener">${/Word/.test(i.label)?"⬇":"↗"} ${esc(i.label)}</a>`)});p.append(d);
     $("#docs").innerHTML="";b.items.forEach(i=>$("#docs").insertAdjacentHTML("beforeend",`<a class="doclink" href="${esc(i.href)}" target="_blank" rel="noopener">${esc(i.label)}</a>`));return p}
   if(b.type==="outline"){const p=panel("제안서 목차");p.insertAdjacentHTML("beforeend",`<ol class="outline">${b.items.map(x=>`<li>${esc(x.replace(/^\d+\.\s*/,""))}</li>`).join("")}</ol>`);return p}
   const d=document.createElement("pre");d.textContent=JSON.stringify(b,null,2);return d;
 }
+// 2026-11-14: 장마다 그림 바꾸기 — 후보를 누르면 그 그림으로 제안서를 다시 만든다 (AI 본문은 그대로)
+function artPanel(b){const p=panel("장마다 그림",b.item_icons?"항목 아이콘 켜짐":"항목 아이콘 꺼짐");
+  b.slots.forEach(s=>{const r=document.createElement("div");r.className="artrow";
+    const cur=s.current?`<img src="${esc(s.current.thumb)}" alt="" title="${esc(s.current.tags.join(", "))}">`:"없음";
+    r.innerHTML=`<div class=lb>${esc(s.label)}<small>${s.picked?"직접 고름":"자동 선택"}${s.current?" · "+esc(s.current.id):""}</small></div><div class=artcur>${cur}</div><div class=artcs></div>`;
+    const cs=r.querySelector(".artcs");
+    s.cands.forEach((c,i)=>{const x=document.createElement("button");x.type="button";x.className="artc"+(s.current&&c.id===s.current.id?" on":"");
+      x.title=`${i+1}번 · ${c.id} · ${c.tags.join(", ")}`;x.innerHTML=`<img src="${esc(c.thumb)}" alt="">`;
+      x.onclick=()=>run(`${s.cmd} 그림 ${c.id} 로 바꿔줘`);cs.append(x)});
+    const rm=document.createElement("button");rm.type="button";rm.className="artc rm";rm.textContent="빼기";rm.onclick=()=>run(`${s.cmd} 그림 빼줘`);cs.append(rm);
+    p.append(r)});
+  const a=document.createElement("div");a.className="actions";a.style.marginTop="8px";
+  [b.item_icons?"항목 아이콘 빼줘":"항목 아이콘 넣어줘","그림 원래대로 해줘"].forEach(t=>a.append(btn(t)));p.append(a);return p}
+
 function propFiles(b){
   const t=b.template||{};const p=panel("제안서 파일",t.name?`템플릿 · ${t.name}`:"");
   const groups={};b.items.forEach(i=>(groups[i.group]=groups[i.group]||[]).push(i));

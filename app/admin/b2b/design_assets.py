@@ -118,30 +118,142 @@ def pick(sid: str, kinds: tuple[str, ...], extra: list[str] | None = None, used:
     return best if best_s >= 1.0 else None
 
 
-def plan(sections: list, categories: list[str] | None = None, title: str = "") -> dict:
-    """제안서 한 부에 넣을 그림: {'cover': 자산, 'closing': 자산, 'sections': {sid: 자산}}. 같은 그림은 한 번만."""
+SLOT_NAMES = {"cover": "표지", "closing": "마무리"}
+SLOT_KINDS = {"cover": ("illustration", "photo", "background"), "closing": ("illustration", "photo")}
+SECTION_KINDS = ("icon", "illustration")
+ITEM_KINDS = ("icon",)
+
+
+def by_id(aid: str) -> dict | None:
+    """자산 id (manifest 의 hash, 앞 6자 이상) → 자산."""
+    aid = (aid or "").strip().lower()
+    if len(aid) < 6:
+        return None
+    return next((a for a in assets() if str(a.get("hash", "")).lower().startswith(aid)), None)
+
+
+def candidates(slot: str, categories: list[str] | None = None, n: int = 8) -> list[dict]:
+    """장(slot) 하나에 어울리는 그림 후보 — 점수 높은 순 (그림 바꾸기 화면·'다음 그림'에 쓴다)."""
+    extra = [w for c in categories or [] for w in CATEGORY_WORDS.get(c, [c])] if slot in ("cover", "closing", "products") else []
+    want = SECTION_WORDS.get(slot, []) + extra
+    kinds = SLOT_KINDS.get(slot, SECTION_KINDS)
+    ranked = sorted(((score(a, want, slot), a) for a in assets() if a.get("kind") in kinds), key=lambda x: -x[0])
+    return [a for s, a in ranked if s >= 1.0][:n]
+
+
+def plan(sections: list, categories: list[str] | None = None, title: str = "", overrides: dict | None = None,
+         item_icons: bool = True) -> dict:
+    """제안서 한 부에 넣을 그림: {'cover': 자산, 'closing': 자산, 'sections': {sid: 자산}}. 같은 그림은 한 번만.
+
+    overrides — 사람이 고른 그림 {slot: 자산 id | ""(빼기)} (2026-11-14 '장마다 그림 바꾸기'). 고른 것이 먼저 자리를 잡는다.
+    """
+    empty = {"cover": None, "closing": None, "sections": {}, "item_icons": item_icons, "_used_items": set()}
     if not assets():
-        return {"cover": None, "closing": None, "sections": {}}
+        return empty
+    ov = dict(overrides or {})
     extra = [w for c in categories or [] for w in CATEGORY_WORDS.get(c, [c])]
     extra += [w for w in re.findall(r"[가-힣]{2,}", title or "") if w in {"선물", "명절", "설", "추석", "식품", "기념품"}]
     used: set[str] = set()
-    cover = pick("cover", ("illustration", "photo", "background"), extra, used)
-    out = {"cover": cover, "sections": {}, "closing": None}
+    fixed: dict[str, dict | None] = {}
+    for slot, aid in ov.items():
+        if aid == "":
+            fixed[slot] = None
+        elif (a := by_id(str(aid))) is not None:
+            fixed[slot] = a
+            used.add(a["path"])
+
+    def get(slot: str, kinds: tuple[str, ...], ex: list[str] | None) -> dict | None:
+        if slot in fixed:
+            return fixed[slot]
+        return pick(slot, kinds, ex, used)
+
+    out = dict(empty)
+    out["cover"] = get("cover", SLOT_KINDS["cover"], extra)
+    out["sections"] = {}
     for sec in sections:
         sid = getattr(sec, "id", None) or (sec.get("id") if isinstance(sec, dict) else None)
         if not sid or sid.startswith("appendix") or sid in out["sections"]:
             continue
-        a = pick(sid, ("icon", "illustration"), extra if sid in ("products", "cover") else None, used)
+        a = get(sid, SECTION_KINDS, extra if sid in ("products", "cover") else None)
         if a:
             out["sections"][sid] = a
-    out["closing"] = pick("closing", ("illustration", "photo"), extra, used)
+    out["closing"] = get("closing", SLOT_KINDS["closing"], extra)
     return out
 
 
 def for_proposal(p) -> dict:
-    """제안서(Proposal) 한 부의 그림 계획 — 공고 품목·제목·장 목록으로."""
-    cats = [c.get("name") for c in ((getattr(p, "facts", None) or {}).get("categories") or []) if c.get("name")]
-    return plan(p.sections, cats, getattr(p, "title", ""))
+    """제안서(Proposal) 한 부의 그림 계획 — 공고 품목·제목·장 목록, 사람이 고른 그림(facts['art'])으로."""
+    facts = getattr(p, "facts", None) or {}
+    cats = [c.get("name") for c in (facts.get("categories") or []) if c.get("name")]
+    art = facts.get("art") or {}
+    return plan(p.sections, cats, getattr(p, "title", ""), art.get("overrides"), art.get("item_icons", True))
+
+
+@lru_cache(maxsize=1024)
+def blobs(path: str) -> int:
+    """그림 안의 떨어진 덩어리 수 (64px 로 줄여 셈). 아이콘 여러 개가 한 장에 붙은 '모음 그림'을 걸러 낸다."""
+    try:
+        from PIL import Image
+
+        with Image.open(path) as im:
+            im = im.convert("RGBA")
+            im.thumbnail((64, 64))
+            w, h = im.size
+            px = im.load()
+            on = [[px[x, y][3] > 40 and min(px[x, y][:3]) < 235 for x in range(w)] for y in range(h)]
+    except Exception:  # noqa: BLE001
+        return 1
+    seen, n = set(), 0
+    for y in range(h):
+        for x in range(w):
+            if on[y][x] and (x, y) not in seen:
+                size, stack = 0, [(x, y)]
+                seen.add((x, y))
+                while stack:
+                    cx, cy = stack.pop()
+                    size += 1
+                    for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                        if 0 <= nx < w and 0 <= ny < h and on[ny][nx] and (nx, ny) not in seen:
+                            seen.add((nx, ny))
+                            stack.append((nx, ny))
+                n += size >= 6
+    return n
+
+
+def single(a: dict) -> bool:
+    """작은 아이콘 자리에 쓸 만한가 — 덩어리가 4개 이하 (모음 그림 제외)."""
+    return blobs(a["path"]) <= 4
+
+
+_STOP = {"합니다", "있습니다", "제공", "운영", "관리", "통해", "대한", "위한", "가능", "기준", "이내", "포함"}
+
+
+def item_icons(art: dict | None, texts: list[str], sid: str = "") -> list[dict | None]:
+    """카드·단계 항목마다 어울리는 작은 아이콘 (항목 글 낱말 + 장 주제). 한 묶음 안에서는 겹치지 않게,
+    제안서 전체에서는 되도록 새 아이콘을 쓴다. 자산이 없거나 꺼 두면 None."""
+    if not art or art.get("item_icons") is False or not assets():
+        return [None] * len(texts)
+    used: set = art.setdefault("_used_items", set())
+    head = (art.get("sections") or {}).get(sid)
+    banned = {head["path"]} if head else set()
+    pool = [a for a in assets() if a.get("kind") in ITEM_KINDS and single(a)]
+    out: list[dict | None] = []
+    for t in texts:
+        want = [w for w in re.findall(r"[가-힣A-Za-z]{2,}", str(t)) if w not in _STOP][:24]
+        best, best_s = None, 0.0
+        for a in pool:
+            if a["path"] in banned:
+                continue
+            s = score(a, want, sid) + 0.4 * score(a, SECTION_WORDS.get(sid, [])) - (0.8 if a["path"] in used else 0)
+            if s > best_s:
+                best, best_s = a, s
+        if best and best_s >= 1.0:
+            banned.add(best["path"])
+            used.add(best["path"])
+            out.append(best)
+        else:
+            out.append(None)
+    return out
 
 
 def fit(path: str, w: float, h: float) -> tuple[float, float]:
