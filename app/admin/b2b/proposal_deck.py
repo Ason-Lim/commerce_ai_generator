@@ -112,7 +112,7 @@ def path_geom(e: Element) -> tuple[int, int, list[float]]:
             break
         t = max(math.ceil(len(r[1] if len(r) > 1 else "") / cb) * 16
                 + (math.ceil(len(r[2]) / cs) * 14 + 4 if len(r) > 2 and r[2] else 0) for r in chunk)
-        rh.append(float(min(260, max(150, 104 + t))))
+        rh.append(float(min(270, max(150, 114 + t))))     # 아래 줄 이름표와 닿지 않게 여유 10px
     return rows, per, rh
 
 
@@ -539,10 +539,10 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .rcard .rn{font-size:13px;font-weight:800;color:var(--p);letter-spacing:.08em}
 .ncard,.rcard{position:relative}.nico{position:absolute;right:14px;top:12px;width:52px;height:52px;object-fit:contain}
 .path{display:flex;flex-direction:column}
-.prow{position:relative;list-style:none;display:grid;grid-template-columns:repeat(var(--per),1fr);padding:0 46px;height:var(--rh,158px);margin:0}
+.prow{position:relative;list-style:none;display:grid;grid-template-columns:repeat(var(--per),1fr);padding:0 46px 18px;min-height:var(--rh,158px);margin:0;box-sizing:border-box}
 .prow.rev{direction:rtl}.prow.rev li{direction:ltr}
 .prail{position:absolute;top:58px;height:3px;background:var(--p);border-radius:2px}
-.arc{position:absolute;top:58px;width:46px;height:var(--rh,158px);border:3px solid var(--p);box-sizing:border-box}
+.arc{position:absolute;top:58px;width:46px;height:100%;border:3px solid var(--p);box-sizing:border-box}
 .arc.r{right:0;border-left:none;border-radius:0 80px 80px 0}.arc.l{left:0;border-right:none;border-radius:80px 0 0 80px}
 .prow li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:0 6px}
 .pc{font-size:12px;font-weight:800;color:var(--p);background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:2px 10px;height:22px;line-height:16px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}

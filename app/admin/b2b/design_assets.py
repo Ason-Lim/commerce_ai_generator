@@ -191,13 +191,13 @@ def for_proposal(p) -> dict:
 
 @lru_cache(maxsize=1024)
 def blobs(path: str) -> int:
-    """그림 안의 떨어진 덩어리 수 (64px 로 줄여 셈). 아이콘 여러 개가 한 장에 붙은 '모음 그림'을 걸러 낸다."""
+    """그림 안의 떨어진 덩어리 수 (96px 로 줄여 셈). 아이콘 여러 개가 한 장에 붙은 '모음 그림'을 걸러 낸다."""
     try:
         from PIL import Image
 
         with Image.open(path) as im:
             im = im.convert("RGBA")
-            im.thumbnail((64, 64))
+            im.thumbnail((96, 96))
             w, h = im.size
             px = im.load()
             on = [[px[x, y][3] > 40 and min(px[x, y][:3]) < 235 for x in range(w)] for y in range(h)]
@@ -216,7 +216,7 @@ def blobs(path: str) -> int:
                         if 0 <= nx < w and 0 <= ny < h and on[ny][nx] and (nx, ny) not in seen:
                             seen.add((nx, ny))
                             stack.append((nx, ny))
-                n += size >= 6
+                n += size >= 3
     return n
 
 
