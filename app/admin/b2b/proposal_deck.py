@@ -15,6 +15,7 @@ import re
 from dataclasses import dataclass, field
 
 from app.admin.b2b import design_assets
+from app.admin.b2b import proposal_figures as F
 from app.admin.b2b import proposal_templates as T
 from app.admin.b2b.proposal import TODO, Element, Proposal
 
@@ -50,6 +51,10 @@ def layout_of(e: Element, sid: str = "") -> str:
             return "steps" if n == 3 else ("path" if 5 <= n <= 10 and path_fits(e) else ("flow" if n <= 4 else "table"))
         if h == ["리스크", "대응"]:
             return "cards"
+        if h == F.MIRROR_HEAD:
+            return "mirror" if F.mirror_fits(e) else "table"
+        if h and h[0].startswith("평가 항목") and F.pyramid_fits(e):
+            return "pyramid"
         if h and h[0] == "구분" and "금액" in h:
             return "price"
         if len(h) == 2 and h[0] == "항목":
@@ -77,6 +82,12 @@ def _units(e: Element, sid: str) -> float:
         return sum(path_geom(e)[2]) / 52
     if lay == "icards":
         return 5.6
+    if lay == "pyramid":
+        rows, hs = F.pyramid_rows(e)
+        return (sum(hs) + 6 * len(hs)) / 52
+    if lay == "mirror":
+        rows, hs = F.mirror_rows(e)
+        return (64 + sum(hs) + 12 * len(hs)) / 52
     if lay == "cards":
         return 2.3 * math.ceil(len(e.rows) / 3)
     if lay == "price":
@@ -235,9 +246,66 @@ def _path(e: Element, sid: str, i: int) -> str:
     return f'<div class="path" style="--per:{per}">' + "".join(out) + "</div>"
 
 
+_CK = {"p": "var(--p)", "sf": "var(--sf)", "ln": "var(--ln)", "ink": "var(--ink)", "mu": "var(--mu)", "bg": "var(--bg)",
+       "onp": "var(--onp)", "todo": "#B47A00"}
+
+
+def _c(k: str | None) -> str:
+    if not k:
+        return "transparent"
+    if k in _CK:
+        return _CK[k]
+    if k.startswith("p") and k[1:].isdigit():
+        return f"color-mix(in srgb,var(--p) {k[1:]}%,#fff)"
+    return k
+
+
+def fig_html(shapes: list[dict], h: float, i: int = 0) -> str:
+    """proposal_figures 도형 목록 → 절대 위치 HTML (본문 폭 1136px 기준)."""
+    out = []
+    for k, o in enumerate(shapes):
+        t = o["t"]
+        if t == "box":
+            ln = f"border:1.5px solid {_c(o['line'])};" if o.get("line") else ""
+            out.append(f'<i class="fg" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{o["w"]:.1f}px;height:{o["h"]:.1f}px;'
+                       f'background:{_c(o["fill"])};{ln}border-radius:{o["r"]:.0f}px"></i>')
+        elif t == "oval":
+            ln = f"border:{o['lw']:.1f}px solid {_c(o['line'])};" if o.get("line") else ""
+            out.append(f'<i class="fg" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{o["d"]:.1f}px;height:{o["d"]:.1f}px;'
+                       f'background:{_c(o["fill"])};{ln}border-radius:50%"></i>')
+        elif t == "line":
+            x, y = min(o["x1"], o["x2"]), min(o["y1"], o["y2"])
+            w, hh = max(abs(o["x2"] - o["x1"]), o["w"]), max(abs(o["y2"] - o["y1"]), o["w"])
+            if o["y1"] == o["y2"]:
+                y -= o["w"] / 2
+            else:
+                x -= o["w"] / 2
+            out.append(f'<i class="fg" style="left:{x:.1f}px;top:{y:.1f}px;width:{w:.1f}px;height:{hh:.1f}px;background:{_c(o["color"])}"></i>')
+        elif t == "trap":
+            wb, wt = o["wb"], o["wt"]
+            a, b = (wb - wt) / 2, (wb + wt) / 2
+            out.append(f'<i class="fg" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{wb:.1f}px;height:{o["h"]:.1f}px;'
+                       f'background:{_c(o["fill"])};clip-path:polygon({a:.1f}px 0,{b:.1f}px 0,100% 100%,0 100%)"></i>')
+        elif t == "img":
+            out.append(f'<img class="fg" alt="" src="{design_assets.data_uri(o["a"]["path"], 240)}" style="left:{o["x"]:.1f}px;'
+                       f'top:{o["y"]:.1f}px;width:{o["w"]:.1f}px;height:{o["h"]:.1f}px;object-fit:contain">')
+        elif t == "text":
+            paras = "".join("<div>" + "".join(
+                f'<span style="font-size:{sz * 1.333:.1f}px;font-weight:{800 if b else 400};color:{_c(col)}">{_m(tx)}</span>'
+                for tx, sz, b, col in para) + "</div>" for para in o["paras"])
+            jc = {"top": "flex-start", "bottom": "flex-end"}.get(o["anchor"], "center")
+            out.append(f'<div class="fg ft" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{o["w"]:.1f}px;height:{o["h"]:.1f}px;'
+                       f'justify-content:{jc};text-align:{o["align"]}">{paras}</div>')
+    return f'<div class="fig rv" style="--d:{i};height:{h:.0f}px">' + "".join(out) + "</div>"
+
+
 def _el(e: Element, sid: str, i: int) -> str:
     lay = layout_of(e, sid)
     d = f' style="--d:{i}"'
+    if lay == "pyramid":
+        return fig_html(*F.pyramid(e, ART, sid), i)
+    if lay == "mirror":
+        return fig_html(*F.mirror(e, ART, sid), i)
     if lay == "path":
         return _path(e, sid, i)
     if lay in ("steps", "trio"):
@@ -363,6 +431,8 @@ def _cover(p: Proposal, tpl: T.Template, logo: str | None) -> str:
 
 
 def _numbers(p: Proposal) -> str:
+    if (ART or {}).get("cover") is not None or (ART or {}).get("sections"):     # 학습한 자산이 있으면 허브 수치판 (자료 tipt2290618c)
+        return fig_html(*F.hub(p.facts, ART, _won_short), 1)
     f = p.facts
     cards = []
 
@@ -537,6 +607,8 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .step b{font-size:1.05em}.step em{font-style:normal;color:var(--p);font-weight:700;font-size:.92em}.step p{font-size:.86em;color:var(--mu)}
 .rcards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .rcard .rn{font-size:13px;font-weight:800;color:var(--p);letter-spacing:.08em}
+.fig{position:relative;width:1136px;max-width:100%;flex:none}.fg{position:absolute;display:block;box-sizing:border-box}
+.ft{display:flex;flex-direction:column;line-height:1.35;word-break:keep-all;overflow-wrap:break-word}.ft mark{font-size:inherit}
 .ncard,.rcard{position:relative}.nico{position:absolute;right:14px;top:12px;width:52px;height:52px;object-fit:contain}
 .path{display:flex;flex-direction:column}
 .prow{position:relative;list-style:none;display:grid;grid-template-columns:repeat(var(--per),1fr);padding:0 46px 18px;min-height:var(--rh,158px);margin:0;box-sizing:border-box}

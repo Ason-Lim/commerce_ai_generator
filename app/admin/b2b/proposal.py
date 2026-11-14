@@ -319,11 +319,13 @@ def _apply_ai(S: list[Section], body: dict) -> list[Section]:
             if items("strategy"):
                 out.append(Section(id="strategy", title="0. 추진 전략", elements=[Element(kind="bullets", items=items("strategy"))]))
             ev = rows("evaluation")
-            if ev or items("differentiation"):
+            if ev or items("differentiation") or rows("compare"):
                 els = ([Element(kind="table", headers=["평가 항목(배점)", "평가위원이 확인할 것", "우리 제안의 대응·근거"], rows=ev)]
                        if ev else [])
                 if items("differentiation"):
                     els.append(Element(kind="bullets", items=items("differentiation")))
+                if rows("compare"):                   # 2026-11-14: 공고 최소 요건 ↔ 우리 제안 (좌우 비교 장)
+                    els.append(Element(kind="table", headers=["비교 항목", "공고 최소 요건", "우리 제안"], rows=rows("compare")))
                 out.append(Section(id="evaluation", title="0. 평가 항목별 대응·차별화", elements=els))
         if sec.id == "delivery":
             ops = items("operations") + items("quality")

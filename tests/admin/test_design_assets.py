@@ -160,3 +160,27 @@ def test_console_picture_commands(tmp_path, monkeypatch):
     assert w.item_icons is False
     c._art(w, "그림 원래대로 해줘", None)
     assert w.art_overrides == {}
+
+
+def test_pyramid_mirror_and_hub_figures(tmp_path, monkeypatch):
+    import zipfile
+
+    from app.admin.b2b import proposal_figures as F
+
+    _pack(tmp_path, monkeypatch, ICONS + ASSETS)
+    ev = Element(kind="table", headers=["평가 항목(배점)", "평가위원이 확인할 것", "우리 제안의 대응·근거"],
+                 rows=[["가격 (20점)", "단가", "구성 제시"], ["품질 (30점)", "품목", "근거표"], ["실적 (10점)", "실적", "[확인 필요: 실적]"]])
+    cmp_ = Element(kind="table", headers=F.MIRROR_HEAD, rows=[["배송", "3영업일", "지연 사전 보고"], ["정산", "지급수량 기준", "건별 연결"]])
+    assert proposal_deck.layout_of(ev, "evaluation") == "pyramid" and proposal_deck.layout_of(cmp_, "evaluation") == "mirror"
+    rows, _ = F.pyramid_rows(ev)
+    assert [r[0] for r in rows] == ["실적 (10점)", "가격 (20점)", "품질 (30점)"]          # 배점 큰 항목이 아래
+    long_ev = Element(kind="table", headers=ev.headers, rows=[["항목", "가" * 300, "나" * 300]] * 5)
+    assert proposal_deck.layout_of(long_ev, "evaluation") == "table"                    # 글이 길면 표
+    p = _prop([ev, cmp_], sid="evaluation")
+    p.facts = {"headcount": 500, "budget_per_person": 50000, "total": 25000000, "delivery_days": 3,
+               "categories": [{"name": "식품", "count": 2}]}
+    html = proposal_deck.render(p)
+    assert html.count('class="fig rv"') == 3 and "clip-path:polygon" in html and "VS" in html   # 허브·피라미드·비교
+    out = proposal_export.to_pptx(p, tmp_path / "f.pptx")
+    xml = zipfile.ZipFile(out).read("ppt/slides/slide3.xml").decode()
+    assert 'prst="trapezoid"' in xml and 'prst="triangle"' in xml

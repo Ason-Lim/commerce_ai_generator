@@ -243,6 +243,11 @@ class _Pptx:
                       [((a + "   ", 11, False, pal.on_primary if on_bold else pal.muted), (b, 11, True, ink))])
 
     def numbers(self, s):
+        if self.art.get("cover") is not None or self.art.get("sections"):    # 학습한 자산이 있으면 허브 수치판
+            from app.admin.b2b import proposal_figures as F
+
+            self.fig(s, *F.hub(self.p.facts, self.art, D._won_short), 72, 160)  # noqa: SLF001
+            return
         f, pal = self.p.facts, self.pal
         tot = f.get("total")
         tn, tu = D._won_short(tot) if tot else (None, "원")  # noqa: SLF001
@@ -352,6 +357,10 @@ class _Pptx:
             return 160
         if lay == "path":
             return sum(D.path_geom(e)[2])
+        if lay in ("pyramid", "mirror"):
+            from app.admin.b2b import proposal_figures as F
+
+            return (F.pyramid if lay == "pyramid" else F.mirror)(e, None, sid)[1]
         if lay in ("steps", "trio"):
             return 262
         if lay == "icards":
@@ -370,6 +379,58 @@ class _Pptx:
     def table_h(self, e: Element) -> float:
         ws = _col_w(e)
         return 34 + sum(max(_lines(c, max(8, int(w / 13.5))) for c, w in zip(r, ws)) * 19 + 14 for r in e.rows)
+
+    # ── 도형 장 (proposal_figures) ─────────────────────────
+    def col(self, k: str | None) -> str | None:
+        pal = self.pal
+        if not k:
+            return None
+        m = {"p": pal.primary, "sf": pal.surface, "ln": pal.line, "ink": pal.ink, "mu": pal.muted, "bg": pal.bg,
+             "onp": pal.on_primary, "todo": "#" + TODO_RGB}
+        if k in m:
+            return m[k]
+        if k.startswith("p") and k[1:].isdigit():
+            t = int(k[1:]) / 100
+            c = pal.primary.lstrip("#")
+            rgb = [int(c[i:i + 2], 16) for i in (0, 2, 4)]
+            return "#" + "".join(f"{round(v * t + 255 * (1 - t)):02X}" for v in rgb)
+        return k
+
+    def fig(self, s, shapes: list[dict], h: float, ox: float, oy: float) -> float:
+        from pptx.enum.shapes import MSO_SHAPE
+        for o in shapes:
+            t = o["t"]
+            if t == "box":
+                self.box(s, ox + o["x"], oy + o["y"], o["w"], o["h"], self.col(o["fill"]), self.col(o.get("line")),
+                         radius=min(0.5, o["r"] / max(1.0, min(o["w"], o["h"]))))
+            elif t == "oval":
+                sh = self.oval(s, ox + o["x"], oy + o["y"], o["d"], self.col(o["fill"]), self.col(o.get("line")))
+                if o.get("line"):
+                    sh.line.width = self.X(o["lw"])
+            elif t == "line":
+                x, y = min(o["x1"], o["x2"]), min(o["y1"], o["y2"])
+                if o["y1"] == o["y2"]:
+                    self.box(s, ox + x, oy + y - o["w"] / 2, abs(o["x2"] - o["x1"]), o["w"], self.col(o["color"]), rounded=False)
+                else:
+                    self.box(s, ox + x - o["w"] / 2, oy + y, o["w"], abs(o["y2"] - o["y1"]), self.col(o["color"]), rounded=False)
+            elif t == "trap":
+                wb, wt, hh = o["wb"], o["wt"], o["h"]
+                kind = MSO_SHAPE.ISOSCELES_TRIANGLE if wt < 1 else MSO_SHAPE.TRAPEZOID
+                sh = s.shapes.add_shape(kind, self.X(ox + o["x"]), self.Y(oy + o["y"]), self.X(wb), self.Y(hh))
+                if kind == MSO_SHAPE.TRAPEZOID:
+                    sh.adjustments[0] = ((wb - wt) / 2) / min(wb, hh)
+                sh.fill.solid()
+                sh.fill.fore_color.rgb = self.rgb(self.col(o["fill"]))
+                sh.line.fill.background()
+                sh.shadow.inherit = False
+            elif t == "img":
+                self.pic(s, o["a"], ox + o["x"], oy + o["y"], o["w"], o["h"])
+            elif t == "text":
+                paras = [tuple((tx, sz, b, self.col(c)) for tx, sz, b, c in para) for para in o["paras"]]
+                self.text(s, ox + o["x"], oy + o["y"], o["w"], o["h"], paras,
+                          align=o["align"] if o["align"] in ("center", "right") else None,
+                          anchor=o["anchor"] if o["anchor"] in ("middle", "bottom") else None)
+        return oy + h
 
     def icons(self, texts: list[str], sid: str) -> list:
         try:
@@ -481,6 +542,10 @@ class _Pptx:
         lay = D.layout_of(e, sid)
         if lay == "path":
             return self.path(s, e, sid, y)
+        if lay in ("pyramid", "mirror"):
+            from app.admin.b2b import proposal_figures as F
+
+            return self.fig(s, *(F.pyramid if lay == "pyramid" else F.mirror)(e, self.art, sid), 72, y)
         if lay == "steps":
             return self.steps(s, [(r[0], r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in e.rows], sid, y, True)
         if lay == "trio":

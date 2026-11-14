@@ -2,6 +2,7 @@
 
   uv run python scripts/learn_ppt_assets.py "<자료 폴더>" --pack clipartkorea
   uv run python scripts/learn_ppt_assets.py "<자료 폴더>" --pack clipartkorea --no-tag   # 자르기만 (Claude 태그 없이)
+  uv run python scripts/learn_ppt_assets.py "<자료 폴더>" --pack clipartkorea --extras   # 2차: WMF·EMF 그림 + 슬라이드 배경
 
 하는 일
 1. .ppt 는 LibreOffice 로 .pptx 로 바꾼다. 슬라이드마다 그림(사진·일러스트·아이콘)을 꺼내고, 슬라이드 전체 모습(레이아웃 참고)과
@@ -182,6 +183,99 @@ def save(img: Image.Image, folder: Path, prefix: str, alpha: bool) -> tuple[str,
     return name, h
 
 
+# ── 2차 학습 (2026-11-14): 벡터 그림(WMF·EMF) + 슬라이드 배경 ──────────────
+def vector_png(blob: bytes, ext: str, tmp: Path) -> Image.Image | None:
+    """WMF·EMF → PDF(LibreOffice) → 600dpi PNG → 그림 부분만 잘라 냄. 빈 그림이면 None."""
+    import numpy as np
+
+    f = tmp / f"v_{sha(blob)}.{ext or 'wmf'}"
+    f.write_bytes(blob)
+    subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(tmp), str(f)], capture_output=True, timeout=120)
+    pdf = f.with_suffix(".pdf")
+    if not pdf.exists():
+        return None
+    subprocess.run(["pdftoppm", "-r", "600", "-png", "-singlefile", str(pdf), str(f.with_suffix(""))], capture_output=True, timeout=120)
+    png = f.with_suffix(".png")
+    if not png.exists():
+        return None
+    im = Image.open(png).convert("RGB")
+    arr = np.asarray(im)
+    ys, xs = np.where(arr.min(axis=2) < 235)
+    if not len(xs):
+        return None
+    box = (max(0, xs.min() - 6), max(0, ys.min() - 6), min(im.width, xs.max() + 7), min(im.height, ys.max() + 7))
+    if (box[2] - box[0]) > im.width * 0.95 and (box[3] - box[1]) > im.height * 0.95:
+        return None                                   # 페이지 전체 = 빈 그림·배경 틀
+    out = im.crop(box)
+    return out if min(out.size) >= 80 else None
+
+
+def background_png(pptx: Path, tmp: Path) -> list[Image.Image]:
+    """슬라이드에서 글자·작은 그림·도형을 지우고 배경(바탕 채우기 + 슬라이드의 절반 넘게 덮는 그림)만 남겨 그린다."""
+    import numpy as np
+    from pptx import Presentation
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+
+    prs = Presentation(str(pptx))
+    area = prs.slide_width * prs.slide_height
+    for sl in prs.slides:
+        for sh in list(sl.shapes):
+            big = sh.shape_type == MSO_SHAPE_TYPE.PICTURE and (sh.width or 0) * (sh.height or 0) >= area * 0.5
+            if not big:
+                sh._element.getparent().remove(sh._element)  # noqa: SLF001
+    bare = tmp / f"bg_{pptx.stem}.pptx"
+    prs.save(str(bare))
+    out = []
+    for png in render(bare, tmp):
+        im = Image.open(png).convert("RGB")
+        arr = np.asarray(im.resize((160, 90))).astype(float)
+        if arr.std() < 4:                              # 그냥 한 가지 색(흰 바탕 등) — 템플릿 색으로 충분
+            continue
+        out.append(im)
+    return out
+
+
+def extras(folder: Path, out: Path, man: dict, seen: set) -> int:
+    import io as _io
+
+    from pptx import Presentation
+
+    tmp = Path(tempfile.mkdtemp())
+    done = set(man.setdefault("extras_done", []))
+    added = 0
+    for src in sorted(folder.iterdir()):
+        if src.suffix.lower() not in (".ppt", ".pptx") or src.name in done:
+            continue
+        px = to_pptx(src, tmp)
+        if px is None:
+            continue
+        for sl in Presentation(str(px)).slides:
+            for pic in pictures(sl.shapes):
+                blob = pic.image.blob
+                try:
+                    Image.open(_io.BytesIO(blob)).load()
+                    continue                           # 1차에서 이미 꺼낸 그림
+                except Exception:  # noqa: BLE001
+                    pass
+                im = vector_png(blob, pic.image.ext, tmp)
+                r = save(im, out, "vec_" + src.stem, True) if im else None
+                if r and r[1] not in seen:
+                    seen.add(r[1])
+                    man["assets"].append({"file": r[0], "hash": r[1], "source": src.name, "from": "vector"})
+                    added += 1
+        for im in background_png(px, tmp):
+            r = save(im, out, "bg_" + src.stem, False)
+            if r and r[1] not in seen:
+                seen.add(r[1])
+                man["assets"].append({"file": r[0], "hash": r[1], "source": src.name, "from": "background", "hint": "background"})
+                added += 1
+        man["extras_done"].append(src.name)
+        (out / "manifest.json").write_text(json.dumps(man, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(src.name, "→ 2차 자산", added, flush=True)
+    shutil.rmtree(tmp, ignore_errors=True)
+    return added
+
+
 # ── Claude 태그 ────────────────────────────────────────────
 def contact_sheet(files: list[Path]) -> bytes:
     cell = 220
@@ -228,6 +322,7 @@ def main() -> int:
     ap.add_argument("--tag-only", action="store_true", help="자르기는 건너뛰고 태그 없는 것만 태그")
     ap.add_argument("--model", default="claude-sonnet-5-5")
     ap.add_argument("--limit", type=int, default=0, help="태그 묶음 수 제한 (나눠 돌리기)")
+    ap.add_argument("--extras", action="store_true", help="2차: 1차에서 건너뛴 WMF·EMF 그림과 슬라이드 배경만 학습")
     a = ap.parse_args()
     from app.admin.b2b import design_assets
 
@@ -236,7 +331,9 @@ def main() -> int:
     mf = out / "manifest.json"
     man = json.loads(mf.read_text(encoding="utf-8")) if mf.exists() else {"pack": a.pack, "sources": [], "assets": [], "layouts": []}
     seen = {x["hash"] for x in man["assets"]}
-    if not a.tag_only:
+    if a.extras:
+        print("2차 학습:", extras(Path(a.folder), out, man, seen), "개 추가")
+    elif not a.tag_only:
         from pptx import Presentation
 
         tmp = Path(tempfile.mkdtemp())
@@ -320,6 +417,8 @@ def main() -> int:
                 if not it:
                     continue
                 x["kind"] = it.get("kind") or "skip"
+                if x.get("hint") == "background" and x["kind"] != "skip":
+                    x["kind"] = "background"           # 배경만 떼어 낸 것은 배경으로
                 x["tags"] = [str(t) for t in it.get("tags") or []][:8]
                 x["sections"] = [s for s in it.get("sections") or [] if s in SECTIONS]
                 x["keep"] = x["kind"] != "skip"
