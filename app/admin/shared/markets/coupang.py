@@ -39,7 +39,12 @@ class CoupangPartnersAdapter:
 
         if not coupang_rate.acquire():      # 대화 서비스와 같은 키·같은 1분 한도를 나눠 쓴다
             raise RuntimeError("쿠팡 검색 1분 호출 한도에 가까워 잠시 뒤 다시 시도해 주세요")
-        qs = urlencode({"keyword": query, "limit": max(1, min(int(limit), 10))})
+        from app.services.coupang_api import coupang_sub_id
+
+        params = {"keyword": query, "limit": max(1, min(int(limit), 10))}
+        if coupang_sub_id():                 # 2026-11-13: 채널 아이디 — 고객 경로와 같은 값
+            params["subId"] = coupang_sub_id()
+        qs = urlencode(params)
         r = requests.get(f"{DOMAIN}{SEARCH_PATH}?{qs}", timeout=10, headers={
             "Authorization": self._auth("GET", SEARCH_PATH, qs),
             "Content-Type": "application/json;charset=UTF-8"})
@@ -53,7 +58,7 @@ class CoupangPartnersAdapter:
                 mall="coupang", mall_label="쿠팡", mall_product_id=str(it.get("productId")),
                 title=title, category=it.get("categoryName"),
                 price=int(it.get("productPrice") or 0),
-                shipping_fee=0 if free is True else None,       # 무료배송 표시가 있을 때만 0
+                shipping_fee=None,      # 2026-11-13: 무료배송 '표시'는 조건부일 수 있어 0원으로 확정하지 않음 (raw 에 isFreeShipping 보존)
                 url=it.get("productUrl"), image_url=it.get("productImage"),
                 unit_count=unit, weight_g=weight, raw=it))
         return out

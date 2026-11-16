@@ -19,7 +19,7 @@ import logging
 import os
 import threading
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import RedirectResponse, Response
 from pydantic import BaseModel, Field
 
@@ -39,6 +39,8 @@ class ChatIn(BaseModel):
     chip: str | None = Field(None, max_length=200)
     # 2026-11-01: 관심 상품 보관함 id (브라우저별, '새 대화'를 눌러도 유지)
     owner: str | None = Field(None, max_length=64)
+    # 2026-11-12: 첫 화면(지난 메시지가 안 보임)에서 보낸 질문 — 이전 레시피·되묻기 맥락을 닫는다
+    fresh: bool = False
 
 
 class ClickIn(BaseModel):
@@ -91,12 +93,33 @@ def build_default_service() -> ChatService:
     if ready:
         from app.services.nlu.llm_client import LLMClient
 
-        reader = LLMClient(consult.PROMPT, provider="deepseek", timeout=60.0)
+        reader = LLMClient(consult.PROMPT, provider="deepseek", timeout=60.0, cache="recipe_consult", cache_days=30)
         # 2026-11-06: '굴국밥 1인분에 굴 몇 g' — used only when no public recipe gives the amount (labelled AI 추정)
         from app.services.recipe_chat import dish_shopping
 
-        amounts = LLMClient(dish_shopping.AMOUNT_PROMPT, provider="deepseek", timeout=40.0)
+        amounts = LLMClient(dish_shopping.AMOUNT_PROMPT, provider="deepseek", timeout=40.0,
+                            cache="dish_amounts", cache_days=90)
         recipe.amount_estimator = lambda text: amounts.chat_json(text, temperature=0)
+        # 2026-11-12: '생새우로 4인분 저녁 메뉴' — 한 끼 요리 조합 (검증 못 넘으면 규칙 표 · AI 메뉴 제안으로 표시)
+        from app.services.recipe_chat import menu_plan
+
+        menus = LLMClient(menu_plan.MENU_PROMPT, provider="deepseek", timeout=40.0, cache="menu_plan", cache_days=90)
+        recipe.menu_picker = lambda text: menus.chat_json(text, temperature=0.2)
+        # 2026-11-12: 문장 뜻 읽기 — 요리 이름·레시피/상품 원함·상품 검색어 (DeepSeek, 같은 문장은 저장된 답)
+        from app.services.recipe_chat import intent as recipe_intent
+
+        intents = LLMClient(recipe_intent.INTENT_PROMPT, provider="deepseek", timeout=15.0, cache="chat_intent",
+                            cache_days=30, task="chat_intent", thinking=False)   # 빠르게 — 생각 모드 끔
+        recipe.intent_reader = lambda text: intents.chat_json(text, temperature=0)
+        shop_words = LLMClient(recipe_intent.SHOP_TERMS_PROMPT, provider="deepseek", timeout=15.0, cache="shop_terms",
+                               cache_days=60, task="shop_terms", thinking=False)
+        recipe.shop_terms = lambda text: shop_words.chat_json(text, temperature=0)
+        # 교차 확인: DeepSeek 가 짠 조합을 Claude 가 검토 (ANTHROPIC_API_KEY · AI_CROSS_CHECK, 없으면 '교차 확인 안 됨')
+        from app.services.ai import cross_check as menu_check
+
+        if menu_check.enabled():
+            recipe.menu_reviewer = lambda context, items: menu_check.review(
+                "menu_plan", context, items, instruction=menu_plan.REVIEW_INSTRUCTION)
         recipe.consultant = consult.Consultant(lambda text: reader.chat_json(text, temperature=0.2),
                                                recipe.resolver.catalog, search=getattr(recipe.discovery, "provider", None),
                                                kind_of=requested_kind)
@@ -105,17 +128,21 @@ def build_default_service() -> ChatService:
         from app.services.chat.service import SHOP_KEYWORD_PROMPT
         from app.services.nlu.llm_client import LLMClient
 
-        client = LLMClient(SHOP_KEYWORD_PROMPT, provider="deepseek")
+        client = LLMClient(SHOP_KEYWORD_PROMPT, provider="deepseek", cache="shop_keyword", cache_days=90)
         keyword_extractor = lambda text: client.chat_json(text, temperature=0)  # noqa: E731
     food_tips = None
     if ready:      # 2026-11-04: 보관·손질·먹는 법 질문 — 일반 정보 짧게 (AI 정리로 표시, 서비스에서 검증)
         from app.services.chat import food_tips as food_tips_mod
         from app.services.nlu.llm_client import LLMClient
 
-        tips_client = LLMClient(food_tips_mod.PROMPT, provider="deepseek")
+        tips_client = LLMClient(food_tips_mod.PROMPT, provider="deepseek", task="food_knowledge")   # 저장은 food_knowledge 가
         food_tips = lambda text: tips_client.chat_json(text, temperature=0.2)  # noqa: E731
+    # 2026-11-11: 고급 작업 교차 확인 — 식품 지식(저장해 다시 쓰는 답)은 Claude 가 한 번 더 검토 (ANTHROPIC_API_KEY · AI_CROSS_CHECK)
+    from app.services.ai import cross_check
+
+    food_review = cross_check.reviewer("food_knowledge") if food_tips is not None else None
     return ChatService(db, nlu_loader=load_food_nlu, recipe_chat=recipe, keyword_extractor=keyword_extractor,
-                       food_tips=food_tips)
+                       food_tips=food_tips, food_review=food_review)
 
 
 def get_chat_service() -> ChatService:
@@ -161,7 +188,7 @@ def public(response: dict) -> dict:
 @router.post("/api/chat")
 def chat(body: ChatIn, service: ChatService = Depends(get_chat_service)):
     return public(service.handle(body.session_id, message=body.message, answers=body.answers, chip=body.chip,
-                                 owner=body.owner))
+                                 owner=body.owner, fresh=body.fresh))
 
 
 @router.get("/api/chat/saved")
@@ -209,8 +236,19 @@ def recipe_image(recipe_id: str = Query(..., max_length=64), v: str = Query(...,
     return Response(content=data, media_type=mime, headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
+def _click_query(request: Request | None) -> str:
+    """클릭 기록의 query 값. 관리자로 로그인한 브라우저(운영자 본인 시험)는 'chat_internal' 로 따로 남긴다
+    (2026-11-10 R0 — 행동 신호 재도입 조건 2: 우리 테스트 세션을 걸러 낸다)."""
+    try:
+        from app.admin.auth import request_ok
+
+        return "chat_internal" if request is not None and request_ok(request) else "chat"
+    except Exception:  # noqa: BLE001
+        return "chat"
+
+
 @router.post("/api/click", status_code=204)
-def click(body: ClickIn, service: ChatService = Depends(get_chat_service)):
+def click(body: ClickIn, request: Request, service: ChatService = Depends(get_chat_service)):
     """바로 이동 링크(네이버 쇼핑커넥트)의 클릭 기록 (2026-11-02).
 
     링크는 브라우저가 발급 주소 그대로 연다 — 이 호출은 이동과 무관한 기록용(sendBeacon)이다.
@@ -220,7 +258,7 @@ def click(body: ClickIn, service: ChatService = Depends(get_chat_service)):
         try:
             from app.services.analytics_logger import log_product_click
 
-            log_product_click(session_id=body.session_id, query="chat", product={
+            log_product_click(session_id=body.session_id, query=_click_query(request), product={
                 "product_url": item["url"], "product_name": item.get("title"), "mall_name": item.get("mall"),
                 "rank": body.rank, "selected_section": "chat_direct", "recommendation_mode": "ranking"})
         except Exception:  # noqa: BLE001 — 기록 실패가 화면에 영향을 주지 않는다
@@ -229,21 +267,22 @@ def click(body: ClickIn, service: ChatService = Depends(get_chat_service)):
 
 
 @router.get("/go/{sid}/k/{key}")
-def go_key(sid: str, key: str, service: ChatService = Depends(get_chat_service)):
-    return _redirect(sid, service.resolve_go_key(sid, key), shown=service.seen_card(sid, key))
+def go_key(sid: str, key: str, request: Request, service: ChatService = Depends(get_chat_service)):
+    return _redirect(sid, service.resolve_go_key(sid, key), shown=service.seen_card(sid, key), request=request)
 
 
 @router.get("/go/s/{owner}/{key}")
-def go_saved(owner: str, key: str, service: ChatService = Depends(get_chat_service)):
-    return _redirect(owner, service.resolve_saved_go(owner, key), section="saved")
+def go_saved(owner: str, key: str, request: Request, service: ChatService = Depends(get_chat_service)):
+    return _redirect(owner, service.resolve_saved_go(owner, key), section="saved", request=request)
 
 
 @router.get("/go/{sid}/{rank}")
-def go(sid: str, rank: int, service: ChatService = Depends(get_chat_service)):
-    return _redirect(sid, service.resolve_go(sid, rank), shown=service.shown_item(sid, rank))
+def go(sid: str, rank: int, request: Request, service: ChatService = Depends(get_chat_service)):
+    return _redirect(sid, service.resolve_go(sid, rank), shown=service.shown_item(sid, rank), request=request)
 
 
-def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | None = None):
+def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | None = None,
+              request: Request | None = None):
     if url is None:
         return RedirectResponse("/")
     try:
@@ -253,7 +292,7 @@ def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | No
         # 클릭 기록까지 되돌려졌다 — 채팅 /go 클릭이 하나도 남지 않은 원인. 보여 준 상품의 이름·판매처를 넘기고,
         # 모르면 URL 을 이름 자리에 둔다.
         shown = shown if shown and shown.get("url") == url else {}
-        log_product_click(session_id=sid, query="chat", product={
+        log_product_click(session_id=sid, query=_click_query(request), product={
             "product_url": url, "product_name": shown.get("title") or url, "mall_name": shown.get("mall"),
             "rank": shown.get("rank"), "selected_section": section, "recommendation_mode": "ranking"})
     except Exception:  # noqa: BLE001 — logging must not block the redirect

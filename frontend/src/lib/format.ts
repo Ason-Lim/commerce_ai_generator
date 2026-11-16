@@ -6,6 +6,11 @@ export const weightLabel = (g: number | null | undefined): string | null => {
   return g >= 1000 ? `${+(g / 1000).toFixed(2)}kg` : `${g}g`;
 };
 
+export const volumeLabel = (ml: number | null | undefined): string | null => {
+  if (!ml) return null;
+  return ml >= 1000 ? `${+(ml / 1000).toFixed(2)}L` : `${ml}ml`;
+};
+
 export const per100g = (total: number | null, g: number | null | undefined): number | null =>
   total != null && g ? Math.round((total / g) * 100) : null;
 

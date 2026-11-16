@@ -194,7 +194,9 @@ def test_cooking_question_uses_recipe_context_and_never_searches(make_service, s
     assert shopping.calls == []
 
 
-def test_shortage_products_only_on_explicit_request(make_service, sqlite_db, shopping):
+def test_shortage_products_come_with_the_judgement(make_service, sqlite_db, shopping):
+    """2026-11-16 (사용자·점수 창): '부족해요'를 누른 것 자체가 '이게 필요해요' — 장보기 칸에 바로 담는다.
+    (이전: '부족한 재료 상품 보여줘'라고 다시 말해야 상품이 나왔다.) 남은 양을 알려 주셨으면 모자란 만큼만 기준."""
     service = make_service()
     sid = start_recipe(service)
     service.handle(sid, message="생크림 200mL 있어요")
@@ -204,8 +206,11 @@ def test_shortage_products_only_on_explicit_request(make_service, sqlite_db, sho
     assert shopping.calls == []
 
     res = service.handle(sid, message="생크림 부족해요")
-    assert res["stage"] == "recipe_judgement"
-    assert shopping.calls == []  # a judgement is not a purchase request
+    assert res["stage"] == "recipe_shortage_shop" and res["panel"]["ingredient"] == "생크림"
+    assert res["panel"]["mode"] == "short"
+    assert [c[0] for c in shopping.calls] == ["생크림"]
+    assert "남은 200mL 뺀 양" in json.dumps(res, ensure_ascii=False) or "product_list" not in types(res)
+    shopping.calls.clear()
     state, revision = stored(sqlite_db, sid, CREAM)
     assert state["status"] == "CUSTOMER_REPORTED_SHORT" and state["purchase_candidate"] is True
     assert state["shopping_consent"] is None
@@ -348,3 +353,18 @@ def test_recipe_without_source_is_not_invented(make_service, shopping, message):
     res = make_service().handle(None, message=message)
     assert res["stage"] == "recipe_unavailable"
     assert shopping.calls == []
+
+
+def test_the_shopping_panel_shows_three_and_a_folded_rest_and_cancel_removes_it(make_service, shopping):
+    """2026-11-16 장보기 칸: 재료마다 3개 + 접힌 '더 보기'. 다시 누르면('충분해요') 칸에 담을 답이 아니다(화면이 뺀다)."""
+    from app.services.chat.service import _shortlist
+
+    items = [{"title": f"생크림 {n}00mL"} for n in range(1, 7)]
+    out = _shortlist([{"type": "product_list", "data": {"items": items}}], 3)
+    assert len(out[0]["data"]["items"]) == 3 and out[1]["data"]["collapsed"] and len(out[1]["data"]["items"]) == 3
+    assert out[1]["data"]["title"] == "더 보기 3개"
+    service = make_service()
+    sid = start_recipe(service)
+    assert service.handle(sid, message="생크림 부족해요")["panel"]["ingredient"] == "생크림"
+    res = service.handle(sid, message="생크림 충분해요")
+    assert res["stage"] == "recipe_judgement" and "panel" not in res

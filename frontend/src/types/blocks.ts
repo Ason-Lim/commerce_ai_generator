@@ -7,6 +7,9 @@
  *   → 백엔드가 아직 내려주지 않으면 api/adapt.ts 가 기존 블록에서 만들어 준다.
  */
 
+/** 2026-11-13 배송비 상태 */
+export type ShippingStatus = "confirmed" | "free_label" | "fee_label" | "unknown";
+
 export type ChipMode = "chip" | "message";
 
 export interface ChipItem {
@@ -71,6 +74,8 @@ export interface ApiCard {
   price: number;
   shipping_fee?: number | null;
   total?: number | null;
+  /** 2026-11-13 배송비 상태 — confirmed(주문 단계 계산)·free_label(무료 표시)·fee_label(적힌 금액)·unknown */
+  shipping_status?: ShippingStatus | null;
   original_price?: number | null;
   unit_price?: number | null;
   unit_count?: number | null;
@@ -91,6 +96,9 @@ export interface ApiCard {
   missing_terms?: string[];
   /* 제안 필드 (백엔드 추가 요청) */
   weight_g?: number | null;
+  /** 2026-11-12: 액체 용량(ml)·100ml당 — 중량이 없을 때만 (g 와 섞지 않음) */
+  volume_ml?: number | null;
+  per100ml?: number | null;
   delivery_terms?: string | null;
   is_sponsored?: boolean;
   /** 수수료가 발생하는 제휴 링크 (쿠팡 파트너스 등) */
@@ -111,13 +119,17 @@ export interface ApiCard {
   /** 서버가 정한 판매처 이동 경로 (/go/{sid}/k/{key} · 관심 상품은 /go/s/{owner}/{key}) */
   go?: string | null;
   /** 역할: value 가성비 · lowest 최저가 · fast 빠른 배송 · ample 넉넉한 양 · gift 선물용 · alt 다른 선택 */
-  role?: "value" | "lowest" | "fast" | "ample" | "gift" | "alt" | null;
+  role?: "value" | "lowest" | "fast" | "ample" | "gift" | "sweet" | "house" | "alt" | null;
   role_label?: string | null;
   /** 왜 골랐는지 — basis: calc 후보끼리 계산 · mall 판매처 표시 · you 고객이 말한 조건 */
   why?: WhyLine[];
   /** 판매자가 상품명에 적은 문구 (고당도·등급·국내산 …) — 확인되지 않음, 사유·순서에 쓰지 않음 */
   seller_claims?: string[];
   per100g?: number | null;
+  /** 2026-11-11: 중량 옵션·증정분 안내 — 상세페이지를 열기 전에 알 수 있게 */
+  weight_note?: WeightNote | null;
+  /** 2026-11-11: 상품명에 품종이 2개 이상 — "여러 품종 구성 · 금실 · 킹스베리" */
+  variety_mix?: VarietyMix | null;
   per_unit?: number | null;
   rocket?: boolean | null;
   free_shipping?: boolean | null;
@@ -276,7 +288,9 @@ export interface RecipeCardBlock {
     source_gap?: string | null;
     /** AI 제안 레시피: 무엇을 언제 어떤 모델로 만들었는지 (원문 아님) */
     generated?: { at?: string | null; model?: string | null; servings?: string | null; ingredients: number; steps: number;
-      what?: string | null } | null;
+      what?: string | null;
+      /** 2026-11-12: 작성 모델과 다른 회사 모델(GPT)의 교차 검토 — notes 는 고쳐 쓴 뒤에도 남은 의견 */
+      review?: { by?: string | null; status: 'ok' | 'notes' | 'failed'; notes: string[] } | null } | null;
     /** AI가 보충한 단계 — 원문 아님, 검증 통과분만 */
     supplement?: RecipeSupplement | null;
     supplement_status?: RecipeEasyStatus;
@@ -319,9 +333,14 @@ export interface ProductCompareRow {
   total: number | null;
   shipping_included: boolean;
   free_shipping?: boolean | null;
+  shipping_status?: ShippingStatus | null;   // 2026-11-13
+  shipping_fee?: number | null;
   /** 제목에 적힌 포장 용량 ('1kg', '1kg×2 (총 2kg)') — 없으면 null */
   pack: string | null;
   per100g: number | null;
+  /** 2026-11-11: 포장 용량 대신 — 중량 옵션이 있어요 · 증정분이 있어요 */
+  weight_note?: WeightNote | null;
+  variety_mix?: VarietyMix | null;
   fit?: "fits" | "partial" | "unknown" | "bulk" | null;
   fit_text?: string | null;
   /** 손질 상태 표기 (굴: 깐굴 표기 · 껍질째 표기 · 손질 상태 미표기) */
@@ -371,6 +390,8 @@ export interface ChatResponse {
   stage?: string;
   slots?: Record<string, unknown>;
   blocks: Block[];
+  /** 2026-11-16: 이 답은 '부족한 재료 장보기' 칸에 담는다 (새 메시지로 붙이지 않음) */
+  panel?: { ingredient: string; word?: string; mode: "short" | "absent" } | null;
 }
 
 export interface ChatRequest {
@@ -380,6 +401,21 @@ export interface ChatRequest {
   message?: string;
   answers?: Record<string, string>;
   chip?: string;
+  /** 2026-11-12: 화면에 지난 메시지가 없을 때(첫 화면) — 서버가 이전 레시피·되묻기 맥락을 닫는다 (보유량 기록은 유지) */
+  fresh?: boolean;
+}
+
+/** 2026-11-11: 상품명에 중량이 여러 개(옵션 목록)이거나 증정분이 적힌 경우 — 100g당 가격은 계산하지 않는다 */
+export interface WeightNote {
+  kind: "options" | "bonus";
+  label: string;     // "중량 옵션이 있어요" · "증정분이 있어요"
+  detail: string;    // "2kg · 5kg · 10kg" · "3kg + 1kg 증정" · "1+1 구성"
+}
+
+/** 2026-11-11: 여러 품종을 섞어 파는 상품 */
+export interface VarietyMix {
+  label: string;     // "여러 품종 구성"
+  detail: string;    // "금실 · 킹스베리"
 }
 
 /* ───────── 화면용 뷰 모델 ───────── */
@@ -394,8 +430,13 @@ export interface Candidate {
   price: number;
   shippingFee: number | null;   // null = 미확인 (0원과 다름)
   total: number | null;         // null = 배송비 미확인으로 확정 불가
+  shippingStatus?: ShippingStatus | null;  // 2026-11-13: 무료 '표시'는 0원 확정이 아님
+  rocket?: boolean | null;                 // 로켓배송 표시 (판매처 검색 결과)
   weightLabel?: string | null;  // "1.2kg"
   per100g?: number | null;      // 100g당 가격
+  per100ml?: number | null;     // 100ml당 가격 (액체, 2026-11-12)
+  weightNote?: WeightNote | null; // 중량 옵션·증정분 안내 (2026-11-11)
+  varietyMix?: VarietyMix | null; // 여러 품종 구성 (2026-11-11)
   unitLabel?: string | null;    // "개당 약 4,635원"
   delivery?: { label: string; verified: boolean } | null;
   reasons: string[];            // 선택 이유

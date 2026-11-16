@@ -2,7 +2,7 @@
 
 옵션 목록('1kg … 2개, 500g')·소수/여러 번 곱하기·서로 다른 개수 표기는 가격이 어느 구성의 것인지 모른다
 → 중량뿐 아니라 개당 가격도 비우고, 개당 가격 기반 '가성비' 선택·설명에서도 뺀다.  상품은 계속 보인다.
-'100g 10팩'·'200g, 3개'는 개수가 하나로 적혀 있어 개당 가격을 계산한다 (중량만 보류, p33).
+'100g 10팩'·'200g, 3개'는 개수가 하나로 적혀 있어 개당 가격을 계산한다 (중량은 2026-11-12부터 곱해서 계산).
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def test_enrich_leaves_per_unit_empty_when_the_count_scope_is_unclear():
     card = explain.enrich(_card(OPTION_MIX, 28400), {})
     assert card["unit_count"] == 2 and card["per_unit"] is None and card["weight_g"] is None
     kept = explain.enrich(_card("[꿈에그린한우] 한우 1++등급 등심 구이용 (냉장), 200g, 3개", 73170), {})
-    assert kept["per_unit"] == 24390 and kept["weight_g"] is None
+    assert kept["per_unit"] == 24390 and kept["weight_g"] == 600     # 2026-11-12: '200g, 3개' → 600g (사용자 결정)
 
 
 def it(n, title, price):

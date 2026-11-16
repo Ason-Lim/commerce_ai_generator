@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>레시피 평가</title>
+<style>
+  :root { --ink:#1f2421; --ink2:#4a524d; --ink3:#7b847f; --line:#e3e6e2; --paper:#f7f7f4; --accent:#1f6b45; --accentSoft:#e7f2ec; --warn:#a85b00; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.6 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:20px 16px 120px; }
+  h1 { font-size:22px; margin:8px 0 4px; } h2 { font-size:19px; margin:28px 0 8px; } h3 { font-size:16px; margin:0 0 6px; }
+  .lead { color:var(--ink2); } .small { font-size:13px; color:var(--ink3); }
+  .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; margin:12px 0; }
+  .recipe ol { padding-left:20px; margin:6px 0; } .recipe li { margin:2px 0; }
+  .q { margin:12px 0 0; } .q > span { display:block; font-size:14px; font-weight:600; margin-bottom:6px; }
+  .scale { display:flex; gap:6px; flex-wrap:wrap; }
+  .scale button, .yn button { min-width:44px; min-height:44px; border:1px solid var(--line); background:#fff; border-radius:12px; font-size:15px; color:var(--ink); }
+  .yn { display:flex; gap:8px; } .yn button { padding:0 16px; }
+  button.on { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700; }
+  input[type=text], textarea { width:100%; font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+  .best { background:var(--accentSoft); border-radius:12px; padding:12px; margin-top:12px; }
+  .primary { display:block; width:100%; min-height:52px; margin:20px 0 0; border:0; border-radius:14px; background:var(--accent); color:#fff; font-size:17px; font-weight:700; }
+  .secondary { min-height:44px; padding:0 16px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:15px; }
+  img { width:100%; border-radius:12px; display:block; }
+  .tag { font-size:12px; color:var(--ink3); margin:6px 0 10px; }
+  .hidden { display:none; } .locked { opacity:.55; pointer-events:none; }
+  .missing { color:var(--warn); font-size:14px; }
+  .progress { position:sticky; top:0; background:var(--paper); padding:8px 0; font-size:13px; color:var(--ink3); z-index:2; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior:smooth; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>레시피 평가</h1>
+  <p class="lead">같은 요리의 레시피 몇 가지를 읽고 점수를 매겨 주세요. 누가 쓴 레시피인지는 가려 두었어요. 정답은 없고, 평소 요리할 때의 생각 그대로면 돼요. <span id="minutes"></span></p>
+  <p class="lead" id="photoNote">음식 사진은 <b>1부를 마친 뒤 2부</b>에서 보여 드려요. 사진을 보기 전의 생각을 먼저 듣기 위해서예요.</p>
+  <div class="card">
+    <label class="q"><span>이름 또는 별명 (결과를 나눠 보는 데만 써요)</span><input id="who" type="text" maxlength="20" placeholder="예: 큰누나"></label>
+    <p class="small">입력한 답은 이 기기에만 잠시 저장돼요. 마지막에 '답안 저장'을 눌러 받은 파일을 보내 주시면 끝이에요.</p>
+  </div>
+  <div class="progress" id="progress"></div>
+  <section id="part1"></section>
+  <button class="primary" id="to2">1부 마치기</button>
+  <section id="part2" class="hidden"></section>
+  <button class="primary hidden" id="finish">평가 마치기</button>
+  <section id="done" class="hidden card">
+    <h2>고맙습니다!</h2>
+    <p>아래 버튼으로 답안 파일을 저장한 뒤, 평가를 부탁한 사람에게 카카오톡이나 메일로 보내 주세요.</p>
+    <button class="primary" id="save">답안 저장</button>
+    <p class="small">저장이 안 되면(카카오톡 안에서 열었을 때 등) 아래 '답안 복사'를 눌러 메시지에 붙여 넣어 주세요.</p>
+    <button class="secondary" id="copy">답안 복사</button>
+    <textarea id="out" rows="4" readonly class="q"></textarea>
+  </section>
+</main>
+<script>
+const DATA = /*DATA*/null;
+const CRIT = [["safety","정확·안전 — 덜 익히는 등 위험한 방법이 없나"],["amount","분량 — 적힌 인분에 맞나"],
+              ["clarity","따라 하기 — 불 세기·익힘 확인·순서가 분명한가"],["availability","재료 — 동네 마트에서 구하기 쉬운가"]];
+const KEY = "recipe-eval-" + (DATA && DATA.name) + (DATA && DATA.set ? "-" + DATA.set : "");   // A·B 묶음을 한 기기에서 해도 섞이지 않게
+let A = { who:"", rs1:{}, best:{}, rs6:{}, part:1 };
+try { const saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) A = Object.assign(A, saved); } catch (e) {}
+// 2026-11-12: 만든 사람이 사진까지 확인하려면 주소 끝에 ?preview — 1부를 잠그지 않고, 답을 저장하지도 않는다
+const PREVIEW = new URLSearchParams(location.search).has("preview");
+const save = () => { if (!PREVIEW) { try { localStorage.setItem(KEY, JSON.stringify(A)); } catch (e) {} } updateProgress(); };
+const el = (tag, attrs, ...kids) => { const n = document.createElement(tag); Object.entries(attrs || {}).forEach(([k, v]) => k === "class" ? n.className = v : n.setAttribute(k, v)); kids.flat().forEach(k => n.append(k)); return n; };
+
+function choices(values, get, set, cls) {
+  const box = el("div", { class: cls, role: "group" });
+  values.forEach(([v, label]) => {
+    const b = el("button", { type: "button", "aria-pressed": String(get() === v) }, label);
+    if (get() === v) b.classList.add("on");
+    b.onclick = () => { set(v); box.querySelectorAll("button").forEach(x => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-pressed", String(on)); }); save(); };
+    box.append(b);
+  });
+  return box;
+}
+const scale = (get, set) => choices([1,2,3,4,5].map(n => [n, String(n)]), get, set, "scale");
+const yesno = (get, set) => choices([["예","예"],["아니오","아니오"]], get, set, "yn");
+const question = (title, control) => el("div", { class: "q" }, el("span", {}, title), control);
+
+function recipeText(r) {
+  const box = el("div", { class: "recipe" });
+  box.append(el("p", {}, el("b", {}, "재료 "), (r.ingredients || []).join(" · ")));
+  box.append(el("ol", {}, (r.steps || []).map(s => el("li", {}, s))));
+  if ((r.tips || []).length) box.append(el("p", { class: "small" }, "팁: " + r.tips.join(" / ")));
+  return box;
+}
+
+function buildPart1() {
+  const root = document.getElementById("part1");
+  root.append(el("h2", {}, "1부 · 레시피 비교"));
+  DATA.dishes.forEach(d => {
+    root.append(el("h2", {}, d.dish));
+    d.recipes.forEach(r => {
+      const id = d.dish + "|" + r.label;
+      A.rs1[id] = A.rs1[id] || {};
+      const ans = A.rs1[id];
+      const card = el("div", { class: "card" }, el("h3", {}, `레시피 ${r.label} (${r.servings})`), recipeText(r));
+      CRIT.forEach(([k, t]) => card.append(question(t + " (1 나쁨 ~ 5 좋음)", scale(() => ans[k], v => ans[k] = v))));
+      card.append(question("이대로 만들어 보겠어요?", yesno(() => ans.would_cook, v => ans.would_cook = v)));
+      root.append(card);
+    });
+    const best = el("div", { class: "best" });
+    best.append(question(`${d.dish} — 가장 나은 레시피 하나`,
+      choices(d.recipes.map(r => [r.label, r.label]), () => A.best[d.dish], v => A.best[d.dish] = v, "yn")));
+    root.append(best);
+  });
+}
+
+function buildPart2() {
+  const root = document.getElementById("part2");
+  root.append(el("h2", {}, "2부 · 사진과 함께 다시 보기"),
+    el("p", { class: "lead" }, "1부의 레시피 가운데 하나를 이번에는 AI가 그린 예시 사진과 함께 보여 드려요."));
+  DATA.dishes.forEach(d => {
+    const img = DATA.images[d.dish];
+    if (!img) return;
+    const r = d.recipes.find(x => x.label === img.label);
+    A.rs6[d.dish] = A.rs6[d.dish] || {};
+    const ans = A.rs6[d.dish];
+    const card = el("div", { class: "card" }, el("h3", {}, `${d.dish} — 레시피 ${img.label}`),
+      el("img", { src: img.src, alt: `${d.dish} 예시 사진`, loading: "lazy" }),
+      el("p", { class: "tag" }, "AI가 그린 예시 사진 · 실제 결과와 다를 수 있어요"), recipeText(r));
+    card.append(question("사진이 이 레시피의 재료·모양·색을 맞게 보여 주나요? (1~5)", scale(() => ans.image_match, v => ans.image_match = v)));
+    // 2026-11-13: '예/아니오'가 헷갈렸다(평가자 1명이 6개 모두 '예'인데 일치 4~5점) — 답을 말로 고르게
+    card.append(question("사진 속 음식이 이 레시피로 만든 결과와 다르게 보이나요? (예: 새우가 너무 큼, 국물 색이 다름)",
+      choices([["아니오", "비슷해 보여요"], ["예", "달라 보여요"]], () => ans.misleading, v => ans.misleading = v, "yn")));
+    const why = el("input", { type: "text", maxlength: "60", placeholder: "다르게 보이는 점 (있으면)" });
+    why.value = ans.note || ""; why.oninput = () => { ans.note = why.value; save(); };
+    card.append(why);
+    card.append(question("사진을 보니 만들고 싶은 마음은? (1~5)", scale(() => ans.want_cook, v => ans.want_cook = v)));
+    card.append(question("이대로 만들어 보겠어요?", yesno(() => ans.would_cook, v => ans.would_cook = v)));
+    root.append(card);
+  });
+}
+
+function missing1() {
+  let n = 0;
+  DATA.dishes.forEach(d => { d.recipes.forEach(r => { const a = A.rs1[d.dish + "|" + r.label] || {}; CRIT.forEach(([k]) => { if (!a[k]) n++; }); if (!a.would_cook) n++; }); if (!A.best[d.dish]) n++; });
+  return n;
+}
+function updateProgress() {
+  if (PREVIEW) return;
+  const p = document.getElementById("progress");
+  p.textContent = A.part === 1 ? (missing1() ? `1부 · 남은 질문 ${missing1()}개` : "1부 · 모두 답했어요") : A.part === 2 ? "2부 · 사진과 함께" : "";
+}
+function result() {
+  const rs1 = [];
+  DATA.dishes.forEach(d => d.recipes.forEach(r => { const a = A.rs1[d.dish + "|" + r.label] || {};
+    rs1.push({ dish: d.dish, label: r.label, safety: a.safety || "", amount: a.amount || "", clarity: a.clarity || "",
+               availability: a.availability || "", would_cook: a.would_cook || "", best: A.best[d.dish] === r.label }); }));
+  const rs6 = Object.entries(A.rs6).filter(([d]) => DATA.images[d]).map(([d, a]) => ({ dish: d, label: DATA.images[d].label,
+    image_match: a.image_match || "", misleading: a.misleading || "", want_cook: a.want_cook || "", would_cook: a.would_cook || "", note: a.note || "" }));
+  return { eval: DATA.name, set: DATA.set || null, evaluator: (A.who || "").trim(), rs1, rs6, saved_at: new Date().toISOString() };
+}
+function showPart(p) {
+  if (PREVIEW) {          // 미리 보기: 1부와 2부(사진)를 한 번에, 잠그지 않음
+    document.getElementById("part2").classList.remove("hidden");
+    ["to2", "finish"].forEach(id => document.getElementById(id).classList.add("hidden"));
+    document.getElementById("progress").textContent = "미리 보기 — 답은 저장되지 않아요";
+    return;
+  }
+  A.part = p; save();
+  document.getElementById("part1").classList.toggle("locked", p > 1);
+  document.getElementById("to2").classList.toggle("hidden", p > 1);
+  const has2 = Object.keys(DATA.images || {}).length > 0;
+  document.getElementById("part2").classList.toggle("hidden", !(p >= 2 && has2));
+  document.getElementById("finish").classList.toggle("hidden", !(p === 2 && has2));
+  document.getElementById("done").classList.toggle("hidden", p !== 3);
+  if (p === 3) document.getElementById("out").value = JSON.stringify(result());
+}
+
+if (!DATA) { document.querySelector("main").innerHTML = "<p>평가 내용이 들어 있지 않은 파일이에요.</p>"; }
+else {
+  if (DATA.set) { document.querySelector("h1").textContent = `레시피 평가 (${DATA.set})`; document.title = `레시피 평가 ${DATA.set}`; }
+  const who = document.getElementById("who");
+  who.value = A.who || ""; who.oninput = () => { A.who = who.value; save(); };
+  buildPart1(); buildPart2();
+  // 걸리는 시간 안내 (레시피 하나에 1분 남짓, 사진 하나에 30초쯤)
+  const nRecipes = DATA.dishes.reduce((n, d) => n + d.recipes.length, 0), nImages = Object.keys(DATA.images || {}).length;
+  const mins = Math.max(5, Math.round((nRecipes * 1.2 + nImages * 0.5) / 5) * 5);
+  document.getElementById("minutes").textContent = `레시피 ${nRecipes}개${nImages ? `와 사진 ${nImages}장` : ""}, ${mins}분쯤 걸려요. 중간에 닫아도 이 기기에서 다시 열면 이어서 할 수 있어요.`;
+  if (!nImages) document.getElementById("photoNote").classList.add("hidden");
+  document.getElementById("to2").onclick = () => {
+    if (!A.who.trim()) { alert("맨 위에 이름이나 별명을 적어 주세요."); who.focus(); return; }
+    const n = missing1();
+    if (n && !confirm(`아직 답하지 않은 질문이 ${n}개 있어요. 그래도 넘어갈까요? (1부는 넘어가면 바꿀 수 없어요)`)) return;
+    const has2 = Object.keys(DATA.images || {}).length > 0;
+    showPart(has2 ? 2 : 3); window.scrollTo(0, has2 ? document.getElementById("part2").offsetTop - 40 : 0);
+  };
+  document.getElementById("finish").onclick = () => { showPart(3); document.getElementById("done").scrollIntoView(); };
+  document.getElementById("save").onclick = () => {
+    const blob = new Blob([JSON.stringify(result())], { type: "application/json" });
+    const a = el("a", { href: URL.createObjectURL(blob), download: `레시피평가_${DATA.name}${DATA.set ? "_" + DATA.set : ""}_${(A.who || "익명").trim()}.json` });
+    document.body.append(a); a.click(); a.remove();
+  };
+  document.getElementById("copy").onclick = async () => {
+    const t = document.getElementById("out"); t.value = JSON.stringify(result());
+    try { await navigator.clipboard.writeText(t.value); alert("복사했어요. 메시지에 붙여 넣어 보내 주세요."); }
+    catch (e) { t.select(); alert("자동 복사가 안 돼요. 아래 칸의 글을 길게 눌러 모두 복사해 주세요."); }
+  };
+  showPart(A.part || 1);
+}
+</script>
+</body>
+</html>

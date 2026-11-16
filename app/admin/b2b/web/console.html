@@ -82,6 +82,12 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
 .copy{float:right;border:1px solid var(--line);background:#fff;border-radius:8px;padding:2px 10px;font-size:12px;cursor:pointer}
 .docs a{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;margin:4px 6px 4px 0;text-decoration:none;color:var(--acc);font-weight:600}
 .outline{columns:2;font-size:13.5px;margin:0;padding-left:18px}
+.artrow{display:grid;grid-template-columns:150px 76px 1fr;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line,#e5e7eb)}
+.artrow:first-of-type{border-top:none}.artrow .lb{font-size:13px;font-weight:700;min-width:0}.artrow .lb small{display:block;font-weight:400;opacity:.65}
+.artcur,.artc{width:68px;height:68px;border-radius:10px;border:1px solid var(--line,#e5e7eb);background:#fff;display:grid;place-items:center;overflow:hidden;font-size:11px;opacity:.9}
+.artcur{border:2px solid var(--accent,#2563eb)}.artcur img,.artc img{max-width:60px;max-height:60px;object-fit:contain}
+.artcs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;min-width:0}.artc{flex:none;cursor:pointer;padding:0}.artc:hover{outline:2px solid var(--accent,#2563eb)}
+.artc.on{outline:2px solid var(--accent,#2563eb);opacity:.5}.artc.rm{font-size:11px;color:#b42318}
 .notice{font-size:13px;color:var(--ink2);background:var(--acc-s);border-radius:10px;padding:8px 12px;margin:8px 0}
 .notice.warn{background:var(--hold-s);color:var(--hold)}
 .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
@@ -115,7 +121,7 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
 <div class="app">
 <aside>
   <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b" aria-current="page">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b" aria-current="page">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
   <h2>현재 작업</h2><div class="ws" id="ws"><b>선택된 공고 없음</b>프롬프트로 시작하세요</div>
   <h2>공고</h2><div id="bids"></div>
   <label class="up">공고 파일 올리기 (CSV·JSON)<input type="file" id="file" accept=".csv,.json" hidden></label>
@@ -219,12 +225,27 @@ function render(b){
     const det=document.createElement("details");det.innerHTML=`<summary><b>${esc(d.supplier)}</b> · 후보 ${d.items.length}개</summary><button class="copy" type="button">복사</button><pre>${esc(txt)}</pre>`;
     det.querySelector(".copy").onclick=e=>{navigator.clipboard?.writeText(txt);e.target.textContent="복사됨"};p.append(det)});return p}
   if(b.type==="docs"&&b.items.some(i=>i.mode))return propFiles(b);
+  if(b.type==="art")return artPanel(b);
   if(b.type==="docs"){const p=panel("생성 문서");const d=document.createElement("div");d.className="docs";
     b.items.forEach(i=>{d.insertAdjacentHTML("beforeend",`<a href="${esc(i.href)}" target="_blank" rel="noopener">${/Word/.test(i.label)?"⬇":"↗"} ${esc(i.label)}</a>`)});p.append(d);
     $("#docs").innerHTML="";b.items.forEach(i=>$("#docs").insertAdjacentHTML("beforeend",`<a class="doclink" href="${esc(i.href)}" target="_blank" rel="noopener">${esc(i.label)}</a>`));return p}
   if(b.type==="outline"){const p=panel("제안서 목차");p.insertAdjacentHTML("beforeend",`<ol class="outline">${b.items.map(x=>`<li>${esc(x.replace(/^\d+\.\s*/,""))}</li>`).join("")}</ol>`);return p}
   const d=document.createElement("pre");d.textContent=JSON.stringify(b,null,2);return d;
 }
+// 2026-11-14: 장마다 그림 바꾸기 — 후보를 누르면 그 그림으로 제안서를 다시 만든다 (AI 본문은 그대로)
+function artPanel(b){const p=panel("장마다 그림",b.item_icons?"항목 아이콘 켜짐":"항목 아이콘 꺼짐");
+  b.slots.forEach(s=>{const r=document.createElement("div");r.className="artrow";
+    const cur=s.current?`<img src="${esc(s.current.thumb)}" alt="" title="${esc(s.current.tags.join(", "))}">`:"없음";
+    r.innerHTML=`<div class=lb>${esc(s.label)}<small>${s.picked?"직접 고름":"자동 선택"}${s.current?" · "+esc(s.current.id):""}</small></div><div class=artcur>${cur}</div><div class=artcs></div>`;
+    const cs=r.querySelector(".artcs");
+    s.cands.forEach((c,i)=>{const x=document.createElement("button");x.type="button";x.className="artc"+(s.current&&c.id===s.current.id?" on":"");
+      x.title=`${i+1}번 · ${c.id} · ${c.tags.join(", ")}`;x.innerHTML=`<img src="${esc(c.thumb)}" alt="">`;
+      x.onclick=()=>run(`${s.cmd} 그림 ${c.id} 로 바꿔줘`);cs.append(x)});
+    const rm=document.createElement("button");rm.type="button";rm.className="artc rm";rm.textContent="빼기";rm.onclick=()=>run(`${s.cmd} 그림 빼줘`);cs.append(rm);
+    p.append(r)});
+  const a=document.createElement("div");a.className="actions";a.style.marginTop="8px";
+  [b.item_icons?"항목 아이콘 빼줘":"항목 아이콘 넣어줘","그림 원래대로 해줘"].forEach(t=>a.append(btn(t)));p.append(a);return p}
+
 function propFiles(b){
   const t=b.template||{};const p=panel("제안서 파일",t.name?`템플릿 · ${t.name}`:"");
   const groups={};b.items.forEach(i=>(groups[i.group]=groups[i.group]||[]).push(i));
@@ -266,14 +287,15 @@ function candPanel(rows){
 }
 
 function costPanel(b){
-  const p=panel("1인 비용 구조",b.budget?`예산 ${won(b.budget)}`:"");
-  const max=b.budget||Math.max(1,...b.lines.map(l=>l.amount||0));let acc=0;
+  const p=panel("1인 비용·이익 구조",b.budget?`예산 ${won(b.budget)}${b.net_budget&&b.net_budget!==b.budget?` · 공급가액 ${won(b.net_budget)} (VAT 제외)`:""}`:"");
+  const max=b.net_budget||b.budget||Math.max(1,...b.lines.map(l=>l.amount||0));let acc=0;
   const wf=document.createElement("div");wf.className="wf";
   b.lines.forEach(l=>{const known=l.amount!=null;const left=acc/max*100;const w=known?l.amount/max*100:6;if(known)acc+=l.amount;
-    wf.insertAdjacentHTML("beforeend",`<div class="wfrow"><span>${esc(l.label)}</span><div class="wfbar"><i class="${known?"":"unk"}" style="left:${Math.min(left,100)}%;width:${w}%"></i></div><span class="num">${known?won(l.amount):'<span style="color:var(--hold)">미확인</span>'}</span></div>`)});
+    wf.insertAdjacentHTML("beforeend",`<div class="wfrow"><span>${esc(l.label)}</span><div class="wfbar"><i class="${known?"":"unk"}" style="left:${Math.min(left,100)}%;width:${w}%"></i></div><span class="num">${known?won(l.amount)+(l.basis==="가정"?' <small style="color:var(--hold)">가정</small>':""):'<span style="color:var(--hold)">미확인</span>'}</span></div>`)});
   p.append(wf);
-  p.insertAdjacentHTML("beforeend",b.residual!=null?`<div class="residual">잔여액 ${won(b.residual)} (모든 항목 입력됨 — 입력값 기준, 견적 확정 아님)</div>`
-    :`<div class="residual unk">잔여액 확정 불가 — 미확인 ${b.unknown.length}개 (미확인 ≠ 0원) · 확인된 합계 ${won(b.known_total)}</div>`);
+  p.insertAdjacentHTML("beforeend",b.residual!=null?`<div class="residual${b.residual<0?" unk":""}">1인 이익 ${won(b.residual)} · 이익률 ${(b.margin_rate*100).toFixed(1)}%${b.total_profit!=null?` · 총 ${won(b.total_profit)}`:""} — ${esc(b.status)}${b.assumed&&b.assumed.length?` (가정값: ${b.assumed.map(esc).join(", ")})`:""}</div>`
+    :`<div class="residual unk">이익 산출 불가 — 미확인 ${b.unknown.length}개 (미확인 ≠ 0원) · 확인된 합계 ${won(b.known_total)}</div>`);
+  if(b.max_supply_for_target!=null)p.insertAdjacentHTML("beforeend",`<div class="residual">목표 이익률 ${Math.round(b.target_margin_rate*100)}%를 남기려면 매입가 ${won(b.max_supply_for_target)} 이하</div>`);
   if(b.scenarios.length)p.insertAdjacentHTML("beforeend",`<table style="margin-top:10px"><thead><tr><th>가정: 공개가 = 매입가</th><th class=num>가정 매입가</th><th class=num>추가비용 전 차액</th><th>판단</th></tr></thead><tbody>${
     b.scenarios.map(s=>`<tr><td>${esc(s.candidate)}</td><td class=num>${won(s.assumed_supply)}</td><td class="num ${s.gap_before_other_costs<0?"neg":""}">${s.gap_before_other_costs>0?"+":""}${won(s.gap_before_other_costs)}</td><td class=q>${esc(s.verdict)}</td></tr>`).join("")}</tbody></table>`);
   if(b.notes.length)p.insertAdjacentHTML("beforeend",`<ul class="q" style="margin:10px 0 0;padding-left:18px">${b.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`);

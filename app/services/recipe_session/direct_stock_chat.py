@@ -73,7 +73,7 @@ def interpret(message, materials, client_factory=None):
     # No external folder, sys.path change or os.environ mutation.
     from app.services.nlu.llm_client import LLMClient
     env=dict(LLM_PROVIDER='deepseek',DEEPSEEK_API_KEY=key,DEEPSEEK_MODEL=model,DEEPSEEK_BASE_URL=base)
-    factory=client_factory or (lambda prompt: LLMClient(prompt,provider='deepseek',env=env))
+    factory=client_factory or (lambda prompt: LLMClient(prompt,provider='deepseek',env=env,task='stock_chat'))
     value=factory(stock_prompt(materials)).chat_json(message)
     return validate_proposal(value,materials,message)
 

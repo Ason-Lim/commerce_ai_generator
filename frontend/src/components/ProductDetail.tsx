@@ -182,8 +182,14 @@ function PurchaseConfirm({ c }: { c: Candidate }) {
   const [opt, setOpt] = useState(opts[0].id);
   const [qty, setQty] = useState(1);
   const o = opts.find((x) => x.id === opt) ?? opts[0];
-  const ship = c.shippingFee;
+  // 2026-11-13 (사용자 결정): 판매처가 무료배송·배송비 금액을 표시했으면 그 표시 기준으로 결제 예상 금액을 계산한다.
+  //   배송비 정보가 없을 때만 '확정 불가'.
+  const st = c.shippingStatus;
+  const ship = st === "free_label" ? 0 : st === "unknown" ? null : c.shippingFee;
   const total = ship == null ? null : o.price * qty + ship;
+  const byLabel = st === "free_label" || st === "fee_label";
+  const shipLabel = "판매처에서 확인 필요";
+  const rocket = c.rocket ? "로켓배송 · " : "";
   return (
     <section className="space-y-5">
       <div>
@@ -209,9 +215,10 @@ function PurchaseConfirm({ c }: { c: Candidate }) {
       <dl className="space-y-1.5 rounded-2xl bg-chip px-4 py-3 text-sm">
         <div className="flex justify-between"><dt className="text-ink2">상품가</dt><dd>{won(o.price)} × {qty}</dd></div>
         <div className="flex justify-between"><dt className="text-ink2">배송비</dt>
-          <dd className={cx(ship == null && "font-semibold text-warn")}>{ship == null ? "판매처에서 확인 필요" : ship === 0 ? "무료" : won(ship)}</dd></div>
+          <dd className={cx(ship == null && "font-semibold text-warn")}>{ship == null ? shipLabel : `${rocket}${ship === 0 ? "무료배송" : won(ship)}`}</dd></div>
         <div className="flex justify-between border-t border-line pt-1.5 text-base font-extrabold">
           <dt>결제 예상 금액</dt><dd>{total == null ? "확정 불가" : won(total)}</dd></div>
+        {byLabel && total != null && <p className="text-right text-[11px] text-ink3">판매처 배송 표시 기준이에요</p>}
       </dl>
       <p className="text-xs leading-relaxed text-ink3">
         결제는 판매처에서 진행돼요. {c.observed ? `가격은 ${c.observed} 기준이며, ` : ""}이동 후 실제 가격·배송비가 다를 수 있으니 결제 화면에서 한 번 더 확인해 주세요.

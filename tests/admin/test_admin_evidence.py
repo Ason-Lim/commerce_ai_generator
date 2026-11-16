@@ -255,3 +255,14 @@ def test_main_ranks_without_behavior_by_default():
     assert "AS ranking_base_score" in fb and "behavior_reference" in fb
     assert 'elif base_priority == "exploration" and use_behavior' in fb
     assert 'elif base_priority == "discovery" and use_behavior' in fb
+
+
+def test_every_result_section_has_a_label():
+    """2026-11-12: 냉동 구역(frozen_list)이 생겼는데 이름표가 없어 근거 화면이 KeyError 로 멈춘 회귀."""
+    import typing
+
+    from app.admin.ops.evidence import SECTION_LABEL
+    from app.domain.commerce.models import ShoppingItem
+
+    sections = typing.get_args(ShoppingItem.model_fields["section"].annotation)
+    assert set(sections) <= set(SECTION_LABEL)

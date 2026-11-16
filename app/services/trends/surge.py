@@ -633,7 +633,7 @@ def run_from_env(db=None, env=None, **kw) -> dict:
     if (source.get("DEEPSEEK_API_KEY") or "").strip() and (source.get("DEEPSEEK_MODEL") or "").strip():
         from app.services.nlu.llm_client import LLMClient
 
-        client = LLMClient(CAUSE_PROMPT, provider="deepseek", env=source)
+        client = LLMClient(CAUSE_PROMPT, provider="deepseek", env=source, cache="trend_cause", cache_days=7)
         ask = lambda text: client.chat_json(text, temperature=0)  # noqa: E731
     # 2026-11-06: 구글 CSV 는 예시(stub) 데이터 — 운영자가 실제 수집으로 바꾸고 GOOGLE_TRENDS_VERIFIED=1 을 켜야만 쓴다
     google_dir = (source.get("GOOGLE_DATA_DIR") or "").strip() or None

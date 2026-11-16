@@ -16,6 +16,7 @@ from app.services.food.knowledge.seafood.provider import (
 )
 
 
+# 2026-11-11: seafood 이후에 등록된 sauce(a945d62)·compound_seasoning(6657141)을 반영
 LEGACY_PROVIDER_ORDER = [
     "fruit",
     "vegetable",
@@ -24,7 +25,9 @@ LEGACY_PROVIDER_ORDER = [
     "wine",
     "tea",
     "olive_oil",
+    "sauce",
     "herb_spice",
+    "compound_seasoning",
     "venison",
     "goat",
     "beef",

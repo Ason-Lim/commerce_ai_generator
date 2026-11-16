@@ -192,7 +192,7 @@ def llm_interpreter(env=None):
     The caller still validates: kind ∈ {change, question}, target ∈ the numbers in the message."""
     from app.services.nlu.llm_client import LLMClient
 
-    client = LLMClient(LLM_PROMPT, provider="deepseek", env=env)
+    client = LLMClient(LLM_PROMPT, provider="deepseek", env=env, cache="recipe_servings", cache_days=90)
 
     def interpret_llm(text: str) -> dict:
         return client.chat_json(text, temperature=0)

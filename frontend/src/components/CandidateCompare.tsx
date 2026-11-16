@@ -1,6 +1,6 @@
 import type { Candidate, CandidateCompareBlock } from "../types/blocks";
 import { useChatActions } from "./ChatActions";
-import { EvidenceTags, MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags } from "./ui";
+import { EvidenceTags, MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags, WeightNoteTag } from "./ui";
 import { cx, won } from "../lib/format";
 
 /** 상품명 앞의 [빨간특기] 같은 대괄호 태그를 제거한다. */
@@ -29,6 +29,8 @@ export function CandidateCompare({ block }: { block: CandidateCompareBlock }) {
   const minTotal = totals.length ? Math.min(...totals) : null;
   const per = candidates.map((c) => c.per100g).filter((v): v is number => v != null);
   const minPer = per.length > 1 ? Math.min(...per) : null;
+  const perMl = candidates.map((c) => c.per100ml).filter((v): v is number => v != null);
+  const minPerMl = perMl.length > 1 ? Math.min(...perMl) : null;
 
   const isBestTotal = (c: Candidate) => minTotal != null && c.total === minTotal && totals.length > 1;
 
@@ -56,8 +58,9 @@ export function CandidateCompare({ block }: { block: CandidateCompareBlock }) {
                   className="line-clamp-2 block text-left text-base font-bold leading-snug hover:underline">{cleanTitle(c.title)}</button>
                 <div className="mt-1.5"><TotalPrice c={c} best={isBestTotal(c)} /></div>
                 <div className="mt-1 text-xs text-ink2">
-                  {c.weightLabel ?? <span className="text-warn">중량 표기 없음</span>}
+                  {c.weightLabel ?? (c.weightNote ? <WeightNoteTag note={c.weightNote} /> : <span className="text-warn">중량·용량 표기 없음</span>)}
                   {c.per100g != null && <span className={cx("ml-1.5", c.per100g === minPer ? "font-semibold text-accent" : "")}>100g당 {won(c.per100g)}</span>}
+                  {c.per100g == null && c.per100ml != null && <span className={cx("ml-1.5", c.per100ml === minPerMl ? "font-semibold text-accent" : "")}>100ml당 {won(c.per100ml)}</span>}
                 </div>
               </div>
             </div>

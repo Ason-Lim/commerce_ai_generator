@@ -74,8 +74,13 @@ def test_prices_stay_integer_won_and_unknown_shipping_stays_unknown(sqlite_db):
     result = _svc(ITEMS, "사과 추천해줘")
     by_title = {i.product.title: i.offer for i in result.items}
     assert by_title["못난이 사과 10kg"].shipping_krw is None and by_title["못난이 사과 10kg"].total_krw is None
-    assert by_title["꿀사과 3kg 가정용"].total_krw == 24000
-    assert by_title["부사 사과 5kg"].total_krw == 29000          # 무료배송 표시 → 0원 (기존 enrich 규칙)
+    # 2026-11-13 (S5): 배송비는 상태로만 — 적힌 금액·무료 표시는 총액으로 확정하지 않는다
+    assert by_title["꿀사과 3kg 가정용"].total_krw is None and by_title["꿀사과 3kg 가정용"].shipping_krw == 3000
+    assert by_title["꿀사과 3kg 가정용"].shipping_status == "fee_label"
+    assert by_title["부사 사과 5kg"].total_krw is None and by_title["부사 사과 5kg"].shipping_krw is None
+    assert by_title["부사 사과 5kg"].shipping_status == "free_label"
+    assert by_title["사과 선물세트 2kg"].shipping_status == "free_label"     # 출처의 0원도 '무료 표시'로
+    assert by_title["못난이 사과 10kg"].shipping_status == "unknown"
 
 
 def test_platform_merchant_and_url_are_separate(sqlite_db):

@@ -276,6 +276,7 @@ def test_a_shortage_answer_from_other_servings_is_rechecked_not_searched(make_se
     say("파스타 부족해요")          # at 2인분
     say("베이컨 없어요")            # 없음 does not depend on servings
     say("1인분으로 바꿔 줘")
+    shopping.calls.clear()  # 2026-11-16: '부족해요·없어요'는 장보기 칸에 바로 담으며 찾는다 — 그 검색은 여기서 보지 않는다
     res = say("부족한 재료 상품 보여줘")
     text = md(res)
     assert [q for q, _p, _s in shopping.calls] == ["베이컨"]           # the old '부족' is not searched
@@ -301,6 +302,7 @@ def test_only_stale_shortages_means_no_search_at_all(make_service, shopping):
     sid, say = _flow(service)
     say("파스타 부족해요")
     say("1인분으로 바꿔 줘")
+    shopping.calls.clear()  # 2026-11-16: '부족해요·없어요'는 장보기 칸에 바로 담으며 찾는다 — 그 검색은 여기서 보지 않는다
     res = say("부족한 재료 상품 보여줘")
     assert res["stage"] == "recipe_products_recheck" and shopping.calls == []
 

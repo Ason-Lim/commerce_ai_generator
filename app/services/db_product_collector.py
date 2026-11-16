@@ -76,7 +76,7 @@ def fetch_products_from_db(context: str, limit: int = 30):
             "weight_kg": float(row["weight_kg"]) if row.get("weight_kg") is not None else None,
             "unit_price_per_kg": float(row["unit_price_per_kg"]) if row.get("unit_price_per_kg") is not None else None,
             "price_per_100g": float(row["price_per_100g"]) if row.get("price_per_100g") is not None else None,
-            "shipping_fee": 0, "description": row.get("product_name") or "",
+            "shipping_fee": None, "description": row.get("product_name") or "",
             "rating": float(row["rating"]) if row.get("rating") is not None else None,
             "review_count": int(row["review_count"]) if row.get("review_count") is not None else None,
             "url": product_url, "product_url": product_url,

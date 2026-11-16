@@ -1,0 +1,31 @@
+{
+ "_about": "출처로 확인한 식품 사실 (2026-11-11~). 확인된 사실은 AI 답보다 우선한다. statement 는 source_quote(원문 문장·표)가 직접 말하는 범위만 적는다 — 해석을 더하지 않는다. kind=intrinsic(품종 고유 특성·기본 정보)은 기한 없음, kind=seasonal(제철·출하·시장)은 review_after 까지. status=active 만 쓰이고, 출처가 바뀌었거나 다른 출처와 어긋나면 needs_review 로 바꾼다(그동안 쓰이지 않음). 고칠 때는 이 파일을 고치고 verified_at·reviewed_by 를 새로 적는다.",
+ "facts": [
+  {"id": "strawberry-geumsil-traits", "food": "딸기", "subject": "금실", "attribute": "특성", "kind": "intrinsic",
+   "statement": "당도가 높고 경도(단단함)가 우수하며, 기존 수출 품종의 저장성 한계를 크게 개선한 품종으로 소개돼요.",
+   "source_quote": ["높은 당도와 우수한 경도, 낮은 기형과 비율을 갖추고 있다.",
+                    "‘금실’ 딸기는 기존 수출 품종에서 발생하던 기형과 발생률, 당도 편차, 저장성 등의 한계를 크게 개선한 품종이다."],
+   "source_ref": "기사 본문", "applies_to": "금실 (경남도농업기술원 육성)", "conditions": "보도 기사 — 측정 조건 표기 없음",
+   "source_name": "경남일보 2025-11-30 「경남 딸기 ‘금실’, 대한민국우수품종상 국무총리상」",
+   "source_url": "https://www.gnnews.co.kr/news/articleView.html?idxno=624737",
+   "method": "source", "reviewed_by": "Claude (원문 대조, 2026-11-11)", "verified_at": "2026-11-11",
+   "status": "active", "review_after": null},
+  {"id": "strawberry-maehyang-firmness", "food": "딸기", "subject": "매향", "attribute": "특성", "kind": "intrinsic",
+   "statement": "대표적인 수출 품종이고, 한 시험에서 경도가 13.5 g·mm⁻²로 설향(11.0)보다 높게 측정됐어요.",
+   "source_quote": ["경도는 13.1 g · ㎜-2로 대표적인 수출품종인 '매향'과 비슷하였다.", "Table 3: 매향 경도 13.5 g·㎜-2, 설향 11.0 g·㎜-2"],
+   "source_ref": "본문 · Table 3", "applies_to": "매향 (대조 품종)", "conditions": "경남농업기술원 촉성재배 시험, 2018년 발표 — 재배 조건이 다르면 값이 다를 수 있음",
+   "source_name": "안재욱 외 (2018) Korean J. Plant Res. 31(1):90–94, 딸기 '홍실' 육성",
+   "source_url": "https://koreascience.kr/article/JAKO201815661859148.pdf",
+   "method": "source", "reviewed_by": "Claude (원문 대조, 2026-11-11)", "verified_at": "2026-11-11",
+   "status": "active", "review_after": null},
+  {"id": "strawberry-seolhyang-firmness-yield", "food": "딸기", "subject": "설향", "attribute": "특성", "kind": "intrinsic",
+   "statement": "대표적인 다수성(수확량이 많은) 품종이고, 한 시험에서 경도가 11.0 g·mm⁻²로 매향(13.5)보다 낮게 측정됐어요.",
+   "source_quote": ["상품수량은 4,269 ㎏·10a-1로 대표적인 다수성 품종인 '설향'보다 낮았지만 수출품종인 '매향'보다는 높았다(Table 3).",
+                    "Table 3: 설향 경도 11.0 g·㎜-2, 매향 13.5 g·㎜-2"],
+   "source_ref": "본문 · Table 3", "applies_to": "설향 (대조 품종)", "conditions": "경남농업기술원 촉성재배 시험, 2018년 발표 — 재배 조건이 다르면 값이 다를 수 있음",
+   "source_name": "안재욱 외 (2018) Korean J. Plant Res. 31(1):90–94, 딸기 '홍실' 육성",
+   "source_url": "https://koreascience.kr/article/JAKO201815661859148.pdf",
+   "method": "source", "reviewed_by": "Claude (원문 대조, 2026-11-11)", "verified_at": "2026-11-11",
+   "status": "active", "review_after": null}
+ ]
+}

@@ -1,6 +1,6 @@
 /** 작은 공용 조각: 썸네일 · 가격 · 근거/미확인 태그 · 출처 */
 import { useState } from "react";
-import type { Candidate } from "../types/blocks";
+import type { Candidate, VarietyMix, WeightNote } from "../types/blocks";
 import { cx, won } from "../lib/format";
 
 export function Thumb({ c, size = "md" }: { c: Pick<Candidate, "image" | "title">; size?: "sm" | "md" | "lg" }) {
@@ -16,6 +16,17 @@ export function Thumb({ c, size = "md" }: { c: Pick<Candidate, "image" | "title"
   );
 }
 
+/** 2026-11-13: 배송비 상태별 한 줄 — 무료 '표시'·적힌 금액은 조건부라 총액으로 합치지 않는다 */
+export function shippingLine(c: Candidate) {
+  switch (c.shippingStatus) {
+    case "confirmed": return <>상품가 {won(c.price)} + 배송비 {c.shippingFee ? won(c.shippingFee) : "0원"} (주문 단계 계산)</>;
+    case "free_label": return <>{c.rocket ? "로켓배송 · " : ""}무료배송 <span className="text-ink3">(판매처 표시)</span></>;
+    case "fee_label": return <>{c.rocket ? "로켓배송 · " : ""}상품가 {won(c.price)} + 배송비 {won(c.shippingFee ?? 0)} <span className="text-ink3">(판매처 표시)</span></>;
+    case "unknown": return <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>;
+    default: return null;
+  }
+}
+
 /** 총가격 = 배송비 포함. 배송비를 모르면 '확정 불가'로 보여 준다 (0원으로 가정하지 않음) */
 export function TotalPrice({ c, best, size = "md" }: { c: Candidate; best?: boolean; size?: "md" | "lg" }) {
   return (
@@ -28,11 +39,34 @@ export function TotalPrice({ c, best, size = "md" }: { c: Candidate; best?: bool
         {best && <span className="tag bg-accentSoft text-accent">최저</span>}
       </div>
       <div className="text-xs text-ink2">
-        {c.shippingFee == null
+        {shippingLine(c) ?? (c.shippingFee == null
           ? <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>
-          : c.shippingFee === 0 ? <>무료배송 포함</> : <>상품가 {won(c.price)} + 배송비 {won(c.shippingFee)}</>}
+          : c.shippingFee === 0 ? <>무료배송 포함</> : <>상품가 {won(c.price)} + 배송비 {won(c.shippingFee)}</>)}
       </div>
     </div>
+  );
+}
+
+/** 2026-11-11: 중량 옵션·증정분 안내 — 상세페이지를 열기 전에 알 수 있게 (100g당 가격은 계산하지 않음) */
+export function WeightNoteTag({ note, withDetail = true }: { note?: WeightNote | null; withDetail?: boolean }) {
+  if (!note) return null;
+  const hint = note.kind === "options"
+    ? "상품명에 중량이 여러 개 적혀 있어요. 고르는 옵션에 따라 가격이 달라 100g당 가격은 계산하지 않았어요."
+    : "상품명에 증정분이 적혀 있어요. 증정 조건(선착순·기간 등)은 판매처에서 확인해 주세요. 100g당 가격은 계산하지 않았어요.";
+  return (
+    <span className="tag bg-warnSoft text-warn" title={hint}>
+      {note.label}{withDetail && note.detail ? ` · ${note.detail}` : ""}
+    </span>
+  );
+}
+
+/** 2026-11-11: 여러 품종 구성 — 상품명에 품종이 2개 이상 */
+export function VarietyMixTag({ mix }: { mix?: VarietyMix | null }) {
+  if (!mix) return null;
+  return (
+    <span className="tag bg-chip text-ink2" title="상품명에 품종이 여러 개 적혀 있어요. 구성과 비율은 판매처에서 확인해 주세요.">
+      {mix.label}{mix.detail ? ` · ${mix.detail}` : ""}
+    </span>
   );
 }
 

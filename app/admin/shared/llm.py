@@ -16,6 +16,13 @@ class LLMUnavailable(RuntimeError):
     pass
 
 
+def _record(provider: str, model: str, u, tin: str, tout: str) -> None:
+    """2026-11-11: 관리자·B2B AI 호출 비용 기록 (관리자 'AI 비용' 화면)."""
+    from app.services.ai import usage
+
+    usage.record("admin_llm", f"{provider}:{model}", getattr(u, tin, 0) if u else 0, getattr(u, tout, 0) if u else 0)
+
+
 class LLMClient:
     def __init__(self, settings: Settings | None = None):
         self.s = settings or get_settings()
@@ -49,23 +56,31 @@ class LLMClient:
                 model=self.s.openai_model, temperature=temperature, max_tokens=max_tokens,
                 messages=[{"role": "system", "content": system},
                           {"role": "user", "content": user}], **kw)
+            _record("openai", self.s.openai_model, getattr(resp, "usage", None), "prompt_tokens", "completion_tokens")
             return resp.choices[0].message.content or ""
         if p == "anthropic":
             import anthropic  # 지연 import
 
+            # 2026-11-11: 최신 Claude 모델은 temperature 를 받지 않는다 (400 'temperature is deprecated')
             msg = anthropic.Anthropic().messages.create(
-                model=self.s.anthropic_model, max_tokens=max_tokens, temperature=temperature,
+                model=self.s.anthropic_model, max_tokens=max_tokens,
                 system=system + ("\n반드시 JSON 하나만 출력." if json_mode else ""),
                 messages=[{"role": "user", "content": user}])
+            _record("anthropic", self.s.anthropic_model, getattr(msg, "usage", None), "input_tokens", "output_tokens")
             return "".join(getattr(b, "text", "") for b in msg.content)
         raise LLMUnavailable("LLM_PROVIDER=none")
 
     def chat_json(self, system: str, user: str, **kw) -> dict:
+        """관리자·B2B 호출은 저장해 다시 쓰지 않는다 (2026-11-11 검토 반영) — 공고·제안서·셀러 자료는 권한·판본이 다르고
+        결과 본문에 연락처 같은 개인정보가 들어갈 수 있다. 비용 기록(_record · DeepSeek 클라이언트)은 그대로 한다."""
+        return self._chat_json(system, user, **kw)
+
+    def _chat_json(self, system: str, user: str, **kw) -> dict:
         if self.s.llm_provider == "deepseek":
             # commerce 공용 클라이언트 (DEEPSEEK_API_KEY · DEEPSEEK_MODEL, 공식 API 주소만)
             from app.services.nlu.llm_client import LLMClient as DeepSeekClient
 
-            return DeepSeekClient(system, provider="deepseek").chat_json(user, kw.get("temperature", 0.0))
+            return DeepSeekClient(system, provider="deepseek", task="admin_llm").chat_json(user, kw.get("temperature", 0.0))
         return safe_json(self.chat(system, user, json_mode=True, **kw))
 
 

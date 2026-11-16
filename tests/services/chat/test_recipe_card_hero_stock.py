@@ -160,7 +160,9 @@ def test_from_env_uses_server_openai_key_only():
     assert ai_image.from_env({}).generator is None
     assert ai_image.from_env({"OPENAI_API_KEY": "k", "RECIPE_AI_IMAGE": "off"}).generator is None
     imgs = ai_image.from_env({"OPENAI_API_KEY": "k", "RECIPE_AI_IMAGE_DAILY_LIMIT": "5"})
-    assert imgs.generator is not None and imgs.daily_limit == 5 and imgs.model == "gpt-image-1"
+    assert imgs.generator is not None and imgs.daily_limit == 5 and imgs.model == "gpt-image-2.5-flare"
+    # gpt-image-1 은 2026-10-23 종료 — .env 에 남아 있어도 지금 모델로 만든다
+    assert ai_image.from_env({"OPENAI_API_KEY": "k", "RECIPE_AI_IMAGE_MODEL": "gpt-image-1"}).model == "gpt-image-2.5-flare"
 
 
 def test_openai_generator_requests_webp_and_decodes():
@@ -188,6 +190,7 @@ def test_card_shows_recorded_stock_and_customer_shortage(sqlite_db, shopping):
     svc.handle(sid, message="생크림 100mL 있어요")
     svc.handle(sid, message="생크림 부족해요")
     svc.handle(sid, message="베이컨 없어요")
+    shopping.calls.clear()  # 2026-11-16: '부족해요·없어요'는 장보기 칸에 바로 담으며 찾는다 — 그 검색은 여기서 보지 않는다
     card = card_of(svc.handle(sid, message="크림파스타 만드는 법"))
     rows = {i["name"]: i for i in card["ingredients"]}
     assert (rows["생크림"]["status"], rows["생크림"]["status_label"], rows["생크림"]["stock"]) == ("short", "부족", "100mL")

@@ -12,6 +12,9 @@ import type { Message } from './types';
 import type { Candidate } from './types/blocks';
 import { API_MODE, sendChat } from './api/client';
 import { pageTitle } from './lib/pageTitle';
+import { BusyStatus } from './components/BusyStatus';
+import { ShoppingPanel, type PanelEntry } from './components/ShoppingPanel';
+import { BUSY_TIMEOUT_MS, TIMEOUT_MESSAGE, busyKind, type BusyKind } from './lib/busyStages';
 
 // ── 홈 화면 예시 질문: src/data/trend_examples_YYYY-MM-DD.json 중 최신 파일을 읽는다 ──
 // 파일은 commerce_ai_generator/scripts/update_trend_examples.py가 매일 10시에 만든다.
@@ -112,6 +115,9 @@ export default function ChatWindow() {
     const [sessionId, setSessionIdState] = useState<string | null>(loadSession);
     const setSessionId = (sid: string | null) => { setSessionIdState(sid); saveSession(sid); };
     const [busy, setBusy] = useState(false);
+    const [waitKind, setWaitKind] = useState<BusyKind>('shopping');
+    // 2026-11-16: 부족한 재료 장보기 칸 — 재료별 상품 (새 메시지를 쌓지 않는다)
+    const [basket, setBasket] = useState<PanelEntry[]>([]);
     const [error, setError] = useState('');
     const [detail, setDetail] = useState<Candidate | null>(null);
     const [purchasing, setPurchasing] = useState(false);
@@ -216,19 +222,62 @@ export default function ChatWindow() {
         locked.current = true;
         setBusy(true);
         setError('');
+        // 첫 화면에서 보낸 질문은 손님이 볼 수 없는 지난 레시피에 이어 읽히지 않게 (2026-11-12 '4인분' → 지난 레시피 인분 답변)
+        const fresh = messages.length === 0;
         const shown = userText ?? payload.message?.trim();
         if (shown) setMessages(prev => [...prev, { id: newId(), role: 'user', text: shown }]);
+        // 2026-11-12: 레시피는 작성 + 다른 AI 검토로 30초를 넘길 수 있다 — 종류별 안내 문구와 기다리는 시간
+        const kind = busyKind(shown ?? payload.message ?? payload.chip);
+        setWaitKind(kind);
         const current = new AbortController();
         controller.current = current;
-        const timeout = window.setTimeout(() => current.abort('timeout'), 30000);
+        const timeout = window.setTimeout(() => current.abort('timeout'), BUSY_TIMEOUT_MS[kind]);
         try {
-            const response = await sendChat({ session_id: sessionId, ...payload }, current.signal);
+            const response = await sendChat({ session_id: sessionId, ...payload, ...(fresh ? { fresh: true } : {}) }, current.signal);
             if (current.signal.aborted) return;
             setSessionId(response.session_id);
             setMessages(prev => [...prev, { id: newId(), role: 'assistant', blocks: response.blocks, stage: response.stage }]);
         } catch (e) {
             if (current.signal.reason !== 'cancelled')
-                setError(current.signal.aborted ? '응답 시간이 초과됐어요.' : e instanceof Error ? e.message : '응답 오류');
+                setError(current.signal.aborted ? TIMEOUT_MESSAGE[kind] : e instanceof Error ? e.message : '응답 오류');
+        } finally {
+            clearTimeout(timeout);
+            locked.current = false;
+            setBusy(false);
+            controller.current = null;
+        }
+    }
+
+    // 말풍선 없이 보내고 답을 장보기 칸에 담는다 ('부족해요'·'없어요'), cancel 이면 칸에서 뺀다 ('충분해요')
+    async function shop(payload: SendPayload, ingredient: string, cancel = false) {
+        if (locked.current) return;
+        locked.current = true;
+        setBusy(true);
+        setError('');
+        setWaitKind('shopping');
+        const current = new AbortController();
+        controller.current = current;
+        const timeout = window.setTimeout(() => current.abort('timeout'), BUSY_TIMEOUT_MS.shopping);
+        try {
+            const response = await sendChat({ session_id: sessionId, ...payload }, current.signal);
+            if (current.signal.aborted) return;
+            setSessionId(response.session_id);
+            if (cancel) {
+                setBasket(prev => prev.filter(e => e.ingredient !== ingredient));
+            } else if (response.panel) {
+                const entry: PanelEntry = {
+                    ingredient: response.panel.ingredient || ingredient,
+                    mode: response.panel.mode,
+                    blocks: response.blocks.filter(b => b.type !== 'notice'),
+                };
+                setBasket(prev => [...prev.filter(e => e.ingredient !== entry.ingredient), entry]);
+            } else {
+                // 장보기로 담지 못한 답(저장 실패·다시 확인 등)은 평소처럼 대화에 보인다
+                setMessages(prev => [...prev, { id: newId(), role: 'assistant', blocks: response.blocks, stage: response.stage }]);
+            }
+        } catch (e) {
+            if (current.signal.reason !== 'cancelled')
+                setError(current.signal.aborted ? TIMEOUT_MESSAGE.shopping : e instanceof Error ? e.message : '응답 오류');
         } finally {
             clearTimeout(timeout);
             locked.current = false;
@@ -249,10 +298,12 @@ export default function ChatWindow() {
     // 블록 컴포넌트(칩·조건 선택·상품 카드)가 쓰는 동작
     const actions: ChatActionsValue = useMemo(() => ({
         send: (payload, userText) => void send(payload, userText),
+        shop: (payload, ingredient, cancel) => void shop(payload, ingredient, cancel),
+        basket: basket.map(e => e.ingredient),
         openDetail: c => { setDetail(c); setPurchasing(false); },
         busy,
         sessionId,
-    }), [busy, sessionId]);
+    }), [busy, sessionId, basket]);
 
     return (
         <ChatActions.Provider value={actions}>
@@ -273,7 +324,7 @@ export default function ChatWindow() {
                         <a href="#/trends" className="flex items-center gap-1 rounded-lg p-2 text-xs hover:bg-stone-100" aria-label="지금 뜨는 식품">
                             <TrendingUp size={16} /><span className="hidden sm:inline">지금 뜨는 식품</span>
                         </a>
-                        <button className="flex items-center gap-1 rounded-lg p-2 text-xs hover:bg-stone-100" disabled={busy} onClick={() => { setMessages([]); setSessionId(null); setError(''); setInput(''); closeDetail(); }}>
+                        <button className="flex items-center gap-1 rounded-lg p-2 text-xs hover:bg-stone-100" disabled={busy} onClick={() => { setMessages([]); setSessionId(null); setError(''); setInput(''); setBasket([]); closeDetail(); }}>
                             <Plus size={16} /><span className="hidden sm:inline">새 대화</span>
                         </button>
                     </div>
@@ -342,7 +393,9 @@ export default function ChatWindow() {
                                 )}
                             </section>
                         ))}
-                        <div role="status" aria-live="polite">{busy && <p className="animate-pulse text-sm text-stone-500">조건을 살펴보고 있어요…</p>}</div>
+                        <ShoppingPanel entries={basket} busy={busy}
+                            onRemove={name => void shop({ message: `${name} 충분해요` }, name, true)} />
+                        <div role="status">{busy && <BusyStatus kind={waitKind} />}</div>
                     </div>
                 )}
                 {error && <div role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}

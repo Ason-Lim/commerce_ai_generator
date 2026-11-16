@@ -64,6 +64,16 @@ def normalize_coupang_product(item: dict, keyword: str = "") -> dict:
     }
 
 
+def coupang_sub_id() -> str | None:
+    """쿠팡 파트너스 채널 아이디(subId) — 실적 보고서에서 '어디서 생긴 클릭·구매인지' 나눈다 (2026-11-13).
+    .env COUPANG_SUB_ID (예: commerce). 파트너스 '채널 아이디 관리'에서 만든 이름만 쓴다.
+    파트너스 규칙(생성 화면): 8~20자 숫자·영어 대소문자 — 규칙에 맞지 않으면 붙이지 않음."""
+    import re
+
+    v = (os.getenv("COUPANG_SUB_ID") or "").strip()
+    return v if re.fullmatch(r"[A-Za-z0-9]{8,20}", v) else None
+
+
 def search_coupang_products(keyword: str, limit: int = 10):
     if not is_coupang_available():
         return []
@@ -76,6 +86,8 @@ def search_coupang_products(keyword: str, limit: int = 10):
     method = "GET"
     path = "/v2/providers/affiliate_open_api/apis/openapi/products/search"
     query = f"keyword={quote(keyword)}&limit={limit}"
+    if coupang_sub_id():
+        query += f"&subId={coupang_sub_id()}"
 
     authorization = _build_authorization(method, path, query)
 

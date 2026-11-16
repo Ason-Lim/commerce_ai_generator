@@ -14,12 +14,15 @@ import math
 import re
 from dataclasses import dataclass, field
 
+from app.admin.b2b import design_assets
+from app.admin.b2b import proposal_figures as F
 from app.admin.b2b import proposal_templates as T
 from app.admin.b2b.proposal import TODO, Element, Proposal
 
 KICKER = {"summary": "PROPOSAL SUMMARY", "understanding": "PROJECT UNDERSTANDING", "compliance": "REQUIREMENTS",
           "products": "PRODUCT LINE-UP", "mall": "CLOSED MALL", "delivery": "DELIVERY · CS", "price": "PRICE",
-          "risk": "RISK MANAGEMENT", "company": "ABOUT US", "appendix_check": "INTERNAL CHECKLIST",
+          "risk": "RISK MANAGEMENT", "strategy": "STRATEGY", "evaluation": "EVALUATION RESPONSE",
+          "operations": "OPERATIONS", "schedule": "SCHEDULE", "questions": "Q&A", "company": "ABOUT US", "appendix_check": "INTERNAL CHECKLIST",
           "appendix_cost": "INTERNAL COST"}
 MAX_UNITS = 9.5      # 한 장에 넣는 분량 (대략 줄 수)
 ROWS_PER = 7         # 일반 표 한 장 최대 행
@@ -40,19 +43,32 @@ class Slide:
 def layout_of(e: Element, sid: str = "") -> str:
     if e.kind == "table":
         h = e.headers
+        n = len(e.rows)
         if h and h[0] == "일정":
-            return "timeline"
+            return "timeline" if n <= 4 else ("path" if path_fits(e) else "table")
         if h and h[0] == "단계":
-            return "flow"
+            # 2026-11-14 자료 벤치마킹: 3단계는 원형 단계(화살표), 5개 이상은 굽이치는 타임라인
+            return "steps" if n == 3 else ("path" if 5 <= n <= 10 and path_fits(e) else ("flow" if n <= 4 else "table"))
         if h == ["리스크", "대응"]:
             return "cards"
+        if h == F.MIRROR_HEAD:
+            return "mirror" if F.mirror_fits(e) else "table"
+        if h and h[0].startswith("평가 항목") and F.pyramid_fits(e):
+            return "pyramid"
         if h and h[0] == "구분" and "금액" in h:
             return "price"
         if len(h) == 2 and h[0] == "항목":
             return "kv"
         return "table"
     if e.kind == "bullets":
-        return "ncards" if sid == "summary" else "checks"
+        if sid in ("summary", "strategy"):
+            return "ncards"
+        n, longest = len(e.items), max((len(x) for x in e.items), default=0)
+        if n == 4 and longest <= 170:
+            return "icards"            # 2×2 아이콘 카드 (자료의 '4단 카드')
+        if n == 3 and longest <= 110:
+            return "trio"              # 원형 아이콘 3개 나란히
+        return "checks"
     if e.kind == "para" and e.text.startswith("■"):
         return "sub"
     return e.kind
@@ -60,8 +76,18 @@ def layout_of(e: Element, sid: str = "") -> str:
 
 def _units(e: Element, sid: str) -> float:
     lay = layout_of(e, sid)
-    if lay in ("timeline", "flow"):
+    if lay in ("timeline", "flow", "steps", "trio"):
         return 4.2
+    if lay == "path":
+        return sum(path_geom(e)[2]) / 52
+    if lay == "icards":
+        return 5.6
+    if lay == "pyramid":
+        rows, hs = F.pyramid_rows(e)
+        return (sum(hs) + 6 * len(hs)) / 52
+    if lay == "mirror":
+        rows, hs = F.mirror_rows(e)
+        return (64 + sum(hs) + 12 * len(hs)) / 52
     if lay == "cards":
         return 2.3 * math.ceil(len(e.rows) / 3)
     if lay == "price":
@@ -77,6 +103,38 @@ def _units(e: Element, sid: str) -> float:
     if lay == "sub":
         return 0.7
     return 0.9 + len(e.text) // 105 * 0.55
+
+
+def _path_rows(n: int) -> int:
+    return 1 if n <= 4 else (2 if n <= 8 else 3)
+
+
+def path_geom(e: Element) -> tuple[int, int, list[float]]:
+    """굽이치는 타임라인의 (줄 수, 줄당 개수, 줄마다 높이 px) — 글 길이에 맞춰 줄 높이를 늘린다 (1280×720 기준)."""
+    n = len(e.rows)
+    rows = _path_rows(n)
+    per = math.ceil(n / rows)
+    c = (1136 - 92) / per - 12
+    cb, cs = max(6, int(c / 13.5)), max(6, int(c / 11.5))
+    rh = []
+    for ri in range(rows):
+        chunk = e.rows[ri * per:(ri + 1) * per]
+        if not chunk:
+            break
+        t = max(math.ceil(len(r[1] if len(r) > 1 else "") / cb) * 16
+                + (math.ceil(len(r[2]) / cs) * 14 + 4 if len(r) > 2 and r[2] else 0) for r in chunk)
+        rh.append(float(min(270, max(150, 114 + t))))     # 아래 줄 이름표와 닿지 않게 여유 10px
+    return rows, per, rh
+
+
+def path_fits(e: Element) -> bool:
+    return sum(path_geom(e)[2]) <= 480
+
+
+def split_head(t: str) -> tuple[str, str]:
+    """'폐쇄몰 구축: 7일 안에…' → ('폐쇄몰 구축', '7일 안에…'). 머리말이 없으면 ('', 원문)."""
+    m = re.match(r"^\s*([^:：—\-\n]{2,22}?)\s*(?:[:：]|\s—\s|\s-\s)\s*(.+)$", str(t), re.S)
+    return (m.group(1).strip(), m.group(2).strip()) if m else ("", str(t))
 
 
 def _split_tables(els: list[Element], sid: str) -> list[Element]:
@@ -153,9 +211,121 @@ def _won_short(v: int) -> tuple[int, str]:
 
 
 # ── 요소 렌더 ──────────────────────────────────────────────────
+def _ico(a: dict | None, cls: str = "ii", px: int = 200) -> str:
+    return f'<img class="{cls}" src="{design_assets.data_uri(a["path"], px)}" alt="">' if a else ""
+
+
+def _icons(texts: list[str], sid: str) -> list[dict | None]:
+    try:
+        return design_assets.item_icons(ART, [str(t) for t in texts], sid)
+    except Exception:  # noqa: BLE001 — 아이콘은 꾸밈일 뿐
+        return [None] * len(texts)
+
+
+def _path(e: Element, sid: str, i: int) -> str:
+    """굽이치는 타임라인 (자료 ti24516001e 벤치마킹) — 한 줄 4개까지, 줄 끝에서 반원으로 꺾어 반대 방향으로."""
+    n = len(e.rows)
+    rows, per, rh = path_geom(e)
+    icons = _icons([" ".join(r) for r in e.rows], sid)
+    C = f"((100% - 92px) / {per})"
+    out = []
+    for ri in range(rows):
+        chunk = list(enumerate(e.rows))[ri * per:(ri + 1) * per]
+        if not chunk:
+            break
+        rev, turn, cnt = ri % 2 == 1, ri < rows - 1 and (ri + 1) * per < n, len(chunk)
+        start = "46px" if ri > 0 else f"calc(46px + {C} * .5)"
+        end = "46px" if turn else f"calc(100% - 46px - {C} * {cnt - .5})"
+        left, right = (end, start) if rev else (start, end)
+        lis = "".join(
+            f'<li class="rv" style="--d:{i + k}"><span class="pc">{_m(r[0])}</span>'
+            f'<span class="pn">{_ico(icons[k], "pi", 160) or f"<b>{k + 1:02d}</b>"}</span>'
+            f'<b>{_m(r[1]) if len(r) > 1 else ""}</b><small>{_m(r[2]) if len(r) > 2 else ""}</small></li>' for k, r in chunk)
+        arc = f'<i class="arc {"l" if rev else "r"}"></i>' if turn else ""
+        out.append(f'<ol class="prow{" rev" if rev else ""}" style="--rh:{rh[ri]:.0f}px"><i class="prail" style="left:{left};right:{right}"></i>{arc}{lis}</ol>')
+    return f'<div class="path" style="--per:{per}">' + "".join(out) + "</div>"
+
+
+_CK = {"p": "var(--p)", "sf": "var(--sf)", "ln": "var(--ln)", "ink": "var(--ink)", "mu": "var(--mu)", "bg": "var(--bg)",
+       "onp": "var(--onp)", "todo": "#B47A00"}
+
+
+def _c(k: str | None) -> str:
+    if not k:
+        return "transparent"
+    if k in _CK:
+        return _CK[k]
+    if k.startswith("p") and k[1:].isdigit():
+        return f"color-mix(in srgb,var(--p) {k[1:]}%,#fff)"
+    return k
+
+
+def fig_html(shapes: list[dict], h: float, i: int = 0) -> str:
+    """proposal_figures 도형 목록 → 절대 위치 HTML (본문 폭 1136px 기준)."""
+    out = []
+    for k, o in enumerate(shapes):
+        t = o["t"]
+        if t == "box":
+            ln = f"border:1.5px solid {_c(o['line'])};" if o.get("line") else ""
+            out.append(f'<i class="fg" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{o["w"]:.1f}px;height:{o["h"]:.1f}px;'
+                       f'background:{_c(o["fill"])};{ln}border-radius:{o["r"]:.0f}px"></i>')
+        elif t == "oval":
+            ln = f"border:{o['lw']:.1f}px solid {_c(o['line'])};" if o.get("line") else ""
+            out.append(f'<i class="fg" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{o["d"]:.1f}px;height:{o["d"]:.1f}px;'
+                       f'background:{_c(o["fill"])};{ln}border-radius:50%"></i>')
+        elif t == "line":
+            x, y = min(o["x1"], o["x2"]), min(o["y1"], o["y2"])
+            w, hh = max(abs(o["x2"] - o["x1"]), o["w"]), max(abs(o["y2"] - o["y1"]), o["w"])
+            if o["y1"] == o["y2"]:
+                y -= o["w"] / 2
+            else:
+                x -= o["w"] / 2
+            out.append(f'<i class="fg" style="left:{x:.1f}px;top:{y:.1f}px;width:{w:.1f}px;height:{hh:.1f}px;background:{_c(o["color"])}"></i>')
+        elif t == "trap":
+            wb, wt = o["wb"], o["wt"]
+            a, b = (wb - wt) / 2, (wb + wt) / 2
+            out.append(f'<i class="fg" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{wb:.1f}px;height:{o["h"]:.1f}px;'
+                       f'background:{_c(o["fill"])};clip-path:polygon({a:.1f}px 0,{b:.1f}px 0,100% 100%,0 100%)"></i>')
+        elif t == "img":
+            out.append(f'<img class="fg" alt="" src="{design_assets.data_uri(o["a"]["path"], 240)}" style="left:{o["x"]:.1f}px;'
+                       f'top:{o["y"]:.1f}px;width:{o["w"]:.1f}px;height:{o["h"]:.1f}px;object-fit:contain">')
+        elif t == "text":
+            paras = "".join("<div>" + "".join(
+                f'<span style="font-size:{sz * 1.333:.1f}px;font-weight:{800 if b else 400};color:{_c(col)}">{_m(tx)}</span>'
+                for tx, sz, b, col in para) + "</div>" for para in o["paras"])
+            jc = {"top": "flex-start", "bottom": "flex-end"}.get(o["anchor"], "center")
+            out.append(f'<div class="fg ft" style="left:{o["x"]:.1f}px;top:{o["y"]:.1f}px;width:{o["w"]:.1f}px;height:{o["h"]:.1f}px;'
+                       f'justify-content:{jc};text-align:{o["align"]}">{paras}</div>')
+    return f'<div class="fig rv" style="--d:{i};height:{h:.0f}px">' + "".join(out) + "</div>"
+
+
 def _el(e: Element, sid: str, i: int) -> str:
     lay = layout_of(e, sid)
     d = f' style="--d:{i}"'
+    if lay == "pyramid":
+        return fig_html(*F.pyramid(e, ART, sid), i)
+    if lay == "mirror":
+        return fig_html(*F.mirror(e, ART, sid), i)
+    if lay == "path":
+        return _path(e, sid, i)
+    if lay in ("steps", "trio"):
+        if lay == "steps":
+            parts = [(r[0], r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in e.rows]
+        else:
+            parts = [("",) + split_head(x) for x in e.items]
+        icons = _icons([" ".join(x) for x in parts], sid)
+        return (f'<div class="steps{" arrows" if lay == "steps" else ""}">' + "".join(
+            f'<div class="st rv" style="--d:{i + k}">{f"<span class=sl>{_m(a)}</span>" if a else ""}'
+            f'<span class="sc">{_ico(icons[k], "si", 220) or f"<b>{k + 1}</b>"}<em>{k + 1:02d}</em></span>'
+            f'{f"<b>{_m(b)}</b>" if b else ""}<p>{_m(c)}</p></div>' for k, (a, b, c) in enumerate(parts)) + "</div>")
+    if lay == "icards":
+        icons = _icons(e.items, sid)
+        cards = []
+        for k, x in enumerate(e.items):
+            h, body = split_head(x)
+            cards.append(f'<div class="icard rv" style="--d:{i + k}"><span class="ic">{_ico(icons[k], "ci2", 200) or f"<b>{k + 1}</b>"}'
+                         f'<em>{k + 1:02d}</em></span><div class="it">{f"<b>{_m(h)}</b>" if h else ""}<p>{_m(body)}</p></div></div>')
+        return '<div class="icards">' + "".join(cards) + "</div>"
     if lay == "para":
         return f'<p class="para rv"{d}>{_m(e.text)}</p>'
     if lay == "sub":
@@ -163,8 +333,9 @@ def _el(e: Element, sid: str, i: int) -> str:
     if lay == "callout":
         return f'<div class="callout {html.escape(e.tone)} rv"{d}><span class="ci">{"!" if e.tone == "warn" else "i"}</span><div>{_m(e.text)}</div></div>'
     if lay == "ncards":
+        icons = _icons(e.items, sid)
         return '<div class="ncards">' + "".join(
-            f'<div class="card ncard rv" style="--d:{i + k}"><b class="no">{k + 1:02d}</b><p>{_m(x)}</p></div>'
+            f'<div class="card ncard rv" style="--d:{i + k}">{_ico(icons[k], "nico", 160)}<b class="no">{k + 1:02d}</b><p>{_m(x)}</p></div>'
             for k, x in enumerate(e.items)) + "</div>"
     if lay == "checks":
         return '<ul class="checks">' + "".join(
@@ -180,8 +351,9 @@ def _el(e: Element, sid: str, i: int) -> str:
             f'<div class="card step rv" style="--d:{i + k}"><span class="sn">{k + 1}</span><b>{_m(r[0])}</b>'
             f'<em>{_m(r[1])}</em><p>{_m(r[2]) if len(r) > 2 else ""}</p></div>' for k, r in enumerate(e.rows)) + "</div>"
     if lay == "cards":
+        icons = _icons([" ".join(r) for r in e.rows], sid)
         return '<div class="rcards">' + "".join(
-            f'<div class="card rcard rv" style="--d:{i + k}"><span class="rn">{k + 1:02d}</span><b>{_m(r[0])}</b><p>{_m(r[1])}</p></div>'
+            f'<div class="card rcard rv" style="--d:{i + k}">{_ico(icons[k], "nico", 160)}<span class="rn">{k + 1:02d}</span><b>{_m(r[0])}</b><p>{_m(r[1])}</p></div>'
             for k, r in enumerate(e.rows)) + "</div>"
     if lay == "price":
         cards = []
@@ -247,8 +419,11 @@ def _cover(p: Proposal, tpl: T.Template, logo: str | None) -> str:
         f'<em>{html.escape(" ".join(words[-2:] if len(words) > 3 else words))}</em>'
     badge = '<div class="ribbon">INTERNAL DRAFT · 내부 검토본</div>' if p.mode == "internal" else ""
     lg = f'<img class="clogo rv" src="{logo}" alt="" style="--d:0">' if logo else ""
-    art = ('<div class="art" aria-hidden="true"><i class="o1"></i><i class="o2"></i><i class="o3"></i>'
-           '<div class="gift"><i class="lid"></i><i class="box"></i><i class="rib"></i></div></div>') if tpl.cover != "minimal" else ""
+    hero = (ART or {}).get("cover")
+    inner = (f'<img class="hero" src="{design_assets.data_uri(hero["path"], 760)}" alt="">' if hero else
+             '<div class="gift"><i class="lid"></i><i class="box"></i><i class="rib"></i></div>')
+    art = (f'<div class="art" aria-hidden="true"><i class="o1"></i><i class="o2"></i><i class="o3"></i>{inner}</div>'
+           if tpl.cover != "minimal" else (f'<div class="art-min" aria-hidden="true">{inner}</div>' if hero else ""))
     return (f'<div class="cover c-{tpl.cover}">{badge}{art}<div class="ctext">{lg}'
             f'<div class="kick rv" style="--d:1">PROPOSAL · {html.escape(p.subtitle)}</div>'
             f'<h1 class="rv" style="--d:2">{title}</h1>'
@@ -256,6 +431,8 @@ def _cover(p: Proposal, tpl: T.Template, logo: str | None) -> str:
 
 
 def _numbers(p: Proposal) -> str:
+    if (ART or {}).get("cover") is not None or (ART or {}).get("sections"):     # 학습한 자산이 있으면 허브 수치판 (자료 tipt2290618c)
+        return fig_html(*F.hub(p.facts, ART, _won_short), 1)
     f = p.facts
     cards = []
 
@@ -296,11 +473,21 @@ def _market(d: dict) -> str:
 def _closing(p: Proposal) -> str:
     c = (p.facts or {}).get("contact") or {}
     who = " · ".join(html.escape(str(v)) for v in (c.get("contact_name"), c.get("contact_phone"), c.get("contact_email")) if v)
+    end = (ART or {}).get("closing")
+    pic = f'<img class="cart rv" style="--d:3" src="{design_assets.data_uri(end["path"], 640)}" alt="">' if end else ""
     return (f'<div class="closing"><div class="kick rv" style="--d:0">THANK YOU</div><h1 class="rv" style="--d:1"><em>감사합니다</em></h1>'
-            f'<p class="rv" style="--d:2">{_m(p.company)}{(" · " + who) if who else ""}</p></div>')
+            f'<p class="rv" style="--d:2">{_m(p.company)}{(" · " + who) if who else ""}</p>{pic}</div>')
+
+
+ART: dict | None = None     # render() 가 한 부마다 정한다 (학습한 디자인 자산)
 
 
 def render(p: Proposal, tpl: T.Template | None = None, market: dict | None = None) -> str:
+    global ART
+    try:
+        ART = design_assets.for_proposal(p)
+    except Exception:  # noqa: BLE001
+        ART = None
     tpl = tpl or T.get(None)
     logo = T.logo_data_uri(tpl)
     slides = plan(p, market)
@@ -323,7 +510,9 @@ def render(p: Proposal, tpl: T.Template | None = None, market: dict | None = Non
                 body = _market(s.data) if s.kind == "market" else _numbers(p)
             label = (f"{no} " if no else "") + txt + (" (계속)" if s.cont else "")
             badge = '<span class="ibadge">내부용</span>' if s.internal else ""
-            inner = (f'<header class="rv" style="--d:0"><div class="kick">{f"<b>{no}</b>" if no else ""}{kick}{badge}</div>'
+            icon = None if (s.cont or s.kind != "section") else ((ART or {}).get("sections") or {}).get(s.sid)
+            ico = f'<img class="sicon" src="{design_assets.data_uri(icon["path"], 240)}" alt="">' if icon else ""
+            inner = (f'<header class="rv{" has-icon" if icon else ""}" style="--d:0">{ico}<div class="kick">{f"<b>{no}</b>" if no else ""}{kick}{badge}</div>'
                      f'<h2>{_title_html(txt)}{"<small> (계속)</small>" if s.cont else ""}</h2></header>'
                      f'<div class="body">{body}</div>')
         foot = _foot(p, tpl, n, total, logo) if s.kind != "cover" else ""
@@ -418,6 +607,38 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .step b{font-size:1.05em}.step em{font-style:normal;color:var(--p);font-weight:700;font-size:.92em}.step p{font-size:.86em;color:var(--mu)}
 .rcards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .rcard .rn{font-size:13px;font-weight:800;color:var(--p);letter-spacing:.08em}
+.fig{position:relative;width:1136px;max-width:100%;flex:none}.fg{position:absolute;display:block;box-sizing:border-box}
+.ft{display:flex;flex-direction:column;line-height:1.35;word-break:keep-all;overflow-wrap:break-word}.ft mark{font-size:inherit}
+.ncard,.rcard{position:relative}.nico{position:absolute;right:14px;top:12px;width:52px;height:52px;object-fit:contain}
+.path{display:flex;flex-direction:column}
+.prow{position:relative;list-style:none;display:grid;grid-template-columns:repeat(var(--per),1fr);padding:0 46px 18px;min-height:var(--rh,158px);margin:0;box-sizing:border-box}
+.prow.rev{direction:rtl}.prow.rev li{direction:ltr}
+.prail{position:absolute;top:58px;height:3px;background:var(--p);border-radius:2px}
+.arc{position:absolute;top:58px;width:46px;height:100%;border:3px solid var(--p);box-sizing:border-box}
+.arc.r{right:0;border-left:none;border-radius:0 80px 80px 0}.arc.l{left:0;border-right:none;border-radius:80px 0 0 80px}
+.prow li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:0 6px}
+.pc{font-size:12px;font-weight:800;color:var(--p);background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:2px 10px;height:22px;line-height:16px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pn{width:58px;height:58px;border-radius:50%;background:var(--bg);border:3px solid var(--p);display:grid;place-items:center;z-index:1;margin-top:2px;transition:transform .25s}
+.pn b{color:var(--p);font-weight:800}.pi{width:40px;height:40px;object-fit:contain}
+.prow li:hover .pn{transform:scale(1.1)}
+.prow li>b{font-size:.86em;line-height:1.35}
+.prow li small{font-size:.76em;color:var(--mu);line-height:1.35}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;align-items:start}
+.st{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.sl{font-size:.82em;font-weight:800;color:var(--p);letter-spacing:.02em;min-height:1.4em}
+.sc{position:relative;width:128px;height:128px;border-radius:50%;background:var(--sf);border:4px solid color-mix(in srgb,var(--p) 55%,var(--ln));display:grid;place-items:center;box-shadow:0 10px 24px -12px color-mix(in srgb,var(--p) 50%,transparent);transition:transform .25s}
+.st:hover .sc{transform:translateY(-4px)}
+.sc>b{font-size:40px;color:var(--p);font-weight:800}.si{width:84px;height:84px;object-fit:contain}
+.sc em,.ic em{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:800;color:var(--onp);background:var(--p);border-radius:999px;padding:2px 10px}
+.st>b{font-size:1.02em;margin-top:6px}.st p{font-size:.86em;color:var(--mu);line-height:1.5}
+.arrows .st:not(:last-child)::after{content:"";position:absolute;right:-30px;top:calc(1.4em + 72px);border-left:16px solid var(--p);border-top:10px solid transparent;border-bottom:10px solid transparent}
+.icards{display:grid;grid-template-columns:1fr 1fr;gap:22px 30px}
+.icard{display:flex;align-items:center;min-width:0}
+.ic{position:relative;flex:none;width:112px;height:112px;border-radius:50%;background:var(--bg);border:4px solid var(--p);display:grid;place-items:center;z-index:1;box-shadow:0 8px 20px -10px color-mix(in srgb,var(--p) 60%,transparent)}
+.ic>b{font-size:34px;color:var(--p);font-weight:800}.ci2{width:72px;height:72px;object-fit:contain}
+.it{flex:1;min-width:0;margin-left:-46px;padding:16px 24px 16px 62px;background:var(--sf);border:1px solid var(--ln);border-radius:20px 70px 70px 20px;min-height:112px;display:flex;flex-direction:column;justify-content:center;transition:transform .25s}
+.icard:hover .it{transform:translateX(4px)}
+.it b{font-size:1em;color:var(--ink);margin-bottom:4px}.it p{font-size:.86em;color:var(--mu);line-height:1.5}
 .rcard b{display:block;font-size:1.08em;margin:6px 0}.rcard p{font-size:.9em;color:var(--mu)}
 .pcards,.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 .lbl{font-size:.88em;color:var(--mu);font-weight:700}
@@ -480,7 +701,13 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .c-minimal .ctext{max-width:1000px}.c-minimal h1{font-size:54px}
 .c-minimal .meta{border-top:2px solid var(--ink);padding-top:18px;max-width:none;grid-template-columns:repeat(4,auto)}
 .ribbon{position:absolute;top:26px;left:80px;z-index:3;background:#2b2b2b;color:#fff;font-size:12px;font-weight:700;letter-spacing:.06em;border-radius:6px;padding:4px 10px}
-.closing{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px}
+.closing{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;position:relative}
+.hero{position:absolute;right:70px;top:150px;width:400px;height:420px;object-fit:contain;filter:drop-shadow(0 18px 30px rgba(0,0,0,.18));animation:float 6s ease-in-out infinite}
+.art-min{position:absolute;right:60px;top:0;bottom:0;width:440px}
+header.has-icon{position:relative;padding-right:110px}
+.sicon{position:absolute;right:0;top:-6px;width:84px;height:84px;object-fit:contain}
+.cart{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:400px;height:400px;object-fit:contain}
+.still .hero{animation:none}
 .closing h1{font-size:76px;letter-spacing:-.04em;font-weight:800}.closing p{font-size:18px;color:var(--mu)}
 /* 등장 애니메이션 */
 .rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--d,0)*80ms + .1s)}

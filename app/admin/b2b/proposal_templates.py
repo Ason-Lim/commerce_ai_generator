@@ -46,7 +46,9 @@ class Template(BaseModel):
     builtin: bool = False
     palette: Palette = Field(default_factory=Palette)
     font_css: str = FONT_STACK          # HTML 슬라이드 · PDF
-    font_office: str = "맑은 고딕"       # PPTX · Word · HWPX
+    # 2026-11-12: 제안서 글꼴 Pretendard (SIL OFL 1.1 — 상업 사용·문서 임베딩 가능, 글꼴 파일 단독 판매만 금지).
+    # 발표 PC 에 Pretendard 가 없으면 PowerPoint·한글이 다른 글꼴로 바꿔 보여 준다 → 설치하거나 PDF 로 제출.
+    font_office: str = "Pretendard"     # PPTX · Word · HWPX
     cover: Cover = "split"
     motion: bool = True                 # 등장 애니메이션 · 숫자 카운트업
     logo: str | None = None             # 템플릿 폴더 안 파일명

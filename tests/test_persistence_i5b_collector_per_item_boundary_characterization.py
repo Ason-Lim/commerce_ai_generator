@@ -154,19 +154,14 @@ def test_tb10_uses_provider_without_module_level_legacy_engine_authority() -> No
     assert "get_engine" in provider_imports
 
 
-def test_ddl_ensure_function_is_explicitly_separate_from_i5b_transaction_characterization() -> None:
-    fn = _function(_tree(NAVER_SHOPPING), "ensure_collector_v2_columns")
-    text = NAVER_SHOPPING.read_text(encoding="utf-8")
-    segment = "\n".join(
-        text.splitlines()[fn.lineno - 1 : getattr(fn, "end_lineno", fn.lineno)]
-    ).upper()
+# 2026-11-11: 실행 중 DDL(ensure_collector_v2_columns)은 8ae055c(I7-B2)에서 수집기 밖으로 분리됐다.
+# 예전 두 테스트(DDL 함수가 수집기 안에 있다고 가정)는 그 결정과 맞지 않아, 분리가 유지되는지만 확인한다.
+def test_runtime_ddl_stays_detached_from_the_collector() -> None:
+    names = {
+        node.name
+        for node in _tree(NAVER_SHOPPING).body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
 
-    assert "ALTER TABLE" in segment
-
-
-def test_ddl_boundary_is_not_used_as_evidence_for_per_item_update_atomicity() -> None:
-    ddl_fn = _function(_tree(NAVER_SHOPPING), "ensure_collector_v2_columns")
-
-    assert _loops(ddl_fn) == [] or "ALTER TABLE" in NAVER_SHOPPING.read_text(
-        encoding="utf-8"
-    ).upper()
+    assert "ensure_collector_v2_columns" not in names
+    assert "ALTER TABLE" not in NAVER_SHOPPING.read_text(encoding="utf-8").upper()

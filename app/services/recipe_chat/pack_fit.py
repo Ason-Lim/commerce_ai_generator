@@ -154,7 +154,9 @@ def arrange(cards: list[dict], need: dict) -> tuple[list[dict], str]:
             big = Decimal(2000) if want is None else max(Decimal(1000), want * 5)
             if bulk_word or total >= big:
                 group = 3
-                label = f"대용량 {size_text(pack)}" + (f" — 필요량 {need['display']}보다 훨씬 많아요" if want else "")
+                times = f"의 약 {(total / want).quantize(Decimal(1))}배라" if want else "라"
+                label = (f"대용량 {size_text(pack)} — 필요량 {need['display']}{times} 가정에서 쓰기엔 많아요(업소·대가족용)"
+                         if want else f"대용량 {size_text(pack)} — 업소·대가족용 포장")
             elif want is None:
                 group, label = 2, f"포장 {size_text(pack)} · 필요량이 정해지지 않아 비교하지 않았어요"
             elif want <= total <= max(want * 3, Decimal(500)):
@@ -171,7 +173,10 @@ def arrange(cards: list[dict], need: dict) -> tuple[list[dict], str]:
         card["fit_size_known"] = pack is not None
         card["_group"] = group
         kept.append(card)
-    kept.sort(key=lambda c: (c["_group"], c.get("_size", 0) if c["_group"] in (0, 3) else -c.get("_size", 0)))
+    # 2026-11-12 사용자 결정: 레시피 재료는 오늘·내일 요리하려고 찾는 것 — 같은 양 적합 단계 안에서는 빠른 배송
+    # (판매처의 로켓배송 표시) 상품을 먼저. 양 적합 단계(필요량 → 작은 포장 → 미확인 → 대용량)는 그대로 우선한다.
+    kept.sort(key=lambda c: (c["_group"], c["_group"] != 3 and c.get("rocket") is not True,
+                             c.get("_size", 0) if c["_group"] in (0, 3) else -c.get("_size", 0)))
     for c in kept:
         c.pop("_group", None)
         c.pop("_size", None)
@@ -215,6 +220,9 @@ def apply(blocks: list[dict], needs: dict | None) -> list[dict]:
         items = block["data"].get("items") or []
         if by_order:
             key = keys[n]
+            if needs[key].get("skip"):     # 2026-11-12: 필요량이 없는 검색어(손님이 말한 상품)는 그대로 — 다른 재료 머리말이 붙지 않게
+                out.append(block)
+                continue
         else:
             flat_titles = [re.sub(r"\s+", "", it.get("title") or "") for it in items]
             key = max(keys, key=lambda k: sum(_search_word(k) in t for t in flat_titles))
@@ -226,7 +234,11 @@ def apply(blocks: list[dict], needs: dict | None) -> list[dict]:
             known = it.pop("fit_size_known")
             it["reason"] = label
             it.pop("reasoning", None)
-            it["why"] = [{"text": label, "basis": "calc"}] if known else []
+            # 2026-11-12: 대용량은 추천 이유가 아니라 주의 — '왜 추천했나요'에 넣지 않고 한 줄로만
+            it["why"] = [{"text": label, "basis": "calc"}] if known and it.get("fit") != "bulk" else []
+            if it.get("rocket") is True and it.get("fit") != "bulk":   # 2026-11-12: 빠른 배송 표시 (도착일 약속은 아님)
+                it["why"].append({"text": "쿠팡 로켓배송 표시 — 요리 날짜에 맞춰 받기 쉬운 편 · 도착일은 판매처에서 확인",
+                                  "basis": "mall"})
             it["role"] = it["role_label"] = None
         from app.services.chat import blocks as B
 

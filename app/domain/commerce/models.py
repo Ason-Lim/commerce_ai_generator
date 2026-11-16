@@ -61,6 +61,7 @@ class Product(_Model):
     title: str
     image_url: Optional[str] = None
     weight_g: Optional[float] = None
+    volume_ml: Optional[float] = None        # 2026-11-12: 액체 용량 (중량과 섞지 않음)
     unit_count: Optional[int] = None
     seller_claims: list[str] = Field(default_factory=list)   # 판매자 표기 (근거 아님)
 
@@ -73,9 +74,12 @@ class Offer(_Model):
     shipping_krw: Optional[int] = None       # None = 미확인
     total_krw: Optional[int] = None          # 배송비 미확인이면 None
     per100g_krw: Optional[int] = None
+    per100ml_krw: Optional[int] = None       # 2026-11-12
     per_unit_krw: Optional[int] = None
     rocket: Optional[bool] = None
     free_shipping: Optional[bool] = None
+    # 2026-11-13: 배송비 상태 — confirmed(주문 단계 계산) · free_label(무료 표시) · fee_label(적힌 금액) · unknown
+    shipping_status: Optional[Literal["confirmed", "free_label", "fee_label", "unknown"]] = None
     link_type: Literal["affiliate", "direct", "partner"] = "direct"
     affiliate_program: Optional[str] = None
     opens_directly: bool = False             # 쇼핑커넥트: 발급 링크로 곧장 이동 (/go 경유 없음 → 자체 클릭 집계 누락)
@@ -110,7 +114,7 @@ class Disclosure(_Model):
 
 
 class ShoppingItem(_Model):
-    section: Literal["picks", "others", "partner_list", "connect"]
+    section: Literal["picks", "others", "partner_list", "frozen_list", "connect"]   # frozen_list: 2026-11-11
     product: Product
     offer: Offer
     score: ScoreDetail

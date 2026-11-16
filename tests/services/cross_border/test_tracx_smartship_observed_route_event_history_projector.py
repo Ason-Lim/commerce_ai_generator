@@ -1,6 +1,5 @@
 import ast
 import inspect
-import subprocess
 from collections.abc import Mapping
 from dataclasses import FrozenInstanceError
 from pathlib import Path
@@ -531,11 +530,5 @@ def test_at_47_canonical_models_are_reused_without_parallel_classes() -> None:
     assert isinstance(project(response()), ObservedRouteEventHistory)
 
 
-def test_at_48_pending_scope_is_exactly_two_files() -> None:
-    status = subprocess.run(
-        ["git", "status", "--porcelain"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.splitlines()
-    assert status == [f"?? {PROJECTOR_PATH}", f"?? {TEST_PATH}"]
+# 2026-11-11: test_at_48_pending_scope_is_exactly_two_files 삭제 — 커밋 전 작업 범위(git status 에 새 파일 2개만)를
+# 확인하던 일회성 검사라 커밋 뒤에는 항상 실패한다.

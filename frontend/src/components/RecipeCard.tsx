@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, BookOpen, Check, CheckCircle2, ChefHat, Clock, Flame, Lightbulb, ListChecks, Loader2, ShoppingBasket, Wrench } from "lucide-react";
 import type { RecipeCardBlock, RecipeEasyStep, RecipeEasyView, RecipeGeneralTips, RecipeHero, RecipeStockStatus, RecipeSupplement } from "../types/blocks";
 import { fetchRecipeEasy } from "../api/client";
@@ -6,7 +6,7 @@ import { useChatActions } from "./ChatActions";
 import { cx } from "../lib/format";
 
 /**
- * 레시피 카드 (commerce /api/chat 의 recipe_card 블록). 순서: 완성 사진 → 특징·전체 진행 → 재료 → 부족한 재료 → 만드는 순서 → 팁 → 출처.
+ * 레시피 카드 (commerce /api/chat 의 recipe_card 블록). 순서: 완성 사진 → 특징·전체 진행 → 만드는 순서 → 재료 → 부족한 재료 → 팁 → 출처 (2026-11-12 사용자 요청).
  * - 사진: 공공데이터 사진(이용 조건 확인한 출처만), 없으면 'AI 생성 예시 이미지' 표시를 단 AI 이미지.
  * - 만드는 순서(easy-v2): 번호 목록. 단계마다 할 일 + 완료 신호(원문 구절이면 '원문', 아니면 '일반 제안'),
  *   원문 신호는 원문 구절 그대로 보여 준다(바꿔 쓴 문장은 쓰지 않음, easy-v3).
@@ -116,7 +116,7 @@ function EasyStep({ s, last }: { s: RecipeEasyStep; last: boolean }) {
 
 export function RecipeCard({ block }: { block: RecipeCardBlock }) {
   const d = block.data;
-  const { send, busy } = useChatActions();
+  const { send, shop, basket, busy } = useChatActions();
   const [easy, setEasy] = useState<RecipeEasyView | null>(d.easy ?? null);
   const [tips, setTips] = useState<RecipeGeneralTips | null>(d.general_tips ?? null);
   const [hero, setHero] = useState<RecipeHero | null>(d.hero ?? null);
@@ -164,6 +164,15 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
   const [marked, setMarked] = useState<Record<string, RecipeStockStatus>>({});
   const keyOf = (i: { id: string | null; name: string }) => i.id ?? i.name;
   const total = d.ingredients.length;
+  // 2026-11-12: 만드는 순서가 먼저라 카드가 길면 재료가 첫 화면에 안 보인다 — 순서 위의 작은 바로가기로 내려간다
+  const ingredientsRef = useRef<HTMLElement>(null);
+  const goIngredients = () => {
+    const el = ingredientsRef.current;
+    if (!el) return;
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    el.focus({ preventScroll: true });
+  };
   const ready = d.ingredients.filter((i) => checked.has(keyOf(i))).length;
   const toggle = (key: string) =>
     setChecked((prev) => {
@@ -173,11 +182,16 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
     });
   const statusOf = (i: { id: string | null; name: string; status?: RecipeStockStatus | null }) =>
     marked[keyOf(i)] ?? i.status ?? null;
+  // 2026-11-16: 누르면 기록과 함께 그 재료 상품이 '부족한 재료 장보기' 칸에 바로 담긴다. 다시 누르면 취소(칸에서도 빠짐)
   const markShort = (i: { id: string | null; name: string; quantity_known?: boolean }) => {
     const absent = !i.quantity_known;
     const text = absent ? `${i.name} 없어요` : `${i.name} 부족해요`;
     setMarked((m) => ({ ...m, [keyOf(i)]: absent ? "absent" : "short" }));
-    send({ message: text }, text);
+    shop({ message: text }, i.name);
+  };
+  const unmark = (i: { id: string | null; name: string }) => {
+    setMarked((m) => ({ ...m, [keyOf(i)]: "enough" as RecipeStockStatus }));
+    shop({ message: `${i.name} 충분해요` }, i.name, true);
   };
 
   // 다른 인분일 때 한 '부족' 답변은 지금 부족으로 세지 않고 '다시 확인'으로 따로 보여 준다 (기록은 서버에 그대로)
@@ -234,7 +248,70 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
           </div>
         </header>
 
-        <section aria-label="재료" className="rounded-2xl border border-line">
+        {/* 2026-11-12: 만드는 순서를 먼저, 재료·부족한 재료는 그 아래 (사용자 요청) */}
+        <section aria-label="만드는 순서" className="space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="flex items-center gap-1.5 text-sm font-bold">
+              <BookOpen size={15} aria-hidden />만드는 순서
+            </h4>
+            {total > 0 && (
+              <button type="button" onClick={goIngredients}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-accent underline-offset-2 hover:underline">
+                <ListChecks size={13} aria-hidden />재료 {total}개 보기
+              </button>
+            )}
+            {easyPending && (
+              <span className="flex items-center gap-1.5 text-xs text-ink3" aria-live="polite">
+                <Loader2 size={14} className="animate-spin" aria-hidden />읽기 쉽게 다듬고 있어요
+              </span>
+            )}
+          </div>
+          {showEasy ? (
+            <ol className="divide-y divide-line">
+              {easy!.steps.map((s, k) => <EasyStep key={s.no} s={s} last={k === easy!.steps.length - 1} />)}
+            </ol>
+          ) : (
+            <ol className="divide-y divide-line">
+              {d.steps.map((s) => (
+                <li key={s.no} className="flex gap-3 py-3 first:pt-1 last:pb-1">
+                  <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-surface">{s.no}</span>
+                  <p className="min-w-0 flex-1 text-[15px] leading-relaxed">{s.text}</p>
+                  <Photo src={s.image} alt={`${s.no}단계 사진`} className="h-16 w-24 shrink-0 rounded-xl object-cover sm:h-20 sm:w-28" />
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        {d.source_gap && (
+          <section aria-label="원문에 없는 단계" className="rounded-2xl border border-dashed border-line px-4 py-3">
+            <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
+              <AlertTriangle size={15} className="text-warn" aria-hidden />{d.source_gap}
+              {supp && <span className="tag bg-reviewSoft text-review">{supp.label}</span>}
+            </p>
+            {supp ? (
+              <>
+                <p className="mt-1 text-xs leading-relaxed text-ink3">원문 단계 다음에 이어질 내용을 AI가 일반 조리 제안으로 보충했어요. 원문에는 없는 내용이에요.</p>
+                <ol className="mt-1 divide-y divide-line">
+                  {supp.steps.map((st, k) => (
+                    <li key={st.title} className="flex gap-3 py-3 last:pb-1">
+                      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-review text-xs font-bold text-review">{d.steps.length + k + 1}</span>
+                      <p className="min-w-0 flex-1 text-[15px] leading-relaxed"><b className="font-semibold">{st.title}</b> — {st.text}</p>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            ) : suppPending ? (
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-ink3" aria-live="polite">
+                <Loader2 size={14} className="animate-spin" aria-hidden />빠진 단계를 일반 조리 제안으로 보충하고 있어요
+              </p>
+            ) : (
+              <p className="mt-1 text-xs leading-relaxed text-ink3">이 단계는 원문에 없어 안내하지 못했어요. 비슷한 다른 원문 레시피도 살펴보세요.</p>
+            )}
+          </section>
+        )}
+
+        <section ref={ingredientsRef} tabIndex={-1} aria-label="재료" className="scroll-mt-24 rounded-2xl border border-line outline-none">
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
             <h4 className="flex items-center gap-1.5 text-sm font-bold">
               <ListChecks size={15} className="shrink-0" aria-hidden /><span className="shrink-0">재료</span>
@@ -297,11 +374,17 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
 
                     </span>
                   </button>
-                  {(!(st === "short" || st === "absent") || staleOf(i)) && (
+                  {(!(st === "short" || st === "absent") || staleOf(i)) ? (
                     <button type="button" disabled={busy} onClick={() => markShort(i)}
-                      aria-label={`${i.name} ${ask}라고 알리기`}
+                      aria-label={`${i.name} ${ask}라고 알리고 상품 담기`}
                       className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs text-ink2 transition hover:border-ink3 hover:text-ink disabled:opacity-40">
                       {ask}
+                    </button>
+                  ) : (
+                    <button type="button" disabled={busy} onClick={() => unmark(i)} aria-pressed="true"
+                      aria-label={`${i.name} ${st === "absent" ? "없음" : "부족"} 취소${basket.includes(i.name) ? " · 장보기에서 빼기" : ""}`}
+                      className="shrink-0 rounded-full border border-warn/40 bg-warnSoft px-2.5 py-1 text-xs font-semibold text-warn transition hover:opacity-80 disabled:opacity-40">
+                      {st === "absent" ? "없음" : "부족"} ✕
                     </button>
                   )}
                 </li>
@@ -331,74 +414,20 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
           {shortage.length > 0 ? (
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {shortage.map((n) => <span key={n} className="tag bg-surface text-ink">{n}</span>)}
-              <button type="button" disabled={busy} onClick={() => send({ message: "부족한 재료 상품 보여줘" }, "부족한 재료 상품 보여줘")}
+              {/* 장보기 칸에 이미 다 담겼으면 따로 찾는 버튼은 숨긴다 (예전 답변으로 부족한 재료만 남았을 때만 보임) */}
+              {shortage.some((n) => !basket.includes(n)) && <button type="button" disabled={busy} onClick={() => send({ message: "부족한 재료 상품 보여줘" }, "부족한 재료 상품 보여줘")}
                 className="ml-auto rounded-full bg-ink px-3.5 py-1.5 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-30">
                 부족한 재료 상품 보기
-              </button>
+              </button>}
             </div>
           ) : (
             <p className="mt-1 text-xs leading-relaxed text-ink3">
-              모자라거나 없는 재료만 오른쪽 '부족해요'·'없어요'를 눌러 알려 주세요. 누르지 않은 재료는 부족으로 보지 않아요.
+              모자라거나 없는 재료만 오른쪽 '부족해요'·'없어요'를 눌러 알려 주세요. 누르면 그 재료 상품이 아래 '부족한 재료 장보기' 칸에
+              바로 담기고, 다시 누르면 빠져요. 누르지 않은 재료는 부족으로 보지 않아요.
               왼쪽 동그라미는 준비 체크(저장 안 함)이고, 남은 양은 "생크림 100mL 있어요"처럼 말씀해 주시면 기록해요.
             </p>
           )}
         </section>
-
-        <section aria-label="만드는 순서" className="space-y-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="flex items-center gap-1.5 text-sm font-bold">
-              <BookOpen size={15} aria-hidden />만드는 순서
-            </h4>
-            {easyPending && (
-              <span className="flex items-center gap-1.5 text-xs text-ink3" aria-live="polite">
-                <Loader2 size={14} className="animate-spin" aria-hidden />읽기 쉽게 다듬고 있어요
-              </span>
-            )}
-          </div>
-          {showEasy ? (
-            <ol className="divide-y divide-line">
-              {easy!.steps.map((s, k) => <EasyStep key={s.no} s={s} last={k === easy!.steps.length - 1} />)}
-            </ol>
-          ) : (
-            <ol className="divide-y divide-line">
-              {d.steps.map((s) => (
-                <li key={s.no} className="flex gap-3 py-3 first:pt-1 last:pb-1">
-                  <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-surface">{s.no}</span>
-                  <p className="min-w-0 flex-1 text-[15px] leading-relaxed">{s.text}</p>
-                  <Photo src={s.image} alt={`${s.no}단계 사진`} className="h-16 w-24 shrink-0 rounded-xl object-cover sm:h-20 sm:w-28" />
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-
-        {d.source_gap && (
-          <section aria-label="원문에 없는 단계" className="rounded-2xl border border-dashed border-line px-4 py-3">
-            <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
-              <AlertTriangle size={15} className="text-warn" aria-hidden />{d.source_gap}
-              {supp && <span className="tag bg-reviewSoft text-review">{supp.label}</span>}
-            </p>
-            {supp ? (
-              <>
-                <p className="mt-1 text-xs leading-relaxed text-ink3">원문 단계 다음에 이어질 내용을 AI가 일반 조리 제안으로 보충했어요. 원문에는 없는 내용이에요.</p>
-                <ol className="mt-1 divide-y divide-line">
-                  {supp.steps.map((st, k) => (
-                    <li key={st.title} className="flex gap-3 py-3 last:pb-1">
-                      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-review text-xs font-bold text-review">{d.steps.length + k + 1}</span>
-                      <p className="min-w-0 flex-1 text-[15px] leading-relaxed"><b className="font-semibold">{st.title}</b> — {st.text}</p>
-                    </li>
-                  ))}
-                </ol>
-              </>
-            ) : suppPending ? (
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-ink3" aria-live="polite">
-                <Loader2 size={14} className="animate-spin" aria-hidden />빠진 단계를 일반 조리 제안으로 보충하고 있어요
-              </p>
-            ) : (
-              <p className="mt-1 text-xs leading-relaxed text-ink3">이 단계는 원문에 없어 안내하지 못했어요. 비슷한 다른 원문 레시피도 살펴보세요.</p>
-            )}
-          </section>
-        )}
 
         {d.tips.length > 0 && (
           <section aria-label="레시피 팁" className="rounded-2xl bg-accentSoft/50 px-4 py-3">
@@ -430,8 +459,20 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
               외부 원문의 분량을 옮긴 것이 아니에요.
               {d.generated && ` AI 생성: ${[d.generated.servings && `${d.generated.servings} 기준`, `재료 ${d.generated.ingredients}개`,
                 `${d.generated.steps}단계`, d.generated.at, d.generated.model].filter(Boolean).join(" · ")}.`}
+              {d.generated?.review?.status === 'ok' && ' 다른 AI가 분량·익힘·순서를 검토했고 이견이 없었어요.'}
+              {d.generated?.review?.status === 'failed' && ' 다른 AI의 검토는 이번에 되지 않았어요.'}
+              {hero?.kind === "ai" && " 맨 위 사진은 AI가 만든 예시 이미지예요. 실제 결과와 다를 수 있어요."}
             </p>
-          ) : (
+          ) : null}
+          {isAi && d.generated?.review?.status === 'notes' && d.generated.review.notes.length > 0 ? (
+            <div className="mt-1">
+              <p className="font-semibold text-ink2">검토 AI 의견 (한 번 고쳐 쓴 뒤에도 남은 의견)</p>
+              <ul className="list-disc pl-4">
+                {d.generated.review.notes.map(n => <li key={n}>{n}</li>)}
+              </ul>
+            </div>
+          ) : null}
+          {isAi ? null : (
           <p>
             출처: {provider} 「{d.title}」 공공데이터.
             {showEasy || supp
