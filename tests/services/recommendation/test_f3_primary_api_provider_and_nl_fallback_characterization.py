@@ -255,6 +255,7 @@ class _FallbackEngine:
 def test_recommendations_nl_exception_executes_only_one_fallback_sort(
     monkeypatch,
 ):
+    monkeypatch.setenv("RECO_DB_FALLBACK", "1")   # 2026-11-16 R3 ④: 예비 경로는 켰을 때만 (예전 동작 특성 고정)
     rank_calls = _install_rank_counter(
         monkeypatch
     )
@@ -301,6 +302,7 @@ def test_recommendations_nl_exception_executes_only_one_fallback_sort(
 
 
 def test_nl_db_fallback_price_order_does_not_redefine_score(monkeypatch):
+    monkeypatch.setenv("RECO_DB_FALLBACK", "1")
     monkeypatch.setattr(
         main, "run_recommendation_pipeline", lambda **kwargs: 1 / 0
     )

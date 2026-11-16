@@ -112,6 +112,9 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         recommendation_path = result.get("recommendation_path")
         if not isinstance(recommendation_path, str):
             recommendation_path = None
+        if recommendation_path == "provider_failed":
+            # 2026-11-16 R3 ④: 주 경로 실패 — 예비 경로 없이 예외와 같은 '불러오지 못했어요'
+            raise RuntimeError("shopping provider failed (no db fallback)")
         cards = []
         for it in (result.get("items") or [])[:req.limit]:
             card = dict(explain.enrich(item_to_card(it, 0), it), _q=query)

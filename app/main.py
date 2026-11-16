@@ -64,6 +64,10 @@ SHOW_DEBUG_NOVELTY = os.getenv("SHOW_DEBUG_NOVELTY", "false").lower() == "true"
 NL_PATH_CANONICAL = "canonical_provider"
 NL_PATH_DB_FALLBACK = "db_fallback"
 NL_PATH_NOT_CALLED = "not_called"
+# 2026-11-16 R3 결정 ④: 주 경로(쿠팡 실시간)가 실패하면 DB 예비 경로(07-16 수집 과거 가격·과일 7종)를 보여 주지 않고
+# 빈 결과 + provider_failed 를 돌려준다 — 화면은 "불러오지 못했어요" + 네이버쇼핑 검색 링크.
+# db_fallback_recommendations 함수는 관리자 근거 화면·연구 스크립트용으로 남긴다. RECO_DB_FALLBACK=1 이면 예전 동작.
+NL_PATH_PROVIDER_FAILED = "provider_failed"
 NL_PATH_UNKNOWN = "UNKNOWN"
 
 # 2026-11-10 사용자 결정: 방문·클릭(행동 신호)은 당분간 DB 예비 경로 순위에 넣지 않는다
@@ -254,7 +258,19 @@ def natural_language_recommendations(
     except Exception as e:
         print("[Recommendation Pipeline V8 Error]", e)
 
-    return db_fallback_recommendations(q=q, priority=priority, session_id=session_id)
+    if db_fallback_enabled():
+        return db_fallback_recommendations(q=q, priority=priority, session_id=session_id)
+    return {
+        "summary": "지금 상품을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+        "items": [],
+        "recommendation_path": NL_PATH_PROVIDER_FAILED,
+        "error": "provider_unavailable",
+    }
+
+
+def db_fallback_enabled() -> bool:
+    """2026-11-16 R3 ④: 고객 경로의 DB 예비 경로는 기본으로 끔 (RECO_DB_FALLBACK=1 일 때만 예전 동작)."""
+    return os.getenv("RECO_DB_FALLBACK", "0") == "1"
 
 
 def db_fallback_recommendations(

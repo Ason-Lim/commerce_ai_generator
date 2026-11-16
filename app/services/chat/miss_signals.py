@@ -9,6 +9,7 @@
 - requery      상품을 보여 준 뒤 3분 안에 손님이 비슷한 말로 다시 찾거나 '다른 거'를 요청
 - review_left  레시피 카드에 고쳐 쓴 뒤에도 '검토 AI 의견'이 남음
 - intent_rejected  문장 뜻 읽기(LLM) 답이 검사에서 버려져 규칙으로 넘어감
+- source_failed    쿠팡(주 경로)을 불러오지 못함 — 2026-11-16 R3 ④ 로 DB 예비 경로가 없어져 그대로 안내만 나감
 
 저장: var/signals/YYYY-MM-DD.jsonl (한 줄에 신호 하나). 데이터베이스를 바꾸지 않고, 실패해도 대화는 그대로 진행된다.
 개인정보: 손님 문장은 앞 200자만, 세션 id 는 앞 8자만 남긴다. 베타 전에 개인정보 처리방침에 '서비스 개선을 위한 대화 기록'을 적는다.
@@ -133,6 +134,8 @@ def _observe(sid: str, text: str, response: dict) -> None:
         if len(_LAST) > 5000:                       # 오래된 세션 정리
             for k in sorted(_LAST, key=lambda k: _LAST[k]["at"])[:1000]:
                 _LAST.pop(k, None)
+    elif ("product" in stage or "shop" in stage) and "불러오지 못했" in dumped:
+        record("source_failed", text=text, sid=sid, stage=stage, what="상품")
     elif ("product" in stage or "shop" in stage) and "찾지 못했" in dumped:
         record("zero", text=text, sid=sid, stage=stage, what="상품")
     if "recipe_other" in stage and "찾지 못했" in dumped:
