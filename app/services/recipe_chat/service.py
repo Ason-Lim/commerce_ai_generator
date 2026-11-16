@@ -64,6 +64,9 @@ AI_RECIPE_RE = re.compile(r"^\s*(.{1,30}?)\s*AI\s*제안\s*레시피")
 PUBLIC_VIEW_RE = re.compile(r"^\s*(.{1,40}?)\s*공공\s*레시피\s*(?:보기|보여\s*줘|열어\s*줘)\s*$")
 # 2026-11-12: 추천 레시피 뒤 "블로그·카페·유튜브·인스타그램 레시피도 소개해 드릴까요?" 에 대한 답
 RECOMMENDED_RE = re.compile(r"^\s*(.{1,30}?)\s*추천\s*레시피\s*보기\s*$")
+# 2026-11-16 '유자 2kg 기준으로 바꿔 줘' — 분량 답의 줄을 누르거나 직접 말하면 그 재료 무게에 맞춰 레시피 분량을 다시 계산
+WEIGHT_SCALE_RE = re.compile(r"^\s*(?P<name>[가-힣A-Za-z ]{1,15}?)\s*(?P<num>\d+(?:\.\d+)?)\s*(?P<unit>kg|g|mL|ml|L|킬로|리터)\s*"
+                             r"(?:기준으로|기준|으로|로|에)\s*(?:바꿔|맞춰|계산|다시|만들|담그)")
 OTHER_RECIPES_RE = re.compile(r"^\s*(?:네[,\s]*|응[,\s]*)?(.{1,30}?)\s*다른\s*레시피(?:도)?\s*(?:보여\s*줘|보기|소개해\s*줘|알려\s*줘)")
 YES_RE = re.compile(r"^\s*(?:네|예|응|어|좋아요?|그래요?|보여\s*줘|소개해\s*줘|부탁해요?)[\s.!~]*$")
 # 2026-11-12 실제 화면: 요리 확인 질문 뒤 '가성비 생새우'가 요리 설명으로 읽혀 레시피가 만들어졌다
@@ -351,6 +354,11 @@ class RecipeChat:
         # 2026-11-01 (customer check): "카다이프 보유량 얼마로 기록돼 있어요?" — the stored amount first, the requirement apart
         if parsing.is_stock_query(text) and "인분" not in text:
             return self._stock_query(entry, text, state, recipe_sid, db)
+        weight = WEIGHT_SCALE_RE.match(text)
+        if weight:
+            turn = self._weight_scale(entry, weight, state)
+            if turn is not None:
+                return turn
         basis = CUP_BASIS_RE.search(text)
         if basis and entry.has_cups():
             return self._cup_basis(entry, basis.group(1), state, db, recipe_sid)
@@ -1053,8 +1061,10 @@ class RecipeChat:
         rows = [f"- {main[0]} **{dish_mod.fmt(main[1] * k, main[2])}** + "
                 + " + ".join(f"{n} **{dish_mod.fmt(v * k, u)}**" for n, v, u in others) for k in (1, 2, 3)]
         note = ("손질 전 무게로 사면 씨·꼭지·껍질을 빼고 줄어드니 조금 넉넉히 사세요. "
-                "아래 레시피는 첫 줄 분량 기준이에요(AI 작성·검토).")
+                "아래 레시피는 첫 줄 분량 기준이에요(AI 작성·검토). 다른 분량은 아래 칩을 누르면 재료 전체를 그 무게로 계산해 드려요.")
         turn.blocks.insert(at, B.text(head + "\n" + "\n".join(rows) + "\n" + note))
+        # 2026-11-16: 줄을 누르면(칩) 그 무게에 맞춰 레시피 분량을 다시 계산
+        turn.blocks.insert(at + 1, B.chips([f"{main[0]} {dish_mod.fmt(main[1] * k, main[2])} 기준으로 바꿔 줘" for k in (2, 3)]))
         return turn
 
     def _with_ingredient_products(self, turn: RecipeTurn, query: str | None = None) -> RecipeTurn:
@@ -1388,6 +1398,58 @@ class RecipeChat:
         if card.get("shortage"):
             chips.append("부족한 재료 상품 보여줘")
         return chips[:3]
+
+    def _weight_scale(self, recipe, m, state):
+        """'유자 2kg 기준으로 바꿔 줘' — 그 재료의 레시피 무게(원문 분량) 대비 배수로 모든 재료를 다시 계산해 짧은 목록으로.
+        카드와 남은 양 기록은 원문 분량 그대로(인분 바꾸기와 같은 방식). 레시피에 그 재료가 무게로 없으면 None(다른 처리로)."""
+        from fractions import Fraction
+
+        from app.services.recipe_chat import dish_shopping as dish_mod
+        from app.services.recipe_chat.recipes import display_amount
+
+        want_name = re.sub(r"\s+", "", m.group("name"))
+        unit = {"킬로": "kg", "리터": "L", "ml": "mL"}.get(m.group("unit"), m.group("unit"))
+        try:
+            target = Fraction(m.group("num")) * (1000 if unit in ("kg", "L") else 1)
+        except (ValueError, ZeroDivisionError):
+            return None
+        base_unit = "g" if unit in ("kg", "g") else "mL"
+        main = None
+        for i in recipe.ingredients:
+            name = re.sub(r"\(.*?\)", "", i["name"]).strip()
+            got = re.fullmatch(r"\s*(?:약\s*)?(\d+(?:\.\d+)?)\s*(g|kg|ml|mL|L)\s*", str(i["amount"] or ""))
+            if not got or not name or re.sub(r"\s+", "", name) not in want_name and want_name not in re.sub(r"\s+", "", name):
+                continue
+            v, u = Fraction(got.group(1)), got.group(2)
+            v, u = (v * 1000, "g") if u == "kg" else (v * 1000, "mL") if u == "L" else (v, "mL" if u.lower() == "ml" else u)
+            if u == base_unit and v > 0:
+                main = (name, v)
+                break
+        if main is None or target <= 0:
+            return None
+        factor = target / main[1]
+        if factor == 1:
+            head = f"**{main[0]} {dish_mod.fmt(Decimal(main[1].numerator) / main[1].denominator, base_unit)}**이면 레시피 분량 그대로예요."
+            lines = []
+        else:
+            shown = dish_mod.fmt(Decimal(target.numerator) / target.denominator, base_unit)
+            times = f"{float(factor):g}"
+            head = f"**{main[0]} {shown}** 기준 재료예요. 레시피 분량에 **{times}배**를 곱했어요."
+            lines = []
+            for i in recipe.ingredients:
+                scaled = servings_mod.scale(i["amount"], factor)
+                lines.append(f"- {i['name']} **{scaled}** (레시피 {display_amount(i['amount'])})" if scaled
+                             else f"- {i['name']} {display_amount(i['amount']) or '분량 표기 없음'} (그대로)")
+        note = ("'약간'과 숟가락·컵 단위는 그대로 두었어요. 조리 순서는 같고, 양이 많으면 끓이거나 졸이는 시간이 길어질 수 있어요. "
+                "레시피 카드와 남은 양 기록은 원래 분량 그대로예요.")
+        main_now = dish_mod.fmt(Decimal(main[1].numerator) / main[1].denominator, base_unit)
+        chips = [f"{main[0]} {dish_mod.fmt(Decimal(main[1].numerator * k) / main[1].denominator, base_unit)} 기준으로 바꿔 줘"
+                 for k in (2, 3) if main[1] * k != target]
+        if factor != 1:
+            chips = [f"{main[0]} {main_now} 기준으로 바꿔 줘"] + chips
+        state["mode"] = "recipe"
+        return RecipeTurn([B.text(head + ("\n" + "\n".join(lines) if lines else "") + "\n\n" + note), B.chips(chips[:3])],
+                          state, "recipe_weight_scale")
 
     def _servings(self, recipe, target, state):
         """인분 변경: a compact ingredient list (not the whole recipe again); the card keeps the choice."""

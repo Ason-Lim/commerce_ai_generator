@@ -212,3 +212,22 @@ def test_a_named_recipe_shows_only_posts_with_that_name(make_ai):
     form = next(b for b in turn.blocks if b["type"] == "clarify_form")["data"]
     hrefs = [o["href"] for o in form["questions"][0]["options"]]
     assert hrefs == ["https://blog.naver.com/a/1"]
+
+
+def test_tapping_a_weight_row_rescales_the_whole_recipe(make_ai):
+    """2026-11-16 분량 줄 누르기: '유자 2kg 기준으로 바꿔 줘' → 모든 재료를 2배로 (숟가락 단위도 수치는 곱함 · '약간'은 그대로).
+    카드와 남은 양 기록은 원래 분량 그대로. 레시피에 무게로 없는 재료면 이 처리를 하지 않는다."""
+    svc, _calls = make_ai(YUJA, known=True, core=["유자", "설탕"])
+    turn = svc.recipe.handle("유자청 만들려면 몇 kg 필요해?", None, {}, "x", None)
+    chips = [c for b in turn.blocks if b["type"] == "chips" for c in b["data"]["items"]]
+    assert "유자 2kg 기준으로 바꿔 줘" in chips and "유자 3kg 기준으로 바꿔 줘" in chips
+    nxt = svc.recipe.handle("유자 2kg 기준으로 바꿔 줘", None, turn.state, "x", None)
+    md = next(b for b in nxt.blocks if b["type"] == "text")["data"]["md"]
+    assert nxt.stage == "recipe_weight_scale" and "**유자 2kg** 기준 재료예요. 레시피 분량에 **2배**" in md, md
+    assert "- 유자 **2kg** (레시피 1kg)" in md and "- 설탕 **2kg** (레시피 1kg)" in md
+    half = svc.recipe.handle("유자 1.5kg으로 맞춰 줘", None, turn.state, "x", None)
+    assert "**1.5배**" in next(b for b in half.blocks if b["type"] == "text")["data"]["md"]
+    back = svc.recipe.handle("유자 1kg 기준으로 바꿔 줘", None, turn.state, "x", None)
+    assert "레시피 분량 그대로예요" in back.blocks[0]["data"]["md"]
+    other = svc.recipe.handle("사과 2kg 기준으로 바꿔 줘", None, turn.state, "x", None)   # 레시피에 없는 재료
+    assert other is None or other.stage != "recipe_weight_scale"
