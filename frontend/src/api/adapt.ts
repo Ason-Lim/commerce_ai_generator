@@ -13,6 +13,15 @@ import { parseWeightFromTitle, per100g, volumeLabel, weightLabel, won } from "..
 
 export const toChip = (c: string | ChipItem): ChipItem => (typeof c === "string" ? { label: c } : c);
 
+/** 2026-11-13: 배송비 칸 문구 — '로켓배송 · 무료배송'처럼 판매처 표시를 그대로 */
+export function shipText(status: string | null | undefined, fee: number | null | undefined, rocket?: boolean | null): string | null {
+  const r = rocket ? "로켓배송 · " : "";
+  if (status === "free_label") return `${r}무료배송`;
+  if (status === "fee_label" && fee) return `${r}배송비 ${won(fee)}`;
+  if (rocket) return "로켓배송 · 배송비는 판매처에서 확인";
+  return null;
+}
+
 export function cardToCandidate(c: ApiCard): Candidate {
   // 2026-11-13: 서버가 배송비 상태를 주면 총액은 'confirmed' 일 때만. 무료 표시·적힌 배송비는 총액으로 합치지 않는다.
   const status = c.shipping_status ?? null;
@@ -34,6 +43,7 @@ export function cardToCandidate(c: ApiCard): Candidate {
     shippingFee: ship,
     total,
     shippingStatus: status,
+    rocket: c.rocket ?? null,
     weightLabel: weightLabel(g) ?? volumeLabel(c.volume_ml),
     per100g: c.per100g !== undefined ? c.per100g : serverWeighed ? null : per100g(total ?? c.price, g),
     per100ml: c.per100ml ?? null,
@@ -46,7 +56,7 @@ export function cardToCandidate(c: ApiCard): Candidate {
     evidence: c.evidence ?? [],
     unverified: [
       ...(c.unverified ?? []),
-      ...(ship == null ? ["배송비"] : []),
+      ...(ship == null && status !== "free_label" ? ["배송비"] : []),
       // 도착 예정일은 판매처 API가 주지 않는 경우가 많아 '미확인' 경고 대신 카드의 안내 문구로 보여준다
       ...(c.delivery_terms || c.check_at_mall ? [] : ["도착 예정일"]),
     ].filter((v, i, a) => a.indexOf(v) === i),
@@ -74,8 +84,9 @@ export function cardToCandidate(c: ApiCard): Candidate {
       sellerFacts: [
         ...(c.spec ? [{ label: "규격", value: c.spec, source: { label: c.source ?? "판매처", url: c.url } }] : []),
         { label: "상품가", value: won(c.price), source: { label: c.source ?? "판매처", url: c.url } },
-        { label: "배송비", value: ship == null ? "판매자 표기 확인 필요" : won(ship), source: { label: c.source ?? "판매처", url: c.url } },
-        ...(c.rocket || c.free_shipping ? [{ label: "배송 표시", value: [c.rocket && "로켓배송", c.free_shipping && "무료배송"].filter(Boolean).join(" · ") + " (판매처 검색 결과 표시 · 도착일 약속 아님)", source: { label: c.source ?? "판매처", url: c.url } }] : []),
+        { label: "배송비", value: status ? (shipText(status, ship, c.rocket) ?? "판매자 표기 확인 필요") + (status === "unknown" && !c.rocket ? "" : " (판매처 검색 결과 표시 · 도착일 약속 아님)")
+            : ship == null ? "판매자 표기 확인 필요" : won(ship), source: { label: c.source ?? "판매처", url: c.url } },
+        ...(!status && (c.rocket || c.free_shipping) ? [{ label: "배송 표시", value: [c.rocket && "로켓배송", c.free_shipping && "무료배송"].filter(Boolean).join(" · ") + " (판매처 검색 결과 표시 · 도착일 약속 아님)", source: { label: c.source ?? "판매처", url: c.url } }] : []),
         ...(c.seller_claims?.length ? [{ label: "상품명 문구", value: `${c.seller_claims.join(" · ")} — 판매자가 상품명에 적은 내용이라 확인되지 않았고, 추천 순서에 쓰지 않았어요`, source: { label: c.source ?? "판매처", url: c.url } }] : []),
         // 식약처 품목제조보고 (식품정보24) — 제조사·품목명이 맞는 경우에만 백엔드가 내려준다
         ...(c.public_info ? [

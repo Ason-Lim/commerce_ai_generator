@@ -20,8 +20,8 @@ export function Thumb({ c, size = "md" }: { c: Pick<Candidate, "image" | "title"
 export function shippingLine(c: Candidate) {
   switch (c.shippingStatus) {
     case "confirmed": return <>상품가 {won(c.price)} + 배송비 {c.shippingFee ? won(c.shippingFee) : "0원"} (주문 단계 계산)</>;
-    case "free_label": return <>상품가 · 무료배송 표시 <span className="text-ink3">(조건은 판매처에서 확인)</span></>;
-    case "fee_label": return <>상품가 {won(c.price)} + 배송비 {won(c.shippingFee ?? 0)} 표시 <span className="text-ink3">(주문 때 확인)</span></>;
+    case "free_label": return <>{c.rocket ? "로켓배송 · " : ""}무료배송 <span className="text-ink3">(판매처 표시)</span></>;
+    case "fee_label": return <>{c.rocket ? "로켓배송 · " : ""}상품가 {won(c.price)} + 배송비 {won(c.shippingFee ?? 0)} <span className="text-ink3">(판매처 표시)</span></>;
     case "unknown": return <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>;
     default: return null;
   }
