@@ -5,11 +5,12 @@ import { SavedProvider, useSaved } from './state/saved';
 import { PENDING_ASK } from './components/TrendsPage';
 import { BlockRenderer } from './components/BlockRenderer';
 import { ProductDetail } from './components/ProductDetail';
+import { TrendPostPanel } from './components/TrendPost';
 import { FlowStepper } from './components/FlowStepper';
 import { ChatActions, type ChatActionsValue } from './components/ChatActions';
 import type { FlowStep, SendPayload } from './state/useConversation';
 import type { Message } from './types';
-import type { Candidate } from './types/blocks';
+import type { Candidate, TrendPostRef } from './types/blocks';
 import { API_MODE, sendChat } from './api/client';
 import { pageTitle } from './lib/pageTitle';
 import { BusyStatus } from './components/BusyStatus';
@@ -120,6 +121,7 @@ export default function ChatWindow() {
     const [basket, setBasket] = useState<PanelEntry[]>([]);
     const [error, setError] = useState('');
     const [detail, setDetail] = useState<Candidate | null>(null);
+    const [trendPost, setTrendPost] = useState<TrendPostRef | null>(null);
     const [purchasing, setPurchasing] = useState(false);
     const controller = useRef<AbortController | null>(null);
     const locked = useRef(false);
@@ -294,6 +296,7 @@ export default function ChatWindow() {
     }
 
     const closeDetail = useCallback(() => { setDetail(null); setPurchasing(false); }, []);
+    const closeTrendPost = useCallback(() => setTrendPost(null), []);
 
     // 블록 컴포넌트(칩·조건 선택·상품 카드)가 쓰는 동작
     const actions: ChatActionsValue = useMemo(() => ({
@@ -301,6 +304,7 @@ export default function ChatWindow() {
         shop: (payload, ingredient, cancel) => void shop(payload, ingredient, cancel),
         basket: basket.map(e => e.ingredient),
         openDetail: c => { setDetail(c); setPurchasing(false); },
+        openTrendPost: p => setTrendPost(p),
         busy,
         sessionId,
     }), [busy, sessionId, basket]);
@@ -418,6 +422,7 @@ export default function ChatWindow() {
             </footer>
 
             <SavedPanel />
+            {trendPost && <TrendPostPanel key={trendPost.id} post={trendPost} onClose={closeTrendPost} />}
             {detail && <ProductDetail key={detail.key} c={detail} sessionId={sessionId} purchasing={purchasing} onPurchasing={setPurchasing} onClose={closeDetail} />}
         </div>
         </SavedProvider>

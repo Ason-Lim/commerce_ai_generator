@@ -367,7 +367,7 @@ export type Block =
   | TextBlock | NoticeBlock | VerdictBlock | ChipsBlock | ClarifyFormBlock
   | ComparisonPairBlock | ProductListBlock | ShippingOptionsBlock
   | CandidateCompareBlock | SponsoredListBlock | RecipeCardBlock | SearchLinksBlock | ProductCompareBlock
-  | TrendListBlock | CompareCtaBlock;
+  | TrendListBlock | CompareCtaBlock | TrendPostBlock;
 
 /** 지금 검색이 늘어난 식품 (2026-11-06, '요즘 뜨는 식품') — 서버 급상승 리포트의 고객용 항목 */
 export interface TrendYoutube {
@@ -384,6 +384,16 @@ export interface TrendListBlock {
   type: "trend_list";
   data: { title: string; data_until: string | null; items: TrendEntry[]; note?: string };
 }
+
+/** 트렌드 글 원문 보기 카드 (2026-11-16, 2단계 Q&A) — 게시(승인)된 글만 서버가 보낸다 */
+export interface TrendPostRef {
+  id: string; title: string; summary: string;
+  /** 공개 페이지 주소 (/trends/…) — 옆 패널에 그대로 띄운다 */
+  url: string; published: string;
+  /** 제휴 상품이 있어 [광고]·대가성 문구가 붙은 글 */
+  has_ad: boolean;
+}
+export interface TrendPostBlock { type: "trend_post"; data: TrendPostRef }
 
 export interface ChatResponse {
   session_id: string;

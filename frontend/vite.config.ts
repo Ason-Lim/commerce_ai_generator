@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
         "/api": { target, changeOrigin: true },
         "/go": { target, changeOrigin: true },
         "/admin": { target, changeOrigin: true },
+        "/trends": { target, changeOrigin: true },
       },
     },
   };

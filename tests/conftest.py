@@ -66,3 +66,9 @@ def _isolated_ai_cache(monkeypatch, tmp_path):
 import os as _os  # noqa: E402
 
 _os.environ.setdefault("MISS_SIGNALS", "off")
+
+
+# 2026-11-16 (2단계): 트렌드 글 저장소도 테스트마다 임시 폴더 — 실제 var/trends/posts 의 게시 글이 대화 테스트에 섞이지 않게
+@_pytest.fixture(autouse=True)
+def _isolated_trend_posts(monkeypatch, tmp_path):
+    monkeypatch.setenv("TREND_POSTS_DIR", str(tmp_path / "trend_posts"))
