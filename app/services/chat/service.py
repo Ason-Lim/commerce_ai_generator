@@ -178,6 +178,16 @@ class ChatService:
     def handle(self, session_id: str | None, message: str | None = None,
                answers: dict | None = None, chip: str | None = None, owner: str | None = None,
                fresh: bool = False) -> dict:
+        response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
+        # 2026-11-16: 실수 신호 모으기 — 약한 일치·0건·다시 찾기·남은 검토 의견 (대화 결과는 바꾸지 않는다)
+        from app.services.chat import miss_signals
+
+        miss_signals.observe(response.get("session_id") or "", (message or chip or "").strip(), response)
+        return response
+
+    def _handle_turn(self, session_id: str | None, message: str | None = None,
+                     answers: dict | None = None, chip: str | None = None, owner: str | None = None,
+                     fresh: bool = False) -> dict:
         sid = session_id if isinstance(session_id, str) and SESSION_RE.fullmatch(session_id) else str(uuid.uuid4())
         recipe_sid = "recipe:" + sid
         text = (message or chip or "").strip()
