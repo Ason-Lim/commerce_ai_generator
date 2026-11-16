@@ -77,8 +77,8 @@ def engine_db() -> Db:
 
 
 def default_shopping(query: str, priority: str, session_id: str | None) -> dict:
-    """Existing natural-language recommendation logic, unchanged
-    (canonical provider first, DB fallback second)."""
+    """Existing natural-language recommendation logic (canonical provider; since 2026-11-16 R3 ④ no DB fallback
+    unless RECO_DB_FALLBACK=1 — a failure comes back as recommendation_path 'provider_failed')."""
     from app.main import natural_language_recommendations
 
     return natural_language_recommendations(q=query, priority=priority, session_id=session_id)
@@ -916,6 +916,18 @@ class ChatService:
                 pending = {"kind": "budget", "query": label}
                 blocks.append(B.text("💬 예산이 있으면 편하게 말씀해 주세요. 예: **3만원 이하**, **5만원 정도**, **10만원대** — "
                                      "찾은 후보 안에서 바로 다시 골라 드릴게요."))
+        elif got["error"] is not None:
+            # 2026-11-16 R3 ④: 쿠팡을 불러오지 못하면 DB 예비 경로(과거 가격) 대신 안내 + 네이버쇼핑 검색 링크 + 다시 찾기
+            if connect:
+                blocks += [B.text("네이버 쇼핑커넥트(브랜드커넥트)에서 발급해 등록해 둔 링크예요. " + CONNECT_DISCLOSURE),
+                           B.product_list(connect)]
+                items = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
+                         for c in connect]
+            nav = naver_search_block(label, text)
+            if nav:
+                blocks.append(nav)
+            if text and text.strip():
+                blocks.append(B.chips([text.strip()[:60]]))
         elif terms or connect:
             blocks.append(B.text(f"쿠팡에서 **{query}** 관련 상품을 찾지 못했어요. 관련 없는 상품은 보여 드리지 않았어요."))
             if connect:

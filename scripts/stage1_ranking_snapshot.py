@@ -72,7 +72,12 @@ def _call(m, q, priority, force_fallback):
         m.run_recommendation_pipeline = _fail
     try:
         with redirect_stdout(io.StringIO()):
-            result = m.natural_language_recommendations(q=q, priority=priority, session_id=None)
+            # 2026-11-16 R3 ④: 고객 경로에서 예비 경로가 꺼져 있어, 강제 실패 모드는 예비 경로 함수를 직접 부른다 (기준점 s 시리즈 유지)
+            if force_fallback:
+                result = {**m.db_fallback_recommendations(q=q, priority=priority, session_id=None),
+                          "recommendation_path": m.NL_PATH_DB_FALLBACK}
+            else:
+                result = m.natural_language_recommendations(q=q, priority=priority, session_id=None)
         items = result.get("items") or []
         return {
             "path": str(result.get("recommendation_path")),
