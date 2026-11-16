@@ -347,7 +347,7 @@ def test_found_posts_are_compared_by_their_titles_only(make_ai):
     text = md(svc.handle(res["session_id"], message="두쫀쿠 레시피 후보 비교"))
     assert text.startswith("**두쫀쿠 레시피 후보 비교** — 블로그 **제목·게시일만** 비교했어요. 본문(재료·분량·방법)은 이용 조건을 "
                            "확인하지 못해 가져오지 않았어요.")
-    assert "- **1. [두쫀쿠 레시피 자도르 배합 따라하기](https://blog.naver.com/b/222)** — 홈베이커 · 10/25 · 제목에 특징 표기 없음" in text
+    assert "- 1) **[두쫀쿠 레시피 자도르 배합 따라하기](https://blog.naver.com/b/222)** — 홈베이커 · 10/25 · 제목에 특징 표기 없음" in text
     assert "제목 속 특징:" in text or "제목에 특징 표기 없음" in text
 
 
@@ -395,8 +395,10 @@ def test_ai_recipe_runs_the_card_servings_stock_shortage_and_products(make_ai, s
     assert "원문" not in text                                       # no source amounts implied
     assert md(svc.handle(sid, message="버터 10g 있어요")) == "**버터 10g**로 기록했어요. 1인분 필요량 15g보다 5g 적어요(참고 계산)."
     svc.handle(sid, message="카다이프 없어요")
+    assert [q for q, _p, _s in shopping.calls] == ["카다이프"]       # 2026-11-16: '없어요'를 누르면 장보기 칸에 바로
+    shopping.calls.clear()
     res = svc.handle(sid, message="부족한 재료 상품 보여줘")
-    assert [q for q, _p, _s in shopping.calls] == ["카다이프"]       # products only when the customer asks
+    assert [q for q, _p, _s in shopping.calls] == ["카다이프"]
     # served again after a restart from the stored copy (no second generation)
     svc2, calls2 = make_ai()
     card = next(b for b in svc2.handle(sid, message="두쫀쿠 AI 제안 레시피로 만들기")["blocks"] if b["type"] == "recipe_card")["data"]
@@ -575,6 +577,7 @@ def test_shortage_products_prefer_a_household_pack_and_never_mix_paste_and_sprea
     svc.handle(sid, message="20개 분량으로 바꿔줘")
     svc.handle(sid, message="카다이프 없어요")
     svc.handle(sid, message="피스타치오 페이스트 없어요")
+    shopping.calls.clear()  # 2026-11-16: '부족해요·없어요'는 장보기 칸에 바로 담으며 찾는다 — 그 검색은 여기서 보지 않는다
     res = svc.handle(sid, message="부족한 재료 상품 보여줘")
     assert [q for q, _p, _s in shopping.calls] == ["카다이프", "피스타치오 페이스트"]
     lists = [b["data"]["items"] for b in res["blocks"] if b["type"] == "product_list"]

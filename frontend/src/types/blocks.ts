@@ -390,6 +390,8 @@ export interface ChatResponse {
   stage?: string;
   slots?: Record<string, unknown>;
   blocks: Block[];
+  /** 2026-11-16: 이 답은 '부족한 재료 장보기' 칸에 담는다 (새 메시지로 붙이지 않음) */
+  panel?: { ingredient: string; word?: string; mode: "short" | "absent" } | null;
 }
 
 export interface ChatRequest {
@@ -429,6 +431,7 @@ export interface Candidate {
   shippingFee: number | null;   // null = 미확인 (0원과 다름)
   total: number | null;         // null = 배송비 미확인으로 확정 불가
   shippingStatus?: ShippingStatus | null;  // 2026-11-13: 무료 '표시'는 0원 확정이 아님
+  rocket?: boolean | null;                 // 로켓배송 표시 (판매처 검색 결과)
   weightLabel?: string | null;  // "1.2kg"
   per100g?: number | null;      // 100g당 가격
   per100ml?: number | null;     // 100ml당 가격 (액체, 2026-11-12)

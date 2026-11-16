@@ -127,6 +127,19 @@ def item_to_card(item: dict, rank: int) -> dict:
     return card
 
 
+def _shortlist(blocks: list[dict], keep: int) -> list[dict]:
+    """장보기 칸: 재료마다 앞의 몇 개만 보이고 나머지는 접힌 '더 보기' 목록으로 (광고처럼 많이 쏟아지지 않게)."""
+    out = []
+    for b in blocks:
+        items = (b.get("data") or {}).get("items") if b.get("type") == "product_list" else None
+        if not items or len(items) <= keep or (b.get("data") or {}).get("collapsed"):
+            out.append(b)
+            continue
+        out.append({**b, "data": {**b["data"], "items": items[:keep]}})
+        out.append(B.product_list(items[keep:], title=f"더 보기 {len(items) - keep}개", collapsed=True))
+    return out
+
+
 # 2026-11-12: 첫 화면에서 보낸 질문 — 손님이 볼 수 없는 지난 맥락(열린 레시피·되묻기·직전 계산)은 닫는다.
 # 보유량 기록(recipe 세션 저장소)·관심 상품·지난 카드의 이동 링크(last_items)는 그대로 둔다.
 CONTEXT_KEYS = ("recipe_id", "pending", "last_stock_ingredient_id", "cup_ml", "servings", "dish_purchase", "menu_plan",
@@ -222,6 +235,8 @@ class ChatService:
                 if shown >= 2:
                     name = turn.shopping[0]
                     product_blocks.append(product_compare.cta(name, shown, (turn.shopping_needs or {}).get(name)))
+            if turn.stage == "recipe_shortage_shop":
+                product_blocks = _shortlist(product_blocks, 3)
             blocks += product_blocks
             turn.state["last_items"] = items
             for q in turn.shopping:
@@ -241,7 +256,11 @@ class ChatService:
             log.exception("chat write failed")
             return self._response(sid, "storage_error", [B.notice(
                 "저장하지 못했어요. 이전에 저장된 보유량은 그대로예요.", "warn")])
-        return self._response(sid, turn.stage, blocks + turn.write_success_blocks)
+        response = self._response(sid, turn.stage, blocks + turn.write_success_blocks)
+        if getattr(turn, "panel", None):
+            # 화면은 이 답을 새 메시지로 붙이지 않고 '부족한 재료 장보기' 칸 하나에 재료별로 담는다 (2026-11-16)
+            response["panel"] = turn.panel
+        return response
 
     def recipe_easy(self, recipe_id: str, key: str | None = None) -> dict:
         """Polling target for a recipe card whose 쉽게 보기 / AI image is being prepared.

@@ -116,7 +116,7 @@ function EasyStep({ s, last }: { s: RecipeEasyStep; last: boolean }) {
 
 export function RecipeCard({ block }: { block: RecipeCardBlock }) {
   const d = block.data;
-  const { send, busy } = useChatActions();
+  const { send, shop, basket, busy } = useChatActions();
   const [easy, setEasy] = useState<RecipeEasyView | null>(d.easy ?? null);
   const [tips, setTips] = useState<RecipeGeneralTips | null>(d.general_tips ?? null);
   const [hero, setHero] = useState<RecipeHero | null>(d.hero ?? null);
@@ -182,11 +182,16 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
     });
   const statusOf = (i: { id: string | null; name: string; status?: RecipeStockStatus | null }) =>
     marked[keyOf(i)] ?? i.status ?? null;
+  // 2026-11-16: 누르면 기록과 함께 그 재료 상품이 '부족한 재료 장보기' 칸에 바로 담긴다. 다시 누르면 취소(칸에서도 빠짐)
   const markShort = (i: { id: string | null; name: string; quantity_known?: boolean }) => {
     const absent = !i.quantity_known;
     const text = absent ? `${i.name} 없어요` : `${i.name} 부족해요`;
     setMarked((m) => ({ ...m, [keyOf(i)]: absent ? "absent" : "short" }));
-    send({ message: text }, text);
+    shop({ message: text }, i.name);
+  };
+  const unmark = (i: { id: string | null; name: string }) => {
+    setMarked((m) => ({ ...m, [keyOf(i)]: "enough" as RecipeStockStatus }));
+    shop({ message: `${i.name} 충분해요` }, i.name, true);
   };
 
   // 다른 인분일 때 한 '부족' 답변은 지금 부족으로 세지 않고 '다시 확인'으로 따로 보여 준다 (기록은 서버에 그대로)
@@ -369,11 +374,17 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
 
                     </span>
                   </button>
-                  {(!(st === "short" || st === "absent") || staleOf(i)) && (
+                  {(!(st === "short" || st === "absent") || staleOf(i)) ? (
                     <button type="button" disabled={busy} onClick={() => markShort(i)}
-                      aria-label={`${i.name} ${ask}라고 알리기`}
+                      aria-label={`${i.name} ${ask}라고 알리고 상품 담기`}
                       className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs text-ink2 transition hover:border-ink3 hover:text-ink disabled:opacity-40">
                       {ask}
+                    </button>
+                  ) : (
+                    <button type="button" disabled={busy} onClick={() => unmark(i)} aria-pressed="true"
+                      aria-label={`${i.name} ${st === "absent" ? "없음" : "부족"} 취소${basket.includes(i.name) ? " · 장보기에서 빼기" : ""}`}
+                      className="shrink-0 rounded-full border border-warn/40 bg-warnSoft px-2.5 py-1 text-xs font-semibold text-warn transition hover:opacity-80 disabled:opacity-40">
+                      {st === "absent" ? "없음" : "부족"} ✕
                     </button>
                   )}
                 </li>
@@ -403,14 +414,16 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
           {shortage.length > 0 ? (
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {shortage.map((n) => <span key={n} className="tag bg-surface text-ink">{n}</span>)}
-              <button type="button" disabled={busy} onClick={() => send({ message: "부족한 재료 상품 보여줘" }, "부족한 재료 상품 보여줘")}
+              {/* 장보기 칸에 이미 다 담겼으면 따로 찾는 버튼은 숨긴다 (예전 답변으로 부족한 재료만 남았을 때만 보임) */}
+              {shortage.some((n) => !basket.includes(n)) && <button type="button" disabled={busy} onClick={() => send({ message: "부족한 재료 상품 보여줘" }, "부족한 재료 상품 보여줘")}
                 className="ml-auto rounded-full bg-ink px-3.5 py-1.5 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-30">
                 부족한 재료 상품 보기
-              </button>
+              </button>}
             </div>
           ) : (
             <p className="mt-1 text-xs leading-relaxed text-ink3">
-              모자라거나 없는 재료만 오른쪽 '부족해요'·'없어요'를 눌러 알려 주세요. 누르지 않은 재료는 부족으로 보지 않아요.
+              모자라거나 없는 재료만 오른쪽 '부족해요'·'없어요'를 눌러 알려 주세요. 누르면 그 재료 상품이 아래 '부족한 재료 장보기' 칸에
+              바로 담기고, 다시 누르면 빠져요. 누르지 않은 재료는 부족으로 보지 않아요.
               왼쪽 동그라미는 준비 체크(저장 안 함)이고, 남은 양은 "생크림 100mL 있어요"처럼 말씀해 주시면 기록해요.
             </p>
           )}

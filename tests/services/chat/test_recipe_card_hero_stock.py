@@ -190,6 +190,7 @@ def test_card_shows_recorded_stock_and_customer_shortage(sqlite_db, shopping):
     svc.handle(sid, message="생크림 100mL 있어요")
     svc.handle(sid, message="생크림 부족해요")
     svc.handle(sid, message="베이컨 없어요")
+    shopping.calls.clear()  # 2026-11-16: '부족해요·없어요'는 장보기 칸에 바로 담으며 찾는다 — 그 검색은 여기서 보지 않는다
     card = card_of(svc.handle(sid, message="크림파스타 만드는 법"))
     rows = {i["name"]: i for i in card["ingredients"]}
     assert (rows["생크림"]["status"], rows["생크림"]["status_label"], rows["생크림"]["stock"]) == ("short", "부족", "100mL")

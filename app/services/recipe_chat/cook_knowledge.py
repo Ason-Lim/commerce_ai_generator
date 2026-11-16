@@ -71,23 +71,30 @@ APPEARANCE: list[list[tuple[re.Pattern, str]]] = [
     [   # 국물 요리의 모양
         (re.compile(r"김치찌개"), "Kimchi jjigae: a thick, reduced, deep red-orange stew served bubbling in a small earthenware "
                                 "pot (ttukbaegi); the broth is low so chunks of kimchi, pork and tofu rise above it — NOT a thin, "
-                                "watery soup."),
+                                "watery soup. Plenty of red cabbage kimchi is clearly the main ingredient."),
         (re.compile(r"된장찌개"), "Doenjang jjigae: a thick, cloudy brown soybean-paste stew in a ttukbaegi, tofu cubes, zucchini "
                                 "and onion visible above the broth — NOT a clear soup."),
         (re.compile(r"찌개|전골"), "A Korean jjigae: thick and reduced, served in a ttukbaegi or shallow pot with ingredients "
                                  "showing above the broth — NOT a thin soup."),
         (re.compile(r"국밥"), "Gukbap: rice in hot broth in a deep earthenware bowl, the toppings clearly visible on the surface."),
+        # rs2(2026-11-16): '국물색을 더 진하게'·'라면 면이 실제와 달라 보임'
+        (re.compile(r"^(?!.*(?:라멘|돈코츠)).*라면"), "Korean instant ramyeon: wavy, springy instant noodles in a deep red-orange "
+                                                  "spicy broth in a pot or bowl — NOT straight ramen or pale soup."),
     ],
     [   # 주재료가 잘 보이게
         (re.compile(r"대게|홍게|킹크랩"), "A whole steamed crab with a bright red-orange shell and long legs intact, served whole on "
                                        "a large platter — NOT small cut pieces."),
         (re.compile(r"굴"), "The oysters are the focus: plump, glossy grey-white oysters clearly visible on top, several of them."),
         (re.compile(r"꼬막"), "Small blood cockles: seasoned cockle meat clearly visible, some still on the half shell."),
+        # rs2(2026-11-16): 방어무조림 3명 '방어가 잘 안 보임' — 생선 토막과 껍질이 보이게, 윤기 있게
+        (re.compile(r"방어|고등어|갈치|삼치|가자미|조기"), "Thick fish steaks are the focus, their silvery-blue skin clearly visible, "
+                                                 "glossy with sauce, resting on top of the other ingredients."),
     ],
     [   # 유행 디저트 — 사진만 보고 다른 과자로 오해하기 쉽다
         (re.compile(r"두쫀쿠|두바이쫀득쿠키|두바이\s*쫀득"), "Dubai chewy cookie (두쫀쿠): a palm-sized round cookie with a soft, "
             "chewy marshmallow-and-milk-powder shell dusted with cocoa powder; one cookie cut in half shows a thick filling of "
-            "toasted shredded kataifi mixed with green pistachio spread — NOT a flat crunchy biscuit or a chocolate bar."),
+            "toasted shredded kataifi mixed with green pistachio spread — NOT a flat crunchy biscuit or a chocolate bar. "
+            "Shown large and close up on a modern minimal plate."),
     ],
     [   # 조리 방식
         (re.compile(r"조림"), "A Korean braise: the pieces coated in a glossy, reduced sauce, little liquid left."),

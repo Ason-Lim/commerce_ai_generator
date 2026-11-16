@@ -116,3 +116,44 @@ def test_instant_ramyeon_names_its_soup():
     good = {"ingredients": [{"name": "봉지라면", "amount": "1봉지"}, {"name": "달걀", "amount": "1개"}], "steps": ["끓여 주세요."]}
     assert any("스프" in p for p in K.problems(bad, "라면"))
     assert not any("스프" in p for p in K.problems(good, "라면"))
+
+
+YUJA = {"title": "유자청", "summary": "유자와 설탕을 같은 무게로 버무려 숙성하는 청이에요.", "servings": "약 2kg 분량",
+        "ingredients": [{"name": "유자", "amount": "1kg"}, {"name": "설탕", "amount": "1kg"}, {"name": "소금", "amount": "1큰술"}],
+        "tools": ["유리병", "칼", "도마", "볼"],
+        "steps": ["유자는 소금으로 껍질을 문질러 씻고 물기를 닦아 주세요.", "도마 위에서 칼로 유자를 반으로 갈라 씨를 빼고 얇게 채 썰어 주세요.",
+                  "볼에 유자와 설탕을 넣고 고루 버무려 주세요.", "열탕 소독한 유리병에 담아 실온에 하루 둔 뒤 냉장 보관해 주세요."],
+        "tips": ["씨를 뺀 뒤 무게를 재서 설탕을 맞춰 주세요."]}
+
+
+def test_an_amount_question_gets_a_short_answer_above_the_recipe(make_ai):
+    """2026-11-13 유자청: '몇 kg·얼마나'를 물으면 레시피 카드 위에 비율과 1·2·3배 분량 표 (우리 레시피 분량에서 계산)."""
+    from app.services.recipe_chat.service import RecipeChat as R
+
+    assert R._dish_from("유자청 만드는 법 설탕은 얼마나 넣어?") == "유자청"
+    assert R._dish_from("유자청 담그려면 유자 몇 kg 사야 해?") == "유자청"
+    svc, _calls = make_ai(YUJA, known=True, core=["유자", "설탕"])
+    turn = svc.recipe.handle("유자청 만들려면 몇 kg 필요해?", None, {}, "x", None)
+    types = [b["type"] for b in turn.blocks]
+    first_text = next(b for b in turn.blocks if b["type"] == "text")["data"]["md"]
+    assert types.index("text") < types.index("recipe_card")                     # 답이 카드보다 위
+    assert "**유자 1kg에 설탕 1kg** 비율이에요 (설탕은 같은 무게)" in first_text
+    assert "- 유자 **2kg** + 설탕 **2kg**" in first_text and "- 유자 **3kg** + 설탕 **3kg**" in first_text
+    assert "|" not in first_text and "소금" not in first_text                    # 채팅 글에는 표가 그려지지 않는다
+    plain = svc.recipe.handle("유자청 만드는 법", None, {}, "y", None)            # 분량을 묻지 않으면 표 없음
+    assert not any("비율이에요" in (b["data"].get("md") or "") for b in plain.blocks if b["type"] == "text")
+
+
+def test_public_reference_is_only_the_same_dish(make_ai):
+    """2026-11-13 화면: 유자청 아래 '도라지 유자청생채·유자등갈비구이·유자삼치구이'가 참고로 붙었다 — 다른 요리다."""
+    from types import SimpleNamespace
+
+    svc, _calls = make_ai(known=True)
+    recs = {t: SimpleNamespace(recipe_id=t, title=t, provider="식품안전나라", meta=[], ingredients=[], source_level="public")
+            for t in ("도라지 유자청생채", "유자등갈비구이", "참치김치찌개", "김치찌개")}
+    svc.recipe.resolver.get = lambda rid: recs.get(rid)
+    choose = SimpleNamespace(kind="choose", recipe=None, alternatives=[("도라지 유자청생채", ""), ("유자등갈비구이", "")])
+    assert svc.recipe._public_reference("유자청", choose) == (None, [])
+    kimchi = SimpleNamespace(kind="choose", recipe=None, alternatives=[("참치김치찌개", ""), ("김치찌개", "")])
+    _pub, blocks = svc.recipe._public_reference("김치찌개", kimchi)
+    assert "「참치김치찌개」" in blocks[0]["data"]["md"] and "「김치찌개」" in blocks[0]["data"]["md"]

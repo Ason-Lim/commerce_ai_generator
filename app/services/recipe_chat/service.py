@@ -52,6 +52,8 @@ class RecipeTurn:
     write_success_blocks: list[dict] = field(default_factory=list)
     # 2026-11-01: search word → what the recipe needs (pack_fit compares it with each product's package size)
     shopping_needs: dict = field(default_factory=dict)
+    # 2026-11-16: 장보기 칸에 담을 답 — {'ingredient', 'word', 'mode': absent|short}
+    panel: dict | None = None
 
 
 log = logging.getLogger(__name__)
@@ -67,12 +69,17 @@ YES_RE = re.compile(r"^\s*(?:네|예|응|어|좋아요?|그래요?|보여\s*줘|
 _SHOPPING_WORDS = re.compile(r"가성비|최저가|싼\s|저렴|가격|할인|무료배송|상품|구매|주문|추천해")
 # 2026-11-12: 레시피와 상품을 함께 물으면('김치찌개 레시피와 상품을 추천해 주세요') 레시피 아래에 주재료 상품도 보인다
 WANTS_PRODUCTS_RE = re.compile(r"상품|재료\s*(?:도|를|랑)?\s*(?:사|구매|주문|추천|같이|함께)|장보기|사야|구매|주문|살\s*(?:수|게|거)")
+# 분량을 묻는 말 — 레시피 카드 위에 짧은 답(비율·분량 표)을 먼저 둔다 (2026-11-13 유자청: GPT 답 + 우리 레시피)
+AMOUNT_Q_RE = re.compile(r"몇\s*(?:kg|킬로|g|그램|개|근|봉|병|컵|리터|L)|얼마나|분량|비율|몇\s*배")
 RECIPE_PANTRY = {"물", "소금", "설탕", "후추", "후춧가루", "간장", "국간장", "진간장", "식용유", "참기름", "들기름", "식초",
                  "다진마늘", "마늘", "고춧가루", "깨", "통깨", "맛술", "올리고당", "물엿", "밀가루", "부침가루"}
 # 요리 이름 끝이 동사·질문인지 — '오이지'·'바나나' 같은 요리 이름은 걸리지 않게 동사 끝만 (2026-11-12)
 _VERBISH = re.compile(r"(해|줘|요|까|봐|래)$")
 # 꾸밈말 — 요리 이름이 아니다 (2026-11-12: '맛있게 라면'을 요리 이름으로 읽어 AI 가 모르는 요리라며 되물었다)
 _ADVERB = re.compile(r"(?:하게|있게|없게|쉽게|맵게|짜게|르게|롭게|답게|지게)$")
+# 낱말 첫머리에서 요리 이름이 끝나는 말 (낱말 중간의 '볶음밥'·'만두'는 자르지 않는다)
+_CUT_RE = re.compile(r"(?:^|\s)(?:만드|만들|레시피|방법|요리\s*법|조리|끓이는|끓여|볶는|볶아|굽는|구워|부치는|부쳐|무치는|"
+                     r"담그|담가|졸이는|몇|얼마|분량|재료|상품|추천|보여|알려|사야|필요)")
 # 조리 동사 어간 — 낱말 전체가 같을 때만 끊는다 ('삶은계란'·'부추전'은 요리 이름)
 _VERB_STEMS = {"부치", "담그", "졸이", "삶", "튀기", "데치", "무치", "끓이", "볶", "굽", "찌", "만들", "만드", "손질하", "보관하"}
 # 요리 이름 뒤에 오는 요청 말 — 여기서 끊는다 ('김치찌개 요리 방법과 상품을 보여주세요' → '김치찌개')
@@ -296,6 +303,8 @@ class RecipeChat:
             dish = ((intent or {}).get("dish") or self._dish_from(text)) if self._claude_first() else None
             if dish:
                 turn = self._recommended_recipe(dish, finding, state, db, recipe_sid)
+                if (intent or {}).get("asks_amount") or AMOUNT_Q_RE.search(text):
+                    turn = self._with_amount_answer(turn)
                 wants = intent["wants_products"] if intent else bool(WANTS_PRODUCTS_RE.search(text))
                 if wants:
                     turn = self._with_ingredient_products(turn, (intent or {}).get("product_query"))
@@ -573,7 +582,8 @@ class RecipeChat:
             feats = title_features(p["title"])
             when = f" · {p['date'][5:].replace('-', '/')}" if p.get("date") else ""
             label = "" if p.get("kind") in (None, "blog") else KIND_LABEL.get(p["kind"], "") + " "
-            lines.append(f"- **{n}. [{md_label(p['title'])}]({p['link']})** — {label}{p.get('source') or '블로그'}{when} · "
+            # 2026-11-13: '**1. 제목**'은 번호로 시작해 굵은 글씨가 안 먹고 별표가 그대로 보였다 — 번호를 굵은 글씨 밖으로
+            lines.append(f"- {n}) **[{md_label(p['title'])}]({p['link']})** — {label}{p.get('source') or '블로그'}{when} · "
                          + (f"제목 속 특징: {', '.join(feats)}" if feats else "제목에 특징 표기 없음"))
         lines.append("재료와 분량을 비교하려면 원문을 열어 보시거나, 'AI 제안 레시피로 만들기'로 재료표를 받아 보세요.")
         chips = [f"{dish} AI 제안 레시피로 만들기"] if self.ai_recipes is not None else []
@@ -845,6 +855,10 @@ class RecipeChat:
         요리 이름으로 읽을 수 없는 문장(동사·질문만 남음)은 None — 기존 흐름이 맡는다."""
         from app.services.recipe_chat.catalog_store import terms
 
+        # 요청·분량 말이 시작되는 곳에서 먼저 자른다 ('유자청 만드는 법 설탕은 얼마나 넣어?' → '유자청') — 2026-11-13
+        cut = _CUT_RE.search(text)
+        if cut and cut.start() > 0:
+            text = text[: cut.start()]
         words = []
         for w in terms(text):
             if re.search(r"\d|인분", w):
@@ -869,8 +883,11 @@ class RecipeChat:
             recs = [self.resolver.get(rid) for rid, _t in f.alternatives[:3]]
         else:
             return None, []
+        # 같은 요리(또는 그 요리의 한 종류: '참치김치찌개'는 김치찌개)만 — '도라지 유자청생채'·'유자삼치구이'는 다른 요리 (2026-11-13)
+        want = re.sub(r"\s+", "", dish)
         recs = [r for r in recs if r is not None and not str(r.recipe_id).startswith("ai-")
-                and getattr(r, "source_level", "") != "ai_suggestion"]
+                and getattr(r, "source_level", "") != "ai_suggestion"
+                and re.sub(r"\s+", "", r.title).endswith(want)]
         if not recs:
             return None, []
         lines = []
@@ -969,6 +986,47 @@ class RecipeChat:
                       why=f"네이버·유튜브 검색" + (f" · {when} 기준" if when else ""), layout="cards"),
             B.chips([f"{dish} 레시피 후보 비교"]),
         ], state, "recipe_other")
+
+    @staticmethod
+    def _with_amount_answer(turn: RecipeTurn) -> RecipeTurn:
+        """'몇 kg·얼마나' 질문에는 레시피 카드 위에 짧은 답 — 주재료 대비 무게 비율과 1·2·3배 분량 표.
+        숫자는 이 레시피(작성·검토를 거친) 분량에서 계산한다. 다른 AI 답을 옮기지 않는다. 무게로 적힌 재료만 쓴다."""
+        from app.services.recipe_chat import dish_shopping as dish_mod
+
+        at = next((i for i, b in enumerate(turn.blocks) if b.get("type") == "recipe_card"), None)
+        if at is None:
+            return turn
+        card = turn.blocks[at]["data"]
+        weighed = []
+        for ing in card.get("ingredients") or []:
+            m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*(g|kg|ml|mL|L)\s*", str(ing.get("amount") or ""))
+            name = re.sub(r"\(.*?\)", "", str(ing.get("name") or "")).strip()
+            if not m or not name or re.sub(r"\s+", "", name) in {"물", "소금"}:
+                continue
+            v, u = Decimal(m.group(1)), m.group(2)
+            v, u = (v * 1000, "g") if u == "kg" else (v * 1000, "mL") if u == "L" else (v, "mL" if u.lower() == "ml" else u)
+            weighed.append((name, v, u))
+        if len(weighed) < 2:
+            return turn
+        basis = (card.get("generated") or {}).get("basis") or {}
+        core = [re.sub(r"\s+", "", c) for c in basis.get("core") or []]
+        main = next((w for w in weighed if any(c and c in re.sub(r"\s+", "", w[0]) for c in core)), weighed[0])
+        others = [w for w in weighed if w is not main and w[2] == main[2]][:3]
+        if not others:
+            return turn
+
+        def ratio(v):
+            r = (v / main[1]).quantize(Decimal("0.01"))
+            return "같은 무게" if r == 1 else f"{main[0]}의 {r.normalize()}배"
+        head = (f"**{main[0]} {dish_mod.fmt(main[1], main[2])}에 " + ", ".join(f"{n} {dish_mod.fmt(v, u)}" for n, v, u in others)
+                + "** 비율이에요 (" + ", ".join(f"{n}은 {ratio(v)}" for n, v, _u in others) + ").")
+        # 채팅 글에는 표가 그려지지 않는다(2026-11-13 화면에 '|'가 그대로) — 줄 목록으로
+        rows = [f"- {main[0]} **{dish_mod.fmt(main[1] * k, main[2])}** + "
+                + " + ".join(f"{n} **{dish_mod.fmt(v * k, u)}**" for n, v, u in others) for k in (1, 2, 3)]
+        note = ("손질 전 무게로 사면 씨·꼭지·껍질을 빼고 줄어드니 조금 넉넉히 사세요. "
+                "아래 레시피는 첫 줄 분량 기준이에요(AI 작성·검토).")
+        turn.blocks.insert(at, B.text(head + "\n" + "\n".join(rows) + "\n" + note))
+        return turn
 
     def _with_ingredient_products(self, turn: RecipeTurn, query: str | None = None) -> RecipeTurn:
         """레시피 카드의 주재료(기본양념 뺀 앞의 3가지) 상품을 같은 답에 붙인다. 분량이 g·mL 로 적힌 재료는 포장 용량과 견준다."""
@@ -1669,12 +1727,37 @@ class RecipeChat:
             msg.append(f"{need['current']}인분 기준 필요량({need['amount']})에 대한 답변이에요.")
         if judgement_eff == "have":
             msg.append("이 재료는 원문에 분량이 없어 충분·부족을 정할 수 없어요.")
-        if judgement_eff in ("absent", "short"):
-            msg.append("구매는 '부족한 재료 상품 보여줘'처럼 요청하실 때만 찾아볼게요.")
+        # 2026-11-16: '부족해요'·'없어요'를 누른 것 자체가 '이게 필요해요' — 장보기 칸에 그 재료 상품을 바로 담는다
+        # (다시 '보여 줘'라고 말하게 하지 않는다). 상품은 필요량 맞음 → 작은 포장 순, 재료마다 3개 + 더 보기.
+        shop = judgement_eff in ("absent", "short")
+        if shop:
+            msg.append("부족한 재료 장보기 칸에 상품을 담았어요.")
         success = [B.notice(" ".join(msg))]
         judged = need["current"] if judgement_eff in ("short", "enough") else None
+
+        def done(blocks, writes=None, ok_blocks=None):
+            if not shop:
+                return RecipeTurn(blocks, state, "recipe_judgement", writes=writes or [], write_success_blocks=ok_blocks or [])
+            word, want = self._shop_need(entry, material, state)
+            # '부족해요' + 남은 양을 알려 주셨으면 모자란 만큼만 기준으로 ('생크림 200mL 있어요' → 필요 300mL 중 100mL)
+            stock = record["state"].get("direct_stock") or {}
+            if judgement_eff == "short" and want.get("amount") and stock.get("amount") \
+                    and str(stock.get("unit") or "").lower() == str(want.get("unit") or "").lower():
+                from app.services.recipe_chat import dish_shopping as dish_mod
+
+                try:
+                    gap = Decimal(str(want["amount"])) - Decimal(str(stock["amount"]))
+                except Exception:  # noqa: BLE001
+                    gap = None
+                if gap is not None and gap > 0:
+                    want = dict(want, amount=str(gap),
+                                display=f"{dish_mod.fmt(gap, want['unit'])} (남은 {parsing.stock_display(stock)} 뺀 양)")
+            turn = RecipeTurn(blocks, state, "recipe_shortage_shop", shopping=[word], shopping_needs={word: want},
+                              writes=writes or [], write_success_blocks=ok_blocks or [])
+            turn.panel = {"ingredient": material["name"], "word": word, "mode": judgement_eff}
+            return turn
         if record["state"]["status"] == target and record["state"].get("judged_servings") == judged:
-            return RecipeTurn(success, state, "recipe_judgement")
+            return done(success)
         sql = self.sql
         revision = record["revision"]
         current = record["state"]["status"]
@@ -1706,7 +1789,7 @@ class RecipeChat:
                 kept["history"].append(entry)   # one history entry per save (resume_467 checks it)
                 store.save(recipe_sid, material["context"], kept, rev)
 
-        return RecipeTurn([], state, "recipe_judgement", writes=[write], write_success_blocks=success)
+        return done([], writes=[write], ok_blocks=success)
 
     # ── questions ─────────────────────────────────────────
     def _question(self, entry, text, state):
