@@ -818,6 +818,10 @@ app.include_router(b2b_router, dependencies=[_Depends(_require_admin)])
 from app.admin.routes import router as admin_router
 app.include_router(admin_router)
 
+# 공개 트렌드 글 (2단계, 2026-11-16) — 서버가 그리는 /trends 페이지, 승인된 글만
+from app.api.trend_routes import router as trend_router
+app.include_router(trend_router)
+
 # Conversation API (shopping + recipe) for the React front end
 from app.api.chat_routes import router as chat_router
 app.include_router(chat_router)

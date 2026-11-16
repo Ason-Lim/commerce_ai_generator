@@ -36,3 +36,6 @@ __pycache__/
 ocr_results/
 var/logs/
 !.env.example
+
+# 트렌드 글 저장소 (2단계 — 운영 데이터, 백업은 3단계 운영 배치에서)
+var/trends/posts/
