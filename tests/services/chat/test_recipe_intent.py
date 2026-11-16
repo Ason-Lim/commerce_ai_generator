@@ -157,3 +157,58 @@ def test_public_reference_is_only_the_same_dish(make_ai):
     kimchi = SimpleNamespace(kind="choose", recipe=None, alternatives=[("참치김치찌개", ""), ("김치찌개", "")])
     _pub, blocks = svc.recipe._public_reference("김치찌개", kimchi)
     assert "「참치김치찌개」" in blocks[0]["data"]["md"] and "「김치찌개」" in blocks[0]["data"]["md"]
+
+
+def test_a_recipe_named_after_a_person_shows_the_originals_not_a_copy(make_ai):
+    """2026-11-16 실제 화면: '최강록 라면 레시피' → 기본 라면 레시피(같은 사진)가 나왔다.
+    사람·가게 이름이 붙은 레시피는 그대로 옮기지 않고 원문(유튜브·블로그)을 보여 주고, 우리 기본 요리 레시피는 칩으로."""
+    assert I.read(lambda _t: {"dish": "최강록 라면", "wants_recipe": True, "named_after": "최강록", "base_dish": "라면"},
+                  "최강록 라면 레시피를 알려주세요.")["named_after"] == "최강록"
+    assert I.read(lambda _t: {"dish": "라면", "wants_recipe": True, "named_after": "백종원"},
+                  "라면 레시피 알려줘")["named_after"] is None                     # 문장에 없는 이름은 붙이지 않는다
+    svc, calls = make_ai(known=True)
+    svc.recipe.intent_reader = lambda _t: {"dish": "최강록 라면", "wants_recipe": True, "wants_products": False,
+                                          "named_after": "최강록", "base_dish": "라면"}
+    turn = svc.recipe.handle("최강록 라면 레시피를 알려주세요.", None, {}, "x", None)
+    text = "\n".join(b["data"].get("md", "") for b in turn.blocks if b["type"] == "text")
+    assert turn.stage == "recipe_other" and "**최강록 라면**은 최강록 님의 레시피라 그대로 옮기지 않아요" in text, text  # '라면는' 아님
+    assert not any(b["type"] == "recipe_card" for b in turn.blocks)
+    assert "라면 추천 레시피 보기" in [c for b in turn.blocks if b["type"] == "chips" for c in b["data"]["items"]]
+    assert [c for c in calls if not isinstance(c, tuple)] == []                     # 레시피를 만들지 않았다
+
+
+def test_a_trend_question_shows_recent_posts_first(make_ai):
+    """'최신 유행 ○○ 레시피' → 요즘 화제가 된 글·영상(최근 것부터), 우리 추천 레시피는 칩으로."""
+    svc, _calls = make_ai(known=True)
+    turn = svc.recipe.handle("최신 유행 두쫀쿠 레시피를 알려주세요.", None, {}, "x", None)
+    text = "\n".join(b["data"].get("md", "") for b in turn.blocks if b["type"] == "text")
+    assert turn.stage == "recipe_other" and "요즘 화제가 된 **두쫀쿠** 레시피" in text, text
+    assert "두쫀쿠 추천 레시피 보기" in [c for b in turn.blocks if b["type"] == "chips" for c in b["data"]["items"]]
+    nxt = svc.recipe.handle("두쫀쿠 추천 레시피 보기", None, turn.state, "x", None)
+    assert any(b["type"] == "recipe_card" for b in nxt.blocks)
+
+
+def test_the_ramyeon_photo_hint_is_only_for_plain_ramyeon():
+    """로제·볶음·짜장 라면은 국물이 다르다 — 빨간 국물 안내는 기본 라면에만 (종류가 바뀌면 사진도 그 요리대로)."""
+    from app.services.recipe_chat import cook_knowledge as K
+
+    assert "red-orange spicy broth" in K.image_hint("라면")
+    for d in ("로제 라면", "볶음라면", "짜장라면", "최강록 라면"):
+        assert "red-orange spicy broth" not in K.image_hint(d), d
+
+
+
+def test_a_named_recipe_shows_only_posts_with_that_name(make_ai):
+    """2026-11-16 실제 화면: '최강록 라면' 원문 목록에 '김호윤 셰프님 계란코팅진라면'이 섞였다 — 다른 사람의 레시피."""
+    from tests.services.chat.test_recipe_discover import blog
+
+    svc, _calls = make_ai(known=True, blog_titles=[
+        blog("최강록 셰프 라면 레시피 따라해본 안성탕면 계란라면", "https://blog.naver.com/a/1", "식객", "20261115"),
+        blog("김호윤 셰프님 계란코팅진라면 레시피 / 진라면 맛있게 끓이는법", "https://blog.naver.com/b/2", "슝슝", "20260918")])
+    state = {"discover": {"dish": "최강록 라면", "results": [
+        {"title": "최강록 셰프 라면 레시피 따라해본 안성탕면 계란라면", "link": "https://blog.naver.com/a/1", "kind": "blog"},
+        {"title": "김호윤 셰프님 계란코팅진라면 레시피 / 진라면 맛있게 끓이는법", "link": "https://blog.naver.com/b/2", "kind": "blog"}]}}
+    turn = svc.recipe._other_recipes("최강록 라면", state, base="라면", require="최강록", lead="원문을 보여 드릴게요.")
+    form = next(b for b in turn.blocks if b["type"] == "clarify_form")["data"]
+    hrefs = [o["href"] for o in form["questions"][0]["options"]]
+    assert hrefs == ["https://blog.naver.com/a/1"]

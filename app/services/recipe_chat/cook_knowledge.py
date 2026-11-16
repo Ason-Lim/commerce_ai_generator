@@ -78,7 +78,7 @@ APPEARANCE: list[list[tuple[re.Pattern, str]]] = [
                                  "showing above the broth — NOT a thin soup."),
         (re.compile(r"국밥"), "Gukbap: rice in hot broth in a deep earthenware bowl, the toppings clearly visible on the surface."),
         # rs2(2026-11-16): '국물색을 더 진하게'·'라면 면이 실제와 달라 보임'
-        (re.compile(r"^(?!.*(?:라멘|돈코츠)).*라면"), "Korean instant ramyeon: wavy, springy instant noodles in a deep red-orange "
+        (re.compile(r"^(?:기본|매운|얼큰한|끓인|봉지)?라면$"), "Korean instant ramyeon: wavy, springy instant noodles in a deep red-orange "
                                                   "spicy broth in a pot or bowl — NOT straight ramen or pale soup."),
     ],
     [   # 주재료가 잘 보이게

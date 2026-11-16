@@ -63,6 +63,7 @@ AI_RECIPE_RE = re.compile(r"^\s*(.{1,30}?)\s*AI\s*제안\s*레시피")
 # 2026-11-12: 공공 레시피는 참고 — 추천 레시피 아래 '「제목」 공공 레시피 보기' 칩으로만 연다
 PUBLIC_VIEW_RE = re.compile(r"^\s*(.{1,40}?)\s*공공\s*레시피\s*(?:보기|보여\s*줘|열어\s*줘)\s*$")
 # 2026-11-12: 추천 레시피 뒤 "블로그·카페·유튜브·인스타그램 레시피도 소개해 드릴까요?" 에 대한 답
+RECOMMENDED_RE = re.compile(r"^\s*(.{1,30}?)\s*추천\s*레시피\s*보기\s*$")
 OTHER_RECIPES_RE = re.compile(r"^\s*(?:네[,\s]*|응[,\s]*)?(.{1,30}?)\s*다른\s*레시피(?:도)?\s*(?:보여\s*줘|보기|소개해\s*줘|알려\s*줘)")
 YES_RE = re.compile(r"^\s*(?:네|예|응|어|좋아요?|그래요?|보여\s*줘|소개해\s*줘|부탁해요?)[\s.!~]*$")
 # 2026-11-12 실제 화면: 요리 확인 질문 뒤 '가성비 생새우'가 요리 설명으로 읽혀 레시피가 만들어졌다
@@ -223,6 +224,10 @@ class RecipeChat:
                 and not COMPARE_RE.match(text) and not parsing.is_recipe_request(text) \
                 and not parsing.is_product_request(text) and not _SHOPPING_WORDS.search(text):
             return self._ai_recipe(pending["dish"], state, db, recipe_sid, detail=text)
+        if text and self._claude_first():
+            m = RECOMMENDED_RE.match(text)
+            if m:
+                return self._recommended_recipe(m.group(1).strip(), None, state, db, recipe_sid)
         if text:
             m = OTHER_RECIPES_RE.match(text)
             if m:
@@ -301,6 +306,14 @@ class RecipeChat:
                 return self._servings_question(entry, serv, text, state, recipe_sid, db)
             # 2026-11-12: 추천 레시피(Claude 작성 · GPT 검토)가 먼저, 공공 레시피는 아래 참고로만
             dish = ((intent or {}).get("dish") or self._dish_from(text)) if self._claude_first() else None
+            named = (intent or {}).get("named_after")
+            if dish and named and self.discovery is not None:
+                # 2026-11-16 '최강록 라면 레시피' → 기본 라면이 나왔다. 사람·가게 이름이 붙은 레시피는 그대로 옮기지 않고 원문을 보여 준다
+                base = (intent or {}).get("base_dish") or re.sub(re.escape(named), "", dish).strip() or dish
+                return self._other_recipes(
+                    dish, state, base=base, require=named,
+                    lead=(f"**{dish}**{_topic(dish)[len(dish):]} {named} 님의 레시피라 그대로 옮기지 않아요. 원문(유튜브·블로그)을 보여 드릴게요 — "
+                          f"재료·분량은 원문에서 확인해 주세요. 우리 **{base}** 추천 레시피는 아래 칩으로 볼 수 있어요."))
             if dish:
                 turn = self._recommended_recipe(dish, finding, state, db, recipe_sid)
                 if (intent or {}).get("asks_amount") or AMOUNT_Q_RE.search(text):
@@ -506,7 +519,16 @@ class RecipeChat:
         return same, related
 
     def _popular_dish(self, subject, state, recipe_sid, db):
-        """2026-11-11: '인기 샌드위치 레시피' — 그 요리의 레시피로 답하고, 인기 순위는 재지 않았다고 말한다."""
+        """2026-11-11: '인기 샌드위치 레시피' — 그 요리의 레시피로 답하고, 인기 순위는 재지 않았다고 말한다.
+        2026-11-16: '최신 유행 라면 레시피'에 기본 라면 레시피가 나왔다 — 검색이 되면 요즘 화제가 된 글·영상을 먼저 보여 준다."""
+        subject = re.sub(r"(?:^|\s)(?:최신|최근|요즘|요새|요즘에|핫한|화제의?|대세)(?=\s|$)", " ", subject).strip() or subject
+        if self.discovery is not None:
+            turn = self._other_recipes(
+                subject, state, trend=True, base=subject,
+                lead=(f"요즘 화제가 된 **{subject}** 레시피 글·영상이에요(최근 것부터, 제목 기준). 어느 것이 더 인기인지는 재지 않았어요. "
+                      "재료·분량은 원문에서 확인해 주세요."))
+            if turn.stage == "recipe_other" and any(b.get("type") == "clarify_form" for b in turn.blocks):
+                return turn
         turn = self._handle(f"{subject} 레시피", None, state, recipe_sid, db, force_recipe=True)
         if turn is not None:
             turn.blocks = [B.notice(f"'{subject}' 레시피를 보여 드려요. 어느 레시피가 더 인기 있는지는 따로 재지 않았어요. "
@@ -941,17 +963,19 @@ class RecipeChat:
             return "김장용 생새우"
         return None
 
-    def _other_recipes(self, dish, state):
-        """블로그·카페·유튜브에서 찾은 레시피 글 — 제목·링크만 (본문은 가져오지 않는다). 인스타그램은 연결 전."""
+    def _other_recipes(self, dish, state, *, trend: bool = False, lead: str | None = None, base: str | None = None,
+                       require: str | None = None):
+        """블로그·카페·유튜브에서 찾은 레시피 글 — 제목·링크만 (본문은 가져오지 않는다). 인스타그램은 연결 전.
+        trend: 요즘 화제가 된 글부터 · lead: 첫 줄을 바꿈 · base: 우리 추천 레시피로 가는 칩 (2026-11-16)."""
         state.update(mode="recipe", pending=None)
         record = state.get("discover") or {}
-        same = re.sub(r"\s+", "", record.get("dish") or "") == re.sub(r"\s+", "", dish)
+        same = not trend and re.sub(r"\s+", "", record.get("dish") or "") == re.sub(r"\s+", "", dish)
         posts = [x for x in record.get("results") or [] if x.get("title") and x.get("link")] if same else []
         failed = False
         if not posts and self.discovery is not None:
             try:
                 found = self.discovery.dish(f"{dish} 만드는 법", dish, with_signals=False,
-                                                context=self._search_context(dish, state))
+                                                context=self._search_context(dish, state), trend=trend)
                 failed = found.get("status") == "search_failed"
                 if found.get("status") not in ("unavailable", "search_failed"):
                     self._remember_discovery(state, "dish", found)
@@ -959,14 +983,18 @@ class RecipeChat:
             except Exception:  # noqa: BLE001
                 log.warning("other recipes search failed")
                 failed = True
+        if require:
+            # 2026-11-16: '최강록 라면'에 '김호윤 셰프님 계란코팅진라면'이 섞였다 — 이름이 붙은 레시피는 제목에 그 이름이 있는 글만
+            posts = [p for p in posts if re.sub(r"\s+", "", require) in re.sub(r"\s+", "", p["title"])]
         insta = "인스타그램은 아직 연결되지 않아 이번에는 보여 드리지 못했어요."
         if not posts and (state.get("discover") or {}).get("status") == "search_failed" or failed:
             return RecipeTurn([B.notice(f"블로그·카페·유튜브 검색이 지금 응답하지 않아 **{dish}** 레시피 글을 가져오지 못했어요. "
                                         "잠시 뒤 다시 눌러 주세요.", "warn"),
                                B.chips([f"네, {dish} 다른 레시피도 보여 줘"])], state, "recipe_other")
         if not posts:
-            return RecipeTurn([B.text(f"**{dish}** 레시피 글을 블로그·카페·유튜브에서 찾지 못했어요. {insta}")],
-                              state, "recipe_other")
+            miss = f"**{dish}** 레시피 글을 블로그·카페·유튜브에서 찾지 못했어요. {insta}"
+            return RecipeTurn([B.text(f"{lead} 다만 {miss}" if lead else miss)]
+                              + ([B.chips([f"{base} 추천 레시피 보기"])] if base else []), state, "recipe_other")
         # 2026-11-12: 예전처럼 카드로 — 사진·출처·게시일과 '원문 보기' (제목 기준, 본문은 가져오지 않음)
         options = [{"label": p["title"] if len(p["title"]) <= 40 else p["title"][:39] + "…", "value": f"link:{n}",
                     "desc": (f"{KIND_LABEL.get(p.get('kind') or 'blog', '블로그')} · {p.get('source') or ''}".rstrip(" ·")
@@ -977,14 +1005,15 @@ class RecipeChat:
         similar = any(p.get("similar") for p in posts[:8])
         kinds = [KIND_LABEL[k] for k in ("blog", "cafearticle", "video") if k in {p.get("kind") or "blog" for p in posts}]
         when = (state.get("discover") or {}).get("searched_at")
+        head = lead or (f"**{dish}** 다른 레시피예요. {'·'.join(kinds) or '블로그'}에서 찾은 **제목 기준** 후보라 재료·분량은 "
+                        f"원문에서 확인해 주세요.")
         return RecipeTurn([
-            B.text(f"**{dish}** 다른 레시피예요. {'·'.join(kinds) or '블로그'}에서 찾은 **제목 기준** 후보라 재료·분량은 원문에서 "
-                   f"확인해 주세요."
+            B.text(head
                    + (" 이름이 똑같은 글이 적어 비슷한 요리와 같은 재료의 요리·활용법 글도 함께 보여 드려요 — "
                       "'비슷한 레시피'·'관련 레시피'로 표시했어요." if similar else "") + f" {insta}"),
             B.clarify("web", f"{dish} 레시피 후보 (제목 기준)", options,
                       why=f"네이버·유튜브 검색" + (f" · {when} 기준" if when else ""), layout="cards"),
-            B.chips([f"{dish} 레시피 후보 비교"]),
+            B.chips(([f"{base} 추천 레시피 보기"] if base else []) + [f"{dish} 레시피 후보 비교"]),
         ], state, "recipe_other")
 
     @staticmethod

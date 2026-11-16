@@ -20,9 +20,13 @@ log = logging.getLogger(__name__)
 
 INTENT_PROMPT = """너는 한국 식품 쇼핑·요리 도우미의 문장 해석기다. 손님 문장 하나를 읽고 JSON 하나만 출력한다.
 {"dish": "요리 이름 또는 null", "wants_recipe": true/false, "wants_products": true/false,
- "product_query": "상품 검색어 또는 null", "servings": 숫자 또는 null, "asks_amount": true/false}
+ "product_query": "상품 검색어 또는 null", "servings": 숫자 또는 null, "asks_amount": true/false,
+ "named_after": "사람·가게 이름 또는 null", "base_dish": "기본 요리 이름 또는 null", "trend": true/false}
 - dish: 손님이 만들려는 요리의 이름만. '맛있게·간단하게·얼큰하게·바삭하게' 같은 꾸밈말, '레시피·방법·상품·추천' 같은 요청 말은
-  빼고, 요리 이름 자체는 바꾸지 않는다(김치찌개, 생새우부추전, 라면). 요리가 아니면 null.
+  빼고, 요리 이름 자체는 바꾸지 않는다(김치찌개, 생새우부추전, 라면). 사람·가게 이름이나 맛 종류가 붙어 다른 요리가 되면 그대로
+  둔다(최강록 라면, 로제 떡볶이, 마라 라면). '최신·유행·인기' 같은 말은 dish 에 넣지 않는다. 요리가 아니면 null.
+- named_after: 요리 이름에 붙은 사람(셰프·연예인·유튜버)이나 가게 이름. 없으면 null. base_dish: 그 이름을 뺀 기본 요리(라면).
+- trend: 요즘 유행·최신·인기·화제인 레시피를 원하면 true.
 - wants_recipe: 만드는 법·끓이는 법·조리 방법·레시피를 알고 싶어 하면 true. 한국 사람은 라면·찌개·국에 '끓이는 방법'을 쓴다.
   보관·손질·고르는 법·영양·제철만 묻는 것은 false.
 - wants_products: 상품·재료를 사거나 추천받고 싶어 하면 true.
@@ -52,6 +56,9 @@ def read(ask: Callable[[str], dict] | None, text: str) -> dict | None:
     dish = " ".join(str(dish).split()) if isinstance(dish, str) else None
     if dish and (not re.fullmatch(r"[가-힣A-Za-z ]{2,20}", dish) or BAD_DISH_RE.search(dish)):
         log.info("intent dish rejected: %s", dish)
+        from app.services.chat import miss_signals   # 2026-11-16 실수 신호: LLM 답이 버려져 규칙으로 넘어감
+
+        miss_signals.record("intent_rejected", text=text, field="dish", value=dish[:40])
         dish = None
     query = out.get("product_query")
     query = " ".join(str(query).split())[:30] if isinstance(query, str) and query.strip() else None
@@ -63,7 +70,21 @@ def read(ask: Callable[[str], dict] | None, text: str) -> dict | None:
     serv = out.get("servings")
     serv = serv if isinstance(serv, int) and 1 <= serv <= 30 else None
     return {"dish": dish, "wants_recipe": out.get("wants_recipe") is True, "wants_products": out.get("wants_products") is True,
-            "product_query": query, "servings": serv, "asks_amount": out.get("asks_amount") is True}
+            "product_query": query, "servings": serv, "asks_amount": out.get("asks_amount") is True,
+            "named_after": _name(out.get("named_after"), text), "base_dish": _name(out.get("base_dish")),
+            "trend": out.get("trend") is True}
+
+
+def _name(value, text: str | None = None) -> str | None:
+    """짧은 한글 이름만 — 사람·가게 이름은 손님 문장에 실제로 있어야 한다(지어낸 이름을 붙이지 않게)."""
+    if not isinstance(value, str):
+        return None
+    v = " ".join(value.split())
+    if not re.fullmatch(r"[가-힣A-Za-z ]{1,15}", v) or BAD_DISH_RE.search(v):
+        return None
+    if text is not None and v.replace(" ", "") not in text.replace(" ", ""):
+        return None
+    return v
 
 
 # ── 재료 → 상품 검색어 (2026-11-12) ────────────────────────────────────────────

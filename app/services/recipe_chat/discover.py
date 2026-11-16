@@ -794,7 +794,8 @@ class Discovery:
             query = f"{query} 레시피"
         return {"dish": dish, "full_name": full, "query": query, "by": "ai"}
 
-    def dish(self, text: str, fallback: str, *, with_signals: bool = True, context: str | None = None) -> dict:
+    def dish(self, text: str, fallback: str, *, with_signals: bool = True, context: str | None = None,
+             trend: bool = False) -> dict:
         trace: dict = {"search": [], "llm": []}
         name = self.name_of(text, fallback, trace["llm"])
         base = {**name, "searched_at": self.searched_at(), "provider": "naver", "trace": trace}
@@ -805,6 +806,9 @@ class Discovery:
         parts = dish_parts(name["dish"])
         ingredient = main_ingredient(name["dish"])
         words = search_words(name["dish"], context)
+        if trend:
+            # 2026-11-16 '최신 유행 라면 레시피': 요즘 화제가 된 글·영상부터 — 이름 그대로인 기본 레시피가 아니라
+            words = [f"요즘 유행 {name['dish']}", f"{name['dish']} 꿀조합", f"{name['dish']} 레시피"] + words[1:]
         trace["words"] = words
 
         def match(title: str) -> str | None:
@@ -821,7 +825,8 @@ class Discovery:
         rank = {"same": 2, "similar": 1, "related": 0}
         # never link a look-alike as the same dish: the title must name this dish (or the full name) — a similar dish
         # is shown labelled '비슷한 레시피'
-        queries = [name["query"]] + [w if re.search(r"활용|요리$", w) else f"{w} 레시피" for w in words[1:]]
+        queries = ([] if trend else [name["query"]]) + [w if re.search(r"활용|요리$|유행|꿀조합|레시피$", w) else f"{w} 레시피"
+                                                        for w in (words if trend else words[1:])]
         hits = []
         try:
             for q in queries:
@@ -873,9 +878,9 @@ class Discovery:
                 # 검색 한 번이 할당량 100(하루 1만)이라 최근 60일은 첫 말만, 나머지는 기간 없이, 영상 2개가 모이면 멈춘다.
                 vids, seen_links = [], set()
                 for n, word in enumerate(words[:4]):
-                    q = word if re.search(r"활용|요리$", word) else f"{word} 만들기"
+                    q = word if re.search(r"활용|요리$|유행|꿀조합|레시피$", word) else f"{word} 만들기"
                     got = []
-                    if n == 0:
+                    if n == 0 or trend:          # 유행 질문은 모든 말을 최근 60일부터
                         got = [h for h in self.video.search(q, days=60, max_results=15, trace=trace["search"])[0] if ok(h)]
                     if not got:
                         got = [h for h in self.video.search(q, max_results=15, trace=trace["search"])[0] if ok(h)]

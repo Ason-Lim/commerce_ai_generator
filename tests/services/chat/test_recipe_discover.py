@@ -643,7 +643,8 @@ def test_popular_named_dish_gets_its_recipes_not_the_general_trend_list(make):
     res = svc.handle(None, message="인기 샌드위치 레시피")
     assert res["stage"] != "recipe_trend"
     assert "news" not in {k for _q, k in http.calls}
-    assert md(res).startswith("'샌드위치' 레시피를 보여 드려요. 어느 레시피가 더 인기 있는지는 따로 재지 않았어요.")
+    # 2026-11-16: 요즘 화제가 된 그 요리의 글·영상을 먼저 (기본 레시피는 칩으로) — 전체 유행 검색(뉴스)은 여전히 하지 않는다
+    assert md(res).startswith("요즘 화제가 된 **샌드위치** 레시피 글·영상이에요") and res["stage"] == "recipe_other"
 
 
 # ── 2026-11-12: 추천 레시피(AI)가 먼저, 공공 레시피는 아래 참고로만 ─────────────────────────
