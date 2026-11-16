@@ -20,11 +20,11 @@ def _lines(text: str, per: int) -> int:
     return max(1, sum(max(1, math.ceil(len(part) / max(per, 1))) for part in str(text or "").split("\n")))
 
 
-def _icons(art, texts, sid):
+def _icons(art, texts, sid, kinds=("icon",)):
     try:
         from app.admin.b2b import design_assets
 
-        return design_assets.item_icons(art, texts, sid)
+        return design_assets.item_icons(art, texts, sid, kinds)
     except Exception:  # noqa: BLE001
         return [None] * len(texts)
 
@@ -89,11 +89,12 @@ def hub(f: dict, art=None, won_short=None) -> tuple[list[dict], float]:
     # 아래 수치 원 4개
     tot = f.get("total")
     tn, tu = won_short(tot) if (tot and won_short) else (tot, "원")
-    stats = [("예정 인원", f.get("headcount"), "명", "1인 1개 직접 선택", "사람 인원 고객 팀"),
+    stats = [("예정 인원", f.get("headcount"), "명", "1인 1개 직접 선택", "사람 고객 상담원 직원 임직원"),
              ("1인당 단가", f.get("budget_per_person"), "원", f.get("vat") or "", "돈 동전 가격 결제"),
              ("예정 총액", tn, tu, "실제 지급수량 기준 정산", "계산기 금융 은행 돈"),
              ("배송 기한", f.get("delivery_days"), "영업일", "선택일로부터 개별 주소 도착", "배송 트럭 택배")]
-    icons = _icons(art, [s[4] for s in stats], "summary")
+    # 인원 원에는 사람 그림(일러스트 포함 — 2026-11-16 사람 캐릭터 자료), 나머지는 아이콘
+    icons = _icons(art, [stats[0][4]], "", ("illustration", "icon")) + _icons(art, [s[4] for s in stats[1:]], "summary")
     xs = [W * (i + .5) / 4 for i in range(4)]
     out.append(line(cx, 138, cx, 182, "p", 2.5))
     out.append(line(xs[0], 182, xs[-1], 182, "p", 2.5))

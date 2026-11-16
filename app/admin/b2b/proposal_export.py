@@ -352,7 +352,7 @@ class _Pptx:
         if lay == "ncards":
             return math.ceil(len(e.items) / 3) * 150
         if lay == "checks":
-            return sum(_lines(x, 80) * 22 + 12 for x in e.items)
+            return sum(_lines(x, 61) * 22 + 12 for x in e.items)
         if lay == "timeline":
             return 160
         if lay == "path":
@@ -576,8 +576,9 @@ class _Pptx:
                 self.text(s, cx + 20, cy + 52 * k, w - 40, h - 60 * k, x, 12 * k)
             return y + math.ceil(len(e.items) / 3) * (h + 14) - 14
         if lay == "checks":
+            per = max(20, int(1090 / (13 * k * 1.36)))       # 2026-11-16: 글자 크기(k)만큼 줄 수를 다시 셈 — 줄 겹침 수정
             for x in e.items:
-                h = (_lines(x, 80) * 22 + 6) * k
+                h = (_lines(x, per) * 22 + 6) * k
                 self.box(s, 80, y + 2, 20, 20, pal.primary, radius=0.25)
                 self.text(s, 80, y + 2, 20, 20, "✓", 10, True, pal.on_primary, align="center", anchor="middle")
                 self.text(s, 112, y, 1090, h, x, 13 * k)

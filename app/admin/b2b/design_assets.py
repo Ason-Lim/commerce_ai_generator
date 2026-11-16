@@ -228,7 +228,7 @@ def single(a: dict) -> bool:
 _STOP = {"합니다", "있습니다", "제공", "운영", "관리", "통해", "대한", "위한", "가능", "기준", "이내", "포함"}
 
 
-def item_icons(art: dict | None, texts: list[str], sid: str = "") -> list[dict | None]:
+def item_icons(art: dict | None, texts: list[str], sid: str = "", kinds: tuple[str, ...] = ITEM_KINDS) -> list[dict | None]:
     """카드·단계 항목마다 어울리는 작은 아이콘 (항목 글 낱말 + 장 주제). 한 묶음 안에서는 겹치지 않게,
     제안서 전체에서는 되도록 새 아이콘을 쓴다. 자산이 없거나 꺼 두면 None."""
     if not art or art.get("item_icons") is False or not assets():
@@ -236,7 +236,7 @@ def item_icons(art: dict | None, texts: list[str], sid: str = "") -> list[dict |
     used: set = art.setdefault("_used_items", set())
     head = (art.get("sections") or {}).get(sid)
     banned = {head["path"]} if head else set()
-    pool = [a for a in assets() if a.get("kind") in ITEM_KINDS and single(a)]
+    pool = [a for a in assets() if a.get("kind") in kinds and single(a)]
     out: list[dict | None] = []
     for t in texts:
         want = [w for w in re.findall(r"[가-힣A-Za-z]{2,}", str(t)) if w not in _STOP][:24]
