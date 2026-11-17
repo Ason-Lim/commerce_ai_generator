@@ -23,6 +23,13 @@ from app.admin.b2b.proposal import TODO, Element, Proposal
 TODO_RGB = "B47A00"
 
 
+def D_tint(pal) -> str:
+    """주색을 아주 옅게 (사진 없는 자리 바탕)."""
+    c = pal.primary.lstrip("#")
+    rgb = [int(c[i:i + 2], 16) for i in (0, 2, 4)]
+    return "#" + "".join(f"{round(v * .06 + 255 * .94):02X}" for v in rgb)
+
+
 # ── PPTX ──────────────────────────────────────────────────────
 class _Pptx:
     def __init__(self, p: Proposal, tpl: T.Template):
@@ -533,6 +540,51 @@ class _Pptx:
             self.text(s, cx + 130, cy + 14, w - 170, h - 28, segs, anchor="middle", spacing=1.25)
         return y + sum(rows) + 24 * (len(rows) - 1)
 
+    def goods(self, s, e: Element, sid: str, y: float) -> float:
+        """상품 구성안 — 상품 사진 카드 (2026-11-17). 사진이 없으면 품목 예시 그림 + '공급사 이미지 확정 후 교체'."""
+        pal = self.pal
+        g = D.goods_geom(e)
+        imgs = (self.p.facts or {}).get("product_images") or {}
+        try:
+            from app.admin.b2b import design_assets
+
+            ph = design_assets.item_icons(self.art, [re.sub(r"\[확인 필요[^\]]*\]", "선물 식품", r[0]) for r in e.rows],
+                                          "products", ("illustration", "icon"))
+        except Exception:  # noqa: BLE001
+            ph = [None] * len(e.rows)
+        cols, cw, gap, ih = g["cols"], g["cw"], g["gap"], g["img_h"]
+        for i, r in enumerate(e.rows):
+            row = i // cols
+            cx = 72 + (i % cols) * (cw + gap)
+            cy = y + sum(g["rows"][:row]) + gap * row
+            h = g["rows"][row]
+            self.box(s, cx, cy, cw, h, pal.surface, pal.line, radius=min(0.1, 14 / h))
+            img = imgs.get(r[0])
+            self.box(s, cx + 14, cy + 14, cw - 28, ih, pal.bg if img else D_tint(pal), pal.line, radius=0.06)
+            if img:
+                self.pic(s, {"path": img["path"]}, cx + 18, cy + 18, cw - 36, ih - 8)
+                if img.get("label"):
+                    self.box(s, cx + 20, cy + 14 + ih - 26, min(cw - 40, 190), 20, "#FFFFFF", None, radius=0.3)
+                    self.text(s, cx + 24, cy + 14 + ih - 26, min(cw - 48, 182), 20, img["label"], 8, True, "#8A5A00", anchor="middle")
+            else:
+                self.pic(s, ph[i], cx + cw * 0.25, cy + 22, cw * 0.5, ih - 44)
+                self.text(s, cx + 14, cy + 14 + ih - 24, cw - 28, 18, "공급사 이미지 확정 후 교체", 8.5, False, pal.muted, align="center")
+            ty = cy + 14 + ih + 14
+            nh = min(3, D.wrap_n(r[0], g["inner"], 12, True)) * 12 * 1.333 * 1.22 * 1.15
+            self.text(s, cx + 16, ty, g["inner"], nh + 2, r[0], 12, True)
+            ty += nh + 4
+            if len(r) > 1 and r[1]:
+                oh = D.text_h(r[1], g["inner"], 10, False, 1.15)
+                self.text(s, cx + 16, ty, g["inner"], oh, r[1], 10, False, pal.muted)
+                ty += oh + 4
+            if len(r) > 2:
+                self.text(s, cx + 16, ty, g["inner"], 22, r[2], 11, True, pal.primary)
+            ty += 30
+            if len(r) > 3 and r[3]:
+                ok = r[3] in ("확정", "대응")
+                self.text(s, cx + 16, ty, g["inner"], 24, r[3], 9.5, True, pal.primary if ok else "#" + TODO_RGB)
+        return y + g["h"]
+
     def cards(self, s, e: Element, lay: str, sid: str, y: float) -> float:
         """번호 카드·리스크 카드 — 글 길이를 재서 상자 높이를 정한다 (2026-11-17, 넘침 수정·가독성)."""
         pal, k = self.pal, self.k
@@ -583,6 +635,8 @@ class _Pptx:
             return y + h
         if lay in ("ncards", "cards"):
             return self.cards(s, e, lay, sid, y)
+        if lay == "goods":
+            return self.goods(s, e, sid, y)
         if lay == "checks":
             for x, h in zip(e.items, D.checks_h(e.items)):
                 h *= k

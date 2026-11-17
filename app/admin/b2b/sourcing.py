@@ -39,6 +39,7 @@ def discover(req: BidRequirement, categories: list[str] | None = None, markets: 
                 c = Candidate(
                     candidate_id=_cid("mkt", o.mall, o.mall_product_id or o.title), supplier=o.mall_label or o.mall,
                     name=o.title, option=None, category=infer_category(o.title) or cat, url=o.url,
+                    image_url=getattr(o, "image_url", None), image_source="retail",
                     observed_price=price, price_kind="public_retail", observed_date=o.observed_at.date(),
                     notes=(["예시 데이터 — 실제 상품 아님"] if o.is_sample else []) + ["마켓 검색 관측가 — 견적 아님"],
                     source="market_search", is_sample=o.is_sample)

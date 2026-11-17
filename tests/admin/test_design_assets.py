@@ -219,3 +219,46 @@ def test_pptx_cards_box_fits_measured_text(tmp_path):
                 assert sh.top + sh.height <= prs.slide_height                     # 슬라이드 밖으로 안 나감
     html = proposal_deck.render(p)
     assert 'class="ncards c' in html
+
+
+# ── 2026-11-17: 상품 구성안 상품 이미지 ─────────────────────────────────
+def test_product_images_supplier_first_and_retail_only_internal(tmp_path, monkeypatch):
+    from app.admin.b2b import product_images as PI
+    from app.admin.b2b.models import Candidate
+
+    monkeypatch.setenv("ADMIN_DATA_DIR", str(tmp_path))
+    PI.folder().mkdir(parents=True)
+    Image.new("RGB", (60, 60), "red").save(PI.folder() / "c1.jpg")
+    sup = Candidate(candidate_id="c1", supplier="s", name="한라봉 선물세트")
+    ret = Candidate(candidate_id="c2", supplier="s", name="한우 세트", image_url="https://img.example/a.jpg", image_source="retail")
+    cached = tmp_path / "x.jpg"
+    Image.new("RGB", (60, 60), "blue").save(cached)
+    monkeypatch.setattr(PI, "download", lambda url, timeout=6.0: cached)
+    assert PI.resolve(sup, "external")["source"] == "supplier"                 # 공급사 이미지는 제출본에도
+    assert PI.resolve(ret, "external") is None                                  # 판매처 이미지는 제출본에 안 넣음
+    got = PI.resolve(ret, "internal")
+    assert got and "사용 허락 확인" in got["label"]
+
+
+def test_products_section_renders_image_cards(tmp_path, monkeypatch):
+    import zipfile
+
+    from app.admin.b2b import evidence, product_images as PI
+    from app.admin.b2b.models import Candidate
+
+    _pack(tmp_path, monkeypatch, ICONS + ASSETS)
+    PI.folder().mkdir(parents=True)
+    Image.new("RGB", (80, 80), (10, 200, 10)).save(PI.folder() / "g1.png")
+    cands = [Candidate(candidate_id="g1", supplier="s", name="제주 한라봉 선물세트", option="3kg", category="식품",
+                       observed_price=52000, observed_date=date(2026, 11, 14)),
+             Candidate(candidate_id="g2", supplier="s", name="한우 등심 세트", option="1kg", category="식품",
+                       observed_price=58000, observed_date=date(2026, 11, 14))]
+    evals = [evidence.evaluate(c, REQ, today=date(2026, 11, 17)) for c in cands]
+    p = proposal.build(REQ, evals, profile={}, cost=costing.analyze(REQ, {}), mode="external", today=date(2026, 11, 17))
+    assert list(p.facts["product_images"]) == ["제주 한라봉 선물세트"]
+    goods = [e for s in p.sections if s.id == "products" for e in s.elements if e.kind == "table"]
+    assert goods and proposal_deck.layout_of(goods[0], "products") == "goods"
+    html = proposal_deck.render(p)
+    assert 'class="goods"' in html and "공급사 이미지 확정 후 교체" in html
+    out = proposal_export.to_pptx(p, tmp_path / "g.pptx")
+    assert any(n.startswith("ppt/media/") for n in zipfile.ZipFile(out).namelist())

@@ -103,5 +103,6 @@ def to_candidate(o: dict, today: date | None = None) -> Candidate:
     return Candidate(
         candidate_id=f"dmg-{o['market']}-{o['no']}", supplier=f"{o['seller']} ({mall})", name=o["title"],
         category=infer_category(o["title"]), url=o.get("url"), observed_price=o["price"],
+        image_url=o.get("thumb"), image_source="wholesale",
         price_kind="wholesale" if wholesale else "consign", min_order_qty=o.get("moq"),
         observed_date=today or date.today(), notes=notes, source="domeggook")

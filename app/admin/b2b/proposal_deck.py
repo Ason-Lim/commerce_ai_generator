@@ -51,6 +51,8 @@ def layout_of(e: Element, sid: str = "") -> str:
             return "steps" if n == 3 else ("path" if 5 <= n <= 10 and path_fits(e) else ("flow" if n <= 4 else "table"))
         if h == ["리스크", "대응"]:
             return "cards"
+        if h[:2] == ["상품", "옵션·구성"]:
+            return "goods"                        # 2026-11-17: 상품 구성안 → 상품 이미지 카드
         if h == F.MIRROR_HEAD:
             return "mirror" if F.mirror_fits(e) else "table"
         if h and h[0].startswith("평가 항목") and F.pyramid_fits(e):
@@ -225,6 +227,27 @@ def card_geom(e: Element, lay: str) -> dict:
     return other if other["h"] <= BODY_H - 10 else first
 
 
+def goods_geom(e: Element) -> dict:
+    """상품 이미지 카드 — 한 줄 3~4개, 사진 + 상품명·구성·판매가·상태. 줄 높이는 가장 긴 카드에 맞춘다."""
+    n = len(e.rows)
+    cols = 4 if n >= 4 else 3
+    gap = 18.0
+    cw = (BODY_W - gap * (cols - 1)) / cols
+    img_h = min(176.0, cw * 0.66)
+    inner = cw - 32
+    hs = []
+    for r in e.rows:
+        h = 14 + img_h + 14
+        h += min(3, wrap_n(r[0], inner, 12, True)) * 12 * 1.333 * 1.22 * 1.15 + 4
+        if len(r) > 1 and r[1]:
+            h += text_h(r[1], inner, 10, False, 1.15) + 4
+        h += 22 + 8 + 24 + 16                                  # 판매가 · 상태 칩 · 아래 여백
+        hs.append(h)
+    rows = [max(hs[i:i + cols]) for i in range(0, len(hs), cols)]
+    return {"cols": cols, "gap": gap, "cw": cw, "img_h": img_h, "inner": inner, "rows": rows,
+            "h": sum(rows) + gap * (len(rows) - 1)}
+
+
 def icard_rows(parts: list[tuple[str, str]]) -> list[float]:
     """2×2 아이콘 카드 줄 높이 — 글 영역 폭 383px (PPTX), 머리말 12pt 굵게 + 본문 10pt."""
     def need(hb: tuple[str, str]) -> float:
@@ -244,6 +267,8 @@ def block_h(e: Element, sid: str) -> float | None:
         return card_geom(e, lay)["h"]
     if lay == "checks":
         return sum(checks_h(e.items))
+    if lay == "goods":
+        return goods_geom(e)["h"]
     return None
 
 
@@ -313,7 +338,11 @@ def _split_tables(els: list[Element], sid: str) -> list[Element]:
     out = []
     els = [c for e in els for c in _split_items(e, sid)]
     for e in els:
-        if e.kind == "table" and layout_of(e, sid) == "table" and len(e.rows) > ROWS_PER:
+        if e.kind == "table" and layout_of(e, sid) == "goods" and goods_geom(e)["h"] > BODY_H - 40:
+            per = goods_geom(e)["cols"]
+            for i in range(0, len(e.rows), per):
+                out.append(e.model_copy(update={"rows": e.rows[i:i + per]}))
+        elif e.kind == "table" and layout_of(e, sid) == "table" and len(e.rows) > ROWS_PER:
             for i in range(0, len(e.rows), ROWS_PER):
                 out.append(e.model_copy(update={"rows": e.rows[i:i + ROWS_PER]}))
         else:
@@ -472,9 +501,47 @@ def fig_html(shapes: list[dict], h: float, i: int = 0) -> str:
     return f'<div class="fig rv" style="--d:{i};height:{h:.0f}px">' + "".join(out) + "</div>"
 
 
+def goods_image(name: str) -> dict | None:
+    return ((PFACTS or {}).get("product_images") or {}).get(name)
+
+
+def goods_placeholders(e: Element, sid: str) -> list[dict | None]:
+    """이미지가 없는 상품 자리의 예시 그림 (품목 낱말로 고른 일러스트)."""
+    names = [r[0] for r in e.rows]
+    try:
+        return design_assets.item_icons(ART, [re.sub(r"\[확인 필요[^\]]*\]", "선물 식품", n) for n in names], "products",
+                                        ("illustration", "icon"))
+    except Exception:  # noqa: BLE001
+        return [None] * len(names)
+
+
+def _goods_html(e: Element, sid: str, i: int) -> str:
+    g = goods_geom(e)
+    ph = goods_placeholders(e, sid)
+    cards = []
+    for k, r in enumerate(e.rows):
+        img = goods_image(r[0])
+        if img:
+            pic = f'<img src="{design_assets.data_uri(img["path"], 520)}" alt="">' + (
+                f'<span class="gl">{html.escape(img["label"])}</span>' if img.get("label") else "")
+            cls = "gi"
+        else:
+            pic = (_ico(ph[k], "gph", 260) if ph[k] else "") + '<span class="gl soft">공급사 이미지 확정 후 교체</span>'
+            cls = "gi ph"
+        status = r[3] if len(r) > 3 else ""
+        tone = "ok" if status in ("확정", "대응") else "warn"
+        cards.append(f'<div class="card gcard rv" style="--d:{i + k}"><div class="{cls}" style="height:{g["img_h"]:.0f}px">{pic}</div>'
+                     f'<b class="gn">{_m(r[0])}</b>' + (f'<span class="go">{_m(r[1])}</span>' if len(r) > 1 and r[1] else "")
+                     + (f'<span class="gp">{_m(r[2])}</span>' if len(r) > 2 else "")
+                     + (f'<span class="chip {tone}">{_m(status)}</span>' if status else "") + "</div>")
+    return f'<div class="goods" style="--gc:{g["cols"]}">' + "".join(cards) + "</div>"
+
+
 def _el(e: Element, sid: str, i: int) -> str:
     lay = layout_of(e, sid)
     d = f' style="--d:{i}"'
+    if lay == "goods":
+        return _goods_html(e, sid, i)
     if lay == "pyramid":
         return fig_html(*F.pyramid(e, ART, sid), i)
     if lay == "mirror":
@@ -655,10 +722,12 @@ def _closing(p: Proposal) -> str:
 
 
 ART: dict | None = None     # render() 가 한 부마다 정한다 (학습한 디자인 자산)
+PFACTS: dict | None = None  # render() 가 정한다 (상품 이미지 등 제안서 사실)
 
 
 def render(p: Proposal, tpl: T.Template | None = None, market: dict | None = None) -> str:
-    global ART
+    global ART, PFACTS
+    PFACTS = p.facts or {}
     try:
         ART = design_assets.for_proposal(p)
     except Exception:  # noqa: BLE001
@@ -787,7 +856,17 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .rcard .rn{font-size:13px;font-weight:800;color:var(--p);letter-spacing:.08em}
 .fig{position:relative;width:1136px;max-width:100%;flex:none}.fg{position:absolute;display:block;box-sizing:border-box}
 .ft{display:flex;flex-direction:column;line-height:1.35;word-break:keep-all;overflow-wrap:break-word}.ft mark{font-size:inherit}
-.ncard,.rcard{position:relative}.nico{position:absolute;right:14px;top:12px;width:52px;height:52px;object-fit:contain}
+.ncard,.rcard{position:relative}
+.goods{display:grid;grid-template-columns:repeat(var(--gc),1fr);gap:18px}
+.gcard{padding:14px 16px 16px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.gi{position:relative;background:var(--bg);border:1px solid var(--ln);border-radius:12px;display:grid;place-items:center;overflow:hidden;margin-bottom:8px}
+.gi img{max-width:100%;max-height:100%;object-fit:contain}.gi.ph{background:color-mix(in srgb,var(--p) 6%,var(--bg))}
+.gi .gph{max-width:62%;max-height:70%;object-fit:contain;opacity:.9}
+.gl{position:absolute;left:8px;bottom:8px;font-size:11px;font-weight:700;background:rgba(255,255,255,.92);color:#8a5a00;border-radius:6px;padding:2px 7px}
+.gl.soft{color:var(--mu)}
+.gn{font-size:.98em;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.go{font-size:.82em;color:var(--mu);line-height:1.4}.gp{font-size:.92em;font-weight:800;color:var(--p)}
+.gcard .chip{align-self:flex-start;margin-top:4px;white-space:normal;line-height:1.35}.nico{position:absolute;right:14px;top:12px;width:52px;height:52px;object-fit:contain}
 .path{display:flex;flex-direction:column}
 .prow{position:relative;list-style:none;display:grid;grid-template-columns:repeat(var(--per),1fr);padding:0 46px 18px;min-height:var(--rh,158px);margin:0;box-sizing:border-box}
 .prow.rev{direction:rtl}.prow.rev li{direction:ltr}
