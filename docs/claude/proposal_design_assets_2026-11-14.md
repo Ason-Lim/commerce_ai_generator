@@ -99,3 +99,5 @@
 - 같은 장 안에서 항목 아이콘이 겹치지 않게 (나눈 조각 포함).
 - LibreOffice 로 만든 PDF 는 한글과 숫자·괄호 사이에 빈칸을 자동으로 넣음('500 명', '(VAT 포함 )'). Chromium(Playwright)으로 만든 PDF 는 그렇지 않음
   → 맥에서 `uv run playwright install chromium` 1회 실행 권장 (이 맥에는 아직 없음).
+- (같은 날) 제목과 본문 간격: PPTX 본문 시작 160 → 182px (본문 높이 490 → 468px, 장당 분량 MAX_UNITS 9.5 → 9.07),
+  한눈에 보는 제안·시장 동향 장도 같이 내림. HTML 슬라이드 `.body` 위 여백 26 → 44px. 2×2 아이콘 카드 높이도 글 길이로 계산(`icard_rows`).

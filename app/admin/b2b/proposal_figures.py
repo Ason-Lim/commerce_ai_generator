@@ -13,7 +13,7 @@ import math
 import re
 
 W = 1136.0
-MAX_H = 480.0
+MAX_H = 458.0          # 본문 468px − 여유 (2026-11-17 제목 아래 여백 늘림)
 
 
 def _lines(text: str, per: int) -> int:

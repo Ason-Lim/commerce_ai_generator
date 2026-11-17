@@ -24,7 +24,7 @@ KICKER = {"summary": "PROPOSAL SUMMARY", "understanding": "PROJECT UNDERSTANDING
           "risk": "RISK MANAGEMENT", "strategy": "STRATEGY", "evaluation": "EVALUATION RESPONSE",
           "operations": "OPERATIONS", "schedule": "SCHEDULE", "questions": "Q&A", "company": "ABOUT US", "appendix_check": "INTERNAL CHECKLIST",
           "appendix_cost": "INTERNAL COST"}
-MAX_UNITS = 9.5      # 한 장에 넣는 분량 (대략 줄 수)
+MAX_UNITS = 9.07     # 한 장에 넣는 분량 (본문 468px ÷ 51.6) — 2026-11-17 제목 아래 여백 늘림
 ROWS_PER = 7         # 일반 표 한 장 최대 행
 
 
@@ -79,7 +79,7 @@ def layout_of(e: Element, sid: str = "") -> str:
 def _units(e: Element, sid: str) -> float:
     lay = layout_of(e, sid)
     if (bh := block_h(e, sid)) is not None:
-        return (bh + 14) / 51.6                 # MAX_UNITS 9.5 ≈ 본문 490px
+        return (bh + 14) / 51.6                 # MAX_UNITS 9.07 ≈ 본문 468px
     if lay in ("timeline", "flow", "steps", "trio"):
         return 4.2
     if lay == "path":
@@ -168,7 +168,8 @@ def text_h(text: str, width: float, pt: float, bold: bool = False, spacing: floa
     return wrap_n(text, width, pt, bold) * pt * 1.333 * 1.22 * spacing
 
 
-BODY_W, BODY_H = 1136.0, 490.0          # 본문 영역 (PPTX: x 72~1208, y 160~650)
+BODY_W, BODY_H = 1136.0, 468.0          # 본문 영역 (PPTX: x 72~1208, y 182~650)
+BODY_TOP = 182.0                        # 2026-11-17: 제목(~132)과 본문 사이 50px
 CARD_PT, HEAD_PT = 12.5, 13.5           # 카드 본문·머리말 글자 크기
 
 
@@ -224,6 +225,14 @@ def card_geom(e: Element, lay: str) -> dict:
     return other if other["h"] <= BODY_H - 10 else first
 
 
+def icard_rows(parts: list[tuple[str, str]]) -> list[float]:
+    """2×2 아이콘 카드 줄 높이 — 글 영역 폭 383px (PPTX), 머리말 12pt 굵게 + 본문 10pt."""
+    def need(hb: tuple[str, str]) -> float:
+        h = text_h(hb[0], 383, 12, True, 1.15) + 4 if hb[0] else 0
+        return 34 + h + text_h(hb[1], 383, 10, False, 1.25)
+    return [max(112.0, *(need(parts[j]) for j in range(i, min(i + 2, len(parts))))) for i in range(0, len(parts), 2)]
+
+
 def checks_h(items: list[str]) -> list[float]:
     return [max(28.0, text_h(x, 1080, 13, False, 1.25)) + 8 for x in items]
 
@@ -261,7 +270,7 @@ def path_geom(e: Element) -> tuple[int, int, list[float]]:
 
 
 def path_fits(e: Element) -> bool:
-    return sum(path_geom(e)[2]) <= 480
+    return sum(path_geom(e)[2]) <= BODY_H
 
 
 def split_head(t: str) -> tuple[str, str]:
@@ -722,7 +731,7 @@ header .kick b::after{content:"";display:inline-block;width:22px;height:2px;back
 .ibadge{letter-spacing:0;font-size:11.5px;background:#2b2b2b;color:#fff;border-radius:6px;padding:2px 8px}
 .slide h2{font-size:38px;line-height:1.25;letter-spacing:-.025em;font-weight:800;margin:10px 0 0;text-wrap:balance}
 .slide h2 small{font-size:18px;color:var(--mu);font-weight:600}
-.body{flex:1;min-height:0;margin-top:26px;display:flex;flex-direction:column;gap:14px;font-size:calc(16px*var(--fit,1));line-height:1.6}
+.body{flex:1;min-height:0;margin-top:44px;display:flex;flex-direction:column;gap:14px;font-size:calc(16px*var(--fit,1));line-height:1.6}
 footer{position:absolute;left:72px;right:72px;bottom:22px;display:flex;align-items:center;gap:14px;font-size:12px;color:var(--mu)}
 footer .brand{font-weight:800;color:var(--ink);letter-spacing:-.01em}
 footer .brand img{height:20px;display:block}
