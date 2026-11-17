@@ -126,7 +126,7 @@ function open_(p){S.cur=p;$("detail").hidden=false;$("x-title").textContent=p.ti
  const h=$("e-history");h.replaceChildren();for(const x of p.history)h.append(el("div",{class:"turn"},el("span",{},x.at.replace("T"," ").slice(0,16)),x.action+(x.note?" — "+x.note:"")));
  const a=$("x-actions");a.replaceChildren();const B=(t,f,cls)=>a.append(el("button",{class:"btn"+(cls?" "+cls:""),onclick:f},t));
  if(edit){B("저장",save);B("가격 다시 확인",()=>act("refresh"));B("검토 요청",()=>act("submit"),"primary")}
- if(p.status==="pending"){B("승인 · 게시",()=>act("approve",prompt("승인 메모 (선택)")||null),"primary");B("반려",()=>{const r=prompt("반려 사유");if(r)act("reject",r)})}
+ if(p.status==="pending"){B("승인 · 게시",()=>{const m=prompt("승인 메모 (선택) — 무엇을 확인했는지 적어 두면 기록에 남아요. 비워도 돼요. 취소하면 승인하지 않아요.");if(m!==null)act("approve",m.trim()||null)},"primary");B("반려",()=>{const r=prompt("반려 사유");if(r)act("reject",r)})}
  if(p.status==="approved")B("내리기",()=>{const r=prompt("내리는 이유");if(r!==null)act("withdraw",r)});
  if(p.status==="withdrawn")B("다시 초안으로",()=>act("reopen"))}
 async function act(action,note){try{const j=await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/"+action,{note});open_(j);list()}catch(e){showErr(e)}}
