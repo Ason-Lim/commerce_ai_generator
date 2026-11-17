@@ -67,8 +67,10 @@ def _clean_price(v) -> str:
 
 
 def add(items: list[dict], env=None) -> dict:
-    """items: [{keyword, product_name, store_name, price, link, commission_rate, memo}] → {'added': [...], 'rejected': [...]}.
-    상품명·발급 링크(naver.me·brandconnect)가 맞아야 하고, 이미 있는 링크는 다시 넣지 않는다."""
+    """items: [{keyword, product_name, store_name, price, discount_price, link, commission_rate, memo}] → {'added', 'rejected'}.
+    상품명·발급 링크(naver.me·brandconnect)가 맞아야 하고, 이미 있는 링크는 다시 넣지 않는다.
+    가격 (2026-11-17, 브랜드커넥트 화면과 맞춤): 화면의 '판매가'(할인 전) = price, '할인가' = discount_price.
+    등록부 '판매가' 열에는 실제 파는 값(할인가가 있으면 할인가), '정가' 열에는 할인이 있을 때 할인 전 값을 적는다."""
     p = path(env)
     added, rejected = [], []
     with _LOCK:
@@ -88,8 +90,9 @@ def add(items: list[dict], env=None) -> dict:
                 rejected.append({"row": i, "product_name": name, "reason": reason})
                 continue
             row = {"상품명": name[:200], "스토어명": (it.get("store_name") or "").strip()[:80],
-                   "판매가": _clean_price(it.get("price")), "정가": "",
-                   "수수료율(%)": str(it.get("commission_rate") or "").strip()[:8],
+                   "판매가": _clean_price(it.get("discount_price")) or _clean_price(it.get("price")),
+                   "정가": _clean_price(it.get("price")) if _clean_price(it.get("discount_price")) else "",
+                   "수수료율(%)": "".join(ch for ch in str(it.get("commission_rate") or "") if ch.isdigit() or ch == ".")[:8],
                    "링크 발급일": _today(), "쇼핑커넥트 링크": link,
                    "키워드": (it.get("keyword") or "").strip()[:60], "링크 확인일": _today(),
                    "사용처(블로그/사이트)": "블로그", "메모": (it.get("memo") or "").strip()[:200]}

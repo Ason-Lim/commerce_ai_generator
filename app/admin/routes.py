@@ -364,7 +364,8 @@ class _LinkIn(BaseModel):
     keyword: str = Field("", max_length=60)
     product_name: str = Field("", max_length=200)
     store_name: str = Field("", max_length=80)
-    price: str | int | None = None
+    price: str | int | None = None              # 브랜드커넥트 화면의 '판매가' (할인 전)
+    discount_price: str | int | None = None     # 브랜드커넥트 화면의 '할인가' (2026-11-17)
     commission_rate: str | float | None = None
     link: str = Field("", max_length=300)
     memo: str = Field("", max_length=200)

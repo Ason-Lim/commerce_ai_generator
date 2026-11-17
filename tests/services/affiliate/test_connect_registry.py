@@ -137,3 +137,16 @@ def test_admin_brandconnect_find_and_auth(client):
         assert client.get(path).status_code == 401
     assert client.post("/admin/api/connect/links", json={"rows": [{"link": "x"}]}).status_code == 401
     assert client.post("/admin/api/connect/links", headers=H, json={"rows": []}).status_code == 422
+
+
+def test_discount_price_goes_to_the_price_column_and_list_price_to_jeongga(csv_path):
+    """2026-11-17: 브랜드커넥트 화면의 판매가(할인 전) 29,900 · 할인가 22,900 · 수수료 5% →
+    등록부 판매가 22900(실제 파는 값) · 정가 29900 · 수수료율 5. 할인가가 없으면 판매가 그대로, 정가 빈칸."""
+    reg.add([
+        {"keyword": "과메기", "product_name": "피터씨마켓 산지직송 과메기 야채세트", "store_name": "피터씨마켓",
+         "price": "29,900", "discount_price": "22,900원", "commission_rate": "5%", "link": "https://naver.me/5VxsM6Jy"},
+        {"keyword": "과메기", "product_name": "구룡포 과메기 10미", "price": "19,000", "link": "https://naver.me/gwa2"},
+    ])
+    a, b = reg.rows()[1:]
+    assert (a["판매가"], a["정가"], a["수수료율(%)"]) == ("22900", "29900", "5")
+    assert (b["판매가"], b["정가"], b["수수료율(%)"]) == ("19000", "", "")

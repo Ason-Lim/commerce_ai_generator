@@ -115,12 +115,12 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
     <h2 id="links-h">등록된 쇼핑커넥트 링크 <span class="pill p-ok" id="links-n" hidden></span></h2>
     <p class="lede">등록부(naver_connect_links.csv)에 있는 링크예요. 최근에 넣은 것이 위에 와요. 지우면 바로 전 상태를 .bak 로 한 벌 남겨요.</p>
     <div class="row"><button class="btn primary" id="links-add">링크 입력</button><button class="btn" id="links-reload">새로고침</button><span class="note" id="links-note"></span></div>
-    <div class="scroll"><table><thead><tr><th>상품명</th><th>스토어</th><th>키워드</th><th>링크</th><th>발급일</th><th></th></tr></thead>
-    <tbody id="links-rows"><tr><td colspan="6" class="note">불러오는 중…</td></tr></tbody></table></div>
+    <div class="scroll"><table><thead><tr><th>상품명</th><th>스토어</th><th>키워드</th><th>가격</th><th>링크</th><th>발급일</th><th></th></tr></thead>
+    <tbody id="links-rows"><tr><td colspan="7" class="note">불러오는 중…</td></tr></tbody></table></div>
   </section>
   <dialog id="link-dlg" style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;width:min(980px,96vw)">
     <h2 style="margin:0 0 4px">쇼핑커넥트 링크 입력</h2>
-    <p class="lede">브랜드커넥트에서 발급한 링크(<b>https://naver.me/…</b>)를 붙여 넣어 주세요. <b>+</b>로 줄을 더하고 <b>−</b>로 지워요. 저장하면 등록부에 바로 들어가요.</p>
+    <p class="lede">브랜드커넥트에서 발급한 링크(<b>https://naver.me/…</b>)를 붙여 넣어 주세요. 가격은 브랜드커넥트 화면 그대로 — 판매가(할인 전)·할인가·수수료율. <b>+</b>로 줄을 더하고 <b>−</b>로 지워요. 저장하면 등록부에 바로 들어가요.</p>
     <div id="link-rows" style="display:grid;gap:8px"></div>
     <div class="row" style="margin-top:10px"><button class="btn" id="link-plus" type="button">+ 줄 추가</button></div>
     <div id="link-msg" class="note" style="margin:6px 0"></div>
@@ -285,10 +285,11 @@ $("#saved-open").onclick=async()=>{const f=$("#saved-drafts").value;if(!f)return
   catch(e){$("#dnote").textContent=e.message}};
 $("#saved-reload").onclick=()=>loadSaved().catch(e=>$("#dnote").textContent=e.message);
 // ── 쇼핑커넥트 링크 입력 · 등록부 · 브랜드커넥트 상품 찾기 (2026-11-17) ──
-const LINK_FIELDS=[["keyword","키워드",110],["product_name","상품명",260],["store_name","스토어명",120],["price","판매가",90],["link","쇼핑커넥트 링크 (https://naver.me/…)",230],["memo","메모",110]];
+const LINK_FIELDS=[["keyword","키워드",100],["product_name","상품명",250],["store_name","스토어명",110],["price","판매가",86],["discount_price","할인가",86],["commission_rate","수수료율(%)",86],["link","쇼핑커넥트 링크 (https://naver.me/…)",230],["memo","메모",100]];
 let LINK_REQ=null;
 function linkRow(v){const r=document.createElement("div");r.className="lrow";r.style.cssText="display:flex;gap:6px;align-items:center;flex-wrap:wrap";
-  for(const[k,ph,w] of LINK_FIELDS){const i=document.createElement("input");i.name=k;i.placeholder=ph;i.style.width=w+"px";i.value=(v&&v[k]!=null)?v[k]:"";r.append(i)}
+  for(const[k,ph,w] of LINK_FIELDS){const i=document.createElement("input");i.name=k;i.placeholder=ph;i.title=ph;i.style.width=w+"px";i.value=(v&&v[k]!=null)?v[k]:"";
+    i.addEventListener("input",()=>{if(!$("#link-save").disabled)$("#link-msg").textContent=""});r.append(i)}
   const m=document.createElement("button");m.type="button";m.className="btn";m.textContent="−";m.title="이 줄 지우기";
   m.onclick=()=>{r.remove();if(!$("#link-rows").children.length)$("#link-rows").append(linkRow({}))};r.append(m);return r}
 function openLinks(rows,reqId){LINK_REQ=reqId??null;const box=$("#link-rows");box.replaceChildren();(rows&&rows.length?rows:[{}]).forEach(v=>box.append(linkRow(v)));
@@ -303,14 +304,18 @@ $("#link-save").onclick=async()=>{const rows=[...$("#link-rows").children].map(r
     const bad=d.rejected.map(x=>`${x.row}번째 줄${x.product_name?" ("+x.product_name.slice(0,20)+")":""}: ${x.reason}`);
     $("#link-msg").innerHTML=`<b>${d.added}개 저장했어요.</b>`+(bad.length?`<div class="err" style="margin-top:6px">${esc(bad.join(" / "))}</div>`:"");
     if(d.added&&!bad.length)setTimeout(()=>$("#link-dlg").close(),900);
+    else if(d.added){const keep=new Set(d.rejected.map(x=>x.row));const all=[...$("#link-rows").children].filter(r=>[...r.querySelectorAll("input")].some(i=>i.name==="product_name"&&i.value.trim()||i.name==="link"&&i.value.trim()));
+      all.forEach((r,i)=>{if(!keep.has(i+1))r.remove()})}
     loadReq().catch(()=>{});loadLinks().catch(()=>{})}
   catch(e){$("#link-msg").textContent="저장 실패: "+e.message}
   finally{$("#link-save").disabled=false}};
 $("#req-link").onclick=()=>openLinks([{}]);$("#links-add").onclick=()=>openLinks([{}]);
 async function loadLinks(){const d=await api("/admin/api/connect/links");const n=$("#links-n");n.hidden=!d.count;n.textContent=d.count+"개";
+  const won=v=>v&&!isNaN(+v)?Number(v).toLocaleString()+"원":"";
   $("#links-rows").innerHTML=d.items.length?d.items.map(r=>`<tr><td>${esc(r["상품명"])}</td><td>${esc(r["스토어명"])}</td><td>${esc(r["키워드"])}</td>
+    <td>${esc(won(r["판매가"]))}${r["정가"]?`<br><small><s>${esc(won(r["정가"]))}</s>${r["수수료율(%)"]?" · 수수료 "+esc(r["수수료율(%)"])+"%":""}</small>`:(r["수수료율(%)"]?`<br><small>수수료 ${esc(r["수수료율(%)"])}%</small>`:"")}</td>
     <td><a href="${href(r["쇼핑커넥트 링크"])}" target="_blank" rel="noopener noreferrer">${esc(r["쇼핑커넥트 링크"])}</a></td><td>${esc(r["링크 발급일"])}</td>
-    <td><button class="btn" data-del="${esc(r["쇼핑커넥트 링크"])}">삭제</button></td></tr>`).join(""):`<tr><td colspan="6" class="note">등록된 링크가 없어요.</td></tr>`;
+    <td><button class="btn" data-del="${esc(r["쇼핑커넥트 링크"])}">삭제</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">등록된 링크가 없어요.</td></tr>`;
   document.querySelectorAll("#links-rows button[data-del]").forEach(b=>b.onclick=async()=>{if(!confirm("이 링크를 등록부에서 지울까요?"))return;
     try{await api("/admin/api/connect/links/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({link:b.dataset.del})});loadLinks();loadReq().catch(()=>{})}
     catch(e){$("#links-note").textContent=e.message}})}
@@ -323,7 +328,7 @@ $("#bc-go").onclick=async()=>{const kw=$("#bc-kw").value.trim();if(!kw)return;$(
       <td>${it.price_at_snapshot?Number(it.price_at_snapshot).toLocaleString()+"원":"-"} <small>${esc(it.snap_date)}</small></td>
       <td><button class="btn primary" data-bc="${i}">링크 입력</button></td></tr>`).join(""):`<tr><td colspan="6" class="note">이 키워드의 수집 상품이 없어요. 브랜드커넥트에서 직접 검색해 주세요.</td></tr>`;
     document.querySelectorAll("#bc-rows button[data-bc]").forEach(b=>b.onclick=()=>{const it=BC[+b.dataset.bc];
-      openLinks([{keyword:kw,product_name:it.title,store_name:it.mall,price:it.price_at_snapshot||"",memo:`수수료 ${it.commission_rate??"-"}% (${it.snap_date} 수집)`}])})}
+      openLinks([{keyword:kw,product_name:it.title,store_name:it.mall,discount_price:it.price_at_snapshot||"",commission_rate:it.commission_rate??"",memo:`${it.snap_date} 수집 가격 — 브랜드커넥트 화면에서 판매가·할인가를 확인하세요`}])})}
   catch(e){$("#bc-note").textContent=e.message}};
 $("#bc-kw").addEventListener("keydown",e=>{if(e.key==="Enter")$("#bc-go").click()});
 {const q=new URLSearchParams(location.search).get("bc");if(q){$("#bc-kw").value=q;$("#bc-go").click();setTimeout(()=>$("#bc").scrollIntoView(),300)}}
