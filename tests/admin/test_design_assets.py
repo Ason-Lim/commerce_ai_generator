@@ -184,3 +184,38 @@ def test_pyramid_mirror_and_hub_figures(tmp_path, monkeypatch):
     out = proposal_export.to_pptx(p, tmp_path / "f.pptx")
     xml = zipfile.ZipFile(out).read("ppt/slides/slide3.xml").decode()
     assert 'prst="trapezoid"' in xml and 'prst="triangle"' in xml
+
+
+# ── 2026-11-17: 상자 밖으로 글이 넘치지 않게 ─────────────────────────────
+def test_text_measure_wraps_by_words():
+    D = proposal_deck
+    assert D.wrap_n("가" * 10, 1000, 12) == 1
+    assert D.wrap_n("가나다라 " * 40, 300, 12) > 5                 # 좁으면 여러 줄
+    assert D.wrap_n("한줄\n두줄", 1000, 12) == 2
+
+
+def test_cards_grow_with_text_and_long_lists_split_with_continuing_numbers():
+    D = proposal_deck
+    short = Element(kind="bullets", items=["짧은 문장"] * 3)
+    long_ = Element(kind="bullets", items=["관측 소매가 → 제출 시점 온라인 최저가 검증 → 확정 공급단가 세 단계로 나누어 관리합니다. " * 3] * 3)
+    assert D.card_geom(long_, "ncards")["h"] > D.card_geom(short, "ncards")["h"] + 100
+    many = Element(kind="bullets", items=["단가를 상품 매입·포장·물류·택배·교환 예비·운영 CS·구축·일반관리·이윤 항목으로 분해해 제시합니다. " * 2] * 7)
+    parts = D._split_items(many, "strategy")
+    assert len(parts) >= 2 and all(D.block_h(x, "strategy") <= D.BODY_H for x in parts)
+    assert [D.num_start(x) for x in parts][0] == 0 and D.num_start(parts[1]) == len(parts[0].items)
+    assert all(D.layout_of(x, "strategy") == "ncards" for x in parts)            # 조각도 같은 모양
+
+
+def test_pptx_cards_box_fits_measured_text(tmp_path):
+    from pptx import Presentation
+
+    long_items = ["대상자 명부 기반 계정 발급, 1인 선택 수 제한, 중복 주문 차단으로 실제 지급수량 기준 정산이 가능하도록 폐쇄몰을 운영합니다. " * 2] * 5
+    p = _prop([Element(kind="bullets", items=long_items)], sid="strategy")
+    out = proposal_export.to_pptx(p, tmp_path / "c.pptx")
+    prs = Presentation(str(out))
+    for sl in prs.slides:
+        for sh in sl.shapes:
+            if sh.has_text_frame and sh.text_frame.text.strip():
+                assert sh.top + sh.height <= prs.slide_height                     # 슬라이드 밖으로 안 나감
+    html = proposal_deck.render(p)
+    assert 'class="ncards c' in html
