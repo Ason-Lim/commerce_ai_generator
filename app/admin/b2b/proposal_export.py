@@ -337,7 +337,8 @@ class _Pptx:
     def body(self, s, sl: D.Slide):
         y, top, bottom = 160.0, 160.0, 650.0
         need = sum(self.h_of(e, sl.sid) for e in sl.elements) + 14 * len(sl.elements)
-        self.k = min(1.25, max(0.7, (bottom - top) / need)) if need else 1.0
+        # 2026-11-17: 글자를 키우지 않는다(상자 넘침 원인). 장 나누기가 높이를 맞추므로 넘칠 때만 조금 줄인다.
+        self.k = min(1.0, max(0.85, (bottom - top) / need)) if need else 1.0
         for e in sl.elements:
             y = self.el(s, e, sl.sid, y) + 14 * self.k
 
@@ -349,10 +350,8 @@ class _Pptx:
             return 26
         if lay == "callout":
             return _lines(e.text, 80) * 21 + 24
-        if lay == "ncards":
-            return math.ceil(len(e.items) / 3) * 150
-        if lay == "checks":
-            return sum(_lines(x, 61) * 22 + 12 for x in e.items)
+        if (bh := D.block_h(e, sid)) is not None:
+            return bh
         if lay == "timeline":
             return 160
         if lay == "path":
@@ -368,8 +367,6 @@ class _Pptx:
                        for i in range(0, len(e.items), 2)) + 24
         if lay == "flow":
             return 190
-        if lay == "cards":
-            return math.ceil(len(e.rows) / 3) * 112
         if lay == "price":
             return 150
         if lay == "kv":
@@ -537,6 +534,26 @@ class _Pptx:
             self.text(s, cx + 130, cy + 12, w - 170, h - 24, segs, anchor="middle")
         return y + sum(rows) + 24 * (len(rows) - 1)
 
+    def cards(self, s, e: Element, lay: str, sid: str, y: float) -> float:
+        """번호 카드·리스크 카드 — 글 길이를 재서 상자 높이를 정한다 (2026-11-17, 넘침 수정·가독성)."""
+        pal, k = self.pal, self.k
+        g = D.card_geom(e, lay)
+        texts = [" ".join(p) for p in g["parts"]]
+        icons = self.icons(texts, sid)
+        cols, cw, gap = g["cols"], g["cw"], g["gap"]
+        for i, (head, body) in enumerate(g["parts"]):
+            r = i // cols
+            cx = 72 + (i % cols) * (cw + gap)
+            cy = y + (sum(g["rows"][:r]) + gap * r) * k
+            h = g["rows"][r] * k
+            self.box(s, cx, cy, cw, h, pal.surface, pal.line, radius=min(0.12, 14 / max(h, 1)))
+            self.box(s, cx + 24, cy + 22 * k, 44, 24, pal.primary, radius=0.5)
+            self.text(s, cx + 24, cy + 22 * k, 44, 24, f"{D.num_start(e) + i + 1:02d}", 10.5, True, pal.on_primary, align="center", anchor="middle")
+            self.pic(s, icons[i], cx + cw - 64, cy + 14 * k, 44, 44, "right")
+            paras = ([((head, D.HEAD_PT * k, True, pal.ink),)] if head else []) + ([((body, D.CARD_PT * k, False, pal.ink),)] if body else [])
+            self.text(s, cx + 24, cy + 70 * k, cw - 48, h - 82 * k, paras, spacing=1.3)
+        return y + g["h"] * k
+
     def el(self, s, e: Element, sid: str, y: float) -> float:
         pal, k = self.pal, self.k
         lay = D.layout_of(e, sid)
@@ -565,24 +582,15 @@ class _Pptx:
             self.box(s, 72, y, 1136, h, "#FFF7E6" if e.tone == "warn" else pal.surface, "#F3DFB4" if e.tone == "warn" else pal.line)
             self.text(s, 92, y, 1100, h, ("! " if e.tone == "warn" else "ⓘ ") + e.text, 11.5 * k, anchor="middle")
             return y + h
-        if lay == "ncards":
-            w, h = (1136 - 32) / 3, 136 * k
-            icons = self.icons(e.items, sid)
-            for i, x in enumerate(e.items):
-                cx, cy = 72 + (i % 3) * (w + 16), y + (i // 3) * (h + 14)
-                self.box(s, cx, cy, w, h, pal.surface, pal.line)
-                self.pic(s, icons[i], cx + w - 62, cy + 12, 48, 48, "right")
-                self.text(s, cx + 20, cy + 16, w - 40, 30, f"{i + 1:02d}", 22 * k, True, pal.primary)
-                self.text(s, cx + 20, cy + 52 * k, w - 40, h - 60 * k, x, 12 * k)
-            return y + math.ceil(len(e.items) / 3) * (h + 14) - 14
+        if lay in ("ncards", "cards"):
+            return self.cards(s, e, lay, sid, y)
         if lay == "checks":
-            per = max(20, int(1090 / (13 * k * 1.36)))       # 2026-11-16: 글자 크기(k)만큼 줄 수를 다시 셈 — 줄 겹침 수정
-            for x in e.items:
-                h = (_lines(x, per) * 22 + 6) * k
-                self.box(s, 80, y + 2, 20, 20, pal.primary, radius=0.25)
-                self.text(s, 80, y + 2, 20, 20, "✓", 10, True, pal.on_primary, align="center", anchor="middle")
-                self.text(s, 112, y, 1090, h, x, 13 * k)
-                y += h + 6
+            for x, h in zip(e.items, D.checks_h(e.items)):
+                h *= k
+                self.box(s, 80, y + 4, 20, 20, pal.primary, radius=0.25)
+                self.text(s, 80, y + 4, 20, 20, "✓", 10, True, pal.on_primary, align="center", anchor="middle")
+                self.text(s, 112, y, 1080, h, x, 13 * k, spacing=1.25)
+                y += h
             return y
         if lay == "timeline":
             n = len(e.rows)
@@ -608,17 +616,6 @@ class _Pptx:
                           [((r[0], 13 * k, True, pal.ink),), ((r[1], 10.5 * k, True, pal.primary),),
                            ((r[2] if len(r) > 2 else "", 9.5 * k, False, pal.muted),)])
             return y + 180 * k
-        if lay == "cards":
-            w, h = (1136 - 32) / 3, 100 * k
-            icons = self.icons([" ".join(r) for r in e.rows], sid)
-            for i, r in enumerate(e.rows):
-                cx, cy = 72 + (i % 3) * (w + 16), y + (i // 3) * (h + 12)
-                self.box(s, cx, cy, w, h, pal.surface, pal.line)
-                self.pic(s, icons[i], cx + w - 58, cy + 10, 44, 44, "right")
-                self.text(s, cx + 18, cy + 12, w - 36, h - 20,
-                          [((f"{i + 1:02d}", 10, True, pal.primary),), ((r[0], 13 * k, True, pal.ink),),
-                           ((r[1], 10.5 * k, False, pal.muted),)])
-            return y + math.ceil(len(e.rows) / 3) * (h + 12) - 12
         if lay == "price":
             n = len(e.rows)
             w = (1136 - 16 * (n - 1)) / n
