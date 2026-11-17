@@ -246,7 +246,7 @@ class _Pptx:
         if self.art.get("cover") is not None or self.art.get("sections"):    # 학습한 자산이 있으면 허브 수치판
             from app.admin.b2b import proposal_figures as F
 
-            self.fig(s, *F.hub(self.p.facts, self.art, D._won_short), 72, 160)  # noqa: SLF001
+            self.fig(s, *F.hub(self.p.facts, self.art, D._won_short), 72, 178)  # noqa: SLF001
             return
         f, pal = self.p.facts, self.pal
         tot = f.get("total")
@@ -259,24 +259,24 @@ class _Pptx:
         for i, (lbl, v, unit, note) in enumerate(cards):
             x = 72 + i * (w + 16)
             first = i == 0
-            self.box(s, x, 170, w, 170, pal.primary if first else pal.surface, None if first else pal.line)
+            self.box(s, x, 186, w, 170, pal.primary if first else pal.surface, None if first else pal.line)
             col = pal.on_primary if first else pal.ink
-            self.text(s, x + 20, 188, w - 40, 20, lbl, 11, True, pal.on_primary if first else pal.muted)
+            self.text(s, x + 20, 204, w - 40, 20, lbl, 11, True, pal.on_primary if first else pal.muted)
             val = ((f"{v:,}", 36, True, col), (" " + unit, 13, True, pal.on_primary if first else pal.muted)) if v is not None \
                 else (("[확인 필요]", 16, True, "#" + TODO_RGB),)
-            self.text(s, x + 20, 218, w - 40, 60, [val], anchor="bottom")
-            self.text(s, x + 20, 292, w - 40, 36, _plain(note), 10, False, pal.on_primary if first else pal.muted)
+            self.text(s, x + 20, 234, w - 40, 60, [val], anchor="bottom")
+            self.text(s, x + 20, 308, w - 40, 36, _plain(note), 10, False, pal.on_primary if first else pal.muted)
         cats = "   ".join(f"{c['name']} {c['count']}종" for c in f.get("categories") or [])
         if f.get("min_online_price"):
             cats += f"   ·  온라인 판매가 {f['min_online_price']:,}원 이상 상품만 구성"
-        self.box(s, 72, 370, 1136, 1, pal.line, rounded=False)
-        self.text(s, 72, 392, 640, 30, cats, 12, True, pal.ink)
+        self.box(s, 72, 386, 1136, 1, pal.line, rounded=False)
+        self.text(s, 72, 408, 640, 30, cats, 12, True, pal.ink)
         steps = [("폐쇄몰 오픈", f.get("setup_days"), "일 이내"), ("개별 배송", f.get("delivery_days"), "영업일"),
                  ("교환 완료", f.get("exchange_days"), "영업일")]
         for i, (a, v, u) in enumerate(steps):
             x = 760 + i * 152
-            self.oval(s, x, 396, 8, pal.primary)
-            self.text(s, x + 16, 388, 140, 50, [((a, 10, True, pal.muted),), ((f"{v}{u}" if v else "[확인 필요]", 14, True, pal.ink),)])
+            self.oval(s, x, 412, 8, pal.primary)
+            self.text(s, x + 16, 404, 140, 50, [((a, 10, True, pal.muted),), ((f"{v}{u}" if v else "[확인 필요]", 14, True, pal.ink),)])
 
     def market(self, s, d: dict):
         from pptx.chart.data import CategoryChartData
@@ -291,21 +291,21 @@ class _Pptx:
         for i, (a, v, u) in enumerate(tiles):
             x = 72 + i * (w + 16)
             first = i == 0
-            self.box(s, x, 160, w, 92, pal.primary if first else pal.surface, None if first else pal.line)
-            self.text(s, x + 18, 172, w - 36, 18, a, 10, True, pal.on_primary if first else pal.muted)
-            self.text(s, x + 18, 196, w - 36, 44, [((f"{v:,}" if v is not None else "-", 26, True, pal.on_primary if first else pal.ink),
+            self.box(s, x, 180, w, 92, pal.primary if first else pal.surface, None if first else pal.line)
+            self.text(s, x + 18, 192, w - 36, 18, a, 10, True, pal.on_primary if first else pal.muted)
+            self.text(s, x + 18, 216, w - 36, 44, [((f"{v:,}" if v is not None else "-", 26, True, pal.on_primary if first else pal.ink),
                                                     (" " + u, 12, True, pal.on_primary if first else pal.muted))])
         for i, (key, title) in enumerate((("bid_types", "조달 유형"), ("budget_bands", "예산 규모"))):
             rows = [r for r in d.get(key, []) if r.get("count")][:6]
             x = 72 + i * (560 + 16)
-            self.box(s, x, 268, 560, 360, pal.surface, pal.line)
-            self.text(s, x + 18, 282, 400, 22, title, 12, True)
+            self.box(s, x, 288, 560, 340, pal.surface, pal.line)
+            self.text(s, x + 18, 302, 400, 22, title, 12, True)
             if not rows:
                 continue
             cd = CategoryChartData()
             cd.categories = [str(r["label"]) for r in reversed(rows)]
             cd.add_series("공고 수", [r["count"] for r in reversed(rows)])
-            gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, self.X(x + 10), self.Y(310), self.X(540), self.Y(306), cd)
+            gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, self.X(x + 10), self.Y(330), self.X(540), self.Y(286), cd)
             ch = gf.chart
             ch.has_legend = False
             ch.has_title = False
@@ -335,7 +335,8 @@ class _Pptx:
 
     # ── 섹션 본문 ──────────────────────────────────────────
     def body(self, s, sl: D.Slide):
-        y, top, bottom = 160.0, 160.0, 650.0
+        # 2026-11-17: 제목과 본문 사이를 넉넉히 (160 → 182) — 제목 아래 여백을 위 여백과 맞춤
+        y, top, bottom = D.BODY_TOP, D.BODY_TOP, D.BODY_TOP + D.BODY_H
         need = sum(self.h_of(e, sl.sid) for e in sl.elements) + 14 * len(sl.elements)
         # 2026-11-17: 글자를 키우지 않는다(상자 넘침 원인). 장 나누기가 높이를 맞추므로 넘칠 때만 조금 줄인다.
         self.k = min(1.0, max(0.85, (bottom - top) / need)) if need else 1.0
@@ -363,8 +364,8 @@ class _Pptx:
         if lay in ("steps", "trio"):
             return 262
         if lay == "icards":
-            return sum(max(112, 30 + max(_lines(D.split_head(x)[1], 25) * 16 + 18 for x in e.items[i:i + 2]))
-                       for i in range(0, len(e.items), 2)) + 24
+            rows = D.icard_rows([D.split_head(x) for x in e.items])
+            return sum(rows) + 24 * (len(rows) - 1)
         if lay == "flow":
             return 190
         if lay == "price":
@@ -518,9 +519,7 @@ class _Pptx:
         icons = self.icons(items, sid)
         parts = [D.split_head(x) for x in items]
 
-        def need(hb):
-            return 30 + (18 if hb[0] else 0) + _lines(hb[1], 25) * 16
-        rows = [max(112, *(need(parts[j]) for j in range(i, min(i + 2, len(items))))) for i in range(0, len(items), 2)]
+        rows = D.icard_rows(parts)
         for i, (head, body) in enumerate(parts):
             h = rows[i // 2]
             cx, cy = 72 + (i % 2) * (w + 30), y + sum(rows[:i // 2]) + (i // 2) * 24
@@ -531,7 +530,7 @@ class _Pptx:
                 self.text(s, cx, oy, 112, 112, str(i + 1), 26, True, pal.primary, align="center", anchor="middle")
             self.badge(s, cx + 56, oy + 102, f"{i + 1:02d}")
             segs = ([((head, 12, True, pal.ink),)] if head else []) + [((body, 10, False, pal.muted),)]
-            self.text(s, cx + 130, cy + 12, w - 170, h - 24, segs, anchor="middle")
+            self.text(s, cx + 130, cy + 14, w - 170, h - 28, segs, anchor="middle", spacing=1.25)
         return y + sum(rows) + 24 * (len(rows) - 1)
 
     def cards(self, s, e: Element, lay: str, sid: str, y: float) -> float:
