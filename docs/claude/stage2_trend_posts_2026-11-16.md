@@ -133,3 +133,8 @@
 - **브랜드커넥트 상품 찾기**: `app/services/affiliate/brandconnect_finder.py` — food_recommend 식품 모니터링의 브랜드커넥트 수집분(`~/food_recommend/shop_monitor/data/shop_monitor.db`, 읽기 전용, `.env SHOP_MONITOR_DB` 로 위치 변경) 최근 30일에서 키워드 수집분 + 상품명에 키워드가 든 것. 순서 = **키워드 관련성 → 수수료율 → 할인율** (판매량·리뷰 수 자료가 없어 '인기 순위'라고 부르지 않음). 뺌: 주류·건강기능식품(선택)·식품 아닌 상품(크림·향수·포장재·반려동물 용품 등 낱말 기준)·상품명 불일치('감태' 수집분의 멜라토닌 등). 수집일·오래됨·뺀 개수 표시, 가격은 수집 시점 값
 - **인기 필드 확인 도구**: `~/food_recommend/shop_monitor/tools/bc_fields_probe.py` (새 파일, 읽기 전용 · 링크 발급 안 함) — 수집기와 같은 로그인 세션으로 브랜드커넥트 검색 응답 1번을 받아 필드 이름·인기 관련으로 보이는 필드를 `data/debug/bc_fields_<키워드>.json` 에 남김. 결과를 보고 인기 기준(판매량·리뷰 등)을 정함
 - 테스트 6개(`tests/services/affiliate/test_connect_registry.py`). 전체 **5,812 통과 · 5 건너뜀 · 실패 0**
+
+## 12. 저장된 블로그 초안 다시 열기 (2026-11-17 13:4x, 브랜치 `stage2/blog-saved`)
+- 사용자: "쿠팡 블로그글이 갑자기 사라졌어요" → 확인: 파일(`var/blog_drafts/…_쿠팡용.txt`)은 그대로였고, 화면이 '초안 만들기' 직후에만 초안을 보여 줘서 새로고침·서버 재시작 뒤 빈 칸으로 보였음
+- 블로그 초안 칸에 **저장된 초안 불러오기** 목록(최근에 고친 순, 네이버 블로그용/쿠팡용 표시) + 열기 → 같은 편집 칸(저장·본문 복사). 운영 메모는 빼고 제목·태그·본문만 엶
+- `GET /admin/api/trends/blog-drafts` · `GET /admin/api/trends/blog-draft/file?file=` (초안 폴더 안의 파일만). 테스트 1개, 전체 **5,813 통과 · 5 건너뜀 · 실패 0**

@@ -131,6 +131,8 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
     <h2 id="blog-h">applesodda 블로그 초안</h2>
     <p class="lede">목록에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않고 텍스트 파일로만 저장해요 — 블로그 임시저장은 요청하시면 확인 후 진행해요.</p>
     <div class="row"><button class="btn" id="draft">초안 만들기</button><span class="note" id="dnote"></span></div>
+    <div class="row"><select id="saved-drafts" aria-label="저장된 초안" style="min-width:320px"><option value="">저장된 초안 불러오기…</option></select>
+      <button class="btn" id="saved-open">열기</button><button class="btn" id="saved-reload">목록 새로고침</button></div>
     <div id="bout"></div>
   </section>
 </main>
@@ -198,7 +200,7 @@ function detail(i){
 async function load(date){
   const d=await api("/admin/api/trends"+(date?`?date=${encodeURIComponent(date)}`:""));
   REPORT=d.report; $("#date").innerHTML=d.dates.slice().reverse().map(x=>`<option ${REPORT&&REPORT.generated_at.startsWith(x)?"selected":""}>${esc(x)}</option>`).join("")||"<option>리포트 없음</option>";
-  job(d.job); render(); if(d.guest) guest(); else {loadLinks().catch(()=>{});}
+  job(d.job); render(); if(d.guest) guest(); else {loadLinks().catch(()=>{});loadSaved().catch(()=>{});}
   if(!d.guest) loadReq().catch(e=>{$("#req-rows").innerHTML=`<tr><td colspan="6"><div class="err">${esc(e.message)}</div></td></tr>`});
 }
 // 쇼핑커넥트 발급 요청 (2026-11-02) — 관리자만
@@ -224,7 +226,7 @@ $("#req-trends").onclick=async()=>{try{const d=await api("/admin/api/connect/que
   $("#req-note").textContent=d.queued.length?`올림: ${d.queued.join(", ")}`:"새로 올릴 키워드가 없어요 (이미 등록됐거나 주류·반짝 키워드).";
   $("#req-status").value="open";loadReq()}catch(e){$("#req-note").textContent=e.message}};
 // 둘러보기 모드 (토큰 없이 읽기 전용): 실행·초안·다른 관리자 탭은 숨김
-function guest(){["#run",".logout","#blog","#requests","#nav-req","#bc","#nav-bc","#links","#nav-links",'nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
+function guest(){["#run",".logout","#blog","#saved-drafts","#requests","#nav-req","#bc","#nav-bc","#links","#nav-links",'nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
   const n=$(".railnote");if(n&&!$("#gnote"))n.insertAdjacentHTML("beforebegin",'<div class="railnote" id="gnote"><b>둘러보기 모드</b> — 읽기 전용이에요. 리포트 실행과 블로그 초안은 관리자만 할 수 있어요.</div>')}
 function job(j){$("#job").textContent=j.running?"만드는 중… (1~3분)":j.error?"실패: "+j.error:j.finished?`마지막 실행 ${j.finished}`:"";$("#run").disabled=!!j.running}
 $("#date").onchange=e=>load(e.target.value);
@@ -236,9 +238,13 @@ $("#draft").onclick=async()=>{const picks=[...document.querySelectorAll(".pick:c
    const needHtml=ln?`<div class="${ln.need.length?"err":"note"}" style="margin-bottom:10px"><b>발급이 필요한 상품</b> ${ln.need.length?esc(ln.need.join(", "))+" — 글을 올리기 전에 브랜드커넥트에서 링크를 발급해 주세요.":"없음 — 초안 키워드 모두 등록부에 링크가 있어요."}${ln.have.length?`<br><small>등록된 키워드: ${esc(ln.have.join(", "))}</small>`:""}${ln.alcohol.length?`<br><small>주류(링크 넣지 않음): ${esc(ln.alcohol.join(", "))}</small>`:""}</div>`:"";
    const cp=d.coupang;const cpMiss=cp?Object.keys(cp).filter(k=>!cp[k]):[];
    const cpHtml=cp?`<div class="${cpMiss.length?"err":"note"}" style="margin-bottom:10px"><b>쿠팡 링크</b> ${esc(Object.entries(cp).map(([k,n])=>k+" "+n+"개").join(" · "))} — 쿠팡용 초안에만 넣었어요 (가격은 넣지 않음).${cpMiss.length?`<br><small>찾지 못한 키워드(주류 포함): ${esc(cpMiss.join(", "))}</small>`:""}</div>`:"";
+   showDrafts(d.drafts||{naver:d},cpHtml+needHtml);loadSaved().catch(()=>{})}
+  catch(e){$("#dnote").textContent=e.message}};
+
+
+function showDrafts(drafts,head){
    const LABEL={naver:["네이버 블로그용","쇼핑커넥트 삽입 자리 · 쿠팡 없음"],coupang:["쿠팡용","쿠팡 링크·쿠팡 고지만 (쇼핑커넥트 없음)"]};
-   const drafts=d.drafts||{naver:d};
-   $("#bout").innerHTML=cpHtml+needHtml+Object.entries(drafts).map(([v,x])=>`<div class="draft" data-file="${esc(x.file)}" style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0">
+   $("#bout").innerHTML=(head||"")+Object.entries(drafts).map(([v,x])=>`<div class="draft" data-file="${esc(x.file)}" style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0">
      <p style="margin:0 0 8px"><b>${esc((LABEL[v]||[v])[0])}</b> <small class="note">${esc((LABEL[v]||["",""])[1])} · ${esc(x.file)}</small></p>
      <p class="k">제목</p><input class="d-title" style="width:100%" value="${esc(x.title)}">
      <p class="k">태그 (쉼표로 구분)</p><input class="d-tags" style="width:100%" value="${esc(x.tags.join(", "))}">
@@ -252,9 +258,14 @@ $("#draft").onclick=async()=>{const picks=[...document.querySelectorAll(".pick:c
          msg.textContent="저장했어요"+(r.warnings.length?" — 확인: "+r.warnings.join(" / "):"");msg.style.color=r.warnings.length?"var(--hold)":""}
        catch(e){msg.textContent="저장 실패: "+e.message}};
      box.querySelector(".d-copy").onclick=async()=>{try{await navigator.clipboard.writeText(box.querySelector(".d-body").value);msg.textContent="본문을 복사했어요"}catch(e){msg.textContent="복사 실패 — 본문을 직접 선택해 복사해 주세요"}};
-   })}
-  catch(e){$("#dnote").textContent=e.message}};
-
+   })
+}
+async function loadSaved(){const d=await api("/admin/api/trends/blog-drafts");const sel=$("#saved-drafts");
+  sel.innerHTML='<option value="">저장된 초안 불러오기…</option>'+d.items.map(x=>`<option value="${esc(x.file)}">${esc(x.modified)} · ${x.variant==="coupang"?"쿠팡용":"네이버 블로그용"} · ${esc(x.name.replace(/^trend_/,"").replace(/(_쿠팡용)?\.txt$/,""))}</option>`).join("")}
+$("#saved-open").onclick=async()=>{const f=$("#saved-drafts").value;if(!f)return;
+  try{const x=await api("/admin/api/trends/blog-draft/file?file="+encodeURIComponent(f));$("#dnote").textContent="불러옴: "+x.file;
+    showDrafts({[x.variant]:x},"")}catch(e){$("#dnote").textContent=e.message}};
+$("#saved-reload").onclick=()=>loadSaved().catch(e=>$("#dnote").textContent=e.message);
 // ── 쇼핑커넥트 링크 입력 · 등록부 · 브랜드커넥트 상품 찾기 (2026-11-17) ──
 const LINK_FIELDS=[["keyword","키워드",110],["product_name","상품명",260],["store_name","스토어명",120],["price","판매가",90],["link","쇼핑커넥트 링크 (https://naver.me/…)",230],["memo","메모",110]];
 let LINK_REQ=null;

@@ -135,3 +135,24 @@ def test_blog_draft_makes_two_versions_and_saves_edits(client, monkeypatch):
         assert c.post("/admin/api/trends/blog-draft/save", headers=H,
                       json={"file": bad, "title": "t", "body": "b"}).status_code in (404, 422), bad
     assert c.post("/admin/api/trends/blog-draft/save", json={"file": naver["file"], "title": "t", "body": "b"}).status_code == 401
+
+
+def test_saved_drafts_can_be_listed_and_reopened(client, monkeypatch):
+    """2026-11-17: 저장된 초안 다시 열기 — 새로고침·서버 재시작 뒤에도 (운영 메모는 빼고 제목·태그·본문)."""
+    from app.services.trends import surge
+
+    monkeypatch.setattr(surge, "blog_draft", lambda report, kws=None, **kw: {
+        "title": f"제목 {kw.get('variant')}", "tags": ["a", "b"], "variant": kw.get("variant", "naver"),
+        "body": f"첫 줄 {kw.get('variant')}\n\n둘째 문단", "keywords": kws or ["두쫀쿠"]})
+    c, _ = client
+    made = c.post("/admin/api/trends/blog-draft", headers=H, json={"keywords": ["두쫀쿠", "버터떡"]}).json()["drafts"]
+    items = c.get("/admin/api/trends/blog-drafts", headers=H).json()["items"]
+    assert {x["file"] for x in items} == {made["naver"]["file"], made["coupang"]["file"]}
+    assert {x["variant"] for x in items} == {"naver", "coupang"}
+    for v in ("naver", "coupang"):
+        got = c.get("/admin/api/trends/blog-draft/file", headers=H, params={"file": made[v]["file"]}).json()
+        assert got == {"title": f"제목 {v}", "tags": ["a", "b"], "body": f"첫 줄 {v}\n\n둘째 문단",
+                       "file": made[v]["file"], "variant": v}
+    for bad in ("../.env", "var/blog_drafts/../../.env", "var/blog_drafts/trend_없음.txt"):
+        assert c.get("/admin/api/trends/blog-draft/file", headers=H, params={"file": bad}).status_code == 404
+    assert c.get("/admin/api/trends/blog-drafts").status_code == 401

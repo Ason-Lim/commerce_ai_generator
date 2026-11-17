@@ -224,6 +224,49 @@ def trends_blog_draft_save(body: _DraftSaveIn):
     return {"file": body.file, "saved": True, "warnings": _draft_warnings(body.file, body.body)}
 
 
+def _parse_draft(text: str) -> dict:
+    """초안 파일 → {title, tags, body} (맨 위 운영 메모는 빼고)."""
+    if text.startswith(MEMO_HEAD):
+        text = text.split("\n\n", 1)[1] if "\n\n" in text else ""
+    title, _, rest = text.partition("\n\n")
+    tags_line, _, body = rest.partition("\n\n")
+    tags = [t.strip() for t in tags_line.removeprefix("태그:").split(",") if t.strip()] if tags_line.startswith("태그:") \
+        else []
+    if not tags_line.startswith("태그:"):
+        body = rest
+    return {"title": title.strip(), "tags": tags, "body": body.rstrip("\n")}
+
+
+@router.get("/admin/api/trends/blog-drafts", dependencies=[api])
+def trends_blog_drafts():
+    """저장된 초안 목록 (2026-11-17) — 최근에 고친 것이 위. 서버를 다시 켜거나 새로고침해도 다시 열 수 있게."""
+    from app.services.trends import surge
+
+    folder = surge.ROOT / "var" / "blog_drafts"
+    files = sorted(folder.glob("trend_*.txt"), key=lambda p: p.stat().st_mtime, reverse=True) if folder.is_dir() else []
+    out = []
+    for p in files[:60]:
+        rel = str(p.relative_to(surge.ROOT))
+        if not _DRAFT_FILE.match(rel):
+            continue
+        variant = "coupang" if p.name.endswith("_쿠팡용.txt") else "naver"
+        out.append({"file": rel, "name": p.name, "variant": variant,
+                    "modified": date.fromtimestamp(p.stat().st_mtime).isoformat()})
+    return {"items": out}
+
+
+@router.get("/admin/api/trends/blog-draft/file", dependencies=[api])
+def trends_blog_draft_file(file: str = Query(..., max_length=200)):
+    from app.services.trends import surge
+
+    folder = (surge.ROOT / "var" / "blog_drafts").resolve()
+    path = (surge.ROOT / file).resolve()
+    if not _DRAFT_FILE.match(file) or path.parent != folder or not path.is_file():
+        raise HTTPException(404, "초안 파일을 찾을 수 없어요.")
+    variant = "coupang" if path.name.endswith("_쿠팡용.txt") else "naver"
+    return {**_parse_draft(path.read_text(encoding="utf-8")), "file": file, "variant": variant}
+
+
 def _draft_warnings(file: str, text: str) -> list[str]:
     from app.services.trends import surge
 
