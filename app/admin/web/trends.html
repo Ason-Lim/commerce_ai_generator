@@ -55,6 +55,13 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 .flow span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff}.flow i{color:var(--ink3);font-style:normal}
 .mono{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
 </style>
+<style>
+.subtabs{position:sticky;top:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;margin:-22px -26px 0;padding:12px 26px;background:rgba(243,245,248,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.subtabs a{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
+.subtabs a[aria-current=page]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.subtabs a small{font-weight:400;opacity:.75;margin-left:4px}
+@media (max-width:760px){.subtabs{margin:-14px -12px 0;padding:10px 12px}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -67,6 +74,8 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
 </aside>
 <main>
+<nav class="subtabs" aria-label="트렌드 작업 화면"><a href="/admin/trends" data-k="report">급상승 리포트</a><a href="/admin/trend-posts" data-k="coupang">쿠팡 <small>사이트 글</small></a><a href="/admin/trends#blog" data-k="naver">네이버 <small>블로그 초안·쇼핑커넥트</small></a></nav>
+
   <section id="summary" aria-labelledby="sum-h">
     <h2 id="sum-h">검색량 급상승 리포트</h2>
     <div class="flow" aria-label="분석 순서"><span>① 데이터랩 검색량 급상승</span><i>→</i><span>② 블로그 탐지 (제목·날짜)</span><i>→</i><span>③ 구글 트렌드</span><i>→</i><span>④ 교차 확인 · 비교 분석</span></div>
@@ -138,6 +147,11 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 </main>
 </div>
 <script>
+(function(){const NAVER=["#blog","#requests","#bc","#links"];const mark=()=>{const k=NAVER.includes(location.hash)?"naver":"report";
+  document.querySelectorAll(".subtabs a").forEach(a=>a.toggleAttribute("aria-current",a.dataset.k===k));if(k==="naver")document.querySelector('.subtabs a[data-k="naver"]').setAttribute("aria-current","page");else document.querySelector('.subtabs a[data-k="report"]').setAttribute("aria-current","page")};
+  mark();window.addEventListener("hashchange",mark);
+  document.querySelectorAll('.subtabs a[href^="/admin/trends#"]').forEach(a=>a.addEventListener("click",e=>{if(location.pathname==="/admin/trends"){e.preventDefault();location.hash=a.getAttribute("href").split("#")[1]}}));})();
+
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const href=u=>/^https?:\/\//.test(u||"")?esc(u):"#";
@@ -312,6 +326,7 @@ $("#bc-go").onclick=async()=>{const kw=$("#bc-kw").value.trim();if(!kw)return;$(
       openLinks([{keyword:kw,product_name:it.title,store_name:it.mall,price:it.price_at_snapshot||"",memo:`수수료 ${it.commission_rate??"-"}% (${it.snap_date} 수집)`}])})}
   catch(e){$("#bc-note").textContent=e.message}};
 $("#bc-kw").addEventListener("keydown",e=>{if(e.key==="Enter")$("#bc-go").click()});
+{const q=new URLSearchParams(location.search).get("bc");if(q){$("#bc-kw").value=q;$("#bc-go").click();setTimeout(()=>$("#bc").scrollIntoView(),300)}}
 load().catch(e=>{$("#rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`});
 </script>
 </body>

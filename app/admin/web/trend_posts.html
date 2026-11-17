@@ -55,6 +55,13 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 .flow span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff}.flow i{color:var(--ink3);font-style:normal}
 .mono{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
 </style>
+<style>
+.subtabs{position:sticky;top:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;margin:-22px -26px 0;padding:12px 26px;background:rgba(243,245,248,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.subtabs a{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
+.subtabs a[aria-current=page]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.subtabs a small{font-weight:400;opacity:.75;margin-left:4px}
+@media (max-width:760px){.subtabs{margin:-14px -12px 0;padding:10px 12px}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -66,10 +73,13 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
 </aside>
 <main>
+<nav class="subtabs" aria-label="트렌드 작업 화면"><a href="/admin/trends" data-k="report">급상승 리포트</a><a href="/admin/trend-posts" data-k="coupang">쿠팡 <small>사이트 글</small></a><a href="/admin/trends#blog" data-k="naver">네이버 <small>블로그 초안·쇼핑커넥트</small></a></nav>
+
 <section>
   <h2>새 초안</h2><p class="lede">급상승 리포트의 단어로 초안을 만들어요. 같은 주제의 글이 30일 안에 있으면 새로 만들지 않고 그 글을 열어요.</p>
   <div class="row"><select id="d-date" aria-label="리포트 날짜"></select><select id="d-kw" aria-label="단어"></select>
-  <label><input type="checkbox" id="d-prod" checked> 쿠팡 상품 찾기</label><button class="btn primary" id="d-go">초안 만들기</button></div>
+  <label><input type="checkbox" id="d-prod" checked> 쿠팡 상품 찾기</label><button class="btn primary" id="d-go">초안 만들기</button>
+  <button class="btn" id="d-naver" title="같은 키워드로 네이버 화면의 브랜드커넥트 상품 찾기를 열어요 (쇼핑커넥트 링크는 블로그에만)">네이버 상품 찾기</button></div>
   <div id="d-msg" class="note"></div>
 </section>
 <section>
@@ -95,6 +105,8 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 </main>
 </div>
 <script>
+document.querySelector('.subtabs a[data-k="coupang"]').setAttribute("aria-current","page");
+
 const S={status:null,cur:null,report:null};
 const LABEL={draft:"초안",pending:"검토 대기",approved:"게시됨",rejected:"반려",withdrawn:"내림"};
 const PILL={draft:"p-off",pending:"p-hold",approved:"p-ok",rejected:"p-err",withdrawn:"p-off"};
@@ -134,6 +146,7 @@ async function save(){const keep=[...document.querySelectorAll("#e-products inpu
  const fields={title:$("e-title").value,summary:$("e-summary").value,why:$("e-why").value.split("\n").map(s=>s.trim()).filter(Boolean),price_note:$("e-note").value,products:keep};
  try{const j=await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/update",{fields});open_(j);list()}catch(e){showErr(e)}}
 $("d-date").addEventListener("change",fillKw);$("d-go").addEventListener("click",makeDraft);
+$("d-naver").addEventListener("click",()=>{const kw=$("d-kw").value;location.href="/admin/trends?bc="+encodeURIComponent(kw||"")+"#bc"});
 loadDates().catch(showErr);list().catch(showErr);
 </script>
 </body>
