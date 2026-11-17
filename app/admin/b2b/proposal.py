@@ -142,7 +142,8 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
         Element(kind="callout", tone="info", text="'공급사 확약 필요' 항목은 견적·확약서 회신 후 '대응'으로 바꿔 제출합니다."),
     ]))
 
-    # 4. 상품 구성안
+    # 4. 상품 구성안 (2026-11-17: 슬라이드에는 상품 이미지 카드 — facts['product_images'])
+    gallery: dict[str, dict] = {}
     els: list[Element] = [Element(kind="para", text="카테고리별로 조건을 충족할 수 있는 후보를 복수로 확보한 뒤, 공급사 견적·배송 확약·"
                                                      "온라인가 증빙이 갖춰진 상품만 최종 구성에 넣습니다.")]
     for need in req.categories or []:
@@ -153,6 +154,9 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
         trows = []
         for e in cands[: max(need.count + 2, 3)]:
             c = e.candidate
+            img = _product_image(c, mode)
+            if img:
+                gallery[c.name] = img
             price = f"{c.observed_price:,}원 (관측 {c.observed_date})" if c.observed_price else "[확인 필요: 온라인가]"
             if e.decision == "ELIGIBLE":
                 status = "확정"
@@ -280,9 +284,19 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
         "exchange_days": req.exchange_business_days, "min_online_price": req.min_online_price,
         "categories": [{"name": c.name, "count": c.count} for c in req.categories],
         "contact": {k: pf.get(k) for k in ("contact_name", "contact_phone", "contact_email")},
+        "product_images": gallery,
     }
     prop.todo_count = sum(len(TODO.findall(_flat(s))) for s in S if not s.internal_only)
     return prop
+
+
+def _product_image(c, mode: str) -> dict | None:
+    try:
+        from app.admin.b2b import product_images
+
+        return product_images.resolve(c, mode)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _apply_ai(S: list[Section], body: dict) -> list[Section]:

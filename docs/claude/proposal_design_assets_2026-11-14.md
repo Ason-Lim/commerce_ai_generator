@@ -101,3 +101,13 @@
   → 맥에서 `uv run playwright install chromium` 1회 실행 권장 (이 맥에는 아직 없음).
 - (같은 날) 제목과 본문 간격: PPTX 본문 시작 160 → 182px (본문 높이 490 → 468px, 장당 분량 MAX_UNITS 9.5 → 9.07),
   한눈에 보는 제안·시장 동향 장도 같이 내림. HTML 슬라이드 `.body` 위 여백 26 → 44px. 2×2 아이콘 카드 높이도 글 길이로 계산(`icard_rows`).
+
+## 6단계 (2026-11-17) — 상품 구성안에 상품 이미지 카드
+- 슬라이드(HTML·PPTX)의 상품 구성안 표(`상품 | 옵션·구성 | 온라인 판매가 | 상태`)를 **상품 사진 카드**로 그림 (`layout goods`, 한 줄 3~4개: 사진·상품명·구성·판매가·상태). Word·HWPX·A4 는 표 그대로.
+- 이미지 고르는 순서 (`app/admin/b2b/product_images.py`)
+  1. 공급사 제공 이미지: `data/admin/proposal_assets/_products/<후보ID 또는 상품명>.jpg|png|webp` → 제출본·내부본 모두
+  2. 판매처·도매몰 이미지(`Candidate.image_url` — 쿠팡·네이버 검색 `image_url`, 도매꾹 `thumb`): 사용 허락 확인 전이라 **내부 검토본에만**, '판매처 이미지 · 사용 허락 확인 필요' 표시
+  3. 없으면 품목 낱말로 고른 예시 일러스트 + '공급사 이미지 확정 후 교체'
+- 내려받기: https 만, 5MB 이하, 이미지 확인 후 JPEG(최대 900px)로 `_cache/` 저장. 실패해도 제안서는 만듦.
+- `Candidate` 에 `image_url`·`image_source`(retail·wholesale·supplier) 추가 — 이후 검색·도매몰 조회부터 채워짐 (예전 후보는 비어 있음).
+- 콘솔 제안서 결과에 이미지 넣는 방법 안내. 테스트 2개 추가.
