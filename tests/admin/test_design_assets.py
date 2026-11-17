@@ -266,3 +266,14 @@ def test_products_section_renders_image_cards(tmp_path, monkeypatch):
     assert 'class="goods"' in html and "공급사 이미지 확정 후 교체" in html
     out = proposal_export.to_pptx(p, tmp_path / "g.pptx")
     assert any(n.startswith("ppt/media/") for n in zipfile.ZipFile(out).namelist())
+
+
+# ── 2026-11-17: 한 줄 안내문만 있는 빈 장 방지 ──────────────────────────
+def test_short_intro_line_stays_with_next_figure():
+    D = proposal_deck
+    intro = Element(kind="para", text="구축 방식: [확인 필요: 폐쇄몰 플랫폼·구축 방식]")
+    tl = Element(kind="table", headers=["일정", "작업", "산출물"],
+                 rows=[[f"D+{i}", "계정 발급과 상품 등록", "점검표"] for i in range(6)])
+    p = _prop([intro, tl], sid="mall")
+    sl = [s for s in D.plan(p) if s.kind == "section"]
+    assert len(sl) == 1 and [D.layout_of(e, "mall") for e in sl[0].elements] == ["para", "path"]

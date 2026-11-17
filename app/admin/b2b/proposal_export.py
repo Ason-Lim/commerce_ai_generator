@@ -477,23 +477,23 @@ class _Pptx:
             cxs = [(72 + 1136 - 46 - C * (j + .5)) if rev else (72 + 46 + C * (j + .5)) for j in range(len(chunk))]
             a = (72 + 46) if not rev and ri > 0 else (72 + 1136 - 46 if rev and ri > 0 else cxs[0])
             b = ((72 + 46) if rev else (72 + 1136 - 46)) if turn else cxs[-1]
-            self.box(s, min(a, b), yr + 64.5, abs(b - a), 3, pal.primary, rounded=False)
+            self.box(s, min(a, b), yr + 72.5, abs(b - a), 3, pal.primary, rounded=False)
             if turn:
                 if rev:
-                    self.arc(s, 72, yr + 66, 92, rh[ri], right=False)
+                    self.arc(s, 72, yr + 74, 92, rh[ri], right=False)
                 else:
-                    self.arc(s, 72 + 1136 - 92, yr + 66, 92, rh[ri], right=True)
+                    self.arc(s, 72 + 1136 - 92, yr + 74, 92, rh[ri], right=True)
             w = C - 16
             for (j, (gi, r)), cx in zip(enumerate(chunk), cxs):
-                self.box(s, cx - C / 2 + 14, yr + 2, C - 28, 26, pal.surface, pal.line, radius=0.5)
-                self.text(s, cx - C / 2 + 14, yr + 2, C - 28, 26, r[0], 11, True, pal.primary, align="center", anchor="middle")
-                self.oval(s, cx - 32, yr + 34, 64, pal.bg, pal.primary)
-                if not self.pic(s, icons[gi], cx - 22, yr + 44, 44, 44):
-                    self.text(s, cx - 32, yr + 34, 64, 64, f"{D.num_start(e) + gi + 1:02d}", 14, True, pal.primary, align="center", anchor="middle")
+                self.box(s, cx - C / 2 + 10, yr + 2, C - 20, 34, pal.surface, pal.primary, radius=0.5)
+                self.text(s, cx - C / 2 + 10, yr + 2, C - 20, 34, r[0], 13, True, pal.primary, align="center", anchor="middle")
+                self.oval(s, cx - 32, yr + 42, 64, pal.bg, pal.primary)
+                if not self.pic(s, icons[gi], cx - 22, yr + 52, 44, 44):
+                    self.text(s, cx - 32, yr + 42, 64, 64, f"{D.num_start(e) + gi + 1:02d}", 14, True, pal.primary, align="center", anchor="middle")
                 hb = D.text_h(r[1] if len(r) > 1 else "", w, D.PATH_TB, True, 1.15)
-                self.text(s, cx - w / 2, yr + 112, w, hb + 4, r[1] if len(r) > 1 else "", D.PATH_TB, True, align="center")
+                self.text(s, cx - w / 2, yr + 120, w, hb + 4, r[1] if len(r) > 1 else "", D.PATH_TB, True, align="center")
                 if len(r) > 2:
-                    self.text(s, cx - w / 2, yr + 118 + hb, w, rh[ri] - 124 - hb, r[2], D.PATH_TS, False, pal.ink, align="center", spacing=1.2)
+                    self.text(s, cx - w / 2, yr + 126 + hb, w, rh[ri] - 132 - hb, r[2], D.PATH_TS, False, pal.ink, align="center", spacing=1.2)
         return y + sum(rh) - 8
 
     def steps(self, s, parts: list[tuple[str, str, str]], sid: str, y: float, arrows: bool) -> float:
@@ -540,15 +540,17 @@ class _Pptx:
             if not self.pic(s, icons[i], cx + 20, oy + 20, 72, 72):
                 self.text(s, cx, oy, 112, 112, str(i + 1), 26, True, pal.primary, align="center", anchor="middle")
             self.badge(s, cx + 56, oy + 102, f"{i + 1:02d}")
-            segs = ([((head, 12, True, pal.ink),)] if head else []) + [((body, 10, False, pal.muted),)]
+            segs = ([((head, 13.5, True, pal.ink),)] if head else []) + [((body, 11.5, False, pal.ink),)]
             self.text(s, cx + 130, cy + 14, w - 170, h - 28, segs, anchor="middle", spacing=1.25)
         return y + sum(rows) + 24 * (len(rows) - 1)
 
     def goods(self, s, e: Element, sid: str, y: float) -> float:
-        """상품 구성안 — 상품 사진 카드 (2026-11-17). 사진이 없으면 품목 예시 그림 + '공급사 이미지 확정 후 교체'."""
+        """상품 카드 (2026-11-17) — 왼쪽 사진 칸과 오른쪽 상품 정보표를 나눠 그린다.
+        사진이 없으면 품목 예시 그림 + '공급사 이미지 확정 후 교체'."""
         pal = self.pal
-        g = D.goods_geom(e)
-        imgs = (self.p.facts or {}).get("product_images") or {}
+        facts = self.p.facts or {}
+        g = D.goods_geom(e, facts)
+        imgs = facts.get("product_images") or {}
         try:
             from app.admin.b2b import design_assets
 
@@ -556,37 +558,36 @@ class _Pptx:
                                           "products", ("illustration", "icon"))
         except Exception:  # noqa: BLE001
             ph = [None] * len(e.rows)
-        cols, cw, gap, ih = g["cols"], g["cw"], g["gap"], g["img_h"]
+        cols, cw, gap, iw = g["cols"], g["cw"], g["gap"], D.GOODS_IMG_W
         for i, r in enumerate(e.rows):
             row = i // cols
             cx = 72 + (i % cols) * (cw + gap)
             cy = y + sum(g["rows"][:row]) + gap * row
             h = g["rows"][row]
-            self.box(s, cx, cy, cw, h, pal.surface, pal.line, radius=min(0.1, 14 / h))
+            self.box(s, cx, cy, cw, h, pal.surface, pal.line, radius=min(0.08, 14 / h))
             img = imgs.get(r[0])
-            self.box(s, cx + 14, cy + 14, cw - 28, ih, pal.bg if img else D_tint(pal), pal.line, radius=0.06)
+            self.box(s, cx + 14, cy + 14, iw, h - 28, pal.bg if img else D_tint(pal), pal.line, radius=0.06)
             if img:
-                self.pic(s, {"path": img["path"]}, cx + 18, cy + 18, cw - 36, ih - 8)
+                self.pic(s, {"path": img["path"]}, cx + 20, cy + 20, iw - 12, h - 40)
                 if img.get("label"):
-                    self.box(s, cx + 20, cy + 14 + ih - 26, min(cw - 40, 190), 20, "#FFFFFF", None, radius=0.3)
-                    self.text(s, cx + 24, cy + 14 + ih - 26, min(cw - 48, 182), 20, img["label"], 8, True, "#8A5A00", anchor="middle")
+                    self.box(s, cx + 22, cy + h - 44, iw - 16, 22, "#FFFFFF", None, radius=0.3)
+                    self.text(s, cx + 22, cy + h - 44, iw - 16, 22, img["label"], 8.5, True, "#8A5A00", align="center", anchor="middle")
             else:
-                self.pic(s, ph[i], cx + cw * 0.25, cy + 22, cw * 0.5, ih - 44)
-                self.text(s, cx + 14, cy + 14 + ih - 24, cw - 28, 18, "공급사 이미지 확정 후 교체", 8.5, False, pal.muted, align="center")
-            ty = cy + 14 + ih + 14
-            nh = min(3, D.wrap_n(r[0], g["inner"], 12, True)) * 12 * 1.333 * 1.22 * 1.15
-            self.text(s, cx + 16, ty, g["inner"], nh + 2, r[0], 12, True)
-            ty += nh + 4
-            if len(r) > 1 and r[1]:
-                oh = D.text_h(r[1], g["inner"], 10, False, 1.15)
-                self.text(s, cx + 16, ty, g["inner"], oh, r[1], 10, False, pal.muted)
-                ty += oh + 4
-            if len(r) > 2:
-                self.text(s, cx + 16, ty, g["inner"], 22, r[2], 11, True, pal.primary)
-            ty += 30
-            if len(r) > 3 and r[3]:
-                ok = r[3] in ("확정", "대응")
-                self.text(s, cx + 16, ty, g["inner"], 24, r[3], 9.5, True, pal.primary if ok else "#" + TODO_RGB)
+                self.pic(s, ph[i], cx + 14 + iw * 0.15, cy + 30, iw * 0.7, h - 90)
+                self.text(s, cx + 14, cy + h - 44, iw, 20, "공급사 이미지 확정 후 교체", 9, False, pal.muted, align="center")
+            title, rows = D.goods_info(r, facts)
+            tx, tw = cx + 14 + iw + 22, g["info_w"]
+            ty = cy + 20
+            th = D.text_h(title, tw, 14, True, 1.15)
+            self.text(s, tx, ty, tw, th + 4, title, 14, True)
+            ty += th + 10
+            for k_, v in rows:
+                self.text(s, tx, ty, tw, 16, k_, 9.5, True, pal.muted)
+                ty += 17
+                em = k_ in ("온라인 판매가", "공급 상태")
+                vh = D.text_h(v, tw, 12, em, 1.15)
+                self.text(s, tx, ty, tw, vh + 2, v, 12, em, pal.primary if em else pal.ink)
+                ty += vh + 8
         return y + g["h"]
 
     def cards(self, s, e: Element, lay: str, sid: str, y: float) -> float:
@@ -688,20 +689,17 @@ class _Pptx:
                 self.text(s, cx + 20, y + 100, w - 40, 34, r[2] if len(r) > 2 else "", 9.5, False, pal.muted)
             return y + 140
         if lay == "kv":
-            rows = []
-            for i in range(0, len(e.rows), 2):
-                pair = e.rows[i:i + 2]
-                rows.append([pair[0][0], pair[0][1]] + ([pair[1][0], pair[1][1]] if len(pair) > 1 else ["", ""]))
-            return self.table(s, Element(kind="table", headers=["항목", "내용", "항목", "내용"], rows=rows), y, kv=True)
+            return self.table(s, e, y, kv=True)
         return self.table(s, e, y)
 
     def table(self, s, e: Element, y: float, kv: bool = False) -> float:
-        from pptx.util import Pt
+        """표 — 글자 12pt, 줄 높이는 글을 재서 (2026-11-17 가독성)."""
         k = self.k
-        ws = [130, 438, 130, 438] if kv else _col_w(e)
-        rows = len(e.rows) + (0 if kv else 1)
-        h = self.table_h(e) * k
-        gf = s.shapes.add_table(rows, len(ws), self.X(72), self.Y(y), self.X(1136), self.Y(h))
+        ws, head, hs = D.table_geom(e, kv)
+        rows_data = D.kv_rows(e) if kv else e.rows
+        n_rows = len(rows_data) + (0 if kv else 1)
+        h = (head + sum(hs)) * k
+        gf = s.shapes.add_table(n_rows, len(ws), self.X(72), self.Y(y), self.X(1136), self.Y(h))
         tbl = gf.table
         tbl.first_row = not kv
         for j, w in enumerate(ws):
@@ -711,8 +709,8 @@ class _Pptx:
         def put(cell, text, size, bold, color, fill):
             cell.fill.solid()
             cell.fill.fore_color.rgb = self.rgb(fill)
-            cell.margin_left = cell.margin_right = self.X(10)
-            cell.margin_top = cell.margin_bottom = self.Y(5)
+            cell.margin_left = cell.margin_right = self.X(12)
+            cell.margin_top = cell.margin_bottom = self.Y(7)
             tf = cell.text_frame
             tf.word_wrap = True
             tf.paragraphs[0].text = ""
@@ -720,22 +718,19 @@ class _Pptx:
         r0 = 0
         if not kv:
             for j, hd in enumerate(e.headers):
-                put(tbl.cell(0, j), hd, 10.5 * k, True, self.pal.on_primary, self.pal.primary)
-            tbl.rows[0].height = self.Y(32)
+                put(tbl.cell(0, j), hd, D.TH_PT * k, True, self.pal.on_primary, self.pal.primary)
+            tbl.rows[0].height = self.Y(head * k)
             r0 = 1
-        for i, r in enumerate(e.rows):
+        for i, r in enumerate(rows_data):
             for j in range(len(ws)):
                 c = r[j] if j < len(r) else ""
                 key = kv and j % 2 == 0
                 col = self.pal.primary if j == st and c in ("대응", "확정") else ("#8A5A00" if j == st else
                                                                               (self.pal.muted if key else self.pal.ink))
-                put(tbl.cell(r0 + i, j), c, 10 * k, key or j == st or (not kv and j == 0), col,
+                put(tbl.cell(r0 + i, j), c, D.TB_PT * k, key or j == st or (not kv and j == 0), col,
                     self.pal.surface if (i % 2 and not kv) else self.pal.bg)
-        for row in list(tbl.rows)[r0:]:
-            row.height = self.Y(30 * k)
-        # 표 스타일 테두리 대신 얇은 선 색 (기본 스타일 유지 · 글꼴만 통일)
+            tbl.rows[r0 + i].height = self.Y(hs[i] * k)
         gf.table._tbl.tblPr.set("bandRow", "0")  # noqa: SLF001
-        _ = Pt
         return y + h
 
     def build(self, market: dict | None) -> None:

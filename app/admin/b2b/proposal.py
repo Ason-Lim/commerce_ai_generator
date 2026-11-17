@@ -144,8 +144,17 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
 
     # 4. 상품 구성안 (2026-11-17: 슬라이드에는 상품 이미지 카드 — facts['product_images'])
     gallery: dict[str, dict] = {}
+    info: dict[str, dict] = {}
+    floor_txt = f"온라인 판매가 {req.min_online_price:,}원 이상" if req.min_online_price else "온라인 판매가가 1인 예산 이상"
     els: list[Element] = [Element(kind="para", text="카테고리별로 조건을 충족할 수 있는 후보를 복수로 확보한 뒤, 공급사 견적·배송 확약·"
-                                                     "온라인가 증빙이 갖춰진 상품만 최종 구성에 넣습니다.")]
+                                                     "온라인가 증빙이 갖춰진 상품만 최종 구성에 넣습니다."),
+                          # 2026-11-17: 상품 선정 기준 (상품 구성안 보강)
+                          Element(kind="bullets", items=[
+                              f"선물 가치: {floor_txt}이고, 같은 옵션을 여러 판매처 가격으로 대조해 검증한 상품만 넣습니다.",
+                              "품질·안전: 식품은 원산지·제조일·소비기한과 필요한 인증 서류를 공급사에게 받아 확인합니다.",
+                              f"선물 포장·배송: 선물 상자·보냉 포장 등 포장을 포함하고, 선택일부터 {d_ship} 이내 개별 도착이 가능한 상품만 고릅니다.",
+                              "공급 안정성: 확보 수량·출고 마감 시각·품절 시 대체 상품을 공급사와 미리 확약합니다.",
+                          ])]
     for need in req.categories or []:
         cands = [e for e in evals if e.candidate.category == need.name and e.decision != "EXCLUDED"
                  and not e.candidate.is_sample]
@@ -165,11 +174,18 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             else:
                 status = f"[확인 필요: {', '.join(x.label for x in e.unknown[:3])}]"
             row = [c.name, c.option or "[확인 필요: 옵션]", price, status]
+            info[c.name] = {k: v for k, v in (
+                ("원산지", c.origin), ("제조사", c.manufacturer),
+                ("배송", f"{c.delivery_days}일 이내 (공급사 제시)" if c.delivery_days else None),
+                ("최소 구매", f"{c.min_order_qty:,}개" if c.min_order_qty and c.min_order_qty > 1 else None)) if v}
             if mode == "internal":
                 row.append(c.supplier)
             trows.append(row)
-        if not trows:
-            trows.append([f"[확인 필요: {need.name} 후보 발굴]", "-", "-", "후보 없음"] + (["-"] if mode == "internal" else []))
+        if not trows:                                   # 후보가 없으면 필요한 수만큼 자리 + 선정 기준
+            for i in range(1, need.count + 1):
+                nm = f"[확인 필요: {need.name} 후보 {i}]"
+                trows.append([nm, "선물 포장 포함 · 구성 확정 전", floor_txt, "후보 발굴 중"] + (["-"] if mode == "internal" else []))
+                info[nm] = {"배송": f"선택일부터 {d_ship} 이내 개별 도착", "확정 조건": "공급사 견적·배송 확약·온라인가 증빙"}
         hdr = ["상품", "옵션·구성", "온라인 판매가", "상태"] + (["공급 경로"] if mode == "internal" else [])
         els += [Element(kind="para", text=f"■ {need.name} {need.count}종"), Element(kind="table", headers=hdr, rows=trows)]
     els.append(Element(kind="callout", tone="warn",
@@ -291,6 +307,7 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
         "categories": [{"name": c.name, "count": c.count} for c in req.categories],
         "contact": {k: pf.get(k) for k in ("contact_name", "contact_phone", "contact_email")},
         "product_images": gallery,
+        "product_info": info,
     }
     prop.todo_count = sum(len(TODO.findall(_flat(s))) for s in S if not s.internal_only)
     return prop
