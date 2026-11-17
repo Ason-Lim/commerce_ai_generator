@@ -23,6 +23,11 @@ export function shipText(status: string | null | undefined, fee: number | null |
 }
 
 export function cardToCandidate(c: ApiCard): Candidate {
+  // 2026-11-16 정책: 판매처(쿠팡) 링크는 모두 /go 를 거친다 — 클릭 기록이 빠지지 않게 (쿠팡 리포트 11-13: 쿠팡 클릭 3 · 우리 기록 1).
+  // 상세 패널 '원문 ↗'도 서버가 준 /go 경로로. 쇼핑커넥트 발급 링크(direct)만 받은 그대로 연다 (운영정책: 링크 조작 금지).
+  // /go 경로가 없으면 링크를 걸지 않는다 (판매처 주소로 바로 보내지 않음).
+  const srcUrl: string | undefined = c.direct && c.url && /^https:\/\//.test(c.url) ? c.url
+    : c.go && /^\/go\//.test(c.go) ? c.go : undefined;
   // 2026-11-13: 서버가 배송비 상태를 주면 총액은 'confirmed' 일 때만. 무료 표시·적힌 배송비는 총액으로 합치지 않는다.
   const status = c.shipping_status ?? null;
   const ship = c.shipping_fee ?? null;
@@ -82,12 +87,12 @@ export function cardToCandidate(c: ApiCard): Candidate {
     seenAt: c.seen_at ?? null,
     detail: c.detail ?? {
       sellerFacts: [
-        ...(c.spec ? [{ label: "규격", value: c.spec, source: { label: c.source ?? "판매처", url: c.url } }] : []),
-        { label: "상품가", value: won(c.price), source: { label: c.source ?? "판매처", url: c.url } },
+        ...(c.spec ? [{ label: "규격", value: c.spec, source: { label: c.source ?? "판매처", url: srcUrl } }] : []),
+        { label: "상품가", value: won(c.price), source: { label: c.source ?? "판매처", url: srcUrl } },
         { label: "배송비", value: status ? (shipText(status, ship, c.rocket) ?? "판매자 표기 확인 필요") + (status === "unknown" && !c.rocket ? "" : " (판매처 검색 결과 표시 · 도착일 약속 아님)")
-            : ship == null ? "판매자 표기 확인 필요" : won(ship), source: { label: c.source ?? "판매처", url: c.url } },
-        ...(!status && (c.rocket || c.free_shipping) ? [{ label: "배송 표시", value: [c.rocket && "로켓배송", c.free_shipping && "무료배송"].filter(Boolean).join(" · ") + " (판매처 검색 결과 표시 · 도착일 약속 아님)", source: { label: c.source ?? "판매처", url: c.url } }] : []),
-        ...(c.seller_claims?.length ? [{ label: "상품명 문구", value: `${c.seller_claims.join(" · ")} — 판매자가 상품명에 적은 내용이라 확인되지 않았고, 추천 순서에 쓰지 않았어요`, source: { label: c.source ?? "판매처", url: c.url } }] : []),
+            : ship == null ? "판매자 표기 확인 필요" : won(ship), source: { label: c.source ?? "판매처", url: srcUrl } },
+        ...(!status && (c.rocket || c.free_shipping) ? [{ label: "배송 표시", value: [c.rocket && "로켓배송", c.free_shipping && "무료배송"].filter(Boolean).join(" · ") + " (판매처 검색 결과 표시 · 도착일 약속 아님)", source: { label: c.source ?? "판매처", url: srcUrl } }] : []),
+        ...(c.seller_claims?.length ? [{ label: "상품명 문구", value: `${c.seller_claims.join(" · ")} — 판매자가 상품명에 적은 내용이라 확인되지 않았고, 추천 순서에 쓰지 않았어요`, source: { label: c.source ?? "판매처", url: srcUrl } }] : []),
         // 식약처 품목제조보고 (식품정보24) — 제조사·품목명이 맞는 경우에만 백엔드가 내려준다
         ...(c.public_info ? [
           { label: "신고 제품", value: `${c.public_info.name} · ${c.public_info.company}`, source: { label: "식약처 품목제조보고" } },
