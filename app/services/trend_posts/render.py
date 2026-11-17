@@ -18,6 +18,8 @@ from app.services.trend_posts.model import KST, Post, PostProduct, parse_time
 CHECK_AT_MALL = "가격은 판매처에서 확인해 주세요"
 SITE = "AI 식품 추천"
 
+NAV_ITEMS = (("chat", "대화", "/#"), ("hot", "지금 뜨는 식품", "/#/hot"), ("posts", "트렌드 글", "/trends"))
+
 CSS = """body{margin:0;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;background:#f6f7f4;color:#1d211d;line-height:1.65}
 main{max-width:720px;margin:0 auto;padding:20px 18px 60px}a{color:#24533a}nav{font-size:14px;margin-bottom:14px}
 h1{font-size:24px;line-height:1.35;margin:6px 0 8px}h2{font-size:18px;margin:28px 0 8px}
@@ -25,7 +27,17 @@ h1{font-size:24px;line-height:1.35;margin:6px 0 8px}h2{font-size:18px;margin:28p
 .meta{color:#5d635c;font-size:13px}.card{background:#fff;border:1px solid #e3e5df;border-radius:12px;padding:12px 14px;margin:8px 0}
 .price{font-size:14px;color:#3b403a}.muted{color:#6b706a;font-size:13px}ul{padding-left:20px}
 .go{display:inline-block;margin-top:6px;padding:7px 12px;border-radius:8px;background:#1d211d;color:#fff;text-decoration:none;font-size:14px}
-.list a.t{font-size:17px;font-weight:700;text-decoration:none;color:#1d211d}"""
+.list a.t{font-size:17px;font-weight:700;text-decoration:none;color:#1d211d}
+.top{position:sticky;top:0;z-index:5;background:rgba(246,247,244,.95);border-bottom:1px solid #e3e5df}
+.top .in{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
+.logo{font-weight:700;font-size:17px;color:#1d211d;text-decoration:none}
+.menu{display:flex;gap:4px}.menu a{padding:7px 14px;border-radius:999px;color:#4d534c;text-decoration:none;font-size:14px}
+.menu a[aria-current=page]{background:#1d211d;color:#fff;font-weight:600}
+.tabbar{display:none}
+@media (max-width:639px){.menu{display:none}main{padding-bottom:96px}
+ .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;height:60px;padding-bottom:env(safe-area-inset-bottom);background:rgba(246,247,244,.96);border-top:1px solid #e3e5df;z-index:5}
+ .tabbar a{flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:#6b706a;text-decoration:none}
+ .tabbar a[aria-current=page]{color:#24533a;font-weight:700}}"""
 
 
 def _kst(v, with_time: bool = False) -> str:
@@ -46,18 +58,27 @@ def post_url(post: Post) -> str:
     return "/trends/" + quote(post.id)
 
 
-def _page(title: str, body: str, description: str = "") -> str:
+def _menu(current: str, cls: str) -> str:
+    return (f'<nav class={cls} aria-label="주요 메뉴">'
+            + "".join(f'<a href="{href}"' + (' aria-current=page' if key == current else "") + f">{label}</a>"
+                      for key, label, href in NAV_ITEMS) + "</nav>")
+
+
+def _page(title: str, body: str, description: str = "", current: str = "posts") -> str:
+    """앱(대화·지금 뜨는 식품)과 같은 공통 메뉴 — PC 머리줄 가운데, 모바일 아래 탭 (2026-11-17 내비게이션 설계)."""
+    top = (f'<header class=top><div class=in><a class=logo href="/#">{SITE}</a>{_menu(current, "menu")}'
+           f'<span style="width:60px"></span></div></header>')
     return (f"<!doctype html><html lang=ko><head><meta charset=utf-8>"
             f"<meta name=viewport content=\"width=device-width,initial-scale=1\">"
             f"<title>{escape(title)} | {SITE}</title>"
             + (f"<meta name=description content=\"{escape(description)}\">" if description else "")
-            + f"<style>{CSS}</style></head><body><main>{body}</main></body></html>")
+            + f"<style>{CSS}</style></head><body>{top}<main>{body}</main>{_menu(current, 'tabbar')}</body></html>")
 
 
 def post_page(post: Post, now: datetime | None = None) -> str:
     now = now or datetime.now(timezone.utc)
     e = escape
-    parts = ['<nav><a href="/trends">트렌드 글</a> · <a href="/">AI 추천 대화</a></nav><article>']
+    parts = ['<nav><a href="/trends">← 트렌드 글 목록</a></nav><article>']
     if post.disclosure and post.products:
         parts.append(f'<p class=ad role=note>{e(post.disclosure)}</p>')
     parts.append(f"<h1>{e(post.title)}</h1>")
@@ -91,13 +112,16 @@ def post_page(post: Post, now: datetime | None = None) -> str:
             f'<li><a href="{e(s.url)}" rel="nofollow noopener" target=_blank>{e(s.label)}</a></li>' if s.url
             else f"<li>{e(s.label)}</li>" for s in post.sources)
         parts.append(f"<h2>확인한 곳</h2><ul class=muted>{items}</ul>")
+    ask = f"요즘 {post.topic} 왜 유행해?"
+    parts.append(f'<p style="margin-top:28px"><a class=go href="/?ask={quote(ask)}">이 주제 더 물어보기</a> '
+                 f'<a class=go style="background:#fff;color:#1d211d;border:1px solid #d9dcd5" href="/#/hot">지금 뜨는 식품 전체 보기</a></p>')
     parts.append("</article>")
     return _page(post.title, "".join(parts), post.summary)
 
 
 def index_page(posts: list[Post]) -> str:
     e = escape
-    body = ['<nav><a href="/">AI 추천 대화</a></nav><h1>트렌드 글</h1>'
+    body = ['<h1>트렌드 글</h1>'
             '<p class=meta>검색이 갑자기 늘어난 식품을 데이터로 살펴본 글이에요. 운영자가 확인한 글만 올려요.</p>']
     if not posts:
         body.append("<p>아직 게시된 글이 없어요.</p>")

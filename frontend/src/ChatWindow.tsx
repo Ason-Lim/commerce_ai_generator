@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUp, ArrowRight, Plus, Sparkles, ShoppingBag, Utensils, Square, Gift, Cookie, Leaf, TrendingUp, Heart, type LucideIcon } from 'lucide-react';
+import { ArrowUp, ArrowRight, Plus, Sparkles, ShoppingBag, Utensils, Square, Gift, Cookie, Leaf, Heart, type LucideIcon } from 'lucide-react';
 import { SavedPanel } from './components/SavedPanel';
 import { SavedProvider, useSaved } from './state/saved';
 import { PENDING_ASK } from './components/TrendsPage';
 import { BlockRenderer } from './components/BlockRenderer';
 import { ProductDetail } from './components/ProductDetail';
+import { MobileTabBar, MOBILE_TAB_H, SiteNav } from './components/SiteNav';
 import { TrendPostPanel } from './components/TrendPost';
 import { FlowStepper } from './components/FlowStepper';
 import { ChatActions, type ChatActionsValue } from './components/ChatActions';
@@ -106,8 +107,23 @@ const saveSession = (sid: string | null) => {
     try { if (sid) window.localStorage.setItem(SESSION_KEY, sid); else window.localStorage.removeItem(SESSION_KEY); } catch { /* 기억 못 해도 동작에는 지장 없음 */ }
 };
 
+/** 모바일 폭(sm 미만) — 아래 탭 바가 보이는 폭과 같다 */
+function useIsMobile(): boolean {
+    const q = '(max-width: 639px)';
+    const [m, setM] = useState(() => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(q).matches);
+    useEffect(() => {
+        if (!window.matchMedia) return;
+        const mq = window.matchMedia(q);
+        const on = () => setM(mq.matches);
+        mq.addEventListener?.('change', on);
+        return () => mq.removeEventListener?.('change', on);
+    }, []);
+    return m;
+}
+
 export default function ChatWindow() {
     const { examples, date: examplesDate } = useLiveExamples();
+    const mobile = useIsMobile();
     const [messages, setMessages] = useState<Message[]>([]);
     // 2026-11-04: 네이버 쇼핑커넥트 상품이 실제로 보였을 때만 하단 고지에 네이버 수수료 문구를 붙인다
     const hasConnect = useMemo(() => messages.some(m => (m.blocks ?? []).some(b =>
@@ -206,6 +222,19 @@ export default function ChatWindow() {
         let ask: string | null = null;
         try { ask = sessionStorage.getItem(PENDING_ASK); sessionStorage.removeItem(PENDING_ASK); } catch { /* 저장소 막힘 */ }
         if (ask) void send({ message: ask });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // 트렌드 글 페이지의 '이 주제 더 물어보기'(/?ask=…) — 입력창에 질문만 채워 둔다. 자동으로 보내지 않는다 (2026-11-17)
+    useEffect(() => {
+        try {
+            const url = new URL(window.location.href);
+            const ask = (url.searchParams.get('ask') || '').trim().slice(0, 80);
+            if (!ask) return;
+            setInput(ask);
+            url.searchParams.delete('ask');
+            window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+        } catch { /* 주소를 못 읽으면 그대로 */ }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -319,15 +348,11 @@ export default function ChatWindow() {
                         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
                         AI 식품 추천
                     </a>
+                    <SiteNav current="chat" />
                     <div className="flex items-center gap-3">
-                        <span className="hidden rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] text-stone-500 md:inline">API 연결 준비 중</span>
-                        <div className="hidden sm:flex">
-                            <FlowStepper step={step} />
-                        </div>
+                        {/* 진행 단계는 대화 중에만 (2026-11-17 내비게이션 설계) */}
+                        {messages.length > 0 && <div className="hidden lg:flex"><FlowStepper step={step} /></div>}
                         {messages.length > 0 && <SavedButton />}
-                        <a href="#/trends" className="flex items-center gap-1 rounded-lg p-2 text-xs hover:bg-stone-100" aria-label="지금 뜨는 식품">
-                            <TrendingUp size={16} /><span className="hidden sm:inline">지금 뜨는 식품</span>
-                        </a>
                         <button className="flex items-center gap-1 rounded-lg p-2 text-xs hover:bg-stone-100" disabled={busy} onClick={() => { setMessages([]); setSessionId(null); setError(''); setInput(''); setBasket([]); closeDetail(); }}>
                             <Plus size={16} /><span className="hidden sm:inline">새 대화</span>
                         </button>
@@ -405,7 +430,8 @@ export default function ChatWindow() {
                 {error && <div role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
             </main>
 
-            <footer ref={footer} className="sticky bottom-0 mx-auto w-full max-w-[900px] bg-gradient-to-t from-paper via-paper to-paper/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-8">
+            {/* 모바일: 입력창을 아래 탭 바 위에 둔다 (2026-11-17) */}
+            <footer ref={footer} style={{ bottom: mobile ? MOBILE_TAB_H : 0 }} className="sticky bottom-0 mx-auto w-full max-w-[900px] bg-gradient-to-t from-paper via-paper to-paper/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-8">
                 <form onSubmit={e => { e.preventDefault(); submit(input); }} className="rounded-3xl border border-stone-200 bg-white p-3 shadow-[0_4px_24px_#00000006] transition focus-within:border-stone-300 focus-within:shadow-[0_4px_24px_#0000000f]">
                     <label htmlFor="prompt" className="sr-only">쇼핑 질문</label>
                     <textarea id="prompt" value={input} onChange={e => setInput(e.target.value)} rows={2} maxLength={4000} placeholder={inRecipe ? '재료나 만드는 방법을 물어보세요' : '어떤 상품을 찾으세요? 예산과 원하는 조건을 알려주세요.'} className="max-h-40 min-h-14 w-full resize-y bg-transparent px-2 py-1 text-sm leading-6 outline-none placeholder:text-stone-400" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit(input); } }} />
@@ -422,6 +448,8 @@ export default function ChatWindow() {
             </footer>
 
             <SavedPanel />
+            <MobileTabBar current="chat" />
+            {mobile && <div aria-hidden style={{ height: MOBILE_TAB_H }} />}
             {trendPost && <TrendPostPanel key={trendPost.id} post={trendPost} onClose={closeTrendPost} />}
             {detail && <ProductDetail key={detail.key} c={detail} sessionId={sessionId} purchasing={purchasing} onPurchasing={setPurchasing} onClose={closeDetail} />}
         </div>

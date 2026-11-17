@@ -86,3 +86,18 @@ def test_main_app_serves_trends_before_the_screen(monkeypatch):
     paths = [getattr(r, "path", "") for r in main.app.routes]
     assert "/trends/{post_id}" in paths and paths.index("/trends") < len(paths)
     assert search_result()                                    # helpers 재사용 확인
+
+
+def test_pages_share_the_app_menu_and_link_back(env):
+    """2026-11-17 내비게이션: 앱과 같은 메뉴(대화 · 지금 뜨는 식품 · 트렌드 글), 지금 화면 표시, 모바일 아래 탭,
+    글 끝에 '이 주제 더 물어보기'(입력창에 채우기만)와 '지금 뜨는 식품' 링크."""
+    client, svc, _clock, _ = env
+    post = approved(svc)
+    for path in ("/trends", f"/trends/{post.id}"):
+        html = client.get(path).text
+        assert 'class=menu' in html and 'class=tabbar' in html
+        assert '<a href="/trends" aria-current=page>트렌드 글</a>' in html
+        assert '<a href="/#/hot">지금 뜨는 식품</a>' in html and '<a href="/#">대화</a>' in html
+    page = client.get(f"/trends/{post.id}").text
+    assert 'href="/?ask=%EC%9A%94%EC%A6%98%20%EB%8C%80%EB%B0%A9%EC%96%B4%20%EC%99%9C%20%EC%9C%A0%ED%96%89%ED%95%B4%3F"' in page
+    assert 'href="/#/hot">지금 뜨는 식품 전체 보기' in page and "<script" not in page

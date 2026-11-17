@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
+import { MobileTabBar, MOBILE_TAB_H, SiteNav } from "./SiteNav";
 import { fetchTrends, type TrendItem, type TrendView } from "../api/client";
 
 /**
@@ -71,14 +72,15 @@ export function TrendsPage() {
     <div className="min-h-screen bg-paper text-ink">
       <header className="sticky top-0 z-10 border-b border-stone-200/70 bg-paper/95 backdrop-blur">
         <div className="mx-auto flex h-[72px] max-w-6xl items-center justify-between px-5 sm:px-8">
-          <a href="#" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <a href="/#" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
             AI 식품 추천
           </a>
-          <a href="#" className="flex items-center gap-1 rounded-lg p-2 text-sm hover:bg-stone-100"><ArrowLeft size={16} />대화로</a>
+          <SiteNav current="hot" />
+          <span className="hidden w-[132px] sm:block" aria-hidden />
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[900px] px-4 pb-12 pt-8 sm:px-8">
+      <main className="mx-auto w-full max-w-[900px] px-4 pt-8 sm:px-8 sm:!pb-12" style={{ paddingBottom: MOBILE_TAB_H + 32 }}>
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight sm:text-3xl"><TrendingUp className="text-accent" />지금 뜨는 식품</h1>
         <p className="mt-3 text-[15px] leading-7 text-stone-600">
           네이버 데이터랩에서 검색량이 <b>평소보다 크게 늘어난</b> 식품이에요. 배수는 그 식품의 평소(약 한 달 전) 검색량과 비교한 값이고,
@@ -97,6 +99,7 @@ export function TrendsPage() {
           검색량은 네이버 데이터랩 검색어 트렌드(상대 지수)로 계산했어요. 검색이 늘어난 원인은 확인된 사실이 아니라 블로그 제목에서 찾은 단서와 AI 추정이에요.
         </p>
       </main>
+      <MobileTabBar current="hot" />
     </div>
   );
 }
