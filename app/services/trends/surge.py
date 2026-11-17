@@ -577,17 +577,15 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                connect_ok: bool = True) -> dict:
     """{'title', 'tags', 'body'} — data facts and title clues only; no prices, no copied posts; cause marked as estimate.
 
-    2026-11-17: coupang = {키워드: [{'title', 'url'}]} 를 주면 키워드마다 쿠팡 파트너스 상품 링크를 쇼핑커넥트 삽입 자리
-    **앞에** 넣고(쿠팡 우선), 맨 위 고지에 쿠팡 대가성 문구를 먼저 둔다.  가격은 넣지 않는다(게시 뒤 바뀌어도 고칠 수 없음).
-    쇼핑커넥트 삽입 자리·발급 안내는 그대로 — 쇼핑커넥트는 네이버 블로그 안에서만 쓴다.
-    variant='coupang' (2026-11-17): 쿠팡용 — 쇼핑커넥트 고지·삽입 자리·태그 없이 쿠팡 링크와 쿠팡 고지만
-    (쇼핑커넥트 승인 전에도 쓸 수 있는 판).
-    connect_ok=False: 네이버용에서도 쇼핑커넥트 고지 문구를 넣지 않는다 (.env SC_BLOG_APPROVED=1 이 아닐 때 — 관리자 경로가 정함)."""
+    2026-11-17 두 판 (사용자 결정):
+    * variant='naver' (네이버 블로그용): 데이터 본문 + 키워드마다 쇼핑커넥트 삽입 자리. 쿠팡 링크·쿠팡 고지는 넣지 않는다.
+      쇼핑커넥트 고지는 connect_ok(.env SC_BLOG_APPROVED=1, 관리자 경로가 정함)일 때만 맨 위에.
+    * variant='coupang' (쿠팡용): 키워드마다 쿠팡 파트너스 상품 링크(coupang = {키워드: [{'title', 'url'}]}, 최대 2개),
+      맨 위 쿠팡 대가성 문구 + 운영 문구, 글 끝에 쿠팡 고지 한 번 더. 쇼핑커넥트 문구·삽입 자리·태그 없음.
+    가격은 어느 판에도 넣지 않는다(게시 뒤 바뀌어도 고칠 수 없음)."""
     if variant not in VARIANTS:
         raise ValueError("알 수 없는 초안 종류예요.")
     only_coupang = variant == "coupang"
-    if only_coupang and coupang is None:
-        coupang = {}
     items = [it for it in report["items"] if it["status"] in ("surging", "new")]
     if keywords:
         items = [it for it in report["items"] if it["keyword"] in keywords]
@@ -596,11 +594,8 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         raise ValueError("리포트에 급상승 항목이 없어요.")
     names = [it["keyword"] for it in items]
     title = f"[트렌드 리포트] 요즘 검색이 갑자기 늘어난 식품 — {', '.join(names[:2])}{' 외' if len(names) > 2 else ''}"
-    if only_coupang or not connect_ok:
-        top = [COUPANG_DISCLOSURE, SITE_OPS] if (only_coupang or coupang is not None) else [SITE_OPS]
-    else:
-        top = [COUPANG_DISCLOSURE, DISCLOSURE] if coupang is not None else [DISCLOSURE]
-    lines = [*top, "",
+    top = [COUPANG_DISCLOSURE, SITE_OPS] if only_coupang else ([DISCLOSURE] if connect_ok else [])
+    lines = [*top, *([""] if top else []),
              f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
              "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
     for n, it in enumerate(items, 1):
@@ -627,7 +622,7 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
             lines.append(f"- 계기(추정): {it['cause']['cause']} — 블로그 제목을 바탕으로 한 추정이에요.")
         lines.append(f"- 함께 확인된 신호 {it['cross']['n']}/{it['cross']['of']}개 (블로그 글 증가 · 식품 순위 상승 · 구글 트렌드)")
         links = [x for x in (coupang or {}).get(it["keyword"]) or [] if x.get("url")][:COUPANG_PER_KEYWORD]
-        if links:
+        if only_coupang and links:
             lines.append("▶ 쿠팡에서 보기")
             lines += [f"- {x.get('title') or it['keyword']}: {x['url']}" for x in links]
         if not only_coupang:
@@ -636,7 +631,7 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
     lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
               "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요.",
               "가격·재고는 판매처에서 확인해 주세요."]
-    if coupang is not None:
+    if only_coupang:
         lines.append(COUPANG_DISCLOSURE)
     tags = names + ["트렌드리포트", "요즘뜨는식품", "쿠팡파트너스" if only_coupang else "쇼핑커넥트"]
     return {"title": title, "tags": tags[:10], "body": "\n".join(lines), "keywords": names, "variant": variant}

@@ -147,8 +147,8 @@ class _DraftIn(BaseModel):
 def trends_blog_draft(body: _DraftIn):
     """Text drafts for the applesodda blog (temporary save is done by a person / on request — never published here).
 
-    2026-11-17: 두 판을 함께 만든다 — 'naver'(네이버 블로그용: 쿠팡 링크 먼저 + 쇼핑커넥트 삽입 자리·고지)와
-    'coupang'(쿠팡용: 쿠팡 링크·고지만, 쇼핑커넥트 승인 전에도 쓸 수 있음).  위쪽 필드는 예전처럼 네이버 블로그용."""
+    2026-11-17: 두 판을 함께 만든다 — 'naver'(네이버 블로그용: 쇼핑커넥트 삽입 자리·고지, 쿠팡 없음)와
+    'coupang'(쿠팡용: 쿠팡 링크·고지만, 쇼핑커넥트 없음).  위쪽 필드는 예전처럼 네이버 블로그용."""
     from app.services.trends import surge
 
     report = surge.load(body.date)
@@ -157,7 +157,7 @@ def trends_blog_draft(body: _DraftIn):
     try:
         first = surge.blog_draft(report, body.keywords)
         coupang = _coupang_links(first["keywords"]) if body.with_coupang else None
-        drafts = {"naver": surge.blog_draft(report, body.keywords, coupang=coupang, variant="naver",
+        drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
                                             connect_ok=blog_connect_approved()),
                   "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang")}
     except ValueError as exc:
@@ -171,7 +171,7 @@ def trends_blog_draft(body: _DraftIn):
     stem = f"trend_{report['data_until']}_{'_'.join(keywords)[:40]}"
     for variant, d in drafts.items():
         memo = _operator_memo(needs) if variant == "naver" else ""
-        if missing:                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
+        if missing and variant == "coupang":                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
             line = "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing)
             head, _, last = memo.rpartition("\n")          # 마지막 줄 = 구분선
             memo = f"{head}\n{line}\n{last}" if memo else f"{MEMO_HEAD}\n{line}\n{MEMO_RULE}"

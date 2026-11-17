@@ -121,25 +121,6 @@ def test_customer_view_and_blog_draft_keep_it_honest(data_dirs):
     assert "쿠팡" not in body                                        # 쿠팡 링크를 주지 않으면 예전과 같다
 
 
-def test_blog_draft_puts_coupang_links_before_the_connect_slot(data_dirs):
-    ranks, google = data_dirs
-    report = S.run(datalab=S.DataLab("id", "s", http=fake_http([]), pause=0), blog_search=blog_posts,
-                   rank_dir=ranks, google_dir=google, end=END)
-    links = [{"title": f"휘태커스 다크 {i}", "url": f"https://link.coupang.com/a/w{i}"} for i in range(3)]
-    body = S.blog_draft(report, coupang={"휘태커스초콜릿": links})["body"]
-    lines = body.split("\n")
-    assert lines[0] == S.COUPANG_DISCLOSURE and lines[1] == S.DISCLOSURE      # 맨 위: 쿠팡 고지 먼저, 쇼핑커넥트 고지
-    coupang_at = lines.index("▶ 쿠팡에서 보기")
-    connect_at = lines.index("▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: 휘태커스초콜릿]")
-    assert coupang_at < connect_at                                            # 쿠팡 우선
-    assert lines[coupang_at + 1:connect_at] == ["- 휘태커스 다크 0: https://link.coupang.com/a/w0",
-                                                "- 휘태커스 다크 1: https://link.coupang.com/a/w1"]   # 키워드당 2개
-    assert lines[-1] == S.COUPANG_DISCLOSURE                                  # 끝에도 한 번 더
-    assert "원" not in "".join(lines[coupang_at:connect_at]).replace("https", "")   # 가격 없음
-    empty = S.blog_draft(report, coupang={"휘태커스초콜릿": []})["body"]
-    assert "▶ 쿠팡에서 보기" not in empty and empty.startswith(S.COUPANG_DISCLOSURE)
-
-
 def test_admin_trend_pages_need_the_token_and_public_view_is_short(admin_client, tmp_path, monkeypatch, data_dirs):
     ranks, google = data_dirs
     monkeypatch.setenv("TREND_SURGE_DIR", str(tmp_path / "out"))
@@ -207,18 +188,28 @@ def test_guest_view_is_read_only(admin_client, tmp_path, monkeypatch, data_dirs)
     assert admin_client.get("/admin/api/trends", headers={"X-Access-Token": "test-token"}).json()["guest"] is False
 
 
-def test_coupang_only_draft_and_connect_disclosure_switch(data_dirs):
-    """2026-11-17: 쿠팡용 판 — 쇼핑커넥트 고지·삽입 자리·태그 없음 / 승인 전(connect_ok=False)에는 네이버용에도 쇼핑커넥트 고지 없음."""
+def test_blog_drafts_naver_has_no_coupang_and_coupang_has_no_connect(data_dirs):
+    """2026-11-17 (사용자 결정): 네이버 블로그용 = 쇼핑커넥트만(쿠팡 링크·쿠팡 고지 없음),
+    쿠팡용 = 쿠팡 링크·고지만(쇼핑커넥트 문구·삽입 자리·태그 없음). 쇼핑커넥트 고지는 connect_ok 일 때만."""
     ranks, google = data_dirs
     report = S.run(datalab=S.DataLab("id", "s", http=fake_http([]), pause=0), blog_search=blog_posts,
                    rank_dir=ranks, google_dir=google, end=END)
-    links = {"휘태커스초콜릿": [{"title": "휘태커스 다크", "url": "https://link.coupang.com/a/w0"}]}
-    only = S.blog_draft(report, coupang=links, variant="coupang")
-    assert only["variant"] == "coupang" and only["body"].startswith(S.COUPANG_DISCLOSURE + "\n" + S.SITE_OPS)
-    assert "쇼핑 커넥트" not in only["body"] and "쇼핑커넥트" not in only["body"] and "쇼핑커넥트" not in only["tags"]
-    assert "- 휘태커스 다크: https://link.coupang.com/a/w0" in only["body"] and "쿠팡파트너스" in only["tags"]
-    held = S.blog_draft(report, coupang=links, variant="naver", connect_ok=False)["body"]
-    assert "쇼핑 커넥트 활동" not in held and held.startswith(S.COUPANG_DISCLOSURE)
+    links = {"휘태커스초콜릿": [{"title": f"휘태커스 다크 {i}", "url": f"https://link.coupang.com/a/w{i}"} for i in range(3)]}
+
+    naver = S.blog_draft(report, coupang=links, variant="naver", connect_ok=True)
+    assert naver["body"].startswith(S.DISCLOSURE + "\n\n")
+    assert "쿠팡" not in naver["body"] and "coupang" not in naver["body"]      # 쿠팡 링크를 줘도 넣지 않음
+    assert "▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: 휘태커스초콜릿]" in naver["body"]
+    held = S.blog_draft(report, variant="naver", connect_ok=False)["body"]
+    assert "쇼핑 커넥트 활동" not in held and "쿠팡" not in held and held.startswith("네이버 데이터랩")
     assert "▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: 휘태커스초콜릿]" in held      # 삽입 자리·발급 흐름은 그대로
-    approved = S.blog_draft(report, coupang=links, variant="naver", connect_ok=True)["body"]
-    assert approved.startswith(S.COUPANG_DISCLOSURE + "\n" + S.DISCLOSURE)
+
+    only = S.blog_draft(report, coupang=links, variant="coupang")
+    lines = only["body"].split("\n")
+    assert lines[:2] == [S.COUPANG_DISCLOSURE, S.SITE_OPS] and lines[-1] == S.COUPANG_DISCLOSURE
+    at = lines.index("▶ 쿠팡에서 보기")
+    assert lines[at + 1:at + 3] == ["- 휘태커스 다크 0: https://link.coupang.com/a/w0",
+                                    "- 휘태커스 다크 1: https://link.coupang.com/a/w1"]          # 키워드당 2개
+    assert "쇼핑 커넥트" not in only["body"] and "쇼핑커넥트" not in only["body"] and "쇼핑커넥트" not in only["tags"]
+    assert "쿠팡파트너스" in only["tags"] and only["variant"] == "coupang"
+    assert "▶ 쿠팡에서 보기" not in S.blog_draft(report, coupang={}, variant="coupang")["body"]

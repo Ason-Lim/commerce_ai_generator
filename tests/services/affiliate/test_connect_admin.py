@@ -78,9 +78,11 @@ def test_blog_draft_lists_products_that_need_links(client):
     memo, rest = text.split("─" * 30, 1)
     assert "[트렌드 리포트] 테스트" in rest and "본문" in rest and "본문" not in memo
     assert out["body"] == "본문"                                     # 블로그에 붙일 본문에는 메모가 없다
-    # 2026-11-17: 쿠팡 링크 — 찾은 개수, 못 찾은 키워드(주류 포함)는 운영 메모 안에만
+    # 2026-11-17: 쿠팡 링크 — 찾은 개수, 못 찾은 키워드(주류 포함)는 쿠팡용 초안의 운영 메모 안에만
     assert out["coupang"] == {"두쫀쿠": 1, "버터떡": 0, "하이볼": 0}
-    assert "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): 버터떡, 하이볼" in memo
+    assert "쿠팡" not in memo
+    coupang_memo = (root / out["drafts"]["coupang"]["file"]).read_text(encoding="utf-8").split("─" * 30, 1)[0]
+    assert "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): 버터떡, 하이볼" in coupang_memo
 
 
 def test_blog_draft_can_skip_coupang(client):
