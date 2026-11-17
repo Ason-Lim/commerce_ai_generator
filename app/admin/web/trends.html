@@ -261,10 +261,14 @@ function showDrafts(drafts,head){
    })
 }
 async function loadSaved(){const d=await api("/admin/api/trends/blog-drafts");const sel=$("#saved-drafts");
-  sel.innerHTML='<option value="">저장된 초안 불러오기…</option>'+d.items.map(x=>`<option value="${esc(x.file)}">${esc(x.modified)} · ${x.variant==="coupang"?"쿠팡용":"네이버 블로그용"} · ${esc(x.name.replace(/^trend_/,"").replace(/(_쿠팡용)?\.txt$/,""))}</option>`).join("")}
+  sel.innerHTML='<option value="">저장된 초안 불러오기…</option>'+d.items.map(x=>{const f=x.files.naver||x.files.coupang;
+    const kinds=[x.files.naver?"네이버 블로그용":null,x.files.coupang?"쿠팡용":null].filter(Boolean).join("+");
+    return `<option value="${esc(f)}">${esc(x.modified)} · ${esc(x.name)} (${kinds})</option>`}).join("")}
 $("#saved-open").onclick=async()=>{const f=$("#saved-drafts").value;if(!f)return;
-  try{const x=await api("/admin/api/trends/blog-draft/file?file="+encodeURIComponent(f));$("#dnote").textContent="불러옴: "+x.file;
-    showDrafts({[x.variant]:x},"")}catch(e){$("#dnote").textContent=e.message}};
+  try{const x=await api("/admin/api/trends/blog-draft/file?file="+encodeURIComponent(f));
+    $("#dnote").textContent="불러옴: "+Object.values(x.drafts).map(d=>d.file).join(" · ");
+    showDrafts(x.drafts,Object.keys(x.drafts).length<2?`<div class="note">짝이 되는 ${x.drafts.naver?"쿠팡용":"네이버 블로그용"} 파일이 없어요 (예전 초안). 초안 만들기를 다시 누르면 두 판이 함께 생겨요.</div>`:"")}
+  catch(e){$("#dnote").textContent=e.message}};
 $("#saved-reload").onclick=()=>loadSaved().catch(e=>$("#dnote").textContent=e.message);
 // ── 쇼핑커넥트 링크 입력 · 등록부 · 브랜드커넥트 상품 찾기 (2026-11-17) ──
 const LINK_FIELDS=[["keyword","키워드",110],["product_name","상품명",260],["store_name","스토어명",120],["price","판매가",90],["link","쇼핑커넥트 링크 (https://naver.me/…)",230],["memo","메모",110]];

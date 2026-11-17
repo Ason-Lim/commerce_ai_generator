@@ -239,32 +239,50 @@ def _parse_draft(text: str) -> dict:
 
 @router.get("/admin/api/trends/blog-drafts", dependencies=[api])
 def trends_blog_drafts():
-    """저장된 초안 목록 (2026-11-17) — 최근에 고친 것이 위. 서버를 다시 켜거나 새로고침해도 다시 열 수 있게."""
+    """저장된 초안 목록 (2026-11-17) — 같은 날짜·키워드로 만든 네이버 블로그용·쿠팡용을 한 줄(짝)로, 최근에 고친 짝이 위."""
     from app.services.trends import surge
 
     folder = surge.ROOT / "var" / "blog_drafts"
-    files = sorted(folder.glob("trend_*.txt"), key=lambda p: p.stat().st_mtime, reverse=True) if folder.is_dir() else []
-    out = []
-    for p in files[:60]:
+    pairs: dict[str, dict] = {}
+    for p in (folder.glob("trend_*.txt") if folder.is_dir() else []):
         rel = str(p.relative_to(surge.ROOT))
         if not _DRAFT_FILE.match(rel):
             continue
-        variant = "coupang" if p.name.endswith("_쿠팡용.txt") else "naver"
-        out.append({"file": rel, "name": p.name, "variant": variant,
-                    "modified": date.fromtimestamp(p.stat().st_mtime).isoformat()})
-    return {"items": out}
+        variant = "coupang" if p.name.endswith(COUPANG_SUFFIX) else "naver"
+        stem = rel[:-len(COUPANG_SUFFIX)] if variant == "coupang" else rel[:-len(".txt")]
+        pair = pairs.setdefault(stem, {"stem": stem, "name": Path(stem).name.removeprefix("trend_"), "files": {},
+                                       "mtime": 0.0})
+        pair["files"][variant] = rel
+        pair["mtime"] = max(pair["mtime"], p.stat().st_mtime)
+    items = sorted(pairs.values(), key=lambda x: x["mtime"], reverse=True)[:60]
+    for it in items:
+        it["modified"] = date.fromtimestamp(it.pop("mtime")).isoformat()
+    return {"items": items}
 
 
 @router.get("/admin/api/trends/blog-draft/file", dependencies=[api])
 def trends_blog_draft_file(file: str = Query(..., max_length=200)):
+    """초안 한 벌 열기 — 짝(네이버 블로그용·쿠팡용)이 있으면 둘 다 돌려준다 ('drafts')."""
     from app.services.trends import surge
 
     folder = (surge.ROOT / "var" / "blog_drafts").resolve()
-    path = (surge.ROOT / file).resolve()
-    if not _DRAFT_FILE.match(file) or path.parent != folder or not path.is_file():
+
+    def load(rel: str) -> dict | None:
+        path = (surge.ROOT / rel).resolve()
+        if not _DRAFT_FILE.match(rel) or path.parent != folder or not path.is_file():
+            return None
+        variant = "coupang" if path.name.endswith(COUPANG_SUFFIX) else "naver"
+        return {**_parse_draft(path.read_text(encoding="utf-8")), "file": rel, "variant": variant}
+
+    one = load(file)
+    if one is None:
         raise HTTPException(404, "초안 파일을 찾을 수 없어요.")
-    variant = "coupang" if path.name.endswith("_쿠팡용.txt") else "naver"
-    return {**_parse_draft(path.read_text(encoding="utf-8")), "file": file, "variant": variant}
+    stem = file[:-len(COUPANG_SUFFIX)] if one["variant"] == "coupang" else file[:-len(".txt")]
+    drafts = {"naver": load(stem + ".txt"), "coupang": load(stem + COUPANG_SUFFIX)}
+    return {**one, "drafts": {k: v for k, v in drafts.items() if v}}
+
+
+COUPANG_SUFFIX = "_쿠팡용.txt"
 
 
 def _draft_warnings(file: str, text: str) -> list[str]:
