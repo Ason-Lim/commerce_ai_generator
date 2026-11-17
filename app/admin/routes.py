@@ -139,6 +139,7 @@ def trends_run():
 class _DraftIn(BaseModel):
     date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
     keywords: list[str] | None = Field(None, max_length=5)
+    with_coupang: bool = True        # 2026-11-17: 키워드마다 쿠팡 파트너스 링크를 쇼핑커넥트 자리 앞에
 
 
 @router.post("/admin/api/trends/blog-draft", dependencies=[api])
@@ -151,6 +152,9 @@ def trends_blog_draft(body: _DraftIn):
         raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들어 주세요.")
     try:
         draft = surge.blog_draft(report, body.keywords)
+        coupang = _coupang_links(draft["keywords"]) if body.with_coupang else None
+        if coupang is not None:
+            draft = surge.blog_draft(report, body.keywords, coupang=coupang)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     # 2026-11-02: 초안 키워드 중 쇼핑커넥트 링크 발급이 필요한 것 — 파일 맨 위 운영 메모 + 화면 표시 (본문에는 넣지 않음)
@@ -159,9 +163,34 @@ def trends_blog_draft(body: _DraftIn):
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"trend_{report['data_until']}_{'_'.join(draft['keywords'])[:40]}.txt"
     memo = _operator_memo(needs)
+    missing = [k for k in draft["keywords"] if coupang is not None and not coupang.get(k)]
+    if missing:                      # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
+        line = "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing)
+        head, _, last = memo.rpartition("\n")          # 마지막 줄 = 구분선
+        memo = f"{head}\n{line}\n{last}" if memo else f"[운영 메모 — 블로그에 붙여 넣지 마세요]\n{line}\n{'─' * 30}"
     path.write_text((memo + "\n\n" if memo else "")
                     + f"{draft['title']}\n\n태그: {', '.join(draft['tags'])}\n\n{draft['body']}\n", encoding="utf-8")
-    return {**draft, "file": str(path.relative_to(surge.ROOT)), "link_needs": needs}
+    return {**draft, "file": str(path.relative_to(surge.ROOT)), "link_needs": needs,
+            "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in draft["keywords"]}}
+
+
+def _coupang_links(keywords: list[str]) -> dict[str, list[dict]]:
+    """키워드마다 쿠팡 파트너스 상품 링크 (공통 검색 picks 순서 그대로, 제휴 링크만, 주류 제외). 실패하면 빈 목록."""
+    from app.services.trend_posts import draft as post_draft, policy, wiring
+    from app.services.trends import surge
+
+    out: dict[str, list[dict]] = {}
+    for kw in keywords:
+        if policy.is_alcohol(kw):
+            out[kw] = []
+            continue
+        try:
+            found = post_draft.products_from_result(wiring.find_products(kw), keyword=kw)
+        except Exception:  # noqa: BLE001 — 쿠팡을 못 불러도 초안은 만든다
+            found = []
+        out[kw] = [{"title": p.title, "url": p.url} for p in found
+                   if p.link_type == "affiliate"][:surge.COUPANG_PER_KEYWORD]
+    return out
 
 
 def _link_needs(keywords: list[str]) -> dict | None:

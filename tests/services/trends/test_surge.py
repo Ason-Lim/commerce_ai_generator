@@ -118,6 +118,26 @@ def test_customer_view_and_blog_draft_keep_it_honest(data_dirs):
     assert body.startswith(S.DISCLOSURE) and "평소의 약 5.5배" in body and "388위 → 2026-10-30 165위" in body
     assert "원인은 확정된 사실이 아니라 추정" in body and "원" not in body.split("가격")[0][-3:]   # no prices
     assert "▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: 휘태커스초콜릿]" in body
+    assert "쿠팡" not in body                                        # 쿠팡 링크를 주지 않으면 예전과 같다
+
+
+def test_blog_draft_puts_coupang_links_before_the_connect_slot(data_dirs):
+    ranks, google = data_dirs
+    report = S.run(datalab=S.DataLab("id", "s", http=fake_http([]), pause=0), blog_search=blog_posts,
+                   rank_dir=ranks, google_dir=google, end=END)
+    links = [{"title": f"휘태커스 다크 {i}", "url": f"https://link.coupang.com/a/w{i}"} for i in range(3)]
+    body = S.blog_draft(report, coupang={"휘태커스초콜릿": links})["body"]
+    lines = body.split("\n")
+    assert lines[0] == S.COUPANG_DISCLOSURE and lines[1] == S.DISCLOSURE      # 맨 위: 쿠팡 고지 먼저, 쇼핑커넥트 고지
+    coupang_at = lines.index("▶ 쿠팡에서 보기")
+    connect_at = lines.index("▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: 휘태커스초콜릿]")
+    assert coupang_at < connect_at                                            # 쿠팡 우선
+    assert lines[coupang_at + 1:connect_at] == ["- 휘태커스 다크 0: https://link.coupang.com/a/w0",
+                                                "- 휘태커스 다크 1: https://link.coupang.com/a/w1"]   # 키워드당 2개
+    assert lines[-1] == S.COUPANG_DISCLOSURE                                  # 끝에도 한 번 더
+    assert "원" not in "".join(lines[coupang_at:connect_at]).replace("https", "")   # 가격 없음
+    empty = S.blog_draft(report, coupang={"휘태커스초콜릿": []})["body"]
+    assert "▶ 쿠팡에서 보기" not in empty and empty.startswith(S.COUPANG_DISCLOSURE)
 
 
 def test_admin_trend_pages_need_the_token_and_public_view_is_short(admin_client, tmp_path, monkeypatch, data_dirs):
