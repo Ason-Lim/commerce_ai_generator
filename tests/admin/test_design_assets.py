@@ -97,7 +97,11 @@ def test_benchmarked_layouts_are_chosen_by_shape():
     assert L(Element(kind="bullets", items=["x" * 300] * 4), "operations") == "checks"      # 너무 길면 목록
     assert L(Element(kind="table", headers=["단계", "기한", "내용"], rows=[["1", "2", "3"]] * 3), "schedule") == "steps"
     assert L(Element(kind="table", headers=["일정", "작업", "산출물"], rows=[["D+0", "착수", "명단"]] * 6), "mall") == "path"
-    assert L(Element(kind="table", headers=["일정", "작업", "산출물"], rows=[["D+0", "가" * 120, "나" * 300]] * 8), "mall") == "table"
+    long_tl = Element(kind="table", headers=["일정", "작업", "산출물"], rows=[["D+0", "가" * 120, "나" * 300]] * 8)
+    assert L(long_tl, "mall") == "path_long"                                    # 글이 많으면 표 대신 나눠서
+    parts = proposal_deck._split_tables([long_tl], "mall")
+    assert len(parts) >= 2 and all(L(x, "mall") == "path" and proposal_deck.block_h(x, "mall") <= proposal_deck.BODY_H for x in parts)
+    assert len({len(x.rows) for x in parts[:-1]}) == 1                          # 고르게 나눔
     assert proposal_deck.split_head("폐쇄몰 구축: 7일 안에 오픈") == ("폐쇄몰 구축", "7일 안에 오픈")
     assert proposal_deck.split_head("머리말 없는 문장") == ("", "머리말 없는 문장")
 

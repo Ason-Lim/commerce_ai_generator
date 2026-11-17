@@ -369,7 +369,7 @@ class _Pptx:
 
             return (F.pyramid if lay == "pyramid" else F.mirror)(e, None, sid)[1]
         if lay in ("steps", "trio"):
-            return 262
+            return D.steps_h(D.steps_parts(e, lay))
         if lay == "icards":
             rows = D.icard_rows([D.split_head(x) for x in e.items])
             return sum(rows) + 24 * (len(rows) - 1)
@@ -465,7 +465,9 @@ class _Pptx:
         n = len(e.rows)
         rows, per, rh = D.path_geom(e)
         C = (1136 - 92) / per
-        icons = self.icons([" ".join(r) for r in e.rows], sid)
+        icons = D.all_or_none(self.icons([" ".join(r) for r in e.rows], sid))
+        if e.tone.startswith("split:"):
+            icons = [None] * len(icons)
         for ri in range(rows):
             chunk = list(enumerate(e.rows))[ri * per:(ri + 1) * per]
             if not chunk:
@@ -475,33 +477,34 @@ class _Pptx:
             cxs = [(72 + 1136 - 46 - C * (j + .5)) if rev else (72 + 46 + C * (j + .5)) for j in range(len(chunk))]
             a = (72 + 46) if not rev and ri > 0 else (72 + 1136 - 46 if rev and ri > 0 else cxs[0])
             b = ((72 + 46) if rev else (72 + 1136 - 46)) if turn else cxs[-1]
-            self.box(s, min(a, b), yr + 57.5, abs(b - a), 3, pal.primary, rounded=False)
+            self.box(s, min(a, b), yr + 64.5, abs(b - a), 3, pal.primary, rounded=False)
             if turn:
                 if rev:
-                    self.arc(s, 72, yr + 59, 92, rh[ri], right=False)
+                    self.arc(s, 72, yr + 66, 92, rh[ri], right=False)
                 else:
-                    self.arc(s, 72 + 1136 - 92, yr + 59, 92, rh[ri], right=True)
+                    self.arc(s, 72 + 1136 - 92, yr + 66, 92, rh[ri], right=True)
+            w = C - 16
             for (j, (gi, r)), cx in zip(enumerate(chunk), cxs):
-                self.box(s, cx - C / 2 + 12, yr + 2, C - 24, 22, pal.surface, pal.line, radius=0.5)
-                self.text(s, cx - C / 2 + 12, yr + 2, C - 24, 22, r[0], 9.5, True, pal.primary, align="center", anchor="middle")
-                self.oval(s, cx - 29, yr + 30, 58, pal.bg, pal.primary)
-                if not self.pic(s, icons[gi], cx - 20, yr + 39, 40, 40):
-                    self.text(s, cx - 29, yr + 30, 58, 58, f"{gi + 1:02d}", 12, True, pal.primary, align="center", anchor="middle")
-                cb = max(6, int((C - 12) / 13.5))
-                hb = math.ceil(len(r[1] if len(r) > 1 else "") / cb) * 16
-                self.text(s, cx - C / 2 + 6, yr + 94, C - 12, hb, r[1] if len(r) > 1 else "", 10, True, align="center")
+                self.box(s, cx - C / 2 + 14, yr + 2, C - 28, 26, pal.surface, pal.line, radius=0.5)
+                self.text(s, cx - C / 2 + 14, yr + 2, C - 28, 26, r[0], 11, True, pal.primary, align="center", anchor="middle")
+                self.oval(s, cx - 32, yr + 34, 64, pal.bg, pal.primary)
+                if not self.pic(s, icons[gi], cx - 22, yr + 44, 44, 44):
+                    self.text(s, cx - 32, yr + 34, 64, 64, f"{D.num_start(e) + gi + 1:02d}", 14, True, pal.primary, align="center", anchor="middle")
+                hb = D.text_h(r[1] if len(r) > 1 else "", w, D.PATH_TB, True, 1.15)
+                self.text(s, cx - w / 2, yr + 112, w, hb + 4, r[1] if len(r) > 1 else "", D.PATH_TB, True, align="center")
                 if len(r) > 2:
-                    self.text(s, cx - C / 2 + 6, yr + 98 + hb, C - 12, rh[ri] - 104 - hb, r[2], 8.5, False, pal.muted, align="center")
+                    self.text(s, cx - w / 2, yr + 118 + hb, w, rh[ri] - 124 - hb, r[2], D.PATH_TS, False, pal.ink, align="center", spacing=1.2)
         return y + sum(rh) - 8
 
     def steps(self, s, parts: list[tuple[str, str, str]], sid: str, y: float, arrows: bool) -> float:
         pal, k = self.pal, self.k
         w = (1136 - 80) / 3
-        icons = self.icons([" ".join(x) for x in parts], sid)
+        icons = D.all_or_none(self.icons([" ".join(x) for x in parts], sid))
+        total = D.steps_h(parts)
         for i, (lab, b, c) in enumerate(parts):
             cx = 72 + i * (w + 40) + w / 2
             if lab:
-                self.text(s, cx - w / 2, y, w, 20, lab, 10.5, True, pal.primary, align="center")
+                self.text(s, cx - w / 2, y, w, 20, lab, 11.5, True, pal.primary, align="center")
             self.oval(s, cx - 64, y + 26, 128, pal.surface, pal.primary)
             if not self.pic(s, icons[i], cx - 42, y + 48, 84, 84):
                 self.text(s, cx - 64, y + 26, 128, 128, str(i + 1), 30, True, pal.primary, align="center", anchor="middle")
@@ -515,10 +518,11 @@ class _Pptx:
                 tri.line.fill.background()
             yy = y + 174
             if b:
-                self.text(s, cx - w / 2, yy, w, 24, b, 12.5 * k, True, align="center")
-                yy += 26
-            self.text(s, cx - w / 2 + 8, yy, w - 16, 262 - (yy - y), c, 10 * k, False, pal.muted, align="center")
-        return y + 262
+                bh = D.text_h(b, w, 13.5, True, 1.15)
+                self.text(s, cx - w / 2, yy, w, bh + 4, b, 13.5, True, align="center")
+                yy += bh + 6
+            self.text(s, cx - w / 2 + 8, yy, w - 16, total - (yy - y), c, 12, False, pal.ink, align="center", spacing=1.25)
+        return y + total
 
     def icards(self, s, items: list[str], sid: str, y: float) -> float:
         pal = self.pal
@@ -614,10 +618,8 @@ class _Pptx:
             from app.admin.b2b import proposal_figures as F
 
             return self.fig(s, *(F.pyramid if lay == "pyramid" else F.mirror)(e, self.art, sid), 72, y)
-        if lay == "steps":
-            return self.steps(s, [(r[0], r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in e.rows], sid, y, True)
-        if lay == "trio":
-            return self.steps(s, [("",) + D.split_head(x) for x in e.items], sid, y, False)
+        if lay in ("steps", "trio"):
+            return self.steps(s, D.steps_parts(e, lay), sid, y, lay == "steps")
         if lay == "icards":
             return self.icards(s, e.items, sid, y)
         if lay == "para":

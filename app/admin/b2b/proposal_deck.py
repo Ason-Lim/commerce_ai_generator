@@ -41,14 +41,17 @@ class Slide:
 
 # ── 구성 ──────────────────────────────────────────────────────
 def layout_of(e: Element, sid: str = "") -> str:
+    if e.kind == "table" and e.tone.startswith("split:"):     # 긴 타임라인을 나눈 조각 — 모양 그대로
+        return e.tone.split(":")[1]
     if e.kind == "table":
         h = e.headers
         n = len(e.rows)
         if h and h[0] == "일정":
-            return "timeline" if n <= 4 else ("path" if path_fits(e) else "table")
+            return "timeline" if n <= 4 else ("path" if path_fits(e) else "path_long")
         if h and h[0] == "단계":
             # 2026-11-14 자료 벤치마킹: 3단계는 원형 단계(화살표), 5개 이상은 굽이치는 타임라인
-            return "steps" if n == 3 else ("path" if 5 <= n <= 10 and path_fits(e) else ("flow" if n <= 4 else "table"))
+            return "steps" if n == 3 else ("path" if 5 <= n <= 10 and path_fits(e) else
+                                           ("path_long" if n >= 5 else "flow"))
         if h == ["리스크", "대응"]:
             return "cards"
         if h[:2] == ["상품", "옵션·구성"]:
@@ -68,6 +71,9 @@ def layout_of(e: Element, sid: str = "") -> str:
         if sid in ("summary", "strategy"):
             return "ncards"
         n, longest = len(e.items), max((len(x) for x in e.items), default=0)
+        headed = sum(1 for x in e.items if split_head(x)[0])
+        if n in (2, 5, 6) and headed >= n * 0.8 and longest <= 170:
+            return "ncards"            # '머리말: 설명' 목록은 번호 카드가 읽기 쉽다 (2026-11-17)
         if n == 4 and longest <= 170:
             return "icards"            # 2×2 아이콘 카드 (자료의 '4단 카드')
         if n == 3 and longest <= 110:
@@ -248,6 +254,22 @@ def goods_geom(e: Element) -> dict:
             "h": sum(rows) + gap * (len(rows) - 1)}
 
 
+def steps_parts(e: Element, lay: str) -> list[tuple[str, str, str]]:
+    if lay == "steps":
+        return [(r[0], r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in e.rows]
+    return [("",) + split_head(x) for x in e.items]
+
+
+def steps_h(parts: list[tuple[str, str, str]]) -> float:
+    """원형 3단계·원형 아이콘 3개 높이 — 머리말 13.5pt + 설명 12pt 를 재서."""
+    w = (1136 - 80) / 3
+    need = 0.0
+    for _, b, c in parts:
+        h = (text_h(b, w, 13.5, True, 1.15) + 6 if b else 0) + text_h(c, w - 16, 12, False, 1.25)
+        need = max(need, h)
+    return max(262.0, 174 + need + 12)
+
+
 def icard_rows(parts: list[tuple[str, str]]) -> list[float]:
     """2×2 아이콘 카드 줄 높이 — 글 영역 폭 383px (PPTX), 머리말 12pt 굵게 + 본문 10pt."""
     def need(hb: tuple[str, str]) -> float:
@@ -269,28 +291,35 @@ def block_h(e: Element, sid: str) -> float | None:
         return sum(checks_h(e.items))
     if lay == "goods":
         return goods_geom(e)["h"]
+    if lay in ("steps", "trio"):
+        return steps_h(steps_parts(e, lay))
+    if lay == "path":
+        return sum(path_geom(e)[2])
     return None
 
 
 def _path_rows(n: int) -> int:
+    """4개 이하 한 줄, 5~6개 두 줄(줄당 3개 — 칸이 넓어 읽기 쉽다), 7~8개 두 줄(줄당 4개), 그 이상 세 줄."""
     return 1 if n <= 4 else (2 if n <= 8 else 3)
 
 
+PATH_TB, PATH_TS = 12.5, 11.0       # 타임라인 굵은 글·설명 글 크기 (2026-11-17: 10/8.5 → 키움)
+
+
 def path_geom(e: Element) -> tuple[int, int, list[float]]:
-    """굽이치는 타임라인의 (줄 수, 줄당 개수, 줄마다 높이 px) — 글 길이에 맞춰 줄 높이를 늘린다 (1280×720 기준)."""
+    """굽이치는 타임라인의 (줄 수, 줄당 개수, 줄마다 높이 px) — 한 줄 3~4개(넓게), 글 길이를 재서 줄 높이를 정한다."""
     n = len(e.rows)
     rows = _path_rows(n)
     per = math.ceil(n / rows)
-    c = (1136 - 92) / per - 12
-    cb, cs = max(6, int(c / 13.5)), max(6, int(c / 11.5))
+    w = (1136 - 92) / per - 16
     rh = []
     for ri in range(rows):
         chunk = e.rows[ri * per:(ri + 1) * per]
         if not chunk:
             break
-        t = max(math.ceil(len(r[1] if len(r) > 1 else "") / cb) * 16
-                + (math.ceil(len(r[2]) / cs) * 14 + 4 if len(r) > 2 and r[2] else 0) for r in chunk)
-        rh.append(float(min(270, max(150, 114 + t))))     # 아래 줄 이름표와 닿지 않게 여유 10px
+        t = max(text_h(r[1] if len(r) > 1 else "", w, PATH_TB, True, 1.15)
+                + (text_h(r[2], w, PATH_TS, False, 1.2) + 6 if len(r) > 2 and r[2] else 0) for r in chunk)
+        rh.append(float(max(170, 112 + t + 22)))
     return rows, per, rh
 
 
@@ -338,7 +367,17 @@ def _split_tables(els: list[Element], sid: str) -> list[Element]:
     out = []
     els = [c for e in els for c in _split_items(e, sid)]
     for e in els:
-        if e.kind == "table" and layout_of(e, sid) == "goods" and goods_geom(e)["h"] > BODY_H - 40:
+        if e.kind == "table" and layout_of(e, sid) == "path_long":
+            # 2026-11-17: 글이 많은 타임라인은 표로 바꾸지 않고, 한 장에 들어가는 만큼씩 나눠 이어 그린다
+            def fits(rows):
+                return sum(path_geom(e.model_copy(update={"rows": rows}))[2]) <= BODY_H
+            n, c = len(e.rows), 2
+            while c < n and not all(fits(e.rows[i:i + math.ceil(n / c)]) for i in range(0, n, math.ceil(n / c))):
+                c += 1                                    # 고르게 나눠(7개 → 4+3) 장마다 같은 모양
+            per = math.ceil(n / c)
+            for i in range(0, n, per):
+                out.append(e.model_copy(update={"rows": e.rows[i:i + per], "tone": f"split:path:{i}"}))
+        elif e.kind == "table" and layout_of(e, sid) == "goods" and goods_geom(e)["h"] > BODY_H - 40:
             per = goods_geom(e)["cols"]
             for i in range(0, len(e.rows), per):
                 out.append(e.model_copy(update={"rows": e.rows[i:i + per]}))
@@ -424,11 +463,18 @@ def _icons(texts: list[str], sid: str) -> list[dict | None]:
         return [None] * len(texts)
 
 
+def all_or_none(icons: list) -> list:
+    """한 묶음에서 아이콘이 하나라도 없으면 모두 번호로 (섞여 있으면 어색하다)."""
+    return icons if icons and all(icons) else [None] * len(icons)
+
+
 def _path(e: Element, sid: str, i: int) -> str:
     """굽이치는 타임라인 (자료 ti24516001e 벤치마킹) — 한 줄 4개까지, 줄 끝에서 반원으로 꺾어 반대 방향으로."""
     n = len(e.rows)
     rows, per, rh = path_geom(e)
-    icons = _icons([" ".join(r) for r in e.rows], sid)
+    icons = all_or_none(_icons([" ".join(r) for r in e.rows], sid))
+    if e.tone.startswith("split:"):
+        icons = [None] * len(icons)                    # 여러 장으로 나눈 타임라인은 번호로 통일
     C = f"((100% - 92px) / {per})"
     out = []
     for ri in range(rows):
@@ -441,7 +487,7 @@ def _path(e: Element, sid: str, i: int) -> str:
         left, right = (end, start) if rev else (start, end)
         lis = "".join(
             f'<li class="rv" style="--d:{i + k}"><span class="pc">{_m(r[0])}</span>'
-            f'<span class="pn">{_ico(icons[k], "pi", 160) or f"<b>{k + 1:02d}</b>"}</span>'
+            f'<span class="pn">{_ico(icons[k], "pi", 160) or f"<b>{num_start(e) + k + 1:02d}</b>"}</span>'
             f'<b>{_m(r[1]) if len(r) > 1 else ""}</b><small>{_m(r[2]) if len(r) > 2 else ""}</small></li>' for k, r in chunk)
         arc = f'<i class="arc {"l" if rev else "r"}"></i>' if turn else ""
         out.append(f'<ol class="prow{" rev" if rev else ""}" style="--rh:{rh[ri]:.0f}px"><i class="prail" style="left:{left};right:{right}"></i>{arc}{lis}</ol>')
@@ -553,7 +599,7 @@ def _el(e: Element, sid: str, i: int) -> str:
             parts = [(r[0], r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in e.rows]
         else:
             parts = [("",) + split_head(x) for x in e.items]
-        icons = _icons([" ".join(x) for x in parts], sid)
+        icons = all_or_none(_icons([" ".join(x) for x in parts], sid))
         return (f'<div class="steps{" arrows" if lay == "steps" else ""}">' + "".join(
             f'<div class="st rv" style="--d:{i + k}">{f"<span class=sl>{_m(a)}</span>" if a else ""}'
             f'<span class="sc">{_ico(icons[k], "si", 220) or f"<b>{k + 1}</b>"}<em>{k + 1:02d}</em></span>'
@@ -870,16 +916,16 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .path{display:flex;flex-direction:column}
 .prow{position:relative;list-style:none;display:grid;grid-template-columns:repeat(var(--per),1fr);padding:0 46px 18px;min-height:var(--rh,158px);margin:0;box-sizing:border-box}
 .prow.rev{direction:rtl}.prow.rev li{direction:ltr}
-.prail{position:absolute;top:58px;height:3px;background:var(--p);border-radius:2px}
-.arc{position:absolute;top:58px;width:46px;height:100%;border:3px solid var(--p);box-sizing:border-box}
+.prail{position:absolute;top:66px;height:3px;background:var(--p);border-radius:2px}
+.arc{position:absolute;top:66px;width:46px;height:100%;border:3px solid var(--p);box-sizing:border-box}
 .arc.r{right:0;border-left:none;border-radius:0 80px 80px 0}.arc.l{left:0;border-right:none;border-radius:80px 0 0 80px}
-.prow li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:0 6px}
-.pc{font-size:12px;font-weight:800;color:var(--p);background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:2px 10px;height:22px;line-height:16px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.pn{width:58px;height:58px;border-radius:50%;background:var(--bg);border:3px solid var(--p);display:grid;place-items:center;z-index:1;margin-top:2px;transition:transform .25s}
-.pn b{color:var(--p);font-weight:800}.pi{width:40px;height:40px;object-fit:contain}
+.prow li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:0 8px}
+.pc{font-size:14px;font-weight:800;color:var(--p);background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:3px 14px;height:28px;line-height:20px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pn{width:64px;height:64px;border-radius:50%;background:var(--bg);border:3px solid var(--p);display:grid;place-items:center;z-index:1;margin-top:2px;transition:transform .25s}
+.pn b{color:var(--p);font-weight:800;font-size:18px}.pi{width:44px;height:44px;object-fit:contain}
 .prow li:hover .pn{transform:scale(1.1)}
-.prow li>b{font-size:.86em;line-height:1.35}
-.prow li small{font-size:.76em;color:var(--mu);line-height:1.35}
+.prow li>b{font-size:16px;line-height:1.4;margin-top:4px}
+.prow li small{font-size:14px;color:var(--ink);opacity:.78;line-height:1.45}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;align-items:start}
 .st{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
 .sl{font-size:.82em;font-weight:800;color:var(--p);letter-spacing:.02em;min-height:1.4em}
@@ -887,7 +933,7 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .st:hover .sc{transform:translateY(-4px)}
 .sc>b{font-size:40px;color:var(--p);font-weight:800}.si{width:84px;height:84px;object-fit:contain}
 .sc em,.ic em{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:800;color:var(--onp);background:var(--p);border-radius:999px;padding:2px 10px}
-.st>b{font-size:1.02em;margin-top:6px}.st p{font-size:.86em;color:var(--mu);line-height:1.5}
+.st>b{font-size:1.1em;margin-top:8px}.st p{font-size:1em;color:var(--ink);line-height:1.55}
 .arrows .st:not(:last-child)::after{content:"";position:absolute;right:-30px;top:calc(1.4em + 72px);border-left:16px solid var(--p);border-top:10px solid transparent;border-bottom:10px solid transparent}
 .icards{display:grid;grid-template-columns:1fr 1fr;gap:22px 30px}
 .icard{display:flex;align-items:center;min-width:0}
