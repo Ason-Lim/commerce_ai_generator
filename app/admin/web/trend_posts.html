@@ -130,7 +130,8 @@ function open_(p){S.cur=p;$("detail").hidden=false;$("x-title").textContent=p.ti
  else iss.append(el("p",{class:"note"},"정책 검사 통과 (자동 검사는 권리·약관 준수를 최종 인증하지 않아요 — 내용을 직접 확인해 주세요)"));
  const edit=p.status==="draft"||p.status==="rejected";for(const id of["e-title","e-summary","e-why","e-note"])$(id).disabled=!edit;
  $("e-title").value=p.title;$("e-summary").value=p.summary;$("e-why").value=p.why.join("\n");$("e-note").value=p.price_note;
- const pr=$("e-products");pr.replaceChildren();p.products.forEach((x,i)=>pr.append(el("label",{style:"display:block;margin:3px 0"},el("input",Object.assign({type:"checkbox","data-i":i,checked:""},edit?{}:{disabled:""})),
+ const pr=$("e-products");pr.replaceChildren();p.products.forEach((x,i)=>pr.append(el("label",{style:"display:flex;gap:8px;align-items:center;margin:4px 0"},el("input",Object.assign({type:"checkbox","data-i":i,checked:""},edit?{}:{disabled:""})),
+   x.image_url?el("img",{src:x.image_url,alt:"",width:"40",height:"40",referrerpolicy:"no-referrer",style:"border-radius:6px;object-fit:cover"}):el("span",{class:"note",style:"width:40px"},"사진 없음"),
    " "+x.title+" · "+(x.price_krw!=null?x.price_krw.toLocaleString()+"원 ("+(x.price_checked_at||"확인 시각 없음").replace("T"," ").slice(0,16)+" 확인)":"가격 없음")+(x.link_type==="affiliate"?" · 제휴":""))));
  if(!p.products.length)pr.append(el("span",{class:"note"},"상품 없음"));
  $("e-recipe").textContent=p.recipe?(p.recipe.name+" — 출처 "+p.recipe.source_label+" · 재료 "+p.recipe.ingredients.join(", ")):"붙인 공공 레시피 없음 (이름이 주제로 끝나는 공공 레시피만 붙여요)";

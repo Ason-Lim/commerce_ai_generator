@@ -26,6 +26,8 @@ h1{font-size:24px;line-height:1.35;margin:6px 0 8px}h2{font-size:18px;margin:28p
 .ad{background:#fff4d6;border:1px solid #e8c766;border-radius:10px;padding:10px 12px;font-size:15px;font-weight:600;margin:0 0 14px}
 .meta{color:#5d635c;font-size:13px}.card{background:#fff;border:1px solid #e3e5df;border-radius:12px;padding:12px 14px;margin:8px 0}
 .price{font-size:14px;color:#3b403a}.muted{color:#6b706a;font-size:13px}ul{padding-left:20px}
+.pcard{display:flex;gap:14px;align-items:flex-start}.thumb{width:84px;height:84px;flex:0 0 84px;border-radius:10px;object-fit:cover;background:#eef0ea;border:1px solid #e3e5df}
+.pcard .info{min-width:0;flex:1}
 .go{display:inline-block;margin-top:6px;padding:7px 12px;border-radius:8px;background:#1d211d;color:#fff;text-decoration:none;font-size:14px}
 .list a.t{font-size:17px;font-weight:700;text-decoration:none;color:#1d211d}
 .top{position:sticky;top:0;z-index:5;background:rgba(246,247,244,.95);border-bottom:1px solid #e3e5df}
@@ -102,10 +104,12 @@ def post_page(post: Post, now: datetime | None = None) -> str:
         parts.append("<h2>재료·상품</h2>")
         for n, p in enumerate(post.products, start=1):
             badge = " · 로켓배송" if p.rocket else ""
-            parts.append(f'<div class=card><div>{e(p.title)}</div>'
+            img = (f'<img class=thumb src="{e(p.image_url)}" alt="" loading=lazy referrerpolicy=no-referrer '
+                   f'width=84 height=84>' if p.image_url and policy.coupang_image(p.image_url) else "")
+            parts.append(f'<div class="card pcard">{img}<div class=info><div>{e(p.title)}</div>'
                          f'<div class=price>{e(p.platform)}{badge} · {e(price_line(p, now))}</div>'
                          f'<a class=go href="{post_url(post)}/go/{n}" rel="sponsored nofollow noopener" '
-                         f'target=_blank>판매처에서 보기</a></div>')
+                         f'target=_blank>판매처에서 보기</a></div></div>')
         parts.append(f"<h2>가격 참고</h2><p class=muted>{e(post.price_note)}</p>")
     if post.sources:
         items = "".join(

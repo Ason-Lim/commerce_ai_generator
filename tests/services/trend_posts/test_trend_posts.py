@@ -247,3 +247,23 @@ def test_store_round_trip_and_broken_file_is_skipped(tmp_path):
     assert [p.id for p in store.all()] == [post.id]
     raw = json.loads(store._path(post.id).read_text(encoding="utf-8"))
     assert raw["id"] == "2026-11-15-대방어"
+
+
+
+def test_product_thumbnails_only_from_coupang(tmp_path):
+    """2026-11-17: 상품 칸에 쿠팡 상품 사진 — 쿠팡 https 사진 주소만, 다른 주소는 넣지 않고 검사에서도 막는다."""
+    from .helpers import pick
+
+    result = {"items": [pick("대방어회 500g", "https://link.coupang.com/a/aaa"),
+                        pick("필렛", "https://link.coupang.com/a/bbb", image="https://evil.example/x.jpg"),
+                        pick("뱃살", "https://link.coupang.com/a/ccc", image="http://thumbnail6.coupangcdn.com/x.jpg")]}
+    svc = service(tmp_path)
+    post, _ = svc.create_from_surge(report(), "대방어", find_products=lambda k: result)
+    assert [p.image_url for p in post.products] == ["https://ads-partners.coupang.com/image1/thumb.jpg", None, None]
+    svc.submit(post.id)
+    html = render.post_page(svc.approve(post.id), T0)
+    assert html.count("<img class=thumb") == 1 and 'referrerpolicy=no-referrer' in html and "evil.example" not in html
+    bad = post.model_copy(update={"products": [post.products[0].model_copy(update={"image_url": "https://evil.example/x.jpg"})]})
+    assert "link" in codes(policy.check(bad, now=T0))
+    assert policy.coupang_image("https://thumbnail10.coupangcdn.com/a.jpg")
+    assert not policy.coupang_image("https://coupangcdn.com.evil.example/a.jpg")

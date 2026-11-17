@@ -28,6 +28,7 @@ class PostProduct(_M):
     price_checked_at: Optional[str] = None      # ISO 시각 — 없으면 가격을 그리지 않는다
     rocket: Optional[bool] = None
     keyword: Optional[str] = None               # 어떤 재료·검색어로 찾은 상품인지
+    image_url: Optional[str] = None             # 2026-11-17: 쿠팡 상품 사진 (쿠팡 https 주소만, 없으면 사진 없이)
 
 
 class PostSource(_M):
