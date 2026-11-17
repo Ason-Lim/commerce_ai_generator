@@ -298,6 +298,76 @@ def connect_request_status(req_id: int, body: _ConnectStatusIn):
     return {"ok": True}
 
 
+# ── 쇼핑커넥트 링크 등록부 (2026-11-17) — 관리자 화면에서 입력·삭제하면 naver_connect_links.csv 에 바로 쓴다 ──
+class _LinkIn(BaseModel):
+    keyword: str = Field("", max_length=60)
+    product_name: str = Field("", max_length=200)
+    store_name: str = Field("", max_length=80)
+    price: str | int | None = None
+    commission_rate: str | float | None = None
+    link: str = Field("", max_length=300)
+    memo: str = Field("", max_length=200)
+
+
+class _LinksIn(BaseModel):
+    rows: list[_LinkIn] = Field(..., min_length=1, max_length=30)
+    request_id: int | None = None          # 발급 요청 줄에서 열었으면 저장 뒤 '발급 완료'로 정리
+
+
+@router.get("/admin/api/connect/links", dependencies=[api])
+def connect_links_list():
+    from app.services.affiliate import connect_registry as reg
+
+    rows = reg.rows()
+    return {"items": list(reversed(rows)), "count": len(rows), "file": str(reg.path().name)}
+
+
+@router.post("/admin/api/connect/links", dependencies=[api])
+def connect_links_add(body: _LinksIn):
+    from app.services.affiliate import connect_registry as reg
+    from app.services.affiliate import naver_shopping_connect as sc
+
+    res = reg.add([r.model_dump() for r in body.rows])
+    issued = False
+    if res["added"]:
+        if body.request_id is not None:
+            issued = bool(sc.with_db(sc.set_request_status, body.request_id, "issued"))
+        # 등록된 키워드의 열린 발급 요청도 정리 (CSV 가져오기와 같은 방식)
+        for kw in {r["키워드"] for r in res["added"] if r["키워드"]}:
+            sc.with_db(_close_open_request, kw)
+    return {"added": len(res["added"]), "rejected": res["rejected"], "request_issued": issued}
+
+
+def _close_open_request(conn, keyword: str) -> None:
+    from app.services.affiliate import naver_shopping_connect as sc
+
+    conn.execute("UPDATE sc_link_requests SET status='issued', updated_at=? WHERE keyword=? AND status='open'",
+                 (sc._now(), keyword))
+    conn.commit()
+
+
+class _LinkDeleteIn(BaseModel):
+    link: str = Field(..., min_length=8, max_length=300)
+
+
+@router.post("/admin/api/connect/links/delete", dependencies=[api])
+def connect_links_delete(body: _LinkDeleteIn):
+    from app.services.affiliate import connect_registry as reg
+
+    if not reg.delete(body.link):
+        raise HTTPException(404, "등록부에 없는 링크예요.")
+    return {"ok": True}
+
+
+@router.get("/admin/api/brandconnect/find", dependencies=[api])
+def brandconnect_find(keyword: str = Query(..., min_length=1, max_length=40), n: int = Query(5, ge=1, le=10),
+                      exclude_health: bool = True):
+    """브랜드커넥트 상품 후보 — 키워드 관련성 → 수수료율 순 (판매량 자료 없음, 인기 순위 아님)."""
+    from app.services.affiliate import brandconnect_finder as bf
+
+    return bf.find(keyword, n, exclude_health=exclude_health)
+
+
 @router.post("/admin/api/connect/queue-trends", dependencies=[api])
 def connect_requests_from_trends(body: _DraftIn):
     """선택한 날짜(없으면 최신) 급상승 리포트에서 등록 링크가 없는 식품을 대기열에 올린다."""
