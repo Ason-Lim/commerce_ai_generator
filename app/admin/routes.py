@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import re
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -144,34 +145,96 @@ class _DraftIn(BaseModel):
 
 @router.post("/admin/api/trends/blog-draft", dependencies=[api])
 def trends_blog_draft(body: _DraftIn):
-    """Text draft for the applesodda blog (temporary save is done by a person / on request — never published here)."""
+    """Text drafts for the applesodda blog (temporary save is done by a person / on request — never published here).
+
+    2026-11-17: 두 판을 함께 만든다 — 'naver'(네이버 블로그용: 쿠팡 링크 먼저 + 쇼핑커넥트 삽입 자리·고지)와
+    'coupang'(쿠팡용: 쿠팡 링크·고지만, 쇼핑커넥트 승인 전에도 쓸 수 있음).  위쪽 필드는 예전처럼 네이버 블로그용."""
     from app.services.trends import surge
 
     report = surge.load(body.date)
     if not report:
         raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들어 주세요.")
     try:
-        draft = surge.blog_draft(report, body.keywords)
-        coupang = _coupang_links(draft["keywords"]) if body.with_coupang else None
-        if coupang is not None:
-            draft = surge.blog_draft(report, body.keywords, coupang=coupang)
+        first = surge.blog_draft(report, body.keywords)
+        coupang = _coupang_links(first["keywords"]) if body.with_coupang else None
+        drafts = {"naver": surge.blog_draft(report, body.keywords, coupang=coupang, variant="naver",
+                                            connect_ok=blog_connect_approved()),
+                  "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang")}
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
+    keywords = drafts["naver"]["keywords"]
     # 2026-11-02: 초안 키워드 중 쇼핑커넥트 링크 발급이 필요한 것 — 파일 맨 위 운영 메모 + 화면 표시 (본문에는 넣지 않음)
-    needs = _link_needs(draft["keywords"])
+    needs = _link_needs(keywords)
+    missing = [k for k in keywords if coupang is not None and not coupang.get(k)]
     folder = surge.ROOT / "var" / "blog_drafts"
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"trend_{report['data_until']}_{'_'.join(draft['keywords'])[:40]}.txt"
-    memo = _operator_memo(needs)
-    missing = [k for k in draft["keywords"] if coupang is not None and not coupang.get(k)]
-    if missing:                      # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
-        line = "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing)
-        head, _, last = memo.rpartition("\n")          # 마지막 줄 = 구분선
-        memo = f"{head}\n{line}\n{last}" if memo else f"[운영 메모 — 블로그에 붙여 넣지 마세요]\n{line}\n{'─' * 30}"
-    path.write_text((memo + "\n\n" if memo else "")
-                    + f"{draft['title']}\n\n태그: {', '.join(draft['tags'])}\n\n{draft['body']}\n", encoding="utf-8")
-    return {**draft, "file": str(path.relative_to(surge.ROOT)), "link_needs": needs,
-            "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in draft["keywords"]}}
+    stem = f"trend_{report['data_until']}_{'_'.join(keywords)[:40]}"
+    for variant, d in drafts.items():
+        memo = _operator_memo(needs) if variant == "naver" else ""
+        if missing:                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
+            line = "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing)
+            head, _, last = memo.rpartition("\n")          # 마지막 줄 = 구분선
+            memo = f"{head}\n{line}\n{last}" if memo else f"{MEMO_HEAD}\n{line}\n{MEMO_RULE}"
+        path = folder / (f"{stem}.txt" if variant == "naver" else f"{stem}_쿠팡용.txt")
+        path.write_text(_draft_text(memo, d["title"], d["tags"], d["body"]), encoding="utf-8")
+        d["file"] = str(path.relative_to(surge.ROOT))
+    out = drafts["naver"]
+    return {**out, "link_needs": needs, "drafts": drafts,
+            "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in keywords}}
+
+
+def blog_connect_approved(env=None) -> bool:
+    """네이버 쇼핑커넥트 블로그 사용 승인 뒤 운영자가 켠다 (.env SC_BLOG_APPROVED=1) — 켜야 네이버용 초안에 쇼핑커넥트 고지."""
+    import os
+
+    source = os.environ if env is None else env
+    return (source.get("SC_BLOG_APPROVED") or "0").strip() == "1"
+
+
+MEMO_HEAD = "[운영 메모 — 블로그에 붙여 넣지 마세요]"
+MEMO_RULE = "─" * 30
+_DRAFT_FILE = re.compile(r"^var/blog_drafts/trend_[^/\\]{1,160}\.txt$")
+
+
+def _draft_text(memo: str, title: str, tags: list[str], body: str) -> str:
+    return (memo + "\n\n" if memo else "") + f"{title}\n\n태그: {', '.join(tags)}\n\n{body}\n"
+
+
+class _DraftSaveIn(BaseModel):
+    file: str = Field(..., max_length=200)
+    title: str = Field(..., min_length=1, max_length=200)
+    tags: list[str] = Field(default_factory=list, max_length=30)
+    body: str = Field(..., min_length=1, max_length=50_000)
+
+
+@router.post("/admin/api/trends/blog-draft/save", dependencies=[api])
+def trends_blog_draft_save(body: _DraftSaveIn):
+    """고친 초안 저장 (2026-11-17) — 같은 파일에 덮어쓰고 맨 위 운영 메모는 그대로 둔다.  발행하지 않는다.
+    광고 고지가 빠졌는지 등은 막지 않고 경고로 알린다 (고치는 중에도 저장할 수 있게)."""
+    from app.services.trends import surge
+
+    folder = (surge.ROOT / "var" / "blog_drafts").resolve()
+    path = (surge.ROOT / body.file).resolve()
+    if not _DRAFT_FILE.match(body.file) or path.parent != folder or not path.is_file():
+        raise HTTPException(404, "초안 파일을 찾을 수 없어요.")
+    old = path.read_text(encoding="utf-8")
+    memo = old.split("\n\n", 1)[0] if old.startswith(MEMO_HEAD) else ""
+    tags = [t.strip().lstrip("#") for t in body.tags if t.strip()][:30]
+    path.write_text(_draft_text(memo, body.title.strip(), tags, body.body.rstrip()), encoding="utf-8")
+    return {"file": body.file, "saved": True, "warnings": _draft_warnings(body.file, body.body)}
+
+
+def _draft_warnings(file: str, text: str) -> list[str]:
+    from app.services.trends import surge
+
+    out = []
+    if ("coupang.com" in text or "coupa.ng" in text) and surge.COUPANG_DISCLOSURE not in text:
+        out.append("쿠팡 링크가 있는데 쿠팡 파트너스 대가성 문구가 없어요. 맨 위에 넣어 주세요.")
+    if (file.endswith("_쿠팡용.txt") or not blog_connect_approved()) and "쇼핑 커넥트 활동" in text:
+        out.append("쇼핑커넥트 고지 문구가 있어요. 쿠팡용 초안이거나 승인 전(SC_BLOG_APPROVED 꺼짐)이면 빼 주세요.")
+    if "▶ [여기에" in text:
+        out.append("'▶ [여기에 …]' 삽입 자리 안내가 남아 있어요. 올리기 전에 상품을 넣거나 지워 주세요.")
+    return out
 
 
 def _coupang_links(keywords: list[str]) -> dict[str, list[dict]]:

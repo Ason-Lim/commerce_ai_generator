@@ -205,3 +205,20 @@ def test_guest_view_is_read_only(admin_client, tmp_path, monkeypatch, data_dirs)
     assert admin_client.post("/admin/api/trends/blog-draft", json={}).status_code == 401
     assert admin_client.get("/admin", follow_redirects=False).status_code == 303
     assert admin_client.get("/admin/api/trends", headers={"X-Access-Token": "test-token"}).json()["guest"] is False
+
+
+def test_coupang_only_draft_and_connect_disclosure_switch(data_dirs):
+    """2026-11-17: 쿠팡용 판 — 쇼핑커넥트 고지·삽입 자리·태그 없음 / 승인 전(connect_ok=False)에는 네이버용에도 쇼핑커넥트 고지 없음."""
+    ranks, google = data_dirs
+    report = S.run(datalab=S.DataLab("id", "s", http=fake_http([]), pause=0), blog_search=blog_posts,
+                   rank_dir=ranks, google_dir=google, end=END)
+    links = {"휘태커스초콜릿": [{"title": "휘태커스 다크", "url": "https://link.coupang.com/a/w0"}]}
+    only = S.blog_draft(report, coupang=links, variant="coupang")
+    assert only["variant"] == "coupang" and only["body"].startswith(S.COUPANG_DISCLOSURE + "\n" + S.SITE_OPS)
+    assert "쇼핑 커넥트" not in only["body"] and "쇼핑커넥트" not in only["body"] and "쇼핑커넥트" not in only["tags"]
+    assert "- 휘태커스 다크: https://link.coupang.com/a/w0" in only["body"] and "쿠팡파트너스" in only["tags"]
+    held = S.blog_draft(report, coupang=links, variant="naver", connect_ok=False)["body"]
+    assert "쇼핑 커넥트 활동" not in held and held.startswith(S.COUPANG_DISCLOSURE)
+    assert "▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: 휘태커스초콜릿]" in held      # 삽입 자리·발급 흐름은 그대로
+    approved = S.blog_draft(report, coupang=links, variant="naver", connect_ok=True)["body"]
+    assert approved.startswith(S.COUPANG_DISCLOSURE + "\n" + S.DISCLOSURE)
