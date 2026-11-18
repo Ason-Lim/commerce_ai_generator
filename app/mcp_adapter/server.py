@@ -18,7 +18,8 @@ INSTRUCTIONS = ("식품 쇼핑 후보와 공공 레시피를 찾는 도구예요
                 "바꾸지 말고 함께 보여 주세요. 배송비가 null 이면 0원이 아니라 '미확인'이에요. "
                 "AI 제안 레시피(source_level=ai_suggestion)는 원문이 아니라고 밝혀 주세요. "
                 "naver_search 는 네이버쇼핑 검색 화면 링크(제휴 아님·수수료 없음)예요 — 상품 추천이 아니라 "
-                "'조건으로 찾아보기'로, 확인할 점(check)과 함께 보여 주세요.")
+                "'조건으로 찾아보기'로, 확인할 점(check)과 함께 보여 주세요. "
+                "트렌드 글(food_trend_posts·food_get_trend_post)은 운영자가 게시한 글이라 '추정' 표시를 지우지 마세요.")
 
 
 @functools.lru_cache(maxsize=1)
@@ -78,6 +79,16 @@ def get_recipe(recipe_id: str | None = None, dish_name: str | None = None) -> di
     return tools.food_get_recipe(recipe_id, dish_name, resolver=_service().recipe.resolver)
 
 
+def trend_posts(topic: str | None = None, limit: int = 5) -> dict:
+    """운영자가 게시한 식품 트렌드 글 목록 (최신순). topic 은 식품 이름 (예: '대방어'), 없으면 전체. limit 1~20."""
+    return tools.food_trend_posts(topic, limit)
+
+
+def get_trend_post(post_id: str) -> dict:
+    """게시된 트렌드 글 한 편 — 왜 뜨는지(데이터·추정 구분), 레시피 요약, 상품, 확인한 곳. post_id 는 목록의 id."""
+    return tools.food_get_trend_post(post_id)
+
+
 def build():
     try:                                            # mcp 2.x
         from mcp.server import MCPServer as Server
@@ -87,11 +98,13 @@ def build():
     ro = _read_only()
     server.tool(name="food_search_products", annotations=ro)(search_products)
     server.tool(name="food_get_recipe", annotations=ro)(get_recipe)
+    server.tool(name="food_trend_posts", annotations=ro)(trend_posts)
+    server.tool(name="food_get_trend_post", annotations=ro)(get_trend_post)
     return server
 
 
 def _read_only():
-    """두 도구 모두 읽기 전용 — 결제·주문·저장 도구는 의도적으로 없다."""
+    """모든 도구가 읽기 전용 — 결제·주문·저장 도구는 의도적으로 없다."""
     from mcp.types import ToolAnnotations
 
     try:

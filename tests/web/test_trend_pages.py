@@ -100,4 +100,64 @@ def test_pages_share_the_app_menu_and_link_back(env):
         assert '<a href="/#/hot">지금 뜨는 식품</a>' in html and '<a href="/#">대화</a>' in html
     page = client.get(f"/trends/{post.id}").text
     assert 'href="/?ask=%EC%9A%94%EC%A6%98%20%EB%8C%80%EB%B0%A9%EC%96%B4%20%EC%99%9C%20%EC%9C%A0%ED%96%89%ED%95%B4%3F"' in page
-    assert 'href="/#/hot">지금 뜨는 식품 전체 보기' in page and "<script" not in page
+    assert 'href="/#/hot">지금 뜨는 식품 전체 보기' in page
+    assert page.count("<script") == 1 and '<script type="application/ld+json">' in page   # 구조화 데이터만, 실행 스크립트 없음
+
+
+from urllib.parse import quote  # noqa: E402
+
+
+# ── 2026-11-18: 화면 잇기 · 검색 노출 ──
+def test_posts_api_gives_latest_cards_and_a_topic_table(env):
+    client, svc, clock, _ = env
+    first = approved(svc, "대방어")
+    clock.t = clock.t.replace(hour=clock.t.hour + 1)
+    second = approved(svc, "천수무")
+    waiting, _ = svc.create_from_surge(report(item("유자")), "유자")             # 승인 안 된 글은 안 나간다
+    d = client.get("/api/trends/posts?limit=1").json()
+    assert d["count"] == 2 and [c["id"] for c in d["items"]] == [second.id]
+    assert set(d["by_topic"]) == {"대방어", "천수무"} and d["by_topic"]["대방어"]["url"] == f"/trends/{quote(first.id)}"
+    assert "유자" not in str(d) and set(d["items"][0]) == {"id", "title", "summary", "topic", "approved_at", "url"}
+
+
+def test_post_page_has_article_structured_data_and_canonical(env, monkeypatch):
+    import json
+    import re
+
+    monkeypatch.setenv("SITE_URL", "https://example.kr/")
+    client, svc, _clock, _ = env
+    post = approved(svc)
+    html = client.get(f"/trends/{post.id}").text
+    assert f'<link rel=canonical href="https://example.kr/trends/{quote(post.id)}">' in html
+    ld = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', html).group(1))
+    assert ld["@type"] == "Article" and ld["headline"] == post.title and ld["datePublished"] == post.approved_at
+    assert ld["mainEntityOfPage"] == f"https://example.kr/trends/{quote(post.id)}" and "image" not in ld
+    assert '<link rel=canonical href="https://example.kr/trends">' in client.get("/trends").text
+
+
+def test_structured_data_cannot_break_out_of_its_script_tag():
+    from app.services.trend_posts import render
+
+    out = render._ld_script({"x": "</script><script>alert(1)</script>"})
+    assert out.count("</script>") == 1 and "\\u003c/script>" in out
+
+
+def test_sitemap_lists_home_index_and_only_published_posts(env, monkeypatch):
+    monkeypatch.setenv("SITE_URL", "https://example.kr")
+    client, svc, _clock, _ = env
+    post = approved(svc)
+    waiting, _ = svc.create_from_surge(report(item("유자")), "유자")
+    r = client.get("/sitemap.xml")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/xml")
+    for loc in ("https://example.kr/", "https://example.kr/trends", f"https://example.kr/trends/{quote(post.id)}"):
+        assert f"<loc>{loc}</loc>" in r.text
+    assert waiting.id not in r.text and "/go/" not in r.text and "<lastmod>" in r.text
+
+
+def test_robots_points_to_the_sitemap_and_keeps_private_paths_out(env, monkeypatch):
+    monkeypatch.setenv("SITE_URL", "https://example.kr")
+    client, _svc, _clock, _ = env
+    text = client.get("/robots.txt").text
+    assert "Sitemap: https://example.kr/sitemap.xml" in text
+    for line in ("Disallow: /admin", "Disallow: /api/", "Disallow: /trends/*/go/"):
+        assert line in text

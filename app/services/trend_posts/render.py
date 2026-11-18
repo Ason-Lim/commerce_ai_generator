@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from html import escape
+import json
+import os
 from urllib.parse import quote
 
 from app.services.trend_posts import policy
@@ -31,9 +33,9 @@ h1{font-size:24px;line-height:1.35;margin:6px 0 8px}h2{font-size:18px;margin:28p
 .go{display:inline-block;margin-top:6px;padding:7px 12px;border-radius:8px;background:#1d211d;color:#fff;text-decoration:none;font-size:14px}
 .list a.t{font-size:17px;font-weight:700;text-decoration:none;color:#1d211d}
 .top{position:sticky;top:0;z-index:5;background:rgba(246,247,244,.95);border-bottom:1px solid #e3e5df}
-.top .in{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
+.top .in{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
 .logo{font-weight:700;font-size:17px;color:#1d211d;text-decoration:none}
-.menu{display:flex;gap:4px}.menu a{padding:7px 14px;border-radius:999px;color:#4d534c;text-decoration:none;font-size:14px}
+.menu{display:flex;gap:8px}.menu a{padding:7px 14px;border-radius:999px;color:#4d534c;text-decoration:none;font-size:14px}
 .menu a[aria-current=page]{background:#1d211d;color:#fff;font-weight:600}
 .tabbar{display:none}
 @media (max-width:639px){.menu{display:none}main{padding-bottom:96px}
@@ -66,15 +68,73 @@ def _menu(current: str, cls: str) -> str:
                       for key, label, href in NAV_ITEMS) + "</nav>")
 
 
-def _page(title: str, body: str, description: str = "", current: str = "posts") -> str:
-    """앱(대화·지금 뜨는 식품)과 같은 공통 메뉴 — PC 머리줄 가운데, 모바일 아래 탭 (2026-11-17 내비게이션 설계)."""
-    top = (f'<header class=top><div class=in><a class=logo href="/#">{SITE}</a>{_menu(current, "menu")}'
-           f'<span style="width:60px"></span></div></header>')
+def site_url() -> str:
+    """검색엔진에 알려 줄 사이트 주소 (canonical·sitemap·구조화 데이터). .env SITE_URL 로 바꾼다."""
+    return (os.environ.get("SITE_URL") or "https://app.trendguide.kr").rstrip("/")
+
+
+def _page(title: str, body: str, description: str = "", current: str = "posts", head: str = "") -> str:
+    """앱(대화·지금 뜨는 식품)과 같은 공통 머리줄 — 로고는 본문 왼쪽 끝, 메뉴는 오른쪽 (2026-11-18 헤더 B안),
+    모바일은 아래 탭. head: canonical·구조화 데이터 같은 <head> 추가분."""
+    top = f'<header class=top><div class=in><a class=logo href="/#">{SITE}</a>{_menu(current, "menu")}</div></header>'
     return (f"<!doctype html><html lang=ko><head><meta charset=utf-8>"
             f"<meta name=viewport content=\"width=device-width,initial-scale=1\">"
             f"<title>{escape(title)} | {SITE}</title>"
             + (f"<meta name=description content=\"{escape(description)}\">" if description else "")
+            + head
             + f"<style>{CSS}</style></head><body>{top}<main>{body}</main>{_menu(current, 'tabbar')}</body></html>")
+
+
+def _canonical(path: str) -> str:
+    return f'<link rel=canonical href="{escape(site_url() + path)}">'
+
+
+def article_ld(post: Post) -> dict:
+    """schema.org Article (2026-11-18) — 검색엔진용. 상품 이미지는 판매처 것이라 넣지 않는다."""
+    ld = {"@context": "https://schema.org", "@type": "Article", "headline": post.title[:110],
+          "inLanguage": "ko-KR", "mainEntityOfPage": site_url() + post_url(post),
+          "author": {"@type": "Organization", "name": SITE, "url": site_url() + "/"},
+          "publisher": {"@type": "Organization", "name": SITE, "url": site_url() + "/"},
+          "about": post.topic}
+    if post.summary:
+        ld["description"] = post.summary
+    if post.approved_at:
+        ld["datePublished"] = post.approved_at
+    if post.updated_at:
+        ld["dateModified"] = post.updated_at
+    return ld
+
+
+def _ld_script(data: dict) -> str:
+    # </script> 가 글 안에 있어도 태그가 끊기지 않게 '<' 를 이스케이프
+    return ('<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
+            + "</script>")
+
+
+def sitemap_xml(posts: list[Post]) -> str:
+    """/sitemap.xml — 첫 화면·트렌드 글 목록·게시된 글. 앱의 # 주소(지금 뜨는 식품)는 검색엔진이 따로 읽지 않아 뺀다."""
+    base = site_url()
+    rows = [("/", None), ("/trends", posts[0].approved_at if posts else None)]
+    rows += [(post_url(p), p.updated_at or p.approved_at) for p in posts]
+    out = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for path, mod in rows:
+        when = parse_time(mod)
+        out.append(f"<url><loc>{escape(base + path)}</loc>"
+                   + (f"<lastmod>{when.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}</lastmod>" if when else "")
+                   + "</url>")
+    out.append("</urlset>")
+    return "\n".join(out)
+
+
+def robots_txt() -> str:
+    return ("User-agent: *\nDisallow: /admin\nDisallow: /b2b\nDisallow: /api/\nDisallow: /trends/*/go/\n"
+            f"Sitemap: {site_url()}/sitemap.xml\n")
+
+
+def card(post: Post) -> dict:
+    """앱 화면(첫 화면 '오늘의 트렌드', 지금 뜨는 식품)이 쓰는 글 요약."""
+    return {"id": post.id, "title": post.title, "summary": post.summary, "topic": post.topic,
+            "approved_at": post.approved_at, "url": post_url(post)}
 
 
 def post_page(post: Post, now: datetime | None = None) -> str:
@@ -120,7 +180,8 @@ def post_page(post: Post, now: datetime | None = None) -> str:
     parts.append(f'<p style="margin-top:28px"><a class=go href="/?ask={quote(ask)}">이 주제 더 물어보기</a> '
                  f'<a class=go style="background:#fff;color:#1d211d;border:1px solid #d9dcd5" href="/#/hot">지금 뜨는 식품 전체 보기</a></p>')
     parts.append("</article>")
-    return _page(post.title, "".join(parts), post.summary)
+    return _page(post.title, "".join(parts), post.summary,
+                 head=_canonical(post_url(post)) + _ld_script(article_ld(post)))
 
 
 def index_page(posts: list[Post]) -> str:
@@ -134,4 +195,4 @@ def index_page(posts: list[Post]) -> str:
         body.append(f'<div class=card><a class=t href="{post_url(p)}">{e(p.title)}</a>'
                     f'<div class=meta>{e(_kst(p.approved_at))}</div><div>{e(p.summary)}</div></div>')
     body.append("</div>")
-    return _page("트렌드 글", "".join(body), "검색이 갑자기 늘어난 식품 트렌드 글")
+    return _page("트렌드 글", "".join(body), "검색이 갑자기 늘어난 식품 트렌드 글", head=_canonical("/trends"))

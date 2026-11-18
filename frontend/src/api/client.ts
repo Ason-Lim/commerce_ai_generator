@@ -106,3 +106,14 @@ export async function fetchTrends(signal?: AbortSignal): Promise<TrendView> {
   if (!r.ok) throw new Error(`trends ${r.status}`);
   return (await r.json()) as TrendView;
 }
+
+/** 게시된 트렌드 글 요약 (2026-11-18) — 첫 화면 '오늘의 트렌드', 지금 뜨는 식품 위쪽·카드의 '트렌드 글 읽기' */
+export interface TrendPostCard { id: string; title: string; summary: string; topic: string; approved_at?: string | null; url: string }
+export interface TrendPostList { items: TrendPostCard[]; by_topic: Record<string, TrendPostCard>; count: number }
+export const topicKey = (s: string) => (s || "").replace(/\s+/g, "").toLowerCase();
+export async function fetchTrendPosts(limit = 3, signal?: AbortSignal): Promise<TrendPostList> {
+  if (API_MODE === "mock") return { items: [], by_topic: {}, count: 0 };
+  const r = await fetch(`/api/trends/posts?limit=${limit}`, { signal });
+  if (!r.ok) throw new Error(`trend posts ${r.status}`);
+  return (await r.json()) as TrendPostList;
+}

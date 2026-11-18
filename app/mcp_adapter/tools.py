@@ -2,6 +2,8 @@
 
 food_search_products(text, limit)        → 공통 서비스 search_products 결과(commerce.v1)를 그대로 투영
 food_get_recipe(recipe_id | dish_name)   → 공통 서비스 get_recipe 결과(commerce.v1)를 그대로 투영
+food_trend_posts(topic, limit)            → 게시(승인)된 트렌드 글 목록 (2026-11-18, 2단계)
+food_get_trend_post(post_id)              → 게시된 트렌드 글 한 편 — 웹 /trends/{글} 과 같은 내용
 
 제휴 링크 원칙 (2026-11-02)
 * 쿠팡 파트너스·네이버 쇼핑커넥트 링크를 AI 에이전트를 거쳐 보여 줘도 되는지 아직 확인하지 않았다.
@@ -90,3 +92,62 @@ def food_get_recipe(recipe_id: str | None = None, dish_name: str | None = None, 
 
     req = RecipeRequest(recipe_id=(recipe_id or None), dish_name=(dish_name or None))
     return get_recipe(req, resolver=resolver).model_dump(mode="json")
+
+
+# ── 트렌드 글 (2026-11-18, 2단계 선택 과제) ─────────────────────────────────────
+# 승인된 글만 (TrendPosts.public/published). 상품 링크는 위 제휴 원칙 그대로 — 허용 전에는 비우고 웹 글 주소를 준다.
+TREND_NOTE = ("운영자가 확인해 게시한 글이에요. 트렌드 이유는 데이터 사실과 '추정'을 구분해 적었으니 그대로 전해 주세요. "
+              "가격은 확인한 시각 기준이라 지금은 다를 수 있어요.")
+
+
+def _trend_posts(posts=None):
+    if posts is not None:
+        return posts
+    from app.services.trend_posts.service import TrendPosts
+
+    return TrendPosts()
+
+
+def _post_card(p) -> dict:
+    from app.services.trend_posts import render
+
+    return {"id": p.id, "title": p.title, "summary": p.summary, "topic": p.topic,
+            "published_at": p.approved_at, "url": render.site_url() + render.post_url(p)}
+
+
+def food_trend_posts(topic: str | None = None, limit: int = 5, *, posts=None) -> dict:
+    """게시된 트렌드 글 최신순. topic 을 주면 주제(식품 이름)가 맞는 글만 (띄어쓰기 무시)."""
+    flat = lambda s: "".join((s or "").split()).lower()  # noqa: E731
+    items = _trend_posts(posts).published()
+    if topic and topic.strip():
+        t = flat(topic)
+        items = [p for p in items if t in flat(p.topic) or flat(p.topic) in t]
+    n = max(1, min(int(limit or 5), 20))
+    return {"status": "ok" if items else "none", "items": [_post_card(p) for p in items[:n]], "note": TREND_NOTE}
+
+
+def food_get_trend_post(post_id: str, *, posts=None, env=None, now=None) -> dict:
+    from app.services.trend_posts import render
+
+    p = _trend_posts(posts).public((post_id or "").strip())
+    if p is None:
+        return {"status": "not_found", "message": "게시되지 않았거나 내린 글이에요. food_trend_posts 로 목록을 확인해 주세요."}
+    allow = affiliate_links_allowed(env)
+    page = render.site_url() + render.post_url(p)
+    products, warnings = [], []
+    for n, it in enumerate(p.products, start=1):
+        affiliate = it.link_type != "direct"
+        products.append({"rank": n, "title": it.title, "platform": it.platform, "price": render.price_line(it, now),
+                         "link_type": it.link_type,
+                         "url": (page + f"/go/{n}") if (allow or not affiliate) else None})
+    if any(x["url"] is None for x in products):
+        warnings.append(AFFILIATE_HELD + f" 상품은 웹 글({page})에서 볼 수 있어요.")
+    recipe = None
+    if p.recipe:
+        r = p.recipe
+        recipe = {"name": r.name, "ingredients": list(r.ingredients), "steps": r.step_count,
+                  "source": r.source_label, "source_url": r.source_url, "note": r.note}
+    return {"status": "ok", **_post_card(p), "data_until": p.data_until, "why": list(p.why), "recipe": recipe,
+            "products": products, "price_note": p.price_note,
+            "sources": [{"label": s.label, "url": s.url} for s in p.sources],
+            "disclosure": p.disclosure if p.products else None, "warnings": warnings, "note": TREND_NOTE}

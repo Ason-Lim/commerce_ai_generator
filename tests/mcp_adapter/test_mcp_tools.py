@@ -172,3 +172,48 @@ def test_search_adds_non_affiliate_naver_search_links(monkeypatch):
     assert tools.food_search_products("와인 추천해줘", shopping=FakeShopping(items=[]), env={})["naver_search"] == []
     monkeypatch.setenv("NAVER_SEARCH_LINKS", "0")
     assert tools.food_search_products("사과 추천해줘", shopping=FakeShopping(items=ITEMS), env={})["naver_search"] == []
+
+
+# ── 트렌드 글 도구 (2026-11-18) ──
+from urllib.parse import quote  # noqa: E402
+
+
+def _trend_svc(tmp_path):
+    from tests.services.trend_posts.helpers import approved, item, report, service
+
+    svc = service(tmp_path)
+    live = approved(svc, "대방어")
+    waiting, _ = svc.create_from_surge(report(item("유자")), "유자")
+    return svc, live, waiting
+
+
+def test_trend_post_tools_show_only_published_posts(tmp_path, monkeypatch):
+    monkeypatch.setenv("SITE_URL", "https://example.kr")
+    svc, live, waiting = _trend_svc(tmp_path)
+    out = tools.food_trend_posts(posts=svc)
+    assert [i["id"] for i in out["items"]] == [live.id] and out["items"][0]["url"] == f"https://example.kr/trends/{quote(live.id)}"
+    assert tools.food_trend_posts("대 방어", posts=svc)["items"] and tools.food_trend_posts("유자", posts=svc)["status"] == "none"
+    assert tools.food_get_trend_post(waiting.id, posts=svc)["status"] == "not_found"
+    assert tools.food_get_trend_post("../../etc/passwd", posts=svc)["status"] == "not_found"
+
+
+def test_trend_post_tool_holds_affiliate_links_until_allowed(tmp_path, monkeypatch):
+    monkeypatch.setenv("SITE_URL", "https://example.kr")
+    svc, live, _ = _trend_svc(tmp_path)
+    held = tools.food_get_trend_post(live.id, posts=svc, env={})
+    assert held["status"] == "ok" and held["products"] and all(p["url"] is None for p in held["products"])
+    assert held["warnings"] and f"https://example.kr/trends/{quote(live.id)}" in held["warnings"][0]
+    assert held["disclosure"] and held["why"] == list(live.why)
+    shown = tools.food_get_trend_post(live.id, posts=svc, env={"MCP_AFFILIATE_LINKS": "1"})
+    assert shown["products"][0]["url"] == f"https://example.kr/trends/{quote(live.id)}/go/1" and not shown["warnings"]
+    json.dumps(held, ensure_ascii=False)
+
+
+def test_server_registers_the_trend_post_tools():
+    if importlib.util.find_spec("mcp") is None:
+        pytest.skip("mcp 패키지 없음")
+    from app.mcp_adapter import server
+
+    built = server.build()
+    names = {t.name for t in asyncio.run(built.list_tools())}
+    assert {"food_trend_posts", "food_get_trend_post", "food_search_products", "food_get_recipe"} <= names
