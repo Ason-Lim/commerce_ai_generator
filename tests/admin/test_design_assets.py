@@ -97,7 +97,11 @@ def test_benchmarked_layouts_are_chosen_by_shape():
     assert L(Element(kind="bullets", items=["x" * 300] * 4), "operations") == "checks"      # 너무 길면 목록
     assert L(Element(kind="table", headers=["단계", "기한", "내용"], rows=[["1", "2", "3"]] * 3), "schedule") == "steps"
     assert L(Element(kind="table", headers=["일정", "작업", "산출물"], rows=[["D+0", "착수", "명단"]] * 6), "mall") == "path"
-    assert L(Element(kind="table", headers=["일정", "작업", "산출물"], rows=[["D+0", "가" * 120, "나" * 300]] * 8), "mall") == "table"
+    long_tl = Element(kind="table", headers=["일정", "작업", "산출물"], rows=[["D+0", "가" * 120, "나" * 300]] * 8)
+    assert L(long_tl, "mall") == "path_long"                                    # 글이 많으면 표 대신 나눠서
+    parts = proposal_deck._split_tables([long_tl], "mall")
+    assert len(parts) >= 2 and all(L(x, "mall") == "path" and proposal_deck.block_h(x, "mall") <= proposal_deck.BODY_H for x in parts)
+    assert len({len(x.rows) for x in parts[:-1]}) == 1                          # 고르게 나눔
     assert proposal_deck.split_head("폐쇄몰 구축: 7일 안에 오픈") == ("폐쇄몰 구축", "7일 안에 오픈")
     assert proposal_deck.split_head("머리말 없는 문장") == ("", "머리말 없는 문장")
 
@@ -184,3 +188,92 @@ def test_pyramid_mirror_and_hub_figures(tmp_path, monkeypatch):
     out = proposal_export.to_pptx(p, tmp_path / "f.pptx")
     xml = zipfile.ZipFile(out).read("ppt/slides/slide3.xml").decode()
     assert 'prst="trapezoid"' in xml and 'prst="triangle"' in xml
+
+
+# ── 2026-11-17: 상자 밖으로 글이 넘치지 않게 ─────────────────────────────
+def test_text_measure_wraps_by_words():
+    D = proposal_deck
+    assert D.wrap_n("가" * 10, 1000, 12) == 1
+    assert D.wrap_n("가나다라 " * 40, 300, 12) > 5                 # 좁으면 여러 줄
+    assert D.wrap_n("한줄\n두줄", 1000, 12) == 2
+
+
+def test_cards_grow_with_text_and_long_lists_split_with_continuing_numbers():
+    D = proposal_deck
+    short = Element(kind="bullets", items=["짧은 문장"] * 3)
+    long_ = Element(kind="bullets", items=["관측 소매가 → 제출 시점 온라인 최저가 검증 → 확정 공급단가 세 단계로 나누어 관리합니다. " * 3] * 3)
+    assert D.card_geom(long_, "ncards")["h"] > D.card_geom(short, "ncards")["h"] + 100
+    many = Element(kind="bullets", items=["단가를 상품 매입·포장·물류·택배·교환 예비·운영 CS·구축·일반관리·이윤 항목으로 분해해 제시합니다. " * 2] * 7)
+    parts = D._split_items(many, "strategy")
+    assert len(parts) >= 2 and all(D.block_h(x, "strategy") <= D.BODY_H for x in parts)
+    assert [D.num_start(x) for x in parts][0] == 0 and D.num_start(parts[1]) == len(parts[0].items)
+    assert all(D.layout_of(x, "strategy") == "ncards" for x in parts)            # 조각도 같은 모양
+
+
+def test_pptx_cards_box_fits_measured_text(tmp_path):
+    from pptx import Presentation
+
+    long_items = ["대상자 명부 기반 계정 발급, 1인 선택 수 제한, 중복 주문 차단으로 실제 지급수량 기준 정산이 가능하도록 폐쇄몰을 운영합니다. " * 2] * 5
+    p = _prop([Element(kind="bullets", items=long_items)], sid="strategy")
+    out = proposal_export.to_pptx(p, tmp_path / "c.pptx")
+    prs = Presentation(str(out))
+    for sl in prs.slides:
+        for sh in sl.shapes:
+            if sh.has_text_frame and sh.text_frame.text.strip():
+                assert sh.top + sh.height <= prs.slide_height                     # 슬라이드 밖으로 안 나감
+    html = proposal_deck.render(p)
+    assert 'class="ncards c' in html
+
+
+# ── 2026-11-17: 상품 구성안 상품 이미지 ─────────────────────────────────
+def test_product_images_supplier_first_and_retail_only_internal(tmp_path, monkeypatch):
+    from app.admin.b2b import product_images as PI
+    from app.admin.b2b.models import Candidate
+
+    monkeypatch.setenv("ADMIN_DATA_DIR", str(tmp_path))
+    PI.folder().mkdir(parents=True)
+    Image.new("RGB", (60, 60), "red").save(PI.folder() / "c1.jpg")
+    sup = Candidate(candidate_id="c1", supplier="s", name="한라봉 선물세트")
+    ret = Candidate(candidate_id="c2", supplier="s", name="한우 세트", image_url="https://img.example/a.jpg", image_source="retail")
+    cached = tmp_path / "x.jpg"
+    Image.new("RGB", (60, 60), "blue").save(cached)
+    monkeypatch.setattr(PI, "download", lambda url, timeout=6.0: cached)
+    assert PI.resolve(sup, "external")["source"] == "supplier"                 # 공급사 이미지는 제출본에도
+    assert PI.resolve(ret, "external") is None                                  # 판매처 이미지는 제출본에 안 넣음
+    got = PI.resolve(ret, "internal")
+    assert got and "사용 허락 확인" in got["label"]
+
+
+def test_products_section_renders_image_cards(tmp_path, monkeypatch):
+    import zipfile
+
+    from app.admin.b2b import evidence, product_images as PI
+    from app.admin.b2b.models import Candidate
+
+    _pack(tmp_path, monkeypatch, ICONS + ASSETS)
+    PI.folder().mkdir(parents=True)
+    Image.new("RGB", (80, 80), (10, 200, 10)).save(PI.folder() / "g1.png")
+    cands = [Candidate(candidate_id="g1", supplier="s", name="제주 한라봉 선물세트", option="3kg", category="식품",
+                       observed_price=52000, observed_date=date(2026, 11, 14)),
+             Candidate(candidate_id="g2", supplier="s", name="한우 등심 세트", option="1kg", category="식품",
+                       observed_price=58000, observed_date=date(2026, 11, 14))]
+    evals = [evidence.evaluate(c, REQ, today=date(2026, 11, 17)) for c in cands]
+    p = proposal.build(REQ, evals, profile={}, cost=costing.analyze(REQ, {}), mode="external", today=date(2026, 11, 17))
+    assert list(p.facts["product_images"]) == ["제주 한라봉 선물세트"]
+    goods = [e for s in p.sections if s.id == "products" for e in s.elements if e.kind == "table"]
+    assert goods and proposal_deck.layout_of(goods[0], "products") == "goods"
+    html = proposal_deck.render(p)
+    assert 'class="goods"' in html and "공급사 이미지 확정 후 교체" in html
+    out = proposal_export.to_pptx(p, tmp_path / "g.pptx")
+    assert any(n.startswith("ppt/media/") for n in zipfile.ZipFile(out).namelist())
+
+
+# ── 2026-11-17: 한 줄 안내문만 있는 빈 장 방지 ──────────────────────────
+def test_short_intro_line_stays_with_next_figure():
+    D = proposal_deck
+    intro = Element(kind="para", text="구축 방식: [확인 필요: 폐쇄몰 플랫폼·구축 방식]")
+    tl = Element(kind="table", headers=["일정", "작업", "산출물"],
+                 rows=[[f"D+{i}", "계정 발급과 상품 등록", "점검표"] for i in range(6)])
+    p = _prop([intro, tl], sid="mall")
+    sl = [s for s in D.plan(p) if s.kind == "section"]
+    assert len(sl) == 1 and [D.layout_of(e, "mall") for e in sl[0].elements] == ["para", "path"]

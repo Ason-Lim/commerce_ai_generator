@@ -235,7 +235,8 @@ def item_icons(art: dict | None, texts: list[str], sid: str = "", kinds: tuple[s
         return [None] * len(texts)
     used: set = art.setdefault("_used_items", set())
     head = (art.get("sections") or {}).get(sid)
-    banned = {head["path"]} if head else set()
+    by_sid: set = art.setdefault("_used_by_sid", {}).setdefault(sid, set())   # 같은 장(나눈 조각 포함)에서는 겹치지 않게
+    banned = ({head["path"]} if head else set()) | by_sid
     pool = [a for a in assets() if a.get("kind") in kinds and single(a)]
     out: list[dict | None] = []
     for t in texts:
@@ -250,6 +251,7 @@ def item_icons(art: dict | None, texts: list[str], sid: str = "", kinds: tuple[s
         if best and best_s >= 1.0:
             banned.add(best["path"])
             used.add(best["path"])
+            by_sid.add(best["path"])
             out.append(best)
         else:
             out.append(None)

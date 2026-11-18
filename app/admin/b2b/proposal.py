@@ -142,9 +142,19 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
         Element(kind="callout", tone="info", text="'공급사 확약 필요' 항목은 견적·확약서 회신 후 '대응'으로 바꿔 제출합니다."),
     ]))
 
-    # 4. 상품 구성안
+    # 4. 상품 구성안 (2026-11-17: 슬라이드에는 상품 이미지 카드 — facts['product_images'])
+    gallery: dict[str, dict] = {}
+    info: dict[str, dict] = {}
+    floor_txt = f"온라인 판매가 {req.min_online_price:,}원 이상" if req.min_online_price else "온라인 판매가가 1인 예산 이상"
     els: list[Element] = [Element(kind="para", text="카테고리별로 조건을 충족할 수 있는 후보를 복수로 확보한 뒤, 공급사 견적·배송 확약·"
-                                                     "온라인가 증빙이 갖춰진 상품만 최종 구성에 넣습니다.")]
+                                                     "온라인가 증빙이 갖춰진 상품만 최종 구성에 넣습니다."),
+                          # 2026-11-17: 상품 선정 기준 (상품 구성안 보강)
+                          Element(kind="bullets", items=[
+                              f"선물 가치: {floor_txt}이고, 같은 옵션을 여러 판매처 가격으로 대조해 검증한 상품만 넣습니다.",
+                              "품질·안전: 식품은 원산지·제조일·소비기한과 필요한 인증 서류를 공급사에게 받아 확인합니다.",
+                              f"선물 포장·배송: 선물 상자·보냉 포장 등 포장을 포함하고, 선택일부터 {d_ship} 이내 개별 도착이 가능한 상품만 고릅니다.",
+                              "공급 안정성: 확보 수량·출고 마감 시각·품절 시 대체 상품을 공급사와 미리 확약합니다.",
+                          ])]
     for need in req.categories or []:
         cands = [e for e in evals if e.candidate.category == need.name and e.decision != "EXCLUDED"
                  and not e.candidate.is_sample]
@@ -153,6 +163,9 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
         trows = []
         for e in cands[: max(need.count + 2, 3)]:
             c = e.candidate
+            img = _product_image(c, mode)
+            if img:
+                gallery[c.name] = img
             price = f"{c.observed_price:,}원 (관측 {c.observed_date})" if c.observed_price else "[확인 필요: 온라인가]"
             if e.decision == "ELIGIBLE":
                 status = "확정"
@@ -161,11 +174,18 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             else:
                 status = f"[확인 필요: {', '.join(x.label for x in e.unknown[:3])}]"
             row = [c.name, c.option or "[확인 필요: 옵션]", price, status]
+            info[c.name] = {k: v for k, v in (
+                ("원산지", c.origin), ("제조사", c.manufacturer),
+                ("배송", f"{c.delivery_days}일 이내 (공급사 제시)" if c.delivery_days else None),
+                ("최소 구매", f"{c.min_order_qty:,}개" if c.min_order_qty and c.min_order_qty > 1 else None)) if v}
             if mode == "internal":
                 row.append(c.supplier)
             trows.append(row)
-        if not trows:
-            trows.append([f"[확인 필요: {need.name} 후보 발굴]", "-", "-", "후보 없음"] + (["-"] if mode == "internal" else []))
+        if not trows:                                   # 후보가 없으면 필요한 수만큼 자리 + 선정 기준
+            for i in range(1, need.count + 1):
+                nm = f"[확인 필요: {need.name} 후보 {i}]"
+                trows.append([nm, "선물 포장 포함 · 구성 확정 전", floor_txt, "후보 발굴 중"] + (["-"] if mode == "internal" else []))
+                info[nm] = {"배송": f"선택일부터 {d_ship} 이내 개별 도착", "확정 조건": "공급사 견적·배송 확약·온라인가 증빙"}
         hdr = ["상품", "옵션·구성", "온라인 판매가", "상태"] + (["공급 경로"] if mode == "internal" else [])
         els += [Element(kind="para", text=f"■ {need.name} {need.count}종"), Element(kind="table", headers=hdr, rows=trows)]
     els.append(Element(kind="callout", tone="warn",
@@ -184,9 +204,15 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             ["D+4", "수정 반영, 안내 문자·공지 준비", "수정 내역"],
             [f"D+{req.setup_days or 5}", "오픈 및 선택 현황 대시보드 공유", "오픈 보고"],
         ]),
-        Element(kind="bullets", items=["임직원 본인 인증 후 1인 1개 선택, 마감 전 변경 허용",
-                                        "미선택자 독려 안내(기한·횟수는 발주처와 협의)",
-                                        "발주처 담당자용 선택·배송 현황 실시간 조회"]),
+        # 2026-11-17: 폐쇄몰 기능을 '머리말: 설명' 6개로 (슬라이드에서는 번호 카드)
+        Element(kind="bullets", items=[
+            "임직원 본인 인증: 발주처가 준 명부(사번·휴대폰)로 계정을 만들고, 본인 인증을 마친 임직원만 입장합니다.",
+            "1인 1선택·변경: 1인 선택 수를 시스템에서 제한해 중복 주문을 막고, 마감 전까지 상품·배송지를 바꿀 수 있습니다.",
+            "상품 상세·재고 관리: 상품마다 확보 수량을 정해 두고, 선택이 몰려 품절될 때는 발주처 승인 후 대체 상품을 엽니다.",
+            "선택 독려 안내: 미선택자에게 마감 전 문자·메일로 안내합니다 (기한·횟수·문구는 발주처와 협의).",
+            "발주처 현황 화면: 담당자가 선택률·주문·배송·교환 현황을 실시간으로 보고 엑셀로 내려받습니다.",
+            "개인정보 보호: 배송 정보는 배송 목적에만 쓰고 접속 기록을 남기며, 사업이 끝나면 파기하고 결과를 알립니다.",
+        ]),
     ]))
 
     # 6. 배송·교환·CS
@@ -280,9 +306,20 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
         "exchange_days": req.exchange_business_days, "min_online_price": req.min_online_price,
         "categories": [{"name": c.name, "count": c.count} for c in req.categories],
         "contact": {k: pf.get(k) for k in ("contact_name", "contact_phone", "contact_email")},
+        "product_images": gallery,
+        "product_info": info,
     }
     prop.todo_count = sum(len(TODO.findall(_flat(s))) for s in S if not s.internal_only)
     return prop
+
+
+def _product_image(c, mode: str) -> dict | None:
+    try:
+        from app.admin.b2b import product_images
+
+        return product_images.resolve(c, mode)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _apply_ai(S: list[Section], body: dict) -> list[Section]:

@@ -13,7 +13,7 @@ import math
 import re
 
 W = 1136.0
-MAX_H = 480.0
+MAX_H = 458.0          # 본문 468px − 여유 (2026-11-17 제목 아래 여백 늘림)
 
 
 def _lines(text: str, per: int) -> int:
@@ -166,8 +166,11 @@ MIRROR_HEAD = ["비교 항목", "공고 최소 요건", "우리 제안"]
 
 
 def mirror_rows(e) -> tuple[list[list[str]], list[float]]:
+    from app.admin.b2b.proposal_deck import text_h
+
     rows = [list(r) + [""] * (3 - len(r)) for r in e.rows]
-    hs = [max(62.0, max(_lines(r[1], 30), _lines(r[2], 30)) * 17 + 28) for r in rows]
+    side = W / 2 - 85 - 70                       # 양쪽 글 칸 폭
+    hs = [max(72.0, max(text_h(r[1], side, 12, False, 1.2), text_h(r[2], side - 54, 12.5, True, 1.2)) + 32) for r in rows]
     return rows, hs
 
 
@@ -175,26 +178,27 @@ def mirror_fits(e) -> bool:
     if not 2 <= len(e.rows) <= 5:
         return False
     _, hs = mirror_rows(e)
-    return 64 + sum(hs) + 12 * (len(hs) - 1) <= MAX_H
+    return 74 + sum(hs) + 14 * (len(hs) - 1) <= MAX_H
 
 
 def mirror(e, art=None, sid="evaluation") -> tuple[list[dict], float]:
+    """좌우 비교 — 2026-11-17: 알약 모양(머리·가운데)과 글자를 키움."""
     rows, hs = mirror_rows(e)
-    cx, cw = W / 2, 170.0
-    out: list = [box(0, 0, cx - cw / 2 - 24, 40, "ln", None, 20),
-                 text(0, 0, cx - cw / 2 - 24, 40, [(MIRROR_HEAD[1], 12, True, "mu")]),
-                 box(cx + cw / 2 + 24, 0, W - cx - cw / 2 - 24, 40, "p", None, 20),
-                 text(cx + cw / 2 + 24, 0, W - cx - cw / 2 - 24, 40, [(MIRROR_HEAD[2], 12, True, "onp")]),
-                 oval(cx - 30, -10, 60, "bg", "p", 3), text(cx - 30, -10, 60, 60, [("VS", 13, True, "p")])]
+    cx, cw = W / 2, 190.0
+    out: list = [box(0, 0, cx - cw / 2 - 24, 52, "ln", None, 26),
+                 text(0, 0, cx - cw / 2 - 24, 52, [(MIRROR_HEAD[1], 14, True, "mu")]),
+                 box(cx + cw / 2 + 24, 0, W - cx - cw / 2 - 24, 52, "p", None, 26),
+                 text(cx + cw / 2 + 24, 0, W - cx - cw / 2 - 24, 52, [(MIRROR_HEAD[2], 14, True, "onp")]),
+                 oval(cx - 33, -7, 66, "bg", "p", 3), text(cx - 33, -7, 66, 66, [("VS", 15, True, "p")])]
     icons = _icons(art, [" ".join(r) for r in rows], sid)
-    y = 64.0
+    y = 74.0
     for k, (r, h) in enumerate(zip(rows, hs)):
-        out.append(box(0, y, cx - 10, h, "sf", "ln", 14))
-        out.append(text(20, y, cx - cw / 2 - 50, h, [(r[1], 10.5, False, "mu")], align="right"))
-        out.append(box(cx + 10, y, W - cx - 10, h, "bg", "p", 14))
-        out.append(text(cx + cw / 2 + 30, y, W - cx - cw / 2 - 50 - (54 if icons[k] else 0), h, [("✓ ", 11, True, "p"), (r[2], 10.5, True, "ink")], align="left"))
+        out.append(box(0, y, cx - 10, h, "sf", "ln", 16))
+        out.append(text(20, y, cx - cw / 2 - 50, h, [(r[1], 12, False, "ink")], align="right"))
+        out.append(box(cx + 10, y, W - cx - 10, h, "bg", "p", 16))
+        out.append(text(cx + cw / 2 + 30, y, W - cx - cw / 2 - 50 - (54 if icons[k] else 0), h, [("✓ ", 12.5, True, "p"), (r[2], 12.5, True, "ink")], align="left"))
         out.append(img(icons[k], W - 64, y + h / 2 - 22, 44, 44))
-        out.append(box(cx - cw / 2, y + h / 2 - 22, cw, 44, "p", None, 22))
-        out.append(text(cx - cw / 2 + 8, y + h / 2 - 22, cw - 16, 44, [(r[0], 11, True, "onp")]))
-        y += h + 12
-    return _clean(out), y - 12
+        out.append(box(cx - cw / 2, y + h / 2 - 27, cw, 54, "p", None, 27))
+        out.append(text(cx - cw / 2 + 8, y + h / 2 - 27, cw - 16, 54, [(r[0], 13.5, True, "onp")]))
+        y += h + 14
+    return _clean(out), y - 14

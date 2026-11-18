@@ -67,6 +67,8 @@ class Candidate(BaseModel):
     option: str | None = None
     category: str | None = None
     url: str | None = None
+    image_url: str | None = None           # 상품 이미지 (판매처·도매몰) — 사용 허락 확인 전에는 내부 검토본에만 (2026-11-17)
+    image_source: str | None = None        # retail | wholesale | supplier
     observed_price: int | None = None      # 과거 관측가 (확정 단가 아님)
     price_kind: str = "unknown"            # supplier_quote | public_retail | supply_table | wholesale | consign ...
     min_order_qty: int | None = None       # 최소구매수량 (도매몰 MOQ, 2026-11-04) — 도매가는 이 수량 이상일 때의 단가

@@ -526,6 +526,12 @@ class Console:
         blocks.append({"type": "notice", "tone": "info",
                        "md": "회사명·실적·플랫폼 등은 b2b/data/company_profile.json 을 채우면 자동 반영됩니다. 제출본 초안에는 원가·마진·내부 판정이 들어가지 않아요. "
                              "템플릿은 위쪽 선택 상자에서 바꾸거나 '공공 네이비로 제안서 다시 만들어줘'처럼 말하면 됩니다."})
+        if prop and prop.facts is not None:                # 2026-11-17: 상품 이미지 안내
+            have = len(prop.facts.get("product_images") or {})
+            blocks.append({"type": "notice", "tone": "info",
+                           "md": f"상품 구성안 슬라이드에 상품 이미지 카드를 넣었어요 (제출본 이미지 {have}개). 공급사가 준 이미지를 "
+                                 "**data/admin/proposal_assets/_products/** 에 '상품명.jpg' 또는 '후보ID.jpg' 로 넣으면 제출본에도 들어가요. "
+                                 "판매처(쿠팡·도매몰) 이미지는 사용 허락 확인 전이라 내부 검토본에만 넣어요."})
         if "그림 반영" not in p:
             try:
                 from app.admin.b2b import design_assets
