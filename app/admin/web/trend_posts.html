@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>트렌드 글 검토 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,select,input,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
+.logout{margin-top:18px;background:transparent;border:1px solid #23364a;color:#c3d1de;border-radius:10px;padding:7px 11px;cursor:pointer;width:100%}
+main{padding:22px 26px;min-width:0;display:grid;gap:22px;align-content:start}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-width:0}
+h2{font-size:17px;margin:0 0 2px} .lede{color:var(--ink2);margin:0 0 12px;font-size:13.5px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12.5px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap;background:#fafbfc;position:sticky;top:0}
+td small{display:block;color:var(--ink3);font-size:12px}
+tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{background:var(--acc-s)}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p-ok{background:var(--ok-s);color:var(--ok)} .p-off{background:#eef1f4;color:var(--ink3)} .p-err{background:var(--ex-s);color:var(--ex)} .p-hold{background:var(--hold-s);color:var(--hold)}
+.detail{margin-top:14px;display:grid;gap:12px}
+.turns{display:grid;gap:6px;font-size:13.5px} .turn{display:flex;gap:10px} .turn span{color:var(--ink3);font-size:12px;min-width:120px}
+.k{font-size:12px;color:var(--ink3);font-weight:600;margin:0 0 4px}
+.err{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:10px 12px}
+.note{font-size:12.5px;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+</style>
+<style>
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px}.kpi b{display:block;font-size:18px}.kpi span{font-size:12px;color:var(--ink3)}
+.chart{width:100%;height:190px;border:1px solid var(--line);border-radius:12px;background:#fbfcfd}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.list{margin:0;padding-left:18px;font-size:13.5px}.list li{margin:3px 0}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--ink2);margin:4px 0 12px}
+.flow span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff}.flow i{color:var(--ink3);font-style:normal}
+.mono{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b">B2B</a></nav>
+  <nav aria-label="트렌드 메뉴"><a href="/admin/trends">급상승 리포트</a><a href="/admin/trend-posts" aria-current="page">글 검토 대기열</a><a href="/trends" target="_blank" rel="noopener">공개 페이지 /trends</a></nav>
+  <div class="railnote">급상승 리포트 → 초안 → 검토 요청 → <b>승인</b>(정책 검사를 통과해야 함) → /trends 게시.<br>자동 게시는 없어요. 30일이 넘은 가격은 공개 페이지에서 저절로 숨겨지고, 승인도 막혀요.</div>
+  <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
+</aside>
+<main>
+<section>
+  <h2>새 초안</h2><p class="lede">급상승 리포트의 단어로 초안을 만들어요. 같은 주제의 글이 30일 안에 있으면 새로 만들지 않고 그 글을 열어요.</p>
+  <div class="row"><select id="d-date" aria-label="리포트 날짜"></select><select id="d-kw" aria-label="단어"></select>
+  <label><input type="checkbox" id="d-prod" checked> 쿠팡 상품 찾기</label><button class="btn primary" id="d-go">초안 만들기</button></div>
+  <div id="d-msg" class="note"></div>
+</section>
+<section>
+  <h2>글 목록</h2>
+  <div class="row" id="tabs"></div>
+  <div class="scroll"><table><thead><tr><th>상태</th><th>제목</th><th>주제</th><th>검사</th><th>고친 시각</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<section id="detail" hidden>
+  <h2 id="x-title"></h2><p class="lede"><span id="x-status" class="pill"></span> <span id="x-id" class="note"></span> · <a id="x-preview" target="_blank" rel="noopener">미리 보기</a> <a id="x-public" target="_blank" rel="noopener"></a></p>
+  <div id="x-issues"></div>
+  <div class="row" id="x-actions"></div>
+  <div class="detail">
+    <div><p class="k">제목</p><input id="e-title" style="width:100%"></div>
+    <div><p class="k">요약</p><textarea id="e-summary" style="min-height:50px"></textarea></div>
+    <div><p class="k">왜 뜨고 있을까 (한 줄에 하나)</p><textarea id="e-why"></textarea></div>
+    <div><p class="k">가격 참고 문구</p><input id="e-note" style="width:100%"></div>
+    <div><p class="k">상품 (체크를 풀면 뺌 · 순서는 검색 결과 그대로)</p><div id="e-products"></div></div>
+    <div><p class="k">레시피</p><div id="e-recipe" class="note"></div></div>
+    <div><p class="k">기록</p><div id="e-history" class="turns"></div></div>
+  </div>
+</section>
+<div id="err" class="err" hidden></div>
+</main>
+</div>
+<script>
+const S={status:null,cur:null,report:null};
+const LABEL={draft:"초안",pending:"검토 대기",approved:"게시됨",rejected:"반려",withdrawn:"내림"};
+const PILL={draft:"p-off",pending:"p-hold",approved:"p-ok",rejected:"p-err",withdrawn:"p-off"};
+const $=id=>document.getElementById(id);
+function el(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(k==="class")e.className=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v)}for(const k of kids)e.append(k);return e}
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/trend-posts";throw new Error("auth")}
+ const j=await r.json().catch(()=>({}));if(!r.ok){const d=j.detail||{};const m=typeof d==="string"?d:(d.message||"요청 실패");const e=new Error(m);e.issues=d.issues||[];throw e}return j}
+const post=(url,body)=>api(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})});
+function showErr(e){const b=$("err");b.hidden=false;b.textContent=e.message+(e.issues&&e.issues.length?" — "+e.issues.map(i=>i.message).join(" / "):"");setTimeout(()=>b.hidden=true,8000)}
+async function loadDates(){const j=await api("/admin/api/trends");const sel=$("d-date");sel.replaceChildren();for(const d of (j.dates||[]).slice().reverse())sel.append(el("option",{value:d},d));S.report=j.report;fillKw()}
+async function fillKw(){const d=$("d-date").value;const j=d?await api("/admin/api/trends?date="+d):{report:S.report};const sel=$("d-kw");sel.replaceChildren();
+ for(const it of ((j.report||{}).items||[]).filter(i=>i.status==="surging"||i.status==="new"))sel.append(el("option",{value:it.keyword},it.keyword))}
+async function makeDraft(){$("d-msg").textContent="만드는 중… (상품 찾기는 10초쯤)";try{const j=await post("/admin/api/trend-posts/draft",{date:$("d-date").value||null,keyword:$("d-kw").value,with_products:$("d-prod").checked});
+ $("d-msg").textContent=j.created?"초안을 만들었어요.":"같은 주제의 글이 이미 있어 그 글을 열었어요.";await list();open_(j)}catch(e){$("d-msg").textContent="";showErr(e)}}
+async function list(){const j=await api("/admin/api/trend-posts"+(S.status?"?status="+S.status:""));const tabs=$("tabs");tabs.replaceChildren();
+ for(const s of [null,"pending","draft","approved","rejected","withdrawn"]){const n=s?(j.counts[s]||0):Object.values(j.counts).reduce((a,b)=>a+b,0);
+  tabs.append(el("button",{class:"btn"+(S.status===s?" primary":""),onclick:()=>{S.status=s;list()}},(s?LABEL[s]:"전체")+" "+n))}
+ const rows=$("rows");rows.replaceChildren();for(const p of j.items){rows.append(el("tr",{class:"click",onclick:()=>open_(p)},el("td",{},el("span",{class:"pill "+PILL[p.status]},p.status_label)),el("td",{},p.title),el("td",{},p.topic),el("td",{},p.issues.length?("막힘 "+p.issues.length):"통과"),el("td",{},p.updated_at.replace("T"," ").slice(0,16))))}}
+function open_(p){S.cur=p;$("detail").hidden=false;$("x-title").textContent=p.title;const st=$("x-status");st.textContent=p.status_label;st.className="pill "+PILL[p.status];$("x-id").textContent=p.id;
+ $("x-preview").href="/admin/trend-posts/"+encodeURIComponent(p.id)+"/preview";const pub=$("x-public");pub.textContent=p.public_url?"· 공개 페이지":"";if(p.public_url)pub.href=p.public_url;else pub.removeAttribute("href");
+ const iss=$("x-issues");iss.replaceChildren();if(p.issues.length){iss.append(el("div",{class:"err"},"정책 검사에 막힌 항목 — 고친 뒤 승인할 수 있어요",el("ul",{class:"list"},...p.issues.map(i=>el("li",{},i.message+(i.where?" ("+i.where+")":""))))))}
+ else iss.append(el("p",{class:"note"},"정책 검사 통과 (자동 검사는 권리·약관 준수를 최종 인증하지 않아요 — 내용을 직접 확인해 주세요)"));
+ const edit=p.status==="draft"||p.status==="rejected";for(const id of["e-title","e-summary","e-why","e-note"])$(id).disabled=!edit;
+ $("e-title").value=p.title;$("e-summary").value=p.summary;$("e-why").value=p.why.join("\n");$("e-note").value=p.price_note;
+ const pr=$("e-products");pr.replaceChildren();p.products.forEach((x,i)=>pr.append(el("label",{style:"display:block;margin:3px 0"},el("input",Object.assign({type:"checkbox","data-i":i,checked:""},edit?{}:{disabled:""})),
+   " "+x.title+" · "+(x.price_krw!=null?x.price_krw.toLocaleString()+"원 ("+(x.price_checked_at||"확인 시각 없음").replace("T"," ").slice(0,16)+" 확인)":"가격 없음")+(x.link_type==="affiliate"?" · 제휴":""))));
+ if(!p.products.length)pr.append(el("span",{class:"note"},"상품 없음"));
+ $("e-recipe").textContent=p.recipe?(p.recipe.name+" — 출처 "+p.recipe.source_label+" · 재료 "+p.recipe.ingredients.join(", ")):"붙인 공공 레시피 없음 (이름이 주제로 끝나는 공공 레시피만 붙여요)";
+ const h=$("e-history");h.replaceChildren();for(const x of p.history)h.append(el("div",{class:"turn"},el("span",{},x.at.replace("T"," ").slice(0,16)),x.action+(x.note?" — "+x.note:"")));
+ const a=$("x-actions");a.replaceChildren();const B=(t,f,cls)=>a.append(el("button",{class:"btn"+(cls?" "+cls:""),onclick:f},t));
+ if(edit){B("저장",save);B("가격 다시 확인",()=>act("refresh"));B("검토 요청",()=>act("submit"),"primary")}
+ if(p.status==="pending"){B("승인 · 게시",()=>act("approve",prompt("승인 메모 (선택)")||null),"primary");B("반려",()=>{const r=prompt("반려 사유");if(r)act("reject",r)})}
+ if(p.status==="approved")B("내리기",()=>{const r=prompt("내리는 이유");if(r!==null)act("withdraw",r)});
+ if(p.status==="withdrawn")B("다시 초안으로",()=>act("reopen"))}
+async function act(action,note){try{const j=await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/"+action,{note});open_(j);list()}catch(e){showErr(e)}}
+async function save(){const keep=[...document.querySelectorAll("#e-products input")].filter(c=>c.checked).map(c=>S.cur.products[+c.dataset.i]);
+ const fields={title:$("e-title").value,summary:$("e-summary").value,why:$("e-why").value.split("\n").map(s=>s.trim()).filter(Boolean),price_note:$("e-note").value,products:keep};
+ try{const j=await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/update",{fields});open_(j);list()}catch(e){showErr(e)}}
+$("d-date").addEventListener("change",fillKw);$("d-go").addEventListener("click",makeDraft);
+loadDates().catch(showErr);list().catch(showErr);
+</script>
+</body>
+</html>

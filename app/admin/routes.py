@@ -673,3 +673,124 @@ def monitor_export(status: str = "전체", institution_type: str = "전체", bid
     wb.save(buf)
     return Response(buf.getvalue(), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-Disposition": "attachment; filename*=UTF-8''" + quote("B2B_선물입찰_모니터.xlsx")})
+
+
+# ── 트렌드 글 검토 대기열 (2단계, 2026-11-16) ──────────────────────────
+# 급상승 리포트 → 초안 → 검토 요청 → 승인(정책 검사 통과 시) → /trends 게시.  자동 게시 없음.
+def _trend_posts():
+    from app.services.trend_posts.service import TrendPosts
+
+    return TrendPosts()
+
+
+def _post_out(svc, post) -> dict:
+    from app.services.trend_posts.model import STATUS_LABEL
+    from app.services.trend_posts.render import post_url
+
+    return {**post.model_dump(mode="json"), "status_label": STATUS_LABEL[post.status],
+            "issues": svc.check(post), "public_url": post_url(post) if post.status == "approved" else None}
+
+
+def _post_call(fn, *args):
+    from app.services.trend_posts.service import PostError
+
+    try:
+        return fn(*args)
+    except PostError as exc:
+        status = 404 if exc.code == "not_found" else 409 if exc.code in ("bad_status", "exists", "not_editable",
+                                                                         "policy") else 400
+        raise HTTPException(status, {"message": str(exc), "code": exc.code, "issues": exc.issues}) from exc
+
+
+@router.get("/admin/trend-posts")
+def admin_trend_posts(request: Request):
+    return _page(request, WEB / "trend_posts.html")
+
+
+@router.get("/admin/api/trend-posts", dependencies=[api])
+def trend_posts_list(status: str | None = Query(None, pattern=r"^(draft|pending|approved|rejected|withdrawn)$")):
+    svc = _trend_posts()
+    posts = svc.store.by_status(status) if status else svc.store.all()
+    counts: dict[str, int] = {}
+    for p in svc.store.all():
+        counts[p.status] = counts.get(p.status, 0) + 1
+    return {"items": [_post_out(svc, p) for p in posts], "counts": counts}
+
+
+@router.get("/admin/api/trend-posts/{post_id}", dependencies=[api])
+def trend_posts_get(post_id: str):
+    svc = _trend_posts()
+    return _post_out(svc, _post_call(svc.get, post_id))
+
+
+class _PostDraftIn(BaseModel):
+    date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    keyword: str = Field(..., min_length=1, max_length=40)
+    with_products: bool = True
+
+
+@router.post("/admin/api/trend-posts/draft", dependencies=[api])
+def trend_posts_draft(body: _PostDraftIn):
+    from app.services.trend_posts import wiring
+    from app.services.trends import surge
+
+    report = surge.load(body.date)
+    if not report:
+        raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들어 주세요.")
+    svc = _trend_posts()
+    post, created = _post_call(lambda: svc.create_from_surge(
+        report, body.keyword, find_products=wiring.find_products if body.with_products else None,
+        find_recipe=wiring.find_recipe))
+    return {**_post_out(svc, post), "created": created}
+
+
+class _PostEditIn(BaseModel):
+    fields: dict
+
+
+class _PostNoteIn(BaseModel):
+    note: str | None = Field(None, max_length=500)
+
+
+@router.post("/admin/api/trend-posts/{post_id}/update", dependencies=[api])
+def trend_posts_update(post_id: str, body: _PostEditIn):
+    svc = _trend_posts()
+    try:
+        post = _post_call(svc.update, post_id, body.fields)
+    except ValueError as exc:                    # 칸 모양이 틀림 (pydantic)
+        raise HTTPException(400, {"message": "칸 모양이 맞지 않아요.", "detail": str(exc)[:300]}) from exc
+    return _post_out(svc, post)
+
+
+@router.post("/admin/api/trend-posts/{post_id}/refresh", dependencies=[api])
+def trend_posts_refresh(post_id: str):
+    from app.services.trend_posts import wiring
+
+    svc = _trend_posts()
+    return _post_out(svc, _post_call(svc.refresh_products, post_id, wiring.find_products))
+
+
+@router.post("/admin/api/trend-posts/{post_id}/{action}", dependencies=[api])
+def trend_posts_action(post_id: str, action: str, body: _PostNoteIn | None = None):
+    svc = _trend_posts()
+    note = body.note if body else None
+    calls = {"submit": lambda: svc.submit(post_id), "approve": lambda: svc.approve(post_id, note),
+             "reject": lambda: svc.reject(post_id, note or ""), "withdraw": lambda: svc.withdraw(post_id, note),
+             "reopen": lambda: svc.reopen(post_id)}
+    if action not in calls:
+        raise HTTPException(404, "없는 동작이에요.")
+    return _post_out(svc, _post_call(calls[action]))
+
+
+@router.get("/admin/trend-posts/{post_id}/preview")
+def trend_posts_preview(post_id: str, request: Request):
+    """승인 전 미리 보기 (관리자만, 검색 노출 차단).  공개 페이지와 같은 그리기 — 상품 링크는 눌러도 공개 쪽에서 막힌다."""
+    if not request_ok(request):
+        return RedirectResponse("/admin/login?next=" + quote(request.url.path), status_code=303)
+    from app.services.trend_posts import render
+
+    svc = _trend_posts()
+    post = _post_call(svc.get, post_id)
+    html = render.post_page(post, svc.clock()).replace(
+        "<main>", '<main><p class=ad>미리 보기 — 아직 공개되지 않은 글이에요 (' + post.status + ")</p>", 1)
+    return HTMLResponse(html, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow"})
