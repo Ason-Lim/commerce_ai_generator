@@ -66,11 +66,13 @@ def _clean_price(v) -> str:
     return s
 
 
-def add(items: list[dict], env=None) -> dict:
+def add(items: list[dict], env=None, owner_of=None) -> dict:
     """items: [{keyword, product_name, store_name, price, discount_price, link, commission_rate, memo}] → {'added', 'rejected'}.
     상품명·발급 링크(naver.me·brandconnect)가 맞아야 하고, 이미 있는 링크는 다시 넣지 않는다.
     가격 (2026-11-17, 브랜드커넥트 화면과 맞춤): 화면의 '판매가'(할인 전) = price, '할인가' = discount_price.
-    등록부 '판매가' 열에는 실제 파는 값(할인가가 있으면 할인가), '정가' 열에는 할인이 있을 때 할인 전 값을 적는다."""
+    등록부 '판매가' 열에는 실제 파는 값(할인가가 있으면 할인가), '정가' 열에는 할인이 있을 때 할인 전 값을 적는다.
+    owner_of(link) → {title, mall} | None (2026-11-18): 브랜드커넥트 수집분이 이 링크를 다른 상품 것으로 알면 막는다
+    (한 상품 링크를 다른 상품 줄에 붙여 넣는 실수 방지)."""
     p = path(env)
     added, rejected = [], []
     with _LOCK:
@@ -86,6 +88,11 @@ def add(items: list[dict], env=None) -> dict:
                       or validate_link(link) or validate_product(name))
             if not reason and link in have:
                 reason = "이미 등록된 링크예요"
+            if not reason and owner_of is not None:
+                from app.services.affiliate.brandconnect_finder import same_product
+                owner = owner_of(link)
+                if owner and not same_product(owner.get("title") or "", name):
+                    reason = f"이 링크는 브랜드커넥트에서 '{owner.get('title')}'({owner.get('mall') or '판매처 모름'}) 상품 링크예요"
             if reason:
                 rejected.append({"row": i, "product_name": name, "reason": reason})
                 continue

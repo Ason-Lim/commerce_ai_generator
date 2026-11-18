@@ -1,8 +1,9 @@
 """브랜드커넥트 상품 찾기 (2026-11-17) — 키워드를 넣으면 쇼핑커넥트 링크를 발급할 상품 후보 3~5개.
 
 자료: food_recommend 식품 모니터링의 브랜드커넥트 수집분(shop_monitor.db, 읽기 전용). .env SHOP_MONITOR_DB 로 위치 변경.
-지금 자료에는 판매량·리뷰 수가 없다(수수료율·가격·할인율만) → **인기 순위가 아니라 '키워드 관련성 → 수수료율' 순**이고
-화면에도 그렇게 적는다. 인기 정보가 확인되면(scripts/bc_fields_probe.py) 그때 기준을 바꾼다.
+순서 (2026-11-18, bc_fields_probe 결과): 브랜드커넥트 응답에 판매량은 없고 리뷰 수·평점(reviewInfo)이 있다 →
+'키워드 관련성 → 리뷰 수 → 평점 → 수수료율 → 할인율'. 리뷰는 수집기가 2026-11-18부터 저장하므로 그 전 수집분은 0 → 수수료율 순과 같다.
+응답의 shortenUrl 은 이 계정이 이미 발급한 링크 → bc_link 로 넘겨 링크 입력 칸을 채우고, link_owner() 로 '이 링크가 어느 상품 것인지' 확인한다.
 가격은 수집 시점 값이라 글에 그대로 쓰지 않는다. 주류·건강기능식품(선택)·식품 아닌 상품·실적 제외 유형은 뺀다.
 """
 from __future__ import annotations
@@ -46,8 +47,9 @@ def relevance(title: str, keyword: str) -> int:
 def find(keyword: str, n: int = 5, *, exclude_health: bool = True, path: Path | None = None,
          today: date | None = None) -> dict:
     kw = (keyword or "").strip()
-    out = {"keyword": kw, "items": [], "snap_date": None, "age_days": None, "basis": "관련성 → 수수료율",
-           "note": "판매량·리뷰 수 자료가 없어 인기 순위가 아니에요. 가격은 수집 시점 값이라 글에 그대로 쓰지 마세요.",
+    out = {"keyword": kw, "items": [], "snap_date": None, "age_days": None, "basis": "관련성 → 리뷰 수 → 평점 → 수수료율",
+           "note": "판매량 자료는 없어 리뷰 수를 인기 대신 써요. 가격은 수집 시점 값이라 글에 그대로 쓰지 마세요.",
+           "has_reviews": False,
            "status": "ok", "excluded": {"alcohol": 0, "health": 0, "non_food": 0, "not_relevant": 0}}
     p = path or db_path()
     if not kw:
@@ -62,7 +64,7 @@ def find(keyword: str, n: int = 5, *, exclude_health: bool = True, path: Path | 
             return {**out, "status": "no_data", "note": "브랜드커넥트 수집 자료가 비어 있어요."}
         like = "%" + "%".join(_flat(kw)) + "%"           # 띄어쓰기 달라도 넓게 고른 뒤 아래에서 다시 거른다
         rows = con.execute(
-            "SELECT snap_date, keyword, title, mall, price, discount_rate, commission, link, product_key "
+            "SELECT snap_date, keyword, title, mall, price, discount_rate, commission, link, product_key, rating, review_count "
             "FROM snapshots WHERE source='brandconnect' AND snap_date >= date(?, '-30 day') "
             "AND (keyword = ? OR replace(title, ' ', '') LIKE ?) ORDER BY snap_date DESC",
             (snap, kw, like)).fetchall()
@@ -92,9 +94,39 @@ def find(keyword: str, n: int = 5, *, exclude_health: bool = True, path: Path | 
         items.append({"title": r["title"], "mall": r["mall"], "price_at_snapshot": r["price"],
                       "discount_rate": r["discount_rate"], "commission_rate": r["commission"],
                       "snap_date": r["snap_date"], "relevance": rel, "collected_keyword": r["keyword"],
-                      "bc_link": r["link"] or None})
-    items.sort(key=lambda x: (-x["relevance"], -(x["commission_rate"] or 0), -(x["discount_rate"] or 0)))
+                      "bc_link": r["link"] or None, "review_count": int(r["review_count"] or 0),
+                      "rating": r["rating"]})
+    items.sort(key=lambda x: (-x["relevance"], -x["review_count"], -(x["rating"] or 0),
+                              -(x["commission_rate"] or 0), -(x["discount_rate"] or 0)))
+    if not any(x["review_count"] for x in items):
+        out["basis"] = "관련성 → 수수료율 (리뷰 자료는 다음 수집부터)"
     today = today or date.today()
     age = (today - date.fromisoformat(snap)).days
     return {**out, "items": items[:max(1, min(int(n or 5), 10))], "snap_date": snap, "age_days": age,
             "stale": age > 3}
+
+
+def same_product(a: str, b: str) -> bool:
+    """상품명 비교 — 띄어쓰기를 무시하고 같거나 한쪽이 다른 쪽을 품으면 같은 상품으로 본다 (잘라 붙인 이름 허용)."""
+    fa, fb = _flat(a), _flat(b)
+    return bool(fa and fb) and (fa == fb or fa in fb or fb in fa)
+
+
+def link_owner(link: str, *, path: Path | None = None) -> dict | None:
+    """브랜드커넥트 수집분에서 이 발급 링크(shortenUrl)가 붙어 있던 상품 {title, mall, snap_date}. 모르면 None."""
+    link = (link or "").strip()
+    p = path or db_path()
+    if not link or not p.is_file():
+        return None
+    try:
+        con = sqlite3.connect(f"file:{p}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return None
+    try:
+        r = con.execute("SELECT title, mall, snap_date FROM snapshots WHERE source='brandconnect' AND link = ? "
+                        "ORDER BY snap_date DESC LIMIT 1", (link,)).fetchone()
+    except sqlite3.Error:
+        return None
+    finally:
+        con.close()
+    return {"title": r[0], "mall": r[1], "snap_date": r[2]} if r else None
