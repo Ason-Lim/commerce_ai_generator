@@ -36,8 +36,9 @@ def report(*items, data_until="2026-11-15"):
             "items": list(items) or [item()], "sources": {}}
 
 
-def pick(title, url, price=29900, link_type="affiliate", section="picks", seen_at=None, rocket=True):
-    return {"section": section, "product": {"key": title, "title": title},
+def pick(title, url, price=29900, link_type="affiliate", section="picks", seen_at=None, rocket=True,
+         image="https://ads-partners.coupang.com/image1/thumb.jpg"):
+    return {"section": section, "product": {"key": title, "title": title, "image_url": image},
             "offer": {"platform": "쿠팡", "product_url": url, "price_krw": price, "link_type": link_type,
                       "affiliate_program": "쿠팡 파트너스" if link_type == "affiliate" else None,
                       "seen_at": seen_at, "rocket": rocket},

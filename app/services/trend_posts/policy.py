@@ -55,6 +55,17 @@ def coupang_url(url: str) -> bool:
             and not parts.username and not parts.password)
 
 
+IMAGE_HOSTS = ("coupang.com", "coupangcdn.com")
+
+
+def coupang_image(url: str | None) -> bool:
+    """쿠팡 상품 사진 주소 (https · 쿠팡 도메인)."""
+    parts = urlsplit(url or "")
+    host = (parts.hostname or "").lower()
+    return (parts.scheme == "https" and not parts.username and not parts.password
+            and any(host == h or host.endswith("." + h) for h in IMAGE_HOSTS))
+
+
 def http_url(url: str | None) -> bool:
     parts = urlsplit(url or "")
     return parts.scheme in {"http", "https"} and bool(parts.netloc) and not parts.username and not parts.password
@@ -99,6 +110,9 @@ def check(post: Post, others: list[Post] | tuple = (), now: datetime | None = No
     for i, p in enumerate(post.products):
         if not coupang_url(p.url):
             bad("link", "상품 링크는 쿠팡 https 주소만 쓸 수 있어요.", f"products[{i}].url")
+    for i, p in enumerate(post.products):
+        if p.image_url and not coupang_image(p.image_url):
+            bad("link", "상품 사진은 쿠팡 https 주소만 쓸 수 있어요.", f"products[{i}].image_url")
     for i, s in enumerate(post.sources):
         if s.url and not http_url(s.url):
             bad("link", "출처 링크는 http(s) 주소만 쓸 수 있어요.", f"sources[{i}].url")

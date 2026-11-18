@@ -55,18 +55,27 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 .flow span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff}.flow i{color:var(--ink3);font-style:normal}
 .mono{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
 </style>
+<style>
+.subtabs{position:sticky;top:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;margin:-22px -26px 0;padding:12px 26px;background:rgba(243,245,248,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.subtabs a{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
+.subtabs a[aria-current=page]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.subtabs a small{font-weight:400;opacity:.75;margin-left:4px}
+@media (max-width:760px){.subtabs{margin:-14px -12px 0;padding:10px 12px}}
+</style>
 </head>
 <body>
 <div class="app">
 <aside>
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b">B2B</a></nav>
-  <nav aria-label="트렌드 메뉴"><a href="#summary">리포트 요약</a><a href="#requests" id="nav-req">발급 요청</a><a href="#surge">급상승 목록</a><a href="#detail">비교 분석</a><a href="#blog">블로그 초안</a><a href="/admin/trend-posts">글 검토 대기열</a></nav>
+  <nav aria-label="트렌드 메뉴"><a href="#summary">리포트 요약</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a><a href="#surge">급상승 목록</a><a href="#detail">비교 분석</a><a href="#blog">블로그 초안</a><a href="/admin/trend-posts">글 검토 대기열</a></nav>
   <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
   데이터랩은 전날까지의 일별 지수라 하루 1회 갱신해요. 검색이 사람인지 매크로인지는 판별할 수 없어요.</div>
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
 </aside>
 <main>
+<nav class="subtabs" aria-label="트렌드 작업 화면"><a href="/admin/trends" data-k="report">급상승 리포트</a><a href="/admin/trend-posts" data-k="coupang">쿠팡 <small>사이트 글</small></a><a href="/admin/trends#blog" data-k="naver">네이버 <small>블로그 초안·쇼핑커넥트</small></a></nav>
+
   <section id="summary" aria-labelledby="sum-h">
     <h2 id="sum-h">검색량 급상승 리포트</h2>
     <div class="flow" aria-label="분석 순서"><span>① 데이터랩 검색량 급상승</span><i>→</i><span>② 블로그 탐지 (제목·날짜)</span><i>→</i><span>③ 구글 트렌드</span><i>→</i><span>④ 교차 확인 · 비교 분석</span></div>
@@ -80,16 +89,43 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   </section>
   <section id="requests" aria-labelledby="req-h">
     <h2 id="req-h">쇼핑커넥트 발급 요청 <span class="pill p-hold" id="req-n" hidden></span></h2>
-    <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요. 브랜드커넥트에서 링크를 발급해 <b>data/naver_connect_links.csv</b> 에 적은 뒤 '발급 완료'로 정리해 주세요. 주류는 올리지 않아요.
+    <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요. 브랜드커넥트에서 링크를 발급한 뒤 <b>링크 입력</b>으로 붙여 넣으면 등록부(naver_connect_links.csv)에 저장되고 요청은 '발급 완료'로 정리돼요. 주류는 올리지 않아요.
+    <br><b>이 리포트에서 올리기</b>: 위에서 고른 날짜의 급상승 리포트에서 등록 링크가 없는 식품(급상승·새로 등장, 주류 제외)을 이 목록에 올려요.
     <br><b>쇼핑커넥트 링크는 블로그 글에만</b> 넣어요 — 네이버 정책상 이 사이트·앱 화면에는 보여 줄 수 없어요 (2026-11-04 회신).</p>
     <div class="row">
       <select id="req-status" aria-label="요청 상태"><option value="open">남은 요청</option><option value="issued">발급 완료</option><option value="skipped">건너뜀</option></select>
       <button class="btn" id="req-trends">이 리포트에서 올리기</button>
+      <button class="btn primary" id="req-link">링크 입력</button>
       <span class="note" id="req-note"></span>
     </div>
     <div class="scroll"><table><thead><tr><th>키워드</th><th>이유</th><th>요청</th><th>마지막</th><th>등록부</th><th></th></tr></thead>
     <tbody id="req-rows"><tr><td colspan="6" class="note">불러오는 중…</td></tr></tbody></table></div>
   </section>
+  <section id="bc" aria-labelledby="bc-h">
+    <h2 id="bc-h">브랜드커넥트 상품 찾기</h2>
+    <p class="lede">키워드를 넣으면 쇼핑커넥트 링크를 발급할 상품 후보를 보여 줘요. 자료는 식품 모니터링의 브랜드커넥트 수집분이고, <b>판매량·리뷰 수가 없어 인기 순위가 아니라 '키워드 관련성 → 수수료율' 순</b>이에요. 식품이 아닌 상품·주류·건강기능식품(선택)은 뺐지만 섞일 수 있으니 확인해 주세요. 가격은 수집 시점 값이라 글에 그대로 쓰지 마세요.</p>
+    <div class="row"><input id="bc-kw" placeholder="예: 사과, 감태" aria-label="키워드" style="min-width:220px">
+      <select id="bc-n" aria-label="개수"><option value="3">3개</option><option value="5" selected>5개</option><option value="10">10개</option></select>
+      <label><input type="checkbox" id="bc-health" checked> 건강기능식품 빼기</label>
+      <button class="btn primary" id="bc-go">찾기</button><span class="note" id="bc-note"></span></div>
+    <div class="scroll"><table><thead><tr><th>상품</th><th>판매처</th><th>수수료율</th><th>할인율</th><th>수집 시점 가격</th><th></th></tr></thead>
+    <tbody id="bc-rows"><tr><td colspan="6" class="note">키워드를 넣고 찾기를 눌러 주세요.</td></tr></tbody></table></div>
+  </section>
+  <section id="links" aria-labelledby="links-h">
+    <h2 id="links-h">등록된 쇼핑커넥트 링크 <span class="pill p-ok" id="links-n" hidden></span></h2>
+    <p class="lede">등록부(naver_connect_links.csv)에 있는 링크예요. 최근에 넣은 것이 위에 와요. 지우면 바로 전 상태를 .bak 로 한 벌 남겨요.</p>
+    <div class="row"><button class="btn primary" id="links-add">링크 입력</button><button class="btn" id="links-reload">새로고침</button><span class="note" id="links-note"></span></div>
+    <div class="scroll"><table><thead><tr><th>상품명</th><th>스토어</th><th>키워드</th><th>가격</th><th>링크</th><th>발급일</th><th></th></tr></thead>
+    <tbody id="links-rows"><tr><td colspan="7" class="note">불러오는 중…</td></tr></tbody></table></div>
+  </section>
+  <dialog id="link-dlg" style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;width:min(980px,96vw)">
+    <h2 style="margin:0 0 4px">쇼핑커넥트 링크 입력</h2>
+    <p class="lede">브랜드커넥트에서 발급한 링크(<b>https://naver.me/…</b>)를 붙여 넣어 주세요. 가격은 브랜드커넥트 화면 그대로 — 판매가(할인 전)·할인가·수수료율. <b>+</b>로 줄을 더하고 <b>−</b>로 지워요. 저장하면 등록부에 바로 들어가요.</p>
+    <div id="link-rows" style="display:grid;gap:8px"></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="link-plus" type="button">+ 줄 추가</button></div>
+    <div id="link-msg" class="note" style="margin:6px 0"></div>
+    <div class="row"><button class="btn primary" id="link-save" type="button">저장</button><button class="btn" id="link-close" type="button">닫기</button></div>
+  </dialog>
   <section id="surge" aria-labelledby="surge-h">
     <h2 id="surge-h">급상승 목록</h2>
     <p class="lede">배수는 각 키워드의 평소(35~8일 전 중앙값) 대비예요. 키워드끼리의 검색량 크기 비교가 아니에요. 행을 누르면 아래에 비교 분석이 열려요.</p>
@@ -102,13 +138,20 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   </section>
   <section id="blog" aria-labelledby="blog-h">
     <h2 id="blog-h">applesodda 블로그 초안</h2>
-    <p class="lede">목록에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 발행하지 않고 텍스트 파일로만 저장해요 — 블로그 임시저장은 요청하시면 확인 후 진행해요.</p>
+    <p class="lede">목록에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않고 텍스트 파일로만 저장해요 — 블로그 임시저장은 요청하시면 확인 후 진행해요.</p>
     <div class="row"><button class="btn" id="draft">초안 만들기</button><span class="note" id="dnote"></span></div>
+    <div class="row"><select id="saved-drafts" aria-label="저장된 초안" style="min-width:320px"><option value="">저장된 초안 불러오기…</option></select>
+      <button class="btn" id="saved-open">열기</button><button class="btn" id="saved-reload">목록 새로고침</button></div>
     <div id="bout"></div>
   </section>
 </main>
 </div>
 <script>
+(function(){const NAVER=["#blog","#requests","#bc","#links"];const mark=()=>{const k=NAVER.includes(location.hash)?"naver":"report";
+  document.querySelectorAll(".subtabs a").forEach(a=>a.toggleAttribute("aria-current",a.dataset.k===k));if(k==="naver")document.querySelector('.subtabs a[data-k="naver"]').setAttribute("aria-current","page");else document.querySelector('.subtabs a[data-k="report"]').setAttribute("aria-current","page")};
+  mark();window.addEventListener("hashchange",mark);
+  document.querySelectorAll('.subtabs a[href^="/admin/trends#"]').forEach(a=>a.addEventListener("click",e=>{if(location.pathname==="/admin/trends"){e.preventDefault();location.hash=a.getAttribute("href").split("#")[1]}}));})();
+
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const href=u=>/^https?:\/\//.test(u||"")?esc(u):"#";
@@ -171,7 +214,8 @@ function detail(i){
 async function load(date){
   const d=await api("/admin/api/trends"+(date?`?date=${encodeURIComponent(date)}`:""));
   REPORT=d.report; $("#date").innerHTML=d.dates.slice().reverse().map(x=>`<option ${REPORT&&REPORT.generated_at.startsWith(x)?"selected":""}>${esc(x)}</option>`).join("")||"<option>리포트 없음</option>";
-  job(d.job); render(); if(d.guest) guest(); else loadReq().catch(e=>{$("#req-rows").innerHTML=`<tr><td colspan="6"><div class="err">${esc(e.message)}</div></td></tr>`});
+  job(d.job); render(); if(d.guest) guest(); else {loadLinks().catch(()=>{});loadSaved().catch(()=>{});}
+  if(!d.guest) loadReq().catch(e=>{$("#req-rows").innerHTML=`<tr><td colspan="6"><div class="err">${esc(e.message)}</div></td></tr>`});
 }
 // 쇼핑커넥트 발급 요청 (2026-11-02) — 관리자만
 const kst=iso=>{const t=Date.parse(iso||"");if(isNaN(t))return "";const d=new Date(t+9*3600e3).toISOString();return d.slice(0,10)+" "+d.slice(11,16)};
@@ -181,12 +225,13 @@ async function loadReq(){
   $("#req-note").textContent=d.queue_on?"":"자동 쌓기 꺼짐 — .env 에 SC_REQUEST_QUEUE=1 을 넣고 서버를 다시 켜 주세요.";
   if(st==="open"){const n=$("#req-n");n.hidden=!d.items.length;n.textContent=`${d.items.length}건`}
   $("#req-rows").innerHTML=d.items.length?d.items.map(it=>{const r=REASON[it.reason]||[it.reason_label,"p-off"];
-    const acts=st==="open"?`<button class="btn" data-id="${it.id}" data-s="issued">발급 완료</button> <button class="btn" data-id="${it.id}" data-s="skipped">건너뛰기</button>`
+    const acts=st==="open"?`<button class="btn primary" data-link="${it.id}" data-kw="${esc(it.keyword)}">링크 입력</button> <button class="btn" data-id="${it.id}" data-s="issued">발급 완료</button> <button class="btn" data-id="${it.id}" data-s="skipped">건너뛰기</button>`
       :`<button class="btn" data-id="${it.id}" data-s="open">되돌리기</button>`;
     return `<tr><td><b>${esc(it.keyword)}</b></td><td><span class="pill ${r[1]}">${esc(r[0])}</span></td><td>${it.hit_count}회</td>
      <td>${esc(kst(it.updated_at))}</td>
      <td>${it.registered?'<span class="pill p-ok">링크 있음</span><small>발급 완료로 정리하세요</small>':'<span class="note">없음</span>'}</td><td>${acts}</td></tr>`}).join("")
     :`<tr><td colspan="6" class="note">${st==="open"?"남은 발급 요청이 없어요.":"없어요."}</td></tr>`;
+  document.querySelectorAll("#req-rows button[data-link]").forEach(b=>b.onclick=()=>openLinks([{keyword:b.dataset.kw}],+b.dataset.link));
   document.querySelectorAll("#req-rows button[data-id]").forEach(b=>b.onclick=async()=>{b.disabled=true;
     try{await api("/admin/api/connect/requests/"+b.dataset.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:b.dataset.s})})}
     catch(e){$("#req-note").textContent=e.message} loadReq()})}
@@ -195,7 +240,7 @@ $("#req-trends").onclick=async()=>{try{const d=await api("/admin/api/connect/que
   $("#req-note").textContent=d.queued.length?`올림: ${d.queued.join(", ")}`:"새로 올릴 키워드가 없어요 (이미 등록됐거나 주류·반짝 키워드).";
   $("#req-status").value="open";loadReq()}catch(e){$("#req-note").textContent=e.message}};
 // 둘러보기 모드 (토큰 없이 읽기 전용): 실행·초안·다른 관리자 탭은 숨김
-function guest(){["#run",".logout","#blog","#requests","#nav-req",'nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
+function guest(){["#run",".logout","#blog","#saved-drafts","#requests","#nav-req","#bc","#nav-bc","#links","#nav-links",'nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
   const n=$(".railnote");if(n&&!$("#gnote"))n.insertAdjacentHTML("beforebegin",'<div class="railnote" id="gnote"><b>둘러보기 모드</b> — 읽기 전용이에요. 리포트 실행과 블로그 초안은 관리자만 할 수 있어요.</div>')}
 function job(j){$("#job").textContent=j.running?"만드는 중… (1~3분)":j.error?"실패: "+j.error:j.finished?`마지막 실행 ${j.finished}`:"";$("#run").disabled=!!j.running}
 $("#date").onchange=e=>load(e.target.value);
@@ -205,8 +250,88 @@ $("#draft").onclick=async()=>{const picks=[...document.querySelectorAll(".pick:c
   try{const d=await api("/admin/api/trends/blog-draft",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:$("#date").value||null,keywords:picks.length?picks:null})});
    $("#dnote").textContent="저장: "+d.file;const ln=d.link_needs;
    const needHtml=ln?`<div class="${ln.need.length?"err":"note"}" style="margin-bottom:10px"><b>발급이 필요한 상품</b> ${ln.need.length?esc(ln.need.join(", "))+" — 글을 올리기 전에 브랜드커넥트에서 링크를 발급해 주세요.":"없음 — 초안 키워드 모두 등록부에 링크가 있어요."}${ln.have.length?`<br><small>등록된 키워드: ${esc(ln.have.join(", "))}</small>`:""}${ln.alcohol.length?`<br><small>주류(링크 넣지 않음): ${esc(ln.alcohol.join(", "))}</small>`:""}</div>`:"";
-   $("#bout").innerHTML=needHtml+`<p class="k">제목</p><p><b>${esc(d.title)}</b></p><p class="k">태그</p><p>${esc(d.tags.join(", "))}</p><p class="k">본문</p><textarea readonly style="min-height:320px">${esc(d.body)}</textarea>`}
+   const cp=d.coupang;const cpMiss=cp?Object.keys(cp).filter(k=>!cp[k]):[];
+   const cpHtml=cp?`<div class="${cpMiss.length?"err":"note"}" style="margin-bottom:10px"><b>쿠팡 링크</b> ${esc(Object.entries(cp).map(([k,n])=>k+" "+n+"개").join(" · "))} — 쿠팡용 초안에만 넣었어요 (가격은 넣지 않음).${cpMiss.length?`<br><small>찾지 못한 키워드(주류 포함): ${esc(cpMiss.join(", "))}</small>`:""}</div>`:"";
+   showDrafts(d.drafts||{naver:d},cpHtml+needHtml);loadSaved().catch(()=>{})}
   catch(e){$("#dnote").textContent=e.message}};
+
+
+function showDrafts(drafts,head){
+   const LABEL={naver:["네이버 블로그용","쇼핑커넥트 삽입 자리 · 쿠팡 없음"],coupang:["쿠팡용","쿠팡 링크·쿠팡 고지만 (쇼핑커넥트 없음)"]};
+   $("#bout").innerHTML=(head||"")+Object.entries(drafts).map(([v,x])=>`<div class="draft" data-file="${esc(x.file)}" style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0">
+     <p style="margin:0 0 8px"><b>${esc((LABEL[v]||[v])[0])}</b> <small class="note">${esc((LABEL[v]||["",""])[1])} · ${esc(x.file)}</small></p>
+     <p class="k">제목</p><input class="d-title" style="width:100%" value="${esc(x.title)}">
+     <p class="k">태그 (쉼표로 구분)</p><input class="d-tags" style="width:100%" value="${esc(x.tags.join(", "))}">
+     <p class="k">본문</p><textarea class="d-body" style="min-height:320px">${esc(x.body)}</textarea>
+     <div class="row" style="margin-top:8px"><button class="btn primary d-save">저장</button><button class="btn d-copy">본문 복사</button><span class="note d-msg"></span></div></div>`).join("");
+   document.querySelectorAll("#bout .draft").forEach(box=>{
+     const msg=box.querySelector(".d-msg");
+     box.querySelector(".d-save").onclick=async()=>{msg.textContent="저장 중…";
+       try{const r=await api("/admin/api/trends/blog-draft/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({file:box.dataset.file,
+         title:box.querySelector(".d-title").value,tags:box.querySelector(".d-tags").value.split(",").map(t=>t.trim()).filter(Boolean),body:box.querySelector(".d-body").value})});
+         msg.textContent="저장했어요"+(r.warnings.length?" — 확인: "+r.warnings.join(" / "):"");msg.style.color=r.warnings.length?"var(--hold)":""}
+       catch(e){msg.textContent="저장 실패: "+e.message}};
+     box.querySelector(".d-copy").onclick=async()=>{try{await navigator.clipboard.writeText(box.querySelector(".d-body").value);msg.textContent="본문을 복사했어요"}catch(e){msg.textContent="복사 실패 — 본문을 직접 선택해 복사해 주세요"}};
+   })
+}
+async function loadSaved(){const d=await api("/admin/api/trends/blog-drafts");const sel=$("#saved-drafts");
+  sel.innerHTML='<option value="">저장된 초안 불러오기…</option>'+d.items.map(x=>{const f=x.files.naver||x.files.coupang;
+    const kinds=[x.files.naver?"네이버 블로그용":null,x.files.coupang?"쿠팡용":null].filter(Boolean).join("+");
+    return `<option value="${esc(f)}">${esc(x.modified)} · ${esc(x.name)} (${kinds})</option>`}).join("")}
+$("#saved-open").onclick=async()=>{const f=$("#saved-drafts").value;if(!f)return;
+  try{const x=await api("/admin/api/trends/blog-draft/file?file="+encodeURIComponent(f));
+    $("#dnote").textContent="불러옴: "+Object.values(x.drafts).map(d=>d.file).join(" · ");
+    showDrafts(x.drafts,Object.keys(x.drafts).length<2?`<div class="note">짝이 되는 ${x.drafts.naver?"쿠팡용":"네이버 블로그용"} 파일이 없어요 (예전 초안). 초안 만들기를 다시 누르면 두 판이 함께 생겨요.</div>`:"")}
+  catch(e){$("#dnote").textContent=e.message}};
+$("#saved-reload").onclick=()=>loadSaved().catch(e=>$("#dnote").textContent=e.message);
+// ── 쇼핑커넥트 링크 입력 · 등록부 · 브랜드커넥트 상품 찾기 (2026-11-17) ──
+const LINK_FIELDS=[["keyword","키워드",100],["product_name","상품명",250],["store_name","스토어명",110],["price","판매가",86],["discount_price","할인가",86],["commission_rate","수수료율(%)",86],["link","쇼핑커넥트 링크 (https://naver.me/…)",230],["memo","메모",100]];
+let LINK_REQ=null;
+function linkRow(v){const r=document.createElement("div");r.className="lrow";r.style.cssText="display:flex;gap:6px;align-items:center;flex-wrap:wrap";
+  for(const[k,ph,w] of LINK_FIELDS){const i=document.createElement("input");i.name=k;i.placeholder=ph;i.title=ph;i.style.width=w+"px";i.value=(v&&v[k]!=null)?v[k]:"";
+    i.addEventListener("input",()=>{if(!$("#link-save").disabled)$("#link-msg").textContent=""});r.append(i)}
+  const m=document.createElement("button");m.type="button";m.className="btn";m.textContent="−";m.title="이 줄 지우기";
+  m.onclick=()=>{r.remove();if(!$("#link-rows").children.length)$("#link-rows").append(linkRow({}))};r.append(m);return r}
+function openLinks(rows,reqId){LINK_REQ=reqId??null;const box=$("#link-rows");box.replaceChildren();(rows&&rows.length?rows:[{}]).forEach(v=>box.append(linkRow(v)));
+  $("#link-msg").textContent=reqId!=null?"저장하면 이 발급 요청은 '발급 완료'로 정리돼요.":"";$("#link-dlg").showModal()}
+$("#link-plus").onclick=()=>{const last=[...$("#link-rows").children].pop();const kw=last?last.querySelector('[name=keyword]').value:"";$("#link-rows").append(linkRow({keyword:kw}))};
+$("#link-close").onclick=()=>$("#link-dlg").close();
+$("#link-save").onclick=async()=>{const rows=[...$("#link-rows").children].map(r=>Object.fromEntries([...r.querySelectorAll("input")].map(i=>[i.name,i.value.trim()])))
+    .filter(r=>r.product_name||r.link);
+  if(!rows.length){$("#link-msg").textContent="상품명과 링크를 넣어 주세요.";return}
+  $("#link-save").disabled=true;
+  try{const d=await api("/admin/api/connect/links",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows,request_id:LINK_REQ})});
+    const bad=d.rejected.map(x=>`${x.row}번째 줄${x.product_name?" ("+x.product_name.slice(0,20)+")":""}: ${x.reason}`);
+    $("#link-msg").innerHTML=`<b>${d.added}개 저장했어요.</b>`+(bad.length?`<div class="err" style="margin-top:6px">${esc(bad.join(" / "))}</div>`:"");
+    if(d.added&&!bad.length)setTimeout(()=>$("#link-dlg").close(),900);
+    else if(d.added){const keep=new Set(d.rejected.map(x=>x.row));const all=[...$("#link-rows").children].filter(r=>[...r.querySelectorAll("input")].some(i=>i.name==="product_name"&&i.value.trim()||i.name==="link"&&i.value.trim()));
+      all.forEach((r,i)=>{if(!keep.has(i+1))r.remove()})}
+    loadReq().catch(()=>{});loadLinks().catch(()=>{})}
+  catch(e){$("#link-msg").textContent="저장 실패: "+e.message}
+  finally{$("#link-save").disabled=false}};
+$("#req-link").onclick=()=>openLinks([{}]);$("#links-add").onclick=()=>openLinks([{}]);
+async function loadLinks(){const d=await api("/admin/api/connect/links");const n=$("#links-n");n.hidden=!d.count;n.textContent=d.count+"개";
+  const won=v=>v&&!isNaN(+v)?Number(v).toLocaleString()+"원":"";
+  $("#links-rows").innerHTML=d.items.length?d.items.map(r=>`<tr><td>${esc(r["상품명"])}</td><td>${esc(r["스토어명"])}</td><td>${esc(r["키워드"])}</td>
+    <td>${esc(won(r["판매가"]))}${r["정가"]?`<br><small><s>${esc(won(r["정가"]))}</s>${r["수수료율(%)"]?" · 수수료 "+esc(r["수수료율(%)"])+"%":""}</small>`:(r["수수료율(%)"]?`<br><small>수수료 ${esc(r["수수료율(%)"])}%</small>`:"")}</td>
+    <td><a href="${href(r["쇼핑커넥트 링크"])}" target="_blank" rel="noopener noreferrer">${esc(r["쇼핑커넥트 링크"])}</a></td><td>${esc(r["링크 발급일"])}</td>
+    <td><button class="btn" data-del="${esc(r["쇼핑커넥트 링크"])}">삭제</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">등록된 링크가 없어요.</td></tr>`;
+  document.querySelectorAll("#links-rows button[data-del]").forEach(b=>b.onclick=async()=>{if(!confirm("이 링크를 등록부에서 지울까요?"))return;
+    try{await api("/admin/api/connect/links/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({link:b.dataset.del})});loadLinks();loadReq().catch(()=>{})}
+    catch(e){$("#links-note").textContent=e.message}})}
+$("#links-reload").onclick=()=>loadLinks().catch(e=>$("#links-note").textContent=e.message);
+let BC=[];
+$("#bc-go").onclick=async()=>{const kw=$("#bc-kw").value.trim();if(!kw)return;$("#bc-note").textContent="찾는 중…";
+  try{const d=await api(`/admin/api/brandconnect/find?keyword=${encodeURIComponent(kw)}&n=${$("#bc-n").value}&exclude_health=${$("#bc-health").checked}`);BC=d.items;
+    const ex=d.excluded||{};$("#bc-note").textContent=d.status!=="ok"?d.note:`수집일 ${d.snap_date}${d.stale?` (${d.age_days}일 전 — 오래됨)`:""} · 기준 ${d.basis} · 뺀 상품: 식품 아님 ${ex.non_food||0} · 건강기능식품 ${ex.health||0} · 주류 ${ex.alcohol||0} · 상품명 불일치 ${ex.not_relevant||0}`;
+    $("#bc-rows").innerHTML=d.items.length?d.items.map((it,i)=>`<tr><td>${esc(it.title)}</td><td>${esc(it.mall)}</td><td>${it.commission_rate??"-"}%</td><td>${it.discount_rate||0}%</td>
+      <td>${it.price_at_snapshot?Number(it.price_at_snapshot).toLocaleString()+"원":"-"} <small>${esc(it.snap_date)}</small></td>
+      <td><button class="btn primary" data-bc="${i}">링크 입력</button></td></tr>`).join(""):`<tr><td colspan="6" class="note">이 키워드의 수집 상품이 없어요. 브랜드커넥트에서 직접 검색해 주세요.</td></tr>`;
+    document.querySelectorAll("#bc-rows button[data-bc]").forEach(b=>b.onclick=()=>{const it=BC[+b.dataset.bc];
+      openLinks([{keyword:kw,product_name:it.title,store_name:it.mall,discount_price:it.price_at_snapshot||"",commission_rate:it.commission_rate??"",memo:`${it.snap_date} 수집 가격 — 브랜드커넥트 화면에서 판매가·할인가를 확인하세요`}])})}
+  catch(e){$("#bc-note").textContent=e.message}};
+$("#bc-kw").addEventListener("keydown",e=>{if(e.key==="Enter")$("#bc-go").click()});
+{const q=new URLSearchParams(location.search).get("bc");if(q){$("#bc-kw").value=q;$("#bc-go").click();setTimeout(()=>$("#bc").scrollIntoView(),300)}}
 load().catch(e=>{$("#rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`});
 </script>
 </body>

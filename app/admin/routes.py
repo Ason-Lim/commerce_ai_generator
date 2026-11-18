@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import re
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -139,29 +140,181 @@ def trends_run():
 class _DraftIn(BaseModel):
     date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
     keywords: list[str] | None = Field(None, max_length=5)
+    with_coupang: bool = True        # 2026-11-17: 키워드마다 쿠팡 파트너스 링크를 쇼핑커넥트 자리 앞에
 
 
 @router.post("/admin/api/trends/blog-draft", dependencies=[api])
 def trends_blog_draft(body: _DraftIn):
-    """Text draft for the applesodda blog (temporary save is done by a person / on request — never published here)."""
+    """Text drafts for the applesodda blog (temporary save is done by a person / on request — never published here).
+
+    2026-11-17: 두 판을 함께 만든다 — 'naver'(네이버 블로그용: 쇼핑커넥트 삽입 자리·고지, 쿠팡 없음)와
+    'coupang'(쿠팡용: 쿠팡 링크·고지만, 쇼핑커넥트 없음).  위쪽 필드는 예전처럼 네이버 블로그용."""
     from app.services.trends import surge
 
     report = surge.load(body.date)
     if not report:
         raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들어 주세요.")
     try:
-        draft = surge.blog_draft(report, body.keywords)
+        first = surge.blog_draft(report, body.keywords)
+        coupang = _coupang_links(first["keywords"]) if body.with_coupang else None
+        drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
+                                            connect_ok=blog_connect_approved()),
+                  "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang")}
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
+    keywords = drafts["naver"]["keywords"]
     # 2026-11-02: 초안 키워드 중 쇼핑커넥트 링크 발급이 필요한 것 — 파일 맨 위 운영 메모 + 화면 표시 (본문에는 넣지 않음)
-    needs = _link_needs(draft["keywords"])
+    needs = _link_needs(keywords)
+    missing = [k for k in keywords if coupang is not None and not coupang.get(k)]
     folder = surge.ROOT / "var" / "blog_drafts"
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"trend_{report['data_until']}_{'_'.join(draft['keywords'])[:40]}.txt"
-    memo = _operator_memo(needs)
-    path.write_text((memo + "\n\n" if memo else "")
-                    + f"{draft['title']}\n\n태그: {', '.join(draft['tags'])}\n\n{draft['body']}\n", encoding="utf-8")
-    return {**draft, "file": str(path.relative_to(surge.ROOT)), "link_needs": needs}
+    stem = f"trend_{report['data_until']}_{'_'.join(keywords)[:40]}"
+    for variant, d in drafts.items():
+        memo = _operator_memo(needs) if variant == "naver" else ""
+        if missing and variant == "coupang":                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
+            line = "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing)
+            head, _, last = memo.rpartition("\n")          # 마지막 줄 = 구분선
+            memo = f"{head}\n{line}\n{last}" if memo else f"{MEMO_HEAD}\n{line}\n{MEMO_RULE}"
+        path = folder / (f"{stem}.txt" if variant == "naver" else f"{stem}_쿠팡용.txt")
+        path.write_text(_draft_text(memo, d["title"], d["tags"], d["body"]), encoding="utf-8")
+        d["file"] = str(path.relative_to(surge.ROOT))
+    out = drafts["naver"]
+    return {**out, "link_needs": needs, "drafts": drafts,
+            "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in keywords}}
+
+
+def blog_connect_approved(env=None) -> bool:
+    """네이버 쇼핑커넥트 블로그 사용 승인 뒤 운영자가 켠다 (.env SC_BLOG_APPROVED=1) — 켜야 네이버용 초안에 쇼핑커넥트 고지."""
+    import os
+
+    source = os.environ if env is None else env
+    return (source.get("SC_BLOG_APPROVED") or "0").strip() == "1"
+
+
+MEMO_HEAD = "[운영 메모 — 블로그에 붙여 넣지 마세요]"
+MEMO_RULE = "─" * 30
+_DRAFT_FILE = re.compile(r"^var/blog_drafts/trend_[^/\\]{1,160}\.txt$")
+
+
+def _draft_text(memo: str, title: str, tags: list[str], body: str) -> str:
+    return (memo + "\n\n" if memo else "") + f"{title}\n\n태그: {', '.join(tags)}\n\n{body}\n"
+
+
+class _DraftSaveIn(BaseModel):
+    file: str = Field(..., max_length=200)
+    title: str = Field(..., min_length=1, max_length=200)
+    tags: list[str] = Field(default_factory=list, max_length=30)
+    body: str = Field(..., min_length=1, max_length=50_000)
+
+
+@router.post("/admin/api/trends/blog-draft/save", dependencies=[api])
+def trends_blog_draft_save(body: _DraftSaveIn):
+    """고친 초안 저장 (2026-11-17) — 같은 파일에 덮어쓰고 맨 위 운영 메모는 그대로 둔다.  발행하지 않는다.
+    광고 고지가 빠졌는지 등은 막지 않고 경고로 알린다 (고치는 중에도 저장할 수 있게)."""
+    from app.services.trends import surge
+
+    folder = (surge.ROOT / "var" / "blog_drafts").resolve()
+    path = (surge.ROOT / body.file).resolve()
+    if not _DRAFT_FILE.match(body.file) or path.parent != folder or not path.is_file():
+        raise HTTPException(404, "초안 파일을 찾을 수 없어요.")
+    old = path.read_text(encoding="utf-8")
+    memo = old.split("\n\n", 1)[0] if old.startswith(MEMO_HEAD) else ""
+    tags = [t.strip().lstrip("#") for t in body.tags if t.strip()][:30]
+    path.write_text(_draft_text(memo, body.title.strip(), tags, body.body.rstrip()), encoding="utf-8")
+    return {"file": body.file, "saved": True, "warnings": _draft_warnings(body.file, body.body)}
+
+
+def _parse_draft(text: str) -> dict:
+    """초안 파일 → {title, tags, body} (맨 위 운영 메모는 빼고)."""
+    if text.startswith(MEMO_HEAD):
+        text = text.split("\n\n", 1)[1] if "\n\n" in text else ""
+    title, _, rest = text.partition("\n\n")
+    tags_line, _, body = rest.partition("\n\n")
+    tags = [t.strip() for t in tags_line.removeprefix("태그:").split(",") if t.strip()] if tags_line.startswith("태그:") \
+        else []
+    if not tags_line.startswith("태그:"):
+        body = rest
+    return {"title": title.strip(), "tags": tags, "body": body.rstrip("\n")}
+
+
+@router.get("/admin/api/trends/blog-drafts", dependencies=[api])
+def trends_blog_drafts():
+    """저장된 초안 목록 (2026-11-17) — 같은 날짜·키워드로 만든 네이버 블로그용·쿠팡용을 한 줄(짝)로, 최근에 고친 짝이 위."""
+    from app.services.trends import surge
+
+    folder = surge.ROOT / "var" / "blog_drafts"
+    pairs: dict[str, dict] = {}
+    for p in (folder.glob("trend_*.txt") if folder.is_dir() else []):
+        rel = str(p.relative_to(surge.ROOT))
+        if not _DRAFT_FILE.match(rel):
+            continue
+        variant = "coupang" if p.name.endswith(COUPANG_SUFFIX) else "naver"
+        stem = rel[:-len(COUPANG_SUFFIX)] if variant == "coupang" else rel[:-len(".txt")]
+        pair = pairs.setdefault(stem, {"stem": stem, "name": Path(stem).name.removeprefix("trend_"), "files": {},
+                                       "mtime": 0.0})
+        pair["files"][variant] = rel
+        pair["mtime"] = max(pair["mtime"], p.stat().st_mtime)
+    items = sorted(pairs.values(), key=lambda x: x["mtime"], reverse=True)[:60]
+    for it in items:
+        it["modified"] = date.fromtimestamp(it.pop("mtime")).isoformat()
+    return {"items": items}
+
+
+@router.get("/admin/api/trends/blog-draft/file", dependencies=[api])
+def trends_blog_draft_file(file: str = Query(..., max_length=200)):
+    """초안 한 벌 열기 — 짝(네이버 블로그용·쿠팡용)이 있으면 둘 다 돌려준다 ('drafts')."""
+    from app.services.trends import surge
+
+    folder = (surge.ROOT / "var" / "blog_drafts").resolve()
+
+    def load(rel: str) -> dict | None:
+        path = (surge.ROOT / rel).resolve()
+        if not _DRAFT_FILE.match(rel) or path.parent != folder or not path.is_file():
+            return None
+        variant = "coupang" if path.name.endswith(COUPANG_SUFFIX) else "naver"
+        return {**_parse_draft(path.read_text(encoding="utf-8")), "file": rel, "variant": variant}
+
+    one = load(file)
+    if one is None:
+        raise HTTPException(404, "초안 파일을 찾을 수 없어요.")
+    stem = file[:-len(COUPANG_SUFFIX)] if one["variant"] == "coupang" else file[:-len(".txt")]
+    drafts = {"naver": load(stem + ".txt"), "coupang": load(stem + COUPANG_SUFFIX)}
+    return {**one, "drafts": {k: v for k, v in drafts.items() if v}}
+
+
+COUPANG_SUFFIX = "_쿠팡용.txt"
+
+
+def _draft_warnings(file: str, text: str) -> list[str]:
+    from app.services.trends import surge
+
+    out = []
+    if ("coupang.com" in text or "coupa.ng" in text) and surge.COUPANG_DISCLOSURE not in text:
+        out.append("쿠팡 링크가 있는데 쿠팡 파트너스 대가성 문구가 없어요. 맨 위에 넣어 주세요.")
+    if (file.endswith("_쿠팡용.txt") or not blog_connect_approved()) and "쇼핑 커넥트 활동" in text:
+        out.append("쇼핑커넥트 고지 문구가 있어요. 쿠팡용 초안이거나 승인 전(SC_BLOG_APPROVED 꺼짐)이면 빼 주세요.")
+    if "▶ [여기에" in text:
+        out.append("'▶ [여기에 …]' 삽입 자리 안내가 남아 있어요. 올리기 전에 상품을 넣거나 지워 주세요.")
+    return out
+
+
+def _coupang_links(keywords: list[str]) -> dict[str, list[dict]]:
+    """키워드마다 쿠팡 파트너스 상품 링크 (공통 검색 picks 순서 그대로, 제휴 링크만, 주류 제외). 실패하면 빈 목록."""
+    from app.services.trend_posts import draft as post_draft, policy, wiring
+    from app.services.trends import surge
+
+    out: dict[str, list[dict]] = {}
+    for kw in keywords:
+        if policy.is_alcohol(kw):
+            out[kw] = []
+            continue
+        try:
+            found = post_draft.products_from_result(wiring.find_products(kw), keyword=kw)
+        except Exception:  # noqa: BLE001 — 쿠팡을 못 불러도 초안은 만든다
+            found = []
+        out[kw] = [{"title": p.title, "url": p.url} for p in found
+                   if p.link_type == "affiliate"][:surge.COUPANG_PER_KEYWORD]
+    return out
 
 
 def _link_needs(keywords: list[str]) -> dict | None:
@@ -204,6 +357,77 @@ def connect_request_status(req_id: int, body: _ConnectStatusIn):
     if not sc.with_db(sc.set_request_status, req_id, body.status):
         raise HTTPException(409, "바꾸지 못했어요. 이미 정리됐거나 같은 키워드의 열린 요청이 있어요.")
     return {"ok": True}
+
+
+# ── 쇼핑커넥트 링크 등록부 (2026-11-17) — 관리자 화면에서 입력·삭제하면 naver_connect_links.csv 에 바로 쓴다 ──
+class _LinkIn(BaseModel):
+    keyword: str = Field("", max_length=60)
+    product_name: str = Field("", max_length=200)
+    store_name: str = Field("", max_length=80)
+    price: str | int | None = None              # 브랜드커넥트 화면의 '판매가' (할인 전)
+    discount_price: str | int | None = None     # 브랜드커넥트 화면의 '할인가' (2026-11-17)
+    commission_rate: str | float | None = None
+    link: str = Field("", max_length=300)
+    memo: str = Field("", max_length=200)
+
+
+class _LinksIn(BaseModel):
+    rows: list[_LinkIn] = Field(..., min_length=1, max_length=30)
+    request_id: int | None = None          # 발급 요청 줄에서 열었으면 저장 뒤 '발급 완료'로 정리
+
+
+@router.get("/admin/api/connect/links", dependencies=[api])
+def connect_links_list():
+    from app.services.affiliate import connect_registry as reg
+
+    rows = reg.rows()
+    return {"items": list(reversed(rows)), "count": len(rows), "file": str(reg.path().name)}
+
+
+@router.post("/admin/api/connect/links", dependencies=[api])
+def connect_links_add(body: _LinksIn):
+    from app.services.affiliate import connect_registry as reg
+    from app.services.affiliate import naver_shopping_connect as sc
+
+    res = reg.add([r.model_dump() for r in body.rows])
+    issued = False
+    if res["added"]:
+        if body.request_id is not None:
+            issued = bool(sc.with_db(sc.set_request_status, body.request_id, "issued"))
+        # 등록된 키워드의 열린 발급 요청도 정리 (CSV 가져오기와 같은 방식)
+        for kw in {r["키워드"] for r in res["added"] if r["키워드"]}:
+            sc.with_db(_close_open_request, kw)
+    return {"added": len(res["added"]), "rejected": res["rejected"], "request_issued": issued}
+
+
+def _close_open_request(conn, keyword: str) -> None:
+    from app.services.affiliate import naver_shopping_connect as sc
+
+    conn.execute("UPDATE sc_link_requests SET status='issued', updated_at=? WHERE keyword=? AND status='open'",
+                 (sc._now(), keyword))
+    conn.commit()
+
+
+class _LinkDeleteIn(BaseModel):
+    link: str = Field(..., min_length=8, max_length=300)
+
+
+@router.post("/admin/api/connect/links/delete", dependencies=[api])
+def connect_links_delete(body: _LinkDeleteIn):
+    from app.services.affiliate import connect_registry as reg
+
+    if not reg.delete(body.link):
+        raise HTTPException(404, "등록부에 없는 링크예요.")
+    return {"ok": True}
+
+
+@router.get("/admin/api/brandconnect/find", dependencies=[api])
+def brandconnect_find(keyword: str = Query(..., min_length=1, max_length=40), n: int = Query(5, ge=1, le=10),
+                      exclude_health: bool = True):
+    """브랜드커넥트 상품 후보 — 키워드 관련성 → 수수료율 순 (판매량 자료 없음, 인기 순위 아님)."""
+    from app.services.affiliate import brandconnect_finder as bf
+
+    return bf.find(keyword, n, exclude_health=exclude_health)
 
 
 @router.post("/admin/api/connect/queue-trends", dependencies=[api])

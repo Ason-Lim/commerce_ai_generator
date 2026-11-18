@@ -55,17 +55,26 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 .flow span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff}.flow i{color:var(--ink3);font-style:normal}
 .mono{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
 </style>
+<style>
+.subtabs{position:sticky;top:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;margin:-22px -26px 0;padding:12px 26px;background:rgba(243,245,248,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.subtabs a{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
+.subtabs a[aria-current=page]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.subtabs a small{font-weight:400;opacity:.75;margin-left:4px}
+@media (max-width:760px){.subtabs{margin:-14px -12px 0;padding:10px 12px}}
+</style>
 </head>
 <body>
 <div class="app">
 <aside>
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b">B2B</a></nav>
-  <nav aria-label="트렌드 메뉴"><a href="/admin/trends">급상승 리포트</a><a href="/admin/trend-posts" aria-current="page">글 검토 대기열</a><a href="/trends" target="_blank" rel="noopener">공개 페이지 /trends</a></nav>
-  <div class="railnote">급상승 리포트 → 초안 → 검토 요청 → <b>승인</b>(정책 검사를 통과해야 함) → /trends 게시.<br>자동 게시는 없어요. 30일이 넘은 가격은 공개 페이지에서 저절로 숨겨지고, 승인도 막혀요.</div>
+  <nav aria-label="트렌드 메뉴"><a href="/admin/trends">급상승 리포트</a><a href="/admin/trend-posts" aria-current="page">글 검토 대기열</a><a href="/admin/trends#blog">블로그 초안 (네이버·쿠팡)</a><a href="/trends" target="_blank" rel="noopener">공개 페이지 /trends</a></nav>
+  <div class="railnote">이 화면은 <b>사이트(/trends)에 올리는 트렌드 글</b>이에요. 네이버 블로그용·쿠팡용 블로그 초안은 '블로그 초안' 메뉴에 있어요.<br><br>급상승 리포트 → 초안 → 검토 요청 → <b>승인</b>(정책 검사를 통과해야 함) → /trends 게시.<br>자동 게시는 없어요. 30일이 넘은 가격은 공개 페이지에서 저절로 숨겨지고, 승인도 막혀요.</div>
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
 </aside>
 <main>
+<nav class="subtabs" aria-label="트렌드 작업 화면"><a href="/admin/trends" data-k="report">급상승 리포트</a><a href="/admin/trend-posts" data-k="coupang">쿠팡 <small>사이트 글</small></a><a href="/admin/trends#blog" data-k="naver">네이버 <small>블로그 초안·쇼핑커넥트</small></a></nav>
+
 <section>
   <h2>새 초안</h2><p class="lede">급상승 리포트의 단어로 초안을 만들어요. 같은 주제의 글이 30일 안에 있으면 새로 만들지 않고 그 글을 열어요.</p>
   <div class="row"><select id="d-date" aria-label="리포트 날짜"></select><select id="d-kw" aria-label="단어"></select>
@@ -95,6 +104,8 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 </main>
 </div>
 <script>
+document.querySelector('.subtabs a[data-k="coupang"]').setAttribute("aria-current","page");
+
 const S={status:null,cur:null,report:null};
 const LABEL={draft:"초안",pending:"검토 대기",approved:"게시됨",rejected:"반려",withdrawn:"내림"};
 const PILL={draft:"p-off",pending:"p-hold",approved:"p-ok",rejected:"p-err",withdrawn:"p-off"};
@@ -119,14 +130,15 @@ function open_(p){S.cur=p;$("detail").hidden=false;$("x-title").textContent=p.ti
  else iss.append(el("p",{class:"note"},"정책 검사 통과 (자동 검사는 권리·약관 준수를 최종 인증하지 않아요 — 내용을 직접 확인해 주세요)"));
  const edit=p.status==="draft"||p.status==="rejected";for(const id of["e-title","e-summary","e-why","e-note"])$(id).disabled=!edit;
  $("e-title").value=p.title;$("e-summary").value=p.summary;$("e-why").value=p.why.join("\n");$("e-note").value=p.price_note;
- const pr=$("e-products");pr.replaceChildren();p.products.forEach((x,i)=>pr.append(el("label",{style:"display:block;margin:3px 0"},el("input",Object.assign({type:"checkbox","data-i":i,checked:""},edit?{}:{disabled:""})),
+ const pr=$("e-products");pr.replaceChildren();p.products.forEach((x,i)=>pr.append(el("label",{style:"display:flex;gap:8px;align-items:center;margin:4px 0"},el("input",Object.assign({type:"checkbox","data-i":i,checked:""},edit?{}:{disabled:""})),
+   x.image_url?el("img",{src:x.image_url,alt:"",width:"40",height:"40",referrerpolicy:"no-referrer",style:"border-radius:6px;object-fit:cover"}):el("span",{class:"note",style:"width:40px"},"사진 없음"),
    " "+x.title+" · "+(x.price_krw!=null?x.price_krw.toLocaleString()+"원 ("+(x.price_checked_at||"확인 시각 없음").replace("T"," ").slice(0,16)+" 확인)":"가격 없음")+(x.link_type==="affiliate"?" · 제휴":""))));
  if(!p.products.length)pr.append(el("span",{class:"note"},"상품 없음"));
  $("e-recipe").textContent=p.recipe?(p.recipe.name+" — 출처 "+p.recipe.source_label+" · 재료 "+p.recipe.ingredients.join(", ")):"붙인 공공 레시피 없음 (이름이 주제로 끝나는 공공 레시피만 붙여요)";
  const h=$("e-history");h.replaceChildren();for(const x of p.history)h.append(el("div",{class:"turn"},el("span",{},x.at.replace("T"," ").slice(0,16)),x.action+(x.note?" — "+x.note:"")));
  const a=$("x-actions");a.replaceChildren();const B=(t,f,cls)=>a.append(el("button",{class:"btn"+(cls?" "+cls:""),onclick:f},t));
  if(edit){B("저장",save);B("가격 다시 확인",()=>act("refresh"));B("검토 요청",()=>act("submit"),"primary")}
- if(p.status==="pending"){B("승인 · 게시",()=>act("approve",prompt("승인 메모 (선택)")||null),"primary");B("반려",()=>{const r=prompt("반려 사유");if(r)act("reject",r)})}
+ if(p.status==="pending"){B("승인 · 게시",()=>{const m=prompt("승인 메모 (선택) — 무엇을 확인했는지 적어 두면 기록에 남아요. 비워도 돼요. 취소하면 승인하지 않아요.");if(m!==null)act("approve",m.trim()||null)},"primary");B("반려",()=>{const r=prompt("반려 사유");if(r)act("reject",r)})}
  if(p.status==="approved")B("내리기",()=>{const r=prompt("내리는 이유");if(r!==null)act("withdraw",r)});
  if(p.status==="withdrawn")B("다시 초안으로",()=>act("reopen"))}
 async function act(action,note){try{const j=await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/"+action,{note});open_(j);list()}catch(e){showErr(e)}}

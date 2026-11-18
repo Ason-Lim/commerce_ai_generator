@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
 import uuid
 from collections.abc import Callable
 from contextlib import contextmanager
@@ -26,6 +27,7 @@ from app.services.chat import blocks as B
 from app.services.chat import explain, saved as saved_mod
 from app.services.chat import food_tips as food_tips_mod
 from app.services.chat import hot as hot_mod
+from app.services.trend_posts import qa as trend_qa
 from app.services.chat.budget import is_budget_answer, parse_budget, strip_budget
 from app.services.chat.state_store import ChatStateStore, new_state
 from app.services.recipe_chat import parsing
@@ -155,13 +157,18 @@ def close_context(state: dict) -> dict:
     return out
 
 
+_QA_MISSING = threading.local()   # 2026-11-16: 이 요청 스레드에서 '근거 트렌드 글 없음'이었던 질문
+
+
 class ChatService:
     def __init__(self, db: Db | None = None, *, shopping: Callable | None = None,
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
                  keyword_extractor: Callable | None = None, food_tips: Callable | None = None,
                  food_review: Callable | None = None,
-                 trend_report: Callable | None = None):
+                 trend_report: Callable | None = None, trend_posts: Callable | None = None):
         self.db = db
+        # trend_posts() -> 게시(승인)된 트렌드 글 목록 (2026-11-16, 2단계 Q&A) — 없으면 TREND_POSTS_DIR 의 게시 글
+        self.trend_posts = trend_posts
         # trend_report() -> 오늘의 급상승 리포트 (surge.load, 2026-11-06) — '요즘 뜨는 식품' 답변
         self.trend_report = trend_report
         # food_tips(text) -> {"food", "tips": [...], "buy_with": [...]} (DeepSeek, 2026-11-04); validated before shown
@@ -178,7 +185,16 @@ class ChatService:
     def handle(self, session_id: str | None, message: str | None = None,
                answers: dict | None = None, chip: str | None = None, owner: str | None = None,
                fresh: bool = False) -> dict:
+        _QA_MISSING.text = None
         response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
+        # 2026-11-16 (2단계 Q&A): 트렌드 질문인데 근거 글이 없으면 지어내지 않고 알린 뒤 평소 답을 그대로 둔다
+        stage = str(response.get("stage") or "")
+        if stage.startswith("shopping") and stage != "shopping_hot" and not answers \
+                and getattr(_QA_MISSING, "text", None) == (message or chip or "").strip():
+            blocks = list(response.get("blocks") or [])
+            at = 1 if blocks and (blocks[0].get("data") or {}).get("affiliate") else 0
+            response = dict(response, blocks=blocks[:at] + [B.notice(trend_qa.NO_POST)] + blocks[at:])
+        _QA_MISSING.text = None
         # 2026-11-16: 실수 신호 모으기 — 약한 일치·0건·다시 찾기·남은 검토 의견 (대화 결과는 바꾸지 않는다)
         from app.services.chat import miss_signals
 
@@ -213,6 +229,12 @@ class ChatService:
         pending = state.get("pending") or {}
         if text and not answers and pending.get("kind") == "budget" and is_budget_answer(text):
             return self._budget_turn(sid, text, state, revision, persist, pending)
+
+        # 2026-11-16 (2단계): '요즘 대방어 왜 유행해?' — 게시된 트렌드 글만 근거로 답하고 원문 보기 카드
+        if text and not answers:
+            qa_turn = self._trend_qa_turn(sid, text, state, revision, persist)
+            if qa_turn is not None:
+                return qa_turn
 
         # 2026-11-06: '요즘 뜨는 식품' — 문장을 쿠팡에서 검색하지 않고 급상승 리포트(네이버·유튜브)로 답한다
         if text and not answers:
@@ -506,6 +528,38 @@ class ChatService:
         state = _log_turn(state, text, "shopping_budget")
         self._try_commit(sid, state, revision, persist)
         return self._response(sid, "shopping_budget", blocks)
+
+    def _published_trend_posts(self) -> list:
+        try:
+            if self.trend_posts is not None:
+                return list(self.trend_posts())
+            from app.services.trend_posts.service import TrendPosts
+
+            return TrendPosts().published()
+        except Exception:  # noqa: BLE001 — 글을 못 읽으면 Q&A 없이 평소 대화
+            log.warning("trend posts unavailable")
+            return []
+
+    def _trend_qa_turn(self, sid, text, state, revision, persist):
+        """게시 글 근거 Q&A.  질문이 아니거나 사는 말이 있으면 None (평소 경로 — 순위·화면 불변)."""
+        kind = trend_qa.intent(text)
+        if kind is None:
+            return None
+        post = trend_qa.find(text, self._published_trend_posts())
+        if post is None:
+            _QA_MISSING.text = text                 # handle() 이 평소 답 위에 '관련 글 없음'을 붙인다 (요청 스레드별)
+            return None
+        from datetime import datetime, timezone
+
+        ans = trend_qa.answer(post, kind, datetime.now(timezone.utc))
+        where = f" 글의 '{ans['section']}' 칸을 그대로 옮겼어요." if ans["section"] else ""
+        blocks = [B.text(f"게시된 트렌드 글 **{ans['source']}** 을 근거로 답해요.{where}"),
+                  B.text("\n".join("- " + line for line in ans["lines"])),
+                  B.trend_post(trend_qa.card(post)),
+                  B.chips([f"{post.topic} 추천해줘"])]
+        state = _log_turn(dict(state, pending=None), text, "trend_qa")
+        self._try_commit(sid, state, revision, persist)
+        return self._response(sid, "trend_qa", blocks)
 
     def _hot_turn(self, sid, text, category, state, revision, persist):
         """급상승 식품 목록 + 위 3개 식품의 상품 후보 (식품마다 2개, 첫 사유는 검색 증가 사실)."""

@@ -78,3 +78,9 @@ def recipe_card(card: dict) -> dict:
 def compare_cta(label: str, sub: str, send: str) -> dict:
     """상품 목록 끝의 비교 카드 (2026-11-09 A안): 누르면 ``send`` 를 메시지로 보낸다 (예: '굴 상품 비교')."""
     return {"type": "compare_cta", "data": {"label": label, "sub": sub, "send": send}}
+
+
+def trend_post(card: dict) -> dict:
+    """트렌드 글 원문 보기 카드 (2026-11-16, 2단계 Q&A · components/TrendPostCard.tsx).
+    card: {id, title, summary, url(/trends/…), published, has_ad} — 누르면 공개 페이지를 옆 패널에 그대로 띄운다."""
+    return {"type": "trend_post", "data": dict(card)}

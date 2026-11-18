@@ -11,6 +11,7 @@ import { RecipeCard } from "./RecipeCard";
 import { SearchLinks } from "./SearchLinks";
 import { ShippingOptions } from "./ShippingOptions";
 import { TrendList } from "./TrendList";
+import { TrendPostCard } from "./TrendPost";
 
 /** blocks 배열을 순회하며 type 별 컴포넌트를 렌더링한다. 모르는 type 은 조용히 건너뛴다. */
 export function BlockRenderer({ blocks }: { blocks: Block[] }) {
@@ -60,6 +61,8 @@ function BlockView({ block }: { block: Block }) {
       return <SearchLinks block={block} />;
     case "trend_list":
       return <TrendList block={block} />;
+    case "trend_post":
+      return <TrendPostCard block={block} />;
     default:
       return null;
   }

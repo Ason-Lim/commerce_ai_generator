@@ -67,7 +67,8 @@ def products_from_result(result: dict | None, now: datetime | None = None, keywo
             title=prod.get("title") or "", url=url, platform=offer.get("platform") or "쿠팡",
             link_type=offer.get("link_type") or "direct", affiliate_program=offer.get("affiliate_program"),
             price_krw=offer.get("price_krw"), price_checked_at=offer.get("seen_at") or checked,
-            rocket=offer.get("rocket"), keyword=keyword))
+            rocket=offer.get("rocket"), keyword=keyword,
+            image_url=prod.get("image_url") if policy.coupang_image(prod.get("image_url")) else None))
         if len(out) >= limit:
             break
     return out
