@@ -114,7 +114,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   <section id="links" aria-labelledby="links-h">
     <h2 id="links-h">등록된 쇼핑커넥트 링크 <span class="pill p-ok" id="links-n" hidden></span></h2>
     <p class="lede">등록부(naver_connect_links.csv)에 있는 링크예요. 최근에 넣은 것이 위에 와요. 지우면 바로 전 상태를 .bak 로 한 벌 남겨요.</p>
-    <div class="row"><button class="btn primary" id="links-add">링크 입력</button><button class="btn" id="links-issued" title="브랜드커넥트에서 발급했지만 등록부에 없는 링크를 수집 자료에서 찾아 입력 창에 채워요">발급한 링크 불러오기</button><input id="links-issued-kw" placeholder="키워드 (비우면 전체)" aria-label="불러올 키워드" style="width:150px"><button class="btn" id="links-reload">새로고침</button><span class="note" id="links-note"></span></div>
+    <div class="row"><button class="btn primary" id="links-add">링크 입력</button><button class="btn" id="links-issued" title="브랜드커넥트에서 발급했지만 등록부에 없는 링크를 수집 자료에서 찾아 입력 창에 채워요">발급한 링크 불러오기</button><input id="links-issued-kw" placeholder="키워드 (비우면 전체)" aria-label="불러올 키워드" style="width:150px"><button class="btn" id="links-refresh" title="그 키워드를 브랜드커넥트에서 바로 다시 읽은 뒤 불러와요 (읽기만 함, 링크 발급 안 함). 맥에서 Chrome 창이 잠깐 열려요">다시 읽고 불러오기</button><button class="btn" id="links-reload">새로고침</button><span class="note" id="links-note"></span></div>
     <div class="scroll"><table><thead><tr><th>상품명</th><th>스토어</th><th>키워드</th><th>가격</th><th>링크</th><th>발급일</th><th></th></tr></thead>
     <tbody id="links-rows"><tr><td colspan="7" class="note">불러오는 중…</td></tr></tbody></table></div>
   </section>
@@ -297,14 +297,23 @@ function openLinks(rows,reqId){LINK_REQ=reqId??null;const box=$("#link-rows");bo
 $("#link-plus").onclick=()=>{const last=[...$("#link-rows").children].pop();const kw=last?last.querySelector('[name=keyword]').value:"";$("#link-rows").append(linkRow({keyword:kw}))};
 $("#link-close").onclick=()=>$("#link-dlg").close();
 // 발급한 링크 불러오기 (2026-11-18): 발급은 사람이 브랜드커넥트 화면에서, 여기서는 수집 자료(shortenUrl)를 읽어 입력 창에 채운다
+// '다시 읽고 불러오기'(2부): 그 키워드를 브랜드커넥트에서 바로 다시 읽은 뒤 불러온다 — 방금 발급한 링크도 나온다
+function showIssued(d,prefix){
+  if(d.status!=="ok"){$("#links-note").textContent=prefix+"브랜드커넥트 수집 자료를 찾지 못했어요.";return}
+  if(!d.items.length){$("#links-note").textContent=prefix+`수집일 ${d.snap_date} 자료에 등록부에 없는 발급 링크가 없어요.`;return}
+  $("#links-note").textContent=prefix+`등록부에 없는 발급 링크 ${d.items.length}개 — 필요 없는 줄은 −로 지우고 저장하세요.`;
+  openLinks(d.items.map(it=>({keyword:it.keyword,product_name:it.title,store_name:it.mall,discount_price:it.price_at_snapshot||"",
+    commission_rate:it.commission_rate??"",link:it.link,memo:`${it.snap_date} 수집 가격 — 브랜드커넥트 화면에서 판매가·할인가 확인`})))}
 $("#links-issued").onclick=async()=>{const kw=$("#links-issued-kw").value.trim();$("#links-note").textContent="찾는 중…";
-  try{const d=await api("/admin/api/brandconnect/issued"+(kw?`?keyword=${encodeURIComponent(kw)}`:""));
-    if(d.status!=="ok"){$("#links-note").textContent="브랜드커넥트 수집 자료를 찾지 못했어요.";return}
-    if(!d.items.length){$("#links-note").textContent=`수집일 ${d.snap_date} 자료에 등록부에 없는 발급 링크가 없어요. 방금 발급했다면 다음 수집 뒤에 나타나요.`;return}
-    $("#links-note").textContent=`수집일 ${d.snap_date} · 등록부에 없는 발급 링크 ${d.items.length}개 — 필요 없는 줄은 −로 지우고 저장하세요.`;
-    openLinks(d.items.map(it=>({keyword:it.keyword,product_name:it.title,store_name:it.mall,discount_price:it.price_at_snapshot||"",
-      commission_rate:it.commission_rate??"",link:it.link,memo:`${it.snap_date} 수집 가격 — 브랜드커넥트 화면에서 판매가·할인가 확인`})))}
+  try{showIssued(await api("/admin/api/brandconnect/issued"+(kw?`?keyword=${encodeURIComponent(kw)}`:"")),"")}
   catch(e){$("#links-note").textContent=e.message}};
+$("#links-refresh").onclick=async()=>{const kw=$("#links-issued-kw").value.trim();
+  if(!kw){$("#links-note").textContent="다시 읽을 키워드를 넣어 주세요.";$("#links-issued-kw").focus();return}
+  const b=$("#links-refresh");b.disabled=true;$("#links-note").textContent=`'${kw}' 브랜드커넥트에서 다시 읽는 중… (Chrome 창이 잠깐 열려요, 10~30초)`;
+  try{const d=await api("/admin/api/brandconnect/issued/refresh",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keyword:kw})});
+    const r=d.refresh||{};showIssued(d,r.ok?`${r.message} · `:`다시 읽기 실패: ${r.message} — 이전 수집 자료로 보여요. · `)}
+  catch(e){$("#links-note").textContent=e.message}
+  finally{b.disabled=false}};
 $("#link-save").onclick=async()=>{const rows=[...$("#link-rows").children].map(r=>Object.fromEntries([...r.querySelectorAll("input")].map(i=>[i.name,i.value.trim()])))
     .filter(r=>r.product_name||r.link);
   if(!rows.length){$("#link-msg").textContent="상품명과 링크를 넣어 주세요.";return}

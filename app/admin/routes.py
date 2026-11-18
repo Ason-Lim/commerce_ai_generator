@@ -440,6 +440,21 @@ def brandconnect_issued(keyword: str | None = Query(None, max_length=40)):
     return bf.issued_links(have, keyword)
 
 
+class _RefreshIn(BaseModel):
+    keyword: str = Field(..., min_length=1, max_length=40)
+
+
+@router.post("/admin/api/brandconnect/issued/refresh", dependencies=[api])
+def brandconnect_issued_refresh(body: _RefreshIn):
+    """키워드 하나를 브랜드커넥트에서 바로 다시 읽은 뒤(읽기 전용) 등록부에 없는 발급 링크를 돌려준다 (2026-11-18 2부)."""
+    from app.services.affiliate import brandconnect_finder as bf
+    from app.services.affiliate import connect_registry as reg
+
+    res = bf.refresh_keyword(body.keyword)
+    have = {(r.get("쇼핑커넥트 링크") or "").strip() for r in reg.rows()}
+    return {"refresh": res, **bf.issued_links(have, body.keyword)}
+
+
 @router.get("/admin/api/brandconnect/find", dependencies=[api])
 def brandconnect_find(keyword: str = Query(..., min_length=1, max_length=40), n: int = Query(5, ge=1, le=10),
                       exclude_health: bool = True):

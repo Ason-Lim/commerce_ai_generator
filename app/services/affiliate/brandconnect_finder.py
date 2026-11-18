@@ -8,9 +8,12 @@
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import sqlite3
+import subprocess
+import threading
 from datetime import date
 from pathlib import Path
 
@@ -168,3 +171,54 @@ def issued_links(registered: set[str], keyword: str | None = None, *, path: Path
                              "commission_rate": r["commission"], "link": link, "snap_date": r["snap_date"],
                              "review_count": int(r["review_count"] or 0), "rating": r["rating"]})
     return {**out, "snap_date": snap}
+
+
+# ── 키워드 하나 다시 읽기 (2026-11-18 '발급한 링크 불러오기' 2부) ──────────────────────
+# 식품 모니터링의 tools/bc_refresh.py 를 따로 실행한다 (수집기와 같은 로그인 세션·읽기 전용·링크 발급 안 함).
+# 화면에서 부르므로 한 번에 하나만, 시간 제한을 둔다. 로그인이 풀려 있으면 스크립트가 바로 실패를 알린다.
+_REFRESH_LOCK = threading.Lock()
+
+
+def shop_dir(env=None) -> Path:
+    return db_path(env).parent.parent
+
+
+def _python(base: Path, env) -> str:
+    raw = (env.get("SHOP_MONITOR_PYTHON") or "").strip()
+    if raw:
+        return str(Path(raw).expanduser())
+    venv = base / ".venv" / "bin" / "python"
+    return str(venv) if venv.is_file() else "python3"
+
+
+def refresh_keyword(keyword: str, *, env=None, run=subprocess.run) -> dict:
+    """{ok, keyword, rows, snap_date, message}. run 은 테스트에서 바꿔 끼운다."""
+    source = os.environ if env is None else env
+    kw = (keyword or "").strip()
+    if not kw or len(kw) > 40:
+        return {"ok": False, "keyword": kw, "rows": 0, "message": "키워드는 1~40자로 넣어 주세요."}
+    base = shop_dir(source)
+    script = base / "tools" / "bc_refresh.py"
+    if not script.is_file():
+        return {"ok": False, "keyword": kw, "rows": 0, "message": f"다시 읽기 스크립트를 찾지 못했어요 ({script})."}
+    if not _REFRESH_LOCK.acquire(blocking=False):
+        return {"ok": False, "keyword": kw, "rows": 0, "message": "다른 키워드를 다시 읽는 중이에요. 잠시 후 다시 눌러 주세요."}
+    try:
+        timeout = int(source.get("BC_REFRESH_TIMEOUT") or 150)
+        try:
+            proc = run([_python(base, source), str(script), kw], cwd=str(base), capture_output=True, text=True,
+                       timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "keyword": kw, "rows": 0, "message": f"{timeout}초 안에 끝나지 않았어요. 잠시 후 다시 해 주세요."}
+        except OSError as e:
+            return {"ok": False, "keyword": kw, "rows": 0, "message": f"실행하지 못했어요: {e}"}
+        lines = [ln for ln in (proc.stdout or "").splitlines() if ln.strip()]
+        try:
+            res = json.loads(lines[-1])
+        except (IndexError, ValueError):
+            tail = (proc.stderr or "").strip().splitlines()[-1:] or ["결과가 없어요"]
+            return {"ok": False, "keyword": kw, "rows": 0, "message": f"다시 읽기 실패: {tail[0][:200]}"}
+        return {"ok": bool(res.get("ok")), "keyword": kw, "rows": int(res.get("rows") or 0),
+                "snap_date": res.get("snap_date"), "message": str(res.get("message") or "")[:300]}
+    finally:
+        _REFRESH_LOCK.release()
