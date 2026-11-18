@@ -30,7 +30,7 @@ ROWS_PER = 7         # 일반 표 한 장 최대 행
 
 @dataclass
 class Slide:
-    kind: str                     # cover | numbers | section | market | closing
+    kind: str                     # cover | toc | numbers | section | market | closing
     title: str = ""
     sid: str = ""
     elements: list[Element] = field(default_factory=list)
@@ -491,7 +491,28 @@ def plan(p: Proposal, market: dict | None = None) -> list[Slide]:
         if sec.id == "understanding" and market and market.get("total", 0) >= 3:
             S.append(Slide("market", "임직원 선물 조달 동향", sid="market", data=market))
     S.append(Slide("closing", "감사합니다"))
+    # 2026-11-18: 표지 다음에 목차 — 장 번호·제목·시작 쪽 (목차 장을 넣은 뒤의 쪽 번호)
+    S.insert(1, Slide("toc", "목차", sid="toc"))
+    items = []
+    for n, sl in enumerate(S, 1):
+        if sl.kind == "section" and not sl.cont:
+            no, txt = split_title(sl.title)
+            items.append({"no": no, "title": txt, "page": n, "internal": sl.internal})
+    S[1].data = {"items": items}
     return S
+
+
+TOC_ROWS = 8          # 한 단 최대 줄 수 — 넘으면 두 단
+
+
+def toc_geom(n: int) -> dict:
+    """목차 배치 (본문 좌표 px): 7개 이하 한 단, 그 이상 두 단. 줄 높이는 본문 높이에 맞춰 최대 60px."""
+    cols = 1 if n <= 7 else 2
+    rows = max(1, math.ceil(n / cols))
+    h = min(60.0, BODY_H / rows)
+    w = 1136 if cols == 1 else (1136 - 48) / 2
+    cells = [(72 + (i // rows) * (w + 48), BODY_TOP + (i % rows) * h) for i in range(n)]
+    return {"cols": cols, "rows": rows, "h": h, "w": w, "cells": cells}
 
 
 # ── 텍스트 ────────────────────────────────────────────────────
@@ -827,6 +848,18 @@ def _market(d: dict) -> str:
             f'<p class="src">출처: 공개 입찰공고 {d.get("total", 0)}건 자체 집계 (유형은 키워드 규칙 분류 · 원문 확인 필요)</p></div>')
 
 
+def _toc(d: dict) -> str:
+    items = d.get("items") or []
+    g = toc_geom(len(items))
+    rows = []
+    for k, it in enumerate(items):
+        badge = '<span class="ibadge">내부용</span>' if it.get("internal") and "내부용" not in it["title"] else ""
+        rows.append(f'<li class="rv" style="--d:{1 + k % 8}"><b class="tn">{html.escape(it["no"] or "·")}</b>'
+                    f'<span class="tt">{_m(it["title"])}{badge}</span><span class="tp">{it["page"]:02d}</span></li>')
+    return (f'<ol class="tocl" style="grid-template-columns:repeat({g["cols"]},1fr);'
+            f'grid-template-rows:repeat({g["rows"]},{g["h"]:.0f}px)">{"".join(rows)}</ol>')
+
+
 def _closing(p: Proposal) -> str:
     c = (p.facts or {}).get("contact") or {}
     who = " · ".join(html.escape(str(v)) for v in (c.get("contact_name"), c.get("contact_phone"), c.get("contact_email")) if v)
@@ -865,8 +898,8 @@ def render(p: Proposal, tpl: T.Template | None = None, market: dict | None = Non
                 body = "".join(_el(e, s.sid, k + 2) for k, e in enumerate(s.elements))
             else:
                 no, txt = ("", s.title)
-                kick = "MARKET EVIDENCE" if s.kind == "market" else "AT A GLANCE"
-                body = _market(s.data) if s.kind == "market" else _numbers(p)
+                kick = {"market": "MARKET EVIDENCE", "toc": "CONTENTS"}.get(s.kind, "AT A GLANCE")
+                body = _market(s.data) if s.kind == "market" else _toc(s.data) if s.kind == "toc" else _numbers(p)
             label = (f"{no} " if no else "") + txt + (" (계속)" if s.cont else "")
             badge = '<span class="ibadge">내부용</span>' if s.internal else ""
             icon = None if (s.cont or s.kind != "section") else ((ART or {}).get("sections") or {}).get(s.sid)
@@ -1075,6 +1108,12 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .c-minimal .ctext{max-width:1000px}.c-minimal h1{font-size:54px}
 .c-minimal .meta{border-top:2px solid var(--ink);padding-top:18px;max-width:none;grid-template-columns:repeat(4,auto)}
 .ribbon{position:absolute;top:26px;left:80px;z-index:3;background:#2b2b2b;color:#fff;font-size:12px;font-weight:700;letter-spacing:.06em;border-radius:6px;padding:4px 10px}
+.tocl{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;column-gap:48px}
+.tocl li{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--ln);min-width:0}
+.tocl .tn{flex:none;width:40px;height:40px;border-radius:50%;background:var(--p);color:var(--onp);display:grid;place-items:center;font-size:15px;font-weight:800}
+.tocl .tt{flex:1;min-width:0;font-size:19px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tocl .tt .ibadge{margin-left:8px}
+.tocl .tp{flex:none;font-size:15px;font-weight:700;color:var(--mu)}
 .closing{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;position:relative}
 .hero{position:absolute;right:70px;top:150px;width:400px;height:420px;object-fit:contain;filter:drop-shadow(0 18px 30px rgba(0,0,0,.18));animation:float 6s ease-in-out infinite}
 .art-min{position:absolute;right:60px;top:0;bottom:0;width:440px}
