@@ -343,17 +343,22 @@ export default function ChatWindow() {
         <SavedProvider sessionId={sessionId}>
         <div className="min-h-dvh bg-paper text-ink">
             <header ref={header} className="sticky top-0 z-10 border-b border-stone-200/70 bg-paper/95 backdrop-blur">
-                <div className="mx-auto flex h-[72px] max-w-6xl items-center justify-between px-5 sm:px-8">
-                    <a href="./" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                {/* B안 (2026-11-18): 한 줄 머리줄. 왼쪽 = 로고 (본문 제목 '식'자와 세로로 맞춤, 폭 900px)
+                    · 가운데 = (대화 중에만) 진행 단계 "점 5개 + 2/5 조건 확인" · 오른쪽 = 메뉴 3개 | 관심 · 새 대화.
+                    모바일은 메뉴가 아래 탭으로 간다. */}
+                <div className="mx-auto flex h-[64px] w-full max-w-[900px] items-center gap-3 px-4 sm:px-8">
+                    <a href="./" className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight">
                         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
-                        AI 식품 추천
+                        <span className="hidden min-[380px]:inline">AI 식품 추천</span>
                     </a>
-                    <SiteNav current="chat" />
-                    <div className="flex items-center gap-3">
-                        {/* 진행 단계는 대화 중에만 (2026-11-17 내비게이션 설계) */}
-                        {messages.length > 0 && <div className="hidden lg:flex"><FlowStepper step={step} /></div>}
+                    <div className="flex min-w-0 flex-1 justify-center">
+                        {messages.length > 0 && <FlowStepper step={step} compact />}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                        <SiteNav current="chat" />
+                        <span className="mx-1 hidden h-5 w-px bg-stone-200 sm:block" aria-hidden />
                         {messages.length > 0 && <SavedButton />}
-                        <button className="flex items-center gap-1 rounded-lg p-2 text-xs hover:bg-stone-100" disabled={busy} onClick={() => { setMessages([]); setSessionId(null); setError(''); setInput(''); setBasket([]); closeDetail(); }}>
+                        <button className="flex items-center gap-1 whitespace-nowrap rounded-lg p-2 text-xs hover:bg-stone-100" disabled={busy} onClick={() => { setMessages([]); setSessionId(null); setError(''); setInput(''); setBasket([]); closeDetail(); }}>
                             <Plus size={16} /><span className="hidden sm:inline">새 대화</span>
                         </button>
                     </div>
@@ -406,7 +411,6 @@ export default function ChatWindow() {
                             })}
                         </div>
                         {examplesDate && <p className="mt-3 text-right text-[11px] text-stone-400">예시 질문 기준일 {examplesDate} · 네이버 식품 키워드 순위</p>}
-                        <p className="mt-7 text-center text-xs text-stone-400">조건 확인 → 후보 비교 → 근거 확인 → 판매처 연결</p>
                     </section>
                 ) : (
                     <div className="space-y-8">
@@ -444,7 +448,8 @@ export default function ChatWindow() {
                         )}
                     </div>
                 </form>
-                <p className="mt-3 text-center text-[10px] text-stone-400">쿠팡 파트너스 활동의 일환으로 일정액의 수수료를 제공받습니다.{hasConnect && ' 네이버 쇼핑커넥트 링크로 구매하셔도 수수료를 제공받습니다.'} 수수료는 본 사이트 운영에 도움이 됩니다. 가격·배송·리뷰는 확인 시점에 따라 달라질 수 있어요.</p>
+                {/* 첫 화면은 위쪽 '광고 · 제휴 링크 안내' 상자가 있으므로 생략. 대화 중에는 상품 링크가 보이므로 남긴다 (2026-11-18) */}
+                {messages.length > 0 && <p className="mt-3 text-center text-[10px] text-stone-400">쿠팡 파트너스 활동의 일환으로 일정액의 수수료를 제공받습니다.{hasConnect && ' 네이버 쇼핑커넥트 링크로 구매하셔도 수수료를 제공받습니다.'} 수수료는 본 사이트 운영에 도움이 됩니다. 가격·배송·리뷰는 확인 시점에 따라 달라질 수 있어요.</p>}
             </footer>
 
             <SavedPanel />

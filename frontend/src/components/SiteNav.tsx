@@ -18,10 +18,10 @@ const ITEMS: { key: NavKey; label: string; href: string; icon: LucideIcon }[] = 
 
 export function SiteNav({ current }: { current: NavKey }) {
   return (
-    <nav aria-label="주요 메뉴" className="hidden items-center gap-1 sm:flex">
+    <nav aria-label="주요 메뉴" className="hidden items-center gap-2 sm:flex">
       {ITEMS.map(({ key, label, href }) => (
         <a key={key} href={href} aria-current={key === current ? "page" : undefined}
-          className={`rounded-full px-3.5 py-1.5 text-sm transition ${key === current
+          className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition ${key === current
             ? "bg-ink font-semibold text-white" : "text-stone-600 hover:bg-stone-100 hover:text-ink"}`}>
           {label}
         </a>

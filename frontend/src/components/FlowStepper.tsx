@@ -9,8 +9,23 @@ const STEPS: { n: FlowStep; label: string }[] = [
   { n: 5, label: "구매 연결" },
 ];
 
-/** 지금 어느 단계인지 보여 주는 진행 표시. 모바일에서는 현재 단계 이름만 보인다. */
-export function FlowStepper({ step }: { step: FlowStep }) {
+/** 지금 어느 단계인지 보여 주는 진행 표시.
+ *  compact: 좁은 머리줄용 "1/5 원하는 것" 한 덩어리 (B안, 2026-11-18). */
+export function FlowStepper({ step, compact = false }: { step: FlowStep; compact?: boolean }) {
+  if (compact) {
+    const cur = STEPS.find(s => s.n === step) ?? STEPS[0];
+    return (
+      <span className="flex items-center gap-2 whitespace-nowrap rounded-full bg-chip px-3 py-1 text-xs"
+        aria-label={`진행 단계 ${step}/5 ${cur.label}`} title={STEPS.map(s => `${s.n} ${s.label}`).join(" › ")}>
+        <span className="hidden items-center gap-1 sm:flex" aria-hidden>
+          {STEPS.map(s => (
+            <span key={s.n} className={cx("h-1.5 rounded-full", s.n === step ? "w-4 bg-ink" : s.n < step ? "w-1.5 bg-accent" : "w-1.5 bg-line")} />
+          ))}
+        </span>
+        <span className="font-bold tabular-nums">{step}/5</span><span>{cur.label}</span>
+      </span>
+    );
+  }
   return (
     <ol className="flex items-center gap-1" aria-label="진행 단계">
       {STEPS.map((s, i) => {
@@ -22,7 +37,7 @@ export function FlowStepper({ step }: { step: FlowStep }) {
               state === "now" ? "bg-ink text-surface" : state === "done" ? "bg-accentSoft text-accent" : "bg-chip text-ink3")}>
               {state === "done" ? "✓" : s.n}
             </span>
-            <span className={cx("whitespace-nowrap text-xs", state === "now" ? "font-bold" : "hidden text-ink3 lg:inline")}>{s.label}</span>
+            <span className={cx("whitespace-nowrap text-xs", state === "now" ? "font-bold" : "text-ink3")}>{s.label}</span>
           </li>
         );
       })}
