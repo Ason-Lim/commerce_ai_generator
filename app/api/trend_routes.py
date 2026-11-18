@@ -2,6 +2,8 @@
 
   GET /trends                    게시된 글 목록
   GET /trends/{글}               글 한 편 (승인되지 않았거나 내린 글은 404)
+  GET /api/trends/posts          앱 화면용 게시 글 요약 (첫 화면 '오늘의 트렌드', 지금 뜨는 식품) — 2026-11-18
+  GET /sitemap.xml · /robots.txt 검색엔진용 (2026-11-18)
   GET /trends/{글}/go/{번호}     상품 링크 — 고객이 누를 때만 판매처로 보내고 클릭을 남긴다
                                  (관리자 로그인 브라우저는 'trend_internal' 로 따로 — 1단계 chat_internal 과 같은 이유)
 """
@@ -10,8 +12,10 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+import re
+
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 
 from app.services.trend_posts import render
 from app.services.trend_posts.service import TrendPosts
@@ -32,6 +36,31 @@ Posts = Annotated[TrendPosts, Depends(get_trend_posts)]
 
 def _html(text: str, status: int = 200) -> HTMLResponse:
     return HTMLResponse(text, status_code=status, headers={"Cache-Control": "no-cache"})
+
+
+def _flat(s: str) -> str:
+    return re.sub(r"\s+", "", s or "").lower()
+
+
+@router.get("/api/trends/posts")
+def trends_posts_json(posts: Posts, limit: int = Query(3, ge=1, le=20)):
+    """게시된 글 요약 — 최신순 limit 개와, 지금 뜨는 식품 카드가 '트렌드 글 읽기'를 붙일 수 있게 주제별 최신 글 표."""
+    published = posts.published()
+    by_topic: dict[str, dict] = {}
+    for p in published:                       # 최신순이므로 처음 본 것이 그 주제의 최신 글
+        by_topic.setdefault(_flat(p.topic), render.card(p))
+    return {"items": [render.card(p) for p in published[:limit]], "by_topic": by_topic, "count": len(published)}
+
+
+@router.get("/sitemap.xml")
+def sitemap(posts: Posts):
+    return Response(render.sitemap_xml(posts.published()), media_type="application/xml",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
+@router.get("/robots.txt")
+def robots():
+    return PlainTextResponse(render.robots_txt(), headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.get("/trends")

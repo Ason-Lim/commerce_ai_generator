@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, Newspaper, Sparkles, TrendingUp } from "lucide-react";
 import { MobileTabBar, MOBILE_TAB_H, SiteNav } from "./SiteNav";
-import { fetchTrends, type TrendItem, type TrendView } from "../api/client";
+import { fetchTrendPosts, fetchTrends, topicKey, type TrendItem, type TrendPostCard, type TrendPostList, type TrendView } from "../api/client";
+import { TrendPostsStrip } from "./TrendPostsStrip";
 
 /**
  * 지금 뜨는 식품 (2026-10-31) — 네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품.
@@ -20,7 +21,7 @@ function Spark({ values }: { values: number[] }) {
   );
 }
 
-function Card({ it }: { it: TrendItem }) {
+function Card({ it, post }: { it: TrendItem; post?: TrendPostCard }) {
   const ask = () => {
     try { sessionStorage.setItem(PENDING_ASK, it.ask); } catch { /* 저장이 막혀도 대화 화면으로는 간다 */ }
     window.location.hash = "";
@@ -51,10 +52,18 @@ function Card({ it }: { it: TrendItem }) {
         {it.clues.map((c) => <span key={c} className="tag bg-chip text-ink2">블로그 단서: {c}</span>)}
       </div>
       {it.cause && <p className="text-sm leading-relaxed text-ink2"><b className="font-semibold text-ink">계기(추정)</b> {it.cause}</p>}
-      <button type="button" onClick={ask}
-        className="flex w-full items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold transition hover:border-ink3">
-        추천 상품 보기 <ArrowRight size={15} aria-hidden />
-      </button>
+      <div className={post ? "grid gap-2 sm:grid-cols-2" : ""}>
+        {post && (
+          <a href={post.url}
+            className="flex w-full items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink/90">
+            <Newspaper size={15} aria-hidden /> 트렌드 글 읽기
+          </a>
+        )}
+        <button type="button" onClick={ask}
+          className="flex w-full items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold transition hover:border-ink3">
+          추천 상품 보기 <ArrowRight size={15} aria-hidden />
+        </button>
+      </div>
     </li>
   );
 }
@@ -62,22 +71,25 @@ function Card({ it }: { it: TrendItem }) {
 export function TrendsPage() {
   const [view, setView] = useState<TrendView | null>(null);
   const [error, setError] = useState("");
+  const [posts, setPosts] = useState<TrendPostList>({ items: [], by_topic: {}, count: 0 });
   useEffect(() => {
     const ctrl = new AbortController();
     fetchTrends(ctrl.signal).then(setView).catch((e) => { if (!ctrl.signal.aborted) setError(e instanceof Error ? e.message : "오류"); });
+    // 게시된 트렌드 글 (2026-11-18 화면 잇기): 위쪽 최신 글 + 같은 식품 카드의 '트렌드 글 읽기'. 실패해도 목록은 그대로.
+    fetchTrendPosts(3, ctrl.signal).then(setPosts).catch(() => { /* 글이 없어도 된다 */ });
     return () => ctrl.abort();
   }, []);
   useEffect(() => { document.title = "Trending | AI 식품 추천"; }, []);
   return (
     <div className="min-h-screen bg-paper text-ink">
       <header className="sticky top-0 z-10 border-b border-stone-200/70 bg-paper/95 backdrop-blur">
-        <div className="mx-auto flex h-[72px] max-w-6xl items-center justify-between px-5 sm:px-8">
-          <a href="/#" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        {/* 대화 화면과 같은 머리줄 (2026-11-18 헤더 B안): 로고는 본문 왼쪽 끝, 메뉴는 오른쪽 */}
+        <div className="mx-auto flex h-[64px] w-full max-w-[900px] items-center justify-between gap-3 px-4 sm:px-8">
+          <a href="/#" className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
             AI 식품 추천
           </a>
           <SiteNav current="hot" />
-          <span className="hidden w-[132px] sm:block" aria-hidden />
         </div>
       </header>
       <main className="mx-auto w-full max-w-[900px] px-4 pt-8 sm:px-8 sm:!pb-12" style={{ paddingBottom: MOBILE_TAB_H + 32 }}>
@@ -87,6 +99,7 @@ export function TrendsPage() {
           블로그 글·식품 검색어 순위·유튜브 영상이 함께 늘었는지도 표시해요.
         </p>
         {view?.data_until && <p className="mt-1 text-sm text-stone-500">{view.data_until}까지의 검색량 기준 · 하루 한 번 갱신</p>}
+        <TrendPostsStrip title="최신 트렌드 글" posts={posts.items} className="mt-6" />
         {error && <p className="mt-6 rounded-xl bg-warnSoft px-4 py-3 text-sm text-warn">불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>}
         {!view && !error && <p className="mt-6 text-sm text-stone-500">불러오는 중…</p>}
         {view && view.items.length === 0 && (
@@ -94,7 +107,7 @@ export function TrendsPage() {
             {view.status === "empty" ? "아직 오늘의 리포트가 없어요." : "지금은 평소보다 크게 늘어난 식품이 없어요."}
           </p>
         )}
-        {view && view.items.length > 0 && <ul className="mt-6 grid gap-4">{view.items.map((it) => <Card key={it.keyword} it={it} />)}</ul>}
+        {view && view.items.length > 0 && <ul className="mt-6 grid gap-4">{view.items.map((it) => <Card key={it.keyword} it={it} post={posts.by_topic[topicKey(it.keyword)]} />)}</ul>}
         <p className="mt-8 text-[13px] leading-6 text-stone-500">
           검색량은 네이버 데이터랩 검색어 트렌드(상대 지수)로 계산했어요. 검색이 늘어난 원인은 확인된 사실이 아니라 블로그 제목에서 찾은 단서와 AI 추정이에요.
         </p>
