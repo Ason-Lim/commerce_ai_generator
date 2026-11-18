@@ -70,7 +70,7 @@ def shop_db(tmp_path):
     con = sqlite3.connect(p)
     con.execute("CREATE TABLE snapshots(snap_date TEXT, source TEXT, keyword TEXT, rank INTEGER, product_key TEXT, "
                 "title TEXT, mall TEXT, brand TEXT, price INTEGER, category TEXT, link TEXT, image TEXT, "
-                "discount_rate INTEGER, commission REAL)")
+                "discount_rate INTEGER, commission REAL, rating REAL, review_count INTEGER)")
     rows = [("2026-11-13", "감태", "태743 감태 엑소좀 크림", "뷰티몰", 30000, 0, 33.0),          # 식품 아님
             ("2026-11-13", "감태", "타트체리 주스 1L", "뉴트리", 19860, 20, 48.0),                # 상품명 불일치
             ("2026-11-13", "감태", "김명월 태안구운감태 1봉", "김명월", 9000, 10, 16.0),
@@ -94,7 +94,7 @@ def test_finder_ranks_relevant_food_by_commission(shop_db):
     assert r["items"][1]["price_at_snapshot"] == 9000                       # 같은 상품은 최근 수집분
     assert r["excluded"] == {"alcohol": 1, "health": 1, "non_food": 1, "not_relevant": 1}
     assert r["snap_date"] == "2026-11-13" and r["age_days"] == 4 and r["stale"] is True
-    assert "인기 순위가 아니" in r["note"] and r["basis"] == "관련성 → 수수료율"
+    assert "판매량 자료는 없어" in r["note"] and r["basis"] == "관련성 → 수수료율 (리뷰 자료는 다음 수집부터)"
     keep = bf.find("감태", 10, path=shop_db, exclude_health=False)
     assert "감태 콜라겐 영양제" in [i["title"] for i in keep["items"]]
     assert bf.find("감태", path=shop_db.parent / "none.db")["status"] == "no_data"
@@ -150,3 +150,63 @@ def test_discount_price_goes_to_the_price_column_and_list_price_to_jeongga(csv_p
     a, b = reg.rows()[1:]
     assert (a["판매가"], a["정가"], a["수수료율(%)"]) == ("22900", "29900", "5")
     assert (b["판매가"], b["정가"], b["수수료율(%)"]) == ("19000", "", "")
+
+
+# ── 2026-11-18: 리뷰 수 순서 · 발급 링크 채우기 · 링크와 상품이 어긋나면 막기 ──
+def _add_bc(path, rows):
+    con = sqlite3.connect(path)
+    con.executemany("INSERT INTO snapshots(snap_date, source, keyword, title, mall, price, discount_rate, commission, "
+                    "rating, review_count, link) VALUES (?, 'brandconnect', ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
+    con.commit()
+    con.close()
+
+
+def test_finder_puts_reviewed_products_first_and_passes_the_issued_link(shop_db):
+    from datetime import date
+
+    _add_bc(shop_db, [("2026-11-18", "딸기", "딸기 설향 금실 프리미엄 생딸기 산청", "청광농수산", 34900, 48, 5.0, 4.88, 3552,
+                       "https://naver.me/GSQeTdjc"),
+                      ("2026-11-18", "딸기", "딸기 설향 킹스베리 논산 산지직송 생딸기 400g", "아농이농원", 26900, 46, 5.0, 4.7, 120, ""),
+                      ("2026-11-18", "딸기", "논산 딸기 1kg 특가", "특가몰", 19900, 0, 20.0, None, 0, "")])
+    r = bf.find("딸기", 5, path=shop_db, today=date(2026, 11, 18))
+    assert [i["mall"] for i in r["items"]] == ["청광농수산", "아농이농원", "특가몰"]   # 수수료가 높아도 리뷰 없는 상품은 뒤로
+    top = r["items"][0]
+    assert (top["review_count"], top["rating"], top["bc_link"]) == (3552, 4.88, "https://naver.me/GSQeTdjc")
+    assert r["basis"].startswith("관련성 → 리뷰 수")
+
+
+def test_finder_says_reviews_start_with_the_next_collection_when_none_are_stored(shop_db):
+    from datetime import date
+
+    r = bf.find("감태", 5, path=shop_db, today=date(2026, 11, 17))
+    assert "다음 수집부터" in r["basis"]
+
+
+def test_link_owner_and_registry_reject_a_link_pasted_on_the_wrong_product(shop_db, csv_path):
+    _add_bc(shop_db, [("2026-11-18", "딸기", "딸기 설향 금실 프리미엄 생딸기 산청", "청광농수산", 34900, 48, 5.0, 4.88, 3552,
+                       "https://naver.me/GSQeTdjc")])
+    owner = lambda link: bf.link_owner(link, path=shop_db)  # noqa: E731
+    assert owner("https://naver.me/GSQeTdjc")["mall"] == "청광농수산"
+    assert owner("https://naver.me/none") is None
+    res = reg.add([{"keyword": "딸기", "product_name": "딸기 설향 킹스베리 논산 산지직송 생딸기 400g", "store_name": "아농이농원",
+                    "link": "https://naver.me/GSQeTdjc"},
+                   {"keyword": "딸기", "product_name": "딸기 설향 금실 프리미엄", "store_name": "청광농수산",   # 잘라 붙인 이름은 같은 상품
+                    "link": "https://naver.me/GSQeTdjc"}], owner_of=owner)
+    assert [r["상품명"] for r in res["added"]] == ["딸기 설향 금실 프리미엄"]
+    assert res["rejected"][0]["row"] == 1 and "금실 프리미엄" in res["rejected"][0]["reason"]
+
+
+def test_same_product_ignores_spaces_and_cut_names():
+    assert bf.same_product("딸기 설향 금실 프리미엄 생딸기 산청", "딸기설향 금실 프리미엄")
+    assert not bf.same_product("딸기 설향 금실 프리미엄 생딸기 산청", "딸기 설향 킹스베리 논산")
+    assert not bf.same_product("", "딸기")
+
+
+def test_admin_links_list_flags_a_link_that_belongs_to_another_product(client, shop_db, csv_path):
+    _add_bc(shop_db, [("2026-11-18", "사과", "경북 부사 사과 5kg", "다른농원", 30000, 0, 5.0, 4.5, 10,
+                       "https://naver.me/5g4aHtNK")])       # 등록부의 '영주사과 홍로 2kg' 링크를 수집분은 다른 상품으로 안다
+    items = client.get("/admin/api/connect/links", headers=H).json()["items"]
+    assert items[0]["_owner"]["title"] == "경북 부사 사과 5kg"
+    bad = client.post("/admin/api/connect/links", headers=H, json={"rows": [
+        {"keyword": "사과", "product_name": "영주사과 부사 3kg", "link": "https://naver.me/5g4aHtNK"}]}).json()
+    assert bad["added"] == 0 and "이미 등록된 링크" in bad["rejected"][0]["reason"]

@@ -380,8 +380,15 @@ class _LinksIn(BaseModel):
 def connect_links_list():
     from app.services.affiliate import connect_registry as reg
 
+    from app.services.affiliate import brandconnect_finder as bf
+
     rows = reg.rows()
-    return {"items": list(reversed(rows)), "count": len(rows), "file": str(reg.path().name)}
+    items = []
+    for r in reversed(rows):                 # 브랜드커넥트 수집분이 이 링크를 다른 상품 것으로 알면 표시 (2026-11-18)
+        owner = bf.link_owner(r.get("쇼핑커넥트 링크") or "")
+        mismatch = bool(owner) and not bf.same_product(owner["title"] or "", r.get("상품명") or "")
+        items.append({**r, "_owner": owner if mismatch else None})
+    return {"items": items, "count": len(rows), "file": str(reg.path().name)}
 
 
 @router.post("/admin/api/connect/links", dependencies=[api])
@@ -389,7 +396,9 @@ def connect_links_add(body: _LinksIn):
     from app.services.affiliate import connect_registry as reg
     from app.services.affiliate import naver_shopping_connect as sc
 
-    res = reg.add([r.model_dump() for r in body.rows])
+    from app.services.affiliate import brandconnect_finder as bf
+
+    res = reg.add([r.model_dump() for r in body.rows], owner_of=bf.link_owner)
     issued = False
     if res["added"]:
         if body.request_id is not None:
@@ -424,7 +433,7 @@ def connect_links_delete(body: _LinkDeleteIn):
 @router.get("/admin/api/brandconnect/find", dependencies=[api])
 def brandconnect_find(keyword: str = Query(..., min_length=1, max_length=40), n: int = Query(5, ge=1, le=10),
                       exclude_health: bool = True):
-    """브랜드커넥트 상품 후보 — 키워드 관련성 → 수수료율 순 (판매량 자료 없음, 인기 순위 아님)."""
+    """브랜드커넥트 상품 후보 — 키워드 관련성 → 리뷰 수 → 평점 → 수수료율 순 (판매량 자료 없음)."""
     from app.services.affiliate import brandconnect_finder as bf
 
     return bf.find(keyword, n, exclude_health=exclude_health)
