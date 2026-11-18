@@ -332,6 +332,20 @@ class _Pptx:
             ch.category_axis.format.line.fill.background()
         self.text(s, 72, 640, 1136, 18, f"출처: 공개 입찰공고 {d.get('total', 0)}건 자체 집계 (유형은 키워드 규칙 분류 · 원문 확인 필요)", 9, False, pal.muted)
 
+    def toc(self, s, d: dict):
+        """목차 (2026-11-18): 번호 원 · 장 제목 · 시작 쪽, 아래 가는 선. 배치는 D.toc_geom 과 HTML 이 같은 값."""
+        pal = self.pal
+        items = d.get("items") or []
+        g = D.toc_geom(len(items))
+        w, h = g["w"], g["h"]
+        for it, (x, y) in zip(items, g["cells"]):
+            self.oval(s, x, y + (h - 40) / 2, 40, pal.primary)
+            self.text(s, x, y + (h - 40) / 2, 40, 40, it["no"] or "·", 13, True, pal.on_primary, align="center", anchor="middle")
+            segs = [(it["title"], 15, True, pal.ink)] + ([("   내부용", 10, True, pal.muted)] if it.get("internal") and "내부용" not in it["title"] else [])
+            self.text(s, x + 56, y, w - 56 - 60, h, [tuple(segs)], anchor="middle")
+            self.text(s, x + w - 60, y, 60, h, f"{it['page']:02d}", 12, True, pal.muted, align="right", anchor="middle")
+            self.box(s, x, y + h - 1, w, 1, pal.line, rounded=False)
+
     def closing(self, s):
         c = (self.p.facts or {}).get("contact") or {}
         who = " · ".join(str(v) for v in (c.get("contact_name"), c.get("contact_phone"), c.get("contact_email")) if v)
@@ -749,6 +763,9 @@ class _Pptx:
             elif sl.kind == "market":
                 self.header(s, "MARKET EVIDENCE", "", sl.title)
                 self.market(s, sl.data)
+            elif sl.kind == "toc":
+                self.header(s, "CONTENTS", "", sl.title)
+                self.toc(s, sl.data)
             else:
                 no, txt = D.split_title(sl.title)
                 self.header(s, D.KICKER.get(sl.sid, ""), no, txt, sl.cont, sl.internal, sl.sid)

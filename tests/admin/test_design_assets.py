@@ -186,7 +186,7 @@ def test_pyramid_mirror_and_hub_figures(tmp_path, monkeypatch):
     html = proposal_deck.render(p)
     assert html.count('class="fig rv"') == 3 and "clip-path:polygon" in html and "VS" in html   # 허브·피라미드·비교
     out = proposal_export.to_pptx(p, tmp_path / "f.pptx")
-    xml = zipfile.ZipFile(out).read("ppt/slides/slide3.xml").decode()
+    xml = zipfile.ZipFile(out).read("ppt/slides/slide4.xml").decode()
     assert 'prst="trapezoid"' in xml and 'prst="triangle"' in xml
 
 
@@ -277,3 +277,24 @@ def test_short_intro_line_stays_with_next_figure():
     p = _prop([intro, tl], sid="mall")
     sl = [s for s in D.plan(p) if s.kind == "section"]
     assert len(sl) == 1 and [D.layout_of(e, "mall") for e in sl[0].elements] == ["para", "path"]
+
+
+# ── 2026-11-18: 목차 ───────────────────────────────────────────
+def test_toc_slide_lists_sections_with_start_pages(tmp_path):
+    from pptx import Presentation
+
+    D = proposal_deck
+    els = [Element(kind="bullets", items=["대상자 명부 기반 계정 발급"] * 3)]
+    p = Proposal(title="설 선물", subtitle="", bid_id=None, agency=None, company="테스트", created=date(2026, 11, 18),
+                 mode="external", sections=[Section(id="summary", title="1. 제안 요약", elements=els),
+                                            Section(id="operations", title="9. 운영 방안", elements=els)])
+    S = D.plan(p)
+    assert S[0].kind == "cover" and S[1].kind == "toc"
+    items = S[1].data["items"]
+    assert [(i["no"], i["title"]) for i in items] == [("01", "제안 요약"), ("09", "운영 방안")]
+    assert all(S[i["page"] - 1].kind == "section" and not S[i["page"] - 1].cont for i in items)   # 쪽 번호 = 그 장의 첫 쪽
+    assert D.toc_geom(14)["cols"] == 2 and D.toc_geom(5)["cols"] == 1
+    assert all(y + D.toc_geom(16)["h"] <= D.BODY_TOP + D.BODY_H + 0.1 for _, y in D.toc_geom(16)["cells"])
+    assert 'class="tocl"' in D.render(p)
+    prs = Presentation(str(proposal_export.to_pptx(p, tmp_path / "t.pptx")))
+    assert "운영 방안" in " ".join(sh.text_frame.text for sh in prs.slides[1].shapes if sh.has_text_frame)
