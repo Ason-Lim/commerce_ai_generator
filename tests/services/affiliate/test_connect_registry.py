@@ -210,3 +210,33 @@ def test_admin_links_list_flags_a_link_that_belongs_to_another_product(client, s
     bad = client.post("/admin/api/connect/links", headers=H, json={"rows": [
         {"keyword": "사과", "product_name": "영주사과 부사 3kg", "link": "https://naver.me/5g4aHtNK"}]}).json()
     assert bad["added"] == 0 and "이미 등록된 링크" in bad["rejected"][0]["reason"]
+
+
+# ── 2026-11-18: 발급한 링크 불러오기 ──
+def test_issued_links_lists_only_unregistered_links_once(shop_db):
+    _add_bc(shop_db, [("2026-11-18", "딸기", "딸기 설향 금실 프리미엄 생딸기 산청", "청광농수산", 34900, 48, 5.0, 4.88, 3552,
+                       "https://naver.me/GSQeTdjc"),
+                      ("2026-11-17", "딸기", "딸기 설향 금실 프리미엄 생딸기 산청", "청광농수산", 35900, 40, 5.0, 4.8, 3500,
+                       "https://naver.me/GSQeTdjc"),                          # 같은 링크 예전 수집 → 하나만
+                      ("2026-11-18", "딸기", "킹스베리 딸기 500g", "아농이농원", 26900, 46, 5.0, 4.7, 120,
+                       "https://naver.me/AlreadyIn"),                        # 이미 등록부에 있음
+                      ("2026-11-18", "딸기", "딸기 막걸리 750ml", "양조장", 9000, 0, 10.0, None, 0,
+                       "https://naver.me/Alcohol1"),                         # 주류
+                      ("2026-11-18", "사과", "부사 사과 3kg", "사과농원", 25000, 10, 7.0, 4.6, 80,
+                       "https://naver.me/Apple001")])
+    have = {"https://naver.me/AlreadyIn"}
+    d = bf.issued_links(have, path=shop_db)
+    assert sorted(i["link"] for i in d["items"]) == ["https://naver.me/Apple001", "https://naver.me/GSQeTdjc"]
+    one = [i for i in d["items"] if i["link"] == "https://naver.me/GSQeTdjc"][0]
+    assert one["price_at_snapshot"] == 34900 and one["snap_date"] == "2026-11-18"
+    assert [i["link"] for i in bf.issued_links(have, "딸기", path=shop_db)["items"]] == ["https://naver.me/GSQeTdjc"]
+
+
+def test_admin_issued_links_skip_what_the_registry_has(client, shop_db):
+    _add_bc(shop_db, [("2026-11-18", "사과", "영주사과 홍로 2kg", "햇살품은사과", 22900, 0, 23.0, 4.5, 10,
+                       "https://naver.me/5g4aHtNK"),                         # 등록부(OLD)에 있음
+                      ("2026-11-18", "사과", "부사 사과 3kg", "사과농원", 25000, 10, 7.0, 4.6, 80,
+                       "https://naver.me/Apple001")])
+    d = client.get("/admin/api/brandconnect/issued?keyword=사과", headers=H).json()
+    assert [i["link"] for i in d["items"]] == ["https://naver.me/Apple001"]
+    assert client.get("/admin/api/brandconnect/issued").status_code in (401, 403)

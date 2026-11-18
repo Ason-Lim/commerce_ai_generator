@@ -130,3 +130,41 @@ def link_owner(link: str, *, path: Path | None = None) -> dict | None:
     finally:
         con.close()
     return {"title": r[0], "mall": r[1], "snap_date": r[2]} if r else None
+
+
+def issued_links(registered: set[str], keyword: str | None = None, *, path: Path | None = None,
+                 days: int = 30) -> dict:
+    """브랜드커넥트에서 이미 발급했지만(수집분의 shortenUrl) 등록부에 아직 없는 링크 (2026-11-18 '발급한 링크 불러오기').
+    발급은 사람이 브랜드커넥트 화면에서 하고, 여기서는 수집 자료를 읽기만 한다. 같은 링크는 가장 최근 수집분 하나.
+    주류는 블로그에도 쓰지 않으므로 뺀다. 가격은 수집 시점 값(할인가)이라 화면에서 확인하도록 메모를 남긴다."""
+    p = path or db_path()
+    out = {"items": [], "snap_date": None, "status": "ok"}
+    if not p.is_file():
+        return {**out, "status": "no_data"}
+    con = sqlite3.connect(f"file:{p}?mode=ro", uri=True)
+    try:
+        con.row_factory = sqlite3.Row
+        snap = con.execute("SELECT max(snap_date) FROM snapshots WHERE source='brandconnect'").fetchone()[0]
+        if not snap:
+            return {**out, "status": "no_data"}
+        sql = ("SELECT snap_date, keyword, title, mall, price, discount_rate, commission, link, rating, review_count "
+               "FROM snapshots WHERE source='brandconnect' AND link != '' AND snap_date >= date(?, ?)")
+        args: list = [snap, f"-{int(days)} day"]
+        kw = (keyword or "").strip()
+        if kw:
+            sql += " AND (keyword = ? OR replace(title, ' ', '') LIKE ?)"
+            args += [kw, "%" + "%".join(_flat(kw)) + "%"]
+        rows = con.execute(sql + " ORDER BY snap_date DESC", args).fetchall()
+    finally:
+        con.close()
+    seen = set(registered)
+    for r in rows:
+        link = (r["link"] or "").strip()
+        if not link or link in seen or is_alcohol_related(r["title"] or ""):
+            continue
+        seen.add(link)
+        out["items"].append({"keyword": r["keyword"], "title": r["title"], "mall": r["mall"],
+                             "price_at_snapshot": r["price"], "discount_rate": r["discount_rate"],
+                             "commission_rate": r["commission"], "link": link, "snap_date": r["snap_date"],
+                             "review_count": int(r["review_count"] or 0), "rating": r["rating"]})
+    return {**out, "snap_date": snap}

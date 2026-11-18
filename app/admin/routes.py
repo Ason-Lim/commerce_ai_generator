@@ -430,6 +430,16 @@ def connect_links_delete(body: _LinkDeleteIn):
     return {"ok": True}
 
 
+@router.get("/admin/api/brandconnect/issued", dependencies=[api])
+def brandconnect_issued(keyword: str | None = Query(None, max_length=40)):
+    """발급했지만 등록부에 없는 쇼핑커넥트 링크 — 수집분(shortenUrl)에서 읽기만 한다 (2026-11-18)."""
+    from app.services.affiliate import brandconnect_finder as bf
+    from app.services.affiliate import connect_registry as reg
+
+    have = {(r.get("쇼핑커넥트 링크") or "").strip() for r in reg.rows()}
+    return bf.issued_links(have, keyword)
+
+
 @router.get("/admin/api/brandconnect/find", dependencies=[api])
 def brandconnect_find(keyword: str = Query(..., min_length=1, max_length=40), n: int = Query(5, ge=1, le=10),
                       exclude_health: bool = True):
