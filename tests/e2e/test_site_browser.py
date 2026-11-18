@@ -18,6 +18,7 @@ import socket
 import threading
 import time
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 
@@ -108,7 +109,7 @@ def test_trend_post_pages(site, page):
     assert page.locator(".menu a[aria-current=page]").inner_text() == "트렌드 글"
     assert abs(_left(page.locator("header .logo")) - _left(page.locator("main h1"))) <= 2      # 로고 = 본문 왼쪽 끝
     page.get_by_role("link", name=post.title).click()
-    page.wait_for_url(f"**/trends/{post.id}")
+    page.wait_for_url(f"**/trends/{quote(post.id)}")   # 주소의 한글은 %EB… 로 바뀌어 있다
     assert page.locator("h1").inner_text() == post.title
     assert page.locator('script[type="application/ld+json"]').count() == 1
     assert page.get_by_role("link", name="이 주제 더 물어보기").is_visible()
@@ -125,7 +126,7 @@ def test_hot_page_links_to_the_post(site, page):
     yuja = cards.filter(has_text="유자")
     assert yuja.get_by_role("link", name="트렌드 글 읽기").count() == 0      # 글 없는 식품엔 없음
     daebang.get_by_role("link", name="트렌드 글 읽기").click()
-    page.wait_for_url(f"**/trends/{post.id}")
+    page.wait_for_url(f"**/trends/{quote(post.id)}")   # 주소의 한글은 %EB… 로 바뀌어 있다
 
 
 def test_home_header_and_todays_trends(site, page):
