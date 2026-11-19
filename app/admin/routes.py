@@ -114,6 +114,87 @@ def trends_report(request: Request, date: str | None = Query(None, pattern=r"^\d
             "guest": not admin}
 
 
+# ── 급상승 키워드 기간 조회 · 키워드 관심 이력 (2026-11-19 설계 1·2절) — 파일만 읽음, 외부 호출 없음 ─────────
+def _period_dirs():
+    from app.services.trends import period, surge
+
+    rank_dir, kind = period.rank_dir_from_env()
+    return rank_dir, kind, surge.report_dir()
+
+
+def _period_has_link():
+    """표에 보이는 줄에만 등록부 '링크 있음'을 붙인다 (화면과 같은 기준 chat.service.registry_links)."""
+    try:
+        from app.services.chat.service import registry_links
+    except Exception:  # noqa: BLE001
+        return None
+    cache: dict[str, bool] = {}
+
+    def has(kw: str) -> bool:
+        if kw not in cache:
+            try:
+                cache[kw] = bool(registry_links([kw]))
+            except Exception:  # noqa: BLE001
+                cache[kw] = False
+        return cache[kw]
+    return has
+
+
+@router.get("/admin/api/trends/period")
+def trends_period(request: Request, preset: str | None = Query(None, pattern=r"^(1w|1m|3m)$"),
+                  start: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                  end: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                  sort: str = Query("change", pattern=r"^(change|max_gain|days_top100|surge_days|best)$"),
+                  limit: int = Query(60, ge=1, le=500), min_days: int = Query(1, ge=1, le=400)):
+    """기간별 식품 키워드 순위 변화 + 급상승 감지 이력 (종료일 이하 자료만). 1w·1m·3m 또는 start~end."""
+    from app.services.trends import period
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, surge_dir = _period_dirs()
+    cov = period.coverage(rank_dir, surge_dir)
+    if not rank_dir or not cov["rank"]:
+        return {"ok": False, "coverage": cov, "source": {"kind": kind, "note": period.source_note(kind, rank_dir)}}
+    s, e = period.resolve_period(preset, start, end, cov["rank"]["last"])
+    if (date.fromisoformat(e) - date.fromisoformat(s)).days > 400:
+        raise HTTPException(400, "기간은 400일 이내로 골라 주세요")
+    table = period.period_table(rank_dir, s, e, surge_dir=surge_dir, sort=sort, min_days=min_days, with_series=True)
+    has = _period_has_link()
+    for g, rows in table["groups"].items():
+        rows[:] = rows[:limit]
+        for r in rows:
+            r["series"] = r["series"][-90:]                    # 작은 선 그래프용 (최대 90점)
+            r["has_link"] = has(r["keyword"]) if has else None
+    table.update(ok=True, coverage=cov, source={"kind": kind, "note": period.source_note(kind, rank_dir)},
+                 guest=not request_ok(request))
+    return table
+
+
+@router.get("/admin/api/trends/keyword")
+def trends_keyword(request: Request, keyword: str = Query(..., min_length=1, max_length=60),
+                   start: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                   end: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$")):
+    """키워드 하나의 관심 이력 — 순위 전체 기간(누락·500위 밖 표시), 급상승 감지일, 종료일 이하 최근 급상승 파일의 60일 지수, 함께 움직인 키워드."""
+    from app.services.trends import period
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, surge_dir = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    kw = keyword.strip()
+    h = period.keyword_history(kw, rank_dir, end=end, surge_dir=surge_dir)
+    if start or end:                                           # 같은 기간에 함께 오른 키워드
+        s, e = period.resolve_period("1m", start, end, h["series"][-1][0] if h["series"] else None)
+        table = period.period_table(rank_dir, s, e, surge_dir=None, with_series=False)
+        h["companions"] = period.companions(kw, table)
+        h["period"] = {"start": s, "end": e}
+    has = _period_has_link()
+    h["has_link"] = has(kw) if has else None
+    h["source"] = {"kind": kind, "note": period.source_note(kind, rank_dir)}
+    return h
+
+
 @router.post("/admin/api/trends/run", dependencies=[api])
 def trends_run():
     """Makes today's report in the background (DataLab · blog search · DeepSeek) — about 1~3 minutes."""
