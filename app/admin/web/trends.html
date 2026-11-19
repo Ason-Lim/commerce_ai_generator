@@ -44,6 +44,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 [hidden]{display:none!important}
 @media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+kbd{display:inline-block;padding:0 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:#fff;font:600 12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
 </style>
 <style>
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -97,7 +98,13 @@ body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver
   </section>
   <section id="requests" aria-labelledby="req-h">
     <h2 id="req-h">쇼핑커넥트 발급 요청 <span class="pill p-hold" id="req-n" hidden></span></h2>
-    <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요. 브랜드커넥트에서 링크를 발급한 뒤 <b>링크 입력</b>으로 붙여 넣으면 등록부(naver_connect_links.csv)에 저장되고 요청은 '발급 완료'로 정리돼요. 주류는 올리지 않아요.
+    <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요 — <b>발급할 키워드 할 일 목록</b>이에요. 요청 횟수가 많은 것부터 하세요. 주류는 올리지 않아요.
+    <br><b>발급하는 법 (크롬 확장 'bc-to-registry')</b>: ① 줄의 <b>브랜드커넥트에서 찾기</b> → 키워드가 복사되고 브랜드커넥트 탭이 열려요
+    → ② 브랜드커넥트 검색칸을 누르고 <kbd>⌘V</kbd>(붙여 넣기) → <kbd>Enter</kbd>
+    → ③ 상품의 <b>링크 발급</b> → ④ 오른쪽 아래 'commerce_ai 등록부' 창에서 <b>등록부에 저장</b>.
+    확장 창 키워드가 이 목록 키워드와 <b>글자까지 같으면</b> 요청이 저절로 '발급 완료'가 돼요(다르게 저장했으면 <b>발급 완료</b>를 눌러 정리).
+    한 창 안에서 반반으로 보려면 크롬 툴바의 초록 <b>등</b> 아이콘(분할 화면). 브랜드커넥트 탭으로 오가기: <kbd>⌘⌥←</kbd>/<kbd>⌘⌥→</kbd>.
+    <br><b>링크 입력</b>(위 버튼)은 확장 없이 링크를 손으로 붙여 넣을 때만 써요.
     <br><b>이 리포트에서 올리기</b>: 위에서 고른 날짜의 급상승 리포트에서 등록 링크가 없는 식품(급상승·새로 등장, 주류 제외)을 이 목록에 올려요.
     <br><b>쇼핑커넥트 링크는 블로그 글에만</b> 넣어요 — 네이버 정책상 이 사이트·앱 화면에는 보여 줄 수 없어요 (2026-11-04 회신).</p>
     <div class="row">
@@ -239,13 +246,13 @@ async function loadReq(){
   $("#req-note").textContent=d.queue_on?"":"자동 쌓기 꺼짐 — .env 에 SC_REQUEST_QUEUE=1 을 넣고 서버를 다시 켜 주세요.";
   if(st==="open"){const n=$("#req-n");n.hidden=!d.items.length;n.textContent=`${d.items.length}건`}
   $("#req-rows").innerHTML=d.items.length?d.items.map(it=>{const r=REASON[it.reason]||[it.reason_label,"p-off"];
-    const acts=st==="open"?`<button class="btn primary" data-link="${it.id}" data-kw="${esc(it.keyword)}">링크 입력</button> <button class="btn" data-id="${it.id}" data-s="issued">발급 완료</button> <button class="btn" data-id="${it.id}" data-s="skipped">건너뛰기</button>`
+    const acts=st==="open"?`<button class="btn primary" data-find="${esc(it.keyword)}" title="키워드를 복사하고 브랜드커넥트 탭을 열어요 — 검색칸에 ⌘V, Enter">브랜드커넥트에서 찾기</button> <button class="btn" data-id="${it.id}" data-s="issued">발급 완료</button> <button class="btn" data-id="${it.id}" data-s="skipped">건너뛰기</button>`
       :`<button class="btn" data-id="${it.id}" data-s="open">되돌리기</button>`;
     return `<tr><td><b>${esc(it.keyword)}</b></td><td><span class="pill ${r[1]}">${esc(r[0])}</span></td><td>${it.hit_count}회</td>
      <td>${esc(kst(it.updated_at))}</td>
      <td>${it.registered?'<span class="pill p-ok">링크 있음</span><small>발급 완료로 정리하세요</small>':'<span class="note">없음</span>'}</td><td>${acts}</td></tr>`}).join("")
     :`<tr><td colspan="6" class="note">${st==="open"?"남은 발급 요청이 없어요.":"없어요."}</td></tr>`;
-  document.querySelectorAll("#req-rows button[data-link]").forEach(b=>b.onclick=()=>openLinks([{keyword:b.dataset.kw}],+b.dataset.link));
+  document.querySelectorAll("#req-rows button[data-find]").forEach(b=>b.onclick=()=>openBrandconnect(b.dataset.find,$("#req-note")));
   document.querySelectorAll("#req-rows button[data-id]").forEach(b=>b.onclick=async()=>{b.disabled=true;
     try{await api("/admin/api/connect/requests/"+b.dataset.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:b.dataset.s})})}
     catch(e){$("#req-note").textContent=e.message} loadReq()})}
@@ -348,11 +355,13 @@ $("#links-refresh").onclick=()=>refreshIssued($("#links-issued-kw").value.trim()
 // 발급은 그 화면에서 사람이 하고, 크롬 확장 'bc-to-registry'의 오른쪽 아래 창에서 등록부에 저장한다.
 // 한 창 안에서 반반으로 보려면 확장의 '등' 아이콘(크롬 분할 화면). 예전 '발급하러 가기'(오른쪽 창 + 돌아오면 자동 다시 읽기)는 지움.
 const BC_URL="https://brandconnect.naver.com/971564859961248/affiliate/products";
-$("#bc-open").onclick=()=>{const kw=$("#bc-kw").value.trim();
+function openBrandconnect(kw,note){
   if(kw){try{navigator.clipboard&&navigator.clipboard.writeText(kw)}catch(e){}}
   const w=window.open(BC_URL,"bc-issue");
-  if(!w){$("#bc-note").textContent="팝업이 막혔어요 — 주소창 오른쪽의 팝업 허용을 눌러 주세요.";return}
-  $("#bc-note").textContent=kw?`브랜드커넥트를 열었어요 — 검색칸에 붙여 넣기(⌘V)하면 '${kw}'를 찾아요. 발급한 뒤 오른쪽 아래 'commerce_ai 등록부'에서 저장하세요.`:"브랜드커넥트를 열었어요. 발급한 뒤 오른쪽 아래 'commerce_ai 등록부'에서 저장하세요."}
+  if(!w){note.textContent="팝업이 막혔어요 — 주소창 오른쪽의 팝업 허용을 눌러 주세요.";return}
+  note.textContent=kw?`'${kw}'를 복사했어요 — 브랜드커넥트 검색칸을 누르고 ⌘V, Enter → 링크 발급 → 오른쪽 아래 'commerce_ai 등록부'에서 저장. 키워드가 '${kw}' 그대로면 요청도 저절로 정리돼요.`
+    :"브랜드커넥트를 열었어요. 발급한 뒤 오른쪽 아래 'commerce_ai 등록부'에서 저장하세요."}
+$("#bc-open").onclick=()=>openBrandconnect($("#bc-kw").value.trim(),$("#bc-note"));
 $("#link-save").onclick=async()=>{const rows=[...$("#link-rows").children].map(r=>Object.fromEntries([...r.querySelectorAll("input")].map(i=>[i.name,i.value.trim()])))
     .filter(r=>r.product_name||r.link);
   if(!rows.length){$("#link-msg").textContent="상품명과 링크를 넣어 주세요.";return}
