@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "commerce_ai — 브랜드커넥트 링크를 등록부에 저장",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "브랜드커넥트에서 사람이 발급한 쇼핑커넥트 링크를 버튼 한 번으로 commerce_ai 등록부(naver_connect_links.csv)에 저장합니다. 브랜드커넥트 API 를 스스로 부르지 않습니다.",
   "icons": {
     "16": "icons/icon16.png",

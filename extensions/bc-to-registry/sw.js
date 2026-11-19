@@ -1,6 +1,6 @@
 // 서비스 워커: commerce_ai 관리자 API 로만 요청한다 (2026-11-19). 브랜드커넥트 API 는 부르지 않는다.
 // 0.2.2: 파일 이름을 background.js → sw.js 로 바꾸고(크롬이 옛 파일을 붙잡고 있던 문제) 다른 파일을 불러오지 않는다.
-console.info('[bc-to-registry] sw 0.3.0 시작');
+console.info('[bc-to-registry] sw 0.3.1 시작');
 
 // 서버 주소 점검: 이 컴퓨터(localhost·127.0.0.1)만 — lib/registry_row.js 의 serverOk 와 같은 규칙
 function serverOk(base) {
@@ -80,7 +80,8 @@ async function openBrandconnect() {
   const { openMode } = await chrome.storage.local.get({ openMode: 'tab' });
   if (openMode === 'window') return openRightWindow();
   const cur = await chrome.windows.getLastFocused({ windowTypes: ['normal'] }).catch(() => null);
-  const tabs = await chrome.tabs.query({ url: 'https://brandconnect.naver.com/*' }).catch(() => []);
+  // 따로 띄운 창(예전 '오른쪽 절반 창')에 있는 탭은 건너뛰고 일반 크롬 창의 탭만 다시 쓴다
+  const tabs = await chrome.tabs.query({ url: 'https://brandconnect.naver.com/*', windowType: 'normal' }).catch(() => []);
   const same = tabs.find((t) => cur && t.windowId === cur.id) || tabs[0];
   if (same) {
     await chrome.tabs.update(same.id, { active: true });
