@@ -59,3 +59,31 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   handle(msg || {}).then(sendResponse, (e) => sendResponse({ ok: false, error: String(e) }));
   return true;
 });
+
+// 툴바 아이콘 (2026-11-19): 브랜드커넥트 상품 찾기를 지금 창의 오른쪽 절반 크기 창으로 연다. 이미 열어 둔 창이 있으면 앞으로.
+// 관리자 화면 '브랜드커넥트 열기'·'발급하러 가기'와 같은 주소 (채널 971564859961248).
+const BC_HOME = 'https://brandconnect.naver.com/971564859961248/affiliate/products';
+
+async function openBrandconnect() {
+  const { bcWindowId } = await chrome.storage.session.get('bcWindowId');
+  if (bcWindowId) {
+    try {
+      await chrome.windows.update(bcWindowId, { focused: true });
+      return;
+    } catch (e) { /* 닫혔으면 새로 연다 */ }
+  }
+  const cur = await chrome.windows.getLastFocused().catch(() => null);
+  const left = cur && cur.left != null ? cur.left : 0;
+  const top = cur && cur.top != null ? cur.top : 0;
+  const width = cur && cur.width ? cur.width : 1440;
+  const height = cur && cur.height ? cur.height : 900;
+  const half = Math.round(width / 2);
+  const win = await chrome.windows.create({ url: BC_HOME, type: 'popup', left: left + width - half, top, width: half, height, focused: true });
+  await chrome.storage.session.set({ bcWindowId: win.id });
+}
+
+chrome.action.onClicked.addListener(() => { openBrandconnect().catch((e) => console.warn('[bc-to-registry] 창 열기 실패', e)); });
+chrome.windows.onRemoved.addListener(async (id) => {
+  const { bcWindowId } = await chrome.storage.session.get('bcWindowId');
+  if (id === bcWindowId) await chrome.storage.session.remove('bcWindowId');
+});
