@@ -299,3 +299,19 @@ def test_admin_refresh_then_lists_new_issued_links(client, shop_db, monkeypatch)
 def test_issue_window_url_uses_the_creator_channel():
     assert bf.bc_products_url({}) == "https://brandconnect.naver.com/971564859961248/affiliate/products"
     assert bf.bc_products_url({"BC_CREATOR_ID": "123x"}) == "https://brandconnect.naver.com/123/affiliate/products"
+
+
+def test_admin_accepts_the_row_the_extension_sends(client, csv_path):
+    """크롬 확장 bc-to-registry (2026-11-19) 가 보내는 모양 그대로: 숫자 가격·실수 수수료·할인 없으면 null."""
+    row = {"keyword": "감태", "product_name": "김명월 태안구운감태 1봉", "store_name": "김명월", "price": 11000,
+           "discount_price": 9900, "commission_rate": 16.5, "link": "https://naver.me/ExtA1", "memo": ""}
+    out = client.post("/admin/api/connect/links", headers=H, json={"rows": [row]}).json()
+    assert out == {"added": 1, "rejected": [], "request_issued": False}
+    new = reg.rows()[-1]
+    assert (new["판매가"], new["정가"], new["수수료율(%)"], new["키워드"]) == ("9900", "11000", "16.5", "감태")
+    plain = {**row, "link": "https://naver.me/ExtB2", "product_name": "무안 생감태 900g", "discount_price": None, "price": 15000}
+    assert client.post("/admin/api/connect/links", headers=H, json={"rows": [plain]}).json()["added"] == 1
+    assert (reg.rows()[-1]["판매가"], reg.rows()[-1]["정가"]) == ("15000", "")
+    again = client.post("/admin/api/connect/links", headers=H, json={"rows": [row]}).json()      # 두 번 눌러도 한 줄
+    assert again["added"] == 0 and again["rejected"][0]["reason"] == "이미 등록된 링크예요"
+    assert client.post("/admin/api/connect/links", json={"rows": [row]}).status_code == 401       # 토큰 없으면 거부
