@@ -129,7 +129,8 @@
     return `<li class="bcr-item${fresh ? ' bcr-fresh' : ''}">
       <div class="bcr-name">${fresh ? '<b class="bcr-new">방금 발급</b> ' : ''}${esc(row.product_name || '(상품명 모름 — 검색 결과에서 다시 찾아 주세요)')}</div>
       <div class="bcr-meta">${esc(row.store_name)} · ${row.discount_price ? `<s>${won(row.price)}</s> ${won(row.discount_price)}` : won(row.price)}
-        · 수수료 ${row.commission_rate == null ? '?' : row.commission_rate + '%'} · <span class="bcr-link">${esc(row.link)}</span></div>
+        · 수수료 ${row.commission_rate == null ? '?' : row.commission_rate + '%'} · <span class="bcr-rev">${esc(R.reviewText(p))}</span>
+        · <span class="bcr-link">${esc(row.link)}</span></div>
       <div class="bcr-act">
         ${saved ? '<span class="bcr-saved">저장됨 ✓</span>'
           : `<button class="bcr-save" data-id="${esc(id)}" ${row.product_name ? '' : 'disabled'}>등록부에 저장</button>`}

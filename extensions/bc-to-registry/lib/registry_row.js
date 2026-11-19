@@ -43,7 +43,7 @@
         out.push({ id: f(['id', 'affiliateProductId', 'productId']) ?? link.trim(), productName: pick(holder, NAME_KEYS),
           storeName: f(['storeName', 'mallName', 'channelName']), salePrice: f(['salePrice', 'price']),
           discountedSalePrice: f(['discountedSalePrice', 'discountPrice']), commissionRate: f(['commissionRate']),
-          shortenUrl: link.trim() });
+          reviewInfo: f(['reviewInfo']), shortenUrl: link.trim() });
         return;
       }
       Object.values(o).forEach((v) => visit(v, depth + 1));
@@ -123,6 +123,21 @@
     };
   }
 
+  /** 리뷰 수·평점 — 검색 응답의 reviewInfo{totalReviewCount, averageReviewScore}. 없으면 null (0.6.0) */
+  function reviewsOf(p) {
+    const info = (p && (p.reviewInfo || p.review)) || {};
+    const n = Number(info.totalReviewCount ?? p?.reviewCount ?? p?.totalReviewCount);
+    const sc = Number(info.averageReviewScore ?? p?.reviewScore ?? p?.averageReviewScore);
+    return { count: Number.isFinite(n) && n > 0 ? n : null, score: Number.isFinite(sc) && sc > 0 ? Math.round(sc * 100) / 100 : null };
+  }
+
+  /** '리뷰 2,178 · ★4.84' (없으면 '리뷰 없음') */
+  function reviewText(p) {
+    const r = reviewsOf(p);
+    if (r.count == null) return '리뷰 없음';
+    return `리뷰 ${r.count.toLocaleString('ko-KR')}${r.score != null ? ` · ★${r.score.toFixed(2)}` : ''}`;
+  }
+
   /** 서버 주소 점검: 이 컴퓨터(localhost·127.0.0.1)만 허용 — 토큰이 밖으로 나가지 않게 */
   function serverOk(base) {
     try {
@@ -133,7 +148,7 @@
     }
   }
 
-  const api = { kindOf, issuedItemsOf, shapeOf, productsOf, issuedUrlOf, productIdOfIssueUrl, keywordFromPageUrl, toRegistryRow, serverOk };
+  const api = { kindOf, issuedItemsOf, shapeOf, reviewsOf, reviewText, productsOf, issuedUrlOf, productIdOfIssueUrl, keywordFromPageUrl, toRegistryRow, serverOk };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BcRegistry = api;
 })(typeof self !== 'undefined' ? self : this);

@@ -86,3 +86,12 @@ test('발급 목록: 평평한 모양·한 단계 아래 상품·링크 이름�
 test('모양 진단은 열쇠 이름만 남긴다', () => {
   assert.deepEqual(R.shapeOf({ data: { list: [{ a: 1, b: 'x' }] }, total: 3 }), { top: ['data', 'total'], item: ['a', 'b'] });
 });
+
+test("리뷰·평점: '리뷰 2,178 · ★4.84', 없으면 '리뷰 없음'", () => {
+  assert.equal(R.reviewText({ reviewInfo: { totalReviewCount: 2178, averageReviewScore: 4.8412 } }), '리뷰 2,178 · ★4.84');
+  assert.equal(R.reviewText({ reviewInfo: { totalReviewCount: 13, averageReviewScore: null } }), '리뷰 13');
+  assert.equal(R.reviewText({ reviewInfo: { totalReviewCount: 0 } }), '리뷰 없음');
+  assert.equal(R.reviewText({}), '리뷰 없음');
+  const listed = R.issuedItemsOf({ content: [{ affiliateUrl: 'https://naver.me/r1', affiliateProduct: { productName: '감', reviewInfo: { totalReviewCount: 5, averageReviewScore: 4.5 } } }] });
+  assert.equal(R.reviewText(listed[0]), '리뷰 5 · ★4.50');
+});
