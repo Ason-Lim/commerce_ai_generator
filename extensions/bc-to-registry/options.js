@@ -2,17 +2,18 @@
 const $ = (id) => document.getElementById(id);
 const say = (text, cls) => { $('status').textContent = text; $('status').className = cls || ''; };
 
-chrome.storage.local.get({ server: 'http://localhost:8001', token: '', openMode: 'tab' }).then((s) => {
+chrome.storage.local.get({ server: 'http://localhost:8001', token: '', openView: 'split' }).then((s) => {
   $('server').value = s.server;
-  document.querySelector(`input[name=openMode][value=${s.openMode === 'window' ? 'window' : 'tab'}]`).checked = true;
+  const v = ['split', 'tab', 'window'].includes(s.openView) ? s.openView : 'split';
+  document.querySelector(`input[name=openView][value=${v}]`).checked = true;
   $('token').placeholder = s.token ? '저장된 토큰 있음 (바꿀 때만 입력)' : '토큰을 넣어 주세요';
 });
 
 $('save').onclick = async () => {
   const server = $('server').value.trim().replace(/\/+$/, '') || 'http://localhost:8001';
   if (!self.BcRegistry.serverOk(server)) return say('localhost 또는 127.0.0.1 주소만 쓸 수 있어요', 'err');
-  const mode = document.querySelector('input[name=openMode]:checked');
-  const patch = { server, openMode: mode ? mode.value : 'tab' };
+  const view = document.querySelector('input[name=openView]:checked');
+  const patch = { server, openView: view ? view.value : 'split' };
   if ($('token').value.trim()) patch.token = $('token').value.trim();
   await chrome.storage.local.set(patch);
   $('token').value = '';

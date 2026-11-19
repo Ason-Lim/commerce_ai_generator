@@ -22,8 +22,9 @@
 <input id="token" type="password" autocomplete="off" placeholder="저장된 토큰은 보여 주지 않아요">
 <p class="note">비워 두고 저장하면 지금 토큰을 그대로 둡니다. 토큰은 이 브라우저(chrome.storage.local)에만 저장돼요.</p>
 <label>'등' 아이콘으로 브랜드커넥트 열기</label>
-<div><label style="display:inline;font-weight:400"><input type="radio" name="openMode" value="tab" style="width:auto"> 지금 창의 탭으로 (이미 열려 있으면 그 탭으로)</label></div>
-<div><label style="display:inline;font-weight:400"><input type="radio" name="openMode" value="window" style="width:auto"> 화면 오른쪽 절반 창으로</label></div>
+<div><label style="display:inline;font-weight:400"><input type="radio" name="openView" value="split" style="width:auto"> 이 창 안에서 오른쪽 절반 (크롬 분할 화면, 크롬 155 이상)</label></div>
+<div><label style="display:inline;font-weight:400"><input type="radio" name="openView" value="tab" style="width:auto"> 이 창의 새 탭</label></div>
+<div><label style="display:inline;font-weight:400"><input type="radio" name="openView" value="window" style="width:auto"> 따로 창 (화면 오른쪽 절반)</label></div>
 <button id="save">저장</button><button id="test">연결 확인</button><span id="status"></span>
 <script src="lib/registry_row.js"></script>
 <script src="options.js"></script>
