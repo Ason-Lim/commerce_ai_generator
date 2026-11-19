@@ -1,0 +1,29 @@
+#bcr-panel { position: fixed; right: 16px; bottom: 16px; z-index: 2147483000; width: 380px; max-height: 70vh;
+  display: flex; flex-direction: column; background: #fff; border: 1px solid #cfd8dc; border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18); font: 13px/1.45 -apple-system, "Apple SD Gothic Neo", sans-serif; color: #222; }
+#bcr-panel.bcr-closed { width: auto; }
+#bcr-panel.bcr-closed .bcr-body { display: none; }
+#bcr-panel button { font: inherit; cursor: pointer; }
+.bcr-head { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: #f1f6f2; border-radius: 10px 10px 0 0; }
+.bcr-toggle { border: 0; background: none; font-weight: 700 !important; color: #1b5e20; padding: 0; }
+.bcr-server { flex: 1; color: #607d8b; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bcr-reload, .bcr-options { border: 1px solid #cfd8dc; background: #fff; border-radius: 6px; padding: 0 6px; }
+.bcr-body { padding: 8px 10px; overflow: auto; }
+.bcr-body label { display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 6px; }
+.bcr-kw { flex: 1; padding: 4px 6px; border: 1px solid #b0bec5; border-radius: 6px; font: inherit; }
+.bcr-list { list-style: none; margin: 0; padding: 0; }
+.bcr-item { border-top: 1px solid #eceff1; padding: 7px 0; }
+.bcr-fresh { background: #fffde7; }
+.bcr-new { color: #e65100; font-size: 11px; }
+.bcr-name { font-weight: 600; }
+.bcr-meta { color: #546e7a; font-size: 12px; word-break: break-all; }
+.bcr-link { color: #1565c0; }
+.bcr-act { margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bcr-save { background: #2e7d32; color: #fff; border: 0; border-radius: 6px; padding: 3px 10px; }
+.bcr-save[disabled] { background: #b0bec5; cursor: not-allowed; }
+.bcr-saved { color: #2e7d32; font-weight: 700; }
+.bcr-msg { font-size: 12px; }
+.bcr-ok { color: #2e7d32; } .bcr-err { color: #c62828; } .bcr-wait { color: #607d8b; }
+.bcr-empty { color: #78909c; padding: 6px 0; }
+.bcr-sum { font-size: 12px; color: #455a64; margin: 2px 0 6px; } .bcr-sum b { color: #c62828; }
+.bcr-rev { color: #6d4c00; }

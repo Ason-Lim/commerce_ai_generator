@@ -44,6 +44,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 [hidden]{display:none!important}
 @media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+kbd{display:inline-block;padding:0 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:#fff;font:600 12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
 </style>
 <style>
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -97,7 +98,13 @@ body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver
   </section>
   <section id="requests" aria-labelledby="req-h">
     <h2 id="req-h">쇼핑커넥트 발급 요청 <span class="pill p-hold" id="req-n" hidden></span></h2>
-    <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요. 브랜드커넥트에서 링크를 발급한 뒤 <b>링크 입력</b>으로 붙여 넣으면 등록부(naver_connect_links.csv)에 저장되고 요청은 '발급 완료'로 정리돼요. 주류는 올리지 않아요.
+    <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요 — <b>발급할 키워드 할 일 목록</b>이에요. 요청 횟수가 많은 것부터 하세요. 주류는 올리지 않아요.
+    <br><b>발급하는 법 (크롬 확장 'bc-to-registry')</b>: ① 줄의 <b>브랜드커넥트에서 찾기</b> → 그 키워드의 브랜드커넥트 검색 결과가 바로 열려요
+    → ② 상품의 <b>링크 발급</b> → ③ 오른쪽 아래 'commerce_ai 등록부' 창에서 <b>등록부에 저장</b>.
+    (검색칸에 다른 말로 찾을 때는 키워드가 복사돼 있으니 <kbd>⌘V</kbd>(Windows: <kbd>Ctrl+V</kbd>)로 붙여 넣으세요.)
+    확장 창 키워드가 이 목록 키워드와 <b>글자까지 같으면</b> 요청이 저절로 '발급 완료'가 돼요(다르게 저장했으면 <b>발급 완료</b>를 눌러 정리).
+    한 창 안에서 반반으로 보려면 크롬 툴바의 초록 <b>등</b> 아이콘(분할 화면). 브랜드커넥트 탭으로 오가기: <kbd>⌘⌥←</kbd>/<kbd>⌘⌥→</kbd> (Windows: <kbd>Ctrl+PgUp</kbd>/<kbd>Ctrl+PgDn</kbd>).
+    <br><b>링크 입력</b>(위 버튼)은 확장 없이 링크를 손으로 붙여 넣을 때만 써요.
     <br><b>이 리포트에서 올리기</b>: 위에서 고른 날짜의 급상승 리포트에서 등록 링크가 없는 식품(급상승·새로 등장, 주류 제외)을 이 목록에 올려요.
     <br><b>쇼핑커넥트 링크는 블로그 글에만</b> 넣어요 — 네이버 정책상 이 사이트·앱 화면에는 보여 줄 수 없어요 (2026-11-04 회신).</p>
     <div class="row">
@@ -115,7 +122,7 @@ body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver
     <div class="row"><input id="bc-kw" placeholder="예: 사과, 감태" aria-label="키워드" style="min-width:220px">
       <select id="bc-n" aria-label="개수"><option value="3">3개</option><option value="5" selected>5개</option><option value="10">10개</option></select>
       <label><input type="checkbox" id="bc-health" checked> 건강기능식품 빼기</label>
-      <button class="btn primary" id="bc-go">찾기</button><span class="note" id="bc-note"></span></div>
+      <button class="btn primary" id="bc-go">찾기</button><button class="btn" id="bc-open" title="키워드 칸의 말로 브랜드커넥트를 검색해 열어요. 한 창 안 반반은 확장의 등 아이콘">브랜드커넥트 열기</button><span class="note" id="bc-note"></span></div>
     <div class="scroll"><table><thead><tr><th>상품</th><th>판매처</th><th>리뷰</th><th>수수료율</th><th>할인율</th><th>수집 시점 가격</th><th></th></tr></thead>
     <tbody id="bc-rows"><tr><td colspan="7" class="note">키워드를 넣고 찾기를 눌러 주세요.</td></tr></tbody></table></div>
   </section>
@@ -239,13 +246,13 @@ async function loadReq(){
   $("#req-note").textContent=d.queue_on?"":"자동 쌓기 꺼짐 — .env 에 SC_REQUEST_QUEUE=1 을 넣고 서버를 다시 켜 주세요.";
   if(st==="open"){const n=$("#req-n");n.hidden=!d.items.length;n.textContent=`${d.items.length}건`}
   $("#req-rows").innerHTML=d.items.length?d.items.map(it=>{const r=REASON[it.reason]||[it.reason_label,"p-off"];
-    const acts=st==="open"?`<button class="btn primary" data-link="${it.id}" data-kw="${esc(it.keyword)}">링크 입력</button> <button class="btn" data-id="${it.id}" data-s="issued">발급 완료</button> <button class="btn" data-id="${it.id}" data-s="skipped">건너뛰기</button>`
+    const acts=st==="open"?`<button class="btn primary" data-find="${esc(it.keyword)}" title="이 키워드로 브랜드커넥트를 검색해 열어요 (키워드도 복사해 둠)">브랜드커넥트에서 찾기</button> <button class="btn" data-id="${it.id}" data-s="issued">발급 완료</button> <button class="btn" data-id="${it.id}" data-s="skipped">건너뛰기</button>`
       :`<button class="btn" data-id="${it.id}" data-s="open">되돌리기</button>`;
     return `<tr><td><b>${esc(it.keyword)}</b></td><td><span class="pill ${r[1]}">${esc(r[0])}</span></td><td>${it.hit_count}회</td>
      <td>${esc(kst(it.updated_at))}</td>
      <td>${it.registered?'<span class="pill p-ok">링크 있음</span><small>발급 완료로 정리하세요</small>':'<span class="note">없음</span>'}</td><td>${acts}</td></tr>`}).join("")
     :`<tr><td colspan="6" class="note">${st==="open"?"남은 발급 요청이 없어요.":"없어요."}</td></tr>`;
-  document.querySelectorAll("#req-rows button[data-link]").forEach(b=>b.onclick=()=>openLinks([{keyword:b.dataset.kw}],+b.dataset.link));
+  document.querySelectorAll("#req-rows button[data-find]").forEach(b=>b.onclick=()=>openBrandconnect(b.dataset.find,$("#req-note")));
   document.querySelectorAll("#req-rows button[data-id]").forEach(b=>b.onclick=async()=>{b.disabled=true;
     try{await api("/admin/api/connect/requests/"+b.dataset.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:b.dataset.s})})}
     catch(e){$("#req-note").textContent=e.message} loadReq()})}
@@ -338,36 +345,26 @@ async function refreshIssued(kw,auto){
   if(!kw){$("#links-note").textContent="다시 읽을 키워드를 넣어 주세요.";$("#links-issued-kw").focus();return}
   if(REFRESHING)return;REFRESHING=true;
   const b=$("#links-refresh");b.disabled=true;
-  $("#links-note").textContent=`${auto?"돌아오셔서 자동으로 ":""}'${kw}' 브랜드커넥트에서 다시 읽는 중… (10~30초)`;
-  if(auto)$("#links").scrollIntoView({behavior:"smooth",block:"start"});
+  $("#links-note").textContent=`'${kw}' 브랜드커넥트에서 다시 읽는 중… (10~30초)`;
   try{const d=await api("/admin/api/brandconnect/issued/refresh",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keyword:kw})});
     const r=d.refresh||{};showIssued(d,r.ok?`${r.message} · `:`다시 읽기 실패: ${r.message} — 이전 수집 자료로 보여요. · `,auto)}
   catch(e){$("#links-note").textContent=e.message}
   finally{b.disabled=false;REFRESHING=false}}
 $("#links-refresh").onclick=()=>refreshIssued($("#links-issued-kw").value.trim(),false);
-// 발급하러 가기 (2026-11-19, 1번 방식): 브랜드커넥트를 화면 오른쪽 절반 창으로 열고(창 이름 고정 → 같은 창 재사용),
-// 상품명을 복사해 둔다. 그 창에서 발급한 뒤 이 관리자 창을 다시 누르면(포커스) 자동으로 다시 읽어 입력 창을 채운다.
-let BC_URL="https://brandconnect.naver.com/971564859961248/affiliate/products",BC_WIN=null,ISSUE_KW="",ARMED=false;
-function goIssue(kw,it){
-  ISSUE_KW=kw;$("#links-issued-kw").value=kw;
-  try{navigator.clipboard&&navigator.clipboard.writeText(it.title)}catch(e){}
-  const sx=screen.availLeft||0,sw=screen.availWidth||1440,sh=screen.availHeight||900,w=Math.round(sw/2);
-  BC_WIN=window.open(BC_URL,"bc-issue",`popup=yes,width=${w},height=${sh},left=${sx+sw-w},top=${screen.availTop||0}`);
-  if(!BC_WIN){$("#bc-note").textContent="팝업이 막혔어요 — 주소창 오른쪽의 팝업 허용을 눌러 주세요.";return}
-  BC_WIN.focus();banner(true,it.title)}
-function banner(on,title){let el=$("#bc-issue-banner");
-  if(!on){if(el)el.remove();return}
-  if(!el){el=document.createElement("div");el.id="bc-issue-banner";
-    el.style.cssText="position:fixed;left:16px;bottom:16px;z-index:50;max-width:min(560px,90vw);background:#1d211d;color:#fff;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;box-shadow:0 6px 20px rgba(0,0,0,.18)";
-    document.body.append(el)}
-  el.innerHTML=`<b>오른쪽 창에서 발급해 주세요</b> — 검색칸에 붙여 넣기(⌘V)하면 '${esc((title||"").slice(0,40))}'를 찾아요. 발급한 뒤 <b>이 창을 한 번 누르면</b> '${esc(ISSUE_KW)}'를 자동으로 다시 읽어요. <button class="btn" id="bc-issue-off" style="margin-left:6px;padding:3px 10px">끄기</button>`;
-  $("#bc-issue-off").onclick=e=>{e.stopPropagation();ISSUE_KW="";ARMED=false;banner(false)}}
-window.addEventListener("blur",()=>{if(ISSUE_KW&&BC_WIN&&!BC_WIN.closed&&!REFRESHING)ARMED=true});   // 다시 읽기가 여는 Chrome 창 때문에 생긴 blur 는 무시
-window.addEventListener("focus",()=>{
-  if(!ISSUE_KW)return;
-  if(BC_WIN&&BC_WIN.closed){BC_WIN=null}
-  if(ARMED){ARMED=false;refreshIssued(ISSUE_KW,true)}
-  if(!BC_WIN){ISSUE_KW="";banner(false)}});
+// 브랜드커넥트 열기 (2026-11-19): 브랜드커넥트 상품 찾기를 새 탭으로 연다(탭 이름 고정 → 같은 탭 재사용). 키워드는 복사해 둔다.
+// 발급은 그 화면에서 사람이 하고, 크롬 확장 'bc-to-registry'의 오른쪽 아래 창에서 등록부에 저장한다.
+// 한 창 안에서 반반으로 보려면 확장의 '등' 아이콘(크롬 분할 화면). 예전 '발급하러 가기'(오른쪽 창 + 돌아오면 자동 다시 읽기)는 지움.
+const BC_URL="https://brandconnect.naver.com/971564859961248/affiliate/products";
+// 검색 결과 주소 형식은 브랜드커넥트 화면에서 확인 (2026-11-19): …/affiliate/products/search?query=…&tab=product
+const bcSearchUrl=q=>q?`${BC_URL}/search?query=${encodeURIComponent(q)}&tab=product`:BC_URL;
+function openBrandconnect(q,note,kw){   // q = 브랜드커넥트에서 찾을 말(키워드 또는 상품명), kw = 등록부에 적을 키워드
+  kw=kw||q;
+  if(kw){try{navigator.clipboard&&navigator.clipboard.writeText(kw)}catch(e){}}
+  const w=window.open(bcSearchUrl(q),"bc-issue");
+  if(!w){note.textContent="팝업이 막혔어요 — 주소창 오른쪽의 팝업 허용을 눌러 주세요.";return}
+  note.textContent=q?`브랜드커넥트에서 '${q.slice(0,40)}' 검색 결과를 열었어요 → 링크 발급 → 오른쪽 아래 'commerce_ai 등록부'에서 저장. 확장 창 키워드를 '${kw}'(복사해 둠)로 두면 발급 요청도 저절로 정리돼요.`
+    :"브랜드커넥트를 열었어요. 발급한 뒤 오른쪽 아래 'commerce_ai 등록부'에서 저장하세요."}
+$("#bc-open").onclick=()=>openBrandconnect($("#bc-kw").value.trim(),$("#bc-note"));
 $("#link-save").onclick=async()=>{const rows=[...$("#link-rows").children].map(r=>Object.fromEntries([...r.querySelectorAll("input")].map(i=>[i.name,i.value.trim()])))
     .filter(r=>r.product_name||r.link);
   if(!rows.length){$("#link-msg").textContent="상품명과 링크를 넣어 주세요.";return}
@@ -400,9 +397,18 @@ $("#bc-go").onclick=async()=>{const kw=$("#bc-kw").value.trim();if(!kw)return;$(
     $("#bc-rows").innerHTML=d.items.length?d.items.map((it,i)=>`<tr><td>${esc(it.title)}${it.bc_link?' <span class="pill p-ok">발급됨</span>':""}</td><td>${esc(it.mall)}</td>
       <td>${it.review_count?Number(it.review_count).toLocaleString()+(it.rating!=null?` · ★${esc(it.rating)}`:""):"-"}</td><td>${it.commission_rate??"-"}%</td><td>${it.discount_rate||0}%</td>
       <td>${it.price_at_snapshot?Number(it.price_at_snapshot).toLocaleString()+"원":"-"} <small>${esc(it.snap_date)}</small></td>
-      <td style="white-space:nowrap">${it.bc_link?"":`<button class="btn" data-go="${i}" title="브랜드커넥트를 화면 오른쪽 창으로 열고 상품명을 복사해 둬요">발급하러 가기</button> `}<button class="btn primary" data-bc="${i}">링크 입력</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">이 키워드의 수집 상품이 없어요. 브랜드커넥트에서 직접 검색해 주세요.</td></tr>`;
+      <td style="white-space:nowrap"><button class="btn" data-see="${i}" title="이 상품명으로 브랜드커넥트를 검색해 열어요">브랜드커넥트에서 보기</button> <button class="btn primary" data-bc="${i}">링크 입력</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">이 키워드의 수집 상품이 없어요 — 매일 수집하는 키워드(약 20개)에 없거나 수집이 오래됐어요.
+      <button class="btn" id="bc-live" style="margin-left:6px">브랜드커넥트에서 지금 읽기 (10~30초)</button>
+      <br><small>읽기만 해요(발급 안 함). 또는 <b>브랜드커넥트 열기</b>로 직접 검색하면 확장 창에 리뷰·평점이 같이 나와요.</small></td></tr>`;
+    const live=$("#bc-live");
+    if(live)live.onclick=async()=>{live.disabled=true;$("#bc-note").textContent=`'${kw}' 브랜드커넥트에서 읽는 중… (10~30초)`;
+      try{const r=await api("/admin/api/brandconnect/issued/refresh",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keyword:kw})});
+        const x=r.refresh||{};
+        if(!x.ok){$("#bc-note").textContent=`읽기 실패: ${x.message||"알 수 없음"} — 로그인이 풀렸으면 식품 모니터링 브라우저에서 다시 로그인해 주세요.`;live.disabled=false;return}
+        $("#bc-go").click()}
+      catch(e){$("#bc-note").textContent=e.message;live.disabled=false}};
     BC_URL=d.bc_url||BC_URL;
-    document.querySelectorAll("#bc-rows button[data-go]").forEach(b=>b.onclick=()=>goIssue(kw,BC[+b.dataset.go]));
+    document.querySelectorAll("#bc-rows button[data-see]").forEach(b=>b.onclick=()=>openBrandconnect(BC[+b.dataset.see].title,$("#bc-note"),kw));
     document.querySelectorAll("#bc-rows button[data-bc]").forEach(b=>b.onclick=()=>{const it=BC[+b.dataset.bc];
       openLinks([{keyword:kw,product_name:it.title,store_name:it.mall,discount_price:it.price_at_snapshot||"",commission_rate:it.commission_rate??"",link:it.bc_link||"",
         memo:`${it.snap_date} 수집 가격 — 브랜드커넥트 화면에서 판매가·할인가를 확인하세요`}])})}
