@@ -60,6 +60,11 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 .subtabs a{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
 .subtabs a[aria-current=page]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .subtabs a small{font-weight:400;opacity:.75;margin-left:4px}
+aside .grp{margin:14px 0 4px;padding:0 10px;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:#7f93a8}
+aside .grp small{font-weight:400;margin-left:4px}
+/* 2026-11-19 화면 정리: 급상승 리포트(공통) = 요약·급상승 목록·비교 분석 / 네이버 = 블로그 초안·발급 요청·상품 찾기·등록된 링크 */
+body[data-view=report] #blog,body[data-view=report] #requests,body[data-view=report] #bc,body[data-view=report] #links{display:none}
+body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver] #detail{display:none}
 @media (max-width:760px){.subtabs{margin:-14px -12px 0;padding:10px 12px}}
 </style>
 </head>
@@ -68,13 +73,16 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 <aside>
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b">B2B</a></nav>
-  <nav aria-label="트렌드 메뉴"><a href="#summary">리포트 요약</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a><a href="#surge">급상승 목록</a><a href="#detail">비교 분석</a><a href="#blog">블로그 초안</a><a href="/admin/trend-posts">글 검토 대기열</a></nav>
+  <nav aria-label="트렌드 메뉴">
+    <div class="grp">급상승 리포트 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#surge">급상승 목록</a><a href="#detail">비교 분석</a>
+    <div class="grp" id="grp-naver">네이버 <small>블로그</small></div><a href="#blog" id="nav-blog">블로그 초안</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a>
+    <div class="grp">쿠팡 <small>사이트 글</small></div><a href="/admin/trend-posts">글 검토 대기열</a></nav>
   <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
   데이터랩은 전날까지의 일별 지수라 하루 1회 갱신해요. 검색이 사람인지 매크로인지는 판별할 수 없어요.</div>
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
 </aside>
 <main>
-<nav class="subtabs" aria-label="트렌드 작업 화면"><a href="/admin/trends" data-k="report">급상승 리포트</a><a href="/admin/trend-posts" data-k="coupang">쿠팡 <small>사이트 글</small></a><a href="/admin/trends#blog" data-k="naver">네이버 <small>블로그 초안·쇼핑커넥트</small></a></nav>
+<nav class="subtabs" aria-label="트렌드 작업 화면"><a href="/admin/trends" data-k="report">급상승 리포트</a><a href="/admin/trend-posts" data-k="coupang">쿠팡 <small>사이트 글</small></a><a href="/admin/trends#naver" data-k="naver">네이버 <small>블로그 초안·쇼핑커넥트</small></a></nav>
 
   <section id="summary" aria-labelledby="sum-h">
     <h2 id="sum-h">검색량 급상승 리포트</h2>
@@ -138,7 +146,8 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   </section>
   <section id="blog" aria-labelledby="blog-h">
     <h2 id="blog-h">applesodda 블로그 초안</h2>
-    <p class="lede">목록에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않고 텍스트 파일로만 저장해요 — 블로그 임시저장은 요청하시면 확인 후 진행해요.</p>
+    <p class="note" id="pick-hint"></p>
+    <p class="lede"><a href="/admin/trends#surge">급상승 리포트</a> 목록에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않고 텍스트 파일로만 저장해요 — 블로그 임시저장은 요청하시면 확인 후 진행해요.</p>
     <div class="row"><button class="btn" id="draft">초안 만들기</button><span class="note" id="dnote"></span></div>
     <div class="row"><select id="saved-drafts" aria-label="저장된 초안" style="min-width:320px"><option value="">저장된 초안 불러오기…</option></select>
       <button class="btn" id="saved-open">열기</button><button class="btn" id="saved-reload">목록 새로고침</button></div>
@@ -147,10 +156,15 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 </main>
 </div>
 <script>
-(function(){const NAVER=["#blog","#requests","#bc","#links"];const mark=()=>{const k=NAVER.includes(location.hash)?"naver":"report";
-  document.querySelectorAll(".subtabs a").forEach(a=>a.toggleAttribute("aria-current",a.dataset.k===k));if(k==="naver")document.querySelector('.subtabs a[data-k="naver"]').setAttribute("aria-current","page");else document.querySelector('.subtabs a[data-k="report"]').setAttribute("aria-current","page")};
+(function(){const NAVER=["#naver","#blog","#requests","#bc","#links"];
+  const mark=()=>{const k=NAVER.includes(location.hash)?"naver":"report";document.body.dataset.view=k;
+    document.querySelectorAll(".subtabs a").forEach(a=>{if(a.dataset.k===k)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+    if(location.hash==="#naver"||(!location.hash&&k==="report"))window.scrollTo(0,0);
+    else{const t=document.querySelector(location.hash);if(t)t.scrollIntoView()}
+    if(k==="naver"&&window.pickHint)window.pickHint()};
   mark();window.addEventListener("hashchange",mark);
-  document.querySelectorAll('.subtabs a[href^="/admin/trends#"]').forEach(a=>a.addEventListener("click",e=>{if(location.pathname==="/admin/trends"){e.preventDefault();location.hash=a.getAttribute("href").split("#")[1]}}));})();
+  document.querySelectorAll('.subtabs a[href^="/admin/trends#"]').forEach(a=>a.addEventListener("click",e=>{if(location.pathname==="/admin/trends"){e.preventDefault();location.hash=a.getAttribute("href").split("#")[1]}}));
+  document.querySelectorAll('.subtabs a[href="/admin/trends"]').forEach(a=>a.addEventListener("click",e=>{if(location.pathname==="/admin/trends"){e.preventDefault();history.pushState(null,"","/admin/trends");mark()}}));})();
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -240,12 +254,17 @@ $("#req-trends").onclick=async()=>{try{const d=await api("/admin/api/connect/que
   $("#req-note").textContent=d.queued.length?`올림: ${d.queued.join(", ")}`:"새로 올릴 키워드가 없어요 (이미 등록됐거나 주류·반짝 키워드).";
   $("#req-status").value="open";loadReq()}catch(e){$("#req-note").textContent=e.message}};
 // 둘러보기 모드 (토큰 없이 읽기 전용): 실행·초안·다른 관리자 탭은 숨김
-function guest(){["#run",".logout","#blog","#saved-drafts","#requests","#nav-req","#bc","#nav-bc","#links","#nav-links",'nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
+function guest(){["#run",".logout","#blog","#saved-drafts","#requests","#nav-req","#bc","#nav-bc","#links","#nav-links","#grp-naver",'.subtabs a[data-k="naver"]','nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
   const n=$(".railnote");if(n&&!$("#gnote"))n.insertAdjacentHTML("beforebegin",'<div class="railnote" id="gnote"><b>둘러보기 모드</b> — 읽기 전용이에요. 리포트 실행과 블로그 초안은 관리자만 할 수 있어요.</div>')}
 function job(j){$("#job").textContent=j.running?"만드는 중… (1~3분)":j.error?"실패: "+j.error:j.finished?`마지막 실행 ${j.finished}`:"";$("#run").disabled=!!j.running}
 $("#date").onchange=e=>load(e.target.value);
 $("#run").onclick=async()=>{const d=await api("/admin/api/trends/run",{method:"POST"});job(d.job);
   const t=setInterval(async()=>{const s=await api("/admin/api/trends");job(s.job);if(!s.job.running){clearInterval(t);load()}},5000)};
+window.pickHint=()=>{const p=[...document.querySelectorAll(".pick:checked")].map(x=>x.value);const el=$("#pick-hint");if(!el)return;
+  el.innerHTML=p.length?`초안 키워드: <b>${p.slice(0,5).map(esc).join(", ")}</b>${p.length>5?" (앞 5개만)":""} — <a href="/admin/trends#surge">급상승 목록에서 바꾸기</a>`
+    :`체크한 키워드가 없어 급상승 상위 3개로 만들어요 — <a href="/admin/trends#surge">급상승 목록에서 고르기</a>`};
+document.addEventListener("change",e=>{if(e.target.classList&&e.target.classList.contains("pick"))window.pickHint()});
+window.pickHint();
 $("#draft").onclick=async()=>{const picks=[...document.querySelectorAll(".pick:checked")].map(x=>x.value).slice(0,5);
   try{const d=await api("/admin/api/trends/blog-draft",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:$("#date").value||null,keywords:picks.length?picks:null})});
    $("#dnote").textContent="저장: "+d.file;const ln=d.link_needs;
