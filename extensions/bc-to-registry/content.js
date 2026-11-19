@@ -4,6 +4,9 @@
   'use strict';
   const R = self.BcRegistry;
   const TAG = 'bc-to-registry';
+  // 콘솔에서 'bc-to-registry' 로 걸러 보면 확장이 무엇을 잡았는지 보인다 (토큰·링크 외 개인 정보는 남기지 않음)
+  const log = (...a) => console.info('[bc-to-registry]', ...a);
+  log('시작', location.pathname);
 
   const state = {
     products: new Map(),   // id → 상품 (최근 검색 응답)
@@ -25,11 +28,14 @@
       let q = '';
       try { q = (new URL(url, location.href).searchParams.get('query') || '').trim(); } catch (e) {}
       if (q && !state.keywordTouched) state.keyword = q;
-      for (const p of R.productsOf(json)) state.products.set(String(p.id), p);
+      const got = R.productsOf(json);
+      for (const p of got) state.products.set(String(p.id), p);
+      log('검색 응답', q, got.length + '개', '발급된 것', got.filter((p) => p.shortenUrl).length + '개');
       render();
     } else if (kind === 'issue') {
       const id = R.productIdOfIssueUrl(url);
       const link = R.issuedUrlOf(json);
+      log('발급 응답', id, link || '(링크를 못 찾음 — 응답 모양: ' + Object.keys(json || {}).join(',') + ')');
       if (id && link) {
         const p = state.products.get(String(id)) || { id, productName: '' };
         p.shortenUrl = link;
@@ -117,7 +123,9 @@
     if (!el) {
       el = document.createElement('div');
       el.id = 'bcr-panel';
-      document.body.appendChild(el);
+      // body 가 아니라 <html> 에 붙인다: 브랜드커넥트(React)가 body 를 다시 그려도 지워지지 않게
+      document.documentElement.appendChild(el);
+      log('창을 붙였어요');
       el.addEventListener('click', (e) => {
         const b = e.target.closest('button');
         if (!b) return;
@@ -164,4 +172,6 @@
   document.getElementById('bcr-panel')?.remove();
   render();
   loadRegistered();
+  // 화면이 다시 그려지며 창이 지워지면 다시 붙인다
+  setInterval(() => { if (!document.getElementById('bcr-panel')) { log('창이 지워져서 다시 붙여요'); render(); } }, 1500);
 })();

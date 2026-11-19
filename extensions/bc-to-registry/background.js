@@ -65,24 +65,47 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 const BC_HOME = 'https://brandconnect.naver.com/971564859961248/affiliate/products';
 
 async function openBrandconnect() {
-  const { bcWindowId } = await chrome.storage.session.get('bcWindowId');
+  const { bcWindowId } = await chrome.storage.session.get('bcWindowId').catch(() => ({}));
   if (bcWindowId) {
     try {
-      await chrome.windows.update(bcWindowId, { focused: true });
-      return;
-    } catch (e) { /* 닫혔으면 새로 연다 */ }
+      await chrome.windows.update(bcWindowId, { focused: true, state: 'normal' });
+      return 'focused';
+    } catch (e) {
+      await chrome.storage.session.remove('bcWindowId').catch(() => {});   // 닫혔으면 새로 연다
+    }
   }
-  const cur = await chrome.windows.getLastFocused().catch(() => null);
-  const left = cur && cur.left != null ? cur.left : 0;
-  const top = cur && cur.top != null ? cur.top : 0;
-  const width = cur && cur.width ? cur.width : 1440;
-  const height = cur && cur.height ? cur.height : 900;
+  // 오른쪽 절반: 지금 크롬 창의 위치·크기 기준 (전체 화면·최소화 상태면 기본 크기)
+  const cur = await chrome.windows.getLastFocused({ windowTypes: ['normal'] }).catch(() => null);
+  const ok = cur && cur.state === 'normal' && cur.width > 400;
+  const width = ok ? cur.width : 1440;
+  const height = ok ? cur.height : 900;
   const half = Math.round(width / 2);
-  const win = await chrome.windows.create({ url: BC_HOME, type: 'popup', left: left + width - half, top, width: half, height, focused: true });
-  await chrome.storage.session.set({ bcWindowId: win.id });
+  const bounds = { left: (ok ? cur.left : 0) + width - half, top: ok ? cur.top : 0, width: half, height };
+  try {
+    const win = await chrome.windows.create({ url: BC_HOME, type: 'popup', focused: true, ...bounds });
+    await chrome.storage.session.set({ bcWindowId: win.id }).catch(() => {});
+    return 'window';
+  } catch (e) {
+    console.warn('[bc-to-registry] 오른쪽 창 열기 실패, 새 탭으로 엽니다', e);
+    await chrome.tabs.create({ url: BC_HOME, active: true });                // 그래도 열리게
+    return 'tab';
+  }
 }
 
-chrome.action.onClicked.addListener(() => { openBrandconnect().catch((e) => console.warn('[bc-to-registry] 창 열기 실패', e)); });
+async function onIcon() {
+  await chrome.action.setBadgeText({ text: '' });
+  try {
+    const how = await openBrandconnect();
+    console.info('[bc-to-registry] 브랜드커넥트 창', how);
+  } catch (e) {
+    console.error('[bc-to-registry] 브랜드커넥트 창 열기 실패', e);
+    await chrome.action.setBadgeBackgroundColor({ color: '#c62828' });
+    await chrome.action.setBadgeText({ text: '!' });
+    await chrome.action.setTitle({ title: '브랜드커넥트 창 열기 실패: ' + (e && e.message ? e.message : e) });
+  }
+}
+
+chrome.action.onClicked.addListener(() => { onIcon(); });
 chrome.windows.onRemoved.addListener(async (id) => {
   const { bcWindowId } = await chrome.storage.session.get('bcWindowId');
   if (id === bcWindowId) await chrome.storage.session.remove('bcWindowId');

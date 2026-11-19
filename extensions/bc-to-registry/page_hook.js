@@ -4,6 +4,7 @@
   'use strict';
   if (window.__bcToRegistryHooked) return;
   window.__bcToRegistryHooked = true;
+  console.info('[bc-to-registry] 응답 읽기 준비', location.pathname);
 
   const TAG = 'bc-to-registry';
   const WATCH = /\/affiliate\/(query\/affiliate-products\/search-by-query|command\/affiliate-urls)/;
