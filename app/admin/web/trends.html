@@ -105,11 +105,11 @@ body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver
     확장 창 키워드가 이 목록 키워드와 <b>글자까지 같으면</b> 요청이 저절로 '발급 완료'가 돼요(다르게 저장했으면 <b>발급 완료</b>를 눌러 정리).
     한 창 안에서 반반으로 보려면 크롬 툴바의 초록 <b>등</b> 아이콘(분할 화면). 브랜드커넥트 탭으로 오가기: <kbd>⌘⌥←</kbd>/<kbd>⌘⌥→</kbd> (Windows: <kbd>Ctrl+PgUp</kbd>/<kbd>Ctrl+PgDn</kbd>).
     <br><b>링크 입력</b>(위 버튼)은 확장 없이 링크를 손으로 붙여 넣을 때만 써요.
-    <br><b>이 리포트에서 올리기</b>: 위에서 고른 날짜의 급상승 리포트에서 등록 링크가 없는 식품(급상승·새로 등장, 주류 제외)을 이 목록에 올려요.
+    <br><b>급상승 리포트에서 올리기</b>: <b>'급상승 리포트' 탭에서 고른 날짜</b>(따로 안 고르면 가장 최근)의 리포트에서 등록부에 링크가 없는 식품(급상승·새로 등장, 주류 제외)을 <b>아래 표('남은 요청')에 새 줄로</b> 더해요. 버튼에 쓰이는 날짜가 보여요.
     <br><b>쇼핑커넥트 링크는 블로그 글에만</b> 넣어요 — 네이버 정책상 이 사이트·앱 화면에는 보여 줄 수 없어요 (2026-11-04 회신).</p>
     <div class="row">
       <select id="req-status" aria-label="요청 상태"><option value="open">남은 요청</option><option value="issued">발급 완료</option><option value="skipped">건너뜀</option></select>
-      <button class="btn" id="req-trends">이 리포트에서 올리기</button>
+      <button class="btn" id="req-trends" title="'급상승 리포트' 탭에서 고른 날짜의 리포트에서 링크 없는 급상승 식품을 아래 표에 더해요">급상승 리포트에서 올리기</button>
       <button class="btn primary" id="req-link">링크 입력</button>
       <span class="note" id="req-note"></span>
     </div>
@@ -235,6 +235,7 @@ function detail(i){
 async function load(date){
   const d=await api("/admin/api/trends"+(date?`?date=${encodeURIComponent(date)}`:""));
   REPORT=d.report; $("#date").innerHTML=d.dates.slice().reverse().map(x=>`<option ${REPORT&&REPORT.generated_at.startsWith(x)?"selected":""}>${esc(x)}</option>`).join("")||"<option>리포트 없음</option>";
+  reqTrendsLabel();
   job(d.job); render(); if(d.guest) guest(); else {loadLinks().catch(()=>{});loadSaved().catch(()=>{});}
   if(!d.guest) loadReq().catch(e=>{$("#req-rows").innerHTML=`<tr><td colspan="6"><div class="err">${esc(e.message)}</div></td></tr>`});
 }
@@ -264,7 +265,9 @@ $("#req-trends").onclick=async()=>{try{const d=await api("/admin/api/connect/que
 function guest(){["#run",".logout","#blog","#saved-drafts","#requests","#nav-req","#bc","#nav-bc","#links","#nav-links","#grp-naver",'.subtabs a[data-k="naver"]','nav[aria-label="관리자 탭"]','a[href="#blog"]'].forEach(s=>{const e=$(s);if(e)e.style.display="none"});
   const n=$(".railnote");if(n&&!$("#gnote"))n.insertAdjacentHTML("beforebegin",'<div class="railnote" id="gnote"><b>둘러보기 모드</b> — 읽기 전용이에요. 리포트 실행과 블로그 초안은 관리자만 할 수 있어요.</div>')}
 function job(j){$("#job").textContent=j.running?"만드는 중… (1~3분)":j.error?"실패: "+j.error:j.finished?`마지막 실행 ${j.finished}`:"";$("#run").disabled=!!j.running}
-$("#date").onchange=e=>load(e.target.value);
+$("#date").onchange=e=>{load(e.target.value);reqTrendsLabel()};
+// '급상승 리포트에서 올리기' 버튼에 쓰이는 리포트 날짜를 보여 준다 (날짜 칸은 '급상승 리포트' 탭에만 보임)
+function reqTrendsLabel(){const b=$("#req-trends"),v=$("#date").value;if(b)b.textContent=v&&v!=="리포트 없음"?`급상승 리포트(${v})에서 올리기`:"급상승 리포트에서 올리기"}
 $("#run").onclick=async()=>{const d=await api("/admin/api/trends/run",{method:"POST"});job(d.job);
   const t=setInterval(async()=>{const s=await api("/admin/api/trends");job(s.job);if(!s.job.running){clearInterval(t);load()}},5000)};
 window.pickHint=()=>{const p=[...document.querySelectorAll(".pick:checked")].map(x=>x.value);const el=$("#pick-hint");if(!el)return;
