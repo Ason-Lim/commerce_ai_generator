@@ -30,7 +30,7 @@
 - `lib/registry_row.js` — 응답 → 등록부 행 순수 함수 (확장·테스트 공용)
 - `page_hook.js` — MAIN world, fetch/XHR 응답 읽기만
 - `content.js`, `content.css` — 오른쪽 아래 창
-- `background.js` — commerce_ai 관리자 API 호출 (브랜드커넥트 탭의 우리 스크립트에서 온 요청만)
+- `sw.js` — 서비스 워커: commerce_ai 관리자 API 호출, 툴바 아이콘으로 브랜드커넥트 창 열기 (브랜드커넥트 탭의 우리 스크립트에서 온 요청만)
 - `options.html`, `options.js` — 서버 주소·토큰
 
 ## 테스트

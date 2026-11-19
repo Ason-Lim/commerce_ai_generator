@@ -1,6 +1,16 @@
 // 서비스 워커: commerce_ai 관리자 API 로만 요청한다 (2026-11-19). 브랜드커넥트 API 는 부르지 않는다.
-importScripts('lib/registry_row.js');
-const R = self.BcRegistry;
+// 0.2.2: 파일 이름을 background.js → sw.js 로 바꾸고(크롬이 옛 파일을 붙잡고 있던 문제) 다른 파일을 불러오지 않는다.
+console.info('[bc-to-registry] sw 0.2.2 시작');
+
+// 서버 주소 점검: 이 컴퓨터(localhost·127.0.0.1)만 — lib/registry_row.js 의 serverOk 와 같은 규칙
+function serverOk(base) {
+  try {
+    const u = new URL(base);
+    return (u.protocol === 'http:' || u.protocol === 'https:') && ['localhost', '127.0.0.1'].includes(u.hostname);
+  } catch (e) {
+    return false;
+  }
+}
 const DEFAULTS = { server: 'http://localhost:8001', token: '' };
 
 async function settings() {
@@ -10,7 +20,7 @@ async function settings() {
 
 async function call(path, init) {
   const s = await settings();
-  if (!R.serverOk(s.server)) return { ok: false, error: '서버 주소는 이 컴퓨터(localhost)만 쓸 수 있어요 — ⚙에서 고쳐 주세요' };
+  if (!serverOk(s.server)) return { ok: false, error: '서버 주소는 이 컴퓨터(localhost)만 쓸 수 있어요 — ⚙에서 고쳐 주세요' };
   if (!s.token) return { ok: false, error: '관리자 토큰이 없어요 — ⚙에서 넣어 주세요' };
   let res;
   try {
