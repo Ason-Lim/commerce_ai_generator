@@ -32,6 +32,16 @@
       for (const p of got) state.products.set(String(p.id), p);
       log('검색 응답', q, got.length + '개', '발급된 것', got.filter((p) => p.shortenUrl).length + '개');
       render();
+    } else if (kind === 'list') {
+      // '발급 링크 관리' 같은 화면: 이미 발급한 링크 목록 → 등록부에 없는 것을 위로 (0.5.0)
+      const got = R.issuedItemsOf(json);
+      if (!got.length) { log('조회 응답 (발급 링크 없음)', new URL(url, location.href).pathname, JSON.stringify(R.shapeOf(json))); return; }
+      for (const p of got) {
+        const prev = state.products.get(String(p.id));
+        state.products.set(String(p.id), prev ? { ...p, ...prev, shortenUrl: prev.shortenUrl || p.shortenUrl } : p);
+      }
+      log('발급 목록 응답', new URL(url, location.href).pathname, got.length + '개');
+      render();
     } else if (kind === 'issue') {
       const id = R.productIdOfIssueUrl(url);
       const link = R.issuedUrlOf(json);
@@ -96,10 +106,18 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   function linkedIds() {
-    // 방금 발급한 것 먼저, 그다음 이번 검색 결과 중 예전에 발급해 둔 것
-    const rest = [...state.products.values()].filter((p) => p.shortenUrl && !state.issuedNow.includes(String(p.id)))
-      .map((p) => String(p.id));
-    return [...state.issuedNow, ...rest].slice(0, 30);
+    // 방금 발급한 것 → 등록부에 아직 없는 발급 링크 → 이미 저장된 것 순서
+    const rest = [...state.products.values()].filter((p) => p.shortenUrl && !state.issuedNow.includes(String(p.id)));
+    const missing = rest.filter((p) => !state.registered.has(p.shortenUrl)).map((p) => String(p.id));
+    const saved = rest.filter((p) => state.registered.has(p.shortenUrl)).map((p) => String(p.id));
+    return [...state.issuedNow, ...missing, ...saved].slice(0, 80);
+  }
+
+  function summary() {
+    const linked = [...state.products.values()].filter((p) => p.shortenUrl);
+    if (!linked.length) return '';
+    const missing = linked.filter((p) => !state.registered.has(p.shortenUrl)).length;
+    return `<div class="bcr-sum">이 화면의 발급 링크 ${linked.length}개 · <b>등록부에 없는 것 ${missing}개</b></div>`;
   }
 
   function rowHtml(id) {
@@ -157,6 +175,7 @@
       </div>
       <div class="bcr-body">
         <label>키워드 <input class="bcr-kw" value="${esc(state.keyword)}" maxlength="60" placeholder="검색하면 검색어가 들어와요"></label>
+        <div class="bcr-sumwrap"></div>
         <ul class="bcr-list"></ul>
       </div>`;
     renderList(el, ids);
@@ -165,8 +184,10 @@
   function renderList(el, ids) {
     const ul = el.querySelector('.bcr-list');
     if (!ul) return;
+    const sum = el.querySelector('.bcr-sumwrap');
+    if (sum) sum.innerHTML = summary();
     ul.innerHTML = ids.length ? ids.map(rowHtml).join('')
-      : '<li class="bcr-empty">상품을 검색하고 \'링크 발급\'을 누르면 여기에 나와요. (이미 발급해 둔 상품도 검색 결과에 있으면 나와요)</li>';
+      : '<li class="bcr-empty">상품을 검색하고 \'링크 발급\'을 누르면 여기에 나와요. 예전에 발급한 링크를 한꺼번에 맞추려면 위쪽 \'발급 링크 관리\' 화면을 여세요.</li>';
   }
 
   // 확장이 다시 로드되면 옛 패널이 남지 않게

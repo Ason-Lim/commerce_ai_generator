@@ -7,7 +7,8 @@
   console.info('[bc-to-registry] 응답 읽기 준비', location.pathname);
 
   const TAG = 'bc-to-registry';
-  const WATCH = /\/affiliate\/(query\/affiliate-products\/search-by-query|command\/affiliate-urls)/;
+  // 검색·발급 응답 + 그 밖의 조회 응답(예: '발급 링크 관리' 목록, 0.5.0). 읽기만 한다.
+  const WATCH = /\/affiliate\/(query\/|command\/affiliate-urls)/;
 
   function send(url, method, text) {
     if (!text) return;

@@ -6,12 +6,59 @@
   const SEARCH_RE = /\/affiliate\/query\/affiliate-products\/search-by-query/;
   const ISSUE_RE = /\/affiliate\/command\/affiliate-urls/;
 
-  /** 페이지가 부른 주소가 어떤 응답인지: 'search' | 'issue' | null */
+  const QUERY_RE = /\/affiliate\/query\//;
+  const LINK_RE = /^https:\/\/(naver\.me|[\w.-]*brandconnect\.naver\.com)\//;
+
+  /** 페이지가 부른 주소가 어떤 응답인지: 'search' | 'issue' | 'list' | null
+   *  'list' = 그 밖의 조회(GET) 응답 — 예: '발급 링크 관리' 화면의 발급 목록 (0.5.0) */
   function kindOf(url, method) {
     const u = String(url || '');
+    const m = String(method || 'GET').toUpperCase();
     if (SEARCH_RE.test(u)) return 'search';
-    if (ISSUE_RE.test(u) && String(method || 'GET').toUpperCase() === 'POST') return 'issue';
+    if (ISSUE_RE.test(u) && m === 'POST') return 'issue';
+    if (QUERY_RE.test(u) && m === 'GET') return 'list';
     return null;
+  }
+
+  const pick = (o, keys) => { for (const k of keys) if (o && o[k] != null && o[k] !== '') return o[k]; return null; };
+  const NAME_KEYS = ['productName', 'name', 'title'];
+  const LINK_KEYS = ['shortenUrl', 'affiliateUrl', 'shortUrl', 'url'];
+
+  /** 응답 어디에 있든 '상품명 + 발급 링크(naver.me·brandconnect)'를 가진 것을 찾아 상품 모양으로 맞춘다.
+   *  상품 정보가 한 단계 아래(예: {affiliateProduct:{…}, shortenUrl})에 있어도 찾는다. 모양을 모르는 화면용. */
+  function issuedItemsOf(resp) {
+    const out = [];
+    const seen = new Set();
+    const visit = (o, depth) => {
+      if (!o || typeof o !== 'object' || depth > 6) return;
+      if (Array.isArray(o)) { o.forEach((x) => visit(x, depth + 1)); return; }
+      const kids = Object.values(o).filter((v) => v && typeof v === 'object' && !Array.isArray(v));
+      const link = [o, ...kids].map((x) => pick(x, LINK_KEYS)).find((v) => typeof v === 'string' && LINK_RE.test(v.trim()));
+      const holder = [o, ...kids].find((x) => typeof pick(x, NAME_KEYS) === 'string');
+      if (link && holder && !seen.has(link.trim())) {
+        seen.add(link.trim());
+        const f = (keys) => pick(holder, keys) ?? pick(o, keys);
+        out.push({ id: f(['id', 'affiliateProductId', 'productId']) ?? link.trim(), productName: pick(holder, NAME_KEYS),
+          storeName: f(['storeName', 'mallName', 'channelName']), salePrice: f(['salePrice', 'price']),
+          discountedSalePrice: f(['discountedSalePrice', 'discountPrice']), commissionRate: f(['commissionRate']),
+          shortenUrl: link.trim() });
+        return;
+      }
+      Object.values(o).forEach((v) => visit(v, depth + 1));
+    };
+    visit(resp, 0);
+    return out;
+  }
+
+  /** 모양 진단용: 응답의 윗단 열쇠와 첫 목록 원소의 열쇠 (값은 남기지 않는다) */
+  function shapeOf(resp) {
+    const top = resp && typeof resp === 'object' ? Object.keys(resp) : [];
+    let first = null;
+    const find = (o, d) => { if (first || !o || typeof o !== 'object' || d > 4) return;
+      if (Array.isArray(o)) { if (o[0] && typeof o[0] === 'object') first = Object.keys(o[0]); return; }
+      Object.values(o).forEach((v) => find(v, d + 1)); };
+    find(resp, 0);
+    return { top, item: first };
   }
 
   /** 검색 응답 {data:[...], paging} → 상품 목록 (모양이 다르면 빈 목록) */
@@ -84,7 +131,7 @@
     }
   }
 
-  const api = { kindOf, productsOf, issuedUrlOf, productIdOfIssueUrl, keywordFromPageUrl, toRegistryRow, serverOk };
+  const api = { kindOf, issuedItemsOf, shapeOf, productsOf, issuedUrlOf, productIdOfIssueUrl, keywordFromPageUrl, toRegistryRow, serverOk };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BcRegistry = api;
 })(typeof self !== 'undefined' ? self : this);

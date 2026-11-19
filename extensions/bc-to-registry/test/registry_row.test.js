@@ -63,3 +63,24 @@ test('수수료는 글자로 — 5 → \'5\', 16.5 → \'16.5\'', () => {
   assert.equal(R.toRegistryRow({ ...P, commissionRate: 16.5 }, 'k').commission_rate, '16.5');
   assert.equal(R.toRegistryRow({ ...P, commissionRate: null }, 'k').commission_rate, null);
 });
+
+test("'발급 링크 관리' 같은 조회(GET)는 list, 검색·발급과 구분", () => {
+  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/query/affiliate-urls?page=1', 'GET'), 'list');
+  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/query/affiliate-products/search-by-query?query=a', 'GET'), 'search');
+  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/query/x', 'POST'), null);
+});
+
+test('발급 목록: 평평한 모양·한 단계 아래 상품·링크 이름이 달라도 찾는다', () => {
+  const flat = { data: [{ id: 1, productName: '사과 5kg', storeName: '농장', salePrice: 30000, commissionRate: 5, shortenUrl: 'https://naver.me/a1' }] };
+  const nested = { content: [{ affiliateUrl: 'https://naver.me/b2', createdAt: 'x', affiliateProduct: { id: 7, productName: '배 3kg', storeName: '과수원', discountedSalePrice: 19000, salePrice: 25000, commissionRate: 7 } }] };
+  const other = { items: [{ title: '귤 10kg', mallName: '제주', url: 'https://naver.me/c3' }, { title: '광고', url: 'https://example.com/x' }] };
+  assert.deepEqual(R.issuedItemsOf(flat).map((p) => [p.productName, p.shortenUrl, p.commissionRate]), [['사과 5kg', 'https://naver.me/a1', 5]]);
+  const n = R.issuedItemsOf(nested)[0];
+  assert.deepEqual([n.id, n.productName, n.storeName, n.salePrice, n.discountedSalePrice, n.shortenUrl], [7, '배 3kg', '과수원', 25000, 19000, 'https://naver.me/b2']);
+  assert.deepEqual(R.issuedItemsOf(other).map((p) => [p.productName, p.storeName]), [['귤 10kg', '제주']]);
+  assert.deepEqual(R.issuedItemsOf({ data: [{ id: 1, productName: '링크 없음' }] }), []);
+});
+
+test('모양 진단은 열쇠 이름만 남긴다', () => {
+  assert.deepEqual(R.shapeOf({ data: { list: [{ a: 1, b: 'x' }] }, total: 3 }), { top: ['data', 'total'], item: ['a', 'b'] });
+});
