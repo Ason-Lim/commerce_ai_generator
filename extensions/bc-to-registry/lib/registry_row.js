@@ -16,7 +16,9 @@
     const m = String(method || 'GET').toUpperCase();
     if (SEARCH_RE.test(u)) return 'search';
     if (ISSUE_RE.test(u) && m === 'POST') return 'issue';
-    if (QUERY_RE.test(u) && m === 'GET') return 'list';
+    if (QUERY_RE.test(u) && m === 'GET' && /^https:\/\/gw-brandconnect\.naver\.com\//.test(u)) return 'list';
+    // 0.5.1: 그 밖의 브랜드커넥트 서버 응답도 '발급 링크가 든 목록'인지 살펴본다 (예: 조건을 붙여 POST 로 받는 목록)
+    if (/^https:\/\/gw-brandconnect\.naver\.com\//.test(u) && !/\/command\//.test(u)) return 'list';
     return null;
   }
 

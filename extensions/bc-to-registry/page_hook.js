@@ -7,8 +7,9 @@
   console.info('[bc-to-registry] 응답 읽기 준비', location.pathname);
 
   const TAG = 'bc-to-registry';
-  // 검색·발급 응답 + 그 밖의 조회 응답(예: '발급 링크 관리' 목록, 0.5.0). 읽기만 한다.
-  const WATCH = /\/affiliate\/(query\/|command\/affiliate-urls)/;
+  // 브랜드커넥트 서버(gw-brandconnect)에서 오는 응답은 모두 사본을 '읽기만' 한다 (0.5.1).
+  // '발급 링크 관리' 목록이 어떤 주소·방식(GET/POST)으로 오는지 몰라서 넓게 본다. 요청은 새로 보내지 않는다.
+  const WATCH = /^https:\/\/gw-brandconnect\.naver\.com\//;
 
   function send(url, method, text) {
     if (!text) return;

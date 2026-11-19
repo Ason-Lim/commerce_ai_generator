@@ -12,7 +12,7 @@ test('검색·발급 주소를 구분하고, 발급은 POST 만 본다', () => {
   assert.equal(R.kindOf(s, 'GET'), 'search');
   assert.equal(R.kindOf(i, 'post'), 'issue');
   assert.equal(R.kindOf(i, 'GET'), null);
-  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/ping', 'GET'), null);
+  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/ping', 'GET'), 'list');   // 0.5.1: 그 밖의 응답은 목록인지 살펴만 본다
   assert.equal(R.productIdOfIssueUrl(i), '123');
 });
 
@@ -67,7 +67,9 @@ test('수수료는 글자로 — 5 → \'5\', 16.5 → \'16.5\'', () => {
 test("'발급 링크 관리' 같은 조회(GET)는 list, 검색·발급과 구분", () => {
   assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/query/affiliate-urls?page=1', 'GET'), 'list');
   assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/query/affiliate-products/search-by-query?query=a', 'GET'), 'search');
-  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/query/x', 'POST'), null);
+  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/v2/affiliate-urls/search', 'POST'), 'list');   // 조건 붙인 POST 목록
+  assert.equal(R.kindOf('https://gw-brandconnect.naver.com/affiliate/command/something', 'POST'), null);              // 명령 응답은 아님
+  assert.equal(R.kindOf('https://example.com/affiliate/query/x', 'GET'), null);
 });
 
 test('발급 목록: 평평한 모양·한 단계 아래 상품·링크 이름이 달라도 찾는다', () => {

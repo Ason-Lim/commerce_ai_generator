@@ -35,7 +35,7 @@
     } else if (kind === 'list') {
       // '발급 링크 관리' 같은 화면: 이미 발급한 링크 목록 → 등록부에 없는 것을 위로 (0.5.0)
       const got = R.issuedItemsOf(json);
-      if (!got.length) { log('조회 응답 (발급 링크 없음)', new URL(url, location.href).pathname, JSON.stringify(R.shapeOf(json))); return; }
+      if (!got.length) { log('조회 응답 (발급 링크 없음)', method, new URL(url, location.href).pathname, JSON.stringify(R.shapeOf(json))); return; }
       for (const p of got) {
         const prev = state.products.get(String(p.id));
         state.products.set(String(p.id), prev ? { ...p, ...prev, shortenUrl: prev.shortenUrl || p.shortenUrl } : p);
