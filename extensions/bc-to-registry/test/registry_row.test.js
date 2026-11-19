@@ -34,7 +34,7 @@ test('발급 응답의 여러 모양에서 링크를 찾고, 쇼핑커넥트 링
 test('등록부 행: 판매가=할인 전, 할인가=할인가, 수수료=응답 값 그대로', () => {
   assert.deepEqual(R.toRegistryRow(P, ' 감태 '), {
     keyword: '감태', product_name: '김명월 태안구운감태 1봉', store_name: '김명월', price: 11000, discount_price: 9900,
-    commission_rate: 16, link: 'https://naver.me/AbC12', memo: '' });
+    commission_rate: '16', link: 'https://naver.me/AbC12', memo: '' });
 });
 
 test('할인이 없거나 할인가가 판매가와 같으면 discount_price 는 비운다', () => {
@@ -56,4 +56,10 @@ test('서버 주소는 이 컴퓨터만', () => {
   assert.ok(!R.serverOk('https://my-tunnel.trycloudflare.com'));
   assert.ok(!R.serverOk('http://localhost.evil.com:8001'));
   assert.ok(!R.serverOk('javascript:alert(1)'));
+});
+
+test('수수료는 글자로 — 5 → \'5\', 16.5 → \'16.5\'', () => {
+  assert.equal(R.toRegistryRow({ ...P, commissionRate: 5 }, 'k').commission_rate, '5');
+  assert.equal(R.toRegistryRow({ ...P, commissionRate: 16.5 }, 'k').commission_rate, '16.5');
+  assert.equal(R.toRegistryRow({ ...P, commissionRate: null }, 'k').commission_rate, null);
 });

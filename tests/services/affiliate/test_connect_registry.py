@@ -302,9 +302,9 @@ def test_issue_window_url_uses_the_creator_channel():
 
 
 def test_admin_accepts_the_row_the_extension_sends(client, csv_path):
-    """크롬 확장 bc-to-registry (2026-11-19) 가 보내는 모양 그대로: 숫자 가격·실수 수수료·할인 없으면 null."""
+    """크롬 확장 bc-to-registry (2026-11-19) 가 보내는 모양 그대로: 숫자 가격·글자 수수료·할인 없으면 null."""
     row = {"keyword": "감태", "product_name": "김명월 태안구운감태 1봉", "store_name": "김명월", "price": 11000,
-           "discount_price": 9900, "commission_rate": 16.5, "link": "https://naver.me/ExtA1", "memo": ""}
+           "discount_price": 9900, "commission_rate": "16.5", "link": "https://naver.me/ExtA1", "memo": ""}
     out = client.post("/admin/api/connect/links", headers=H, json={"rows": [row]}).json()
     assert out == {"added": 1, "rejected": [], "request_issued": False}
     new = reg.rows()[-1]

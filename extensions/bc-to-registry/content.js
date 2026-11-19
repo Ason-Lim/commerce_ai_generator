@@ -80,6 +80,7 @@
     if (res.ok && res.added === 1) {
       state.registered.add(p.shortenUrl);
       state.msg[id] = { kind: 'ok', text: `저장했어요 (키워드 '${kw}')` };
+      loadRegistered();                      // 위쪽 '등록부 N건' 을 새로
     } else if (res.ok) {
       const why = (res.rejected && res.rejected[0] && res.rejected[0].reason) || '저장되지 않았어요';
       if (why === '이미 등록된 링크예요') state.registered.add(p.shortenUrl);

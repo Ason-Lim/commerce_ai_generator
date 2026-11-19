@@ -67,7 +67,8 @@
       store_name: String(p.storeName || '').trim().slice(0, 80),
       price: sale != null ? sale : (disc != null ? disc : null),
       discount_price: hasDisc && sale != null ? disc : null,
-      commission_rate: Number.isFinite(comm) ? comm : null,
+      // 글자로 보낸다: 숫자 5 를 보내면 서버가 '5.0' 으로 적는다 (등록부 다른 줄은 '5')
+      commission_rate: Number.isFinite(comm) ? String(comm) : null,
       link: String(link || p.shortenUrl || '').trim(),
       memo: '',
     };
