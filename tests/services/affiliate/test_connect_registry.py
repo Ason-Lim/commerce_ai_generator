@@ -210,3 +210,92 @@ def test_admin_links_list_flags_a_link_that_belongs_to_another_product(client, s
     bad = client.post("/admin/api/connect/links", headers=H, json={"rows": [
         {"keyword": "사과", "product_name": "영주사과 부사 3kg", "link": "https://naver.me/5g4aHtNK"}]}).json()
     assert bad["added"] == 0 and "이미 등록된 링크" in bad["rejected"][0]["reason"]
+
+
+# ── 2026-11-18: 발급한 링크 불러오기 ──
+def test_issued_links_lists_only_unregistered_links_once(shop_db):
+    _add_bc(shop_db, [("2026-11-18", "딸기", "딸기 설향 금실 프리미엄 생딸기 산청", "청광농수산", 34900, 48, 5.0, 4.88, 3552,
+                       "https://naver.me/GSQeTdjc"),
+                      ("2026-11-17", "딸기", "딸기 설향 금실 프리미엄 생딸기 산청", "청광농수산", 35900, 40, 5.0, 4.8, 3500,
+                       "https://naver.me/GSQeTdjc"),                          # 같은 링크 예전 수집 → 하나만
+                      ("2026-11-18", "딸기", "킹스베리 딸기 500g", "아농이농원", 26900, 46, 5.0, 4.7, 120,
+                       "https://naver.me/AlreadyIn"),                        # 이미 등록부에 있음
+                      ("2026-11-18", "딸기", "딸기 막걸리 750ml", "양조장", 9000, 0, 10.0, None, 0,
+                       "https://naver.me/Alcohol1"),                         # 주류
+                      ("2026-11-18", "사과", "부사 사과 3kg", "사과농원", 25000, 10, 7.0, 4.6, 80,
+                       "https://naver.me/Apple001")])
+    have = {"https://naver.me/AlreadyIn"}
+    d = bf.issued_links(have, path=shop_db)
+    assert sorted(i["link"] for i in d["items"]) == ["https://naver.me/Apple001", "https://naver.me/GSQeTdjc"]
+    one = [i for i in d["items"] if i["link"] == "https://naver.me/GSQeTdjc"][0]
+    assert one["price_at_snapshot"] == 34900 and one["snap_date"] == "2026-11-18"
+    assert [i["link"] for i in bf.issued_links(have, "딸기", path=shop_db)["items"]] == ["https://naver.me/GSQeTdjc"]
+
+
+def test_admin_issued_links_skip_what_the_registry_has(client, shop_db):
+    _add_bc(shop_db, [("2026-11-18", "사과", "영주사과 홍로 2kg", "햇살품은사과", 22900, 0, 23.0, 4.5, 10,
+                       "https://naver.me/5g4aHtNK"),                         # 등록부(OLD)에 있음
+                      ("2026-11-18", "사과", "부사 사과 3kg", "사과농원", 25000, 10, 7.0, 4.6, 80,
+                       "https://naver.me/Apple001")])
+    d = client.get("/admin/api/brandconnect/issued?keyword=사과", headers=H).json()
+    assert [i["link"] for i in d["items"]] == ["https://naver.me/Apple001"]
+    assert client.get("/admin/api/brandconnect/issued").status_code in (401, 403)
+
+
+# ── 2026-11-18 2부: 키워드 다시 읽기 (식품 모니터링 tools/bc_refresh.py 실행) ──
+def _shop(tmp_path):
+    base = tmp_path / "shop_monitor"
+    (base / "tools").mkdir(parents=True)
+    (base / "data").mkdir()
+    (base / "tools" / "bc_refresh.py").write_text("# stub", encoding="utf-8")
+    return {"SHOP_MONITOR_DB": str(base / "data" / "shop_monitor.db")}, base
+
+
+def test_refresh_runs_the_monitor_script_and_reads_its_last_line(tmp_path):
+    import subprocess
+
+    env, base = _shop(tmp_path)
+    seen = {}
+
+    def run(cmd, **kw):
+        seen.update(cmd=cmd, cwd=kw["cwd"], timeout=kw["timeout"])
+        return subprocess.CompletedProcess(cmd, 0, stdout='log line\n{"ok": true, "rows": 7, "snap_date": "2026-11-18", '
+                                                          '"message": "딸기: 7개 다시 읽음"}\n', stderr="")
+
+    r = bf.refresh_keyword(" 딸기 ", env=env, run=run)
+    assert r == {"ok": True, "keyword": "딸기", "rows": 7, "snap_date": "2026-11-18", "message": "딸기: 7개 다시 읽음"}
+    assert seen["cmd"][1:] == [str(base / "tools" / "bc_refresh.py"), "딸기"] and seen["cwd"] == str(base)
+    assert seen["cmd"][0] == "python3" and seen["timeout"] == 150          # .venv 없으면 python3
+
+
+def test_refresh_reports_login_timeout_and_missing_script_plainly(tmp_path):
+    import subprocess
+
+    env, _base = _shop(tmp_path)
+    fail = lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, stdout='{"ok": false, "rows": 0, "message": "로그인이 필요해요"}', stderr="")  # noqa: E731
+    assert bf.refresh_keyword("딸기", env=env, run=fail)["message"] == "로그인이 필요해요"
+
+    def slow(cmd, **kw):
+        raise subprocess.TimeoutExpired(cmd, kw["timeout"])
+    assert "초 안에 끝나지" in bf.refresh_keyword("딸기", env={**env, "BC_REFRESH_TIMEOUT": "5"}, run=slow)["message"]
+    garbage = lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, stdout="", stderr="Traceback\nBoom")  # noqa: E731
+    assert bf.refresh_keyword("딸기", env=env, run=garbage)["message"] == "다시 읽기 실패: Boom"
+    assert bf.refresh_keyword("", env=env, run=fail)["ok"] is False
+    assert "찾지 못했어요" in bf.refresh_keyword("딸기", env={"SHOP_MONITOR_DB": str(tmp_path / "x" / "d" / "a.db")})["message"]
+
+
+def test_admin_refresh_then_lists_new_issued_links(client, shop_db, monkeypatch):
+    def fake_refresh(keyword, **_):
+        _add_bc(shop_db, [("2026-11-18", keyword, "부사 사과 3kg", "사과농원", 25000, 10, 7.0, 4.6, 80,
+                           "https://naver.me/NewApple")])                 # 방금 발급한 링크가 새로 읽힘
+        return {"ok": True, "keyword": keyword, "rows": 1, "snap_date": "2026-11-18", "message": "사과: 1개 다시 읽음"}
+    monkeypatch.setattr(bf, "refresh_keyword", fake_refresh)
+    d = client.post("/admin/api/brandconnect/issued/refresh", headers=H, json={"keyword": "사과"}).json()
+    assert d["refresh"]["ok"] and [i["link"] for i in d["items"]] == ["https://naver.me/NewApple"]
+    assert client.post("/admin/api/brandconnect/issued/refresh", json={"keyword": "사과"}).status_code in (401, 403)
+    assert client.post("/admin/api/brandconnect/issued/refresh", headers=H, json={"keyword": ""}).status_code == 422
+
+
+def test_issue_window_url_uses_the_creator_channel():
+    assert bf.bc_products_url({}) == "https://brandconnect.naver.com/971564859961248/affiliate/products"
+    assert bf.bc_products_url({"BC_CREATOR_ID": "123x"}) == "https://brandconnect.naver.com/123/affiliate/products"
