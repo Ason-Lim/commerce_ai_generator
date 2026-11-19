@@ -394,7 +394,16 @@ $("#bc-go").onclick=async()=>{const kw=$("#bc-kw").value.trim();if(!kw)return;$(
     $("#bc-rows").innerHTML=d.items.length?d.items.map((it,i)=>`<tr><td>${esc(it.title)}${it.bc_link?' <span class="pill p-ok">발급됨</span>':""}</td><td>${esc(it.mall)}</td>
       <td>${it.review_count?Number(it.review_count).toLocaleString()+(it.rating!=null?` · ★${esc(it.rating)}`:""):"-"}</td><td>${it.commission_rate??"-"}%</td><td>${it.discount_rate||0}%</td>
       <td>${it.price_at_snapshot?Number(it.price_at_snapshot).toLocaleString()+"원":"-"} <small>${esc(it.snap_date)}</small></td>
-      <td style="white-space:nowrap"><button class="btn primary" data-bc="${i}">링크 입력</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">이 키워드의 수집 상품이 없어요. 브랜드커넥트에서 직접 검색해 주세요.</td></tr>`;
+      <td style="white-space:nowrap"><button class="btn primary" data-bc="${i}">링크 입력</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">이 키워드의 수집 상품이 없어요 — 매일 수집하는 키워드(약 20개)에 없거나 수집이 오래됐어요.
+      <button class="btn" id="bc-live" style="margin-left:6px">브랜드커넥트에서 지금 읽기 (10~30초)</button>
+      <br><small>읽기만 해요(발급 안 함). 또는 <b>브랜드커넥트 열기</b>로 직접 검색하면 확장 창에 리뷰·평점이 같이 나와요.</small></td></tr>`;
+    const live=$("#bc-live");
+    if(live)live.onclick=async()=>{live.disabled=true;$("#bc-note").textContent=`'${kw}' 브랜드커넥트에서 읽는 중… (10~30초)`;
+      try{const r=await api("/admin/api/brandconnect/issued/refresh",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keyword:kw})});
+        const x=r.refresh||{};
+        if(!x.ok){$("#bc-note").textContent=`읽기 실패: ${x.message||"알 수 없음"} — 로그인이 풀렸으면 식품 모니터링 브라우저에서 다시 로그인해 주세요.`;live.disabled=false;return}
+        $("#bc-go").click()}
+      catch(e){$("#bc-note").textContent=e.message;live.disabled=false}};
     BC_URL=d.bc_url||BC_URL;
     document.querySelectorAll("#bc-rows button[data-bc]").forEach(b=>b.onclick=()=>{const it=BC[+b.dataset.bc];
       openLinks([{keyword:kw,product_name:it.title,store_name:it.mall,discount_price:it.price_at_snapshot||"",commission_rate:it.commission_rate??"",link:it.bc_link||"",
