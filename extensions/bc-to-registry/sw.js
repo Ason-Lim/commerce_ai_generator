@@ -1,6 +1,6 @@
 // 서비스 워커: commerce_ai 관리자 API 로만 요청한다 (2026-11-19). 브랜드커넥트 API 는 부르지 않는다.
 // 0.2.2: 파일 이름을 background.js → sw.js 로 바꾸고(크롬이 옛 파일을 붙잡고 있던 문제) 다른 파일을 불러오지 않는다.
-console.info('[bc-to-registry] sw 0.6.0 시작');
+console.info('[bc-to-registry] sw 0.6.1 시작');
 
 // 서버 주소 점검: 이 컴퓨터(localhost·127.0.0.1)만 — lib/registry_row.js 의 serverOk 와 같은 규칙
 function serverOk(base) {
@@ -82,8 +82,19 @@ async function openBrandconnect() {
   if (openView === 'window') return openRightWindow();
   const cur = await chrome.windows.getLastFocused({ windowTypes: ['normal'], populate: true }).catch(() => null);
   const active = cur && (cur.tabs || []).find((t) => t.active);
-  // 같은 창에 이미 브랜드커넥트 탭이 있으면 그 탭으로 (분할돼 있으면 그대로 반반으로 보인다)
-  const existing = cur && (cur.tabs || []).find((t) => /^https:\/\/brandconnect\.naver\.com\//.test(t.url || t.pendingUrl || ''));
+  const isBc = (t) => /^https:\/\/brandconnect\.naver\.com\//.test((t && (t.url || t.pendingUrl)) || '');
+  const inSplit = (t) => t && t.splitViewId != null && t.splitViewId !== -1;
+  if (openView === 'split' && active) {
+    // 0.6.1: 늘 '지금 보고 있는 탭' 오른쪽에. 예전 분할(다른 탭과 짝지은 브랜드커넥트)로 건너뛰지 않는다.
+    if (isBc(active)) return 'already';
+    const partner = inSplit(active) && (cur.tabs || []).find((t) => t.id !== active.id && t.splitViewId === active.splitViewId);
+    if (partner && isBc(partner)) {
+      await chrome.tabs.update(partner.id, { active: true });
+      return 'split-existing';
+    }
+  }
+  // 새 탭 방식: 같은 창에 이미 브랜드커넥트 탭이 있으면 그 탭으로
+  const existing = openView !== 'split' && cur && (cur.tabs || []).find(isBc);
   if (existing) {
     await chrome.tabs.update(existing.id, { active: true });
     await chrome.windows.update(existing.windowId, { focused: true });
