@@ -28,6 +28,13 @@ NON_FOOD = re.compile(r"크림|화장품|스킨|로션|세럼|앰플|토너|마�
                       r"브러시|브러쉬|도구|실리콘|몰드|베이킹\s*틀|초코향|향\s*\d+종|드레스퍼퓸|조명|레일|기구")
 
 
+def bc_products_url(env=None) -> str:
+    """브랜드커넥트 '상품 찾기' 화면 주소 (발급하러 가기 창). 채널 번호는 수집기와 같은 BC_CREATOR_ID."""
+    source = os.environ if env is None else env
+    creator = re.sub(r"\D", "", source.get("BC_CREATOR_ID") or "") or "971564859961248"
+    return f"https://brandconnect.naver.com/{creator}/affiliate/products"
+
+
 def db_path(env=None) -> Path:
     source = os.environ if env is None else env
     raw = (source.get("SHOP_MONITOR_DB") or "").strip()
@@ -53,7 +60,8 @@ def find(keyword: str, n: int = 5, *, exclude_health: bool = True, path: Path | 
     out = {"keyword": kw, "items": [], "snap_date": None, "age_days": None, "basis": "관련성 → 리뷰 수 → 평점 → 수수료율",
            "note": "판매량 자료는 없어 리뷰 수를 인기 대신 써요. 가격은 수집 시점 값이라 글에 그대로 쓰지 마세요.",
            "has_reviews": False,
-           "status": "ok", "excluded": {"alcohol": 0, "health": 0, "non_food": 0, "not_relevant": 0}}
+           "status": "ok", "excluded": {"alcohol": 0, "health": 0, "non_food": 0, "not_relevant": 0},
+           "bc_url": bc_products_url()}
     p = path or db_path()
     if not kw:
         return {**out, "status": "empty"}

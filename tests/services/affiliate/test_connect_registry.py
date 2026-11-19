@@ -294,3 +294,8 @@ def test_admin_refresh_then_lists_new_issued_links(client, shop_db, monkeypatch)
     assert d["refresh"]["ok"] and [i["link"] for i in d["items"]] == ["https://naver.me/NewApple"]
     assert client.post("/admin/api/brandconnect/issued/refresh", json={"keyword": "사과"}).status_code in (401, 403)
     assert client.post("/admin/api/brandconnect/issued/refresh", headers=H, json={"keyword": ""}).status_code == 422
+
+
+def test_issue_window_url_uses_the_creator_channel():
+    assert bf.bc_products_url({}) == "https://brandconnect.naver.com/971564859961248/affiliate/products"
+    assert bf.bc_products_url({"BC_CREATOR_ID": "123x"}) == "https://brandconnect.naver.com/123/affiliate/products"
