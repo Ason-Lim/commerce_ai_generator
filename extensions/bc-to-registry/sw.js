@@ -1,6 +1,6 @@
 // 서비스 워커: commerce_ai 관리자 API 로만 요청한다 (2026-11-19). 브랜드커넥트 API 는 부르지 않는다.
 // 0.2.2: 파일 이름을 background.js → sw.js 로 바꾸고(크롬이 옛 파일을 붙잡고 있던 문제) 다른 파일을 불러오지 않는다.
-console.info('[bc-to-registry] sw 0.2.2 시작');
+console.info('[bc-to-registry] sw 0.3.0 시작');
 
 // 서버 주소 점검: 이 컴퓨터(localhost·127.0.0.1)만 — lib/registry_row.js 의 serverOk 와 같은 규칙
 function serverOk(base) {
@@ -74,7 +74,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // 관리자 화면 '브랜드커넥트 열기'·'발급하러 가기'와 같은 주소 (채널 971564859961248).
 const BC_HOME = 'https://brandconnect.naver.com/971564859961248/affiliate/products';
 
+// 여는 방식 (0.3.0): 기본은 지금 크롬 창의 탭 — 이미 브랜드커넥트 탭이 있으면 그 탭으로 간다.
+// 설정에서 '오른쪽 절반 창'을 고르면 따로 창을 연다.
 async function openBrandconnect() {
+  const { openMode } = await chrome.storage.local.get({ openMode: 'tab' });
+  if (openMode === 'window') return openRightWindow();
+  const cur = await chrome.windows.getLastFocused({ windowTypes: ['normal'] }).catch(() => null);
+  const tabs = await chrome.tabs.query({ url: 'https://brandconnect.naver.com/*' }).catch(() => []);
+  const same = tabs.find((t) => cur && t.windowId === cur.id) || tabs[0];
+  if (same) {
+    await chrome.tabs.update(same.id, { active: true });
+    await chrome.windows.update(same.windowId, { focused: true });
+    return 'tab-existing';
+  }
+  await chrome.tabs.create({ url: BC_HOME, active: true, ...(cur ? { windowId: cur.id } : {}) });
+  return 'tab';
+}
+
+async function openRightWindow() {
   const { bcWindowId } = await chrome.storage.session.get('bcWindowId').catch(() => ({}));
   if (bcWindowId) {
     try {
