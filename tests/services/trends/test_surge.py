@@ -286,3 +286,18 @@ def test_coupang_blog_uses_topic_templates():
     assert "유행" in d["body"].split("■ 2.")[1].split("■ 3.")[0]       # 32 유행 상품 검토
     forced = S.blog_draft(rep, coupang=links, variant="coupang", template="01")
     assert {v["id"] for v in forced["templates"].values()} == {"01"}
+
+
+def test_coupang_blog_hold_has_no_links_or_ad(data_dirs):
+    """2026-11-20 55종 v1.2: 구매 보류 결론 — 쿠팡 링크·고지·[광고] 없이 보류 문장."""
+    from app.services.trend_posts import templates
+
+    ranks, google = data_dirs
+    report = S.run(datalab=S.DataLab("id", "s", http=fake_http([]), pause=0), blog_search=blog_posts,
+                   rank_dir=ranks, google_dir=google, end=END)
+    links = {"휘태커스초콜릿": [{"title": "휘태커스 다크 250g 2개", "url": "https://link.coupang.com/a/w0", "rocket": True}]}
+    d = S.blog_draft(report, coupang=links, variant="coupang", hold=True)
+    assert d["hold"] and not d["title"].startswith("[광고]")
+    assert "coupang.com" not in d["body"] and S.COUPANG_DISCLOSURE not in d["body"]
+    assert templates.HOLD_LINE["blog"] in d["body"] and "쿠팡파트너스" not in d["tags"]
+    assert not S.blog_draft(report, coupang=links, variant="coupang")["hold"]

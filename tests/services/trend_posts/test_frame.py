@@ -192,3 +192,20 @@ def test_gift_keyword_title_does_not_repeat_gift():
     for ch in ("site", "blog"):
         t = T.choose("어버이날선물", products=[{"title": "x 1kg"}], channel=ch).title
         assert "선물 선물" not in t and "선물선물" not in t and t.count("선물") == 1
+
+
+def test_public_templates_do_not_assume_reader_stock():
+    """2026-11-20 55종 v1.2: 공개 글은 독자의 보유량을 모른다 — 26·28 은 대입 방법, 32 는 보류 결론 허용."""
+    from types import SimpleNamespace
+
+    from app.services.trend_posts import templates
+
+    r = SimpleNamespace(name="방어회", ingredients=["대방어", "간장"], source_label="")
+    for ch in ("site", "blog"):
+        s26 = " ".join(templates.sections("26", "대방어", "seasonal", [], r, ch)[0][1])
+        assert "대입" in s26 or "빼 보세요" in s26
+        assert "부족한 것만" not in s26
+        s32 = " ".join(templates.sections("32", "두바이쫀득쿠키", "viral", [], None, ch)[0][1])
+        assert "사지 않아도" in s32
+    for bank in templates.TITLES.values():
+        assert not any("좋아할" in t or "딱 세 가지" in t for ts in bank.values() for t in ts)

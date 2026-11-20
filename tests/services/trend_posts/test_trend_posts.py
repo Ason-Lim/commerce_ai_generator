@@ -113,6 +113,21 @@ def test_editing_keeps_ad_label_in_step_with_products(tmp_path):
     assert cleared.title == "제목만 바꿈" and cleared.disclosure is None
 
 
+def test_hold_conclusion_drops_links_and_ad(tmp_path):
+    """2026-11-20 55종 v1.2: 구매 보류 결론 글 — 링크·[광고]·고지·가격 문구 없이 결론 문장."""
+    from app.services.trend_posts import templates
+
+    svc = service(tmp_path)
+    post, _ = svc.create_from_surge(report(), "대방어", find_products=lambda k: search_result())
+    held = svc.update(post.id, {"conclusion": "hold"})
+    assert not held.title.startswith("[광고]") and held.disclosure is None and held.products
+    html = render.post_page(held.model_copy(update={"status": "approved", "approved_at": "2026-11-16T03:00:00+00:00"}), T0)
+    assert "판매처에서 보기" not in html and "/go/" not in html and policy.COUPANG_DISCLOSURE not in html
+    assert templates.HOLD_LINE["site"] in html
+    back = svc.update(post.id, {"conclusion": "buy"})
+    assert back.title.startswith("[광고]")
+
+
 def test_rendered_page_puts_disclosure_before_any_product_link(tmp_path):
     svc = service(tmp_path)
     post = approved(svc)

@@ -141,7 +141,8 @@ def post_page(post: Post, now: datetime | None = None) -> str:
     now = now or datetime.now(timezone.utc)
     e = escape
     parts = ['<nav><a href="/trends">← 트렌드 글 목록</a></nav><article>']
-    if post.disclosure and post.products:
+    hold = post.conclusion == "hold"              # 2026-11-20 구매 보류 결론 — 상품 링크·고지·가격 문구 없음
+    if post.disclosure and post.products and not hold:
         parts.append(f'<p class=ad role=note>{e(post.disclosure)}</p>')
     parts.append(f"<h1>{e(post.title)}</h1>")
     parts.append(f'<p class=meta>게시 {e(_kst(post.approved_at))}'
@@ -183,7 +184,10 @@ def post_page(post: Post, now: datetime | None = None) -> str:
 
     if not framed:
         recipe_html()
-    if post.products:
+    if hold:
+        from app.services.trend_posts import templates
+        parts.append(f"<h2>결론</h2><p>{e(templates.HOLD_LINE['site'])}</p>")
+    if post.products and not hold:
         parts.append("<h2>상품 비교</h2>" if framed else "<h2>재료·상품</h2>")
         if framed and post.checklist:
             parts.append(f"<p class=muted>{e(post.checklist)}</p>")
@@ -199,7 +203,7 @@ def post_page(post: Post, now: datetime | None = None) -> str:
                          f'target=_blank>판매처에서 보기</a></div></div>')
     if framed:
         recipe_html()
-    if post.products:
+    if post.products and not hold:
         parts.append(f"<h2>가격 참고</h2><p class=muted>{e(post.price_note)}</p>")
     if post.sources:
         items = "".join(

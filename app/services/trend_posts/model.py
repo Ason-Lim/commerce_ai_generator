@@ -83,6 +83,7 @@ class Post(_M):
     template: Optional[str] = None               # 글 틀 번호 (55종 중 자동 8종: 01·03·05·06·14·26·28·32)
     topic_kind: Optional[str] = None             # 주제 (frame.keyword_type: kimjang·seasonal·seollal·… )
     sections: list[PostSection] = Field(default_factory=list)
+    conclusion: Literal["buy", "hold"] = "buy"   # 2026-11-20 hold = 구매 보류 결론 — 구매 링크·광고 고지 없음
     status: Status = "draft"
     created_at: str
     updated_at: str

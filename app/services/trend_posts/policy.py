@@ -48,6 +48,8 @@ def disclosure_text() -> str:
 
 
 def has_affiliate(post: Post) -> bool:
+    if getattr(post, "conclusion", "buy") == "hold":   # 보류 결론 글은 링크를 내보내지 않는다
+        return False
     return any(p.link_type == "affiliate" for p in post.products)
 
 

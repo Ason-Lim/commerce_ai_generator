@@ -142,6 +142,7 @@ class _DraftIn(BaseModel):
     keywords: list[str] | None = Field(None, max_length=5)
     with_coupang: bool = True        # 2026-11-17: 키워드마다 쿠팡 파트너스 링크를 쇼핑커넥트 자리 앞에
     template: str | None = Field(None, pattern=r"^\d{2}$")    # 2026-11-20 쿠팡용 글 틀 번호 (없으면 주제별 기본)
+    hold: bool = False               # 2026-11-20 구매 보류 결론 — 쿠팡용에 링크·고지를 넣지 않는다
 
 
 @router.post("/admin/api/trends/blog-draft", dependencies=[api])
@@ -162,7 +163,7 @@ def trends_blog_draft(body: _DraftIn):
         drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
                                             connect_ok=blog_connect_approved()),
                   "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang",
-                                              recipes=recipes, template=body.template)}
+                                              recipes=recipes, template=body.template, hold=body.hold)}
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     keywords = drafts["naver"]["keywords"]

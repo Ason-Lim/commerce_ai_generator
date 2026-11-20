@@ -22,7 +22,7 @@ class PostError(ValueError):
 
 
 EDIT_FIELDS = {"title", "summary", "why", "price_note", "products", "recipe",
-               "question", "answer", "criteria", "constraints", "checklist", "sections"}   # 2026-11-20 프레임 0.4·템플릿 칸
+               "question", "answer", "criteria", "constraints", "checklist", "sections", "conclusion"}   # 2026-11-20 프레임 0.4·템플릿 칸
 
 
 class TrendPosts:

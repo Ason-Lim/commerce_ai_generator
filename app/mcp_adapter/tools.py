@@ -135,7 +135,7 @@ def food_get_trend_post(post_id: str, *, posts=None, env=None, now=None) -> dict
     allow = affiliate_links_allowed(env)
     page = render.site_url() + render.post_url(p)
     products, warnings = [], []
-    for n, it in enumerate(p.products, start=1):
+    for n, it in enumerate([] if p.conclusion == "hold" else p.products, start=1):
         affiliate = it.link_type != "direct"
         products.append({"rank": n, "title": it.title, "platform": it.platform, "price": render.price_line(it, now),
                          "link_type": it.link_type,

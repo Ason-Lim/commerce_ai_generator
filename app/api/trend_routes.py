@@ -79,7 +79,7 @@ def trends_post(post_id: str, posts: Posts):
 @router.get("/trends/{post_id}/go/{n}")
 def trends_go(post_id: str, n: int, request: Request, posts: Posts):
     post = posts.public(post_id)
-    if post is None or not 1 <= n <= len(post.products):
+    if post is None or post.conclusion == "hold" or not 1 <= n <= len(post.products):
         return RedirectResponse("/trends", status_code=303)
     product = post.products[n - 1]
     try:
