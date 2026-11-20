@@ -90,6 +90,31 @@ def recipe_from_result(result: dict | None, topic: str) -> PostRecipe | None:
     return None
 
 
+def apply_conclusion(post: Post, conclusion: str) -> Post:
+    """2026-11-20 결론을 바꾸면 글 틀 칸을 다시 만든다. hold = 구매를 이끄는 요소(상품 비교 안내·옵션/결제 확인·
+    구매 전 제약·상품 절)를 모두 빼고 보류 결론 · buy = 상품 기준으로 원래 틀. [광고]·고지는 service.update 가 맞춘다.
+    (질문·답·절·제약을 사람이 고쳤다면 결론을 바꿀 때 다시 써진다 — 기록에 남긴다.)"""
+    from app.services.trend_posts import templates
+    status = "new" if post.topic_kind == "viral" else None
+    if conclusion == "hold":
+        ch = templates.hold(post.topic, status=status, channel="site")
+        return post.model_copy(update={
+            "conclusion": "hold", "title": ch.title, "template": ch.id, "topic_kind": ch.kind,
+            "summary": f"'{post.topic}' 검색이 왜 늘었는지 데이터로 보고, 지금 꼭 사야 하는지 정리했어요.",
+            "answer": templates.hold_answer(post.topic, ch.kind, "site"), "constraints": [], "checklist": None,
+            "sections": [PostSection(heading=h, items=lines) for h, lines in ch.sections]})
+    prods = [p for p in post.products]
+    ch = templates.choose(post.topic, status=status, recipe=post.recipe, channel="site",
+                          products=[{"title": p.title, "rocket": p.rocket} for p in prods])
+    return post.model_copy(update={
+        "conclusion": "buy", "title": ch.title, "template": ch.id, "topic_kind": ch.kind,
+        "summary": f"'{post.topic}' 검색이 왜 늘었는지 데이터로 보고, 함께 볼 레시피와 상품을 정리했어요.",
+        "answer": frame.answer(post.topic, bool(prods), any(p.rocket for p in prods), "site", ch.kind),
+        "constraints": frame.constraints(post.topic, "site", ch.kind),
+        "checklist": frame.checklist(post.topic, "site") if prods else None,
+        "sections": [PostSection(heading=h, items=lines) for h, lines in ch.sections]})
+
+
 def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (), recipe: PostRecipe | None = None,
           now: datetime | None = None, sources: dict | None = None, template: str | None = None) -> Post:
     now = now or datetime.now(timezone.utc)

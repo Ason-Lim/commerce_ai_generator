@@ -90,6 +90,9 @@ class TrendPosts:
         if unknown:
             raise PostError(f"고칠 수 없는 칸이에요: {', '.join(sorted(unknown))}")
         merged = Post.model_validate({**post.model_dump(mode="json"), **fields, "status": "draft"})
+        if "conclusion" in fields and fields["conclusion"] != post.conclusion:   # 결론이 바뀌면 글 틀 칸을 다시 만든다
+            from app.services.trend_posts import draft as post_draft
+            merged = post_draft.apply_conclusion(merged, merged.conclusion)
         # 제휴 상품이 생기거나 없어지면 [광고]·고지를 그에 맞춘다 (사람이 빼먹지 않게)
         aff = policy.has_affiliate(merged)
         title = merged.title.removeprefix(policy.AD_PREFIX).strip()

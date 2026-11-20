@@ -21,6 +21,51 @@ HOLD_LINE = {"site": "지금은 사지 않아도 되는 경우가 많아요. 그
                      "가진 제품으로 해결되지 않을 때 위의 기준으로 다시 비교해 보세요.",
              "blog": "지금 당장 사지 않아도 괜찮아요. 그래서 이 글에는 구매 링크를 넣지 않았어요. "
                      "갖고 있는 것으로 부족할 때 위 기준으로 다시 골라 보세요."}
+# 보류 결론 글의 틀: 급상승 신상(viral)은 32(유행과 필요 구분), 그 밖은 20(구매 보류 판단). 자동 선택·관리자 지정 대상 아님.
+HOLD_NAMES = {"20": "구매 보류 판단", "32": "유행 상품 구매 전 검토"}
+HOLD_ANSWER = {"site": "가진 제품이나 비슷한 기존 상품으로 해결된다면 지금 새로 살 필요는 없어요.",
+               "blog": "갖고 있는 것이나 비슷한 기존 제품으로 충분하다면, 지금 굳이 새로 사지 않아도 돼요."}
+HOLD_CRITERIA_HEAD = {"site": "필요해지면 볼 기준", "blog": "나중에 필요해지면 볼 기준"}
+HOLD_TITLES = {
+    "site": {"20": ["{k}, 지금 꼭 사야 할까? 먼저 확인할 것", "{k} 사기 전에, 정말 필요한지부터"],
+             "32": ["화제인 {k}, 가진 것으로 충분하지 않을까", "요즘 많이 찾는 {k}, 유행과 필요는 따로"]},
+    "blog": {"20": ["{k}, 지금 꼭 사야 할까요?", "{k} 사기 전에 정말 필요한지부터 봐요"],
+             "32": ["요즘 다들 찾는 {k}, 나한테도 필요할까", "{k} 유행, 지금 가진 걸로 충분할 수도 있어요"]},
+}
+HOLD_SECTIONS = {
+    "site": {"20": ("사지 않아도 되는 경우", [
+                 "비슷한 용도의 제품이 이미 있다면 그것으로 해결되는지 먼저 확인하세요.",
+                 "다시 검토할 때: 쓸 일이 정해졌거나, 기존 제품으로 해결되지 않을 때."]),
+             "32": ("유행과 필요 나눠 보기", [
+                 "검색 증가는 관심의 변화일 뿐, 판매량이나 품질을 뜻하지 않아요.",
+                 "비슷한 기존 상품으로 충분하다면 유행과 상관없이 사지 않아도 됩니다.",
+                 "다시 검토할 때: 기존 상품으로 대신할 수 없는 쓰임이 생겼을 때."])},
+    "blog": {"20": ("사지 않아도 되는 경우", [
+                 "비슷한 걸 이미 갖고 있다면 그걸로 되는지부터 봐 주세요.",
+                 "이럴 때 다시 보세요: 쓸 일이 정해졌거나, 갖고 있는 걸로는 안 될 때."]),
+             "32": ("유행이랑 필요는 따로", [
+                 "검색이 늘었다는 건 관심이 늘었다는 뜻이지, 많이 팔렸다거나 품질이 좋다는 뜻은 아니에요.",
+                 "비슷한 기존 제품으로 충분하다면 유행과 상관없이 안 사셔도 돼요.",
+                 "이럴 때 다시 보세요: 갖고 있는 걸로는 대신할 수 없는 쓰임이 생겼을 때."])},
+}
+
+
+def hold(topic: str, *, status: str | None = None, channel: str = "site") -> Chosen:
+    """구매 보류 결론 글 — 구매를 이끄는 절(옵션·주문·결제·상품 줄)은 넣지 않는다 (사용자 결정 2026-11-20 16:18)."""
+    c = channel if channel in HOLD_TITLES else "site"
+    kind = frame.keyword_type(topic, status=status)
+    tid = "32" if kind == "viral" else "20"
+    head, lines = HOLD_SECTIONS[c][tid]
+    ch = Chosen(id=tid, name=HOLD_NAMES[tid], kind=kind, note="구매 보류 결론")
+    ch.sections = [(head, list(lines))]
+    ch.title = frame.pick(HOLD_TITLES[c][tid], topic, "th" + c).format(k=topic)
+    return ch
+
+
+def hold_answer(topic: str, kind: str, channel: str = "site") -> list[str]:
+    """질문에 대한 답 — 상품 비교로 이끄는 마지막 줄 대신 보류 결론."""
+    c = channel if channel in HOLD_ANSWER else "site"
+    return frame.answer(topic, False, False, c, kind)[:-1] + [HOLD_ANSWER[c]]
 
 # 주제별 기본 템플릿 (앞이 먼저, 자료가 없으면 다음). 사용자 결정 2026-11-20 15:55 '주제를 나눠 기본 템플릿을 정해 달라'.
 DEFAULTS = {
@@ -100,7 +145,7 @@ TITLES = {
              "03": ["{k} 얼마나 사야 할까? 양 정하는 기준", "{k} 용량 고르기, 큰 구성이 늘 나을까"],
              "05": ["{k}, 쓰는 날짜에 맞춰 받으려면", "{k} 주문 전, 받을 날짜부터 확인하세요"],
              "06": ["{k} 두 상품 비교: 무엇이 다른가", "{k} 비교, 같은 기준으로 놓고 보면"],
-             "14": ["{k} 선물, 고르기 전에 확인할 것", "{k}, 받는 분 기준으로 고르는 법"],
+             "14": ["{k} 선물, 구성·포장·받는 날 비교", "{k}, 받는 분 기준으로 고르는 법"],
              "26": ["{r} 만들 때 {k}, 필요한 재료부터", "{r}에 쓸 {k}, 재료와 고르는 법"],
              "28": ["{h_or_k} 준비, {k} 언제 무엇을 확인할까", "{k} 준비 일정과 고르는 기준"],
              "32": ["요즘 많이 찾는 {k}, 사기 전에 확인할 것", "화제인 {k}, 나에게도 필요할까"]},
@@ -127,7 +172,8 @@ def title(tid: str, topic: str, kind: str, channel: str = "site", recipe=None) -
     r = getattr(recipe, "name", None) or topic
     h_or_k = frame.HOLIDAY_NAME.get(kind) or {"family_month": "가정의 달", "event": "행사",
                                               "anniversary": "기념일", "birthday": "생일"}.get(kind, topic)
-    return t.format(k=topic, r=r, h_or_k=h_or_k)
+    out = t.format(k=topic, r=r, h_or_k=h_or_k)
+    return out.replace(f"{topic} 준비, {topic} ", f"{topic} 준비, ")   # '추석 준비, 추석 …' 되풀이 막기
 
 
 # ── 절 (소제목 + 줄) ─────────────────────────────────────────────────────

@@ -288,6 +288,43 @@ def test_coupang_blog_uses_topic_templates():
     assert {v["id"] for v in forced["templates"].values()} == {"01"}
 
 
+
+BUY_MARKERS = ("coupang.com", "▶ 쿠팡에서 보기", "쿠팡 파트너스", "결제", "주문 버튼", "장바구니", "옵션 이름",
+               "판매처에서 확인", "판매 페이지에서", "[광고]")
+
+
+def _hold_rep():
+    def it(k, st="surging"):
+        return {"keyword": k, "status": st, "ratio_recent": 2.0, "ratio_peak": 2.5, "onset": None,
+                "rank_trend": {}, "blog": {}, "google": {}, "cross": {"n": 1, "of": 2}, "cause": None}
+    return {"data_until": "2026-11-19", "items": [it("두쫀쿠", "new"), it("절임배추")]}
+
+
+def test_coupang_blog_hold_removes_every_buy_element():
+    """2026-11-20 사용자 결정: 보류 결론이면 마지막 링크뿐 아니라 본문의 구매 유도 요소(링크·버튼·결제 확인·
+    상품 비교 안내·구매 전 제약·[광고]·고지) 전체를 뺀다. 판단 근거 출처 문장은 남긴다."""
+    from app.services.trend_posts import frame, templates
+
+    links = {"두쫀쿠": [{"title": "두쫀쿠 4개입", "url": "https://link.coupang.com/a/2", "rocket": True}],
+             "절임배추": [{"title": "절임배추 20kg", "url": "https://link.coupang.com/a/1"}]}
+    d = S.blog_draft(_hold_rep(), coupang=links, variant="coupang", hold=True)
+    body = d["body"]
+    assert d["hold"] and {k: v["id"] for k, v in d["templates"].items()} == {"두쫀쿠": "32", "절임배추": "20"}
+    for m in BUY_MARKERS:
+        assert m not in body and m not in d["title"], m
+    assert S.COUPANG_DISCLOSURE not in body and "쿠팡파트너스" not in d["tags"]
+    assert not any(x in body for x in frame.COMPARE["blog"] + frame.ROCKET["blog"] + frame.NO_PRODUCTS["blog"])
+    assert not any(x in body for x in frame.CHECKLIST_TEXT["blog"])
+    assert frame.heading("constraints", "두쫀쿠", "blog") not in body
+    # 32: 유행과 필요를 나누고 '기존 제품으로 충분'이라는 결론이 실제로 나온다
+    block1 = body.split("■ 1.")[1].split("■ 2.")[0]
+    assert "기존 제품으로 충분하다면" in block1 and "관심이 늘었다는 뜻" in block1
+    assert templates.HOLD_ANSWER["blog"] in body and templates.HOLD_LINE["blog"] in body
+    assert "네이버 데이터랩" in body                                       # 판단 근거(출처) 문장은 유지
+    assert d["title"] == templates.hold("두쫀쿠", status="new", channel="blog").title + " (+절임배추)"
+    buy = S.blog_draft(_hold_rep(), coupang=links, variant="coupang")
+    assert not buy["hold"] and "coupang.com" in buy["body"] and buy["title"].startswith("[광고]")
+
 def test_coupang_blog_hold_has_no_links_or_ad(data_dirs):
     """2026-11-20 55종 v1.2: 구매 보류 결론 — 쿠팡 링크·고지·[광고] 없이 보류 문장."""
     from app.services.trend_posts import templates

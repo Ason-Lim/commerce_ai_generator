@@ -164,8 +164,8 @@ def post_page(post: Post, now: datetime | None = None) -> str:
         if sec.items:
             parts.append(f"<h2>{e(sec.heading)}</h2><ul>" + "".join(f"<li>{e(x)}</li>" for x in sec.items) + "</ul>")
     if framed and post.criteria:
-        parts.append("<h2>고르기 전에 볼 것</h2><ol>" + "".join(f"<li>{e(c)}</li>" for c in post.criteria) + "</ol>")
-    if framed and post.products and post.constraints:
+        parts.append(("<h2>필요해지면 볼 기준</h2><ol>" if hold else "<h2>고르기 전에 볼 것</h2><ol>") + "".join(f"<li>{e(c)}</li>" for c in post.criteria) + "</ol>")
+    if framed and post.products and post.constraints and not hold:
         parts.append("<h2>구매 전에 알아 둘 것</h2><ul>" + "".join(f"<li>{e(c)}</li>" for c in post.constraints)
                      + "</ul>")
 

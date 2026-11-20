@@ -209,3 +209,58 @@ def test_public_templates_do_not_assume_reader_stock():
         assert "사지 않아도" in s32
     for bank in templates.TITLES.values():
         assert not any("좋아할" in t or "딱 세 가지" in t for ts in bank.values() for t in ts)
+
+
+
+# 2026-11-20 사용자 결정: 공개 글(블로그·/trends)은 독자의 보유량·가족 구성·환경을 아는 듯 쓰지 않는다.
+ASSUME = ("집에 있는 재료는", "부족한 것만", "가진 재료는 빼고", "이미 있는 건 빼고", "이미 있는 것은 빼고", "우리 집",
+          "댁의", "당신의", "가족이 ", "가족 구성", "냉장고에 있는", "김치통이 작", "이미 갖고 계신", "필요하실 거예요",
+          "필요하시죠", "딱 맞을", "좋아할")
+
+
+def _all_text():
+    from app.services.trend_posts import templates
+    out = []
+
+    def walk(o):
+        if isinstance(o, str):
+            out.append(o)
+        elif isinstance(o, dict):
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, (list, tuple)):
+            for v in o:
+                walk(v)
+    for mod in (frame, templates):
+        for n in dir(mod):
+            if n.isupper():
+                walk(getattr(mod, n))
+    return out
+
+
+def test_public_text_never_assumes_reader_situation():
+    from types import SimpleNamespace
+
+    from app.services.trend_posts import templates
+
+    texts = _all_text()
+    r = SimpleNamespace(name="방어회", ingredients=["대방어", "간장"], source_label="")
+    prods = [{"title": "대방어 500g", "rocket": True}, {"title": "대방어 1kg", "rocket": False}]
+    for ch in ("site", "blog"):
+        for tid in templates.NAMES:
+            texts += [h + " ".join(ls) for h, ls in templates.sections(tid, "대방어", "seasonal", prods, r, ch)]
+    for t in texts:
+        assert not any(a in t for a in ASSUME), t
+    # 예시 조건은 '예시'로 표시한다 (숫자 가정이 들어간 문장)
+    import re
+    for t in texts:
+        if re.search(r"\d+\s*(인분|명|포기|kg)", t) and "(상품명 표기)" not in t:
+            assert "예시" in t, t
+
+
+def test_title_does_not_repeat_holiday_word():
+    from app.services.trend_posts import templates
+    for k in ("추석", "한우", "설날"):
+        for ch in ("site", "blog"):
+            t = templates.title("28", k, frame.keyword_type(k), ch)
+            assert t.count(k) == 1, t

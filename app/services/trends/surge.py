@@ -612,10 +612,11 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
     chosen_of = {}
     head = []
     if only_coupang:                          # 블로그 말투(channel='blog'): 리포트 숫자 도입 → 결론부터 → 직접 사용 아님
-        chosen_of = {it["keyword"]: templates.choose(it["keyword"], status=it.get("status"),
-                                                     products=links_of[it["keyword"]],
-                                                     recipe=(recipes or {}).get(it["keyword"]), override=template,
-                                                     channel="blog") for it in items}
+        chosen_of = {it["keyword"]: (templates.hold(it["keyword"], status=it.get("status"), channel="blog") if hold else
+                                     templates.choose(it["keyword"], status=it.get("status"),
+                                                      products=links_of[it["keyword"]],
+                                                      recipe=(recipes or {}).get(it["keyword"]), override=template,
+                                                      channel="blog")) for it in items}
         lead_title = chosen_of[names[0]].title
         title = ("" if hold else f"{AD_PREFIX} ") + lead_title + (f" (+{'·'.join(names[1:3])})" if len(names) > 1 else "")
         any_links = any(links_of.values())
@@ -626,9 +627,10 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         hook = frame.blog_hook(items[0])
         head = ([hook, ""] if hook else []) + [
             frame.question(topic, "blog", kind), frame.heading("answer", lead, "blog"),
-            " ".join(frame.answer(topic, any_links, any(x.get("rocket") for v in links_of.values() for x in v), "blog",
+            " ".join(templates.hold_answer(topic, kind, "blog") if hold else
+                     frame.answer(topic, any_links, any(x.get("rocket") for v in links_of.values() for x in v), "blog",
                                   kind)),
-            frame.experience_line(lead, "blog"), *([templates.HOLD_LINE["blog"]] if hold else []), ""]
+            frame.experience_line(lead, "blog"), ""]
     lines = [*top, *([""] if top else []), *head,
              f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
              "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
@@ -662,7 +664,7 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
             for head_line, sec in ch.sections:
                 lines.append(head_line)
                 lines += [f"- {x}" for x in sec]
-            lines.append(frame.heading("criteria", names[0], "blog", n - 1))
+            lines.append(templates.HOLD_CRITERIA_HEAD["blog"] if hold else frame.heading("criteria", names[0], "blog", n - 1))
             lines += [f"{i}. {c}" for i, c in enumerate(frame.criteria(kw, "blog", ch.kind), 1)]
         if only_coupang and links:
             lines.append(frame.checklist(names[0], "blog", n - 1))
@@ -682,9 +684,12 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                       if c not in notes]
         notes += frame.CONSTRAINTS_COMMON["blog"]
         lines += [frame.heading("constraints", names[0], "blog")] + [f"- {c}" for c in notes] + [""]
+    if hold:                                  # 결론 문장은 기준 뒤 한 번 (구매 안내 대신)
+        lines += [templates.HOLD_LINE["blog"], ""]
     lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
-              "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요.",
-              "가격·재고는 판매처에서 확인해 주세요."]
+              "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요."]
+    if not hold:
+        lines.append("가격·재고는 판매처에서 확인해 주세요.")
     if only_coupang and not hold:
         lines.append(COUPANG_DISCLOSURE)
     tags = names + ["트렌드리포트", "요즘뜨는식품"] + ([] if hold else ["쿠팡파트너스" if only_coupang else "쇼핑커넥트"])
