@@ -65,7 +65,8 @@ aside .grp{margin:14px 0 4px;padding:0 10px;font-size:11.5px;font-weight:700;let
 aside .grp small{font-weight:400;margin-left:4px}
 /* 2026-11-19 화면 정리: 급상승 키워드(공통, 예전 이름 급상승 리포트) = 요약·급상승 키워드 목록·비교 분석 / 네이버 = 블로그 초안·발급 요청·상품 찾기·등록된 링크 */
 body[data-view=report] #blog,body[data-view=report] #requests,body[data-view=report] #bc,body[data-view=report] #links{display:none}
-body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver] #detail{display:none}
+/* 네이버 탭에는 네이버 작업 칸만 — 새로 붙는 리포트 칸(행사 선행 곡선·가격 전망 등)은 자동으로 '급상승 키워드' 탭에만 보인다 (2026-11-20) */
+body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links){display:none}
 @media (max-width:760px){.subtabs{margin:-14px -12px 0;padding:10px 12px}}
 </style>
 </head>
@@ -75,7 +76,7 @@ body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b">B2B</a></nav>
   <nav aria-label="트렌드 메뉴">
-    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
+    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
     <div class="grp" id="grp-naver">네이버 <small>블로그</small></div><a href="#blog" id="nav-blog">블로그 초안</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a>
     <div class="grp">쿠팡 <small>사이트 글</small></div><a href="/admin/trend-posts">글 검토 대기열</a></nav>
   <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
@@ -141,6 +142,54 @@ body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver
     <div id="link-msg" class="note" style="margin:6px 0"></div>
     <div class="row"><button class="btn primary" id="link-save" type="button">저장</button><button class="btn" id="link-close" type="button">닫기</button></div>
   </dialog>
+  <section id="period" aria-labelledby="period-h">
+    <h2 id="period-h">기간별 식품 키워드 순위 변화</h2>
+    <p class="lede">식품 분야 하루 상위 500 순위가 기간 안에서 어떻게 움직였는지 봐요. 순위는 상대값이라 순위가 올라도 검색량이 늘었다고 단정할 수 없어요. 급상승 감지(데이터랩 지수 배수)는 별도 칸이에요. 줄을 누르면 아래 '키워드 관심 이력'이 열려요.</p>
+    <div class="row" id="period-ctl">
+      <button class="btn" data-preset="1w">1주일</button><button class="btn primary" data-preset="1m">1개월</button><button class="btn" data-preset="3m">3개월</button>
+      <span class="note" style="margin-left:10px">기간 설정</span><input type="date" id="p-start" aria-label="시작일"><span class="note">~</span><input type="date" id="p-end" aria-label="종료일"><button class="btn" id="p-go">조회</button>
+      <select id="p-sort" aria-label="정렬"><option value="change">시작→종료 개선폭</option><option value="max_gain">기간 중 최대 개선폭</option><option value="days_top100">100위 안 머문 일수</option><option value="surge_days">급상승 목록 포함 일수</option><option value="best">최고 순위</option></select>
+      <select id="p-min" aria-label="최소 관측 일수"><option value="1">전부</option><option value="2" selected>2일 이상 500위 안</option><option value="5">5일 이상</option></select>
+    </div>
+    <p class="note" id="p-cov"></p>
+    <div class="kpis" id="p-kpis"></div>
+    <div class="scroll"><table><thead><tr><th>키워드</th><th>순위 흐름</th><th>시작→종료</th><th>최대 개선폭</th><th>최고</th><th>100위 안</th><th>최근 방향</th><th>급상승 감지</th><th>종료일 상태</th><th>쇼핑 링크</th></tr></thead>
+    <tbody id="p-rows"><tr><td colspan="10" class="note">불러오는 중…</td></tr></tbody></table></div>
+    <p class="note" id="p-notes"></p>
+  </section>
+  <section id="khist" aria-labelledby="khist-h">
+    <h2 id="khist-h">키워드 관심 이력</h2>
+    <div id="kout"><p class="note">위 표에서 키워드를 골라 주세요.</p></div>
+  </section>
+  <section id="evcurve" aria-labelledby="evcurve-h">
+    <h2 id="evcurve-h">행사 선행 곡선 <small class="note" style="font-weight:400">예측 모델 1단계 — 행사 전후 반복 패턴 탐색기 (예측 성능은 백테스트로 따로)</small></h2>
+    <p class="lede">행사(설·추석·복날·빼빼로데이·수능…) 기준 상대일 −35…+14 에서 식품 순위가 어떻게 움직였는지 봐요. <b>반복</b> = 판정 가능한 해가 2개 이상이고 모두 "기준 구간(−35…−29)엔 100위 밖 → 행사 전(−28…0) 100위 안 진입 → 행사 뒤(+3…+14) 100위 밖"을 만족, <b>후보</b> = 한 해만 만족. 늘 상위권인 키워드(쌀·생수)는 '유지형'으로 빼요. 500위 밖은 '순위 밖'으로 쓰고, 파일 없는 날만 판단에서 빼요. 기준일 뒤 자료는 읽지 않아요. 복날처럼 이어지는 행사는 '복날(초복~말복)' 행사군으로 봐요. 전년 패턴을 다음 행사 날짜에 얹은 것은 <b>예보 재료</b>일 뿐이에요.</p>
+    <div class="row" id="ev-ctl">
+      <select id="ev-sel" aria-label="행사"></select>
+      <input id="ev-seeds" placeholder="씨앗 키워드 (쉼표, 선택)" aria-label="씨앗 키워드" style="min-width:200px">
+      <span class="note">기준일</span><input type="date" id="ev-asof" aria-label="기준일(이 날까지의 자료만)">
+      <button class="btn primary" id="ev-go">보기</button>
+      <button class="btn" id="ev-cp" title="반복·후보 키워드의 쿠팡 파트너스 상품 후보 수를 가져와요 (쿠팡 호출, 몇 초)">쿠팡 상품 확인</button>
+      <span class="note" id="ev-cov"></span>
+    </div>
+    <p class="note" id="ev-upcoming"></p>
+    <div class="kpis" id="ev-kpis"></div>
+    <div class="scroll"><table><thead><tr><th>키워드</th><th>등급</th><th>상대일 곡선 (−35…+14, 해마다 한 줄)</th><th>진입 선행일</th><th>최고 순위 구간</th><th>최고</th><th>해별 판정</th><th>다음 행사 예보 재료</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead>
+    <tbody id="ev-rows"><tr><td colspan="10" class="note">행사를 골라 '보기'를 눌러 주세요.</td></tr></tbody></table></div>
+  </section>
+  <section id="pricefc" aria-labelledby="pricefc-h">
+    <h2 id="pricefc-h">가격 전망·매수 시점 <small class="note" style="font-weight:400">예측 모델 — 가격 레이어 (공공 시세 KAMIS · 동인은 가설 · 임계값은 첫 값)</small></h2>
+    <p class="lede">감시 품목(김장 재료·곡물·축산·수입식품·과일·수산)의 <b>공공 소매 시세</b>가 지금 52주 분포의 어디에 있고, <b>전년 같은 시기</b>엔 4주 뒤 얼마나 움직였는지로 <b>지금 / 기다리기 / 분할 / 보류</b>를 내요. 해마다 따로 보고 중앙값·범위를 함께 적어요. 기준일 뒤 자료는 읽지 않아요. 엘니뇨·곡물·사료·AI·김장·환율 같은 <b>동인은 가설표</b>이고 켜짐 상태는 사람이 적어요(data/driver_signals.csv) — 판정 수치엔 들어가지 않고 이유로만 붙어요. 올리브유·커피·양고기처럼 공공 시세가 없는 품목은 <b>국내 상품(쿠팡)</b>과 <b>해외 UCP(Shopify) 직구 견적</b>으로 100g당을 견줘요 — 견적은 추정이고, 육류·계란·유제품·생과·수산물은 검역 때문에 직구 견적을 내지 않아요.</p>
+    <div class="row">
+      <span class="note">기준일</span><input type="date" id="pf-asof" aria-label="기준일">
+      <button class="btn primary" id="pf-go">보기</button>
+      <span class="note" id="pf-cov"></span>
+    </div>
+    <div class="kpis" id="pf-kpis"></div>
+    <div class="scroll"><table><thead><tr><th>품목</th><th>군</th><th>판정</th><th>최근 시세</th><th>52주 위치</th><th>1개월 / 1년 대비</th><th>4주 전망(전년)</th><th>켜진 동인</th><th>직구</th></tr></thead>
+    <tbody id="pf-rows"><tr><td colspan="9" class="note">불러오는 중…</td></tr></tbody></table></div>
+    <div id="pf-detail"><p class="note">위 표에서 품목을 고르면 1년 시세·행사 상대일 곡선·이유·동인·상품 비교가 나와요.</p></div>
+  </section>
   <section id="surge" aria-labelledby="surge-h">
     <h2 id="surge-h">급상승 키워드 목록</h2>
     <p class="lede">배수는 각 키워드의 평소(35~8일 전 중앙값) 대비예요. 키워드끼리의 검색량 크기 비교가 아니에요. 행을 누르면 아래에 비교 분석이 열려요.</p>
@@ -447,6 +496,188 @@ $("#bc-go").onclick=async()=>{const kw=$("#bc-kw").value.trim();if(!kw)return;$(
   catch(e){$("#bc-note").textContent=e.message}};
 $("#bc-kw").addEventListener("keydown",e=>{if(e.key==="Enter")$("#bc-go").click()});
 {const q=new URLSearchParams(location.search).get("bc");if(q){$("#bc-kw").value=q;$("#bc-go").click();setTimeout(()=>$("#bc").scrollIntoView(),300)}}
+// ── 기간별 순위 변화 · 키워드 관심 이력 (2026-11-19) ─────────────────────────────────────────
+let PERIOD=null, PPRESET="1m";
+const DIR={up:["오름","p-ok"],down:["내림","p-err"],flat:["보합","p-off"],short:["자료 짧음","p-off"]};
+const SURGE_ST={surging:["급상승","p-err"],new:["새로 등장","p-hold"],rising:["상승","p-ok"],spike_faded:["한 번 튀고 꺼짐","p-off"],flat:["평소","p-off"]};
+const pill=(m,k)=>{const v=m[k];return v?`<span class="pill ${v[1]}">${v[0]}</span>`:"—"};
+const rk=r=>r==null?"500위 밖":`${r}위`;
+function rankSpark(series,w=120,h=28){ // 작은 선: 순위 1 이 위, 500위 밖은 바닥 점선 자리
+  const pts=series.filter(x=>x[1]!=null); if(pts.length<2) return `<span class="note">${pts.length?rk(pts[0][1]):"—"}</span>`;
+  const x=i=>2+i*(w-4)/Math.max(series.length-1,1), y=r=>2+(Math.min(r??501,501)-1)*(h-4)/500;
+  const d=series.map((s,i)=>s[1]==null?null:`${x(i).toFixed(1)},${y(s[1]).toFixed(1)}`);
+  let path="",open=false; d.forEach(p=>{if(!p){open=false;return} path+=(open?" L":" M")+p; open=true});
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="순위 흐름"><line x1="2" x2="${w-2}" y1="${h-2}" y2="${h-2}" stroke="#dde3ea" stroke-dasharray="2 3"/><path d="${path.trim()}" fill="none" stroke="#1d5fa8" stroke-width="1.6"/></svg>`}
+function periodRow(r,g){
+  const ch=r.change==null?(g==="entered"?'<span class="pill p-hold">상위 500 진입</span>':g==="exited"?'<span class="pill p-off">500위 밖으로</span>':'<span class="note">잠깐 등장</span>')
+    :`<b style="color:${r.change>0?"#1a7f37":r.change<0?"#b42318":"inherit"}">${r.change>0?"+":""}${r.change}</b><small>${rk(r.start.rank)}→${rk(r.end.rank)}</small>`;
+  const sg=r.surge&&r.surge.days?`${r.surge.days}일<small>첫 ${esc(r.surge.first.slice(5))} · 최고 ${r.surge.peak_ratio}배</small>`:'<span class="note">—</span>';
+  return `<tr data-kw="${esc(r.keyword)}" style="cursor:pointer"><td><b>${esc(r.keyword)}</b></td><td>${rankSpark(r.series||[])}</td><td>${ch}</td>
+   <td>${r.max_gain>0?`${r.max_gain}${r.from_outside?'<small>500위 밖에서</small>':""}`:"—"}</td><td>${r.best.rank}위<small>${esc(r.best.date.slice(5))}</small></td>
+   <td>${r.days_top100}/${r.days_listed}일</td><td>${pill(DIR,r.recent_direction)}</td><td>${sg}</td><td>${r.surge&&r.surge.status_at_end?pill(SURGE_ST,r.surge.status_at_end):"—"}</td>
+   <td>${r.has_link==null?"—":r.has_link?'<span class="pill p-ok">있음</span>':'<span class="pill p-off">없음</span>'}</td></tr>`}
+function renderPeriod(){
+  const d=PERIOD, tb=$("#p-rows");
+  if(!d||!d.ok){tb.innerHTML=`<tr><td colspan="10" class="note">${esc((d&&d.source&&d.source.note)||"식품 순위 자료가 없어요.")}</td></tr>`;$("#p-cov").textContent="";$("#p-kpis").innerHTML="";return}
+  const c=d.coverage; $("#p-cov").innerHTML=`자료 있는 기간 — 식품 순위 ${esc(c.rank.first)}~${esc(c.rank.last)} (${c.rank.files}일${c.rank.missing?`, 빠진 날 ${c.rank.missing}일`:""})`
+    +(c.surge?` · 급상승 감지 ${esc(c.surge.first)}~${esc(c.surge.last)}`:" · 급상승 감지 자료 없음")+(d.source.note?`<br><span style="color:#b42318">${esc(d.source.note)}</span>`:"")
+    +(c.surge&&d.start<c.surge.first?`<br>이 기간의 급상승 감지 칸은 ${esc(c.surge.first)}부터만 자료가 있어요.`:"");
+  $("#p-kpis").innerHTML=[["조회 기간",`${d.start} ~ ${d.end}`],["관측 일수",`${d.days.observed}/${d.days.calendar}일${d.days.missing.length?` <small>빠짐 ${d.days.missing.map(x=>x.slice(5)).join(", ")}</small>`:""}`],
+    ["키워드",`${d.keywords}개`],["양끝 순위 있음 / 진입 / 이탈",`${d.counts.ranked} / ${d.counts.entered} / ${d.counts.exited}`]].map(([k,v])=>`<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("");
+  const sec=(t,rows,g,hint)=>rows.length?`<tr><td colspan="10" style="background:#f3f5f8;font-weight:700">${t} <small class="note" style="font-weight:400">${hint}</small></td></tr>`+rows.map(r=>periodRow(r,g)).join(""):"";
+  tb.innerHTML=sec("양끝 순위가 있는 키워드",d.groups.ranked,"ranked","시작일·종료일 모두 500위 안 — 개선폭은 시작→종료 순위 차이")
+    +sec("상위 500 진입",d.groups.entered,"entered","시작일엔 500위 밖, 종료일엔 안 — 이전에 관심이 없었다는 뜻은 아님")
+    +sec("500위 밖으로",d.groups.exited,"exited","시작일엔 안, 종료일엔 밖")||`<tr><td colspan="10" class="note">이 기간엔 자료가 없어요.</td></tr>`;
+  $("#p-notes").textContent=(d.notes||[]).join(" ");
+  tb.querySelectorAll("tr[data-kw]").forEach(tr=>tr.onclick=()=>khist(tr.dataset.kw));
+}
+async function loadPeriod(q){
+  $("#p-rows").innerHTML=`<tr><td colspan="10" class="note">불러오는 중…</td></tr>`;
+  const u=new URLSearchParams(q); u.set("sort",$("#p-sort").value); u.set("min_days",$("#p-min").value); u.set("limit","80");
+  try{PERIOD=await api("/admin/api/trends/period?"+u.toString()); renderPeriod();
+    if(PERIOD.ok){$("#p-start").value=PERIOD.start;$("#p-end").value=PERIOD.end}}
+  catch(e){$("#p-rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`}}
+function periodQuery(){return PPRESET?{preset:PPRESET}:{start:$("#p-start").value,end:$("#p-end").value}}
+document.querySelectorAll("#period-ctl [data-preset]").forEach(b=>b.onclick=()=>{PPRESET=b.dataset.preset;document.querySelectorAll("#period-ctl [data-preset]").forEach(x=>x.classList.toggle("primary",x===b));loadPeriod({preset:PPRESET})});
+$("#p-go").onclick=()=>{if(!$("#p-start").value||!$("#p-end").value){$("#p-cov").textContent="시작일과 종료일을 넣어 주세요.";return}PPRESET=null;document.querySelectorAll("#period-ctl [data-preset]").forEach(x=>x.classList.remove("primary"));loadPeriod(periodQuery())};
+$("#p-sort").onchange=()=>loadPeriod(periodQuery()); $("#p-min").onchange=()=>loadPeriod(periodQuery());
+function rankChart(series,marks){ // 전체 기간 순위 (1위가 위) + 급상승 감지일 점
+  const w=760,h=220,p=30,n=series.length; if(!n) return '<p class="note">순위 자료가 없어요.</p>';
+  const x=i=>p+i*(w-2*p)/Math.max(n-1,1), y=r=>p+(Math.min(r,501)-1)*(h-2*p)/500;
+  let path="",open=false; series.forEach((s,i)=>{if(s[1]==null){open=false;return} path+=(open?" L":" M")+`${x(i).toFixed(1)},${y(s[1]).toFixed(1)}`;open=true});
+  const miss=series.map((s,i)=>s[2]==="missing"?`<rect x="${x(i)-1}" y="${p}" width="2" height="${h-2*p}" fill="#f1c0bb"/>`:"").join("");
+  const idx=Object.fromEntries(series.map((s,i)=>[s[0],i]));
+  const dots=(marks||[]).map(m=>idx[m.date]!=null&&series[idx[m.date]][1]!=null?`<circle cx="${x(idx[m.date])}" cy="${y(series[idx[m.date]][1])}" r="4" fill="#b42318"><title>${esc(m.date)} 급상승 ${m.ratio_peak}배 (${esc(m.status)})</title></circle>`:"").join("");
+  const grid=[1,100,250,500].map(r=>`<line x1="${p}" x2="${w-p}" y1="${y(r)}" y2="${y(r)}" stroke="#eef1f5"/><text x="2" y="${y(r)+4}" font-size="10" fill="#8494a5">${r}위</text>`).join("");
+  const tick=[0,Math.floor(n/2),n-1].map(i=>`<text x="${x(i)-18}" y="${h-8}" font-size="11" fill="#8494a5">${esc(series[i][0].slice(2))}</text>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="식품 순위 전체 기간">${grid}${miss}<path d="${path.trim()}" fill="none" stroke="#1d5fa8" stroke-width="1.8"/>${dots}${tick}</svg>
+   <p class="note">파란 선 = 그날 순위(위가 1위, 끊긴 곳 = 500위 밖) · 빨간 점 = 급상승 목록에 든 날 · 연한 빨간 띠 = 파일 없는 날</p>`}
+async function khist(kw){
+  $("#kout").innerHTML='<p class="note">불러오는 중…</p>'; $("#khist").scrollIntoView({behavior:"smooth",block:"start"});
+  const q=new URLSearchParams({keyword:kw}); if(PERIOD&&PERIOD.ok){q.set("start",PERIOD.start);q.set("end",PERIOD.end)}
+  try{const h=await api("/admin/api/trends/keyword?"+q.toString());
+    const st=(h.stages||[]).map(s=>`<span class="pill ${s.stage==="정점"?"p-err":s.stage==="하락"?"p-off":"p-ok"}">${esc(s.stage)} ${esc(s.date.slice(5))}${s.rank?` · ${s.rank}위`:""}</span>`).join(" ");
+    const ls=h.latest_surge, comp=(h.companions||[]).map(c=>`<span class="pill ${c.related?"p-hold":"p-off"}" style="cursor:pointer" data-kw="${esc(c.keyword)}">${esc(c.keyword)}${c.change!=null?` ${c.change>0?"+":""}${c.change}`:""}</span>`).join(" ");
+    $("#kout").innerHTML=`<h3 style="margin:0 0 6px">${esc(h.keyword)} <small class="note">500위 안 ${h.days_listed}일${h.best?` · 최고 ${h.best.rank}위 (${esc(h.best.date)})`:""} · 쇼핑 링크 ${h.has_link==null?"모름":h.has_link?"있음":"없음"}</small></h3>
+      ${rankChart(h.series,h.surge_days)}
+      <p><b>흐름 단계</b> ${st||'<span class="note">자료가 짧아 단계를 나누지 못했어요.</span>'} <small class="note">주 단위 평균 순위로 나눈 규칙 기반 표시예요.</small></p>
+      ${ls?`<p><b>가장 최근 급상승 감지</b> ${esc(ls.date)} · ${pill(SURGE_ST,ls.status)} 평소의 ${ls.ratio_recent}배 (최고 ${ls.ratio_peak}배)${ls.onset?` · 시작 ${esc(ls.onset)}`:""}${ls.cross!=null?` · 교차 확인 ${ls.cross}`:""}
+        ${ls.blog?`<br><small>블로그 최근 7일 ${ls.blog.last7}건 · 단서: ${Object.entries(ls.blog.clues||{}).map(([k,v])=>`${esc(k)} ${v}`).join(", ")||"없음"}</small>`:""}
+        ${ls.cause&&ls.cause.text?`<br><small>계기 (AI 추정, 공개 가능한 것만): ${esc(ls.cause.text)}</small>`:""}</p>
+        ${ls.series?spark(ls.series,ls.onset):""}`:'<p class="note">이 키워드는 (종료일 이하) 급상승 목록에 든 날이 없어요.</p>'}
+      <p><b>함께 움직인 키워드</b> ${comp||'<span class="note">없음</span>'}</p>`;
+    $("#kout").querySelectorAll("[data-kw]").forEach(e=>e.onclick=()=>khist(e.dataset.kw));
+  }catch(e){$("#kout").innerHTML=`<div class="err">${esc(e.message)}</div>`}}
+// ── 행사 선행 곡선 (2026-11-19 밤, 예측 모델 1단계 · GPT 2차 검토 반영) ─────────────────────────
+let EV=null;
+const relD=k=>k===0?"D":k<0?`D${k}`:`D+${k}`;
+function relSpark(curve,span,w=260,h=30){ // 1위가 위, 'out'은 바닥 점, null(누락)은 빈칸, 행사 시작·끝 빨간 점선, 100위 회색선
+  const n=curve.length, x=i=>2+i*(w-4)/Math.max(n-1,1), y=r=>2+(Math.min(r,500)-1)*(h-4)/500;
+  let path="",open=false, dots="";
+  curve.forEach(([k,v],i)=>{if(typeof v==="number"){path+=(open?" L":" M")+`${x(i).toFixed(1)},${y(v).toFixed(1)}`;open=true}else{open=false; if(v==="out") dots+=`<circle cx="${x(i).toFixed(1)}" cy="${h-2}" r="1" fill="#b9c3cf"/>`}});
+  const vline=k=>{const i=curve.findIndex(c=>c[0]===k);return i<0?"":`<line x1="${x(i)}" x2="${x(i)}" y1="2" y2="${h-2}" stroke="#b42318" stroke-dasharray="2 2"/>`};
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="상대일 곡선"><line x1="2" x2="${w-2}" y1="${y(100)}" y2="${y(100)}" stroke="#eef1f5"/>${vline(0)}${span?vline(span):""}${dots}<path d="${path.trim()}" fill="none" stroke="#1d5fa8" stroke-width="1.5"/></svg>`}
+async function loadEvents(){
+  try{const d=await api("/admin/api/trends/forecast/events?days=42");
+    const sel=$("#ev-sel"), yr=new Date().getFullYear();
+    sel.innerHTML=d.events.map(e=>`<option value="${esc(e.event)}">${esc(e.event)} (${esc(e.category)}${e.dates[yr]?" · "+esc(e.dates[yr].slice(5)):""})</option>`).join("");
+    const up=(d.upcoming||[]).filter(u=>u.type!=="window").slice(0,8);
+    $("#ev-upcoming").innerHTML=up.length?"다가오는 행사: "+up.map(u=>`<span class="pill p-hold" style="cursor:pointer" data-ev="${esc(u.event)}">${esc(u.event)} D-${u.d_day}</span>`).join(" "):"";
+    $("#ev-upcoming").querySelectorAll("[data-ev]").forEach(e=>e.onclick=()=>{sel.value=e.dataset.ev;loadEvent()});
+    $("#ev-cov").textContent=d.data_years.length?`순위 자료 연도: ${d.data_years.join(", ")}`:(d.source&&d.source.note)||"식품 순위 자료가 없어요.";
+    if(up.length){sel.value=up[0].event}
+  }catch(e){$("#ev-cov").textContent=e.message}}
+const GR={"반복":"p-ok","후보":"p-hold","씨앗":"p-off"};
+function evRow(r){
+  const ys=Object.keys(r.years).sort();
+  const curves=ys.map(y=>`<div style="display:flex;gap:6px;align-items:center"><small class="note" style="width:34px">${y}</small>${relSpark(r.years[y].curve,(EV.years[y]||{}).span)}</div>`).join("");
+  const judg=ys.map(y=>{const a=r.years[y];const tag=!a.usable?'<span class="pill p-off">자료 부족</span>':a.bound?'<span class="pill p-ok">만족</span>':'<span class="pill p-off">아님</span>';
+    const why=(!a.usable?a.lack:a.reasons).join(" · ");
+    return `<div><small><b>${y}</b> ${tag} ${a.enter_rel!=null?`진입 ${relD(a.enter_rel)}`:""}${why?` <span class="note">${esc(why)}</span>`:""}${a.missing_days?` <span class="note">누락 ${a.missing_days}일</span>`:""}</small></div>`}).join("");
+  const f=EV.next&&EV.next.forecast.find(x=>x.keyword===r.keyword);
+  const fc=f?`<small>진입 ${esc(f.expected_enter.slice(5))}<br>최고 ${esc(f.expected_peak[0].slice(5))}~${esc(f.expected_peak[1].slice(5))}</small>`:'<span class="note">—</span>';
+  const pk=r.peak_rel?`${relD(Math.round(r.peak_rel[0]))} ~ ${relD(Math.round(r.peak_rel[1]))}`:"—";
+  const top=ys.map(y=>r.years[y].peak_top).filter(Boolean); const topTxt=top.length?`<br><small class="note">20위 안 ${relD(top[top.length-1][0])}~${relD(top[top.length-1][1])}</small>`:"";
+  const cp=r.coupang==null?'<span class="note">미확인</span>':r.coupang?`<span class="pill p-ok">${r.coupang}개</span>`:'<span class="pill p-err">없음</span>';
+  return `<tr data-kw="${esc(r.keyword)}" style="cursor:pointer"><td><b>${esc(r.keyword)}</b></td><td><span class="pill ${GR[r.grade]||"p-off"}">${esc(r.grade)}</span></td><td>${curves}</td>
+   <td>${r.lead_days!=null?`${r.lead_days}일 전`:"—"}</td><td>${pk}${topTxt}</td><td>${r.best_rank!=null?r.best_rank+"위":"—"}</td><td>${judg}</td><td>${fc}</td>
+   <td>${r.has_link==null?"—":r.has_link?'<span class="pill p-ok">있음</span>':'<span class="pill p-off">없음</span>'}</td><td>${cp}</td></tr>`}
+async function loadEvent(withCoupang){
+  const ev=$("#ev-sel").value; if(!ev) return;
+  $("#ev-rows").innerHTML=`<tr><td colspan="10" class="note">불러오는 중…${withCoupang?" (쿠팡 상품 확인 중)":""}</td></tr>`;
+  const q=new URLSearchParams({event:ev}); const sd=$("#ev-seeds").value.trim(); if(sd) q.set("seeds",sd);
+  const ao=$("#ev-asof").value; if(ao) q.set("as_of",ao); if(withCoupang) q.set("coupang","1");
+  try{EV=await api("/admin/api/trends/forecast/event?"+q.toString());
+    const yrs=Object.entries(EV.years).map(([y,i])=>`${y} ${esc(i.start.slice(5))}${i.span?"~"+esc(i.end.slice(5)):""} (${i.coverage.observed}/${i.coverage.total}일)`).join(" · ");
+    const sk=(EV.skipped||[]).map(s=>`${s.year} ${esc(s.why)}`).join(", ");
+    const n=g=>EV.keywords.filter(k=>k.grade===g).length;
+    $("#ev-kpis").innerHTML=[["기준일",esc(EV.as_of||"오늘")],["분석한 해",yrs||'<span class="note">자료 있는 해 없음</span>'],["건너뜀",sk||"—"],["반복 / 후보",`${n("반복")} / ${n("후보")}`],
+      ["다음 행사",EV.next?`${esc(EV.next.date)} (D-${EV.next.d_day}) · 예보 재료 ${EV.next.forecast.length}개`:"—"]].map(([k,v])=>`<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("");
+    $("#ev-rows").innerHTML=EV.keywords.length?EV.keywords.map(evRow).join(""):`<tr><td colspan="10" class="note">${yrs?"이 행사에 반복·후보 키워드가 없어요. 씨앗 키워드를 넣어 곡선만 볼 수 있어요.":"이 행사는 판정할 수 있는 해가 아직 없어요 (백필이 끝나거나 이탈 구간이 지나면 보여요)."}${EV.source&&EV.source.note?`<br><span style="color:#b42318">${esc(EV.source.note)}</span>`:""}</td></tr>`;
+    $("#ev-rows").querySelectorAll("tr[data-kw]").forEach(tr=>tr.onclick=()=>khist(tr.dataset.kw));
+  }catch(e){$("#ev-rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`}}
+$("#ev-go").onclick=()=>loadEvent(false); $("#ev-cp").onclick=()=>loadEvent(true);
+// ── 가격 전망·매수 시점 (2026-11-19 밤, 가격 레이어) ─────────────────────────────────────
+const VD={"지금":"p-ok","기다리기":"p-hold","분할":"p-hold","보류":"p-off"};
+const won=v=>v==null?"—":Math.round(v).toLocaleString("ko-KR")+"원";
+const pctTxt=v=>v==null?"—":(v>0?"+":"")+v+"%";
+function priceSpark(series,w=260,h=36){ // [[date,price]] → 선. 값이 없으면 빈칸
+  const vals=series.map(s=>s[1]).filter(v=>typeof v==="number"); if(!vals.length) return '<span class="note">자료 없음</span>';
+  const lo=Math.min(...vals),hi=Math.max(...vals),n=series.length,x=i=>2+i*(w-4)/Math.max(n-1,1),y=v=>hi===lo?h/2:2+(hi-v)*(h-4)/(hi-lo);
+  let p="",open=false; series.forEach(([d,v],i)=>{if(typeof v==="number"){p+=(open?" L":" M")+`${x(i).toFixed(1)},${y(v).toFixed(1)}`;open=true}else open=false});
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="시세 곡선"><path d="${p.trim()}" fill="none" stroke="#1d5fa8" stroke-width="1.5"/></svg><small class="note">${won(lo)}~${won(hi)}</small>`}
+function relPriceSpark(points,w=260,h=36){ // [[rel,price,ratio]] — 비율(기준 구간=1.0) 선, 상대일 0 에 빨간 점선
+  const rs=points.map(p=>p[2]).filter(v=>typeof v==="number"); if(!rs.length) return '<span class="note">기준 구간 자료 부족 (가격만 ' +points.length+'점)</span>';
+  const lo=Math.min(1,...rs),hi=Math.max(1,...rs),ks=points.map(p=>p[0]),k0=Math.min(...ks),k1=Math.max(...ks),x=k=>2+(k-k0)*(w-4)/Math.max(k1-k0,1),y=v=>hi===lo?h/2:2+(hi-v)*(h-4)/(hi-lo);
+  let p="";points.forEach(([k,v,r],i)=>{if(typeof r==="number")p+=(p?" L":"M")+`${x(k).toFixed(1)},${y(r).toFixed(1)}`});
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="상대일 가격 곡선"><line x1="2" x2="${w-2}" y1="${y(1)}" y2="${y(1)}" stroke="#eef1f5"/>${k0<=0&&k1>=0?`<line x1="${x(0)}" x2="${x(0)}" y1="2" y2="${h-2}" stroke="#b42318" stroke-dasharray="2 2"/>`:""}<path d="${p}" fill="none" stroke="#1d5fa8" stroke-width="1.5"/></svg><small class="note">${((Math.max(...rs)-1)*100).toFixed(0)>0?"+":""}${((Math.max(...rs)-1)*100).toFixed(0)}% 최고</small>`}
+let PF=null;
+function pfRow(r){
+  const p=r.position; const pos=p?`${won(p.price)}<br><small class="note">${esc(p.date)}${p.stale_days>3?` · ${p.stale_days}일 전`:""}</small>`:'<span class="note">시세 없음</span>';
+  const pct=p&&p.pct_52w!=null?`${p.pct_52w<=0.5?"하위":"상위"} ${Math.round((p.pct_52w<=0.5?p.pct_52w:1-p.pct_52w)*100)}%<br><small class="note">${won(p.min_52w)}~${won(p.max_52w)} · ${p.n_52w}일</small>`:"—";
+  const ol=r.expected_28d!=null?`${pctTxt(r.expected_28d)}<br><small class="note">해 ${r.outlook_28_n}개</small>`:(r.outlook_28_n?`<small class="note">참고 해 ${r.outlook_28_n}개</small>`:"—");
+  const ovs=r.overseas==="quote"?'<span class="pill p-hold">견적</span>':'<span class="note">—</span>';
+  return `<tr data-item="${esc(r.item)}" style="cursor:pointer"><td><b>${esc(r.item)}</b>${r.kamis_item?"":'<br><small class="note">공공 시세 없음</small>'}</td><td>${esc(r.group||"")}</td><td><span class="pill ${VD[r.verdict]||"p-off"}">${esc(r.verdict)}</span></td><td>${pos}</td><td>${pct}</td><td>${p?`${pctTxt(p.vs_1m)} / ${pctTxt(p.vs_1y)}`:"—"}</td><td>${ol}</td><td>${(r.active_drivers||[]).map(d=>`<span class="pill p-hold">${esc(d)}</span>`).join(" ")||'<span class="note">—</span>'}</td><td>${ovs}</td></tr>`}
+async function loadPrices(){
+  const q=new URLSearchParams(); const ao=$("#pf-asof").value; if(ao) q.set("as_of",ao);
+  $("#pf-rows").innerHTML='<tr><td colspan="9" class="note">불러오는 중…</td></tr>';
+  try{PF=await api("/admin/api/trends/forecast/prices?"+q.toString());
+    const h=PF.history; $("#pf-cov").textContent=`${PF.source} · ${h.days}일 (${h.first||"—"}~${h.last||"—"})${h.backfilled?"":" · 백필 전 — scripts/backfill_kamis_history.py"}`;
+    const n=v=>PF.items.filter(i=>i.verdict===v).length;
+    $("#pf-kpis").innerHTML=[["기준일",esc(PF.as_of)],["지금 / 기다리기 / 분할 / 보류",`${n("지금")} / ${n("기다리기")} / ${n("분할")} / ${n("보류")}`],["켜진 동인 신호",(PF.signals||[]).filter(s=>s.state==="on").map(s=>esc(s.driver)).join(", ")||"없음"],["임계(첫 값)",`하위 ${PF.thresholds.low_pct*100}% · 상위 ${PF.thresholds.high_pct*100}% · ±${PF.thresholds.up*100}% · 해 ≥${PF.thresholds.min_years}`]].map(([k,v])=>`<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("");
+    $("#pf-rows").innerHTML=PF.items.map(pfRow).join("")||'<tr><td colspan="9" class="note">감시 품목이 없어요 (data/price_watchlist.csv)</td></tr>';
+    $("#pf-rows").querySelectorAll("tr[data-item]").forEach(tr=>tr.onclick=()=>loadPrice(tr.dataset.item,false,false));
+  }catch(e){$("#pf-rows").innerHTML=`<tr><td colspan="9"><div class="err">${esc(e.message)}</div></td></tr>`}}
+async function loadPrice(item,withCoupang,withUcp){
+  const box=$("#pf-detail"); box.innerHTML=`<p class="note">${esc(item)} 불러오는 중…${withCoupang?" (쿠팡 상품)":""}${withUcp?" (UCP 판매자 검색·견적)":""}</p>`;
+  const q=new URLSearchParams({item}); const ao=$("#pf-asof").value; if(ao) q.set("as_of",ao); if(withCoupang) q.set("coupang","1"); if(withUcp){q.set("ucp","1");q.set("coupang","1")}
+  try{const d=await api("/admin/api/trends/forecast/price?"+q.toString());
+    const t=d.timing, p=d.position, o=d.outlook||{};
+    const olRows=Object.keys(o).sort((a,b)=>a-b).map(h=>{const v=o[h];return `<tr><td>${h}일 뒤</td><td>${v.median!=null?pctTxt(Math.round((v.median-1)*100)):"—"}</td><td>${Object.entries(v.years||{}).map(([y,r])=>`${y} ${pctTxt(Math.round((r-1)*100))}`).join(" · ")||"—"}</td><td>${v.agree==null?"—":v.agree?"같음":'<span style="color:#b42318">다름</span>'}</td></tr>`}).join("");
+    const curves=d.curves&&d.curves.years?Object.entries(d.curves.years).map(([y,c])=>`<div style="display:flex;gap:6px;align-items:center"><small class="note" style="width:34px">${y}</small>${relPriceSpark(c.points)}<small class="note">${esc(c.anchor)} 기준</small></div>`).join(""):"";
+    const drv=(d.drivers||[]).map(x=>`<li><b>${esc(x.driver)}</b> <span class="pill ${x.state==="on"?"p-hold":"p-off"}">${x.state==="on"?"켜짐":x.state==="off"?"꺼짐":"미입력"}</span> <small class="note">${esc(x.status)} · 지연 ${x.lag_days[0]}~${x.lag_days[1]}일 · 신호: ${esc(x.signal_source)}${x.signal_note?` · ${esc(x.signal_note)}`:""}</small>${x.note?`<br><small>${esc(x.note)}</small>`:""}</li>`).join("");
+    const dom=d.domestic?(d.domestic.length?`<ul>${d.domestic.map(x=>`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a> ${won(x.price)}${x.per100g?` · 100g당 ${won(x.per100g)}`:""} <small class="note">${esc(x.keyword)}</small></li>`).join("")}</ul>`:'<p class="note">쿠팡 상품을 못 가져왔어요.</p>'):"";
+    let ovs="";
+    if(d.overseas_quotes){const oq=d.overseas_quotes;
+      if(oq.blocked) ovs=`<p class="note">직구 견적 없음 — ${esc(oq.blocked)}</p>`;
+      else{ovs=`<p><small class="note">환율 ${oq.fx&&oq.fx.USD?`USD ${oq.fx.USD} (${esc(oq.fx.source||"")})`:"없음"} · ${esc(oq.note||"")}</small></p>`+
+        (oq.quotes.length?`<table><thead><tr><th>상품</th><th>판매자</th><th>현지가</th><th>상품+배송+세금 → 도착 추정</th><th>100g당</th><th>비고</th></tr></thead><tbody>${oq.quotes.map(x=>x.ok?`<tr><td><a href="${esc(x.url||"#")}" target="_blank" rel="noopener">${esc(x.title)}</a></td><td>${esc(x.host||"")}</td><td>${x.price} ${esc(x.currency)}</td><td>${won(x.item_krw)} + ${won(x.shipping_krw)} + ${won(x.duty_krw+x.vat_krw)} = <b>${won(x.total_krw)}</b></td><td>${x.per100g_krw?won(x.per100g_krw):"중량 미상"}</td><td><small class="note">${x.notes.map(esc).join(" · ")}</small></td></tr>`:`<tr><td>${esc(x.title)}</td><td colspan="5"><small class="note">${esc(x.reason)}</small></td></tr>`).join("")}</tbody></table>`:'<p class="note">외화 상품을 못 찾았어요 (UCP 등록부 data/ucp/merchants.csv 의 판매자, 우리 플랫폼 프로필 필요).</p>')+
+        (oq.errors.length?`<p><small class="note">판매자 오류: ${oq.errors.map(esc).join(" · ")}</small></p>`:"");}}
+    const cmp=d.compare&&(d.compare.domestic_best||d.compare.overseas_best)?`<p><b>100g당 비교</b> 국내 최저 ${d.compare.domestic_best?won(d.compare.domestic_best.per100g):"—"} · 직구 최저 ${d.compare.overseas_best?won(d.compare.overseas_best.per100g):"—"}${d.compare.diff_pct!=null?` → 직구가 ${pctTxt(d.compare.diff_pct)} (${esc(d.compare.cheaper)} 쪽이 싸요)`:""} <small class="note">${esc(d.compare.note)}</small></p>`:"";
+    box.innerHTML=`<h3>${esc(d.item)} <span class="pill ${VD[t.verdict]||"p-off"}">${esc(t.verdict)}</span> <small class="note">${esc(d.group||"")} · 기준일 ${esc(d.as_of)} · ${esc(d.source||"")}</small></h3>
+      <ul>${t.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>
+      ${d.kamis?`<p><b>공공 시세</b> KAMIS ${esc(d.kamis.item)}${d.kamis.kind?" / "+esc(d.kamis.kind):""} · 관측 ${d.kamis.n}일 (${esc(d.kamis.first||"—")}~${esc(d.kamis.last||"—")})</p><div>${priceSpark(d.series_1y||[])}</div>`:`<p class="note">${esc(d.note||"")}</p>`}
+      ${olRows?`<table><thead><tr><th>지평</th><th>중앙값</th><th>해별(전년 같은 날짜 → 그 뒤)</th><th>방향 일치</th></tr></thead><tbody>${olRows}</tbody></table>`:""}
+      ${curves?`<p><b>${esc(d.curves.event)} 상대일 곡선</b> <small class="note">−42…+28일, 기준 구간(−42…−29) 중앙값 = 1.0, 해마다 한 줄</small></p>${curves}`:""}
+      <p><b>동인(가설)</b></p>${drv?`<ul>${drv}</ul>`:'<p class="note">연결된 동인 없음</p>'}
+      <div class="row"><button class="btn" id="pf-cp">국내 상품(쿠팡) 가격</button>${d.overseas==="quote"?'<button class="btn" id="pf-ucp">해외 직구 견적(UCP)</button>':`<span class="note">직구: ${esc(d.overseas_note||"대상 아님")}</span>`}</div>
+      ${dom?`<p><b>국내 상품</b></p>${dom}`:""}${ovs?`<p><b>해외 직구 견적</b></p>${ovs}`:""}${cmp}`;
+    const cpb=$("#pf-cp"); if(cpb) cpb.onclick=()=>loadPrice(item,true,false); const ub=$("#pf-ucp"); if(ub) ub.onclick=()=>loadPrice(item,true,true);
+  }catch(e){box.innerHTML=`<div class="err">${esc(e.message)}</div>`}}
+$("#pf-go").onclick=loadPrices;
+loadPrices().catch(()=>{});
+loadEvents().catch(()=>{});
+loadPeriod({preset:"1m"}).catch(()=>{});
 load().catch(e=>{$("#rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`});
 </script>
 </body>
