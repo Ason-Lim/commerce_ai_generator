@@ -65,7 +65,8 @@ aside .grp{margin:14px 0 4px;padding:0 10px;font-size:11.5px;font-weight:700;let
 aside .grp small{font-weight:400;margin-left:4px}
 /* 2026-11-19 화면 정리: 급상승 키워드(공통, 예전 이름 급상승 리포트) = 요약·급상승 키워드 목록·비교 분석 / 네이버 = 블로그 초안·발급 요청·상품 찾기·등록된 링크 */
 body[data-view=report] #blog,body[data-view=report] #requests,body[data-view=report] #bc,body[data-view=report] #links{display:none}
-body[data-view=naver] #summary,body[data-view=naver] #period,body[data-view=naver] #khist,body[data-view=naver] #surge,body[data-view=naver] #detail{display:none}
+/* 네이버 탭에는 네이버 작업 칸만 — 새로 붙는 리포트 칸(행사 선행 곡선·가격 전망 등)은 자동으로 '급상승 키워드' 탭에만 보인다 (2026-11-20) */
+body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links){display:none}
 @media (max-width:760px){.subtabs{margin:-14px -12px 0;padding:10px 12px}}
 </style>
 </head>
