@@ -113,6 +113,29 @@ def test_editing_keeps_ad_label_in_step_with_products(tmp_path):
     assert cleared.title == "제목만 바꿈" and cleared.disclosure is None
 
 
+def test_hold_conclusion_drops_every_buy_element(tmp_path):
+    """2026-11-20 사용자 결정: 보류 결론 글 — 상품 카드·버튼·/go·결제 확인·상품 비교 안내·구매 전 제약·가격 문구·
+    [광고]·고지를 모두 빼고 보류 결론. 판단 근거 출처(확인한 곳)는 남긴다. 결론을 되돌리면 원래 틀."""
+    from app.services.trend_posts import frame, templates
+
+    svc = service(tmp_path)
+    post, _ = svc.create_from_surge(report(), "대방어", find_products=lambda k: search_result())
+    held = svc.update(post.id, {"conclusion": "hold"})
+    assert not held.title.startswith("[광고]") and held.disclosure is None and held.products
+    assert held.template == "20" and held.checklist is None and held.constraints == []
+    assert held.answer[-1] == templates.HOLD_ANSWER["site"]
+    html = render.post_page(held.model_copy(update={"status": "approved", "approved_at": "2026-11-16T03:00:00+00:00"}), T0)
+    for m in ("판매처에서 보기", "/go/", "class=go href=\"/trends/", "상품 비교", "가격 참고", "구매 전에 알아 둘 것",
+              "결제", "판매 페이지에서", policy.COUPANG_DISCLOSURE, "sponsored"):
+        assert m not in html, m
+    assert not any(x in html for x in frame.COMPARE["site"] + frame.ROCKET["site"] + frame.NO_PRODUCTS["site"])
+    assert templates.HOLD_LINE["site"] in html and "필요해지면 볼 기준" in html and "확인한 곳" in html
+    assert "datalab.naver.com" in html                                       # 출처 링크는 유지
+    back = svc.update(post.id, {"conclusion": "buy"})
+    assert back.title.startswith("[광고]") and back.checklist and back.template != "20"
+    assert back.answer == frame.answer("대방어", True, True, "site", back.topic_kind)
+
+
 def test_rendered_page_puts_disclosure_before_any_product_link(tmp_path):
     svc = service(tmp_path)
     post = approved(svc)

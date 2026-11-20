@@ -569,12 +569,14 @@ COUPANG_PER_KEYWORD = 2
 
 
 SITE_OPS = "받은 수수료는 블로그와 무료 식품 추천 서비스 운영에 도움이 됩니다."
+AD_PREFIX = "[광고]"
 VARIANTS = ("naver", "coupang")
 
 
 def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                coupang: dict[str, list[dict]] | None = None, variant: str = "naver",
-               connect_ok: bool = True) -> dict:
+               connect_ok: bool = True, recipes: dict | None = None, template: str | None = None,
+               hold: bool = False) -> dict:
     """{'title', 'tags', 'body'} — data facts and title clues only; no prices, no copied posts; cause marked as estimate.
 
     2026-11-17 두 판 (사용자 결정):
@@ -582,10 +584,16 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
       쇼핑커넥트 고지는 connect_ok(.env SC_BLOG_APPROVED=1, 관리자 경로가 정함)일 때만 맨 위에.
     * variant='coupang' (쿠팡용): 키워드마다 쿠팡 파트너스 상품 링크(coupang = {키워드: [{'title', 'url'}]}, 최대 2개),
       맨 위 쿠팡 대가성 문구 + 운영 문구, 글 끝에 쿠팡 고지 한 번 더. 쇼핑커넥트 문구·삽입 자리·태그 없음.
+      2026-11-20: 키워드마다 주제(frame) → 글 틀(templates, 55종 중 자동 8종) — 제목·키워드 블록 절이 틀을 따른다.
+      recipes = {키워드: PostRecipe} (레시피 틀 26 용), template = 관리자가 지정한 틀 번호.
+      hold=True (쿠팡용, 55종 v1.2): 결론이 '구매 보류'인 글 — 쿠팡 링크·고지·[광고] 없이 보류 결론 문장을 넣는다.
     가격은 어느 판에도 넣지 않는다(게시 뒤 바뀌어도 고칠 수 없음)."""
     if variant not in VARIANTS:
         raise ValueError("알 수 없는 초안 종류예요.")
     only_coupang = variant == "coupang"
+    hold = hold and only_coupang
+    if hold:
+        coupang = {}
     items = [it for it in report["items"] if it["status"] in ("surging", "new")]
     if keywords:
         items = [it for it in report["items"] if it["keyword"] in keywords]
@@ -594,8 +602,36 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         raise ValueError("리포트에 급상승 항목이 없어요.")
     names = [it["keyword"] for it in items]
     title = f"[트렌드 리포트] 요즘 검색이 갑자기 늘어난 식품 — {', '.join(names[:2])}{' 외' if len(names) > 2 else ''}"
-    top = [COUPANG_DISCLOSURE, SITE_OPS] if only_coupang else ([DISCLOSURE] if connect_ok else [])
-    lines = [*top, *([""] if top else []),
+    top = ([] if hold else [COUPANG_DISCLOSURE, SITE_OPS]) if only_coupang else ([DISCLOSURE] if connect_ok else [])
+    if top:                                   # 2026-11-20: 광고 글 제목은 늘 [광고]로 시작 (사용자 규칙)
+        title = f"{AD_PREFIX} {title}"
+    # 2026-11-20 프레임 0.4 (쿠팡용): 고지 → 질문과 조건부 답 → 데이터 → 선택 기준 → 키워드별 근거 붙은 상품·확인 → 구매 전 제약
+    from app.services.trend_posts import frame, templates
+    links_of = {it["keyword"]: [x for x in (coupang or {}).get(it["keyword"]) or [] if x.get("url")][:COUPANG_PER_KEYWORD]
+                for it in items}
+    chosen_of = {}
+    head = []
+    if only_coupang:                          # 블로그 말투(channel='blog'): 리포트 숫자 도입 → 결론부터 → 직접 사용 아님
+        chosen_of = {it["keyword"]: (templates.hold(it["keyword"], status=it.get("status"), channel="blog") if hold else
+                                     templates.choose(it["keyword"], status=it.get("status"),
+                                                      products=links_of[it["keyword"]],
+                                                      recipe=(recipes or {}).get(it["keyword"]), override=template,
+                                                      channel="blog")) for it in items}
+        lead_title = chosen_of[names[0]].title
+        title = ("" if hold else f"{AD_PREFIX} ") + lead_title + (f" (+{'·'.join(names[1:3])})" if len(names) > 1 else "")
+        any_links = any(links_of.values())
+        lead = names[0]
+        kinds = {frame.bank_key(k, c.kind) for k, c in chosen_of.items()}
+        kind = chosen_of[lead].kind if len(kinds) == 1 else "general"   # 주제가 섞인 글은 일반 문장으로 시작
+        topic = lead if len(names) == 1 else "·".join(names[:2]) + " 같은 식품"
+        hook = frame.blog_hook(items[0])
+        head = ([hook, ""] if hook else []) + [
+            frame.question(topic, "blog", kind), frame.heading("answer", lead, "blog"),
+            " ".join(templates.hold_answer(topic, kind, "blog") if hold else
+                     frame.answer(topic, any_links, any(x.get("rocket") for v in links_of.values() for x in v), "blog",
+                                  kind)),
+            frame.experience_line(lead, "blog"), ""]
+    lines = [*top, *([""] if top else []), *head,
              f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
              "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
     for n, it in enumerate(items, 1):
@@ -621,20 +657,46 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         if it.get("cause") and it["cause"]["kind"] != "불명" and _public(it["cause"]):
             lines.append(f"- 계기(추정): {it['cause']['cause']} — 블로그 제목을 바탕으로 한 추정이에요.")
         lines.append(f"- 함께 확인된 신호 {it['cross']['n']}/{it['cross']['of']}개 (블로그 글 증가 · 식품 순위 상승 · 구글 트렌드)")
-        links = [x for x in (coupang or {}).get(it["keyword"]) or [] if x.get("url")][:COUPANG_PER_KEYWORD]
+        links = links_of[it["keyword"]]
+        if only_coupang:                      # 글 틀 절 → 주제별 기준
+            kw = it["keyword"]
+            ch = chosen_of[kw]
+            for head_line, sec in ch.sections:
+                lines.append(head_line)
+                lines += [f"- {x}" for x in sec]
+            lines.append(templates.HOLD_CRITERIA_HEAD["blog"] if hold else frame.heading("criteria", names[0], "blog", n - 1))
+            lines += [f"{i}. {c}" for i, c in enumerate(frame.criteria(kw, "blog", ch.kind), 1)]
         if only_coupang and links:
+            lines.append(frame.checklist(names[0], "blog", n - 1))
             lines.append("▶ 쿠팡에서 보기")
-            lines += [f"- {x.get('title') or it['keyword']}: {x['url']}" for x in links]
+            for x in links:
+                lines.append(f"- {x.get('title') or it['keyword']}: {x['url']}")
+                facts = frame.product_facts(x.get("title") or "", x.get("rocket"))
+                if facts:
+                    lines.append("  · " + " · ".join(facts))
         if not only_coupang:
             lines.append(f"▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: {it['keyword']}]")
         lines.append("")
+    if only_coupang and any(links_of.values()):
+        notes: list[str] = []
+        for kw in names:                      # 유형별 제약 먼저, 공통 줄은 끝에 한 번
+            notes += [c for c in frame.constraints(kw, "blog", chosen_of[kw].kind)[:-len(frame.CONSTRAINTS_COMMON["blog"])]
+                      if c not in notes]
+        notes += frame.CONSTRAINTS_COMMON["blog"]
+        lines += [frame.heading("constraints", names[0], "blog")] + [f"- {c}" for c in notes] + [""]
+    if hold:                                  # 결론 문장은 기준 뒤 한 번 (구매 안내 대신)
+        lines += [templates.HOLD_LINE["blog"], ""]
     lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
-              "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요.",
-              "가격·재고는 판매처에서 확인해 주세요."]
-    if only_coupang:
+              "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요."]
+    if not hold:
+        lines.append("가격·재고는 판매처에서 확인해 주세요.")
+    if only_coupang and not hold:
         lines.append(COUPANG_DISCLOSURE)
-    tags = names + ["트렌드리포트", "요즘뜨는식품", "쿠팡파트너스" if only_coupang else "쇼핑커넥트"]
-    return {"title": title, "tags": tags[:10], "body": "\n".join(lines), "keywords": names, "variant": variant}
+    tags = names + ["트렌드리포트", "요즘뜨는식품"] + ([] if hold else ["쿠팡파트너스" if only_coupang else "쇼핑커넥트"])
+    picked = {k: {"id": c.id, "name": c.name, "kind": c.kind, "kind_label": frame.TYPE_LABEL.get(c.kind, c.kind),
+                  "note": c.note} for k, c in chosen_of.items()}
+    return {"title": title, "tags": tags[:10], "body": "\n".join(lines), "keywords": names, "variant": variant,
+            "templates": picked, "hold": hold}
 
 
 # ── wiring from the server environment (keys stay in .env; nothing printed) ─────────────────────────

@@ -21,7 +21,8 @@ class PostError(ValueError):
         self.code, self.issues = code, issues or []
 
 
-EDIT_FIELDS = {"title", "summary", "why", "price_note", "products", "recipe"}
+EDIT_FIELDS = {"title", "summary", "why", "price_note", "products", "recipe",
+               "question", "answer", "criteria", "constraints", "checklist", "sections", "conclusion"}   # 2026-11-20 프레임 0.4·템플릿 칸
 
 
 class TrendPosts:
@@ -57,7 +58,8 @@ class TrendPosts:
         return None
 
     def create_from_surge(self, report: dict, keyword: str, *, find_products: Callable[[str], dict] | None = None,
-                          find_recipe: Callable[[str], dict] | None = None) -> tuple[Post, bool]:
+                          find_recipe: Callable[[str], dict] | None = None,
+                          template: str | None = None) -> tuple[Post, bool]:
         """(글, 새로 만들었는지).  리포트에 없는 단어는 만들지 않는다."""
         item = next((it for it in report.get("items") or [] if it.get("keyword") == keyword), None)
         if item is None:
@@ -69,7 +71,7 @@ class TrendPosts:
         products = draft.products_from_result(find_products(keyword), now, keyword) if find_products else []
         recipe = draft.recipe_from_result(find_recipe(keyword), keyword) if find_recipe else None
         post = draft.build(item, report.get("data_until"), products=products, recipe=recipe, now=now,
-                           sources=_used_sources(report))
+                           sources=_used_sources(report), template=template)
         if self.store.get(post.id) is not None:                 # 같은 날짜·주제 id (내린 글) → 덮어쓰지 않음
             raise PostError(f"같은 주소의 글({post.id})이 이미 있어요. 그 글을 고쳐 다시 검토 요청해 주세요.", "exists")
         return self.store.save(post), True
@@ -88,6 +90,9 @@ class TrendPosts:
         if unknown:
             raise PostError(f"고칠 수 없는 칸이에요: {', '.join(sorted(unknown))}")
         merged = Post.model_validate({**post.model_dump(mode="json"), **fields, "status": "draft"})
+        if "conclusion" in fields and fields["conclusion"] != post.conclusion:   # 결론이 바뀌면 글 틀 칸을 다시 만든다
+            from app.services.trend_posts import draft as post_draft
+            merged = post_draft.apply_conclusion(merged, merged.conclusion)
         # 제휴 상품이 생기거나 없어지면 [광고]·고지를 그에 맞춘다 (사람이 빼먹지 않게)
         aff = policy.has_affiliate(merged)
         title = merged.title.removeprefix(policy.AD_PREFIX).strip()

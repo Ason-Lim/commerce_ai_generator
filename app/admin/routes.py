@@ -141,6 +141,8 @@ class _DraftIn(BaseModel):
     date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
     keywords: list[str] | None = Field(None, max_length=5)
     with_coupang: bool = True        # 2026-11-17: 키워드마다 쿠팡 파트너스 링크를 쇼핑커넥트 자리 앞에
+    template: str | None = Field(None, pattern=r"^\d{2}$")    # 2026-11-20 쿠팡용 글 틀 번호 (없으면 주제별 기본)
+    hold: bool = False               # 2026-11-20 구매 보류 결론 — 쿠팡용에 링크·고지를 넣지 않는다
 
 
 @router.post("/admin/api/trends/blog-draft", dependencies=[api])
@@ -157,9 +159,11 @@ def trends_blog_draft(body: _DraftIn):
     try:
         first = surge.blog_draft(report, body.keywords)
         coupang = _coupang_links(first["keywords"]) if body.with_coupang else None
+        recipes = _blog_recipes(report, first["keywords"], coupang or {}, body.template)
         drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
                                             connect_ok=blog_connect_approved()),
-                  "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang")}
+                  "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang",
+                                              recipes=recipes, template=body.template, hold=body.hold)}
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     keywords = drafts["naver"]["keywords"]
@@ -171,8 +175,14 @@ def trends_blog_draft(body: _DraftIn):
     stem = f"trend_{report['data_until']}_{'_'.join(keywords)[:40]}"
     for variant, d in drafts.items():
         memo = _operator_memo(needs) if variant == "naver" else ""
+        extra = []
         if missing and variant == "coupang":                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
-            line = "쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing)
+            extra.append("쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing))
+        if variant == "coupang" and d.get("templates"):       # 2026-11-20 글 틀
+            extra.append("글 틀: " + " · ".join(f"{k} {t['id']} {t['name']}({t['kind_label']})"
+                                               + (f" — {t['note']}" if t["note"] else "")
+                                               for k, t in d["templates"].items()))
+        for line in extra:
             head, _, last = memo.rpartition("\n")          # 마지막 줄 = 구분선
             memo = f"{head}\n{line}\n{last}" if memo else f"{MEMO_HEAD}\n{line}\n{MEMO_RULE}"
         path = folder / (f"{stem}.txt" if variant == "naver" else f"{stem}_쿠팡용.txt")
@@ -285,6 +295,52 @@ def trends_blog_draft_file(file: str = Query(..., max_length=200)):
 COUPANG_SUFFIX = "_쿠팡용.txt"
 
 
+# ── 블로그 초안 승인 → 네이버 임시저장 (2026-11-20) ────────────────────────────
+class _DraftApproveIn(BaseModel):
+    file: str = Field(..., max_length=200)
+    with_image: bool = False          # gpt-image 보조 그림 1장 (유료, 캡션 앞에 'AI로 만든 그림')
+
+
+def _draft_path_or_404(rel: str) -> Path:
+    from app.services.trends import surge
+
+    folder = (surge.ROOT / "var" / "blog_drafts").resolve()
+    path = (surge.ROOT / rel).resolve()
+    if not _DRAFT_FILE.match(rel) or path.parent != folder or not path.is_file():
+        raise HTTPException(404, "초안 파일을 찾을 수 없어요.")
+    return path
+
+
+@router.post("/admin/api/trends/blog-draft/approve", dependencies=[api])
+def trends_blog_draft_approve(body: _DraftApproveIn):
+    """관리자 확인 완료 → 네이버 블로그 임시저장 (발행 안 함). 저장된 내용 그대로 쓴다 — 고친 뒤에는 먼저 '저장'.
+    .env BLOG_AUTODRAFT=1 일 때만. 검사(광고 표시·고지 위치·남은 안내·사용 후기 표현)에 걸리면 시작하지 않는다."""
+    from app.services.trends import blog_autosave as bas, surge
+
+    if not bas.enabled():
+        raise HTTPException(400, "자동 임시저장이 꺼져 있어요 (.env BLOG_AUTODRAFT=1).")
+    if not bas.mcp_python().is_file():
+        raise HTTPException(400, f"네이버 블로그 도구를 찾지 못했어요: {bas.mcp_dir()} (.env NAVER_BLOG_MCP_DIR)")
+    path = _draft_path_or_404(body.file)
+    d = _parse_draft(path.read_text(encoding="utf-8"))
+    variant = "coupang" if path.name.endswith(COUPANG_SUFFIX) else "naver"
+    issues = bas.check(variant, d["title"], d["body"], _draft_warnings(body.file, d["body"]), surge.COUPANG_DISCLOSURE)
+    if issues:
+        raise HTTPException(400, {"message": "확인이 필요한 곳이 있어 임시저장을 시작하지 않았어요.", "issues": issues})
+    keywords = [t for t in d["tags"] if t not in ("트렌드리포트", "요즘뜨는식품", "쿠팡파트너스", "쇼핑커넥트")] or [d["title"]]
+    rec = bas.start(path, variant=variant, title=d["title"], tags=d["tags"], body=d["body"], keywords=keywords,
+                    with_image=body.with_image)
+    return {"file": body.file, "approval": rec}
+
+
+@router.get("/admin/api/trends/blog-draft/approval", dependencies=[api])
+def trends_blog_draft_approval(file: str = Query(..., max_length=200)):
+    from app.services.trends import blog_autosave as bas
+
+    path = _draft_path_or_404(file)
+    return {"file": file, "approval": bas.read_approval(path), "enabled": bas.enabled()}
+
+
 def _draft_warnings(file: str, text: str) -> list[str]:
     from app.services.trends import surge
 
@@ -312,8 +368,25 @@ def _coupang_links(keywords: list[str]) -> dict[str, list[dict]]:
             found = post_draft.products_from_result(wiring.find_products(kw), keyword=kw)
         except Exception:  # noqa: BLE001 — 쿠팡을 못 불러도 초안은 만든다
             found = []
-        out[kw] = [{"title": p.title, "url": p.url} for p in found
+        out[kw] = [{"title": p.title, "url": p.url, "rocket": p.rocket} for p in found
                    if p.link_type == "affiliate"][:surge.COUPANG_PER_KEYWORD]
+    return out
+
+
+def _blog_recipes(report: dict, keywords: list[str], coupang: dict, override: str | None) -> dict:
+    """레시피 틀(26)을 쓸 수 있는 키워드만 공공 레시피를 찾는다 (실패해도 초안은 만든다 — 그러면 다른 틀로)."""
+    from app.services.trend_posts import draft as post_draft, templates, wiring
+
+    status = {it["keyword"]: it.get("status") for it in report.get("items") or []}
+    out = {}
+    for kw in keywords:
+        kind = templates.frame.keyword_type(kw, status=status.get(kw))
+        if override != "26" and "26" not in templates.candidates(kw, kind)[:1]:
+            continue
+        try:
+            out[kw] = post_draft.recipe_from_result(wiring.find_recipe(kw), kw)
+        except Exception:  # noqa: BLE001
+            out[kw] = None
     return out
 
 
@@ -985,6 +1058,7 @@ class _PostDraftIn(BaseModel):
     date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
     keyword: str = Field(..., min_length=1, max_length=40)
     with_products: bool = True
+    template: str | None = Field(None, pattern=r"^\d{2}$")    # 2026-11-20 글 틀 번호 (없으면 주제별 기본)
 
 
 @router.post("/admin/api/trend-posts/draft", dependencies=[api])
@@ -998,7 +1072,7 @@ def trend_posts_draft(body: _PostDraftIn):
     svc = _trend_posts()
     post, created = _post_call(lambda: svc.create_from_surge(
         report, body.keyword, find_products=wiring.find_products if body.with_products else None,
-        find_recipe=wiring.find_recipe))
+        find_recipe=wiring.find_recipe, template=body.template))
     return {**_post_out(svc, post), "created": created}
 
 

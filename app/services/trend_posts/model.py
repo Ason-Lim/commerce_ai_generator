@@ -29,6 +29,7 @@ class PostProduct(_M):
     rocket: Optional[bool] = None
     keyword: Optional[str] = None               # 어떤 재료·검색어로 찾은 상품인지
     image_url: Optional[str] = None             # 2026-11-17: 쿠팡 상품 사진 (쿠팡 https 주소만, 없으면 사진 없이)
+    facts: list[str] = Field(default_factory=list)  # 2026-11-20 프레임 0.4: 근거 줄 ('중량·수량: 500g (상품명 표기)')
 
 
 class PostSource(_M):
@@ -45,6 +46,12 @@ class PostRecipe(_M):
     ingredients: list[str] = Field(default_factory=list)
     step_count: int = 0
     note: str = "공공 레시피를 참고했으며 원문 그대로가 아니에요."
+
+
+class PostSection(_M):
+    """2026-11-20 템플릿 절 (소제목 + 줄). 템플릿 번호는 Post.template."""
+    heading: str
+    items: list[str] = Field(default_factory=list)
 
 
 class HistoryEntry(_M):
@@ -65,6 +72,18 @@ class Post(_M):
     price_note: str = "가격은 확인한 시각 기준이에요. 지금은 다를 수 있으니 판매처에서 확인해 주세요."
     sources: list[PostSource] = Field(default_factory=list)
     disclosure: Optional[str] = None             # 제휴 상품이 있으면 본문 맨 위 고지
+    # 2026-11-20 프레임 0.4 (고지 → 질문과 조건부 답 → 선택 기준 → 근거 붙은 상품 → 구매 전 제약 → 확인 링크).
+    # 예전 글에는 없는 칸 — 비어 있으면 예전 모양으로 그린다.
+    experience: Literal["direct", "data"] = "data"   # direct = 직접 사용 기록이 있을 때만
+    question: Optional[str] = None
+    answer: list[str] = Field(default_factory=list)
+    criteria: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    checklist: Optional[str] = None
+    template: Optional[str] = None               # 글 틀 번호 (55종 중 자동 8종: 01·03·05·06·14·26·28·32)
+    topic_kind: Optional[str] = None             # 주제 (frame.keyword_type: kimjang·seasonal·seollal·… )
+    sections: list[PostSection] = Field(default_factory=list)
+    conclusion: Literal["buy", "hold"] = "buy"   # 2026-11-20 hold = 구매 보류 결론 — 구매 링크·광고 고지 없음
     status: Status = "draft"
     created_at: str
     updated_at: str

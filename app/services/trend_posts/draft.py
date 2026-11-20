@@ -1,4 +1,5 @@
-"""급상승 리포트 항목 → 트렌드 글 초안 (고정 템플릿: 트렌드 이유 → 레시피 요약 → 재료·상품 → 가격 참고).
+"""급상승 리포트 항목 → 트렌드 글 초안 (2026-11-20 프레임 0.4: 고지 → 질문과 조건부 답 → 트렌드 이유 → 선택 기준 →
+구매 전 제약·결제 전 확인 → 근거 붙은 상품 → 레시피 → 가격 참고).
 
 * 이유 문장은 리포트에 있는 데이터 사실만 쓴다(배수·시작일·순위·블로그 글 수).  원인은 AI 가 블로그 제목으로
   추정한 것이라 '추정'으로 적고, 공개 불가로 표시된 원인·'불명'은 쓰지 않는다 (surge.blog_draft 와 같은 기준).
@@ -11,9 +12,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.services.trend_posts import policy
-from app.services.trend_posts.model import (HistoryEntry, Post, PostProduct, PostRecipe, PostSource, now_iso,
-                                            post_id)
+from app.services.trend_posts import frame, policy
+from app.services.trend_posts.model import (HistoryEntry, Post, PostProduct, PostRecipe, PostSection, PostSource,
+                                            now_iso, post_id)
 
 MAX_PRODUCTS = 4
 SOURCE_LABEL = {"naver_datalab": ("네이버 데이터랩 검색어 트렌드", "https://datalab.naver.com/"),
@@ -68,7 +69,8 @@ def products_from_result(result: dict | None, now: datetime | None = None, keywo
             link_type=offer.get("link_type") or "direct", affiliate_program=offer.get("affiliate_program"),
             price_krw=offer.get("price_krw"), price_checked_at=offer.get("seen_at") or checked,
             rocket=offer.get("rocket"), keyword=keyword,
-            image_url=prod.get("image_url") if policy.coupang_image(prod.get("image_url")) else None))
+            image_url=prod.get("image_url") if policy.coupang_image(prod.get("image_url")) else None,
+            facts=frame.product_facts(prod.get("title") or "", offer.get("rocket"))))
         if len(out) >= limit:
             break
     return out
@@ -88,14 +90,43 @@ def recipe_from_result(result: dict | None, topic: str) -> PostRecipe | None:
     return None
 
 
+def apply_conclusion(post: Post, conclusion: str) -> Post:
+    """2026-11-20 결론을 바꾸면 글 틀 칸을 다시 만든다. hold = 구매를 이끄는 요소(상품 비교 안내·옵션/결제 확인·
+    구매 전 제약·상품 절)를 모두 빼고 보류 결론 · buy = 상품 기준으로 원래 틀. [광고]·고지는 service.update 가 맞춘다.
+    (질문·답·절·제약을 사람이 고쳤다면 결론을 바꿀 때 다시 써진다 — 기록에 남긴다.)"""
+    from app.services.trend_posts import templates
+    status = "new" if post.topic_kind == "viral" else None
+    if conclusion == "hold":
+        ch = templates.hold(post.topic, status=status, channel="site")
+        return post.model_copy(update={
+            "conclusion": "hold", "title": ch.title, "template": ch.id, "topic_kind": ch.kind,
+            "summary": f"'{post.topic}' 검색이 왜 늘었는지 데이터로 보고, 지금 꼭 사야 하는지 정리했어요.",
+            "answer": templates.hold_answer(post.topic, ch.kind, "site"), "constraints": [], "checklist": None,
+            "sections": [PostSection(heading=h, items=lines) for h, lines in ch.sections]})
+    prods = [p for p in post.products]
+    ch = templates.choose(post.topic, status=status, recipe=post.recipe, channel="site",
+                          products=[{"title": p.title, "rocket": p.rocket} for p in prods])
+    return post.model_copy(update={
+        "conclusion": "buy", "title": ch.title, "template": ch.id, "topic_kind": ch.kind,
+        "summary": f"'{post.topic}' 검색이 왜 늘었는지 데이터로 보고, 함께 볼 레시피와 상품을 정리했어요.",
+        "answer": frame.answer(post.topic, bool(prods), any(p.rocket for p in prods), "site", ch.kind),
+        "constraints": frame.constraints(post.topic, "site", ch.kind),
+        "checklist": frame.checklist(post.topic, "site") if prods else None,
+        "sections": [PostSection(heading=h, items=lines) for h, lines in ch.sections]})
+
+
 def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (), recipe: PostRecipe | None = None,
-          now: datetime | None = None, sources: dict | None = None) -> Post:
+          now: datetime | None = None, sources: dict | None = None, template: str | None = None) -> Post:
     now = now or datetime.now(timezone.utc)
     topic = item["keyword"]
     day = (data_until or now.date().isoformat())[:10]
     products = [] if policy.is_alcohol(topic) else list(products)
     affiliate = any(p.link_type == "affiliate" for p in products)
-    title = f"요즘 검색이 크게 늘어난 '{topic}' — 왜 뜨는지와 함께 볼 것"
+    from app.services.trend_posts import templates
+    chosen = templates.choose(topic, status=item.get("status"), recipe=recipe, override=template, channel="site",
+                              products=[{"title": p.title, "rocket": p.rocket} for p in products])
+    kind = chosen.kind
+    title = chosen.title
     used = [k for k in SOURCE_LABEL if k == "naver_datalab" or (sources or {}).get(k)]
     stamp = now_iso(now)
     return Post(
@@ -105,5 +136,13 @@ def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (
         why=why_lines(item, data_until), recipe=recipe, products=products,
         sources=[PostSource(kind="data", label=SOURCE_LABEL[k][0], url=SOURCE_LABEL[k][1]) for k in used],
         disclosure=policy.disclosure_text() if affiliate else None,
+        experience="data", question=frame.question(topic, "site", kind),
+        answer=frame.answer(topic, bool(products), any(p.rocket for p in products), "site", kind),
+        criteria=frame.criteria(topic, "site", kind), constraints=frame.constraints(topic, "site", kind),
+        checklist=frame.checklist(topic, "site") if products else None,
+        template=chosen.id, topic_kind=kind,
+        sections=[PostSection(heading=h, items=lines) for h, lines in chosen.sections],
         created_at=stamp, updated_at=stamp,
-        history=[HistoryEntry(at=stamp, action="create", note=f"급상승 리포트 {data_until or ''}")])
+        history=[HistoryEntry(at=stamp, action="create",
+                              note=f"급상승 리포트 {data_until or ''} · 글 틀 {chosen.id} {chosen.name}"
+                                   + (f" · {chosen.note}" if chosen.note else ""))])
