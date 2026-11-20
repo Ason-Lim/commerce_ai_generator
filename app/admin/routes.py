@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, timedelta
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote
@@ -193,6 +193,199 @@ def trends_keyword(request: Request, keyword: str = Query(..., min_length=1, max
     h["has_link"] = has(kw) if has else None
     h["source"] = {"kind": kind, "note": period.source_note(kind, rank_dir)}
     return h
+
+
+@router.get("/admin/api/trends/forecast/events")
+def trends_forecast_events(request: Request, days: int = Query(35, ge=7, le=120)):
+    """행사 달력(data/event_calendar.csv) — 행사 목록(연속 행사군 포함)과 앞으로 days 일 안의 행사(D-day). 자료가 있는 연도도 함께."""
+    from app.services.trends import period
+    from app.services.trends.forecast import calendar as cal
+    from app.services.trends.forecast import events as ev
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, _ = _period_dirs()
+    cov = period.coverage(rank_dir, None)
+    years = []
+    if cov["rank"]:
+        years = sorted({int(d[:4]) for d in period.rank_files(rank_dir)})
+    rows = cal.load()
+    events = cal.events(rows, types=("fixed", "lunar", "computed", "solar_term"))
+    for name, (a, b) in ev.GROUPS.items():                       # 연속 행사군 (복날 등) — 시작 행사 날짜로 보임
+        occ = ev.group_occurrences(name, rows)
+        if occ:
+            events.append({"event": name, "type": "group", "category": "행사군", "note": f"{a}~{b}",
+                           "dates": {y: d[0].isoformat() for y, d in occ.items()}})
+    events.sort(key=lambda e: min(d[5:] for d in e["dates"].values()))
+    return {"ok": bool(rows), "events": events, "upcoming": cal.upcoming(date.today(), days, rows),
+            "data_years": years, "coverage": cov, "source": {"kind": kind, "note": period.source_note(kind, rank_dir)}}
+
+
+@router.get("/admin/api/trends/forecast/event")
+def trends_forecast_event(request: Request, event: str = Query(..., min_length=1, max_length=40),
+                          years: str | None = Query(None, pattern=r"^\d{4}(,\d{4})*$"),
+                          as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                          seeds: str | None = Query(None, max_length=400), limit: int = Query(60, ge=1, le=300),
+                          coupang: int = Query(0, ge=0, le=1)):
+    """행사 선행 곡선 — 행사 전에 100위 안으로 들어오고 행사 뒤 나가는 '반복 패턴' 키워드와 상대일 곡선(−35…+14).
+    as_of(기준일, 기본 오늘) 뒤 자료는 읽지 않고, 이탈 구간이 기준일 전에 끝난 해만 판정(정보 누출 방지).
+    coupang=1 이면 반복·후보 키워드의 쿠팡 파트너스 상품 후보 수를 함께 (쿠팡 호출 — 느림)."""
+    from app.services.trends import period
+    from app.services.trends.forecast import calendar as cal
+    from app.services.trends.forecast import events as ev
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    rows = cal.load()
+    occ = ev.group_occurrences(event.strip(), rows)
+    if not occ:
+        raise HTTPException(404, "달력에 없는 행사예요")
+    today = date.fromisoformat(as_of) if as_of else date.today()
+    ys = [int(y) for y in years.split(",")] if years else sorted(occ)
+    seed_list = [s.strip() for s in (seeds or "").split(",") if s.strip()]
+    rep = ev.event_report(event.strip(), rank_dir, sorted(ys), rows=rows, seeds=seed_list, limit=limit, as_of=today)
+    nxt = min((d for d, _ in occ.values() if d > today), default=None)
+    rep["next"] = {"date": nxt.isoformat(), "d_day": (nxt - today).days,
+                   "forecast": ev.forecast_from_report(rep, nxt)} if nxt else None
+    has = _period_has_link()
+    cp = _coupang_links([r["keyword"] for r in rep["keywords"] if r["grade"] != "씨앗"]) if coupang else None
+    for r in rep["keywords"]:
+        r["has_link"] = has(r["keyword"]) if has else None            # 네이버 쇼핑커넥트 등록부
+        r["coupang"] = None if cp is None else len(cp.get(r["keyword"]) or [])   # 쿠팡 파트너스 상품 후보 수
+    rep["source"] = {"kind": kind, "note": period.source_note(kind, rank_dir)}
+    rep["guest"] = not request_ok(request)
+    return rep
+
+
+# ── 가격 레이어 (2026-11-19 밤, 연구 §9) ─────────────────────────────────────────────
+OVERSEAS_QUERY = {"올리브유": "extra virgin olive oil", "커피 원두": "coffee beans", "카카오·초콜릿": "dark chocolate",
+                  "견과류": "almonds", "밀가루·파스타": "pasta"}
+
+
+def _fx(fx_usd: float | None, fx_eur: float | None) -> dict:
+    """환율 — 질의값 > 환경 변수(FX_USD_KRW·FX_EUR_KRW). 자동 조회는 다음 단계(출처·날짜를 함께 보관해야 해서)."""
+    import os
+
+    usd = fx_usd or _float(os.getenv("FX_USD_KRW"))
+    eur = fx_eur or _float(os.getenv("FX_EUR_KRW"))
+    src = "질의값" if fx_usd else ("환경 변수 FX_USD_KRW" if usd else None)
+    return {k: v for k, v in (("USD", usd), ("EUR", eur)) if v} | {"source": src, "date": date.today().isoformat()}
+
+
+def _float(v) -> float | None:
+    try:
+        return float(v) if v not in (None, "") else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _domestic_products(keywords: list[str], limit: int = 8) -> list[dict]:
+    """국내 상품(쿠팡 파트너스 공통 검색 picks) — {title, price, weight_g, per100g, url}. 실패하면 빈 목록."""
+    from app.services.trend_posts import wiring
+
+    out = []
+    for kw in keywords:
+        try:
+            res = wiring.find_products(kw)
+        except Exception:  # noqa: BLE001
+            continue
+        for it in (res or {}).get("items") or []:
+            if it.get("section") != "picks":
+                continue
+            offer, prod = it.get("offer") or {}, it.get("product") or {}
+            if not offer.get("product_url") or not offer.get("price_krw"):
+                continue
+            out.append({"title": prod.get("title") or "", "price": offer["price_krw"], "weight_g": prod.get("weight_g"),
+                        "per100g": offer.get("per100g_krw"), "url": offer["product_url"], "keyword": kw,
+                        "seen_at": offer.get("seen_at")})
+        if len(out) >= limit:
+            break
+    return out[:limit]
+
+
+def _ucp_foreign(query: str, limit: int = 8) -> dict:
+    """등록부(사용·시험) 판매자에게 검색해 **외화 옵션**만 모은다 — 직구 견적 입력. 판매자별 실패는 격리."""
+    try:
+        import requests
+
+        from app.services.ucp import client, discovery, registry
+        from app.services.trends.forecast import overseas
+    except Exception as e:  # noqa: BLE001
+        return {"variants": [], "errors": [f"UCP 모듈 없음 ({e})"]}
+    variants, errors = [], []
+    for m in registry.load(states=("사용", "시험")):
+        try:
+            merchant = discovery.discover(m["host"], http=requests)
+            res = client.search(merchant, query, http=requests, limit=limit)
+            if not res.ok or not isinstance(res.response, dict):
+                errors.append(f"{m['host']}: {res.error or res.code}")
+                continue
+            variants.extend(overseas.foreign_variants(res.response, m["host"]))
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{m['host']}: {type(e).__name__}")
+    return {"variants": variants[:limit], "errors": errors}
+
+
+@router.get("/admin/api/trends/forecast/prices")
+def trends_forecast_prices(request: Request, as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$")):
+    """감시 품목 전체 — 현재 위치(52주 백분위·1개월·1년 대비)·4주 전망(전년 같은 시기)·매수 시점 판정·켜진 동인.
+    공공 시세(KAMIS 소매)만으로 판정. 백필(scripts/backfill_kamis_history.py) 전에는 일별 파일의 네 점만 써서 대부분 '보류'."""
+    from app.services.trends.forecast import prices as pr
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    today = date.fromisoformat(as_of) if as_of else date.today()
+    rows, src = pr.rows_for_analysis()
+    days = sorted({r["date"] for r in rows})
+    return {"ok": bool(rows), "as_of": today.isoformat(), "source": src,
+            "history": {"backfilled": pr.HISTORY.exists(), "rows": len(rows), "days": len(days),
+                        "first": days[0].isoformat() if days else None, "last": days[-1].isoformat() if days else None},
+            "items": pr.summary(today, rows=rows, source=src), "signals": pr.signals()[-20:],
+            "thresholds": {"low_pct": pr.LOW_PCT, "high_pct": pr.HIGH_PCT, "up": pr.UP, "down": pr.DOWN,
+                           "min_years": pr.MIN_YEARS, "min_obs_52w": pr.MIN_OBS_52W},
+            "guest": not request_ok(request)}
+
+
+@router.get("/admin/api/trends/forecast/price")
+def trends_forecast_price(request: Request, item: str = Query(..., min_length=1, max_length=40),
+                          as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                          coupang: int = Query(0, ge=0, le=1), ucp: int = Query(0, ge=0, le=1),
+                          fx_usd: float | None = Query(None, gt=0), fx_eur: float | None = Query(None, gt=0),
+                          origin: str = Query("US", pattern=r"^[A-Z]{2}$")):
+    """감시 품목 하나 — 1년 시세·행사(김장·추석) 상대일 곡선(해마다)·전망·판정·동인.
+    coupang=1: 국내 상품(쿠팡 파트너스) 가격 · ucp=1: UCP 판매자(Shopify 등) 외화 상품 → 직구 도착 추정가 → 100g당 비교.
+    환율은 fx_usd/fx_eur 또는 FX_USD_KRW 환경 변수 — 없으면 견적을 내지 않는다. 직구 견적은 참고용(식품 구매대행 영업등록 전)."""
+    from app.services.trends.forecast import calendar as cal
+    from app.services.trends.forecast import overseas as ov
+    from app.services.trends.forecast import prices as pr
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    row = next((r for r in pr.watchlist() if r["item"] == item.strip()), None)
+    if not row:
+        raise HTTPException(404, "감시 품목에 없어요 (data/price_watchlist.csv)")
+    today = date.fromisoformat(as_of) if as_of else date.today()
+    rows, src = pr.rows_for_analysis()
+    rep = pr.item_report(row, rows, today, cal_rows=cal.load(), source=src)
+    rep["domestic"] = _domestic_products(rep["keywords"][:2]) if (coupang or ucp) else None   # 직구 견적은 국내와 견줘야 뜻이 있음
+    rep["overseas_quotes"] = None
+    rep["compare"] = None
+    if ucp:
+        if row.get("overseas") != "quote":
+            rep["overseas_quotes"] = {"variants": [], "errors": [], "blocked": row.get("overseas_note") or "직구 대상 아님"}
+        else:
+            fx = _fx(fx_usd, fx_eur)
+            found = _ucp_foreign(OVERSEAS_QUERY.get(row["item"], rep["keywords"][0] if rep["keywords"] else row["item"]))
+            quotes = [ov.quote(v, group=row.get("group", ""), item=row["item"], fx=fx, origin=origin)
+                      for v in found["variants"]]
+            rep["overseas_quotes"] = {"fx": fx, "quotes": quotes, "errors": found["errors"],
+                                      "note": ov.ESTIMATE_NOTE if quotes else ("환율 없음 — fx_usd 또는 FX_USD_KRW" if "USD" not in fx else None)}
+            rep["compare"] = ov.compare(quotes, rep["domestic"] or [])
+    rep["guest"] = not request_ok(request)
+    return rep
 
 
 @router.post("/admin/api/trends/run", dependencies=[api])
