@@ -107,9 +107,9 @@ def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (
         why=why_lines(item, data_until), recipe=recipe, products=products,
         sources=[PostSource(kind="data", label=SOURCE_LABEL[k][0], url=SOURCE_LABEL[k][1]) for k in used],
         disclosure=policy.disclosure_text() if affiliate else None,
-        experience="data", question=frame.question(topic),
-        answer=frame.answer(topic, bool(products), any(p.rocket for p in products)),
-        criteria=frame.criteria(topic), constraints=frame.constraints(),
-        checklist=frame.CHECKLIST if products else None,
+        experience="data", question=frame.question(topic, "site"),
+        answer=frame.answer(topic, bool(products), any(p.rocket for p in products), "site"),
+        criteria=frame.criteria(topic, "site"), constraints=frame.constraints(topic, "site"),
+        checklist=frame.checklist(topic, "site") if products else None,
         created_at=stamp, updated_at=stamp,
         history=[HistoryEntry(at=stamp, action="create", note=f"급상승 리포트 {data_until or ''}")])

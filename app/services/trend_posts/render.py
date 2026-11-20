@@ -156,7 +156,7 @@ def post_page(post: Post, now: datetime | None = None) -> str:
         if post.answer:
             parts.append("<p>" + " ".join(e(a) for a in post.answer) + "</p>")
         if post.experience == "data":
-            parts.append(f"<p class=muted>{e(frame.EXPERIENCE_DATA)}</p>")
+            parts.append(f"<p class=muted>{e(frame.experience_line(post.topic, 'site'))}</p>")
     if post.why:
         parts.append("<h2>왜 뜨고 있을까</h2><ul>" + "".join(f"<li>{e(w)}</li>" for w in post.why) + "</ul>")
     if framed and post.criteria:

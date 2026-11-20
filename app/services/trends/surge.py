@@ -603,16 +603,20 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
     links_of = {it["keyword"]: [x for x in (coupang or {}).get(it["keyword"]) or [] if x.get("url")][:COUPANG_PER_KEYWORD]
                 for it in items}
     head = []
-    if only_coupang:
+    if only_coupang:                          # 블로그 말투(channel='blog'): 리포트 숫자 도입 → 결론부터 → 직접 사용 아님
         any_links = any(links_of.values())
-        head = ["먼저 답부터.", frame.question(", ".join(names[:2]) + (" 외" if len(names) > 2 else "")),
-                " ".join(frame.answer(names[0], any_links, any(x.get("rocket") for v in links_of.values() for x in v))),
-                frame.EXPERIENCE_DATA, ""]
+        lead = names[0]
+        kind = frame.common_type(names)       # 유형이 섞인 글은 일반 문장으로 시작 (키워드별 기준은 아래 블록에서)
+        topic = lead if len(names) == 1 else "·".join(names[:2]) + " 같은 식품"
+        hook = frame.blog_hook(items[0])
+        head = ([hook, ""] if hook else []) + [
+            frame.heading("answer", lead, "blog"), frame.question(topic, "blog", kind),
+            " ".join(frame.answer(topic, any_links, any(x.get("rocket") for v in links_of.values() for x in v), "blog",
+                                  kind)),
+            frame.experience_line(lead, "blog"), ""]
     lines = [*top, *([""] if top else []), *head,
              f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
              "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
-    if only_coupang:
-        lines += ["고르기 전에 볼 것"] + [f"{i}. {c}" for i, c in enumerate(frame.criteria(names[0]), 1)] + [""]
     for n, it in enumerate(items, 1):
         lines.append(f"■ {n}. {it['keyword']}")
         if it["status"] == "surging":
@@ -637,8 +641,12 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
             lines.append(f"- 계기(추정): {it['cause']['cause']} — 블로그 제목을 바탕으로 한 추정이에요.")
         lines.append(f"- 함께 확인된 신호 {it['cross']['n']}/{it['cross']['of']}개 (블로그 글 증가 · 식품 순위 상승 · 구글 트렌드)")
         links = links_of[it["keyword"]]
+        if only_coupang:                      # 키워드 유형별 기준 (제철·김장·시즌 이벤트·일반)
+            kw = it["keyword"]
+            lines.append(frame.heading("criteria", names[0], "blog", n - 1))
+            lines += [f"{i}. {c}" for i, c in enumerate(frame.criteria(kw, "blog"), 1)]
         if only_coupang and links:
-            lines.append(frame.CHECKLIST)
+            lines.append(frame.checklist(names[0], "blog", n - 1))
             lines.append("▶ 쿠팡에서 보기")
             for x in links:
                 lines.append(f"- {x.get('title') or it['keyword']}: {x['url']}")
@@ -649,7 +657,11 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
             lines.append(f"▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: {it['keyword']}]")
         lines.append("")
     if only_coupang and any(links_of.values()):
-        lines += ["구매 전에 알아 둘 것"] + [f"- {c}" for c in frame.constraints()] + [""]
+        notes: list[str] = []
+        for kw in names:                      # 유형별 제약 먼저, 공통 줄은 끝에 한 번
+            notes += [c for c in frame.constraints(kw, "blog")[:-len(frame.CONSTRAINTS_COMMON["blog"])] if c not in notes]
+        notes += frame.CONSTRAINTS_COMMON["blog"]
+        lines += [frame.heading("constraints", names[0], "blog")] + [f"- {c}" for c in notes] + [""]
     lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
               "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요.",
               "가격·재고는 판매처에서 확인해 주세요."]

@@ -227,13 +227,40 @@ def test_coupang_blog_draft_follows_frame_04(data_dirs):
     d = S.blog_draft(report, coupang=links, variant="coupang")
     assert d["title"].startswith("[광고] ")
     body = d["body"]
-    order = [S.COUPANG_DISCLOSURE, "먼저 답부터.", frame.EXPERIENCE_DATA, "고르기 전에 볼 것", frame.CHECKLIST,
+    kw = "휘태커스초콜릿"
+    order = [S.COUPANG_DISCLOSURE, frame.blog_hook(report["items"][0]), frame.heading("answer", kw, "blog"),
+             frame.question(kw, "blog"), frame.experience_line(kw, "blog"), frame.heading("criteria", kw, "blog", 0),
+             frame.criteria(kw, "blog")[0], frame.checklist(kw, "blog", 0),
              "▶ 쿠팡에서 보기", "- 휘태커스 다크 250g 2개: https://link.coupang.com/a/w0",
-             "  · 중량·수량: 250g, 2개 (상품명 표기) · 로켓배송 표시 (검색 결과 표시)", "구매 전에 알아 둘 것"]
+             "  · 중량·수량: 250g, 2개 (상품명 표기) · 로켓배송 표시 (검색 결과 표시)",
+             frame.heading("constraints", kw, "blog")]
     at = [body.index(x) for x in order]
     assert at == sorted(at) and body.startswith(S.COUPANG_DISCLOSURE)
-    assert "로켓배송 표시가 있는 상품부터" in body
-    assert "원" not in body.split("구매 전에 알아 둘 것")[0].split("검색량")[0][-200:]
+    assert "로켓배송" in body.split("▶ 쿠팡에서 보기")[0]                      # 블로그 말투의 로켓배송 안내
     no_links = S.blog_draft(report, coupang={}, variant="coupang")["body"]
-    assert "구매 전에 알아 둘 것" not in no_links and frame.CHECKLIST not in no_links
+    assert frame.checklist(kw, "blog") not in no_links and frame.heading("criteria", kw, "blog") in no_links
     assert not S.blog_draft(report, variant="naver", connect_ok=False)["title"].startswith("[광고]")
+
+
+def test_coupang_blog_mixed_types_do_not_repeat_lines():
+    """2026-11-20: 유형이 섞인 글(김장·제철·이벤트)은 일반 질문으로 시작, 키워드 블록마다 자기 유형 기준,
+    확인 문장·기준 제목은 한 글 안에서 되풀이하지 않음, 제약은 유형별 먼저·공통은 끝에 한 번."""
+    from app.services.trend_posts import frame
+
+    def it(k, st="surging"):
+        return {"keyword": k, "status": st, "ratio_recent": 2.0, "ratio_peak": 2.5, "onset": None,
+                "rank_trend": {}, "blog": {}, "google": {}, "cross": {"n": 1, "of": 2}, "cause": None}
+    rep = {"data_until": "2026-11-19", "items": [it("절임배추"), it("대방어"), it("빼빼로")]}
+    links = {k: [{"title": f"{k} 1kg", "url": f"https://link.coupang.com/a/{i}", "rocket": False}]
+             for i, k in enumerate(("절임배추", "대방어", "빼빼로"))}
+    body = S.blog_draft(rep, coupang=links, variant="coupang")["body"]
+    assert frame.question("절임배추·대방어 같은 식품", "blog", "general") in body
+    heads = [ln for ln in body.split("\n") if ln in frame.CRITERIA_HEAD["blog"]]
+    assert len(heads) == 3 and len(set(heads)) == 3
+    assert "김장은 날짜가 먼저" not in body.split("■ 1.")[0]
+    checks = [ln for ln in body.split("\n") if ln in frame.CHECKLIST_TEXT["blog"]]
+    assert len(checks) == 3 and len(set(checks)) == 3
+    assert any("포기" in ln for ln in body.split("■ 2.")[0].split("■ 1.")[1].split("\n"))
+    assert any("손질" in ln for ln in body.split("■ 3.")[0].split("■ 2.")[1].split("\n"))
+    tail = body.split(frame.CONSTRAINTS_COMMON["blog"][0])[0]
+    assert all(frame.CONSTRAINTS_TYPE[t]["blog"] in tail for t in ("kimjang", "seasonal", "event"))
