@@ -59,7 +59,16 @@ def _int(v) -> int | None:
 RETRY_WAITS = (3.0, 10.0, 30.0)      # 재시도 간격 — KAMIS 는 아침 시세 갱신 시간대(10~11시)에 느려질 때가 있음
 
 
-def fetch(day: str, category: str, cls: str, country: str, key: str, cid: str, timeout: float = 40.0,
+def strip_secret(doc: dict) -> dict:
+    """응답의 condition 에는 요청 인증키(p_cert_key·p_cert_id)가 그대로 돌아온다 — 저장하기 전에 지운다 (2026-11-20)."""
+    for c in doc.get("condition") or [] if isinstance(doc, dict) else []:
+        if isinstance(c, dict):
+            c.pop("p_cert_key", None)
+            c.pop("p_cert_id", None)
+    return doc
+
+
+def fetch(day: str, category: str, cls: str, country: str, key: str, cid: str, timeout: float = 20.0,
           retries: int = len(RETRY_WAITS)) -> dict:
     """한 번 요청. 타임아웃·연결 오류는 RETRY_WAITS 간격으로 다시(기본 3번). 끝내 안 되면 마지막 예외를 던진다."""
     q = urllib.parse.urlencode({"action": "dailyPriceByCategoryList", "p_product_cls_code": cls,
@@ -159,8 +168,12 @@ def main() -> int:
     ap.add_argument("--categories", default=",".join(CATEGORIES))
     ap.add_argument("--cls", default="01", help="01 소매 / 02 도매")
     ap.add_argument("--country", default="1101", help="KAMIS 지역 코드 (1101 서울). 빈 값이면 미지정")
-    ap.add_argument("--sleep", type=float, default=1.0)
-    ap.add_argument("--max-fail-streak", type=int, default=5, help="연속 실패가 이 수에 이르면 멈춤(이어받기 가능)")
+    ap.add_argument("--sleep", type=float, default=3.0, help="요청 사이 쉬는 초 (2026-11-20: 1초 간격에서 13건쯤 뒤 응답이 끊겨 3초로)")
+    ap.add_argument("--timeout", type=float, default=20.0, help="요청 한 번의 응답 대기 초 (재시도 3번 별도)")
+    ap.add_argument("--max-fail-streak", type=int, default=3, help="연속 실패가 이 수에 이르면 쉬었다가 이어 받음")
+    ap.add_argument("--cooldown", type=float, default=10.0, help="연속 실패 뒤 쉬는 분")
+    ap.add_argument("--max-cooldowns", type=int, default=3, help="쉬고 다시 해도 안 되면 이 횟수 뒤 멈춤(이어받기 가능)")
+    ap.add_argument("--strip-saved", action="store_true", help="이미 받아 둔 원본 파일에서 인증키를 지우기만 하고 끝")
     ap.add_argument("--probe", action="store_true", help="오늘 하루 식량작물(100)만 받아 형식·코드 확인")
     ap.add_argument("--build", action="store_true", help="받아 둔 원본으로 history.csv 만 다시 만들기")
     ap.add_argument("--check", action="store_true")
@@ -168,6 +181,15 @@ def main() -> int:
 
     if a.check:
         return check()
+    if a.strip_saved:
+        n = 0
+        for f in RAW.rglob("*.json"):
+            doc = json.loads(f.read_text(encoding="utf-8"))
+            if any(isinstance(c, dict) and ("p_cert_key" in c or "p_cert_id" in c) for c in doc.get("condition") or []):
+                f.write_text(json.dumps(strip_secret(doc), ensure_ascii=False), encoding="utf-8")
+                n += 1
+        print(f"인증키를 지운 원본 {n}개")
+        return 0
     if a.build:
         print(f"history.csv 행 {build(a.cls, a.country)}개")
         return 0
@@ -180,7 +202,7 @@ def main() -> int:
     if a.probe:
         day = a.end
         try:
-            doc = fetch(day, "100", a.cls, a.country, key, cid)
+            doc = fetch(day, "100", a.cls, a.country, key, cid, timeout=a.timeout, retries=1)
         except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
             print(f"KAMIS 응답 없음({type(e).__name__}: {e}) — 재시도 {len(RETRY_WAITS)}번 뒤에도 실패. 잠시 뒤(아침 시세 갱신 시간대 피해서) 다시 해 보세요.")
             return 1
@@ -203,23 +225,30 @@ def main() -> int:
                 if not raw_path(d.isoformat(), c, a.cls, a.country).exists():
                     todo.append((d.isoformat(), c))
         d += dt.timedelta(days=1)
-    print(f"받을 요청 {len(todo)}건 (이미 받은 것 제외) · 약 {len(todo) * a.sleep / 60:.0f}분")
-    done = fail = streak = 0
+    print(f"받을 요청 {len(todo)}건 (이미 받은 것 제외) · 약 {len(todo) * (a.sleep + 1) / 60:.0f}분 (응답 시간 1초 가정)")
+    done = fail = streak = cools = 0
     for i, (day, c) in enumerate(todo, 1):
         p = raw_path(day, c, a.cls, a.country)
         p.parent.mkdir(parents=True, exist_ok=True)
         try:
-            doc = fetch(day, c, a.cls, a.country, key, cid)
+            doc = fetch(day, c, a.cls, a.country, key, cid, timeout=a.timeout)
         except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
             fail += 1
             streak += 1
             print(f"  실패 {day} {c}: {type(e).__name__} {e}", flush=True)
             if streak >= a.max_fail_streak:
-                print(f"연속 {streak}번 실패 — KAMIS 가 응답하지 않아요. 멈춥니다. 잠시 뒤 같은 명령으로 이어받기 하세요.", flush=True)
-                break
+                if cools >= a.max_cooldowns:
+                    print(f"연속 실패 — {a.cooldown:.0f}분씩 {cools}번 쉬어도 KAMIS 가 응답하지 않아요. 멈춥니다. "
+                          "나중에 같은 명령으로 이어받기 하세요.", flush=True)
+                    break
+                cools += 1
+                print(f"연속 {streak}번 실패 — {a.cooldown:.0f}분 쉬고 이어 받아요 ({cools}/{a.max_cooldowns}).", flush=True)
+                time.sleep(a.cooldown * 60)
+                streak = 0
             continue
         streak = 0
-        p.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+        cools = 0
+        p.write_text(json.dumps(strip_secret(doc), ensure_ascii=False), encoding="utf-8")
         done += 1
         if i % 50 == 0:
             print(f"  {i}/{len(todo)} … {day}", flush=True)
