@@ -26,6 +26,14 @@ from app.services.chat.budget import fits
 
 # app.admin.shared.markets.base.parse_units 와 같은 규칙 — 대화 서비스가 관리자 패키지(pydantic)를 불러오지 않도록 옮겨 둠
 _UNIT_RE = re.compile(r"(\d+)\s*(?:개입|개|입|팩|봉|구)\b")
+# 2026-11-20: 대략의 낱개 수 — '3~7개 내외'·'10개 정도'는 상자에 든 개수의 범위일 뿐 개수가 아니다
+# ('천수무 5kg 3~7개 내외'를 7개로 읽어 '개당 2,041원'을 냈고, 5kg 중량도 '개당·전체 불명'으로 버렸다).
+_APPROX_COUNT_RE = re.compile(r"\d+\s*[~∼～\-]\s*\d+\s*(?:개입|개|입|과|구|수|미)|"
+                              r"\d+\s*(?:개입|개|입|과|구|수|미)\s*(?:내외|안팎|정도|전후|이상|이내)")
+
+
+def _without_approx(text: str) -> str:
+    return _APPROX_COUNT_RE.sub(" ", text or "")
 # 2026-11-11: '\b' 대신 '영문자가 뒤따르지 않음' — '4kg내외'·'10kg박스'처럼 한글이 바로 붙어도 읽는다
 _WEIGHT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(kg|g)(?![A-Za-z])", re.IGNORECASE)
 
@@ -146,7 +154,10 @@ def parse_weight(title: str) -> dict:
     if totals:
         return {"weight": totals[0], "kind": "multiplied", "formula": formulas[0], "found": found}
     # 2026-11-03 p33: '100g 10팩'처럼 곱하기 표시 없이 개수가 붙으면 개당 중량인지 전체 중량인지 모른다 → 쓰지 않음
-    count = _UNIT_RE.search(text)
+    # 2026-11-20: 1kg 이상 상자의 '3~7개 내외'·'10~13과'는 상자에 든 개수 범위 — 중량은 상자 전체로 본다
+    # 단, '3kg이상'처럼 최소 중량만 적은 상자는 실제 중량을 몰라 그대로 '불명' (11-20 d10: 선물세트가 '가정용 양' 1위로 올라옴)
+    at_least = bool(re.search(r"\d(?:kg|g)\s*이상", text, re.IGNORECASE))
+    count = _UNIT_RE.search(_without_approx(text) if min(values) >= 1000 and not at_least else text)
     if count and int(count.group(1)) > 1:
         return {"weight": None, "kind": "count_unclear", "formula": None,
                 "found": found + [count.group(0).replace(" ", "")]}
@@ -156,7 +167,7 @@ def parse_weight(title: str) -> dict:
 def parse_units(title: str) -> tuple[int | None, float | None]:
     """상품명에서 개입 수·중량(g)을 읽는다 (상품명 표기 그대로).
     2026-11-03 p32: 중량은 parse_weight 규칙 — 옵션 목록처럼 중량이 여러 개면 None, '500g x 2'는 1000."""
-    m = _UNIT_RE.search(title or "")
+    m = _UNIT_RE.search(_without_approx(title))
     unit = int(m.group(1)) if m else None
     return unit, parse_weight(title)["weight"]
 
@@ -209,7 +220,7 @@ def parse_volume(title: str) -> dict:
         return {"volume": None, "kind": "ambiguous", "formula": None, "found": found}
     if totals:
         return {"volume": totals[0], "kind": "multiplied", "formula": formulas[0], "found": found}
-    count = _UNIT_RE.search(text)
+    count = _UNIT_RE.search(text)      # 액체 '200ml 10~12개'는 한 개 용량일 수 있어 그대로 '개당·전체 불명
     if count and int(count.group(1)) > 1:
         return {"volume": None, "kind": "count_unclear", "formula": None,
                 "found": found + [count.group(0).replace(" ", "")]}
@@ -280,9 +291,9 @@ UNIT_UNCLEAR_KINDS = ("ambiguous", "bonus", "multiply_unclear")
 def unit_scope(title: str) -> dict:
     """개수의 적용 범위 판정: {'clear': bool, 'found': [표기들]} (p39)."""
     text = title or ""
-    counts = [m.group(0).replace(" ", "") for m in _UNIT_RE.finditer(text)]
+    counts = [m.group(0).replace(" ", "") for m in _UNIT_RE.finditer(_without_approx(text))]
     parsed = parse_weight(text)
-    distinct = {int(m.group(1)) for m in _UNIT_RE.finditer(text)}
+    distinct = {int(m.group(1)) for m in _UNIT_RE.finditer(_without_approx(text))}
     clear = parsed["kind"] not in UNIT_UNCLEAR_KINDS and len(distinct) <= 1
     return {"clear": clear, "found": parsed["found"] + [c for c in counts if c not in parsed["found"]]}
 
