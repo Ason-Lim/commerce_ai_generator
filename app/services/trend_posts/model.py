@@ -48,6 +48,12 @@ class PostRecipe(_M):
     note: str = "공공 레시피를 참고했으며 원문 그대로가 아니에요."
 
 
+class PostSection(_M):
+    """2026-11-20 템플릿 절 (소제목 + 줄). 템플릿 번호는 Post.template."""
+    heading: str
+    items: list[str] = Field(default_factory=list)
+
+
 class HistoryEntry(_M):
     at: str
     action: str                                  # create · update · submit · approve · reject · withdraw · refresh
@@ -74,6 +80,9 @@ class Post(_M):
     criteria: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
     checklist: Optional[str] = None
+    template: Optional[str] = None               # 글 틀 번호 (55종 중 자동 8종: 01·03·05·06·14·26·28·32)
+    topic_kind: Optional[str] = None             # 주제 (frame.keyword_type: kimjang·seasonal·seollal·… )
+    sections: list[PostSection] = Field(default_factory=list)
     status: Status = "draft"
     created_at: str
     updated_at: str

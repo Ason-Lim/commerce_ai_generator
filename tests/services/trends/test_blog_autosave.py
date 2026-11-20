@@ -24,6 +24,11 @@ def test_check_blocks_missing_ad_label_disclosure_position_and_first_hand_words(
     assert bas.check("coupang", TITLE, BODY, [place], COUPANG_DISCLOSURE) == [place]
 
 
+def test_check_blocks_unfilled_template_blanks():
+    assert any("빈칸" in x for x in bas.check("coupang", TITLE, BODY + "\n[상품] 옵션은 [입력]", [], COUPANG_DISCLOSURE))
+    assert bas.check("coupang", TITLE, BODY + "\n[[이미지1]]", [], COUPANG_DISCLOSURE) == []
+
+
 def test_image_mark_goes_after_the_answer_block():
     out = bas.with_image_mark(BODY)
     blocks = out.split("\n\n")

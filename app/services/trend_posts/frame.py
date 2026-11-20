@@ -21,33 +21,63 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-TYPES = ("seasonal", "kimjang", "event", "general")
-TYPE_LABEL = {"seasonal": "제철 식재료", "kimjang": "김장·저장식", "event": "시즌 이벤트", "general": "일반"}
+TYPES = ("seollal", "chuseok", "holiday", "family_month", "birthday", "anniversary", "kimjang", "event",
+         "weather", "gift", "seasonal", "viral", "general")
+TYPE_LABEL = {"seollal": "설날", "chuseok": "추석", "holiday": "명절", "family_month": "가정의 달", "birthday": "생일",
+              "anniversary": "기념일", "kimjang": "김장", "event": "시즌 이벤트", "weather": "날씨",
+              "gift": "선물", "seasonal": "제철 식재료", "viral": "급상승 신상", "general": "일반"}
+WEATHER_LABEL = {"cold": "추운 날", "hot": "더운 날", "rain": "비 오는 날", "snow": "눈 오는 날"}
+HOLIDAY_NAME = {"seollal": "설날", "chuseok": "추석", "holiday": "명절"}
 TABLE = Path(__file__).with_name("keyword_types.csv")
 CHANNELS = ("site", "blog")
 
 
-# ── 1) 유형 판정 (규칙표) ──────────────────────────────────────────────
+# ── 1) 주제 판정 (규칙표) ──────────────────────────────────────────────
 @lru_cache(maxsize=4)
-def _rules(path: str = str(TABLE)) -> tuple[tuple[str, str], ...]:
+def _rules(path: str = str(TABLE)) -> tuple[tuple[str, str, str], ...]:
     rows = []
     try:
         with open(path, encoding="utf-8") as f:
             for row in csv.DictReader(line for line in f if not line.startswith("#")):
                 t, w = (row.get("type") or "").strip(), (row.get("word") or "").strip()
                 if t in TYPES and w:
-                    rows.append((t, w.replace(" ", "")))
+                    rows.append((t, w.replace(" ", ""), (row.get("sub") or "").strip()))
     except OSError:
         pass
     return tuple(rows)
 
 
-def keyword_type(keyword: str, rules=None) -> str:
+def _match(keyword: str, rules=None) -> tuple[str, str]:
     k = (keyword or "").replace(" ", "")
-    for t, w in (rules if rules is not None else _rules()):
+    for row in (rules if rules is not None else _rules()):
+        t, w = row[0], row[1]
         if w and w in k:
-            return t
-    return "general"
+            return t, (row[2] if len(row) > 2 else "")
+    return "general", ""
+
+
+def keyword_type(keyword: str, rules=None, status: str | None = None) -> str:
+    """규칙표 주제. 어느 줄에도 안 걸리고 급상승 리포트 status 가 'new' 면 급상승 신상(viral)."""
+    t, _ = _match(keyword, rules)
+    if t == "general" and status == "new" and not any(w and w in (keyword or "").replace(" ", "")
+                                                      for _, w, *_ in (rules if rules is not None else _rules())):
+        return "viral"
+    return t
+
+
+def weather_kind(keyword: str) -> str:
+    t, sub = _match(keyword)
+    return (sub if sub in WEATHER_LABEL else "cold") if t == "weather" else ""
+
+
+def bank_key(keyword: str, kind: str | None = None) -> str:
+    """문장 묶음 열쇠 — 날씨는 날씨 종류까지, 설날·추석·명절은 'holiday' 묶음을 함께 쓴다."""
+    t = kind or keyword_type(keyword)
+    if t == "weather":
+        return "weather_" + (weather_kind(keyword) or "cold")
+    if t in HOLIDAY_NAME:
+        return "holiday"
+    return t
 
 
 # ── 2) 문장 변형: 키워드마다 고정 선택 ──────────────────────────────────
@@ -178,6 +208,172 @@ CONSTRAINTS_TYPE = {
               "blog": "행사 날짜가 다가올수록 배송 마감·품절이 생길 수 있어요. 여유 있게 주문하세요."},
     "general": {"site": None, "blog": None},
 }
+
+for _c, _bank in {"site": {
+        "holiday": ["{h} 준비, {k}{j_eun} 무엇을 보고 고를까요?", "{h}에 쓸 {k}, 언제까지 무엇을 확인할까요?"],
+        "family_month": ["가정의 달 {k}, 받는 분에 맞춰 고르려면?", "{k}, 가정의 달에 무엇을 보고 고를까요?"],
+        "birthday": ["생일에 쓸 {k}, 무엇을 먼저 정할까요?", "{k}, 생일 날짜에 맞춰 고르려면?"],
+        "anniversary": ["{k}, 기념일 날짜에 맞춰 고르려면?", "기념일 {k}, 무엇을 보고 고를까요?"],
+        "gift": ["{k}, 받는 사람에 맞춰 고르는 기준은?", "선물용 {k}, 무엇부터 확인할까요?"],
+        "viral": ["요즘 많이 찾는 {k}, 사기 전에 무엇을 확인할까요?", "화제인 {k}, 나에게도 필요할까요?"],
+        "weather_cold": ["{w}에 찾는 {k}, 무엇을 보고 고를까요?", "추위에 {k}, 고르는 기준은?"],
+        "weather_snow": ["{w} 집에서 먹을 {k}, 무엇을 확인할까요?", "{w}에 찾는 {k}, 고르는 기준은?"],
+        "weather_hot": ["{w}에 찾는 {k}, 무엇을 보고 고를까요?", "더위에 {k}, 고르는 기준은?"],
+        "weather_rain": ["{w}에 생각나는 {k}, 무엇부터 볼까요?", "{w} {k}, 고르는 기준은?"]},
+    "blog": {
+        "holiday": ["{h} 준비하다 보면 {k}{j_eun} 언제 사야 할지부터 헷갈리죠.",
+                    "{h}에 쓸 {k}, 상차림이든 선물이든 어떤 기준으로 고르면 좋을까요?"],
+        "family_month": ["가정의 달에 {k} 고르는 분들 많으시죠. 받는 분 기준으로 정리해 볼게요.",
+                         "{k}, 부모님·아이·선생님 중 누구에게 주느냐에 따라 고르는 법이 달라요."],
+        "birthday": ["생일상이든 선물이든, {k}{j_eun} 날짜를 맞추는 게 제일 중요해요.",
+                     "생일 준비하면서 {k} 찾고 계신가요? 먼저 정할 것부터 볼게요."],
+        "anniversary": ["{k}, 기념일 당일에 받으려면 생각보다 일찍 챙겨야 해요.",
+                        "기념일에 {k} 준비하시나요? 날짜부터 거꾸로 계산해 볼게요."],
+        "gift": ["{k} 고를 때 내 취향보다 받는 분 사정이 먼저예요.", "선물로 {k}, 어떤 걸 골라야 실패가 적을까요?"],
+        "viral": ["요즘 여기저기서 {k} 이야기가 보이죠. 나도 사야 할지부터 생각해 볼게요.",
+                  "{k}, 유행이라서 사는 건지 필요해서 사는 건지 한 번 나눠 볼게요."],
+        "weather_cold": ["날이 추워지면 {k} 생각나시죠. 고르기 전에 볼 것만 정리했어요.",
+                         "{w}엔 역시 {k}. 어떤 걸 고르면 좋을까요?"],
+        "weather_snow": ["눈 오는 날엔 장 보러 나가기도 번거롭죠. {k}, 미리 무엇을 볼까요?",
+                         "{w} 집에서 {k} 즐기려면 무엇부터 챙길까요?"],
+        "weather_hot": ["더운 날엔 {k} 찾는 분이 많아요. 배송 중 상태부터 챙겨야 해요.",
+                        "{w}에 {k}, 어떤 걸 고르면 좋을까요?"],
+        "weather_rain": ["비 오는 날엔 왠지 {k} 생각나죠. 바로 해 먹을 수 있는지가 관건이에요.",
+                         "{w} {k}, 어떤 걸 준비하면 좋을까요?"]}}.items():
+    QUESTION[_c].update(_bank)
+
+_ANS = {"site": {
+        "holiday": [["{h} 날짜와 필요한 양을 먼저 정하고, 그 전에 받을 수 있는 상품을 고르세요."],
+                    ["{h} 전 배송 마감부터 확인하고, 필요한 양에 맞는 상품을 고르세요."]],
+        "family_month": [["받는 분과 전달 날짜를 먼저 정하고, 그에 맞는 구성·포장을 고르세요."],
+                         ["누구에게, 언제 줄지를 정한 뒤 구성과 포장을 고르세요."]],
+        "birthday": [["생일 날짜와 인원을 먼저 정하고, 그 전에 받을 수 있는 상품을 고르세요."],
+                     ["날짜와 인원부터 정하세요. 그다음 양과 배송을 맞추면 돼요."]],
+        "anniversary": [["기념일 날짜 전에 받을 수 있는지부터 확인하고, 수량·포장을 고르세요."],
+                        ["날짜가 먼저예요. 그 날짜까지 받을 수 있는 상품 중에서 고르세요."]],
+        "gift": [["받는 분의 보관 여건과 전달 날짜를 먼저 정하고, 구성·포장을 고르세요."],
+                 ["받는 분 기준으로 구성과 보관 조건을 보고, 전달 날짜를 맞추세요."]],
+        "viral": [["화제인 이유와 내 필요를 나눠 보고, 필요할 때만 같은 기준으로 비교하세요."],
+                  ["유행과 별개로 쓸 이유가 있는지 먼저 정하세요."]],
+        "weather_cold": [["바로 데워 먹을 수 있는지와 필요한 양을 먼저 정하세요."],
+                         ["조리·데우는 시간과 양을 먼저 보고 고르세요."]],
+        "weather_snow": [["외출이 어려운 날을 대비해 보관 가능한 양과 배송 일정을 먼저 보세요."],
+                         ["미리 받아 둘 양과 보관 방법을 먼저 정하세요."]],
+        "weather_hot": [["배송 중 온도 관리(냉장·냉동)와 받은 뒤 보관을 먼저 확인하세요."],
+                        ["냉장·냉동 배송인지, 받은 뒤 바로 보관할 수 있는지부터 보세요."]],
+        "weather_rain": [["바로 해 먹을 양과 조리 시간을 먼저 정하세요."],
+                         ["오늘 해 먹을 양만 정하면 고르기 쉬워요."]]},
+    "blog": {
+        "holiday": [["{h}엔 '언제까지 받을 수 있나'가 먼저예요. 날짜와 양만 정하면 나머지는 금방이에요."],
+                    ["{h} 전 배송 마감을 먼저 보고, 필요한 양만큼만 고르세요. 미리 사 두면 보관이 문제예요."]],
+        "family_month": [["받는 분이 누구인지, 언제 드릴지만 정해도 고를 상품이 확 줄어요."],
+                         ["가정의 달 선물은 받는 분 생활에 맞는지가 먼저예요. 보관·구성부터 보세요."]],
+        "birthday": [["생일은 날짜가 정해져 있으니 배송부터 거꾸로 계산해 보세요."],
+                     ["몇 명이 먹을지, 언제 받을지만 정하면 고르기 쉬워요."]],
+        "anniversary": [["기념일 선물은 하루 늦으면 의미가 줄어요. 도착 날짜부터 확인하세요."],
+                        ["언제까지 받아야 하는지 정하고 그 안에서 고르는 게 가장 확실해요."]],
+        "gift": [["받는 분이 바로 먹고 보관할 수 있는지부터 생각해 보세요. 포장은 그다음이에요."],
+                 ["선물은 받는 쪽 사정이 먼저예요. 보관 여건과 받을 날짜를 먼저 정하세요."]],
+        "viral": [["유행이라서 사는 건지, 정말 쓸 데가 있는지부터 나눠 보세요."],
+                  ["화제성과 내 필요는 따로예요. 쓸 이유가 있을 때만 비교해 보세요."]],
+        "weather_cold": [["추운 날엔 바로 데워 먹을 수 있는 게 최고예요. 조리 시간과 양부터 보세요."],
+                         ["손이 덜 가는지, 양이 맞는지만 보면 실패가 적어요."]],
+        "weather_snow": [["눈 오는 날엔 나가기 어려우니 미리 받아 둘 양과 보관부터 생각해 보세요."],
+                         ["배송이 늦어질 수 있으니 여유 있게 주문하고 보관할 자리를 챙기세요."]],
+        "weather_hot": [["더울 땐 배송 중 상태가 제일 걱정이에요. 냉장·냉동 배송인지 먼저 보세요."],
+                        ["받자마자 넣어 둘 자리가 있는지, 배송 온도 관리가 되는지부터 보세요."]],
+        "weather_rain": [["비 오는 날 메뉴는 오늘 바로 해 먹는 게 포인트예요. 양과 조리 시간을 보세요."],
+                         ["오늘 먹을 만큼, 금방 만들 수 있는 걸로 고르면 돼요."]]}}
+for _c in _ANS:
+    ANSWER[_c].update(_ANS[_c])
+
+_CRIT = {
+    "holiday": [["날짜 — {h} 전에 받을 수 있는 배송인지, 주문 마감을 먼저 보세요.",
+                 "배송 마감 — {h} 연휴 전 마지막 도착일을 판매 페이지에서 확인하세요."],
+                ["양 — 상차림·선물 등 쓰임과 인원에 맞춰 중량·수량을 고르세요.",
+                 "필요한 양 — 쓰임(상차림·선물)과 인원에 맞춰 중량·수량을 맞추세요."],
+                ["보관 — 미리 받는다면 냉장·냉동 보관할 자리가 필요해요.",
+                 "보관 공간 — 일찍 받으면 명절까지 둘 자리가 있는지 보세요."]],
+    "family_month": [["받는 분 — 부모님·아이·선생님 등 받는 분의 식생활과 보관 여건을 먼저 생각하세요.",
+                      "받는 분 조건 — 누가 먹는지에 따라 구성과 양이 달라져요."],
+                     ["구성·포장 — 선물용 포장인지, 구성품이 무엇인지 판매 페이지에서 보세요.",
+                      "포장 — 선물 포장·메시지 여부를 판매 페이지에서 확인하세요."],
+                     ["전달 — 받는 분 주소로 원하는 날에 도착하는지 확인하세요.",
+                      "배송 — 받는 분이 집에 있는 날로 받을 수 있는지 보세요."]],
+    "birthday": [["날짜 — 생일 전에 받을 수 있는 배송인지 먼저 보세요.",
+                  "배송 마감 — 생일 당일에 늦지 않게 도착일을 확인하세요."],
+                 ["인원·양 — 함께 먹을 사람 수에 맞춰 양을 고르세요.",
+                  "양 — 몇 명이 먹을지에 맞춰 중량·수량을 보세요."],
+                 ["알레르기 표시 — 함께 먹을 사람이 있다면 원재료·알레르기 표시를 판매 페이지에서 확인하세요.",
+                  "원재료 — 알레르기 표시와 원재료를 판매 페이지에서 보세요."]],
+    "anniversary": [["날짜 — 기념일 전에 받을 수 있는 배송인지 먼저 보세요.",
+                     "배송 마감 — 기념일 당일까지 도착하는지 확인하세요."],
+                    ["수량 — 나눠 줄 사람 수에 맞게 낱개 포장·묶음 수량을 보세요.",
+                     "받는 사람·수량 — 몇 명에게 줄지에 따라 구성을 고르세요."],
+                    ["포장·보관 — 선물 포장과 보관 온도(상온·냉장)를 판매 페이지에서 확인하세요.",
+                     "보관 — 상온·냉장 보관 여부와 포장 상태를 보세요."]],
+    "gift": [["받는 분 — 받는 분이 바로 먹거나 보관할 수 있는지 먼저 생각하세요.",
+              "받는 분 조건 — 보관 여건(냉장 공간 등)과 식생활을 먼저 보세요."],
+             ["구성·포장 — 구성품과 선물 포장 여부를 판매 페이지에서 확인하세요.",
+              "포장 — 선물 포장·쇼핑백·메시지 카드 여부를 보세요."],
+             ["전달 — 받는 분 주소로 원하는 날짜에 받을 수 있는지 보세요.",
+              "배송 — 받는 분이 받을 수 있는 날로 도착하는지 확인하세요."]],
+    "viral": [["화제의 이유 — 어디서 왜 이야기되는지와 내 필요를 나눠 보세요.",
+               "유행과 필요 — 화제인 것과 내가 쓸 이유는 따로예요."],
+              ["구성·양 — 처음이라면 작은 구성부터 보세요. 상품명의 중량·수량을 같은 단위로 비교하세요.",
+               "처음 구매 — 소량 구성이 있는지 상품명의 중량·수량을 보세요."],
+              ["대안 — 비슷한 기존 상품으로도 되는지 함께 보세요.",
+               "비교 — 익숙한 비슷한 상품과 같은 기준으로 견줘 보세요."]],
+    "weather_cold": [["조리 — 데우기만 하면 되는지, 조리가 필요한지 상품명과 판매 페이지에서 보세요.",
+                      "간편함 — 바로 데워 먹는 제품인지 조리 과정이 필요한지 보세요."],
+                     ["양 — 한 번에 먹을 양과 남는 양을 생각해 중량·수량을 고르세요.",
+                      "필요한 양 — 상품명의 중량·수량을 같은 단위로 맞춰 보세요."],
+                     ["보관 — 남으면 냉장·냉동으로 둘 수 있는지 확인하세요.",
+                      "보관 — 남은 양을 어디에 둘지 먼저 생각하세요."]],
+    "weather_snow": [["미리 받기 — 눈 소식이 있으면 배송이 늦어질 수 있으니 여유 있게 받으세요.",
+                      "배송 — 날씨로 늦어질 수 있어 도착 예정일을 넉넉히 잡으세요."],
+                     ["보관 — 미리 받아 둘 양을 냉장·냉동할 자리가 있는지 보세요.",
+                      "보관 공간 — 쟁여 둘 양만큼 자리가 있는지 확인하세요."],
+                     ["양 — 상품명의 중량·수량을 같은 단위로 비교하세요.",
+                      "필요한 양 — 며칠 먹을 양인지 정해 중량·수량을 맞추세요."]],
+    "weather_hot": [["배송 온도 — 냉장·냉동 배송인지, 포장에 보냉재가 있는지 판매 페이지에서 보세요.",
+                     "신선도 — 더운 날 배송 중 온도 관리가 되는지 확인하세요."],
+                    ["받는 시간 — 받자마자 냉장·냉동할 수 있는 날로 받으세요.",
+                     "수령 — 집에 있는 날로 받아 바로 보관하세요."],
+                    ["양 — 상품명의 중량·수량을 같은 단위로 비교하세요.",
+                     "필요한 양 — 한 번에 먹을 양 기준으로 고르세요."]],
+    "weather_rain": [["바로 조리 — 오늘 바로 만들 수 있는 재료·제품인지 보세요.",
+                      "간편함 — 조리 시간이 짧은지, 반조리인지 상품명을 보세요."],
+                     ["양 — 한 번에 해 먹을 양에 맞춰 중량·수량을 고르세요.",
+                      "필요한 양 — 상품명의 중량·수량을 같은 단위로 맞춰 보세요."],
+                     ["배송 — 비 오는 날엔 배송이 늦어질 수 있어요. 도착 예정을 확인하세요.",
+                      "도착 — 오늘·내일 받을 수 있는지 판매 페이지에서 확인하세요."]],
+}
+CRITERIA.update(_CRIT)
+
+_CON = {
+    "holiday": {"site": "{h} 전에는 주문이 몰려 배송 마감이 앞당겨지거나 품절이 생길 수 있어요.",
+                "blog": "{h} 직전엔 배송이 밀리기 쉬워요. 날짜가 정해졌다면 일찍 주문하는 편이 안전해요."},
+    "family_month": {"site": "가정의 달에는 선물 상품의 배송 마감·품절이 생길 수 있어요.",
+                     "blog": "5월엔 선물 주문이 몰려요. 원하는 날짜가 있으면 미리 확인하세요."},
+    "birthday": {"site": "생일 당일 도착은 판매처 배송 안내에 따라 보장되지 않을 수 있어요.",
+                 "blog": "당일 도착이 꼭 보장되는 건 아니에요. 하루 이틀 여유를 두세요."},
+    "anniversary": {"site": "기념일이 가까워지면 배송 마감이나 품절이 생길 수 있어요.",
+                    "blog": "기념일 직전엔 배송 마감·품절이 생기기 쉬워요. 여유 있게 주문하세요."},
+    "gift": {"site": "선물은 받는 분 주소·수령 여건에 따라 배송이 달라질 수 있어요.",
+             "blog": "받는 분이 집에 없으면 신선식품은 곤란할 수 있어요. 받을 날을 미리 물어보세요."},
+    "viral": {"site": "화제가 된 상품은 일시 품절이나 구성 변경이 생길 수 있어요.",
+              "blog": "유행 상품은 금방 품절되거나 구성이 바뀌기도 해요. 결제 전 구성을 한 번 더 보세요."},
+    "weather_cold": {"site": "추운 날에는 배송이 늦어질 수 있어요.", "blog": "한파엔 배송이 늦어지기도 해요."},
+    "weather_snow": {"site": "눈이 오면 지역에 따라 배송이 늦어질 수 있어요.",
+                     "blog": "눈 오는 날엔 지역에 따라 배송이 하루 이틀 밀릴 수 있어요."},
+    "weather_hot": {"site": "더운 날에는 배송 중 상태 변화가 생길 수 있어요. 받은 즉시 보관 상태를 확인하세요.",
+                    "blog": "더울 땐 받자마자 상태를 확인하고 바로 보관하세요."},
+    "weather_rain": {"site": "비가 많이 오면 배송이 늦어질 수 있어요.",
+                     "blog": "비가 많이 오는 날엔 배송이 늦어질 수 있어요."},
+}
+CONSTRAINTS_TYPE.update(_CON)
+
 CONSTRAINTS_HEAD = {"site": ["구매 전에 알아 둘 것"], "blog": ["주문 전에 알아 두세요", "구매 전에 알아 둘 것"]}
 
 EXPERIENCE = {"site": ["이 글은 직접 사용해 본 후기가 아니라, 검색 결과에 나온 상품 정보를 같은 기준으로 정리한 글이에요.",
@@ -200,20 +396,23 @@ def _ch(channel: str) -> str:
     return channel if channel in CHANNELS else "site"
 
 
-def _fmt(text: str, topic: str) -> str:
-    return text.format(k=topic, j_eun=_j(topic, "은", "는"), j_eul=_j(topic, "을", "를"), j_i=_j(topic, "이", "가"))
+def _fmt(text: str, topic: str, kind: str | None = None) -> str:
+    t = kind or keyword_type(topic)
+    h = HOLIDAY_NAME.get(t, "명절")
+    return text.format(k=topic, h=h, j_eun=_j(topic, "은", "는"), j_eul=_j(topic, "을", "를"), j_i=_j(topic, "이", "가"),
+                       w=WEATHER_LABEL.get(weather_kind(topic), "날씨"))
 
 
 def question(topic: str, channel: str = "site", kind: str | None = None) -> str:
-    """kind: 유형을 직접 지정 (여러 유형이 섞인 글은 'general')."""
-    c = _ch(channel)
-    return _fmt(pick(QUESTION[c][kind or keyword_type(topic)], topic, "q" + c), topic)
+    """kind: 주제를 직접 지정 (여러 주제가 섞인 글은 'general', 급상승 신상은 'viral')."""
+    c, b = _ch(channel), bank_key(topic, kind)
+    return _fmt(pick(QUESTION[c][b], topic, "q" + c), topic, kind)
 
 
 def answer(topic: str, has_products: bool, any_rocket: bool = False, channel: str = "site",
            kind: str | None = None) -> list[str]:
-    c, t = _ch(channel), kind or keyword_type(topic)
-    out = [_fmt(x, topic) for x in pick(ANSWER[c][t], topic, "a" + c)]
+    c, b = _ch(channel), bank_key(topic, kind)
+    out = [_fmt(x, topic, kind) for x in pick(ANSWER[c][b], topic, "a" + c)]
     if has_products:
         out.append(pick(COMPARE[c], topic, "cmp" + c))
         if any_rocket:
@@ -223,18 +422,18 @@ def answer(topic: str, has_products: bool, any_rocket: bool = False, channel: st
     return out
 
 
-def criteria(topic: str, channel: str = "site") -> list[str]:
-    """유형별 기준. 같은 기준의 표현 두 벌 중 채널마다 다른 쪽을 쓴다 (사이트·블로그 문장이 겹치지 않게)."""
-    c, t = _ch(channel), keyword_type(topic)
+def criteria(topic: str, channel: str = "site", kind: str | None = None) -> list[str]:
+    """주제별 기준. 같은 기준의 표현 두 벌 중 채널마다 다른 쪽을 쓴다 (사이트·블로그 문장이 겹치지 않게)."""
+    c, b = _ch(channel), bank_key(topic, kind)
     first = pick((0, 1), topic, "crit")          # 사이트가 쓰는 쪽, 블로그는 반대쪽
     idx = first if c == "site" else 1 - first
-    return [pair[idx] for pair in CRITERIA[t]]
+    return [_fmt(pair[idx], topic, kind) for pair in CRITERIA[b]]
 
 
-def constraints(topic: str = "", channel: str = "site") -> list[str]:
+def constraints(topic: str = "", channel: str = "site", kind: str | None = None) -> list[str]:
     c = _ch(channel)
-    extra = CONSTRAINTS_TYPE[keyword_type(topic)][c] if topic else None
-    return ([extra] if extra else []) + CONSTRAINTS_COMMON[c]
+    extra = CONSTRAINTS_TYPE[bank_key(topic, kind)][c] if topic else None
+    return ([_fmt(extra, topic, kind)] if extra else []) + CONSTRAINTS_COMMON[c]
 
 
 def experience_line(topic: str, channel: str = "site") -> str:
@@ -251,9 +450,11 @@ def heading(kind: str, topic: str, channel: str = "site", offset: int = 0) -> st
 
 
 def common_type(keywords: list[str]) -> str:
-    """글 전체의 유형 — 키워드 유형이 모두 같으면 그 유형, 섞이면 general."""
-    kinds = {keyword_type(k) for k in keywords}
-    return kinds.pop() if len(kinds) == 1 else "general"
+    """글 전체의 주제 — 키워드 주제(날씨는 종류까지)가 모두 같으면 그 주제, 섞이면 general."""
+    kinds = {bank_key(k) for k in keywords}
+    if len(kinds) != 1:
+        return "general"
+    return keyword_type(keywords[0])
 
 
 def blog_hook(item: dict) -> str | None:

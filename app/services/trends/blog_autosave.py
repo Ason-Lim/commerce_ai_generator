@@ -80,6 +80,11 @@ def check(variant: str, title: str, body: str, warnings: list[str], coupang_disc
         first = body.lstrip().split("\n", 1)[0]
         if coupang_disclosure not in first and connect_disclosure_mark not in first:
             issues.append("광고 고지는 본문 첫 줄에 있어야 해요 (상품 링크보다 먼저).")
+    # 55종 템플릿 '작성 완료 확인': [입력]·[상품] 같은 빈칸이 남지 않았는가 ([광고]·[트렌드 리포트]·[[이미지1]]·쇼핑커넥트 자리 제외)
+    left = [m for m in re.findall(r"(?<!\[)\[([^\[\]\n]{1,20})\](?!\])", title + "\n" + body)
+            if m not in ("광고", "트렌드 리포트") and not m.startswith("여기에")]
+    if left:
+        issues.append("채우지 않은 빈칸이 있어요: " + ", ".join(f"[{m}]" for m in left[:5]))
     if variant == "coupang" and re.search(r"내돈내산|직접\s*(?:먹어|써|사용해)\s*봤", body):
         issues.append("직접 사용 기록이 없는 글에 사용 후기 표현이 있어요.")
     return issues

@@ -89,6 +89,8 @@ def _texts(post: Post) -> list[tuple[str, str]]:
     out += [(f"answer[{i}]", x) for i, x in enumerate(post.answer)]
     out += [(f"criteria[{i}]", x) for i, x in enumerate(post.criteria)]
     out += [(f"constraints[{i}]", x) for i, x in enumerate(post.constraints)]
+    for i, sec in enumerate(post.sections):
+        out += [(f"sections[{i}].heading", sec.heading)] + [(f"sections[{i}].items[{j}]", x) for j, x in enumerate(sec.items)]
     out += [(f"products[{i}].title", p.title) for i, p in enumerate(post.products)]
     out += [(f"products[{i}].facts[{j}]", f) for i, p in enumerate(post.products) for j, f in enumerate(p.facts)]
     out += [(f"sources[{i}].label", s.label) for i, s in enumerate(post.sources)]

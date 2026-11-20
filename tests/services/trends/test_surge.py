@@ -228,8 +228,8 @@ def test_coupang_blog_draft_follows_frame_04(data_dirs):
     assert d["title"].startswith("[광고] ")
     body = d["body"]
     kw = "휘태커스초콜릿"
-    order = [S.COUPANG_DISCLOSURE, frame.blog_hook(report["items"][0]), frame.heading("answer", kw, "blog"),
-             frame.question(kw, "blog"), frame.experience_line(kw, "blog"), frame.heading("criteria", kw, "blog", 0),
+    order = [S.COUPANG_DISCLOSURE, frame.blog_hook(report["items"][0]), frame.question(kw, "blog"),
+             frame.heading("answer", kw, "blog"), frame.experience_line(kw, "blog"), frame.heading("criteria", kw, "blog", 0),
              frame.criteria(kw, "blog")[0], frame.checklist(kw, "blog", 0),
              "▶ 쿠팡에서 보기", "- 휘태커스 다크 250g 2개: https://link.coupang.com/a/w0",
              "  · 중량·수량: 250g, 2개 (상품명 표기) · 로켓배송 표시 (검색 결과 표시)",
@@ -263,4 +263,26 @@ def test_coupang_blog_mixed_types_do_not_repeat_lines():
     assert any("포기" in ln for ln in body.split("■ 2.")[0].split("■ 1.")[1].split("\n"))
     assert any("손질" in ln for ln in body.split("■ 3.")[0].split("■ 2.")[1].split("\n"))
     tail = body.split(frame.CONSTRAINTS_COMMON["blog"][0])[0]
-    assert all(frame.CONSTRAINTS_TYPE[t]["blog"] in tail for t in ("kimjang", "seasonal", "event"))
+    assert all(frame.CONSTRAINTS_TYPE[t]["blog"] in tail for t in ("kimjang", "seasonal", "anniversary"))
+
+
+def test_coupang_blog_uses_topic_templates():
+    """2026-11-20: 키워드마다 주제 → 글 틀. 제목은 첫 키워드 틀, 절은 키워드 블록 안 (기준 앞), 결과에 templates."""
+    from app.services.trend_posts import templates as T
+
+    def it(k, st="surging"):
+        return {"keyword": k, "status": st, "ratio_recent": 2.0, "ratio_peak": 2.5, "onset": None,
+                "rank_trend": {}, "blog": {}, "google": {}, "cross": {"n": 1, "of": 2}, "cause": None}
+    rep = {"data_until": "2026-11-19", "items": [it("절임배추"), it("두쫀쿠", "new"), it("한우선물세트")]}
+    links = {"절임배추": [{"title": "절임배추 20kg", "url": "https://link.coupang.com/a/1", "rocket": True}],
+             "두쫀쿠": [{"title": "두쫀쿠 4개입", "url": "https://link.coupang.com/a/2"}],
+             "한우선물세트": [{"title": "한우 선물세트 1.2kg", "url": "https://link.coupang.com/a/3"}]}
+    d = S.blog_draft(rep, coupang=links, variant="coupang")
+    assert {k: v["id"] for k, v in d["templates"].items()} == {"절임배추": "05", "두쫀쿠": "32", "한우선물세트": "14"}
+    assert d["title"].startswith("[광고] ") and d["title"].endswith("(+두쫀쿠·한우선물세트)")
+    assert T.choose("절임배추", products=links["절임배추"], channel="blog").title in d["title"]
+    block1 = d["body"].split("■ 1.")[1].split("■ 2.")[0]
+    assert block1.index("받는 날") < block1.index("1. ")             # 05 절이 기준보다 먼저
+    assert "유행" in d["body"].split("■ 2.")[1].split("■ 3.")[0]       # 32 유행 상품 검토
+    forced = S.blog_draft(rep, coupang=links, variant="coupang", template="01")
+    assert {v["id"] for v in forced["templates"].values()} == {"01"}

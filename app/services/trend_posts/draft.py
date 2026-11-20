@@ -13,8 +13,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.services.trend_posts import frame, policy
-from app.services.trend_posts.model import (HistoryEntry, Post, PostProduct, PostRecipe, PostSource, now_iso,
-                                            post_id)
+from app.services.trend_posts.model import (HistoryEntry, Post, PostProduct, PostRecipe, PostSection, PostSource,
+                                            now_iso, post_id)
 
 MAX_PRODUCTS = 4
 SOURCE_LABEL = {"naver_datalab": ("네이버 데이터랩 검색어 트렌드", "https://datalab.naver.com/"),
@@ -91,13 +91,17 @@ def recipe_from_result(result: dict | None, topic: str) -> PostRecipe | None:
 
 
 def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (), recipe: PostRecipe | None = None,
-          now: datetime | None = None, sources: dict | None = None) -> Post:
+          now: datetime | None = None, sources: dict | None = None, template: str | None = None) -> Post:
     now = now or datetime.now(timezone.utc)
     topic = item["keyword"]
     day = (data_until or now.date().isoformat())[:10]
     products = [] if policy.is_alcohol(topic) else list(products)
     affiliate = any(p.link_type == "affiliate" for p in products)
-    title = f"요즘 검색이 크게 늘어난 '{topic}' — 왜 뜨는지와 함께 볼 것"
+    from app.services.trend_posts import templates
+    chosen = templates.choose(topic, status=item.get("status"), recipe=recipe, override=template, channel="site",
+                              products=[{"title": p.title, "rocket": p.rocket} for p in products])
+    kind = chosen.kind
+    title = chosen.title
     used = [k for k in SOURCE_LABEL if k == "naver_datalab" or (sources or {}).get(k)]
     stamp = now_iso(now)
     return Post(
@@ -107,9 +111,13 @@ def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (
         why=why_lines(item, data_until), recipe=recipe, products=products,
         sources=[PostSource(kind="data", label=SOURCE_LABEL[k][0], url=SOURCE_LABEL[k][1]) for k in used],
         disclosure=policy.disclosure_text() if affiliate else None,
-        experience="data", question=frame.question(topic, "site"),
-        answer=frame.answer(topic, bool(products), any(p.rocket for p in products), "site"),
-        criteria=frame.criteria(topic, "site"), constraints=frame.constraints(topic, "site"),
+        experience="data", question=frame.question(topic, "site", kind),
+        answer=frame.answer(topic, bool(products), any(p.rocket for p in products), "site", kind),
+        criteria=frame.criteria(topic, "site", kind), constraints=frame.constraints(topic, "site", kind),
         checklist=frame.checklist(topic, "site") if products else None,
+        template=chosen.id, topic_kind=kind,
+        sections=[PostSection(heading=h, items=lines) for h, lines in chosen.sections],
         created_at=stamp, updated_at=stamp,
-        history=[HistoryEntry(at=stamp, action="create", note=f"급상승 리포트 {data_until or ''}")])
+        history=[HistoryEntry(at=stamp, action="create",
+                              note=f"급상승 리포트 {data_until or ''} · 글 틀 {chosen.id} {chosen.name}"
+                                   + (f" · {chosen.note}" if chosen.note else ""))])

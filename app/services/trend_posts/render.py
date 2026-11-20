@@ -159,6 +159,9 @@ def post_page(post: Post, now: datetime | None = None) -> str:
             parts.append(f"<p class=muted>{e(frame.experience_line(post.topic, 'site'))}</p>")
     if post.why:
         parts.append("<h2>왜 뜨고 있을까</h2><ul>" + "".join(f"<li>{e(w)}</li>" for w in post.why) + "</ul>")
+    for sec in post.sections if framed else []:
+        if sec.items:
+            parts.append(f"<h2>{e(sec.heading)}</h2><ul>" + "".join(f"<li>{e(x)}</li>" for x in sec.items) + "</ul>")
     if framed and post.criteria:
         parts.append("<h2>고르기 전에 볼 것</h2><ol>" + "".join(f"<li>{e(c)}</li>" for c in post.criteria) + "</ol>")
     if framed and post.products and post.constraints:
