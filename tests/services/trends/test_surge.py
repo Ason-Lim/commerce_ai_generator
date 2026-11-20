@@ -113,7 +113,7 @@ def test_customer_view_and_blog_draft_keep_it_honest(data_dirs):
     assert card["keyword"] == "휘태커스초콜릿" and card["times"] == 5.5 and len(card["spark"]) == 30
     assert "calls" not in json.dumps(view) and "queries" not in json.dumps(view)    # nothing internal for customers
     draft = S.blog_draft(report)
-    assert draft["title"].startswith("[트렌드 리포트] 요즘 검색이 갑자기 늘어난 식품 — 휘태커스초콜릿")
+    assert draft["title"].startswith("[광고] [트렌드 리포트] 요즘 검색이 갑자기 늘어난 식품 — 휘태커스초콜릿")  # 2026-11-20 고지 있으면 [광고]
     body = draft["body"]
     assert body.startswith(S.DISCLOSURE) and "평소의 약 5.5배" in body and "388위 → 2026-10-30 165위" in body
     assert "원인은 확정된 사실이 아니라 추정" in body and "원" not in body.split("가격")[0][-3:]   # no prices
@@ -213,3 +213,27 @@ def test_blog_drafts_naver_has_no_coupang_and_coupang_has_no_connect(data_dirs):
     assert "쇼핑 커넥트" not in only["body"] and "쇼핑커넥트" not in only["body"] and "쇼핑커넥트" not in only["tags"]
     assert "쿠팡파트너스" in only["tags"] and only["variant"] == "coupang"
     assert "▶ 쿠팡에서 보기" not in S.blog_draft(report, coupang={}, variant="coupang")["body"]
+
+
+def test_coupang_blog_draft_follows_frame_04(data_dirs):
+    """2026-11-20 프레임 0.4 (쿠팡용): [광고] 제목 · 고지 → 먼저 답부터 → 직접 사용 아님 → 고르기 전에 볼 것 →
+    키워드별 결제 전 확인 + 링크(근거 줄) → 구매 전에 알아 둘 것. 가격·사용 후기 표현은 없음."""
+    from app.services.trend_posts import frame
+
+    ranks, google = data_dirs
+    report = S.run(datalab=S.DataLab("id", "s", http=fake_http([]), pause=0), blog_search=blog_posts,
+                   rank_dir=ranks, google_dir=google, end=END)
+    links = {"휘태커스초콜릿": [{"title": "휘태커스 다크 250g 2개", "url": "https://link.coupang.com/a/w0", "rocket": True}]}
+    d = S.blog_draft(report, coupang=links, variant="coupang")
+    assert d["title"].startswith("[광고] ")
+    body = d["body"]
+    order = [S.COUPANG_DISCLOSURE, "먼저 답부터.", frame.EXPERIENCE_DATA, "고르기 전에 볼 것", frame.CHECKLIST,
+             "▶ 쿠팡에서 보기", "- 휘태커스 다크 250g 2개: https://link.coupang.com/a/w0",
+             "  · 중량·수량: 250g, 2개 (상품명 표기) · 로켓배송 표시 (검색 결과 표시)", "구매 전에 알아 둘 것"]
+    at = [body.index(x) for x in order]
+    assert at == sorted(at) and body.startswith(S.COUPANG_DISCLOSURE)
+    assert "로켓배송 표시가 있는 상품부터" in body
+    assert "원" not in body.split("구매 전에 알아 둘 것")[0].split("검색량")[0][-200:]
+    no_links = S.blog_draft(report, coupang={}, variant="coupang")["body"]
+    assert "구매 전에 알아 둘 것" not in no_links and frame.CHECKLIST not in no_links
+    assert not S.blog_draft(report, variant="naver", connect_ok=False)["title"].startswith("[광고]")

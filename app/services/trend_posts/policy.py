@@ -13,6 +13,7 @@ check(post, others, now) → 위반 목록.  하나라도 있으면 승인할 �
   price_claim     '최저가'·'가성비' 같은 가격 우위 문구 금지 (price_claims.CLAIM 과 같은 기준)
   price_time      가격이 있는 상품은 확인 시각 필수
   stale_price     승인 시점에 확인한 지 30일(STALE_DAYS)이 넘은 가격 → 가격을 다시 확인한 뒤 승인
+  experience      (2026-11-20 프레임 0.4) 직접 사용 기록이 없는 글(experience=data)에 사용 후기 표현 금지
   duplicate       최근 30일 안에 같은 주제로 게시된 글이 있으면 새 글 대신 그 글을 갱신
 """
 from __future__ import annotations
@@ -33,6 +34,7 @@ DUPLICATE_DAYS = 30
 _ALCOHOL = re.compile(r"와인|맥주|소주|막걸리|전통주|위스키|사케|하이볼|보드카|데킬라|리큐르|양주|청주|약주|과실주|"
                       r"칵테일|샴페인|브랜디|코냑|(?:^|[^가-힣])술(?![빵떡])|안주")
 _PRICE_TEXT = re.compile(r"\d[\d,.]*\s*(?:천\s*|만\s*)?원|평점|별점|리뷰\s*\d")
+_FIRST_HAND = re.compile(r"내돈내산|직접\s*(?:먹어|써|사용해|구매해|사서)\s*(?:봤|보니|본)|먹어\s*봤어요|써\s*봤어요")
 _HTML = re.compile(r"<\s*/?\s*[a-zA-Z!]|javascript:|on[a-z]+\s*=", re.I)
 
 
@@ -83,7 +85,12 @@ def _texts(post: Post) -> list[tuple[str, str]]:
     if post.recipe:
         out += [("recipe.name", post.recipe.name)] + [(f"recipe.ingredients[{i}]", x)
                                                       for i, x in enumerate(post.recipe.ingredients)]
+    out += [("question", post.question or ""), ("checklist", post.checklist or "")]
+    out += [(f"answer[{i}]", x) for i, x in enumerate(post.answer)]
+    out += [(f"criteria[{i}]", x) for i, x in enumerate(post.criteria)]
+    out += [(f"constraints[{i}]", x) for i, x in enumerate(post.constraints)]
     out += [(f"products[{i}].title", p.title) for i, p in enumerate(post.products)]
+    out += [(f"products[{i}].facts[{j}]", f) for i, p in enumerate(post.products) for j, f in enumerate(p.facts)]
     out += [(f"sources[{i}].label", s.label) for i, s in enumerate(post.sources)]
     return out
 
@@ -144,6 +151,11 @@ def check(post: Post, others: list[Post] | tuple = (), now: datetime | None = No
         elif is_stale(p.price_checked_at, now):
             bad("stale_price", f"확인한 지 {STALE_DAYS}일이 넘은 가격이에요. 가격을 다시 확인한 뒤 승인해 주세요.",
                 f"products[{i}].price_checked_at")
+    # 프레임 0.4: 자료 정리 글이 직접 사용 후기처럼 보이지 않게
+    if post.experience == "data":
+        for where, text in _texts(post):
+            if _FIRST_HAND.search(text or ""):
+                bad("experience", "직접 사용 기록이 없는 글에 '써 봤어요'·'내돈내산' 같은 사용 후기 표현이 있어요.", where)
     # 중복
     for o in others:
         if o.id == post.id or o.topic != post.topic or o.status != "approved":

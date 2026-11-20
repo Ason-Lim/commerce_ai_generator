@@ -29,6 +29,7 @@ class PostProduct(_M):
     rocket: Optional[bool] = None
     keyword: Optional[str] = None               # 어떤 재료·검색어로 찾은 상품인지
     image_url: Optional[str] = None             # 2026-11-17: 쿠팡 상품 사진 (쿠팡 https 주소만, 없으면 사진 없이)
+    facts: list[str] = Field(default_factory=list)  # 2026-11-20 프레임 0.4: 근거 줄 ('중량·수량: 500g (상품명 표기)')
 
 
 class PostSource(_M):
@@ -65,6 +66,14 @@ class Post(_M):
     price_note: str = "가격은 확인한 시각 기준이에요. 지금은 다를 수 있으니 판매처에서 확인해 주세요."
     sources: list[PostSource] = Field(default_factory=list)
     disclosure: Optional[str] = None             # 제휴 상품이 있으면 본문 맨 위 고지
+    # 2026-11-20 프레임 0.4 (고지 → 질문과 조건부 답 → 선택 기준 → 근거 붙은 상품 → 구매 전 제약 → 확인 링크).
+    # 예전 글에는 없는 칸 — 비어 있으면 예전 모양으로 그린다.
+    experience: Literal["direct", "data"] = "data"   # direct = 직접 사용 기록이 있을 때만
+    question: Optional[str] = None
+    answer: list[str] = Field(default_factory=list)
+    criteria: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    checklist: Optional[str] = None
     status: Status = "draft"
     created_at: str
     updated_at: str

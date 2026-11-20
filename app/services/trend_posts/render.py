@@ -14,7 +14,7 @@ import json
 import os
 from urllib.parse import quote
 
-from app.services.trend_posts import policy
+from app.services.trend_posts import frame, policy
 from app.services.trend_posts.model import KST, Post, PostProduct, parse_time
 
 CHECK_AT_MALL = "가격은 판매처에서 확인해 주세요"
@@ -148,9 +148,26 @@ def post_page(post: Post, now: datetime | None = None) -> str:
                  + (f" · 데이터 기준 {e(_kst(post.data_until))}까지" if post.data_until else "") + "</p>")
     if post.summary:
         parts.append(f"<p>{e(post.summary)}</p>")
+    framed = bool(post.question or post.answer)      # 2026-11-20 프레임 0.4 글 (예전 글은 아래 예전 순서)
+    if framed:
+        parts.append("<h2>먼저 답부터</h2>")
+        if post.question:
+            parts.append(f"<p><b>{e(post.question)}</b></p>")
+        if post.answer:
+            parts.append("<p>" + " ".join(e(a) for a in post.answer) + "</p>")
+        if post.experience == "data":
+            parts.append(f"<p class=muted>{e(frame.EXPERIENCE_DATA)}</p>")
     if post.why:
         parts.append("<h2>왜 뜨고 있을까</h2><ul>" + "".join(f"<li>{e(w)}</li>" for w in post.why) + "</ul>")
-    if post.recipe:
+    if framed and post.criteria:
+        parts.append("<h2>고르기 전에 볼 것</h2><ol>" + "".join(f"<li>{e(c)}</li>" for c in post.criteria) + "</ol>")
+    if framed and post.products and post.constraints:
+        parts.append("<h2>구매 전에 알아 둘 것</h2><ul>" + "".join(f"<li>{e(c)}</li>" for c in post.constraints)
+                     + "</ul>")
+
+    def recipe_html():
+        if not post.recipe:
+            return
         r = post.recipe
         src = (f'<a href="{e(r.source_url)}" rel="nofollow noopener" target=_blank>{e(r.source_label)}</a>'
                if r.source_url else e(r.source_label))
@@ -160,16 +177,26 @@ def post_page(post: Post, now: datetime | None = None) -> str:
         if r.step_count:
             parts.append(f"<p class=muted>조리 {r.step_count}단계 — 자세한 순서는 원문에서 확인해 주세요.</p>")
         parts.append(f"<p class=muted>출처: {src} · {e(r.note)}</p>")
+
+    if not framed:
+        recipe_html()
     if post.products:
-        parts.append("<h2>재료·상품</h2>")
+        parts.append("<h2>상품 비교</h2>" if framed else "<h2>재료·상품</h2>")
+        if framed and post.checklist:
+            parts.append(f"<p class=muted>{e(post.checklist)}</p>")
         for n, p in enumerate(post.products, start=1):
             badge = " · 로켓배송" if p.rocket else ""
             img = (f'<img class=thumb src="{e(p.image_url)}" alt="" loading=lazy referrerpolicy=no-referrer '
                    f'width=84 height=84>' if p.image_url and policy.coupang_image(p.image_url) else "")
+            facts = ("<ul class=muted style=\"margin:4px 0\">" + "".join(f"<li>{e(f)}</li>" for f in p.facts) + "</ul>"
+                     if framed and p.facts else "")
             parts.append(f'<div class="card pcard">{img}<div class=info><div>{e(p.title)}</div>'
-                         f'<div class=price>{e(p.platform)}{badge} · {e(price_line(p, now))}</div>'
+                         f'<div class=price>{e(p.platform)}{badge} · {e(price_line(p, now))}</div>{facts}'
                          f'<a class=go href="{post_url(post)}/go/{n}" rel="sponsored nofollow noopener" '
                          f'target=_blank>판매처에서 보기</a></div></div>')
+    if framed:
+        recipe_html()
+    if post.products:
         parts.append(f"<h2>가격 참고</h2><p class=muted>{e(post.price_note)}</p>")
     if post.sources:
         items = "".join(

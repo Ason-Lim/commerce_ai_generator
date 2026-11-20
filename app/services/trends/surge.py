@@ -569,6 +569,7 @@ COUPANG_PER_KEYWORD = 2
 
 
 SITE_OPS = "받은 수수료는 블로그와 무료 식품 추천 서비스 운영에 도움이 됩니다."
+AD_PREFIX = "[광고]"
 VARIANTS = ("naver", "coupang")
 
 
@@ -595,9 +596,23 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
     names = [it["keyword"] for it in items]
     title = f"[트렌드 리포트] 요즘 검색이 갑자기 늘어난 식품 — {', '.join(names[:2])}{' 외' if len(names) > 2 else ''}"
     top = [COUPANG_DISCLOSURE, SITE_OPS] if only_coupang else ([DISCLOSURE] if connect_ok else [])
-    lines = [*top, *([""] if top else []),
+    if top:                                   # 2026-11-20: 광고 글 제목은 늘 [광고]로 시작 (사용자 규칙)
+        title = f"{AD_PREFIX} {title}"
+    # 2026-11-20 프레임 0.4 (쿠팡용): 고지 → 질문과 조건부 답 → 데이터 → 선택 기준 → 키워드별 근거 붙은 상품·확인 → 구매 전 제약
+    from app.services.trend_posts import frame
+    links_of = {it["keyword"]: [x for x in (coupang or {}).get(it["keyword"]) or [] if x.get("url")][:COUPANG_PER_KEYWORD]
+                for it in items}
+    head = []
+    if only_coupang:
+        any_links = any(links_of.values())
+        head = ["먼저 답부터.", frame.question(", ".join(names[:2]) + (" 외" if len(names) > 2 else "")),
+                " ".join(frame.answer(names[0], any_links, any(x.get("rocket") for v in links_of.values() for x in v))),
+                frame.EXPERIENCE_DATA, ""]
+    lines = [*top, *([""] if top else []), *head,
              f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
              "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
+    if only_coupang:
+        lines += ["고르기 전에 볼 것"] + [f"{i}. {c}" for i, c in enumerate(frame.criteria(names[0]), 1)] + [""]
     for n, it in enumerate(items, 1):
         lines.append(f"■ {n}. {it['keyword']}")
         if it["status"] == "surging":
@@ -621,13 +636,20 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         if it.get("cause") and it["cause"]["kind"] != "불명" and _public(it["cause"]):
             lines.append(f"- 계기(추정): {it['cause']['cause']} — 블로그 제목을 바탕으로 한 추정이에요.")
         lines.append(f"- 함께 확인된 신호 {it['cross']['n']}/{it['cross']['of']}개 (블로그 글 증가 · 식품 순위 상승 · 구글 트렌드)")
-        links = [x for x in (coupang or {}).get(it["keyword"]) or [] if x.get("url")][:COUPANG_PER_KEYWORD]
+        links = links_of[it["keyword"]]
         if only_coupang and links:
+            lines.append(frame.CHECKLIST)
             lines.append("▶ 쿠팡에서 보기")
-            lines += [f"- {x.get('title') or it['keyword']}: {x['url']}" for x in links]
+            for x in links:
+                lines.append(f"- {x.get('title') or it['keyword']}: {x['url']}")
+                facts = frame.product_facts(x.get("title") or "", x.get("rocket"))
+                if facts:
+                    lines.append("  · " + " · ".join(facts))
         if not only_coupang:
             lines.append(f"▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: {it['keyword']}]")
         lines.append("")
+    if only_coupang and any(links_of.values()):
+        lines += ["구매 전에 알아 둘 것"] + [f"- {c}" for c in frame.constraints()] + [""]
     lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
               "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요.",
               "가격·재고는 판매처에서 확인해 주세요."]

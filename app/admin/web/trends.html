@@ -154,7 +154,7 @@ body[data-view=naver] #summary,body[data-view=naver] #surge,body[data-view=naver
   <section id="blog" aria-labelledby="blog-h">
     <h2 id="blog-h">applesodda 블로그 초안</h2>
     <p class="note" id="pick-hint"></p>
-    <p class="lede"><a href="/admin/trends#surge">급상승 키워드 목록</a>에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않고 텍스트 파일로만 저장해요 — 블로그 임시저장은 요청하시면 확인 후 진행해요.</p>
+    <p class="lede"><a href="/admin/trends#surge">급상승 키워드 목록</a>에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않아요 — 확인이 끝나면 <b>확인 완료 → 네이버 임시저장</b>을 누르세요. 저장된 내용 그대로 applesodda 임시저장함에 들어가고, 발행은 블로그에서 직접 해요. 쿠팡용은 '고지 → 먼저 답부터 → 고르기 전에 볼 것 → 상품 근거·결제 전 확인 → 구매 전에 알아 둘 것' 순서(프레임 0.4)로 만들어요.</p>
     <div class="row"><button class="btn" id="draft">초안 만들기</button><span class="note" id="dnote"></span></div>
     <div class="row"><select id="saved-drafts" aria-label="저장된 초안" style="min-width:320px"><option value="">저장된 초안 불러오기…</option></select>
       <button class="btn" id="saved-open">열기</button><button class="btn" id="saved-reload">목록 새로고침</button></div>
@@ -292,7 +292,10 @@ function showDrafts(drafts,head){
      <p class="k">제목</p><input class="d-title" style="width:100%" value="${esc(x.title)}">
      <p class="k">태그 (쉼표로 구분)</p><input class="d-tags" style="width:100%" value="${esc(x.tags.join(", "))}">
      <p class="k">본문</p><textarea class="d-body" style="min-height:320px">${esc(x.body)}</textarea>
-     <div class="row" style="margin-top:8px"><button class="btn primary d-save">저장</button><button class="btn d-copy">본문 복사</button><span class="note d-msg"></span></div></div>`).join("");
+     <div class="row" style="margin-top:8px"><button class="btn primary d-save">저장</button><button class="btn d-copy">본문 복사</button><span class="note d-msg"></span></div>
+     <div class="row" style="margin-top:6px;gap:10px;align-items:center"><button class="btn d-approve">확인 완료 → 네이버 임시저장</button>
+       <label class="note"><input type="checkbox" class="d-img"> 그림 1장 넣기 (gpt-image, 유료 · 캡션에 'AI로 만든 그림')</label></div>
+     <div class="note d-appr" style="margin-top:4px"></div></div>`).join("");
    document.querySelectorAll("#bout .draft").forEach(box=>{
      const msg=box.querySelector(".d-msg");
      box.querySelector(".d-save").onclick=async()=>{msg.textContent="저장 중…";
@@ -300,6 +303,24 @@ function showDrafts(drafts,head){
          title:box.querySelector(".d-title").value,tags:box.querySelector(".d-tags").value.split(",").map(t=>t.trim()).filter(Boolean),body:box.querySelector(".d-body").value})});
          msg.textContent="저장했어요"+(r.warnings.length?" — 확인: "+r.warnings.join(" / "):"");msg.style.color=r.warnings.length?"var(--hold)":""}
        catch(e){msg.textContent="저장 실패: "+e.message}};
+     const appr=box.querySelector(".d-appr");
+     const showAppr=a=>{if(!a){appr.textContent="";return}
+       const st={running:"진행 중",done:"임시저장 완료",error:"실패"}[a.status]||a.status;
+       appr.innerHTML=`<b>${esc(st)}</b> · ${esc(a.step||"")}${a.with_image?" · 그림 포함":""} · 승인 ${esc((a.approved_at||"").replace("T"," ").slice(0,16))} UTC${a.message?"<br><small>"+esc(a.message)+"</small>":""}`;
+       appr.style.color=a.status==="error"?"var(--hold)":""};
+     const poll=async(n)=>{try{const r=await api("/admin/api/trends/blog-draft/approval?file="+encodeURIComponent(box.dataset.file));showAppr(r.approval);
+       if(r.approval&&r.approval.status==="running"&&n<90)setTimeout(()=>poll(n+1),5000)}catch(e){}};
+     poll(80);   // 이전 기록이 있으면 보여 주기 (진행 중이면 이어서 확인)
+     box.querySelector(".d-approve").onclick=async()=>{
+       if(!confirm("저장된 내용 그대로 네이버 블로그 임시저장함에 넣을까요? (발행하지 않아요. 고친 게 있으면 먼저 '저장'을 누르세요.)"))return;
+       appr.textContent="시작하는 중…";
+       const r=await fetch("/admin/api/trends/blog-draft/approve",{method:"POST",headers:{"Content-Type":"application/json"},
+         body:JSON.stringify({file:box.dataset.file,with_image:box.querySelector(".d-img").checked})});
+       if(r.status===401){location.href="/admin/login?next=/admin/trends";return}
+       const d=await r.json().catch(()=>({}));
+       if(!r.ok){const det=d.detail||{};appr.style.color="var(--hold)";
+         appr.innerHTML=esc(det.message||det||("HTTP "+r.status))+(det.issues?"<ul>"+det.issues.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"");return}
+       showAppr(d.approval);setTimeout(()=>poll(0),4000)};
      box.querySelector(".d-copy").onclick=async()=>{try{await navigator.clipboard.writeText(box.querySelector(".d-body").value);msg.textContent="본문을 복사했어요"}catch(e){msg.textContent="복사 실패 — 본문을 직접 선택해 복사해 주세요"}};
    })
 }

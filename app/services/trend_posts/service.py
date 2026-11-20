@@ -21,7 +21,8 @@ class PostError(ValueError):
         self.code, self.issues = code, issues or []
 
 
-EDIT_FIELDS = {"title", "summary", "why", "price_note", "products", "recipe"}
+EDIT_FIELDS = {"title", "summary", "why", "price_note", "products", "recipe",
+               "question", "answer", "criteria", "constraints", "checklist"}   # 2026-11-20 프레임 0.4 칸
 
 
 class TrendPosts:

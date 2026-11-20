@@ -1,4 +1,5 @@
-"""급상승 리포트 항목 → 트렌드 글 초안 (고정 템플릿: 트렌드 이유 → 레시피 요약 → 재료·상품 → 가격 참고).
+"""급상승 리포트 항목 → 트렌드 글 초안 (2026-11-20 프레임 0.4: 고지 → 질문과 조건부 답 → 트렌드 이유 → 선택 기준 →
+구매 전 제약·결제 전 확인 → 근거 붙은 상품 → 레시피 → 가격 참고).
 
 * 이유 문장은 리포트에 있는 데이터 사실만 쓴다(배수·시작일·순위·블로그 글 수).  원인은 AI 가 블로그 제목으로
   추정한 것이라 '추정'으로 적고, 공개 불가로 표시된 원인·'불명'은 쓰지 않는다 (surge.blog_draft 와 같은 기준).
@@ -11,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.services.trend_posts import policy
+from app.services.trend_posts import frame, policy
 from app.services.trend_posts.model import (HistoryEntry, Post, PostProduct, PostRecipe, PostSource, now_iso,
                                             post_id)
 
@@ -68,7 +69,8 @@ def products_from_result(result: dict | None, now: datetime | None = None, keywo
             link_type=offer.get("link_type") or "direct", affiliate_program=offer.get("affiliate_program"),
             price_krw=offer.get("price_krw"), price_checked_at=offer.get("seen_at") or checked,
             rocket=offer.get("rocket"), keyword=keyword,
-            image_url=prod.get("image_url") if policy.coupang_image(prod.get("image_url")) else None))
+            image_url=prod.get("image_url") if policy.coupang_image(prod.get("image_url")) else None,
+            facts=frame.product_facts(prod.get("title") or "", offer.get("rocket"))))
         if len(out) >= limit:
             break
     return out
@@ -105,5 +107,9 @@ def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (
         why=why_lines(item, data_until), recipe=recipe, products=products,
         sources=[PostSource(kind="data", label=SOURCE_LABEL[k][0], url=SOURCE_LABEL[k][1]) for k in used],
         disclosure=policy.disclosure_text() if affiliate else None,
+        experience="data", question=frame.question(topic),
+        answer=frame.answer(topic, bool(products), any(p.rocket for p in products)),
+        criteria=frame.criteria(topic), constraints=frame.constraints(),
+        checklist=frame.CHECKLIST if products else None,
         created_at=stamp, updated_at=stamp,
         history=[HistoryEntry(at=stamp, action="create", note=f"급상승 리포트 {data_until or ''}")])
