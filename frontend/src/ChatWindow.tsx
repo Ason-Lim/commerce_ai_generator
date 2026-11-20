@@ -12,8 +12,7 @@ import { ChatActions, type ChatActionsValue } from './components/ChatActions';
 import type { FlowStep, SendPayload } from './state/useConversation';
 import type { Message } from './types';
 import type { Candidate, TrendPostRef } from './types/blocks';
-import { API_MODE, fetchTrendPosts, sendChat, type TrendPostCard } from './api/client';
-import { TrendPostsStrip } from './components/TrendPostsStrip';
+import { API_MODE, sendChat } from './api/client';
 import { pageTitle } from './lib/pageTitle';
 import { BusyStatus } from './components/BusyStatus';
 import { ShoppingPanel, type PanelEntry } from './components/ShoppingPanel';
@@ -136,13 +135,7 @@ export default function ChatWindow() {
     const [waitKind, setWaitKind] = useState<BusyKind>('shopping');
     // 2026-11-16: 부족한 재료 장보기 칸 — 재료별 상품 (새 메시지를 쌓지 않는다)
     const [basket, setBasket] = useState<PanelEntry[]>([]);
-    // 첫 화면 '오늘의 트렌드' (2026-11-18 화면 잇기) — 게시된 트렌드 글 최신 3편. 실패하면 조용히 숨긴다.
-    const [trendPosts, setTrendPosts] = useState<TrendPostCard[]>([]);
-    useEffect(() => {
-        const ctrl = new AbortController();
-        fetchTrendPosts(3, ctrl.signal).then(d => setTrendPosts(d.items)).catch(() => { /* 글 줄은 없어도 된다 */ });
-        return () => ctrl.abort();
-    }, []);
+    // 2026-11-20: 첫 화면 '오늘의 트렌드' 줄은 뺐다 — 트렌드 글은 위쪽 '트렌드 글' 메뉴에서 본다.
     const [error, setError] = useState('');
     const [detail, setDetail] = useState<Candidate | null>(null);
     const [trendPost, setTrendPost] = useState<TrendPostRef | null>(null);
@@ -419,7 +412,6 @@ export default function ChatWindow() {
                             })}
                         </div>
                         {examplesDate && <p className="mt-3 text-right text-[11px] text-stone-400">예시 질문 기준일 {examplesDate} · 네이버 식품 키워드 순위</p>}
-                        <TrendPostsStrip title="오늘의 트렌드" posts={trendPosts} className="mt-10" />
                     </section>
                 ) : (
                     <div className="space-y-8">

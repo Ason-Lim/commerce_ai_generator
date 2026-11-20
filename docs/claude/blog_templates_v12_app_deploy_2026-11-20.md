@@ -52,9 +52,9 @@ git log --oneline -1          # 병합 커밋 확인
 grep -n '^BLOG_AUTODRAFT=' .env || echo 'BLOG_AUTODRAFT=1' >> .env
 grep -n '^BLOG_AUTODRAFT=' .env
 
-# 5) 서버 다시 시작 (화면 frontend 는 바뀌지 않아 빌드 생략)
+# 5) 서버 다시 시작 (2026-11-20 16:35 화면 수정 — 첫 화면·지금 뜨는 식품의 트렌드 글 제거 — 이 있어 빌드 포함)
 ./stop_api.sh
-./run_prod.sh --skip-build
+./run_prod.sh
 ```
 
 ## 5. 배포 후 검증

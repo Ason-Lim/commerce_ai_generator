@@ -2,8 +2,8 @@
 
 무엇을 보나
 * /trends 목록 → 글: 공통 메뉴, 로고가 본문 왼쪽 끝과 맞는지, 구조화 데이터(Article)
-* 지금 뜨는 식품(/#/hot): 위쪽 '최신 트렌드 글', 같은 식품 카드의 '트렌드 글 읽기' → 글로 이동
-* 첫 화면: '오늘의 트렌드', 로고가 제목 '식'자와 세로로 맞는지, 메뉴는 오른쪽, 지운 중복 문구가 없는지
+* 지금 뜨는 식품(/#/hot): 트렌드 글 줄·카드의 '트렌드 글 읽기'가 없다 (2026-11-20 — 트렌드 글은 '트렌드 글' 메뉴에서)
+* 첫 화면: '오늘의 트렌드' 줄이 없다, 로고가 제목 '식'자와 세로로 맞는지, 메뉴는 오른쪽, 지운 중복 문구가 없는지
 * 모바일 폭: 아래 탭이 보이고 머리줄 메뉴는 숨는지
 
 서버는 테스트 안에서 띄운다 (트렌드 글 라우터 + 빌드된 화면 frontend/dist + 가짜 급상승 목록). DB·외부 API 를 부르지 않는다.
@@ -115,25 +115,26 @@ def test_trend_post_pages(site, page):
     assert page.get_by_role("link", name="이 주제 더 물어보기").is_visible()
 
 
-def test_hot_page_links_to_the_post(site, page):
+def test_hot_page_has_no_trend_posts(site, page):
+    """2026-11-20 사용자 결정: 지금 뜨는 식품에서는 트렌드 글(위쪽 줄·카드 버튼)을 빼고 '트렌드 글' 메뉴로만 본다."""
     base, post = site
     page.goto(base + "/#/hot")
-    strip = page.get_by_role("region", name="최신 트렌드 글")
-    strip.get_by_text(post.title).wait_for()
     cards = page.locator("li.card")
     cards.first.wait_for()
-    daebang = cards.filter(has_text="대방어")
-    yuja = cards.filter(has_text="유자")
-    assert yuja.get_by_role("link", name="트렌드 글 읽기").count() == 0      # 글 없는 식품엔 없음
-    daebang.get_by_role("link", name="트렌드 글 읽기").click()
-    page.wait_for_url(f"**/trends/{quote(post.id)}")   # 주소의 한글은 %EB… 로 바뀌어 있다
+    assert page.get_by_role("region", name="최신 트렌드 글").count() == 0
+    assert page.get_by_text(post.title).count() == 0
+    assert page.get_by_role("link", name="트렌드 글 읽기").count() == 0
+    page.get_by_role("link", name="트렌드 글").first.click()               # 메뉴에서는 그대로 갈 수 있다
+    page.wait_for_url("**/trends")
 
 
 def test_home_header_and_todays_trends(site, page):
     base, post = site
     page.goto(base + "/")
-    page.get_by_role("region", name="오늘의 트렌드").get_by_text(post.title).wait_for()
     h1 = page.locator("main h1").first
+    h1.wait_for()
+    assert page.get_by_role("region", name="오늘의 트렌드").count() == 0   # 2026-11-20: 첫 화면 트렌드 글 줄 없음
+    assert page.get_by_text(post.title).count() == 0
     logo = page.locator("header a").first
     assert abs(_left(logo) - _left(h1)) <= 2                                          # 로고 = 제목 '식'자 세로선
     chat_menu = page.locator("header nav[aria-label='주요 메뉴'] a", has_text="대화")
