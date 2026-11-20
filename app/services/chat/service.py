@@ -1150,8 +1150,17 @@ def _single_char_hit(char: str, title: str) -> bool:
     return bool(re.search(rf"(?<![가-힣]){char}|{char}(?=\s|\d|$|[\]),/])", title or ""))
 
 
+# 2026-11-20: '천수무' 검색에 '천수무 씨앗 2000립'이 섞였다 — 상품명에 검색어가 있어도 심는 것(씨앗·종자·모종)은 먹거리가 아니다.
+# 고객이 씨앗·모종·텃밭을 직접 물을 때만 남긴다. 해바라기씨·호박씨 같은 먹는 씨는 '씨앗'이 아니라서 걸리지 않는다.
+# '종자'는 '토종자연산'의 '토종+자연'을 피하려고 '토'가 앞에 오면 보지 않는다. '2000립'처럼 숫자+립은 씨앗 낱알 수.
+_PLANTING = re.compile(r"씨앗|(?<!토)종자|모종|묘목|파종|씨감자|씨마늘|\d[\d,]*\s*립(?![가-힣])")
+_PLANTING_ASK = re.compile(r"씨앗|종자|모종|묘목|파종|텃밭|심을|심기|재배용|씨감자|씨마늘")
+
+
 def relevant(title: str, terms: list[str]) -> bool:
     """A result belongs to the request when it carries (most of) one of its words — '휘태커스초콜릿' ~ '휘태커스 다크 초콜릿'."""
+    if _PLANTING.search(title or "") and not any(_PLANTING_ASK.search(t or "") for t in terms):
+        return False
     have = _bigrams(title)
     for term in terms:
         word = re.sub(r"\s+", "", term or "")
