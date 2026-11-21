@@ -95,7 +95,8 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
     <div><p class="k">요약</p><textarea id="e-summary" style="min-height:50px"></textarea></div>
     <div><p class="k">왜 뜨고 있을까 (한 줄에 하나)</p><textarea id="e-why"></textarea></div>
     <div><p class="k">가격 참고 문구</p><input id="e-note" style="width:100%"></div>
-    <div><label class="note"><input type="checkbox" id="e-hold"> 구매 보류 결론 — 상품 링크·광고 고지 없이 게시</label></div>
+    <div><label class="note"><input type="checkbox" id="e-hold"> 구매 보류 결론 — 상품 링크·광고 고지 없이 게시 (저장하면 AI 대표 그림 1장, 유료)</label></div>
+    <div><p class="k">대표 그림</p><div id="e-cover" class="note"></div></div>
     <div><p class="k">상품 (체크를 풀면 뺌 · 순서는 검색 결과 그대로)</p><div id="e-products"></div></div>
     <div><p class="k">레시피</p><div id="e-recipe" class="note"></div></div>
     <div><p class="k">기록</p><div id="e-history" class="turns"></div></div>
@@ -135,10 +136,14 @@ function open_(p){S.cur=p;$("detail").hidden=false;$("x-title").textContent=p.ti
    x.image_url?el("img",{src:x.image_url,alt:"",width:"40",height:"40",referrerpolicy:"no-referrer",style:"border-radius:6px;object-fit:cover"}):el("span",{class:"note",style:"width:40px"},"사진 없음"),
    " "+x.title+" · "+(x.price_krw!=null?x.price_krw.toLocaleString()+"원 ("+(x.price_checked_at||"확인 시각 없음").replace("T"," ").slice(0,16)+" 확인)":"가격 없음")+(x.link_type==="affiliate"?" · 제휴":""))));
  if(!p.products.length)pr.append(el("span",{class:"note"},"상품 없음"));
+ const cv=$("e-cover");cv.replaceChildren();
+ if(p.hero)cv.append(el("img",Object.assign({src:p.hero.src,alt:"",style:"max-width:240px;max-height:140px;border-radius:8px;display:block;object-fit:contain;border:1px solid #e3e5df"},p.hero.kind==="product"?{referrerpolicy:"no-referrer"}:{})),p.hero.caption);
+ else cv.append(p.cover_running?"AI 그림을 만드는 중이에요 (1분쯤). 잠시 뒤 목록에서 다시 열어 주세요.":(p.conclusion==="hold"?"그림 없음 — 아래 '그림 다시 만들기'":"상품 사진이 없어 그림 없이 게시돼요"));
  $("e-recipe").textContent=p.recipe?(p.recipe.name+" — 출처 "+p.recipe.source_label+" · 재료 "+p.recipe.ingredients.join(", ")):"붙인 공공 레시피 없음 (이름이 주제로 끝나는 공공 레시피만 붙여요)";
  const h=$("e-history");h.replaceChildren();for(const x of p.history)h.append(el("div",{class:"turn"},el("span",{},x.at.replace("T"," ").slice(0,16)),x.action+(x.note?" — "+x.note:"")));
  const a=$("x-actions");a.replaceChildren();const B=(t,f,cls)=>a.append(el("button",{class:"btn"+(cls?" "+cls:""),onclick:f},t));
  if(edit){B("저장",save);B("가격 다시 확인",()=>act("refresh"));B("검토 요청",()=>act("submit"),"primary")}
+ if(p.conclusion==="hold"&&!p.cover_running&&p.status!=="approved")B(p.cover?"그림 다시 만들기 (유료)":"그림 만들기 (유료)",()=>act("cover"));
  if(p.status==="pending"){B("승인 · 게시",()=>{const m=prompt("승인 메모 (선택) — 무엇을 확인했는지 적어 두면 기록에 남아요. 비워도 돼요. 취소하면 승인하지 않아요.");if(m!==null)act("approve",m.trim()||null)},"primary");B("반려",()=>{const r=prompt("반려 사유");if(r)act("reject",r)})}
  if(p.status==="approved")B("내리기",()=>{const r=prompt("내리는 이유");if(r!==null)act("withdraw",r)});
  if(p.status==="withdrawn")B("다시 초안으로",()=>act("reopen"))}

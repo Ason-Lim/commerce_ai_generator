@@ -68,6 +68,20 @@ def trends_index(posts: Posts):
     return _html(render.index_page(posts.published()))
 
 
+@router.get("/trends/img/{name}")
+def trends_image(name: str):
+    """보류 글의 AI 대표 그림 (2026-11-20). 이름 모양이 맞고 var/trend_images 안에 있는 png 만."""
+    from fastapi.responses import FileResponse
+
+    from app.services.trend_posts.cover import image_dir
+    from app.services.trend_posts.model import VALID_IMAGE
+
+    path = image_dir() / name
+    if not VALID_IMAGE.match(name or "") or not path.is_file():
+        return Response(status_code=404)
+    return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
+
 @router.get("/trends/{post_id}")
 def trends_post(post_id: str, posts: Posts):
     post = posts.public(post_id)

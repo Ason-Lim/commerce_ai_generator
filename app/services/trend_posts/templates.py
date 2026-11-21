@@ -50,22 +50,93 @@ HOLD_SECTIONS = {
 }
 
 
-def hold(topic: str, *, status: str | None = None, channel: str = "site") -> Chosen:
-    """구매 보류 결론 글 — 구매를 이끄는 절(옵션·주문·결제·상품 줄)은 넣지 않는다 (사용자 결정 2026-11-20 16:18)."""
+# 2026-11-20 실제 초안 검증(v1.3): 보류 글은 질문·답·기준도 보류 쪽으로 (구매용 '무엇을 기준으로 고를까요?' 를 쓰지 않는다).
+# 'gift' 변형 = 계기(추정)나 키워드에 선물이 있는 보류 글 — 판단의 핵심이 '선물용인지, 내가 먹을 건지'.
+HOLD_QUESTION = {
+    "site": {"20": ["{k}, 지금 꼭 사야 할까요?", "{k}, 가진 것으로 충분하지 않을까요?"],
+             "32": ["요즘 많이 찾는 {k}, 나에게도 필요할까요?", "화제인 {k}, 지금 사야 할까요?"],
+             "gift": ["{k}, 선물로 꼭 지금 사야 할까요?", "선물로 많이 찾는 {k}, 나에게도 필요할까요?"]},
+    "blog": {"20": ["{k}, 지금 꼭 사야 할지 같이 생각해 볼게요.", "{k}, 가진 걸로 충분하지 않을까요?"],
+             "32": ["요즘 여기저기서 {k} 이야기가 보이죠. 나도 사야 할지부터 생각해 볼게요.",
+                    "{k}, 유행이라서 사는 건지 필요해서 사는 건지 한 번 나눠 볼게요."],
+             "gift": ["요즘 선물로 {k} 많이 찾죠. 꼭 지금 사야 할지부터 볼게요.",
+                      "선물로 {k} 고민 중이라면, 사기 전에 한 가지만 먼저요."]},
+}
+HOLD_LEAD = {
+    "site": {"20": "새로 사기 전에, 쓸 곳이 정해졌는지와 비슷한 제품이 이미 있는지부터 보세요.",
+             "32": "화제인 것과 내가 쓸 이유는 따로예요. 쓸 곳이 정해졌는지부터 보세요.",
+             "gift": "선물할 건지, 내가 먹을 건지부터 정하세요."},
+    "blog": {"20": "새로 사기 전에, 쓸 곳이 정해졌는지와 비슷한 게 이미 있는지부터 봐 주세요.",
+             "32": "화제성과 내 필요는 따로예요. 쓸 곳이 정해졌을 때만 비교해 보세요.",
+             "gift": "선물할 건지, 내가 먹을 건지부터 정해 보세요."},
+}
+HOLD_ANSWER_GIFT = {"site": "선물할 곳이 정해지지 않았다면 지금 새로 살 필요는 없어요.",
+                    "blog": "줄 사람과 날짜가 정해지지 않았다면, 지금 굳이 사 두지 않아도 돼요."}
+HOLD_SECTIONS_GIFT = {
+    "site": ("선물용인지, 내가 먹을 건지", [
+        "선물이라면 받는 분이 좋아하는지, 받는 날짜와 보관 방법이 맞는지가 먼저예요. 유행이라서 고를 필요는 없어요.",
+        "내가 먹으려는 거라면, 비슷한 간식이 이미 있는지 먼저 보세요.",
+        "다시 검토할 때: 줄 사람과 날짜가 정해졌을 때."]),
+    "blog": ("선물용인지, 내가 먹을 건지", [
+        "선물이라면 받는 분이 좋아하는지, 받는 날짜·보관 방법이 맞는지가 먼저예요. 유행이라서 고를 필요는 없어요.",
+        "내가 먹으려는 거라면, 비슷한 간식이 이미 있는지부터 봐 주세요.",
+        "이럴 때 다시 보세요: 줄 사람과 날짜가 정해졌을 때."]),
+}
+# 보류 글의 '필요해지면 볼 기준' — 쓸 곳 → 양 → 보관 (구매 비교 문장·냉장 단정 없음)
+HOLD_CRITERIA = {
+    "site": {"20": ["쓸 곳 — 언제, 어디에 쓸지 정해졌는지 먼저 정하세요.",
+                    "양 — 처음이라면 작은 구성부터, 상품명의 중량·수량을 같은 단위로 비교하세요.",
+                    "보관 — 보관 방법(실온·냉장·냉동)과 유통기한을 상품 표시에서 확인하세요."],
+             "32": ["쓸 곳 — 언제, 어디에 쓸지 정해졌는지 먼저 정하세요. 정해진 쓰임이 없으면 미뤄도 돼요.",
+                    "처음 구매 — 소량 구성이 있는지 상품명의 중량·수량을 보세요.",
+                    "대안 — 비슷한 기존 상품으로도 되는지 같은 기준으로 견줘 보세요."],
+             "gift": ["받는 분 — 받는 분이 좋아하는지, 보관할 수 있는지 먼저 생각하세요.",
+                      "날짜 — 줄 날짜가 정해지면 그 전에 받을 수 있는지 보세요.",
+                      "구성·보관 — 개수·포장과 보관 방법(실온·냉장)을 상품 표시에서 확인하세요."]},
+    "blog": {"20": ["쓸 곳 — 언제, 어디에 쓸지부터 정해 보세요.",
+                    "양 — 처음이라면 작은 구성부터 보고, 중량·수량은 같은 단위로 맞춰 비교하세요.",
+                    "보관 — 실온·냉장·냉동 중 어떻게 보관하는지, 유통기한은 얼마인지 상품 표시에서 보세요."],
+             "32": ["쓸 곳 — 언제, 어디에 쓸지 정해졌는지 먼저 적어 보세요. 정해진 쓰임이 없으면 미뤄도 돼요.",
+                    "처음 구매 — 작은 구성이 있는지 상품명의 중량·수량을 보세요.",
+                    "대안 — 비슷한 기존 제품으로도 되는지 같은 기준으로 견줘 보세요."],
+             "gift": ["받는 분 — 좋아하는지, 받아서 보관할 수 있는지부터 생각해 보세요.",
+                      "날짜 — 줄 날짜가 정해지면 그 전에 받을 수 있는지 보세요.",
+                      "구성·보관 — 개수·포장과 보관 방법(실온·냉장)을 상품 표시에서 확인하세요."]},
+}
+# 32·20 공통 예시 줄 — 공개 글이라 독자의 보유를 단정하지 않고 '예시'로 (55종 v1.2 규칙)
+HOLD_EXAMPLE = {"site": "예시: 비슷한 제품이 집에 있다면, 새로 사기 전에 남은 양과 유통기한부터 확인해 보세요.",
+                "blog": "예시: 비슷한 게 집에 있다면, 새로 사기 전에 남은 양과 유통기한부터 확인해 보세요."}
+
+
+def hold_variant(topic: str, kind: str, cause: str | None = None) -> str:
+    """보류 글 변형 — 키워드나 계기(추정)에 선물이 있으면 'gift', 급상승 신상은 '32', 그 밖 '20'."""
+    if any(w in (topic or "") for w in GIFT_WORDS) or "선물" in (cause or "") or kind in ("gift", "family_month"):
+        return "gift"
+    return "32" if kind == "viral" else "20"
+
+
+def hold(topic: str, *, status: str | None = None, channel: str = "site", cause: str | None = None) -> Chosen:
+    """구매 보류 결론 글 — 구매를 이끄는 절(옵션·주문·결제·상품 줄)은 넣지 않는다 (사용자 결정 2026-11-20 16:18).
+    cause: 계기(추정) 문장 — 선물 이야기면 선물 변형. 글 틀 번호는 그대로 32(급상승 신상)·20(그 밖)."""
     c = channel if channel in HOLD_TITLES else "site"
     kind = frame.keyword_type(topic, status=status)
     tid = "32" if kind == "viral" else "20"
-    head, lines = HOLD_SECTIONS[c][tid]
-    ch = Chosen(id=tid, name=HOLD_NAMES[tid], kind=kind, note="구매 보류 결론")
-    ch.sections = [(head, list(lines))]
+    var = hold_variant(topic, kind, cause)
+    head, lines = HOLD_SECTIONS_GIFT[c] if var == "gift" else HOLD_SECTIONS[c][tid]
+    ch = Chosen(id=tid, name=HOLD_NAMES[tid], kind=kind, note="구매 보류 결론" + (" · 선물" if var == "gift" else ""))
+    ch.sections = [(head, list(lines) + ([] if var == "gift" else [HOLD_EXAMPLE[c]]))]
     ch.title = frame.pick(HOLD_TITLES[c][tid], topic, "th" + c).format(k=topic)
+    ch.question = frame.pick(HOLD_QUESTION[c][var], topic, "hq" + c).format(k=topic)
+    ch.answer = [HOLD_LEAD[c][var], HOLD_ANSWER_GIFT[c] if var == "gift" else HOLD_ANSWER[c]]
+    ch.criteria = list(HOLD_CRITERIA[c][var])
     return ch
 
 
-def hold_answer(topic: str, kind: str, channel: str = "site") -> list[str]:
-    """질문에 대한 답 — 상품 비교로 이끄는 마지막 줄 대신 보류 결론."""
+def hold_answer(topic: str, kind: str, channel: str = "site", cause: str | None = None) -> list[str]:
+    """질문에 대한 답 — 구매 쪽 첫 문장('필요한 양과 받을 날짜를 먼저') 없이 보류 쪽으로."""
     c = channel if channel in HOLD_ANSWER else "site"
-    return frame.answer(topic, False, False, c, kind)[:-1] + [HOLD_ANSWER[c]]
+    var = hold_variant(topic, kind, cause)
+    return [HOLD_LEAD[c][var], HOLD_ANSWER_GIFT[c] if var == "gift" else HOLD_ANSWER[c]]
 
 # 주제별 기본 템플릿 (앞이 먼저, 자료가 없으면 다음). 사용자 결정 2026-11-20 15:55 '주제를 나눠 기본 템플릿을 정해 달라'.
 DEFAULTS = {
@@ -94,6 +165,9 @@ class Chosen:
     note: str = ""                            # 지정한 템플릿을 못 쓴 이유 등 (운영자용)
     sections: list[tuple[str, list[str]]] = field(default_factory=list)
     title: str = ""
+    question: str = ""                        # 보류 글만 (구매 글은 frame.question)
+    answer: list[str] = field(default_factory=list)
+    criteria: list[str] = field(default_factory=list)
 
 
 def _ok(tid: str, products: list[dict], recipe) -> bool:
@@ -202,7 +276,10 @@ def sections(tid: str, topic: str, kind: str, products: list[dict], recipe, chan
         lines.append("자주 쓰지 않거나 보관할 자리가 부족하면 큰 구성이 오히려 남을 수 있어요." if blog else
                      "큰 구성이 늘 알뜰한 것은 아니에요. 쓰는 빈도와 보관 공간을 먼저 정하세요.")
     elif tid == "05":
-        lines = ["쓰는 날과 도착일을 꼭 같은 날로 잡을 필요는 없어요. 미리 받으면 보관할 자리만 챙기세요." if blog else
+        cabbage = kind == "kimjang" and frame.kimjang_part(topic) == "cabbage"
+        lines = [("절임배추는 김장 전날이나 당일에 받는 게 기본이에요. 미리 받아 두는 재료가 아니에요." if blog else
+                  "절임배추는 김장 전날·당일 도착이 기본이에요. 미리 받아 두는 재료가 아니에요.") if cabbage else
+                 "쓰는 날과 도착일을 꼭 같은 날로 잡을 필요는 없어요. 미리 받으면 보관할 자리만 챙기세요." if blog else
                  "쓰는 날과 도착일은 다를 수 있어요. 미리 받는다면 보관 조건을 먼저 확인하세요.",
                  ("판매 페이지에서 볼 것: 도착일을 고를 수 있는지, 주문 마감, 지역별 배송 조건이에요." if blog else
                   "판매 페이지에서 확인할 것: 도착일 지정 여부, 주문 마감, 지역별 배송 조건.")]

@@ -30,6 +30,10 @@ h1{font-size:24px;line-height:1.35;margin:6px 0 8px}h2{font-size:18px;margin:28p
 .price{font-size:14px;color:#3b403a}.muted{color:#6b706a;font-size:13px}ul{padding-left:20px}
 .pcard{display:flex;gap:14px;align-items:flex-start}.thumb{width:84px;height:84px;flex:0 0 84px;border-radius:10px;object-fit:cover;background:#eef0ea;border:1px solid #e3e5df}
 .pcard .info{min-width:0;flex:1}
+.hero{margin:10px 0 16px}.hero img{display:block;width:100%;max-height:340px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid #e3e5df}
+.hero figcaption{font-size:12px;color:#6b706a;margin-top:4px}
+.list .card{display:flex;gap:12px;align-items:flex-start}.list .lthumb{width:72px;height:72px;flex:0 0 72px;border-radius:10px;object-fit:cover;background:#eef0ea;border:1px solid #e3e5df}
+.list .ltext{min-width:0;flex:1}
 .go{display:inline-block;margin-top:6px;padding:7px 12px;border-radius:8px;background:#1d211d;color:#fff;text-decoration:none;font-size:14px}
 .list a.t{font-size:17px;font-weight:700;text-decoration:none;color:#1d211d}
 .top{position:sticky;top:0;z-index:5;background:rgba(246,247,244,.95);border-bottom:1px solid #e3e5df}
@@ -137,6 +141,24 @@ def card(post: Post) -> dict:
             "approved_at": post.approved_at, "url": post_url(post)}
 
 
+def image_url(file: str) -> str:
+    return "/trends/img/" + quote(file)
+
+
+def cover(post: Post) -> dict | None:
+    """대표 그림 (2026-11-20) — 보류 글: 저장된 AI 그림만 (상품 사진은 구매를 이끌어 쓰지 않음).
+    구매 글: 상품 비교의 첫 사진(쿠팡 https 주소만). {'src', 'caption', 'kind'} 또는 None."""
+    if post.conclusion == "hold":
+        if post.cover:
+            return {"src": image_url(post.cover.file), "caption": post.cover.caption, "kind": "ai"}
+        return None
+    for n, p in enumerate(post.products, start=1):
+        if p.image_url and policy.coupang_image(p.image_url):
+            return {"src": p.image_url, "kind": "product",
+                    "caption": f"쿠팡 상품 사진 · 아래 상품 목록 {n}번 (판매처 이미지)"}
+    return None
+
+
 def post_page(post: Post, now: datetime | None = None) -> str:
     now = now or datetime.now(timezone.utc)
     e = escape
@@ -147,6 +169,11 @@ def post_page(post: Post, now: datetime | None = None) -> str:
     parts.append(f"<h1>{e(post.title)}</h1>")
     parts.append(f'<p class=meta>게시 {e(_kst(post.approved_at))}'
                  + (f" · 데이터 기준 {e(_kst(post.data_until))}까지" if post.data_until else "") + "</p>")
+    hero = cover(post)
+    if hero:
+        ref = " referrerpolicy=no-referrer" if hero["kind"] == "product" else ""
+        parts.append(f'<figure class=hero><img src="{e(hero["src"])}" alt="{e(post.topic)} 관련 그림" loading=lazy{ref}>'
+                     f'<figcaption>{e(hero["caption"])}</figcaption></figure>')
     if post.summary:
         parts.append(f"<p>{e(post.summary)}</p>")
     framed = bool(post.question or post.answer)      # 2026-11-20 프레임 0.4 글 (예전 글은 아래 예전 순서)
@@ -157,7 +184,7 @@ def post_page(post: Post, now: datetime | None = None) -> str:
         if post.answer:
             parts.append("<p>" + " ".join(e(a) for a in post.answer) + "</p>")
         if post.experience == "data":
-            parts.append(f"<p class=muted>{e(frame.experience_line(post.topic, 'site'))}</p>")
+            parts.append(f"<p class=muted>{e(frame.experience_line(post.topic, 'site', hold))}</p>")
     if post.why:
         parts.append("<h2>왜 뜨고 있을까</h2><ul>" + "".join(f"<li>{e(w)}</li>" for w in post.why) + "</ul>")
     for sec in post.sections if framed else []:
@@ -226,7 +253,10 @@ def index_page(posts: list[Post]) -> str:
         body.append("<p>아직 게시된 글이 없어요.</p>")
     body.append("<div class=list>")
     for p in posts:
-        body.append(f'<div class=card><a class=t href="{post_url(p)}">{e(p.title)}</a>'
-                    f'<div class=meta>{e(_kst(p.approved_at))}</div><div>{e(p.summary)}</div></div>')
+        hero = cover(p)
+        thumb = (f'<img class=lthumb src="{e(hero["src"])}" alt="" loading=lazy'
+                 + (" referrerpolicy=no-referrer" if hero["kind"] == "product" else "") + ">") if hero else ""
+        body.append(f'<div class=card>{thumb}<div class=ltext><a class=t href="{post_url(p)}">{e(p.title)}</a>'
+                    f'<div class=meta>{e(_kst(p.approved_at))}</div><div>{e(p.summary)}</div></div></div>')
     body.append("</div>")
     return _page("트렌드 글", "".join(body), "검색이 갑자기 늘어난 식품 트렌드 글", head=_canonical("/trends"))

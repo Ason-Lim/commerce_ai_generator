@@ -351,7 +351,7 @@ function showDrafts(drafts,head){
      <p class="k">본문</p><textarea class="d-body" style="min-height:320px">${esc(x.body)}</textarea>
      <div class="row" style="margin-top:8px"><button class="btn primary d-save">저장</button><button class="btn d-copy">본문 복사</button><span class="note d-msg"></span></div>
      <div class="row" style="margin-top:6px;gap:10px;align-items:center"><button class="btn d-approve">확인 완료 → 네이버 임시저장</button>
-       <label class="note"><input type="checkbox" class="d-img"> 그림 1장 넣기 (gpt-image, 유료 · 캡션에 'AI로 만든 그림')</label></div>
+       <label class="note"><input type="checkbox" class="d-img"> 쿠팡 사진 대신 AI 그림 (gpt-image, 유료 · 캡션에 'AI로 만든 그림')</label><br><small class="note">대표 그림은 자동: 구매 글 = 쿠팡 상품 사진 1장, 보류 글 = AI 그림 1장(유료)</small></div>
      <div class="note d-appr" style="margin-top:4px"></div></div>`).join("");
    document.querySelectorAll("#bout .draft").forEach(box=>{
      const msg=box.querySelector(".d-msg");
@@ -363,7 +363,7 @@ function showDrafts(drafts,head){
      const appr=box.querySelector(".d-appr");
      const showAppr=a=>{if(!a){appr.textContent="";return}
        const st={running:"진행 중",done:"임시저장 완료",error:"실패"}[a.status]||a.status;
-       appr.innerHTML=`<b>${esc(st)}</b> · ${esc(a.step||"")}${a.with_image?" · 그림 포함":""} · 승인 ${esc((a.approved_at||"").replace("T"," ").slice(0,16))} UTC${a.message?"<br><small>"+esc(a.message)+"</small>":""}`;
+       appr.innerHTML=`<b>${esc(st)}</b> · ${esc(a.step||"")}${a.cover==="seller"?" · 쿠팡 사진":(a.with_image?" · AI 그림":"")} · 승인 ${esc((a.approved_at||"").replace("T"," ").slice(0,16))} UTC${a.message?"<br><small>"+esc(a.message)+"</small>":""}`;
        appr.style.color=a.status==="error"?"var(--hold)":""};
      const poll=async(n)=>{try{const r=await api("/admin/api/trends/blog-draft/approval?file="+encodeURIComponent(box.dataset.file));showAppr(r.approval);
        if(r.approval&&r.approval.status==="running"&&n<90)setTimeout(()=>poll(n+1),5000)}catch(e){}};

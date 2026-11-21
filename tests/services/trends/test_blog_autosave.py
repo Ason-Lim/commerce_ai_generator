@@ -27,6 +27,11 @@ def test_check_blocks_missing_ad_label_disclosure_position_and_first_hand_words(
 def test_check_blocks_unfilled_template_blanks():
     assert any("빈칸" in x for x in bas.check("coupang", TITLE, BODY + "\n[상품] 옵션은 [입력]", [], COUPANG_DISCLOSURE))
     assert bas.check("coupang", TITLE, BODY + "\n[[이미지1]]", [], COUPANG_DISCLOSURE) == []
+    # 쿠팡 상품명의 대괄호(링크 줄)는 빈칸이 아니다 — 2026-11-20 실제 초안에서 승인이 막혔던 경우
+    links = ("\n- [로켓프레시] 자연다감 황석어젓: https://link.coupang.com/re/x"
+             "\n- [프리미엄][당일생산]해남 절임배추 [BZN], 10kg: https://link.coupang.com/re/y")
+    assert bas.check("coupang", TITLE, BODY + links, [], COUPANG_DISCLOSURE) == []
+    assert any("빈칸" in x for x in bas.check("coupang", TITLE, BODY + links + "\n[상품] 확인", [], COUPANG_DISCLOSURE))
 
 
 def test_image_mark_goes_after_the_answer_block():

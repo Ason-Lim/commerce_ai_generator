@@ -54,6 +54,15 @@ class PostSection(_M):
     items: list[str] = Field(default_factory=list)
 
 
+class PostImage(_M):
+    """2026-11-20 대표 그림 — 보류 글의 AI 그림 (var/trend_images/<file>). 구매 글은 따로 저장하지 않고
+    상품 사진(쿠팡) 중 첫 장을 대표로 그린다."""
+    file: str                                    # 예: 2026-11-19-페레로로쉐.png (VALID_IMAGE)
+    kind: Literal["ai"] = "ai"
+    caption: str = "AI로 만든 그림 · 실제 상품 사진이 아니에요"
+    created_at: Optional[str] = None
+
+
 class HistoryEntry(_M):
     at: str
     action: str                                  # create · update · submit · approve · reject · withdraw · refresh
@@ -84,6 +93,7 @@ class Post(_M):
     topic_kind: Optional[str] = None             # 주제 (frame.keyword_type: kimjang·seasonal·seollal·… )
     sections: list[PostSection] = Field(default_factory=list)
     conclusion: Literal["buy", "hold"] = "buy"   # 2026-11-20 hold = 구매 보류 결론 — 구매 링크·광고 고지 없음
+    cover: Optional[PostImage] = None            # 2026-11-20 보류 글 대표 그림 (AI). 구매 글은 상품 사진으로 그린다
     status: Status = "draft"
     created_at: str
     updated_at: str
@@ -119,4 +129,5 @@ def post_id(day: str, topic: str) -> str:
     return f"{day}-{topic_slug(topic)}"
 
 
+VALID_IMAGE = re.compile(r"^\d{4}-\d{2}-\d{2}-[0-9a-z가-힣-]{1,40}(?:-\d+)?\.png$")
 VALID_ID = re.compile(r"^\d{4}-\d{2}-\d{2}-[0-9a-z가-힣-]{1,40}$")

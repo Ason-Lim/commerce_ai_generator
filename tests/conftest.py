@@ -60,6 +60,7 @@ def _isolated_ai_cache(monkeypatch, tmp_path):
     monkeypatch.setenv("AI_CACHE_DB", str(tmp_path / "ai_cache.sqlite3"))
     monkeypatch.delenv("AI_CROSS_CHECK", raising=False)
     monkeypatch.setenv("B2B_PROPOSAL_AI", "0")      # 2026-11-12: 제안서 AI 본문(Claude·GPT 실제 호출)은 테스트에서 끈다
+    monkeypatch.setenv("BLOG_SERP", "0")            # 2026-11-20: 블로그 초안의 네이버 검색(세부 질문·제목 유사도)은 테스트에서 끈다
 
 
 # 2026-11-16: 테스트 대화가 실수 신호(var/signals)를 쌓지 않게 — 신호 테스트는 스스로 켠다
