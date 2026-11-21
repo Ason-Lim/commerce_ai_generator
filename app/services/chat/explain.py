@@ -519,7 +519,11 @@ def _alt_text(c: dict, ref: dict | None) -> str:
         diff = _basis(c) - _basis(ref)
         if diff:
             return f"같은 중량인 {label} 상품보다 {won(abs(diff))} {'비싸요' if diff > 0 else '저렴해요'}"
-    return "상품명에 중량·용량 표기가 없어 양 기준 가격은 견주지 못했어요 · 판매처에서 양을 확인해 주세요"
+    # 2026-11-21: '다른 선택'이 왜 보이는지 먼저 말한다 (자리를 채운 기준 = 원래 검색 순서). 표기가 없는 쪽을 정확히 밝힌다.
+    head = "검색 결과 앞쪽 상품이라 함께 보여 드려요"
+    if not (c.get("weight_g") or c.get("volume_ml")):
+        return f"{head} · 상품명에 중량·용량 표기가 없어 양 기준 가격은 견주지 못했어요 (판매처에서 양 확인)"
+    return f"{head} · {label} 상품에 중량·용량 표기가 없어 양 기준 가격은 견주지 못했어요"
 
 
 # 2026-11-12 사용자 결정 — 가정 기준 양: 과일·채소·식료품은 가정에서 1~2kg 수준, 10kg 등은 식당·업소용.
@@ -597,6 +601,42 @@ def bulk_size(card: dict, ask: str = "") -> str | None:
         return _vtext(card["volume_ml"]) if card["volume_ml"] > limit_ml else None
     m = BULK_TITLE.search(title)
     return f"{m.group(0)} 표기" if m else None
+
+
+# 2026-11-21: 고객이 말한 양('사과 5kg')을 추천 이유에 반영한다 — 순서·역할은 그대로, 맞으면 말하고 없으면 없다고 말한다.
+#   '3~5kg'처럼 범위이거나 '5kg 2박스'처럼 곱한 양은 고객이 말한 그대로 옮기기 어려워 쓰지 않는다.
+_AMOUNT_RANGE = re.compile(r"\d\s*[~∼\-]\s*\d+(?:\.\d+)?\s*(?:kg|g|l|ml)(?![a-z])", re.I)
+AMOUNT_TOLERANCE = 0.1           # 말한 양의 ±10% 안이면 '맞는 양'
+
+
+def asked_amount(ask: str) -> dict | None:
+    """고객 문장의 양 — {"field": "weight_g"|"volume_ml", "value": n, "text": "5kg"} 또는 None."""
+    text = ask or ""
+    if _AMOUNT_RANGE.search(text):
+        return None
+    w = parse_weight(text)
+    if w["weight"] and w["kind"] == "single":
+        return {"field": "weight_g", "value": w["weight"], "text": _wtext(w["weight"])}
+    v = parse_volume(text)
+    if v["volume"] and v["kind"] == "single":
+        return {"field": "volume_ml", "value": v["volume"], "text": _vtext(v["volume"])}
+    return None
+
+
+def amount_fits(card: dict, asked: dict | None) -> bool:
+    have = card.get(asked["field"]) if asked else None
+    return bool(have and abs(have - asked["value"]) <= asked["value"] * AMOUNT_TOLERANCE)
+
+
+def amount_miss_note(miss: dict | None) -> str | None:
+    if not miss:
+        return None
+    text = f"말씀하신 {miss['asked']} 상품은 추천 후보에 없어요"
+    if miss.get("in_others"):
+        text += f" · 다른 후보 중 {miss['asked']} 상품이 {miss['in_others']}개 있어요"
+    if miss.get("nearest"):
+        text += f" · 추천 후보 중 가장 가까운 양: {miss['nearest']}"
+    return text + " (양은 상품명 표기 기준)"
 
 
 def choose(cards: list[dict], *, budget: dict | None = None, ask: str = "") -> dict:
@@ -728,6 +768,7 @@ def choose(cards: list[dict], *, budget: dict | None = None, ask: str = "") -> d
             take(c, "alt", text, "calc")
 
     picks = picks[:MAX_PICKS]
+    asked = asked_amount(ask)
     for p in picks:
         extra = []
         if budget and not budget.get("none") and not budget_miss:
@@ -735,6 +776,8 @@ def choose(cards: list[dict], *, budget: dict | None = None, ask: str = "") -> d
                 extra.append({"text": f"예산 {budget['label']} 안이에요 (배송비 포함 {won(p['total'])})", "basis": "you"})
             else:
                 extra.append({"text": f"상품가 기준 예산 {budget['label']} 안이에요 · {shipping_note(p)}", "basis": "you"})
+        if amount_fits(p, asked):
+            extra.append({"text": f"말씀하신 {asked['text']}에 맞는 양이에요 (상품명 표기 기준)", "basis": "you"})
         if p.get("weight_g") and p["role"] not in ("value", "ample", "house"):
             per = f", 100g당 {won(p['per100g'])}" if p.get("per100g") else ""
             basis_note = (f"상품명 표기 {p['weight_formula']} 계산" if p.get("weight_formula") else "상품명 표기 기준")
@@ -771,8 +814,16 @@ def choose(cards: list[dict], *, budget: dict | None = None, ask: str = "") -> d
     others.sort(key=lambda c: (c["key"] in blemish_keys, c["key"] in bulk_keys))   # 흠과(선물)·대용량은 맨 뒤로
     for rank, c in enumerate(picks + others, 1):
         c["rank"] = rank
+    amount_miss = None
+    if asked and picks and not any(amount_fits(p, asked) for p in picks):
+        sized = [p for p in picks if p.get(asked["field"])]
+        near = min(sized, key=lambda p: abs(p[asked["field"]] - asked["value"])) if sized else None
+        amount_miss = {"asked": asked["text"],
+                       "nearest": ((_wtext if asked["field"] == "weight_g" else _vtext)(near[asked["field"]])
+                                   if near else None),
+                       "in_others": sum(1 for c in others if amount_fits(c, asked))}
     return {"picks": picks, "others": others, "pool": n, "total": len(priced), "budget_miss": budget_miss,
-            "bulk_held": len(bulk_keys)}
+            "bulk_held": len(bulk_keys), "amount_miss": amount_miss}
 
 
 def criteria_line(picks: list[dict], budget: dict | None) -> str:

@@ -309,7 +309,9 @@ def line(ref: dict) -> str:
         cmp = f"{abs(ref['pct'])}% {'높아요' if ref['pct'] > 0 else '낮아요'}"
     text = f"KAMIS {ref['cls']} 시세({day}, {what}) {per} {ref['ref']:,}원 · 이 상품 {per} {ref['own']:,}원으로 {cmp}"
     if ref["cls"] == "도매":
-        text += " (도매가라 소매가보다 낮게 나와요)"
+        # 2026-11-21: 도매 비교에도 품종·등급 차이를 밝힌다 (못난이 소과를 일반 후지 시세와 견줘 '21% 낮아요'로 보이던 문제)
+        text += (" (도매가라 소매가보다 낮게 나와요)" if ref["graded"]
+                 else " (도매가라 소매가보다 낮게 나오고, 품종·등급이 달라 참고용)")
     elif not ref["graded"]:
         text += " (품종·등급이 달라 참고용)"
     return text
