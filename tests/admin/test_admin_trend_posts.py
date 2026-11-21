@@ -71,3 +71,30 @@ def test_bad_edits_are_refused(admin_client, posts_dir):
 def test_alcohol_draft_has_no_products(admin_client, posts_dir):
     r = admin_client.post("/admin/api/trend-posts/draft", json={"keyword": "하이볼"}, headers=H).json()
     assert r["products"] == [] and not r["title"].startswith("[광고]")
+
+
+def test_report_post_through_admin_and_public_routes(admin_client, posts_dir, monkeypatch):
+    """2026-11-21 보고서형 — 관리자에서 데이터 칸을 고치고 보류로 바꿔 게시해도 공개 페이지·/go 가 규칙을 지킨다."""
+    monkeypatch.setenv("TREND_AI_COVER", "0")
+    monkeypatch.delenv("TREND_POST_FORMAT", raising=False)
+    d = admin_client.post("/admin/api/trend-posts/draft", json={"keyword": "대방어"}, headers=H).json()
+    pid = d["id"]
+    assert d["format"] == "report" and d["rules_version"] == "report v1.0" and d["issues"] == []
+    ev = "11월 10일 ○○수산 축제 개막 보도 (출처: https://news.example/a1)"
+    r = admin_client.post(f"/admin/api/trend-posts/{pid}/update",
+                          json={"fields": {"data_events": [ev], "conclusion": "hold"}}, headers=H).json()
+    assert r["data_events"] == [ev] and r["conclusion"] == "hold" and r["issues"] == []
+    admin_client.post(f"/admin/api/trend-posts/{pid}/submit", json={}, headers=H)
+    assert admin_client.post(f"/admin/api/trend-posts/{pid}/approve", json={}, headers=H).json()["status"] == "approved"
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.api.trend_routes import router as public_router
+    pub_app = FastAPI()
+    pub_app.include_router(public_router)
+    public = TestClient(pub_app)
+    page = public.get(f"/trends/{pid}").text
+    assert "① 데이터로 본 변화" in page and 'href="https://news.example/a1"' in page
+    assert "class=pt" not in page and "/go/" not in page and "sponsored" not in page
+    go = public.get(f"/trends/{pid}/go/1", follow_redirects=False)
+    assert go.status_code == 303 and go.headers["location"] == "/trends"          # 보류 글은 판매처 이동 거부

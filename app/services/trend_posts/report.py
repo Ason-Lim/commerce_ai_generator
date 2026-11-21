@@ -34,7 +34,9 @@ HEADS = {"change": "관심 변화", "events": "확인된 관련 행사·보도",
 
 
 def default_format() -> str:
-    """새 사이트 글의 형식 — .env TREND_POST_FORMAT=frame04 로 프레임 0.4 로 되돌릴 수 있다 (기본 report)."""
+    """**새 초안**의 기본 형식 (기본 report). .env TREND_POST_FORMAT=frame04 면 새 초안만 프레임 0.4 로 만든다.
+    이미 만든 글은 저장된 Post.format 대로 그리므로 이 값을 바꿔도 바뀌지 않는다 — 전체 되돌리기가 아님
+    (보고서형으로 게시된 글을 되돌리려면 그 글을 내리고 새로 만든다)."""
     return "frame04" if (os.environ.get("TREND_POST_FORMAT") or "").strip().lower() == "frame04" else FORMAT
 
 

@@ -174,3 +174,21 @@ def test_old_framed_posts_still_render_their_own_way(tmp_path, monkeypatch):
     _, post = _make(tmp_path)
     html = _page(post)
     assert "먼저 답부터" in html and "① 데이터로 본 변화" not in html
+
+
+def test_format_switch_changes_only_new_drafts(tmp_path, monkeypatch):
+    """TREND_POST_FORMAT 은 새 초안의 기본 형식만 바꾼다 — 이미 만든 글은 저장된 format 대로 그린다(전체 되돌리기 아님)."""
+    svc, post = _make(tmp_path)
+    monkeypatch.setenv("TREND_POST_FORMAT", "frame04")
+    assert "① 데이터로 본 변화" in _page(svc.get(post.id))
+    newer, _ = svc.create_from_surge(report(item("방어회")), "방어회", find_products=lambda k: search_result())
+    assert newer.format == "frame04" and "먼저 답부터" in _page(newer)
+
+
+def test_conclusion_switch_rewrites_only_listed_fields(tmp_path):
+    """결론을 바꿀 때 다시 쓰는 칸: 제목·기준·제약·결제 전 확인(·보류면 결론 문단). 요약·데이터 절·상품·출처는 사람이 고친 그대로."""
+    svc, post = _make(tmp_path)
+    edited = svc.update(post.id, {"data_change": ["운영자가 고친 줄"], "summary_lines": ["a", "b", "c"]})
+    held = svc.update(post.id, {"conclusion": "hold"})
+    assert held.data_change == ["운영자가 고친 줄"] and held.summary_lines == ["a", "b", "c"]
+    assert held.products == edited.products and held.sources == edited.sources
