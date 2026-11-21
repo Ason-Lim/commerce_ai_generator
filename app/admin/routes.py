@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from datetime import date, timedelta
@@ -448,6 +449,12 @@ def trends_blog_draft(body: _DraftIn):
     drafts["coupang"]["faq"] = {} if body.hold else {k: [q for q, _ in v] for k, v in
                                                      _faq(first["keywords"], body.questions).items() if v}
     keywords = drafts["naver"]["keywords"]
+    # 2026-11-21 네이버 블로그용: 등록부에서 키워드 칸이 같은 쇼핑커넥트 링크는 자동으로 넣는다 (승인 켜짐일 때만)
+    naver_auto = {}
+    if blog_connect_approved():
+        from app.services.trends import blog_links as bl
+        drafts["naver"]["body"], naver_auto = bl.auto_naver(drafts["naver"]["body"], _connect_options(keywords),
+                                                            surge.DISCLOSURE)
     # 2026-11-20 세부 질문 후보 · 제목 유사도 (네이버 공식 검색 API 블로그 제목, 실패해도 초안은 만든다) — 운영 메모에만
     serp = _blog_serp(keywords)
     status_of = {it["keyword"]: it.get("status") for it in report.get("items") or []}
@@ -462,6 +469,9 @@ def trends_blog_draft(body: _DraftIn):
     for variant, d in drafts.items():
         memo = _operator_memo(needs) if variant == "naver" else ""
         extra = [x.memo_line() for x in subq.values()] + [_ts().memo_line(sims[variant])]
+        if variant == "naver" and naver_auto:
+            extra.append("쇼핑커넥트 링크 자동으로 넣음(등록부 키워드 같음): "
+                         + ", ".join(f"{k} {n}개" for k, n in naver_auto.items()))
         if missing and variant == "coupang":                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
             extra.append("쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing))
         if variant == "coupang" and coupang is not None:   # 2026-11-21 블로그 쿠팡 링크 채널
@@ -486,6 +496,7 @@ def trends_blog_draft(body: _DraftIn):
         _save_cover(path, d.get("cover"))
     _save_serp(folder / f"{stem}.serp.json", keywords, serp, subq)
     out = drafts["naver"]
+    drafts["naver"]["connect_auto"] = naver_auto
     return {**out, "link_needs": needs, "drafts": drafts,
             "subquestions": {k: v.as_dict() for k, v in subq.items()},
             "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in keywords}}
@@ -598,6 +609,7 @@ class _DraftApproveIn(BaseModel):
     file: str = Field(..., max_length=200)
     with_image: bool = False          # gpt-image 보조 그림 1장 (유료, 캡션 앞에 'AI로 만든 그림')
     confirm_similar: bool = False     # 2026-11-21 제목 유사도 '높음'이어도 진행 (관리자가 한 번 확인)
+    confirm_again: bool = False       # 2026-11-21 이미 임시저장한 초안을 고쳐 하나 더 넣기 (관리자가 한 번 확인)
 
 
 def _draft_path_or_404(rel: str) -> Path:
@@ -637,6 +649,19 @@ def trends_blog_draft_approve(body: _DraftApproveIn):
         if sim.get("status") == "ok" else {}
     if sim.get("level") == "높음":
         extra["similar_confirmed"] = True
+    # 2026-11-21 '저장'이 곧 임시저장 — 같은 내용을 두 번 넣지 않고, 이미 넣은 글을 고쳐 다시 넣을 때는 한 번 확인
+    #   (네이버 임시저장 글은 고쳐 쓰는 길이 없어 새 글로 하나 더 들어간다)
+    digest = hashlib.sha256(json.dumps([variant, d["title"], d["tags"], d["body"], body.with_image],
+                                       ensure_ascii=False).encode()).hexdigest()[:16]
+    prev = bas.read_approval(path) or {}
+    if prev.get("status") == "running":
+        return {"file": body.file, "approval": prev, "title_similarity": sim, "skipped": "running"}
+    if prev.get("status") == "done" and prev.get("content_hash") == digest:
+        return {"file": body.file, "approval": prev, "title_similarity": sim, "skipped": "same_content"}
+    if prev.get("status") == "done" and not body.confirm_again:
+        raise HTTPException(409, {"message": "이 초안은 이미 네이버 임시저장함에 있어요. 고친 내용으로 하나 더 넣을까요?",
+                                  "need_confirm": "again", "approved_at": prev.get("approved_at")})
+    extra["content_hash"] = digest
     rec = bas.start(path, variant=variant, title=d["title"], tags=d["tags"], body=d["body"], keywords=keywords,
                     with_image=body.with_image, cover=_read_cover(path), extra=extra)
     return {"file": body.file, "approval": rec, "title_similarity": sim}
@@ -687,7 +712,66 @@ def _draft_warnings(file: str, text: str) -> list[str]:
     return out
 
 
-def _coupang_links(keywords: list[str], channel: str | None = None) -> dict[str, list[dict]]:
+# ── 2026-11-21 초안의 상품 링크 고르기 (네이버 = 등록부 쇼핑커넥트, 쿠팡 = 쿠팡 파트너스 검색) ──────────────
+def _connect_options(keywords: list[str]) -> dict:
+    from app.services.affiliate import connect_registry as reg
+    from app.services.trends import blog_links as bl
+
+    try:
+        rows = reg.rows()
+    except Exception:  # noqa: BLE001 — 등록부를 못 읽어도 초안은 만든다
+        rows = []
+    return bl.connect_options(keywords, rows)
+
+
+@router.get("/admin/api/trends/blog-draft/link-options", dependencies=[api])
+def trends_blog_draft_link_options(file: str = Query(..., max_length=200)):
+    """초안 키워드마다 넣을 수 있는 링크 후보. 네이버 블로그용 = 등록부 쇼핑커넥트 링크, 쿠팡용 = 쿠팡 파트너스 검색 후보
+    (블로그 채널 아이디, 공통 검색 순서 그대로 최대 6개, 주류 제외). 고른 것은 apply-links 로 본문에 넣는다."""
+    from app.services.trends import blog_links as bl
+
+    path = _draft_path_or_404(file)
+    d = _parse_draft(path.read_text(encoding="utf-8"))
+    variant = "coupang" if path.name.endswith(COUPANG_SUFFIX) else "naver"
+    keywords = bl.keywords_of(d["body"])
+    if variant == "naver":
+        opts = _connect_options(keywords)
+        return {"variant": variant, "keywords": keywords, "connect_ok": blog_connect_approved(), **opts}
+    found = _coupang_links(keywords, channel="blog", limit=6)
+    return {"variant": variant, "keywords": keywords, "by_keyword": {k: [{**x, "match": "쿠팡 검색"} for x in v]
+                                                                    for k, v in found.items()}, "all": []}
+
+
+class _ApplyLinksIn(BaseModel):
+    variant: str = Field(..., pattern="^(naver|coupang)$")
+    title: str = Field(..., min_length=1, max_length=200)
+    body: str = Field(..., min_length=1, max_length=50_000)
+    keyword: str = Field(..., min_length=1, max_length=60)
+    links: list[dict] = Field(default_factory=list, max_length=3)
+
+
+@router.post("/admin/api/trends/blog-draft/apply-links", dependencies=[api])
+def trends_blog_draft_apply_links(body: _ApplyLinksIn):
+    """화면의 제목·본문(저장 전 고친 것 포함)에 고른 링크를 넣어 돌려준다. 파일에는 쓰지 않는다 — '저장'을 눌러야 저장."""
+    from app.services.trend_posts import templates
+    from app.services.trends import blog_links as bl, surge
+
+    links = [{"title": str(x.get("title") or "")[:200], "url": str(x.get("url") or "")[:500],
+              "rocket": bool(x.get("rocket"))} for x in body.links]
+    try:
+        if body.variant == "naver":
+            if links and not blog_connect_approved():
+                raise bl.LinkError("쇼핑커넥트 블로그 사용 승인 전이에요 (.env SC_BLOG_APPROVED=1 일 때만 링크를 넣어요).")
+            return {"title": body.title, "body": bl.set_naver_links(body.body, body.keyword, links, surge.DISCLOSURE)}
+        title, text = bl.set_coupang_links(body.title, body.body, body.keyword, links,
+                                           disclosure=surge.COUPANG_DISCLOSURE, site_ops=surge.SITE_OPS,
+                                           ad_prefix=surge.AD_PREFIX, hold_line=templates.HOLD_LINE["blog"])
+        return {"title": title, "body": text}
+    except bl.LinkError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+def _coupang_links(keywords: list[str], channel: str | None = None, limit: int | None = None) -> dict[str, list[dict]]:
     """키워드마다 쿠팡 파트너스 상품 링크 (공통 검색 picks 순서 그대로, 제휴 링크만, 주류 제외). 실패하면 빈 목록.
     2026-11-21: channel='blog' 이면 .env COUPANG_BLOG_SUB_ID 채널로 링크를 받는다(없으면 기본 채널 그대로)."""
     import contextlib
@@ -696,7 +780,7 @@ def _coupang_links(keywords: list[str], channel: str | None = None) -> dict[str,
 
     sub = coupang_api.coupang_blog_sub_id() if channel == "blog" else None
     with coupang_api.sub_id_channel(sub) if sub else contextlib.nullcontext():
-        return _coupang_links_now(keywords)
+        return _coupang_links_now(keywords, limit) if limit else _coupang_links_now(keywords)
 
 
 def _channel_memo() -> str:
@@ -716,7 +800,7 @@ def _faq(keywords: list[str], picked: dict[str, list[str]] | None) -> dict[str, 
     return {kw: subquestions.faq(kw, (picked or {}).get(kw) or []) for kw in keywords if (picked or {}).get(kw)}
 
 
-def _coupang_links_now(keywords: list[str]) -> dict[str, list[dict]]:
+def _coupang_links_now(keywords: list[str], limit: int | None = None) -> dict[str, list[dict]]:
     from app.services.trend_posts import draft as post_draft, policy, wiring
     from app.services.trends import surge
 
@@ -726,11 +810,12 @@ def _coupang_links_now(keywords: list[str]) -> dict[str, list[dict]]:
             out[kw] = []
             continue
         try:
-            found = post_draft.products_from_result(wiring.find_products(kw), keyword=kw)
+            found = post_draft.products_from_result(wiring.find_products(kw), keyword=kw,
+                                                    limit=limit or post_draft.MAX_PRODUCTS)
         except Exception:  # noqa: BLE001 — 쿠팡을 못 불러도 초안은 만든다
             found = []
         out[kw] = [{"title": p.title, "url": p.url, "rocket": p.rocket, "image_url": p.image_url} for p in found
-                   if p.link_type == "affiliate"][:surge.COUPANG_PER_KEYWORD]
+                   if p.link_type == "affiliate"][:limit or surge.COUPANG_PER_KEYWORD]
     return out
 
 

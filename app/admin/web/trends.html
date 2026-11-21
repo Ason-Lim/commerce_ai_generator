@@ -203,7 +203,7 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
   <section id="blog" aria-labelledby="blog-h">
     <h2 id="blog-h">applesodda 블로그 초안</h2>
     <p class="note" id="pick-hint"></p>
-    <p class="lede"><a href="/admin/trends#surge">급상승 키워드 목록</a>에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않아요 — 확인이 끝나면 <b>확인 완료 → 네이버 임시저장</b>을 누르세요. 저장된 내용 그대로 applesodda 임시저장함에 들어가고, 발행은 블로그에서 직접 해요. 쿠팡용은 '고지 → 먼저 답부터 → 고르기 전에 볼 것 → 상품 근거·결제 전 확인 → 구매 전에 알아 둘 것' 순서(프레임 0.4)로 만들어요.</p>
+    <p class="lede"><a href="/admin/trends#surge">급상승 키워드 목록</a>에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않아요 — <b>저장 → 네이버 임시저장</b>을 누르면 저장한 내용 그대로 applesodda 임시저장함에 들어가고(같은 내용은 두 번 넣지 않음), 발행은 블로그에서 직접 해요. 상품 링크는 <b>링크 고르기</b>로 키워드마다 넣어요(네이버 = 등록된 쇼핑커넥트 링크, 쿠팡 = 쿠팡 파트너스 검색). 쿠팡용은 '고지 → 먼저 답부터 → 고르기 전에 볼 것 → 상품 근거·결제 전 확인 → 구매 전에 알아 둘 것' 순서(프레임 0.4)로 만들어요.</p>
     <div class="row"><button class="btn" id="draft">초안 만들기</button>
       <label class="note">쿠팡용 글 틀 <select id="tpl" aria-label="쿠팡용 글 틀"><option value="">자동 (주제별 기본)</option>
         <option value="01">01 첫 구매 안내</option><option value="03">03 용량·수량 선택</option><option value="05">05 주문·수령 일정</option>
@@ -363,17 +363,47 @@ function showDrafts(drafts,head){
      <p class="k">제목</p><input class="d-title" style="width:100%" value="${esc(x.title)}">${simHtml(x.title_similarity)}
      <p class="k">태그 (쉼표로 구분)</p><input class="d-tags" style="width:100%" value="${esc(x.tags.join(", "))}">
      <p class="k">본문</p><textarea class="d-body" style="min-height:320px">${esc(x.body)}</textarea>
-     <div class="row" style="margin-top:8px"><button class="btn primary d-save">저장</button><button class="btn d-copy">본문 복사</button><span class="note d-msg"></span></div>
-     <div class="row" style="margin-top:6px;gap:10px;align-items:center"><button class="btn d-approve">확인 완료 → 네이버 임시저장</button>
-       <label class="note"><input type="checkbox" class="d-img"> 쿠팡 사진 대신 AI 그림 (gpt-image, 유료 · 캡션에 'AI로 만든 그림')</label><br><small class="note">대표 그림은 자동: 구매 글 = 쿠팡 상품 사진 1장, 보류 글 = AI 그림 1장(유료)</small></div>
+     <div class="row" style="margin-top:8px"><button class="btn primary d-save">저장 → 네이버 임시저장</button><button class="btn d-saveonly">저장만</button>
+       <button class="btn d-links">${v==="naver"?"쇼핑커넥트 링크 고르기":"쿠팡 상품 링크 고르기"}</button><button class="btn d-copy">본문 복사</button><span class="note d-msg"></span></div>
+     <div class="row" style="margin-top:6px;gap:10px;align-items:center">
+       <label class="note"><input type="checkbox" class="d-img"> ${v==="naver"?"AI 그림 1장 넣기":"쿠팡 사진 대신 AI 그림"} (gpt-image, 유료 · 캡션에 'AI로 만든 그림')</label><br><small class="note">대표 그림은 자동: 구매 글 = 쿠팡 상품 사진 1장, 보류 글 = AI 그림 1장(유료). 발행은 하지 않아요 — 임시저장함에서 확인 후 직접 발행.</small></div>
+     <div class="d-linkbox" hidden style="border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:8px"></div>
      <div class="note d-appr" style="margin-top:4px"></div></div>`).join("");
    document.querySelectorAll("#bout .draft").forEach(box=>{
      const msg=box.querySelector(".d-msg");
-     box.querySelector(".d-save").onclick=async()=>{msg.textContent="저장 중…";
+     const saveFile=async()=>{msg.textContent="저장 중…";
        try{const r=await api("/admin/api/trends/blog-draft/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({file:box.dataset.file,
          title:box.querySelector(".d-title").value,tags:box.querySelector(".d-tags").value.split(",").map(t=>t.trim()).filter(Boolean),body:box.querySelector(".d-body").value})});
-         msg.textContent="저장했어요"+(r.warnings.length?" — 확인: "+r.warnings.join(" / "):"");msg.style.color=r.warnings.length?"var(--hold)":""}
-       catch(e){msg.textContent="저장 실패: "+e.message}};
+         msg.textContent="저장했어요"+(r.warnings.length?" — 확인: "+r.warnings.join(" / "):"");msg.style.color=r.warnings.length?"var(--hold)":"";return true}
+       catch(e){msg.textContent="저장 실패: "+e.message;return false}};
+     box.querySelector(".d-saveonly").onclick=saveFile;
+     // 2026-11-21 '저장'을 누르면 파일 저장 뒤 바로 네이버 임시저장 (검사에 걸리면 저장만 하고 이유를 보여 줌)
+     box.querySelector(".d-save").onclick=async()=>{if(await saveFile())await approve()};
+     // 2026-11-21 상품 링크 고르기 — 네이버 = 등록부 쇼핑커넥트 링크, 쿠팡 = 쿠팡 파트너스 검색 후보
+     const lbox=box.querySelector(".d-linkbox");
+     box.querySelector(".d-links").onclick=async()=>{lbox.hidden=false;lbox.textContent="링크 후보를 불러오는 중… (쿠팡은 10초쯤)";
+       try{const o=await api("/admin/api/trends/blog-draft/link-options?file="+encodeURIComponent(box.dataset.file));renderLinks(o)}
+       catch(e){lbox.textContent="불러오지 못했어요: "+e.message}};
+     const renderLinks=o=>{const body=box.querySelector(".d-body").value;const naver=o.variant==="naver";
+       const row=(kw,x,i)=>`<label style="display:block;margin:2px 0"><input type="checkbox" class="lk" data-kw="${esc(kw)}" data-i="${i}" ${body.includes(x.url)?"checked":""}> ${esc(x.title)} <small class="note">${esc([x.store,x.keyword&&("키워드 "+x.keyword),x.issued,x.match,x.rocket?"로켓배송":""].filter(Boolean).join(" · "))}</small> <a href="${href(x.url)}" target="_blank" rel="noopener noreferrer"><small>열기</small></a></label>`;
+       const pool={};
+       lbox.innerHTML=(naver&&!o.connect_ok?`<p class="err">쇼핑커넥트 블로그 사용 승인 전이에요 (.env SC_BLOG_APPROVED=1). 승인 뒤에 링크를 넣을 수 있어요.</p>`:"")+
+         `<p class="note" style="margin:0 0 6px">키워드마다 최대 3개. 고른 뒤 <b>이 키워드에 넣기</b> → 본문이 바뀌어요 → <b>저장 → 네이버 임시저장</b>. ${naver?"키워드 칸이 같은 등록 링크는 초안 만들 때 자동으로 들어가요.":"가격은 넣지 않아요 (게시 뒤 바뀌어도 고칠 수 없어서)."}</p>`+
+         o.keywords.map(kw=>{const list=[...(o.by_keyword[kw]||[])];pool[kw]=list;
+           return `<div style="margin:8px 0"><b>■ ${esc(kw)}</b><div class="lk-list" data-kw="${esc(kw)}">${list.length?list.map((x,i)=>row(kw,x,i)).join(""):`<p class="note">${naver?"이 키워드로 등록된 링크가 없어요 — 아래 '등록부 전체'에서 고르거나 브랜드커넥트에서 발급해 주세요.":"쿠팡 후보를 찾지 못했어요 (주류는 넣지 않음)."}</p>`}</div>
+             ${naver&&o.all.length?`<select class="lk-add" data-kw="${esc(kw)}" style="max-width:420px"><option value="">등록부 전체에서 더하기…</option>${o.all.map((x,i)=>`<option value="${i}">${esc(x.title)} (${esc(x.keyword||"키워드 없음")})</option>`).join("")}</select>`:""}
+             <button class="btn lk-go" data-kw="${esc(kw)}">이 키워드에 넣기</button></div>`}).join("");
+       lbox.querySelectorAll(".lk-add").forEach(sel=>sel.onchange=()=>{if(sel.value==="")return;const kw=sel.dataset.kw,x=o.all[+sel.value];
+         if(!pool[kw].some(y=>y.url===x.url)){pool[kw].push({...x,match:"직접 고름"});const lst=lbox.querySelector(`.lk-list[data-kw="${CSS.escape(kw)}"]`);
+           if(pool[kw].length===1)lst.innerHTML="";lst.insertAdjacentHTML("beforeend",row(kw,pool[kw].at(-1),pool[kw].length-1));lst.lastElementChild.querySelector("input").checked=true}
+         sel.value=""});
+       lbox.querySelectorAll(".lk-go").forEach(b=>b.onclick=async()=>{const kw=b.dataset.kw;
+         const picked=[...lbox.querySelectorAll(`.lk[data-kw="${CSS.escape(kw)}"]:checked`)].map(c=>pool[kw][+c.dataset.i]).slice(0,3);
+         try{const r=await api("/admin/api/trends/blog-draft/apply-links",{method:"POST",headers:{"Content-Type":"application/json"},
+             body:JSON.stringify({variant:o.variant,title:box.querySelector(".d-title").value,body:box.querySelector(".d-body").value,keyword:kw,links:picked})});
+           box.querySelector(".d-title").value=r.title;box.querySelector(".d-body").value=r.body;
+           msg.textContent=`'${kw}'에 링크 ${picked.length}개를 넣었어요 — 아직 저장 전이에요`;msg.style.color="var(--hold)"}
+         catch(e){msg.textContent="링크 넣기 실패: "+e.message;msg.style.color="var(--hold)"}})};
      const appr=box.querySelector(".d-appr");
      const showAppr=a=>{if(!a){appr.textContent="";return}
        const st={running:"진행 중",done:"임시저장 완료",error:"실패"}[a.status]||a.status;
@@ -382,20 +412,25 @@ function showDrafts(drafts,head){
      const poll=async(n)=>{try{const r=await api("/admin/api/trends/blog-draft/approval?file="+encodeURIComponent(box.dataset.file));showAppr(r.approval);
        if(r.approval&&r.approval.status==="running"&&n<90)setTimeout(()=>poll(n+1),5000)}catch(e){}};
      poll(80);   // 이전 기록이 있으면 보여 주기 (진행 중이면 이어서 확인)
-     box.querySelector(".d-approve").onclick=async()=>{
-       if(!confirm("저장된 내용 그대로 네이버 블로그 임시저장함에 넣을까요? (발행하지 않아요. 고친 게 있으면 먼저 '저장'을 누르세요.)"))return;
-       appr.textContent="시작하는 중…";
-       const send=confirm_similar=>fetch("/admin/api/trends/blog-draft/approve",{method:"POST",headers:{"Content-Type":"application/json"},
-         body:JSON.stringify({file:box.dataset.file,with_image:box.querySelector(".d-img").checked,confirm_similar})});
-       let r=await send(false);
-       if(r.status===401){location.href="/admin/login?next=/admin/trends";return}
-       let d=await r.json().catch(()=>({}));
-       if(r.status===409&&d.detail&&d.detail.need_confirm==="title_similarity"){   // 2026-11-21: 유사도 '높음' — 한 번 확인
-         const s=d.detail.title_similarity||{};
-         if(!confirm(`제목이 검색 상위 글과 많이 비슷해요 (${s.percent}%).\n가장 비슷한 글: ${s.nearest||""}\n\n그래도 임시저장할까요? (확인한 것은 승인 기록에 남아요)`)){appr.textContent="제목을 고친 뒤 '저장'하고 다시 눌러 주세요.";return}
-         r=await send(true);d=await r.json().catch(()=>({}))}
+     const approve=async()=>{
+       appr.textContent="네이버 임시저장을 시작하는 중…";appr.style.color="";
+       const opt={confirm_similar:false,confirm_again:false};
+       const send=()=>fetch("/admin/api/trends/blog-draft/approve",{method:"POST",headers:{"Content-Type":"application/json"},
+         body:JSON.stringify({file:box.dataset.file,with_image:box.querySelector(".d-img").checked,...opt})});
+       let r,d;
+       for(let n=0;n<3;n++){r=await send();
+         if(r.status===401){location.href="/admin/login?next=/admin/trends";return}
+         d=await r.json().catch(()=>({}));const need=r.status===409&&d.detail&&d.detail.need_confirm;
+         if(need==="title_similarity"){const s=d.detail.title_similarity||{};   // 2026-11-21: 유사도 '높음' — 한 번 확인
+           if(!confirm(`제목이 검색 상위 글과 많이 비슷해요 (${s.percent}%).\n가장 비슷한 글: ${s.nearest||""}\n\n그래도 임시저장할까요? (확인한 것은 승인 기록에 남아요)`)){appr.textContent="저장만 했어요. 제목을 고친 뒤 다시 눌러 주세요.";return}
+           opt.confirm_similar=true;continue}
+         if(need==="again"){   // 이미 임시저장한 초안을 고쳐 다시 — 네이버에는 새 글로 하나 더 들어감
+           if(!confirm("이 초안은 이미 네이버 임시저장함에 있어요.\n고친 내용으로 하나 더 넣을까요? (예전 임시저장 글은 네이버에서 지워 주세요)")){appr.textContent="저장만 했어요 (네이버 임시저장은 그대로).";return}
+           opt.confirm_again=true;continue}
+         break}
        if(!r.ok){const det=d.detail||{};appr.style.color="var(--hold)";
-         appr.innerHTML=esc(det.message||det||("HTTP "+r.status))+(det.issues?"<ul>"+det.issues.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"");return}
+         appr.innerHTML="저장은 했지만 네이버 임시저장은 하지 않았어요 — "+esc(det.message||det||("HTTP "+r.status))+(det.issues?"<ul>"+det.issues.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"");return}
+       if(d.skipped==="same_content"){showAppr(d.approval);appr.insertAdjacentHTML("afterbegin","같은 내용이 이미 임시저장돼 있어 다시 넣지 않았어요 · ");return}
        showAppr(d.approval);setTimeout(()=>poll(0),4000)};
      box.querySelector(".d-copy").onclick=async()=>{try{await navigator.clipboard.writeText(box.querySelector(".d-body").value);msg.textContent="본문을 복사했어요"}catch(e){msg.textContent="복사 실패 — 본문을 직접 선택해 복사해 주세요"}};
    })
