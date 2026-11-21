@@ -45,6 +45,10 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 [hidden]{display:none!important}
 @media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
 kbd{display:inline-block;padding:0 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:#fff;font:600 12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+.steps{list-style:none;padding:0;margin:8px 0 12px;display:grid;gap:10px}.steps>li{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff;font-size:14px}
+.chip small{color:var(--ink3)}.chip button{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;padding:0 2px;color:var(--ink3)}
+#kw-rows tr,#ln-rows tr{cursor:pointer}#kw-rows tr:hover,#ln-rows tr:hover{background:#f4f7fb}
 </style>
 <style>
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -97,6 +101,47 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <div class="kpis" id="kpis"></div>
     <p class="note" id="method"></p>
   </section>
+  <section id="blog" aria-labelledby="blog-h">
+    <h2 id="blog-h">applesodda 블로그 초안</h2>
+    <p class="lede">급상승 키워드나 등록된 쇼핑커넥트 링크로 <b>applesodda 블로그 글 초안</b>을 만들어요. 같은 내용을 두 가지 제휴 방식으로 만들 수 있어요 —
+      <b>네이버 블로그용</b>(쇼핑커넥트 링크)과 <b>쿠팡용</b>(쿠팡 파트너스 링크). 한 글에 두 제휴를 섞지 않아요. 발행은 하지 않고 임시저장함까지만 넣어요.</p>
+    <ol class="steps">
+      <li><b>① 주제</b>
+        <div class="row" style="margin-top:6px"><button class="btn" id="pick-surge">급상승 키워드에서 고르기</button><button class="btn" id="pick-link">등록된 쇼핑커넥트 링크에서 고르기</button>
+          <button class="btn" id="pick-clear" hidden>모두 빼기</button></div>
+        <div id="pick-chips" class="chips" aria-live="polite"></div></li>
+      <li><b>② 만들 글</b>
+        <div class="row" style="margin-top:6px">
+          <label><input type="checkbox" id="v-naver" checked> 네이버 블로그용 <small class="note">쇼핑커넥트 링크 · 네이버 쇼핑커넥트 고지</small></label>
+          <label><input type="checkbox" id="v-coupang" checked> 쿠팡용 <small class="note">쿠팡 파트너스 링크 · 쿠팡 고지</small></label></div>
+        <div id="coupang-opts" class="row" style="margin:4px 0 0 22px">
+          <label class="note">쿠팡용 글 틀 <select id="tpl" aria-label="쿠팡용 글 틀"><option value="">자동 (주제별 기본)</option>
+            <option value="01">01 첫 구매 안내</option><option value="03">03 용량·수량 선택</option><option value="05">05 주문·수령 일정</option>
+            <option value="06">06 두 상품 비교</option><option value="14">14 선물 선택</option><option value="26">26 요리 재료 연결</option>
+            <option value="28">28 계절·행사 준비</option><option value="32">32 유행 상품 구매 전 검토</option></select></label>
+          <label class="note"><input type="checkbox" id="hold"> 구매 보류 결론 (링크·광고 고지 없이 '지금 꼭 사야 할까' 글)</label></div></li>
+      <li><b>③ 초안 만들기</b> <span class="note">→ 아래에서 고치고 링크를 바꾼 뒤 <b>저장 → 네이버 임시저장</b></span>
+        <div class="row" style="margin-top:6px"><button class="btn primary" id="draft">초안 만들기</button><span class="note" id="dnote"></span></div></li>
+    </ol>
+    <div class="row"><select id="saved-drafts" aria-label="저장된 초안" style="min-width:320px"><option value="">저장된 초안 불러오기…</option></select>
+      <button class="btn" id="saved-open">열기</button><button class="btn" id="saved-reload">목록 새로고침</button></div>
+    <div id="bout"></div>
+  </section>
+  <dialog id="kw-dlg" aria-labelledby="kw-dlg-h" style="border:1px solid var(--line);border-radius:14px;padding:16px 18px;width:min(760px,96vw)">
+    <div class="row" style="justify-content:space-between"><h2 id="kw-dlg-h" style="margin:0">급상승 키워드에서 고르기</h2><button class="btn" data-close>닫기</button></div>
+    <p class="note" style="margin:4px 0 8px">키워드를 누르면 그 키워드로 정하고 닫혀요. 여러 개(최대 3개)는 왼쪽 칸을 체크한 뒤 <b>고른 것으로</b>.
+      리포트 <select id="kw-date" aria-label="리포트 날짜"></select></p>
+    <div class="scroll" style="max-height:60vh"><table><thead><tr><th></th><th>키워드</th><th>상태</th><th>평소 대비</th><th>시작</th><th>쇼핑커넥트</th><th>계기(추정)</th></tr></thead><tbody id="kw-rows"></tbody></table></div>
+    <div class="row" style="margin-top:8px"><button class="btn primary" id="kw-ok">고른 것으로</button><span class="note" id="kw-note"></span></div>
+  </dialog>
+  <dialog id="ln-dlg" aria-labelledby="ln-dlg-h" style="border:1px solid var(--line);border-radius:14px;padding:16px 18px;width:min(820px,96vw)">
+    <div class="row" style="justify-content:space-between"><h2 id="ln-dlg-h" style="margin:0">등록된 쇼핑커넥트 링크에서 고르기</h2><button class="btn" data-close>닫기</button></div>
+    <p class="note" style="margin:4px 0 8px">고른 링크의 <b>키워드</b>가 글 주제가 되고, 네이버 블로그용 초안에 그 링크가 들어가요. 초안은 급상승 리포트 데이터로 쓰므로
+      <b>최근 30일 리포트에 있는 키워드</b>만 만들 수 있어요(없으면 알려 드려요). 키워드당 최대 3개.</p>
+    <input id="ln-q" placeholder="상품명·키워드로 찾기" aria-label="링크 찾기" style="width:100%;margin-bottom:6px">
+    <div class="scroll" style="max-height:55vh"><table><thead><tr><th></th><th>상품명</th><th>키워드</th><th>스토어</th><th>발급일</th></tr></thead><tbody id="ln-rows"></tbody></table></div>
+    <div class="row" style="margin-top:8px"><button class="btn primary" id="ln-ok">이 링크로 초안 주제 정하기</button><span class="note" id="ln-note"></span></div>
+  </dialog>
   <section id="requests" aria-labelledby="req-h">
     <h2 id="req-h">쇼핑커넥트 발급 요청 <span class="pill p-hold" id="req-n" hidden></span></h2>
     <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요 — <b>발급할 키워드 할 일 목록</b>이에요. 요청 횟수가 많은 것부터 하세요. 주류는 올리지 않아요.
@@ -200,21 +245,7 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <h2 id="detail-h">비교 분석</h2>
     <div id="dout"><p class="note">급상승 키워드 목록에서 키워드를 골라 주세요.</p></div>
   </section>
-  <section id="blog" aria-labelledby="blog-h">
-    <h2 id="blog-h">applesodda 블로그 초안</h2>
-    <p class="note" id="pick-hint"></p>
-    <p class="lede"><a href="/admin/trends#surge">급상승 키워드 목록</a>에서 체크한 키워드(없으면 상위 3개)로 글 초안을 만들어요. 네이버 블로그용(쇼핑커넥트만)과 쿠팡용(쿠팡만) 두 판을 만들고, 제목·태그·본문을 고쳐 저장할 수 있어요. 발행하지 않아요 — <b>저장 → 네이버 임시저장</b>을 누르면 저장한 내용 그대로 applesodda 임시저장함에 들어가고(같은 내용은 두 번 넣지 않음), 발행은 블로그에서 직접 해요. 상품 링크는 <b>링크 고르기</b>로 키워드마다 넣어요(네이버 = 등록된 쇼핑커넥트 링크, 쿠팡 = 쿠팡 파트너스 검색). 쿠팡용은 '고지 → 먼저 답부터 → 고르기 전에 볼 것 → 상품 근거·결제 전 확인 → 구매 전에 알아 둘 것' 순서(프레임 0.4)로 만들어요.</p>
-    <div class="row"><button class="btn" id="draft">초안 만들기</button>
-      <label class="note">쿠팡용 글 틀 <select id="tpl" aria-label="쿠팡용 글 틀"><option value="">자동 (주제별 기본)</option>
-        <option value="01">01 첫 구매 안내</option><option value="03">03 용량·수량 선택</option><option value="05">05 주문·수령 일정</option>
-        <option value="06">06 두 상품 비교</option><option value="14">14 선물 선택</option><option value="26">26 요리 재료 연결</option>
-        <option value="28">28 계절·행사 준비</option><option value="32">32 유행 상품 구매 전 검토</option></select></label>
-      <label class="note"><input type="checkbox" id="hold"> 구매 보류 결론 (쿠팡용에 링크·광고 고지 넣지 않음)</label>
-      <span class="note" id="dnote"></span></div>
-    <div class="row"><select id="saved-drafts" aria-label="저장된 초안" style="min-width:320px"><option value="">저장된 초안 불러오기…</option></select>
-      <button class="btn" id="saved-open">열기</button><button class="btn" id="saved-reload">목록 새로고침</button></div>
-    <div id="bout"></div>
-  </section>
+
 </main>
 </div>
 <script>
@@ -325,14 +356,85 @@ $("#date").onchange=e=>{load(e.target.value);reqTrendsLabel()};
 function reqTrendsLabel(){const b=$("#req-trends"),v=$("#date").value;if(b)b.textContent=v&&v!=="리포트 없음"?`급상승 키워드 쇼핑 링크 달기 (${v})`:"급상승 키워드 쇼핑 링크 달기"}
 $("#run").onclick=async()=>{const d=await api("/admin/api/trends/run",{method:"POST"});job(d.job);
   const t=setInterval(async()=>{const s=await api("/admin/api/trends");job(s.job);if(!s.job.running){clearInterval(t);load()}},5000)};
-window.pickHint=()=>{const p=[...document.querySelectorAll(".pick:checked")].map(x=>x.value);const el=$("#pick-hint");if(!el)return;
-  el.innerHTML=p.length?`초안 키워드: <b>${p.slice(0,5).map(esc).join(", ")}</b>${p.length>5?" (앞 5개만)":""} — <a href="/admin/trends#surge">급상승 키워드 목록에서 바꾸기</a>`
-    :`체크한 키워드가 없어 급상승 상위 3개로 만들어요 — <a href="/admin/trends#surge">급상승 키워드 목록에서 고르기</a>`};
-document.addEventListener("change",e=>{if(e.target.classList&&e.target.classList.contains("pick"))window.pickHint()});
-window.pickHint();
+// ── 2026-11-21 화면 재설계: 블로그 초안 주제 고르기 (화면 안 창 — 고르면 닫히고 초안 자리로 돌아옴) ──
+const SEL={date:null,keywords:[],links:{}};   // links = {키워드: [{title,url}]} — 네이버 블로그용에 넣을 쇼핑커넥트 링크
+const MAXKW=3;
+const repDate=()=>{const v=$("#date").value;return v&&v!=="리포트 없음"?v:null};
+function renderChips(){const box=$("#pick-chips");if(!box)return;
+  $("#pick-clear").hidden=!SEL.keywords.length;
+  box.innerHTML=SEL.keywords.length?SEL.keywords.map(k=>{const n=(SEL.links[k]||[]).length;
+      return `<span class="chip"><b>${esc(k)}</b><small>${n?"쇼핑커넥트 링크 "+n+"개 고름":"링크는 자동(등록부 키워드 같은 것)"}</small><button type="button" data-rm="${esc(k)}" aria-label="${esc(k)} 빼기">×</button></span>`}).join("")+
+      `<span class="note" style="align-self:center">리포트 ${esc(SEL.date||repDate()||"")}</span>`
+    :`<span class="note">아직 고르지 않았어요 — 그대로 만들면 최신 리포트의 급상승 상위 ${MAXKW}개로 만들어요.</span>`;
+  box.querySelectorAll("button[data-rm]").forEach(b=>b.onclick=()=>{SEL.keywords=SEL.keywords.filter(k=>k!==b.dataset.rm);delete SEL.links[b.dataset.rm];
+    document.querySelectorAll(".pick").forEach(c=>{if(c.value===b.dataset.rm)c.checked=false});renderChips()})}
+window.pickHint=renderChips;
+function setKeywords(date,kws,links){
+  if(SEL.date&&date&&SEL.date!==date){SEL.keywords=[];SEL.links={}}
+  SEL.date=date;for(const k of kws)if(!SEL.keywords.includes(k))SEL.keywords.push(k);
+  for(const [k,v] of Object.entries(links||{}))SEL.links[k]=v.slice(0,3);
+  const over=SEL.keywords.length>MAXKW;if(over){for(const k of SEL.keywords.slice(MAXKW))delete SEL.links[k];SEL.keywords=SEL.keywords.slice(0,MAXKW)}
+  renderChips();$("#dnote").textContent=over?`한 글에는 키워드 ${MAXKW}개까지예요 — 앞의 ${MAXKW}개만 남겼어요.`:"";
+  $("#blog").scrollIntoView({block:"start"})}
+// 급상승 리포트 표의 체크칸도 같은 선택으로 (급상승 키워드 탭에서 체크하고 넘어온 경우)
+document.addEventListener("change",e=>{if(!(e.target.classList&&e.target.classList.contains("pick")))return;const k=e.target.value;
+  if(e.target.checked){if(SEL.date&&SEL.date!==repDate()){SEL.keywords=[];SEL.links={}}SEL.date=repDate();if(!SEL.keywords.includes(k)&&SEL.keywords.length<MAXKW)SEL.keywords.push(k)}
+  else{SEL.keywords=SEL.keywords.filter(x=>x!==k);delete SEL.links[k]}renderChips()});
+$("#pick-clear").onclick=()=>{SEL.keywords=[];SEL.links={};document.querySelectorAll(".pick").forEach(c=>c.checked=false);renderChips()};
+document.querySelectorAll("dialog [data-close]").forEach(b=>b.onclick=()=>b.closest("dialog").close());
+// ① 급상승 키워드 창
+function kwRows(){const tb=$("#kw-rows");const items=(REPORT&&REPORT.items)||[];
+  const linked=new Set(LINKROWS.map(r=>(r["키워드"]||"").replace(/\s/g,"")));
+  tb.innerHTML=items.length?items.map((it,i)=>{const s=STATUS[it.status]||[it.status,"p-off"];
+    return `<tr data-i="${i}"><td><input type="checkbox" class="kwc" value="${esc(it.keyword)}" ${SEL.keywords.includes(it.keyword)&&SEL.date===repDate()?"checked":""} aria-label="${esc(it.keyword)} 고르기"></td>
+      <td><b>${esc(it.keyword)}</b></td><td><span class="pill ${s[1]}">${s[0]}</span></td><td>${it.ratio_recent}배</td><td>${esc((it.onset||"-").slice(5))}</td>
+      <td>${linked.has(it.keyword.replace(/\s/g,""))?'<span class="pill p-ok">등록됨</span>':'<span class="note">없음</span>'}</td>
+      <td><small>${it.cause?esc(it.cause.cause):"—"}</small></td></tr>`}).join("")
+    :`<tr><td colspan="7" class="note">이 날짜 리포트에 급상승 키워드가 없어요.</td></tr>`;
+  tb.querySelectorAll("tr[data-i]").forEach(tr=>tr.onclick=e=>{if(e.target.classList.contains("kwc"))return;
+    const it=REPORT.items[+tr.dataset.i];SEL.keywords=[];SEL.links={};setKeywords(repDate(),[it.keyword]);$("#kw-dlg").close()})}
+$("#pick-surge").onclick=()=>{const d=$("#kw-date");d.innerHTML=$("#date").innerHTML;d.value=$("#date").value;$("#kw-note").textContent="";kwRows();$("#kw-dlg").showModal()};
+$("#kw-date").onchange=async e=>{$("#date").value=e.target.value;await load(e.target.value);kwRows()};
+$("#kw-ok").onclick=()=>{const ks=[...document.querySelectorAll("#kw-rows .kwc:checked")].map(c=>c.value);
+  if(!ks.length){$("#kw-note").textContent="키워드를 하나 이상 체크해 주세요.";return}
+  if(ks.length>MAXKW){$("#kw-note").textContent=`한 글에는 ${MAXKW}개까지예요.`;return}
+  SEL.keywords=[];SEL.links={};setKeywords(repDate(),ks);$("#kw-dlg").close()};
+// ① 등록된 링크 창
+function lnRows(){const q=$("#ln-q").value.trim().replace(/\s/g,"");const tb=$("#ln-rows");
+  const rows=LINKROWS.map((r,i)=>[r,i]).filter(([r])=>!q||((r["상품명"]||"")+(r["키워드"]||"")).replace(/\s/g,"").includes(q)).slice(0,120);
+  tb.innerHTML=rows.length?rows.map(([r,i])=>`<tr data-i="${i}"><td><input type="checkbox" class="lnc" value="${i}" aria-label="${esc(r["상품명"])} 고르기"></td><td>${esc(r["상품명"])}</td>
+      <td>${r["키워드"]?esc(r["키워드"]):'<span class="pill p-hold">키워드 없음</span>'}</td><td>${esc(r["스토어명"]||"")}</td><td>${esc(r["링크 발급일"]||"")}</td></tr>`).join("")
+    :`<tr><td colspan="5" class="note">${LINKROWS.length?"찾는 링크가 없어요.":"등록된 링크가 없어요."}</td></tr>`;
+  tb.querySelectorAll("tr[data-i]").forEach(tr=>tr.onclick=e=>{if(e.target.classList.contains("lnc"))return;const c=tr.querySelector(".lnc");c.checked=!c.checked})}
+$("#pick-link").onclick=async()=>{if(!LINKROWS.length)await loadLinks().catch(()=>{});$("#ln-q").value="";$("#ln-note").textContent="";lnRows();$("#ln-dlg").showModal()};
+$("#ln-q").oninput=lnRows;
+$("#ln-ok").onclick=async()=>{const rows=[...document.querySelectorAll("#ln-rows .lnc:checked")].map(c=>LINKROWS[+c.value]);
+  if(!rows.length){$("#ln-note").textContent="링크를 하나 이상 체크해 주세요.";return}
+  if(await pickLinks(rows,$("#ln-note")))$("#ln-dlg").close()};
+async function pickLinks(rows,note){note=note||$("#dnote");
+  const noKw=rows.filter(r=>!(r["키워드"]||"").trim());
+  if(noKw.length){note.textContent=`키워드가 비어 있는 링크가 있어요: ${noKw.map(r=>r["상품명"]).join(", ")} — 등록부에서 키워드를 채워 주세요.`;return false}
+  const by={};for(const r of rows){const k=r["키워드"].trim();(by[k]=by[k]||[]).push({title:r["상품명"],url:r["쇼핑커넥트 링크"]})}
+  const kws=Object.keys(by).slice(0,MAXKW);
+  note.textContent="이 키워드가 들어 있는 급상승 리포트를 찾는 중…";
+  try{const f=await api("/admin/api/trends/report-for-keywords?keywords="+encodeURIComponent(kws.join(",")));
+    if(!f.date){note.textContent=`최근 30일 급상승 리포트에 '${kws.join(", ")}'가 없어요 — 초안은 리포트 데이터로 쓰기 때문에 지금은 만들 수 없어요. 급상승 키워드에서 골라 주세요.`;return false}
+    if($("#date").value!==f.date){$("#date").value=f.date;await load(f.date)}
+    SEL.keywords=[];SEL.links={};
+    setKeywords(f.date,f.found,Object.fromEntries(f.found.map(k=>[k,by[k]])));
+    $("#dnote").textContent=f.missing.length?`리포트(${f.date})에 없는 키워드는 뺐어요: ${f.missing.join(", ")}`:`리포트 ${f.date} 데이터로 만들어요.`;
+    location.hash="#blog";return true}
+  catch(e){note.textContent=e.message;return false}}
+// ② 만들 글
+const syncVariants=()=>{$("#coupang-opts").style.display=$("#v-coupang").checked?"":"none"};
+$("#v-coupang").onchange=syncVariants;syncVariants();
+renderChips();
 let LASTREQ=null;   // 2026-11-21: 세부 질문을 골라 다시 만들 때 같은 조건으로
-$("#draft").onclick=()=>{const picks=[...document.querySelectorAll(".pick:checked")].map(x=>x.value).slice(0,5);
-  LASTREQ={date:$("#date").value||null,keywords:picks.length?picks:null,template:$("#tpl").value||null,hold:$("#hold").checked};makeDraft(null)};
+$("#draft").onclick=()=>{const variants=["naver","coupang"].filter(v=>$("#v-"+v).checked);
+  if(!variants.length){$("#dnote").textContent="만들 글(네이버 블로그용·쿠팡용)을 하나 이상 골라 주세요.";return}
+  const connect=Object.fromEntries(Object.entries(SEL.links).filter(([k,v])=>SEL.keywords.includes(k)&&v.length).map(([k,v])=>[k,v.map(x=>x.url)]));
+  LASTREQ={date:SEL.keywords.length?SEL.date:(repDate()||null),keywords:SEL.keywords.length?SEL.keywords:null,template:$("#tpl").value||null,
+    hold:$("#v-coupang").checked&&$("#hold").checked,variants,connect:Object.keys(connect).length?connect:null};$("#dnote").textContent="만드는 중… (쿠팡 검색이 있으면 10~20초)";makeDraft(null)};
 function subqHtml(sq,picked){   // 2026-11-21 결정: 답 문장이 있는 질문만 고를 수 있음, 나머지는 다음 글 주제 후보
   const ks=Object.keys(sq||{});if(!ks.length)return"";
   return `<div class="note" style="margin-bottom:10px" id="subq"><b>세부 질문 후보</b> <small>(블로그 제목 기준 — 고른 질문은 쿠팡용 본문 '자주 찾는 질문'에 들어가요. 회색은 다음 글 주제로)</small>`+
@@ -514,13 +616,15 @@ $("#link-save").onclick=async()=>{const rows=[...$("#link-rows").children].map(r
   catch(e){$("#link-msg").textContent="저장 실패: "+e.message}
   finally{$("#link-save").disabled=false}};
 $("#req-link").onclick=()=>openLinks([{}]);$("#links-add").onclick=()=>openLinks([{}]);
-async function loadLinks(){const d=await api("/admin/api/connect/links");const n=$("#links-n");n.hidden=!d.count;n.textContent=d.count+"개";
+let LINKROWS=[];   // 2026-11-21 등록부 줄 (초안 주제 고르기 창이 같이 씀)
+async function loadLinks(){const d=await api("/admin/api/connect/links");LINKROWS=d.items;const n=$("#links-n");n.hidden=!d.count;n.textContent=d.count+"개";
   const won=v=>v&&!isNaN(+v)?Number(v).toLocaleString()+"원":"";
   const bad=d.items.filter(r=>r._owner).length;$("#links-note").textContent=bad?`링크와 상품이 어긋난 줄 ${bad}개 — 빨간 표시를 확인해 주세요.`:"";
   $("#links-rows").innerHTML=d.items.length?d.items.map(r=>`<tr><td>${esc(r["상품명"])}${r._owner?`<br><span class="pill p-err">이 링크는 브랜드커넥트에서 '${esc(r._owner.title)}'(${esc(r._owner.mall||"")}) 상품 링크예요</span>`:""}</td><td>${esc(r["스토어명"])}</td><td>${esc(r["키워드"])}</td>
     <td>${esc(won(r["판매가"]))}${r["정가"]?`<br><small><s>${esc(won(r["정가"]))}</s>${r["수수료율(%)"]?" · 수수료 "+esc(r["수수료율(%)"])+"%":""}</small>`:(r["수수료율(%)"]?`<br><small>수수료 ${esc(r["수수료율(%)"])}%</small>`:"")}</td>
     <td><a href="${href(r["쇼핑커넥트 링크"])}" target="_blank" rel="noopener noreferrer">${esc(r["쇼핑커넥트 링크"])}</a></td><td>${esc(r["링크 발급일"])}</td>
-    <td><button class="btn" data-del="${esc(r["쇼핑커넥트 링크"])}">삭제</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">등록된 링크가 없어요.</td></tr>`;
+    <td><button class="btn" data-draft="${esc(r["쇼핑커넥트 링크"])}" title="이 링크의 키워드로 블로그 초안 주제를 정해요">이 링크로 초안</button> <button class="btn" data-del="${esc(r["쇼핑커넥트 링크"])}">삭제</button></td></tr>`).join(""):`<tr><td colspan="7" class="note">등록된 링크가 없어요.</td></tr>`;
+  document.querySelectorAll("#links-rows button[data-draft]").forEach(b=>b.onclick=()=>pickLinks(LINKROWS.filter(r=>r["쇼핑커넥트 링크"]===b.dataset.draft)));
   document.querySelectorAll("#links-rows button[data-del]").forEach(b=>b.onclick=async()=>{if(!confirm("이 링크를 등록부에서 지울까요?"))return;
     try{await api("/admin/api/connect/links/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({link:b.dataset.del})});loadLinks();loadReq().catch(()=>{})}
     catch(e){$("#links-note").textContent=e.message}})}

@@ -413,6 +413,25 @@ def trends_run():
     return {"started": True, "job": dict(_TREND_JOB)}
 
 
+@router.get("/admin/api/trends/report-for-keywords", dependencies=[api])
+def trends_report_for_keywords(keywords: str = Query(..., max_length=300)):
+    """2026-11-21 등록된 링크로 초안을 시작할 때 — 그 키워드들이 들어 있는 가장 최근 급상승 리포트(30일 안) 날짜.
+    가장 많이 들어 있는 리포트, 같으면 최근 것. 초안은 리포트 데이터로 쓰므로 리포트에 없는 키워드는 missing."""
+    from app.services.trends import surge
+
+    want = [k.strip() for k in keywords.split(",") if k.strip()][:5]
+    best = None
+    for day in reversed(surge.history_dates()[-30:]):
+        rep = surge.load(day) or {}
+        have = {it.get("keyword") for it in rep.get("items") or []}
+        found = [k for k in want if k in have]
+        if found and (best is None or len(found) > len(best["found"])):
+            best = {"date": day, "found": found, "missing": [k for k in want if k not in have]}
+        if best and not best["missing"]:
+            break
+    return best or {"date": None, "found": [], "missing": want}
+
+
 class _DraftIn(BaseModel):
     date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
     keywords: list[str] | None = Field(None, max_length=5)
@@ -421,6 +440,9 @@ class _DraftIn(BaseModel):
     hold: bool = False               # 2026-11-20 구매 보류 결론 — 쿠팡용에 링크·고지를 넣지 않는다
     # 2026-11-21 관리자가 고른 세부 질문 {키워드: [면 id]} — 답 문장이 있는 면만 쿠팡용 본문 '자주 찾는 질문'으로
     questions: dict[str, list[str]] | None = Field(None, max_length=5)
+    # 2026-11-21 화면 재설계: 만들 글(네이버 블로그용·쿠팡용 중 고른 것만)과 사람이 고른 쇼핑커넥트 링크 {키워드: [링크]}
+    variants: list[str] = Field(default_factory=lambda: ["naver", "coupang"], min_length=1, max_length=2)
+    connect: dict[str, list[str]] | None = Field(None, max_length=5)
 
 
 @router.post("/admin/api/trends/blog-draft", dependencies=[api])
@@ -434,10 +456,14 @@ def trends_blog_draft(body: _DraftIn):
     report = surge.load(body.date)
     if not report:
         raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들어 주세요.")
+    want = [v for v in ("naver", "coupang") if v in body.variants]
+    if not want:
+        raise HTTPException(400, "만들 글(네이버 블로그용·쿠팡용)을 하나 이상 골라 주세요.")
     try:
         first = surge.blog_draft(report, body.keywords)
-        # 2026-11-20 v1.3: 보류 결론이면 쿠팡 상품을 찾지 않는다 (링크를 넣지 않으므로)
-        coupang = _coupang_links(first["keywords"], channel="blog") if body.with_coupang and not body.hold else None
+        # 2026-11-20 v1.3: 보류 결론이면 쿠팡 상품을 찾지 않는다 (링크를 넣지 않으므로). 쿠팡용을 안 만들면 찾지 않음
+        coupang = _coupang_links(first["keywords"], channel="blog") \
+            if body.with_coupang and not body.hold and "coupang" in want else None
         recipes = _blog_recipes(report, first["keywords"], coupang or {}, body.template)
         drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
                                             connect_ok=blog_connect_approved()),
@@ -448,13 +474,28 @@ def trends_blog_draft(body: _DraftIn):
         raise HTTPException(400, str(exc)) from exc
     drafts["coupang"]["faq"] = {} if body.hold else {k: [q for q, _ in v] for k, v in
                                                      _faq(first["keywords"], body.questions).items() if v}
-    keywords = drafts["naver"]["keywords"]
-    # 2026-11-21 네이버 블로그용: 등록부에서 키워드 칸이 같은 쇼핑커넥트 링크는 자동으로 넣는다 (승인 켜짐일 때만)
-    naver_auto = {}
-    if blog_connect_approved():
+    drafts = {v: drafts[v] for v in want}
+    keywords = first["keywords"]
+    # 2026-11-21 네이버 블로그용: 사람이 고른 쇼핑커넥트 링크(connect) 먼저, 그 밖 키워드는 등록부에서 키워드 칸이 같은 링크를
+    # 자동으로 넣는다 (승인 켜짐일 때만)
+    naver_auto: dict[str, int] = {}
+    naver_picked: dict[str, int] = {}
+    if "naver" in drafts and blog_connect_approved():
         from app.services.trends import blog_links as bl
-        drafts["naver"]["body"], naver_auto = bl.auto_naver(drafts["naver"]["body"], _connect_options(keywords),
-                                                            surge.DISCLOSURE)
+        opts = _connect_options(keywords)
+        by_url = {o["url"]: o for o in opts["all"]}
+        by_url.update({o["url"]: o for v in opts["by_keyword"].values() for o in v})
+        text = drafts["naver"]["body"]
+        for kw, urls in (body.connect or {}).items():
+            chosen = [by_url[u] for u in urls if u in by_url][:bl.MAX_LINKS]
+            if kw in keywords and chosen:
+                try:
+                    text = bl.set_naver_links(text, kw, chosen, surge.DISCLOSURE)
+                    naver_picked[kw] = len(chosen)
+                except bl.LinkError:
+                    pass
+        rest = {"by_keyword": {k: v for k, v in opts["by_keyword"].items() if k not in naver_picked}}
+        drafts["naver"]["body"], naver_auto = bl.auto_naver(text, rest, surge.DISCLOSURE)
     # 2026-11-20 세부 질문 후보 · 제목 유사도 (네이버 공식 검색 API 블로그 제목, 실패해도 초안은 만든다) — 운영 메모에만
     serp = _blog_serp(keywords)
     status_of = {it["keyword"]: it.get("status") for it in report.get("items") or []}
@@ -469,6 +510,8 @@ def trends_blog_draft(body: _DraftIn):
     for variant, d in drafts.items():
         memo = _operator_memo(needs) if variant == "naver" else ""
         extra = [x.memo_line() for x in subq.values()] + [_ts().memo_line(sims[variant])]
+        if variant == "naver" and naver_picked:
+            extra.append("고른 쇼핑커넥트 링크를 넣음: " + ", ".join(f"{k} {n}개" for k, n in naver_picked.items()))
         if variant == "naver" and naver_auto:
             extra.append("쇼핑커넥트 링크 자동으로 넣음(등록부 키워드 같음): "
                          + ", ".join(f"{k} {n}개" for k, n in naver_auto.items()))
@@ -495,8 +538,10 @@ def trends_blog_draft(body: _DraftIn):
         d["title_similarity"] = sims[variant]
         _save_cover(path, d.get("cover"))
     _save_serp(folder / f"{stem}.serp.json", keywords, serp, subq)
-    out = drafts["naver"]
-    drafts["naver"]["connect_auto"] = naver_auto
+    out = drafts.get("naver") or next(iter(drafts.values()))
+    if "naver" in drafts:
+        drafts["naver"]["connect_auto"] = naver_auto
+        drafts["naver"]["connect_picked"] = naver_picked
     return {**out, "link_needs": needs, "drafts": drafts,
             "subquestions": {k: v.as_dict() for k, v in subq.items()},
             "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in keywords}}
