@@ -1140,6 +1140,31 @@ def ai_knowledge():
             "prices": pricing._table(), "prices_checked": pricing.CHECKED}
 
 
+# ── 로컬 모델 학습 데이터셋 (2026-11-21) — 짧은 정리 작업의 문장·정답, 사람이 확인(gold/고침/버림) ──
+class _DatasetReviewIn(BaseModel):
+    verdict: str = Field(..., pattern="^(ok|fix|drop)$")
+    output: dict | None = None
+    note: str | None = Field(None, max_length=200)
+
+
+@router.get("/admin/api/ai/dataset", dependencies=[api])
+def ai_dataset(task: str | None = Query(None, max_length=40)):
+    from app.services.ai import dataset
+
+    st = dataset.DatasetStore()
+    return {"stats": st.stats(), "queue": st.queue(task, 50), "tasks": sorted(dataset.tasks())}
+
+
+@router.post("/admin/api/ai/dataset/{eid}/review", dependencies=[api])
+def ai_dataset_review(eid: int, body: _DatasetReviewIn):
+    from app.services.ai import dataset
+
+    try:
+        return dataset.DatasetStore().review(eid, body.verdict, output=body.output, note=body.note)
+    except dataset.DatasetError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
 # ── 추천 근거 (1단계, 2026-11-10) — 고객 화면과 같은 선택을 읽기만 하고 근거를 나눠 보여 준다 ──
 @router.get("/admin/evidence")
 def admin_evidence(request: Request):

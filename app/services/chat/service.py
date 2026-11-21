@@ -218,6 +218,9 @@ class ChatService:
                      answers: dict | None = None, chip: str | None = None, owner: str | None = None,
                      fresh: bool = False) -> dict:
         sid = session_id if isinstance(session_id, str) and SESSION_RE.fullmatch(session_id) else str(uuid.uuid4())
+        from app.services.ai import dataset as _dataset      # 2026-11-21: 학습 데이터에 클릭 신호를 붙일 세션 (임시 칸에만)
+
+        _dataset.CURRENT_SESSION.set(sid)
         recipe_sid = "recipe:" + sid
         text = (message or chip or "").strip()
 
