@@ -207,13 +207,23 @@ def fix_typos(text: str) -> str:
     return text
 
 
+# '생'으로 시작하지만 '생 ○○'(날것)이 아닌 낱말 — 붙여 쓴 '생올리브'를 볼 때 뺀다
+_SAENG_WORDS = frozenset({"생강", "생수", "생크림", "생크림케이크", "생선", "생일", "생맥주", "생막걸리", "생면", "생라면",
+                          "생김", "생강차", "생강청", "생활", "생산", "생산지", "생과일주스", "생크림빵", "생초콜릿"})
+
+
 def fresh_request(text: str, query: str) -> str | None:
-    """'생 올리브'·'생 연어' — 띄어 쓴 '생' 뒤의 품목 (없으면 None). '생수'·'생크림'·'생일'처럼 붙은 말은 보지 않는다."""
+    """'생 올리브'·'생올리브'·'생 연어' — '생' 뒤의 품목 (없으면 None).
+    2026-11-21 (2차 확인): 붙여 쓴 '생올리브'도 본다. '생수'·'생크림'·'생강'·'생일' 같은 낱말과 한 글자 품목('생닭')은 보지 않는다."""
     m = re.search(r"(?:^|\s)생\s+([가-힣A-Za-z]{1,15})", text or "")
-    if not m:
-        return None
-    item = m.group(1)
-    return item if item in (query or "") else None
+    if m:
+        item = m.group(1)
+        return item if item in (query or "") else None
+    for tok in re.split(r"\s+", text or ""):
+        tok = re.sub(r"(을|를|은|는|이|가|도|만)$", "", tok) if len(tok) > 3 else tok
+        if tok.startswith("생") and len(tok) >= 3 and tok not in _SAENG_WORDS and re.fullmatch(r"[가-힣]+", tok):
+            return tok[1:] if tok in (query or "") else None
+    return None
 
 
 def _says_fresh(title: str, item: str) -> bool:

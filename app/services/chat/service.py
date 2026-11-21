@@ -1148,7 +1148,15 @@ def refine_followup(text: str, state: dict) -> dict | None:
     core = [w for w in core if w not in previous.split()]
     if not core:
         return None
+    # 2026-11-21 (2차 확인): '생올리브' 다음 '엑스트라 버전' → '엑스트라버진 생올리브'는 없는 상품.
+    # 기름에만 쓰는 말은 앞 검색어가 기름일 때만 잇고, 아니면 그 말만으로 새로 찾는다 ('엑스트라버진' → 올리브유가 나옴).
+    if any(w in _OIL_ONLY for w in core) and not _OIL.search(previous):
+        return None
     return {"text": " ".join(core + [previous]), "previous": previous}
+
+
+_OIL_ONLY = frozenset({"엑스트라버진", "압착", "저온압착"})
+_OIL = re.compile(r"(?:유|오일|기름)$|올리브유|오일|기름")
 
 
 def _bigrams(text: str) -> set[str]:
