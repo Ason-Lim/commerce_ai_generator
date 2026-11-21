@@ -106,6 +106,11 @@ CREATE TABLE IF NOT EXISTS feedback (
   checked_at TEXT, checked_note TEXT,
   UNIQUE (browser_id, post_id, post_version)
 );
+CREATE TABLE IF NOT EXISTS feedback_rollup (
+  post_id TEXT NOT NULL, post_version INTEGER NOT NULL, rules_version TEXT, format TEXT, template TEXT,
+  topic_kind TEXT, conclusion TEXT, source TEXT NOT NULL, rating TEXT NOT NULL, reasons TEXT NOT NULL,
+  n INTEGER NOT NULL, rolled_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS improvements (
   id INTEGER PRIMARY KEY,
   day TEXT NOT NULL, basis TEXT NOT NULL, change TEXT NOT NULL, scope TEXT NOT NULL,
@@ -161,7 +166,12 @@ class FeedbackStore:
         return {"ok": True, "rating": rating, "reasons": picked}
 
     def _purge(self, con: sqlite3.Connection) -> None:
+        """1년 지난 원본은 글·판·형식·평가·칩별 숫자로 접은 뒤 지운다 (2026-11-21 결정: 집계는 계속 보관)."""
         cut = _iso(self.clock() - timedelta(days=KEEP_DAYS))
+        con.execute("INSERT INTO feedback_rollup SELECT post_id, post_version, rules_version, format, template, topic_kind,"
+                    " conclusion, source, rating, reasons, COUNT(*), ? FROM feedback WHERE updated_at < ?"
+                    " GROUP BY post_id, post_version, rules_version, format, template, topic_kind, conclusion, source,"
+                    " rating, reasons", (_iso(self.clock()), cut))
         con.execute("DELETE FROM feedback WHERE updated_at < ?", (cut,))
 
     # ── 관리자 '피드백' ───────────────────────────────
