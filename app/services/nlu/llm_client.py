@@ -1,4 +1,6 @@
-"""LLM JSON client (DeepSeek / OpenAI / Ollama).
+"""LLM JSON client (DeepSeek / OpenAI / Claude / Ollama).
+
+2026-11-21: 고객 문장이 들어가는 작업은 DeepSeek 대신 OpenAI(실패하면 Claude) — customer_route.
 
 Behaviour is preserved from food-nlu ``nlu.LLMClient``:
 
@@ -45,6 +47,46 @@ THINKING_BY_TASK: dict[str, bool] = {
 }
 
 
+# 2026-11-21 사용자 결정 (claude/privacy_policy_draft_2026-11-21.md §7): 고객 문장이 들어가는 일은 DeepSeek(중국)에 보내지 않는다.
+#   → OpenAI 가 쓰고(저장본은 Claude 가 검토 — app/services/ai/cross_check.py), 내부 작업(고객 문장 없음)은 DeepSeek 그대로.
+#   호출하는 곳이 provider="deepseek" 로 적어 두었어도 아래 작업이면 여기서 바꾼다 (한 곳에서 관리).
+#   짧은 정리 = 빠른 작은 모델, 저장해 다시 쓰는 답 = 작성 모델. OpenAI 가 실패하면 Claude 로 (DeepSeek 로 넘기지 않음).
+CUSTOMER_FAST_TASKS = frozenset({
+    "shop_keyword", "shop_terms", "chat_intent", "food_nlu", "stock_chat", "dish_amounts", "recipe_servings",
+    "ai_recipe_identify",
+})
+CUSTOMER_WRITE_TASKS = frozenset({"food_knowledge", "recipe_consult", "menu_plan", "ai_recipe", "ai_recipe_check"})
+CUSTOMER_TASKS = CUSTOMER_FAST_TASKS | CUSTOMER_WRITE_TASKS
+# 내부 작업(고객 문장 없음 — DeepSeek 유지): recipe_supplement·recipe_easy_view(공공 레시피 원문), recipe_discover·trend_cause
+# (뉴스·블로그 제목), warm_classify(순위 키워드). 관리자·B2B 는 app/admin/shared/llm.py(ADMIN_LLM_PROVIDER).
+DEFAULT_OPENAI_FAST = "gpt-5.4-mini"
+DEFAULT_OPENAI_WRITE = "gpt-5.4"
+DEFAULT_CLAUDE_FAST = "claude-haiku-5-5"
+
+
+def customer_route(task: str | None, env_get: Callable[[str, str], str]) -> tuple[str, str, str, str] | None:
+    """고객 작업이면 (공급자, 모델, 대신할 공급자, 대신할 모델). 고객 작업이 아니거나 CUSTOMER_LLM_PROVIDER=deepseek 면 None."""
+    if task not in CUSTOMER_TASKS:
+        return None
+    want = (env_get("CUSTOMER_LLM_PROVIDER", "openai") or "openai").strip().lower()
+    if want in ("deepseek", "off", "none", ""):
+        return None
+    fast = task in CUSTOMER_FAST_TASKS
+    has_openai = bool(env_get("OPENAI_API_KEY", "").strip())
+    has_claude = bool(env_get("ANTHROPIC_API_KEY", "").strip())
+    openai_model = (env_get("OPENAI_FAST_MODEL" if fast else "OPENAI_WRITE_MODEL", "").strip()
+                    or (DEFAULT_OPENAI_FAST if fast else DEFAULT_OPENAI_WRITE))
+    claude_model = ((env_get("ANTHROPIC_FAST_MODEL", "").strip() or DEFAULT_CLAUDE_FAST) if fast
+                    else (env_get("ANTHROPIC_MODEL", "").strip() or "claude-sonnet-5-5"))
+    if want == "openai" and has_openai:
+        return ("openai", openai_model, "anthropic" if has_claude else "", claude_model if has_claude else "")
+    if has_claude:                                   # OpenAI 키가 없으면 Claude 로 (중국으로는 보내지 않음)
+        return ("anthropic", claude_model, "", "")
+    if has_openai:
+        return ("openai", openai_model, "", "")
+    return None                                      # 둘 다 없으면 예전 그대로 (경고는 호출 시)
+
+
 class LLMClient:
     def __init__(
         self,
@@ -79,6 +121,18 @@ class LLMClient:
         self.thinking = thinking
         # 2026-11-12: provider="anthropic" (Claude) — 모델은 이 값, 없으면 ANTHROPIC_MODEL (레시피 작성은 claude-sonnet-5-5)
         self.model = model
+        # 2026-11-21: 고객 문장이 들어가는 작업은 DeepSeek 대신 OpenAI(실패하면 Claude) — 위 customer_route
+        self.fallback: tuple[str, str] | None = None
+        if self.provider == "deepseek":
+            route = customer_route(self.task, self._get)
+            if route:
+                self.provider, self.model = route[0], route[1]
+                self.fallback = (route[2], route[3]) if route[2] else None
+            elif self.task in CUSTOMER_TASKS and (self._get("CUSTOMER_LLM_PROVIDER", "openai") or "").strip().lower() \
+                    not in ("deepseek", "off", "none"):
+                import logging
+
+                logging.getLogger(__name__).warning("customer task %s: no OpenAI/Claude key — still DeepSeek", self.task)
 
     # ── settings ──────────────────────────────────────────
     def _get(self, name: str, default: str = "") -> str:
@@ -135,6 +189,22 @@ class LLMClient:
         return self._get("OLLAMA_MODEL", "qwen2.5:7b")
 
     def _chat_json(self, user_text: str, temperature: float) -> dict:
+        try:
+            return self._chat_json_once(user_text, temperature)
+        except LLMConfigError:
+            raise
+        except Exception:
+            if not self.fallback:
+                raise
+            import logging
+
+            logging.getLogger(__name__).warning("%s failed for %s — falling back to %s", self.provider, self.task,
+                                                self.fallback[0])
+            backup = LLMClient(self.system, provider=self.fallback[0], env=self._env, openai_factory=self._openai_factory,
+                               http_post=self._http_post, timeout=self.timeout, task=self.task, model=self.fallback[1])
+            return backup._chat_json_once(user_text, temperature)
+
+    def _chat_json_once(self, user_text: str, temperature: float) -> dict:
         if self.provider == "anthropic":
             raw = self._anthropic(user_text)
         elif self.provider == "deepseek":

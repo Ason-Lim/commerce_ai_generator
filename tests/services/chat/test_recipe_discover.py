@@ -255,7 +255,7 @@ def test_search_failure_no_results_and_no_provider_are_said_plainly(make, shoppi
     svc, _http = make(provider=False)
     assert "외부 검색이 연결되지 않아" in md(svc.handle(None, message="두쫀쿠 만드는 법"))
     svc, _http = make({"news": TREND_NEWS}, llm=None)
-    assert "요리 이름을 정리하는 기능(DeepSeek)이 꺼져 있어" in md(svc.handle(None, message="요즘 유행하는 요리 알려줘"))
+    assert "요리 이름을 정리하는 AI 기능이 꺼져 있어" in md(svc.handle(None, message="요즘 유행하는 요리 알려줘"))
     assert shopping.calls == []
 
 

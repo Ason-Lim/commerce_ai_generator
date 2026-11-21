@@ -552,7 +552,7 @@ class RecipeChat:
         if r["status"] == "search_failed":
             return self._search_failed(state, "recipe_trend", "요즘 유행하는 요리")
         if r["status"] == "no_interpreter":
-            return RecipeTurn([B.notice(f"검색은 했지만({r['searched_at']}) 요리 이름을 정리하는 기능(DeepSeek)이 꺼져 있어 "
+            return RecipeTurn([B.notice(f"검색은 했지만({r['searched_at']}) 요리 이름을 정리하는 AI 기능이 꺼져 있어 "
                                         "후보를 보여 드리지 못했어요.")], state, "recipe_trend")
         if r["status"] == "interpret_failed":
             return RecipeTurn([B.notice(f"기사 {r.get('hits', 0)}건을 찾았지만 요리 이름을 정리하는 AI가 응답하지 않아 목록을 만들지 "

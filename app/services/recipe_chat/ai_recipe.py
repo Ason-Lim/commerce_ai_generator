@@ -390,7 +390,7 @@ class AiRecipes:
         if found:
             return found, []
         if self.generator is None:
-            return None, ["AI 해석 기능(DeepSeek) 꺼짐"]
+            return None, ["AI 해석 기능 꺼짐"]
         basis = basis or {}
         from app.services.recipe_chat import cook_knowledge
 

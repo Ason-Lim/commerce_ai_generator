@@ -846,7 +846,7 @@ class ChatService:
         def warn(kind, i):
             if (kind, i) in verified:             # 확인된 사실 — Claude 의견 대신 출처
                 return f" _(출처 확인 · {verified[(kind, i)]['source_name']})_"
-            return f" _(Claude 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""
+            return f" _(검토 AI 의견: {flags[(kind, i)]})_" if (kind, i) in flags else ""
 
         # 2026-11-11 (검토 반영): 안전 질문은 검토를 못 했으면 AI 줄을 빼고, 두 AI 판단이 다른 줄은 확정하지 않는다
         safety, unreviewed = bool(know.get("safety")), know.get("review") is None
@@ -1517,8 +1517,9 @@ def _knowledge_note(know: dict) -> str:
         n = know.get("shown_flags", len(know["review"].get("flags") or []))
         if know.get("held"):
             parts.append(f"두 AI 의 판단이 다른 {know['held']}곳은 확정하지 않았어요")
-        parts.append("DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요"
-                     + (f" — 두 AI 의 생각이 다른 {n}곳은 그 줄에 Claude 의견을 함께 적었어요" if n else ""))
+        # 2026-11-21: 고객 화면에는 모델 이름을 쓰지 않는다 (11-12 결정 'AI 작성·검토' — 작성 AI 가 DeepSeek → OpenAI 로 바뀜)
+        parts.append("AI 가 정리하고 다른 AI 가 한 번 더 검토했어요"
+                     + (f" — 두 AI 의 생각이 다른 {n}곳은 그 줄에 검토 AI 의견을 함께 적었어요" if n else ""))
     elif know.get("cross_on"):
         parts.append("아직 다른 AI 의 검토 전이에요")
     if know.get("from_cache") and know.get("saved_at"):

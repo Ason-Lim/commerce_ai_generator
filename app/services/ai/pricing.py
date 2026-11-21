@@ -8,6 +8,8 @@
 * 피크: UTC 월~금 01:00–04:00 · 06:00–10:00 (한국 시간 10~13시 · 15~19시), 중국 공휴일 제외 — 공휴일은 여기서 따지지 않는다
   (공휴일에는 실제보다 비싸게 어림된다).
 * Claude Sonnet 5.5 $2 / $10, Opus 5.5 $4 / $20 (캐시 읽기 $0.20) — eesel.ai 정리(2026-11-11 확인).
+* 2026-11-21 OpenAI 공식 요금표(openai.com/api/pricing): gpt-5.4 입력 $2.50 · 캐시 $0.25 · 출력 $15.00,
+  gpt-5.4-mini $0.75 · $0.075 · $4.50 — 고객 문장 작업을 DeepSeek 에서 OpenAI 로 옮기면서(llm_client.customer_route) 추가.
 
   AI_PRICES={"deepseek-flash": {"in": 0.30, "out": 1.20, "in_hit": 0.006, "offpeak_half": true}}
   USD_KRW=1400       (원 환산 환율 — 없으면 1,400 가정)
@@ -25,6 +27,8 @@ DEFAULT: dict[str, dict] = {
     "deepseek-v4-pro": {"in": 1.32, "out": 3.96, "in_hit": 0.044, "offpeak_half": True},
     "claude-sonnet-5-5": {"in": 2.0, "out": 10.0, "in_hit": 0.20},
     "claude-opus-5-5": {"in": 4.0, "out": 20.0, "in_hit": 0.20},
+    "gpt-5.4": {"in": 2.50, "out": 15.00, "in_hit": 0.25},
+    "gpt-5.4-mini": {"in": 0.75, "out": 4.50, "in_hit": 0.075},
 }
 # 옛 이름 → 실제로 처리하는 모델의 요금
 ALIASES = {"deepseek-v4-flash": "deepseek-flash", "deepseek-v4-flash-vision-exp": "deepseek-flash",
@@ -36,6 +40,7 @@ TASK_LABELS = {
     "ai_recipe_identify": "AI 레시피 확인", "ai_recipe_check": "AI 레시피 설명 검토",
     "recipe_supplement": "레시피 보완", "recipe_easy_view": "레시피 쉬운 보기", "recipe_discover": "요즘 뜨는 요리",
     "trend_cause": "급상승 원인", "admin_llm": "관리자·B2B", "stock_chat": "보유량 해석", "untagged": "기타",
+    "chat_intent": "문장 뜻 읽기", "shop_terms": "상품 검색어", "menu_plan": "메뉴 조합",
 }
 
 
