@@ -1,5 +1,7 @@
 .streamlit/secrets.toml
-data/
+# 2026-11-21 행사 달력은 저장소에 둔다 (scripts/build_event_calendar.py 결과 — 예측 탭·테스트 입력)
+data/*
+!data/event_calendar.csv
 
 # Python
 __pycache__/
