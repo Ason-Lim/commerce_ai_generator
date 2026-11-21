@@ -1,5 +1,6 @@
 import type { Block } from "../types/blocks";
 import { Markdown } from "../lib/Markdown";
+import { AnswerFeedback } from "./AnswerFeedback";
 import { CandidateCompare } from "./CandidateCompare";
 import { ChipsRow } from "./ChipsRow";
 import { ClarifyForm } from "./ClarifyForm";
@@ -63,6 +64,8 @@ function BlockView({ block }: { block: Block }) {
       return <TrendList block={block} />;
     case "trend_post":
       return <TrendPostCard block={block} />;
+    case "answer_feedback":
+      return <AnswerFeedback block={block} />;
     default:
       return null;
   }

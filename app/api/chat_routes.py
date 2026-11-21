@@ -19,9 +19,9 @@ import logging
 import os
 import threading
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.chat.service import ChatService, engine_db
 
@@ -200,6 +200,53 @@ def saved_view(owner: str | None = Query(None, max_length=64), session_id: str |
 @router.post("/api/chat/saved")
 def saved_set(body: SavedIn, service: ChatService = Depends(get_chat_service)):
     return service.set_saved(body.owner, body.session_id, body.key, body.on)
+
+
+class AnswerSignalIn(BaseModel):
+    """2026-11-21 대화 답 피드백 — 화면이 판매처 이동·♡ 저장 뒤 보낸다 (그 밖의 키 거부)."""
+    model_config = ConfigDict(extra="forbid")
+    session_id: str = Field(..., max_length=64)
+    signal: str = Field(..., max_length=8)
+
+
+class AnswerFeedbackIn(BaseModel):
+    """평가·칩 코드·닫기만 — 자유 입력 칸 없음."""
+    model_config = ConfigDict(extra="forbid")
+    session_id: str = Field(..., max_length=64)
+    rating: str | None = Field(None, max_length=8)
+    reasons: list[str] = Field(default_factory=list, max_length=4)
+    close: bool = False
+
+
+@router.post("/api/chat/answer-feedback/signal")
+def answer_feedback_signal(body: AnswerSignalIn, service: ChatService = Depends(get_chat_service)):
+    return service.answer_feedback_signal(body.session_id, body.signal)
+
+
+@router.post("/api/chat/answer-feedback")
+def answer_feedback(body: AnswerFeedbackIn, request: Request, service: ChatService = Depends(get_chat_service)):
+    """저장은 세션 값·평가·칩·신호·직전 조건 요약만 (대화 원문·IP 없음). 집계는 돌려주지 않는다."""
+    from app.services.chat import answer_feedback as afb
+    from app.services.trend_posts.feedback import _Limiter
+
+    global _ANSWER_LIMITER
+    if _ANSWER_LIMITER is None:
+        _ANSWER_LIMITER = _Limiter()
+    if not _ANSWER_LIMITER.hit(body.session_id):
+        raise HTTPException(429, "잠시 뒤에 다시 눌러 주세요.")
+    try:
+        from app.admin.auth import request_ok
+
+        operator = request_ok(request)
+    except Exception:  # noqa: BLE001
+        operator = False
+    try:
+        return service.answer_feedback(body.session_id, body.rating, body.reasons, body.close, operator=operator)
+    except afb.AnswerFeedbackError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+_ANSWER_LIMITER = None
 
 
 @router.get("/api/trends/surge")

@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatResponse, RecipeEasyPoll, SavedView } from "../types/blocks";
+import type { Block, ChatRequest, ChatResponse, RecipeEasyPoll, SavedView } from "../types/blocks";
 import { mockChat } from "./mock";
 import { normalize } from "./adapt";
 
@@ -116,4 +116,28 @@ export async function fetchTrendPosts(limit = 3, signal?: AbortSignal): Promise<
   const r = await fetch(`/api/trends/posts?limit=${limit}`, { signal });
   if (!r.ok) throw new Error(`trend posts ${r.status}`);
   return (await r.json()) as TrendPostList;
+}
+
+/** 2026-11-21 대화 답 피드백 — 판매처 이동·♡ 저장 뒤: 이 대화에서 처음이면 묻기 블록을 받는다 (실패해도 무시) */
+export async function answerFeedbackSignal(sessionId: string, signal: "go" | "save"): Promise<{ ask: boolean; block?: Block }> {
+  if (API_MODE === "mock") return { ask: false };
+  try {
+    const r = await fetch("/api/chat/answer-feedback/signal", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, signal }), keepalive: true,
+    });
+    return r.ok ? await r.json() : { ask: false };
+  } catch {
+    return { ask: false };
+  }
+}
+
+/** 평가·칩 저장 또는 닫기 — 집계는 돌려받지 않는다 */
+export async function sendAnswerFeedback(sessionId: string, body: { rating?: string; reasons?: string[]; close?: boolean }): Promise<boolean> {
+  if (API_MODE === "mock") return true;
+  const r = await fetch("/api/chat/answer-feedback", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, reasons: [], ...body }),
+  });
+  return r.ok;
 }

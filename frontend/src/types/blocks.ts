@@ -363,11 +363,17 @@ export interface ProductCompareBlock {
 /** 상품 목록 끝 비교 카드 (2026-11-09 A안) — 누르면 data.send 를 메시지로 보낸다 */
 export interface CompareCtaBlock { type: "compare_cta"; data: { label: string; sub?: string; send: string } }
 
+/** 2026-11-21 대화 답 피드백 — 결정 신호(판매처 이동·♡·마무리 말) 뒤 대화당 한 번 */
+export interface AnswerFeedbackBlock {
+  type: "answer_feedback";
+  data: { question: string; ratings: Record<string, string>; reasons: Record<string, string>; note: string };
+}
+
 export type Block =
   | TextBlock | NoticeBlock | VerdictBlock | ChipsBlock | ClarifyFormBlock
   | ComparisonPairBlock | ProductListBlock | ShippingOptionsBlock
   | CandidateCompareBlock | SponsoredListBlock | RecipeCardBlock | SearchLinksBlock | ProductCompareBlock
-  | TrendListBlock | CompareCtaBlock | TrendPostBlock;
+  | TrendListBlock | CompareCtaBlock | TrendPostBlock | AnswerFeedbackBlock;
 
 /** 지금 검색이 늘어난 식품 (2026-11-06, '요즘 뜨는 식품') — 서버 급상승 리포트의 고객용 항목 */
 export interface TrendYoutube {

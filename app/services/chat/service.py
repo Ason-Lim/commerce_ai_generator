@@ -27,6 +27,7 @@ from app.services.chat import blocks as B
 from app.services.chat import explain, saved as saved_mod
 from app.services.chat import food_tips as food_tips_mod
 from app.services.chat import hot as hot_mod
+from app.services.chat import answer_feedback as answer_fb
 from app.services.trend_posts import qa as trend_qa
 from app.services.chat.budget import is_budget_answer, parse_budget, strip_budget
 from app.services.chat.state_store import ChatStateStore, new_state
@@ -170,8 +171,11 @@ class ChatService:
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
                  keyword_extractor: Callable | None = None, food_tips: Callable | None = None,
                  food_review: Callable | None = None,
-                 trend_report: Callable | None = None, trend_posts: Callable | None = None):
+                 trend_report: Callable | None = None, trend_posts: Callable | None = None,
+                 answer_feedback=None):
         self.db = db
+        # 2026-11-21 대화 답 피드백 저장소 (없으면 처음 쓸 때 기본 파일) — 순위에는 쓰지 않는다
+        self._answer_feedback = answer_feedback
         # trend_posts() -> 게시(승인)된 트렌드 글 목록 (2026-11-16, 2단계 Q&A) — 없으면 TREND_POSTS_DIR 의 게시 글
         self.trend_posts = trend_posts
         # trend_report() -> 오늘의 급상승 리포트 (surge.load, 2026-11-06) — '요즘 뜨는 식품' 답변
@@ -231,6 +235,15 @@ class ChatService:
             shown = product_compare.find_set(state, name) if name else None
             if shown:
                 return self._compare_shown_turn(sid, name, shown, state, revision, persist, text)
+        # 2026-11-21: 추천 뒤 '이걸로 할게'·'고마워' — 쿠팡에서 찾지 않고 마무리 답 + (대화당 한 번) 도움 여부 묻기
+        if text and not answers and answer_fb.is_closing(text) and answer_fb.in_scope(state):
+            blocks = [B.text("도움이 됐다니 다행이에요. 주문 전에 판매처에서 옵션(중량·수량)·배송비·받는 날을 한 번 더 확인해 주세요.")]
+            if self._ask_feedback(sid, "closing", state):
+                blocks.append(answer_fb.block())
+            return self._response(sid, "closing", blocks)
+        if text and not answers and answer_fb.is_closing(text) and state.get("mode") != "recipe":
+            # 추천을 보여 주기 전의 '고마워' — 쿠팡에서 '고마워'를 찾지 않는다
+            return self._response(sid, "closing", [B.text("천만에요. 다른 식품도 편하게 물어보세요.")])
         pending = state.get("pending") or {}
         if text and not answers and pending.get("kind") == "budget" and is_budget_answer(text):
             return self._budget_turn(sid, text, state, revision, persist, pending)
@@ -298,6 +311,38 @@ class ChatService:
             # 화면은 이 답을 새 메시지로 붙이지 않고 '부족한 재료 장보기' 칸 하나에 재료별로 담는다 (2026-11-16)
             response["panel"] = turn.panel
         return response
+
+    # ── 2026-11-21 대화 답 피드백 ──────────────────────────
+    def answer_feedback_store(self):
+        if self._answer_feedback is None:
+            self._answer_feedback = answer_fb.AnswerFeedbackStore()
+        return self._answer_feedback
+
+    def _ask_feedback(self, sid: str, signal: str, state: dict) -> bool:
+        try:
+            return self.answer_feedback_store().ask(sid, signal, state)
+        except Exception:  # noqa: BLE001 — 피드백 저장 실패가 대화를 막지 않는다
+            log.warning("answer feedback ask failed")
+            return False
+
+    def answer_feedback_signal(self, session_id: str | None, signal: str) -> dict:
+        """화면이 판매처 이동(/go)·♡ 저장 뒤 부른다 — 이 대화에서 처음이고 직전 답이 쇼핑 추천이면 묻기 블록."""
+        if not (isinstance(session_id, str) and SESSION_RE.fullmatch(session_id)) or signal not in ("go", "save"):
+            return {"ask": False}
+        state, _, _ = self._load(session_id)
+        if not self._ask_feedback(session_id, signal, state):
+            return {"ask": False}
+        return {"ask": True, "block": answer_fb.block()}
+
+    def answer_feedback(self, session_id: str | None, rating: str | None, reasons: list[str] | None,
+                        close: bool = False, *, operator: bool = False) -> dict:
+        if not (isinstance(session_id, str) and SESSION_RE.fullmatch(session_id)):
+            raise answer_fb.AnswerFeedbackError("대화 값이 올바르지 않아요.")
+        store = self.answer_feedback_store()
+        if close:
+            store.close(session_id)
+            return {"ok": True, "closed": True}
+        return store.record(session_id, rating or "", reasons, operator=operator)
 
     def recipe_easy(self, recipe_id: str, key: str | None = None) -> dict:
         """Polling target for a recipe card whose 쉽게 보기 / AI image is being prepared.

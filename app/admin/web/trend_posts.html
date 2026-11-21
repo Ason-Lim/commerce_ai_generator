@@ -101,6 +101,11 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   <div class="row"><input id="i-basis" placeholder="근거 — 칩·응답 수·비율·글 판" style="flex:1;min-width:260px"><input id="i-change" placeholder="바꾼 것" style="flex:1;min-width:220px">
    <input id="i-approver" placeholder="승인자" style="width:110px"><input id="i-due" type="date" title="효과 확인 예정일 (4주와 30표 중 늦은 쪽)"><button class="btn primary" id="i-add">기록 추가</button></div>
   <div class="scroll"><table><thead><tr><th>날짜</th><th>범위</th><th>근거</th><th>바꾼 것</th><th>규칙 판</th><th>승인자</th><th>확인 예정</th><th>결과</th></tr></thead><tbody id="fb-imp"></tbody></table></div>
+  <h3>대화 답 피드백 <small class="note" id="cf-bias"></small></h3>
+  <div class="scroll"><table><thead><tr><th>신호</th><th>물음</th><th>닫음</th><th>응답</th><th>좋음/보통/나쁨</th><th>도움 평가</th><th>칩 비율</th></tr></thead><tbody id="cf-sig"></tbody></table></div>
+  <h3>최근 '나쁨' <small class="note">주간 사람 검수 샘플 — 대화 원문은 저장하지 않아요 (상품어·예산·보여 준 후보 수만)</small></h3>
+  <div class="scroll"><table><thead><tr><th>시각</th><th>신호</th><th>이유</th><th>직전 조건</th></tr></thead><tbody id="cf-bad"></tbody></table></div>
+  <p class="note" id="cf-op"></p>
 </section>
 <section id="detail" hidden>
   <h2 id="x-title"></h2><p class="lede"><span id="x-status" class="pill"></span> <span id="x-id" class="note"></span> · <a id="x-preview" target="_blank" rel="noopener">미리 보기</a> <a id="x-public" target="_blank" rel="noopener"></a></p>
@@ -204,6 +209,19 @@ $("i-add").addEventListener("click",async()=>{const V=id=>$(id).value.trim()||nu
   for(const id of ["i-post","i-from","i-to","i-basis","i-change","i-due"])$(id).value="";loadFb()}catch(e){showErr(e)}});
 $("i-day").value=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
 loadFb().catch(showErr);
+// 2026-11-21 대화 답 피드백 (결정 신호 때 대화당 한 번)
+async function loadCf(){const j=await api("/admin/api/chat-feedback");$("cf-bias").textContent=j.bias_note;
+ const t=$("cf-sig");t.replaceChildren();const c=j.customer;
+ if(!c.by_signal.length)t.append(el("tr",{},el("td",{colspan:"7",class:"note"},"아직 물어본 대화가 없어요")));
+ for(const g of c.by_signal)t.append(el("tr",{},el("td",{},g.label),el("td",{},String(g.asked)),el("td",{},String(g.closed)),
+  el("td",{},String(g.n)+(g.n<30?" (관찰)":"")),el("td",{},g.good+"/"+g.ok+"/"+g.bad),el("td",{},pct(g.helpful_rate)),
+  el("td",{},Object.entries(g.chip_rates).map(([k,r])=>k+" "+pct(r)).join(" · ")||"—")));
+ const b=$("cf-bad");b.replaceChildren();
+ if(!c.recent_bad.length)b.append(el("tr",{},el("td",{colspan:"4",class:"note"},"없어요")));
+ for(const x of c.recent_bad)b.append(el("tr",{},el("td",{},x.at.replace("T"," ").slice(0,16)),el("td",{},x.signal),
+  el("td",{},x.reasons.join(", ")||"—"),el("td",{},[x.summary.query,x.summary.budget,x.summary.shown!=null?"후보 "+x.summary.shown+"개":""].filter(Boolean).join(" · "))));
+ const op=j.operator.by_signal.reduce((a,g)=>a+g.n,0);$("cf-op").textContent=op?"운영자 평가 "+op+"건 (고객 집계에서 뺌)":""}
+loadCf().catch(showErr);
 
 </script>
 </body>

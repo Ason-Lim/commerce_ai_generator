@@ -3,6 +3,7 @@
  * - 카드의 ♡ 를 누르면 서버가 '이 세션에서 보여 준 후보'에서 복사해 브라우저별 보관함에 담는다.
  * - '새 대화'를 눌러도 남는다. 최근 본 상품(최근 검색 5번)은 대화 세션에 묶여 있다.
  */
+import { useChatActions } from "../components/ChatActions";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { SavedView } from "../types/blocks";
 import { fetchSaved, setSaved } from "../api/client";
@@ -36,6 +37,7 @@ export function SavedProvider({ sessionId, children }: { sessionId: string | nul
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
+  const { askFeedback } = useChatActions();
 
   const refresh = useCallback(async () => {
     try { setView(await fetchSaved(sessionId)); } catch { /* 보관함을 못 읽어도 대화는 그대로 */ }
@@ -49,13 +51,14 @@ export function SavedProvider({ sessionId, children }: { sessionId: string | nul
     try {
       const res = await setSaved(sessionId, key, on);
       setView({ saved: res.saved ?? [], recent: res.recent ?? [] });
+      if (on && res.ok !== false) askFeedback("save");   // 2026-11-21 결정 신호: 관심 상품 저장
       if (res.ok === false) setError(MESSAGES[res.error ?? ""] ?? "보관함에 반영하지 못했어요.");
     } catch {
       setError("보관함에 연결하지 못했어요.");
     } finally {
       setPending((p) => { const n = new Set(p); n.delete(key); return n; });
     }
-  }, [sessionId]);
+  }, [sessionId, askFeedback]);
 
   const keys = useMemo(() => new Set(view.saved.map((c) => c.key).filter((k): k is string => !!k)), [view]);
   const value = useMemo(() => ({ view, keys, pending, error, open, setOpen, toggle, refresh }),

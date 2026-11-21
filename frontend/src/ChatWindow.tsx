@@ -12,7 +12,7 @@ import { ChatActions, type ChatActionsValue } from './components/ChatActions';
 import type { FlowStep, SendPayload } from './state/useConversation';
 import type { Message } from './types';
 import type { Candidate, TrendPostRef } from './types/blocks';
-import { API_MODE, sendChat } from './api/client';
+import { answerFeedbackSignal, API_MODE, sendChat } from './api/client';
 import { pageTitle } from './lib/pageTitle';
 import { BusyStatus } from './components/BusyStatus';
 import { ShoppingPanel, type PanelEntry } from './components/ShoppingPanel';
@@ -337,6 +337,12 @@ export default function ChatWindow() {
         openTrendPost: p => setTrendPost(p),
         busy,
         sessionId,
+        askFeedback: signal => {
+            if (!sessionId) return;
+            void answerFeedbackSignal(sessionId, signal).then(r => {
+                if (r.ask && r.block) setMessages(prev => [...prev, { id: newId(), role: 'assistant', blocks: [r.block!], stage: 'answer_feedback' }]);
+            });
+        },
     }), [busy, sessionId, basket]);
 
     return (

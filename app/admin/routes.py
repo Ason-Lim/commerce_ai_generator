@@ -1722,6 +1722,18 @@ def trend_feedback_overview():
             "labels": {"ratings": fb.RATINGS, "neg": fb.NEG_REASONS, "pos": fb.POS_REASONS}}
 
 
+@router.get("/admin/api/chat-feedback", dependencies=[api])
+def chat_feedback_overview():
+    """2026-11-21 대화 답 피드백 — 신호 종류별 물은 수·응답·도움 평가·칩 비율, 최근 나쁨(사람 검수 샘플).
+    결정 신호가 있을 때만 묻기 때문에 '대화 전체 만족도'가 아니다."""
+    from app.services.chat import answer_feedback as afb
+
+    st = afb.AnswerFeedbackStore()
+    return {"customer": st.overview("customer"), "operator": st.overview("operator"),
+            "labels": {"ratings": afb.RATINGS, "neg": afb.NEG_REASONS, "signals": afb.SIGNALS},
+            "bias_note": "상품을 거의 골랐다는 신호가 있을 때만 물어요 — 못 찾고 떠난 대화는 여기 없어요."}
+
+
 class _CheckedIn(BaseModel):
     note: str | None = Field(None, max_length=200)
 
