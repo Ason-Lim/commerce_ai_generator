@@ -46,6 +46,11 @@ table.pt th{font-size:13px;color:#5d635c;font-weight:600}table.pt .go{margin-top
  table.pt td{border:0;padding:2px 0}table.pt td.n{display:none}table.pt td.t{font-weight:600;margin-bottom:4px}
  table.pt td[data-k]::before{content:attr(data-k) " · ";color:#6b706a;font-size:13px}table.pt td.g{margin-top:6px}}
 .go{display:inline-block;margin-top:6px;padding:7px 12px;border-radius:8px;background:#1d211d;color:#fff;text-decoration:none;font-size:14px}
+.fb{margin-top:28px;padding:14px 16px;border:1px solid #e3e5df;border-radius:12px;background:#fff}.fb h2{margin:0 0 8px;font-size:17px}
+.fbrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}.fbrow .muted{width:100%;font-size:13px}
+.fb button{font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;border:1px solid #d9dcd5;background:#fff;color:#1d211d;cursor:pointer}
+.fb button[aria-pressed=true]{background:#1d211d;color:#fff;border-color:#1d211d}.fbnote{font-size:12px;margin:8px 0 0}.fbmsg{margin:6px 0 0;font-size:13px}
+small.unit{color:#5d635c;font-size:12px}
 .list a.t{font-size:17px;font-weight:700;text-decoration:none;color:#1d211d}
 .top{position:sticky;top:0;z-index:5;background:rgba(246,247,244,.95);border-bottom:1px solid #e3e5df}
 .top .in{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
@@ -79,6 +84,13 @@ def price_short(p: PostProduct, now: datetime | None = None) -> str:
         return CHECK_AT_MALL
     t = parse_time(p.price_checked_at).astimezone(KST)
     return f"{p.price_krw:,}원 ({t.month}/{t.day} {t.hour}시 확인)"
+
+
+def per_100g_of(p: PostProduct, now: datetime | None = None) -> str | None:
+    """100g당 값 — 가격 칸에 가격을 그릴 때만 (오래된 가격이면 계산도 안 함)."""
+    if p.price_krw is None or policy.is_stale(p.price_checked_at, now):
+        return None
+    return frame.per_100g(p.title, p.price_krw)
 
 
 def post_url(post: Post) -> str:
@@ -261,12 +273,46 @@ def post_page(post: Post, now: datetime | None = None) -> str:
             f'<li><a href="{e(s.url)}" rel="nofollow noopener" target=_blank>{e(s.label)}</a></li>' if s.url
             else f"<li>{e(s.label)}</li>" for s in post.sources)
         parts.append(f"<h2>확인한 곳</h2><ul class=muted>{items}</ul>")
+    parts.append(feedback_block(post))
     ask = f"요즘 {post.topic} 왜 유행해?"
     parts.append(f'<p style="margin-top:28px"><a class=go href="/?ask={quote(ask)}">이 주제 더 물어보기</a> '
                  f'<a class=go style="background:#fff;color:#1d211d;border:1px solid #d9dcd5" href="/#/hot">지금 뜨는 식품 전체 보기</a></p>')
     parts.append("</article>")
     return _page(post.title, "".join(parts), post.summary,
                  head=_canonical(post_url(post)) + _ld_script(article_ld(post)))
+
+
+def feedback_block(post: Post) -> str:
+    """글 끝 피드백 (2026-11-21, 설계 §3) — 게시 글에만. 공개 집계는 보여 주지 않는다. 이름 있는 버튼만."""
+    from app.services.trend_posts import feedback as fb
+
+    if post.status != "approved":
+        return ""
+    e = escape
+    rate = "".join(f'<button type=button class=fbr data-r="{k}" aria-pressed=false>{icon} {e(v)}</button>'
+                   for (k, v), icon in zip(fb.RATINGS.items(), ("🙂", "😐", "🙁")))
+    neg = "".join(f'<button type=button class=fbc data-c="{k}" aria-pressed=false>{e(v)}</button>' for k, v in fb.NEG_REASONS.items())
+    pos = "".join(f'<button type=button class=fbc data-c="{k}" aria-pressed=false>{e(v)}</button>' for k, v in fb.POS_REASONS.items())
+    url = "/api/trends/posts/" + quote(post.id) + "/feedback"
+    return (f'<section class=fb id=fb data-url="{e(url)}" aria-label="이 글에 대한 의견">'
+            f'<h2>이 글이 도움이 됐나요?</h2><div class=fbrow role=group aria-label="평가">{rate}</div>'
+            f'<div class="fbrow fbchips" data-for=neg hidden><span class=muted>어떤 점이 아쉬웠나요? (여러 개 골라도 돼요)</span>{neg}</div>'
+            f'<div class="fbrow fbchips" data-for=pos hidden><span class=muted>좋았던 점을 골라 주세요 (선택)</span>{pos}</div>'
+            '<p class=fbmsg role=status aria-live=polite></p>'
+            '<p class="muted fbnote">이름이나 연락처는 입력받지 않습니다. 중복 평가 방지를 위한 무작위 식별자와 평가 내용을 저장합니다.</p>'
+            "</section>" + FEEDBACK_JS)
+
+
+FEEDBACK_JS = """<script>(function(){var b=document.getElementById('fb');if(!b)return;var url=b.dataset.url,r=null,c=[];
+function sync(){b.querySelectorAll('.fbr').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.r===r)});
+b.querySelectorAll('.fbchips').forEach(function(x){x.hidden=!r||(x.dataset.for==='pos')!==(r==='good')});
+b.querySelectorAll('.fbc').forEach(function(x){x.setAttribute('aria-pressed',c.indexOf(x.dataset.c)>=0)})}
+function send(){var m=b.querySelector('.fbmsg');fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+body:JSON.stringify({rating:r,reasons:c})}).then(function(x){m.textContent=x.ok?'의견 고마워요. 다시 눌러 바꿀 수 있어요.':(x.status===429?'잠시 뒤에 다시 눌러 주세요.':'저장하지 못했어요.')})
+.catch(function(){m.textContent='저장하지 못했어요.'})}
+b.addEventListener('click',function(e){var t=e.target.closest('button');if(!t)return;
+if(t.dataset.r){if(t.dataset.r!==r)c=[];r=t.dataset.r}else if(t.dataset.c){var i=c.indexOf(t.dataset.c);if(i>=0)c.splice(i,1);else c.push(t.dataset.c)}
+sync();send()})})();</script>"""
 
 
 _URL = re.compile(r"\(출처:\s*(https?://[^\s)]+)\)")
@@ -317,17 +363,23 @@ def _report_body(post: Post, now: datetime) -> list[str]:
     elif post.products:
         out.append("<h2>③ 상품</h2><div class=tbl><table class=pt><thead><tr><th>#</th><th>상품</th><th>중량·수량</th>"
                    "<th>배송 표시</th><th>가격(확인 시각)</th><th></th></tr></thead><tbody>")
+        unit_any = False
         for n, p in enumerate(post.products, start=1):
             amount = "·".join(frame.amounts(p.title)) or "상품명에 표기 없음"
+            # 2026-11-21 report v1.1: 구성이 달라도 견줄 수 있게 100g당 값 (가격이 살아 있고 상품명 중량으로 계산될 때만)
+            unit = per_100g_of(p, now)
+            unit_any = unit_any or bool(unit)
             ship = f"{e(p.platform)} · 로켓배송" if p.rocket else e(p.platform)
             img = (f'<img class=tthumb src="{e(p.image_url)}" alt="" loading=lazy referrerpolicy=no-referrer '
                    f'width=48 height=48>' if p.image_url and policy.coupang_image(p.image_url) else "")
             out.append(f"<tr><td class=n>{n}</td><td class=t>{img}{e(p.title)}</td>"
                        f"<td data-k=\"중량·수량\">{e(amount)}</td><td data-k=\"배송 표시\">{ship}</td>"
-                       f"<td class=price data-k=\"가격\">{e(price_short(p, now))}</td>"
+                       f"<td class=price data-k=\"가격\">{e(price_short(p, now))}"
+                       + (f"<br><small class=unit>{e(unit)}</small>" if unit else "") + "</td>"
                        f'<td class=g><a class=go href="{post_url(post)}/go/{n}" rel="sponsored nofollow noopener" '
                        f"target=_blank>판매처에서 보기</a></td></tr>")
-        out.append("</tbody></table></div><p class=muted>중량·수량은 상품명 표기, 배송은 확인한 시점의 검색 결과 표시 기준이에요.</p>")
+        out.append("</tbody></table></div><p class=muted>중량·수량은 상품명 표기, 배송은 확인한 시점의 검색 결과 표시 기준이에요."
+                   + (" 100g당 값은 상품명에 적힌 중량으로 계산했어요." if unit_any else "") + "</p>")
         if post.checklist:
             out.append(f"<p><b>결제 전 확인</b> — {e(post.checklist)}</p>")
         if post.constraints:
@@ -350,6 +402,7 @@ def _report_body(post: Post, now: datetime) -> list[str]:
             else f"<li>{e(s.label)}</li>" for s in post.sources) + "</ul>")
     if post.experience == "data":
         out.append(f"<p class=muted>{e(frame.experience_line(post.topic, 'site', hold or not post.products))}</p>")
+    out.append(feedback_block(post))
     ask = f"요즘 {post.topic} 왜 유행해?"
     out.append(f'<p style="margin-top:28px"><a class=go href="/?ask={quote(ask)}">이 주제 더 물어보기</a> '
                f'<a class=go style="background:#fff;color:#1d211d;border:1px solid #d9dcd5" href="/#/hot">지금 뜨는 식품 전체 보기</a></p>')

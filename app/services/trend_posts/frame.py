@@ -181,6 +181,15 @@ CRITERIA = {
         ["포장·구성 — 선물이라면 포장 상태와 구성을 상품명과 판매 페이지에서 확인하세요.",
          "구성 — 선물용 포장인지, 구성품이 무엇인지 판매 페이지에서 보세요."],
     ],
+    # 2026-11-21 report v1.1: 건강식품(분말·정제·캡슐)에는 보관·배송보다 섭취량·원료·표시가 판단 기준
+    "health": [
+        ["섭취량 — 1회·1일 섭취량과 모두 몇 회분인지 표시를 보고 같은 기준으로 비교하세요.",
+         "회분 — 하루 몇 번, 모두 며칠 분인지 상품 표시에서 맞춰 보세요."],
+        ["원료·함량 — 주원료와 함량 표시를 상품 정보에서 확인하세요.",
+         "함량 — 주원료가 얼마나 들었는지 상품 정보의 표시를 보세요."],
+        ["표시 — '건강기능식품' 표시가 있는 제품인지, 일반 식품인지 확인하세요.",
+         "구분 — 건강기능식품인지 일반 식품인지 표시부터 보세요."],
+    ],
     "general": [
         ["필요한 양 — 상품명에 적힌 중량·수량을 같은 단위로 바꿔 비교하세요.",
          "양 — 중량·수량 표기를 같은 단위로 맞춰 보세요."],
@@ -457,11 +466,24 @@ def answer(topic: str, has_products: bool, any_rocket: bool = False, channel: st
     return out
 
 
+# 2026-11-21 report v1.1: 건강식품 단어 — 주제는 general 그대로 두고 '기준'만 건강식품 쪽으로 (제목·제약 문장 묶음은 일반)
+HEALTH_WORDS = ("효소", "코엔자임", "q10", "콜라겐", "유산균", "프로바이오틱", "프리바이오틱", "비타민", "오메가3",
+                "루테인", "마그네슘", "마그네숨", "아세로라", "밀크씨슬", "밀크시슬", "프로폴리스", "글루타치온",
+                "영양제", "아연", "철분", "칼슘", "엽산", "홍삼정", "쏘팔메토", "크릴오일", "보스웰리아", "nmn")
+
+
+def is_health(topic: str) -> bool:
+    k = (topic or "").replace(" ", "").lower()
+    return any(w in k for w in HEALTH_WORDS)
+
+
 def criteria(topic: str, channel: str = "site", kind: str | None = None) -> list[str]:
     """주제별 기준. 같은 기준의 표현 두 벌 중 채널마다 다른 쪽을 쓴다 (사이트·블로그 문장이 겹치지 않게)."""
     c, b = _ch(channel), bank_key(topic, kind)
     if b == "kimjang" and kimjang_part(topic):
         b = "kimjang_" + kimjang_part(topic)
+    elif b == "general" and is_health(topic):
+        b = "health"
     first = pick((0, 1), topic, "crit")          # 사이트가 쓰는 쪽, 블로그는 반대쪽
     idx = first if c == "site" else 1 - first
     return [_fmt(pair[idx], topic, kind) for pair in CRITERIA[b]]
@@ -531,6 +553,44 @@ def clue_phrase(clues: dict | None, limit: int = 2) -> str:
 # 상품명에서 중량·수량 표기만 뽑는다 (예: 500g, 1kg, 2개, 3-5포기). 가격·평점은 뽑지 않는다.
 _AMOUNT = re.compile(r"(?<![\d.,])(\d+(?:[.,]\d+)?(?:\s*[-~]\s*\d+(?:[.,]\d+)?)?)\s*(kg|㎏|g|그램|ml|㎖|L|l|리터|개입|개|입|봉|팩|포기|마리|미|과|구|병|캔|박스|세트)"
                      r"(?![가-힣a-zA-Z])")
+
+
+def rank_sentence(first_day: str, first_rank: int, last_day: str, last_rank: int) -> str:
+    """식품 검색어 순위 한 줄 — 방향을 말로 (2026-11-21 report v1.1: '…위가 됐어요'만으로는 오른 건지 내린 건지 몰랐음).
+    숫자가 작을수록 위. 처음 순위의 5%(최소 10계단) 안쪽으로 움직였으면 '거의 그대로'."""
+    a, b = int(first_rank), int(last_rank)
+    head = f"네이버 식품 검색어 순위는 {first_day} {a}위에서 {last_day} {b}위로"
+    if abs(a - b) <= max(10, a * 0.05):
+        return head + ", 거의 그대로예요."
+    return head + (" 올랐어요." if b < a else " 내려갔어요.")
+
+
+_WEIGHT = re.compile(r"(?<![\d.,~-])(\d+(?:\.\d+)?)\s*(kg|㎏|g|그램)(?![가-힣a-zA-Z])", re.I)
+_COUNT = re.compile(r"(?<![\d.,~-])(\d+)\s*(개|팩|봉|통|병|박스)(?![가-힣a-zA-Z\d~-])")
+
+
+def grams_total(title: str) -> float | None:
+    """상품명 표기로 본 총중량(g) — 무게 표기가 한 가지이고 묶음 수가 한 가지일 때만 (범위·'내외'는 계산 안 함).
+    예: '대방어 필렛 500g, 2개' → 1000. '사과 3kg 10~12과' 처럼 개수가 낱개 수인 경우는 과·구를 세지 않는다."""
+    t = title or ""
+    if re.search(r"\d\s*[~-]\s*\d|내외|이상|이하|내지", t):
+        return None
+    weights = {(float(m.group(1)) * (1000 if m.group(2).lower() in ("kg", "㎏") else 1)) for m in _WEIGHT.finditer(t)}
+    if len(weights) != 1:
+        return None
+    counts = {int(m.group(1)) for m in _COUNT.finditer(t)}
+    if len(counts) > 1:
+        return None
+    total = next(iter(weights)) * (next(iter(counts)) if counts else 1)
+    return total if total > 0 else None
+
+
+def per_100g(title: str, price: int | None) -> str | None:
+    """100g당 값 (상품명 표기로 계산, 반올림 10원). 계산할 수 없으면 None."""
+    g = grams_total(title)
+    if not g or not price or price <= 0:
+        return None
+    return f"100g당 약 {round(price * 100 / g, -1):,.0f}원"
 
 
 def amounts(title: str) -> list[str]:

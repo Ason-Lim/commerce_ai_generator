@@ -19,7 +19,7 @@ from app.services.trend_posts import frame
 from app.services.trend_posts.model import Post, PostProduct
 
 FORMAT = "report"
-RULES_VERSION = "report v1.0"
+RULES_VERSION = "report v1.1"
 
 TITLE_CHANGE = ["요즘 검색이 늘어난 {k} — 무엇이 달라졌나", "{k} 검색이 늘었어요 — 데이터로 본 변화와 고를 때 볼 것"]
 TITLE_CAUSE = ["{k} 검색이 늘어난 이유와 고를 때 볼 것"]          # 출처 있는 행사·보도가 있을 때만
@@ -74,8 +74,8 @@ def change_lines(item: dict, data_until: str | None) -> list[str]:
         out.append(f"검색이 늘기 시작한 때는 {_md(item['onset'])} 무렵이에요.")
     rank = item.get("rank_trend") or {}
     if rank.get("status") == "ok" and rank.get("first") and rank.get("last"):
-        out.append(f"네이버 식품 검색어 순위는 {_md(rank['first']['date'])} {rank['first']['rank']}위에서 "
-                   f"{_md(rank['last']['date'])} {rank['last']['rank']}위가 됐어요.")
+        out.append(frame.rank_sentence(_md(rank['first']['date']), rank['first']['rank'],
+                                          _md(rank['last']['date']), rank['last']['rank']))
     blog = item.get("blog") or {}
     if blog.get("status") == "ok" and blog.get("last7"):
         clue = frame.clue_phrase(blog.get("clues"))

@@ -148,7 +148,9 @@ def test_rendered_page_puts_disclosure_before_any_product_link(tmp_path):
     html = render.post_page(post, T0)
     assert html.index(policy.COUPANG_DISCLOSURE) < html.index('class=go') < html.index("판매처에서 보기")
     assert "<title>[광고]" in html and 'rel="sponsored nofollow noopener"' in html
-    assert html.count("<script") == html.count('<script type="application/ld+json">') == 1   # 구조화 데이터만
+    # 스크립트는 구조화 데이터 1개 + 글 끝 피드백 1개(2026-11-21)뿐 — 피드백 스크립트는 이동·외부 호출 없음
+    assert html.count('<script type="application/ld+json">') == 1 and html.count("<script") == 2
+    assert render.FEEDBACK_JS in html and "location" not in render.FEEDBACK_JS and "http" not in render.FEEDBACK_JS
     assert "http-equiv" not in html                                      # 자동 이동 없음
     assert "https://link.coupang.com" not in html                       # 상품 주소는 /go 경유로만
 

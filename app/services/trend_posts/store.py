@@ -46,6 +46,14 @@ class FilePostStore:
         os.replace(tmp, path)
         return post
 
+    def delete(self, post_id: str) -> bool:
+        """글 파일 지우기 (2026-11-21 v1.1). 지웠으면 True."""
+        path = self._path(post_id)
+        if self.get(post_id) is None:
+            return False
+        path.unlink()
+        return True
+
     def all(self) -> list[Post]:
         if not self.root.is_dir():
             return []
