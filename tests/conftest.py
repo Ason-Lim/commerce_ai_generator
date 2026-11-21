@@ -73,3 +73,8 @@ _os.environ.setdefault("MISS_SIGNALS", "off")
 @_pytest.fixture(autouse=True)
 def _isolated_trend_posts(monkeypatch, tmp_path):
     monkeypatch.setenv("TREND_POSTS_DIR", str(tmp_path / "trend_posts"))
+
+
+# 2026-11-21: 고객 문장 작업의 OpenAI 전환(llm_client.customer_route)은 .env 키가 있는 맥에서 기존 테스트의 공급자를 바꾼다 —
+# 기존 테스트는 예전 공급자 그대로 두고, 전환 자체는 tests/services/nlu/test_customer_route.py 가 env 를 넘겨 시험한다.
+_os.environ.setdefault("CUSTOMER_LLM_PROVIDER", "deepseek")

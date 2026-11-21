@@ -66,9 +66,9 @@ def test_chat_shows_review_notes_and_where_the_answer_came_from(sqlite_db):
     svc = ChatService(sqlite_db, shopping=FakeShopping(items=items), recipe_chat=RecipeChat(statement_factory=str),
                       food_tips=gen, food_review=review_flagging_geumsil)
     text = md(svc.handle(None, message="딸기 언제부터 맛있어? 품종별 차이 알려줘"))
-    assert "- **금실**: 과육이 부드러워요 _(Claude 의견: 금실은 과육이 단단한 편이에요)_" in text
+    assert "- **금실**: 과육이 부드러워요 _(검토 AI 의견: 금실은 과육이 단단한 편이에요)_" in text
     assert "- **설향**: 과즙이 많고 부드러워요\n" in text
-    assert "DeepSeek 가 정리하고 Claude 가 한 번 더 검토했어요 — 두 AI 의 생각이 다른 1곳은 그 줄에 Claude 의견을 함께 적었어요" in text
+    assert "AI 가 정리하고 다른 AI 가 한 번 더 검토했어요 — 두 AI 의 생각이 다른 1곳은 그 줄에 검토 AI 의견을 함께 적었어요" in text
     text2 = md(svc.handle(None, message="딸기 제철 언제야? 품종 차이도 알려줘"))
     assert gen.calls == 1 and "에 정리해 저장한 정보예요" in text2
 
