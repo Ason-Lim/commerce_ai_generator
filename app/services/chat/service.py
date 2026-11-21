@@ -1012,6 +1012,8 @@ class ChatService:
         if picked:
             if got.get("fresh_miss"):
                 blocks.append(B.notice(got["fresh_miss"] + "."))
+            if got.get("search_note"):
+                blocks.append(B.notice(got["search_note"] + "."))
             blocks += self._result_blocks(sid, label, picked, budget, got["found"], frozen=frozen_list)
             all_cards = picked["picks"] + picked["others"]
             items = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in all_cards]
@@ -1568,7 +1570,7 @@ def _safe_url(url) -> str | None:
 
 
 PRIVATE_CARD_KEYS = frozenset({"_q", "weight_source", "weight_formula", "weight_found", "weight_verified", "volume_formula",
-                               "category", "same_name_options"})  # 2026-11-21: 화면에는 weight_note 로만 알림   # 서버 기록용 (화면 응답에서 뺌)
+                               "category", "same_name_options", "grade_note"})  # 2026-11-21: 화면에는 weight_note 로만 알림   # 서버 기록용 (화면 응답에서 뺌)
 
 
 def _public(card: dict, *, go: str | None = None, saved: bool = False) -> dict:
