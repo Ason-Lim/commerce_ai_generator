@@ -103,6 +103,9 @@ HOLD_CRITERIA = {
                       "날짜 — 줄 날짜가 정해지면 그 전에 받을 수 있는지 보세요.",
                       "구성·보관 — 개수·포장과 보관 방법(실온·냉장)을 상품 표시에서 확인하세요."]},
 }
+# 2026-11-21 v1.1 배포 확인: 건강식품 보류 글은 '보관' 줄 대신 섭취량·표시 (frame.is_health)
+HOLD_HEALTH_LINE = {"site": "섭취량·표시 — 1일 섭취량과 주원료 함량, '건강기능식품' 표시를 상품 정보에서 확인하세요.",
+                    "blog": "섭취량·표시 — 하루 섭취량과 주원료 함량, '건강기능식품' 표시가 있는지 상품 정보에서 보세요."}
 # 32·20 공통 예시 줄 — 공개 글이라 독자의 보유를 단정하지 않고 '예시'로 (55종 v1.2 규칙)
 HOLD_EXAMPLE = {"site": "예시: 비슷한 제품이 집에 있다면, 새로 사기 전에 남은 양과 유통기한부터 확인해 보세요.",
                 "blog": "예시: 비슷한 게 집에 있다면, 새로 사기 전에 남은 양과 유통기한부터 확인해 보세요."}
@@ -129,6 +132,8 @@ def hold(topic: str, *, status: str | None = None, channel: str = "site", cause:
     ch.question = frame.pick(HOLD_QUESTION[c][var], topic, "hq" + c).format(k=topic)
     ch.answer = [HOLD_LEAD[c][var], HOLD_ANSWER_GIFT[c] if var == "gift" else HOLD_ANSWER[c]]
     ch.criteria = list(HOLD_CRITERIA[c][var])
+    if var != "gift" and frame.is_health(topic):
+        ch.criteria = [HOLD_HEALTH_LINE[c] if x.startswith("보관") else x for x in ch.criteria]
     return ch
 
 

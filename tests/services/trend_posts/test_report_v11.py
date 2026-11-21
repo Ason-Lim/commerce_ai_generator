@@ -105,3 +105,16 @@ def test_delete_only_draft_rejected_withdrawn(tmp_path):
     with pytest.raises(PostError):
         svc.get(post.id)
     assert svc.store.delete(post.id) is False
+
+
+def test_hold_criteria_for_health_food_have_no_storage_line():
+    """배포 확인(11-21 22:24): 보류로 바꾼 캡슐레이션효소에 '보관(실온·냉장·냉동)' 줄이 남아 있었음."""
+    for ch in ("site", "blog"):
+        crit = templates.hold("캡슐레이션효소", channel=ch).criteria
+        assert any("섭취량" in x for x in crit) and not any("냉동" in x for x in crit)
+        assert any(x.startswith("보관") for x in templates.hold("방어필렛", channel=ch).criteria)   # 일반 식품은 그대로
+
+
+def test_feedback_chip_rows_really_hide():
+    """배포 확인(11-21 22:24): .fbrow{display:flex} 가 hidden 을 덮어 좋음 칩 줄이 '나쁨'에도 보였음."""
+    assert ".fb [hidden]{display:none}" in render.CSS
