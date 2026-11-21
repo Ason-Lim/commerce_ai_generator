@@ -108,6 +108,9 @@ def apply_conclusion(post: Post, conclusion: str) -> Post:
     구매 전 제약·상품 절)를 모두 빼고 보류 결론 · buy = 상품 기준으로 원래 틀. [광고]·고지는 service.update 가 맞춘다.
     (질문·답·절·제약을 사람이 고쳤다면 결론을 바꿀 때 다시 써진다 — 기록에 남긴다.)"""
     from app.services.trend_posts import templates
+    if post.format == "report":                  # 2026-11-21 보고서형은 데이터 절을 두고 기준·결론 칸만
+        from app.services.trend_posts import report
+        return report.apply_conclusion(post, conclusion)
     status = "new" if post.topic_kind == "viral" else None
     if conclusion == "hold":
         ch = templates.hold(post.topic, status=status, channel="site", cause=cause_of(post))
@@ -131,7 +134,9 @@ def apply_conclusion(post: Post, conclusion: str) -> Post:
 
 
 def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (), recipe: PostRecipe | None = None,
-          now: datetime | None = None, sources: dict | None = None, template: str | None = None) -> Post:
+          now: datetime | None = None, sources: dict | None = None, template: str | None = None,
+          format: str | None = None) -> Post:
+    """format: 'report'(보고서형 v1.0, 기본) · 'frame04'(프레임 0.4). 기본값은 report.default_format() (.env)."""
     now = now or datetime.now(timezone.utc)
     topic = item["keyword"]
     day = (data_until or now.date().isoformat())[:10]
@@ -144,6 +149,20 @@ def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (
     title = chosen.title
     used = [k for k in SOURCE_LABEL if k == "naver_datalab" or (sources or {}).get(k)]
     stamp = now_iso(now)
+    from app.services.trend_posts import report
+    fmt = format or report.default_format()
+    if fmt == report.FORMAT:
+        rf = report.fields(item, data_until, products, kind)
+        rtitle = rf.pop("title")
+        return Post(
+            id=post_id(day, topic), topic=topic, data_until=data_until,
+            title=(policy.AD_PREFIX + " " + rtitle) if affiliate else rtitle,
+            why=why_lines(item, data_until), recipe=recipe, products=products,
+            sources=[PostSource(kind="data", label=SOURCE_LABEL[k][0], url=SOURCE_LABEL[k][1]) for k in used],
+            disclosure=policy.disclosure_text() if affiliate else None, experience="data",
+            topic_kind=kind, created_at=stamp, updated_at=stamp, **rf,
+            history=[HistoryEntry(at=stamp, action="create",
+                                  note=f"급상승 리포트 {data_until or ''} · 보고서형 {report.RULES_VERSION}")])
     return Post(
         id=post_id(day, topic), topic=topic, data_until=data_until,
         title=(policy.AD_PREFIX + " " + title) if affiliate else title,
@@ -155,7 +174,7 @@ def build(item: dict, data_until: str | None, *, products: list[PostProduct] = (
         answer=frame.answer(topic, bool(products), any(p.rocket for p in products), "site", kind),
         criteria=frame.criteria(topic, "site", kind), constraints=frame.constraints(topic, "site", kind),
         checklist=frame.checklist(topic, "site") if products else None,
-        template=chosen.id, topic_kind=kind,
+        template=chosen.id, topic_kind=kind, format="frame04",
         sections=[PostSection(heading=h, items=lines) for h, lines in chosen.sections],
         created_at=stamp, updated_at=stamp,
         history=[HistoryEntry(at=stamp, action="create",

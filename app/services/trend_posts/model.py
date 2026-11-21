@@ -94,6 +94,14 @@ class Post(_M):
     sections: list[PostSection] = Field(default_factory=list)
     conclusion: Literal["buy", "hold"] = "buy"   # 2026-11-20 hold = 구매 보류 결론 — 구매 링크·광고 고지 없음
     cover: Optional[PostImage] = None            # 2026-11-20 보류 글 대표 그림 (AI). 구매 글은 상품 사진으로 그린다
+    # 2026-11-21 보고서형 (report.py). format 이 비어 있으면 예전 글 — 질문·답이 있으면 프레임 0.4, 없으면 첫 형식.
+    format: Optional[Literal["frame04", "report"]] = None
+    rules_version: Optional[str] = None          # 글을 만든 규칙 판 (예: 'report v1.0') — 피드백 집계 묶음
+    summary_lines: list[str] = Field(default_factory=list)   # 요약 3줄: 무엇이 · 얼마나 · 왜
+    data_change: list[str] = Field(default_factory=list)     # ① 관심 변화
+    data_events: list[str] = Field(default_factory=list)     # ① 확인된 관련 행사·보도 (출처 있는 것만)
+    data_reading: list[str] = Field(default_factory=list)    # ① 가능한 해석 (추정이라고 밝힘)
+    data_unknown: list[str] = Field(default_factory=list)    # ① 확인되지 않은 부분
     status: Status = "draft"
     created_at: str
     updated_at: str
