@@ -190,7 +190,7 @@ class LLMClient:
 
     def _chat_json(self, user_text: str, temperature: float) -> dict:
         try:
-            return self._chat_json_once(user_text, temperature)
+            out, teacher = self._chat_json_once(user_text, temperature), f"{self.provider}:{self._model_name()}"
         except LLMConfigError:
             raise
         except Exception:
@@ -202,7 +202,13 @@ class LLMClient:
                                                 self.fallback[0])
             backup = LLMClient(self.system, provider=self.fallback[0], env=self._env, openai_factory=self._openai_factory,
                                http_post=self._http_post, timeout=self.timeout, task=self.task, model=self.fallback[1])
-            return backup._chat_json_once(user_text, temperature)
+            out, teacher = backup._chat_json_once(user_text, temperature), f"{backup.provider}:{backup._model_name()}"
+        # 2026-11-21: 로컬 모델 학습 데이터셋 — 짧은 정리 작업만, 개인정보 모양이 있으면 담지 않음 (app/services/ai/dataset.py)
+        if self.task in CUSTOMER_FAST_TASKS and self.provider != "ollama":
+            from app.services.ai import dataset
+
+            dataset.capture(self.task, user_text, out, teacher, self.system)
+        return out
 
     def _chat_json_once(self, user_text: str, temperature: float) -> dict:
         if self.provider == "anthropic":
