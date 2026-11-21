@@ -97,7 +97,9 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     from app.services.partners import feed as partner_feed
     from app.services.public_price import kamis
 
-    text = fix_typos(req.text.strip())
+    from app.services.privacy import pii
+
+    text = fix_typos(pii.mask(req.text.strip())[0])     # 2026-11-21: MCP 경로도 개인정보 모양은 가리고 찾는다
     priority = req.priority or _priority(text, nlu_parse)
     budget = parse_budget(text)
     search_text = strip_budget(text) if budget and not budget.get("none") else text

@@ -13,6 +13,8 @@ import type { FlowStep, SendPayload } from './state/useConversation';
 import type { Message } from './types';
 import type { Candidate, TrendPostRef } from './types/blocks';
 import { API_MODE, sendChat } from './api/client';
+// 2026-11-21: 보내기 전에 보이는 안내 (서버 app/services/privacy/pii.INPUT_HINT 와 같은 뜻)
+const PII_HINT = '이름·전화번호 등 개인정보는 적지 마세요';
 import { pageTitle } from './lib/pageTitle';
 import { BusyStatus } from './components/BusyStatus';
 import { ShoppingPanel, type PanelEntry } from './components/ShoppingPanel';
@@ -441,7 +443,7 @@ export default function ChatWindow() {
                     <label htmlFor="prompt" className="sr-only">쇼핑 질문</label>
                     <textarea id="prompt" value={input} onChange={e => setInput(e.target.value)} rows={2} maxLength={4000} placeholder={inRecipe ? '재료나 만드는 방법을 물어보세요' : '어떤 상품을 찾으세요? 예산과 원하는 조건을 알려주세요.'} className="max-h-40 min-h-14 w-full resize-y bg-transparent px-2 py-1 text-sm leading-6 outline-none placeholder:text-stone-400" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit(input); } }} />
                     <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] text-stone-400">추천 정보는 판매처에서 최종 확인해 주세요</span>
+                        <span className="text-[11px] text-stone-400">추천 정보는 판매처에서 최종 확인해 주세요 · {PII_HINT}</span>
                         {busy ? (
                             <button type="button" aria-label="응답 중단" className="send" onClick={() => controller.current?.abort('cancelled')}><Square size={15} /></button>
                         ) : (

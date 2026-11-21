@@ -191,7 +191,15 @@ class ChatService:
                answers: dict | None = None, chip: str | None = None, owner: str | None = None,
                fresh: bool = False) -> dict:
         _QA_MISSING.text = None
+        # 2026-11-21: 개인정보로 보이는 부분은 저장·외부 AI 전송·실수 신호 기록 전에 가린다 (서비스는 개인정보를 받지 않음)
+        from app.services.privacy import pii
+
+        message, pii_kinds = pii.mask(message) if message else (message, [])
         response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
+        if pii_kinds:
+            blocks = list(response.get("blocks") or [])
+            at = 1 if blocks and (blocks[0].get("data") or {}).get("affiliate") else 0
+            response = dict(response, blocks=blocks[:at] + [B.notice(pii.notice(pii_kinds), "warn")] + blocks[at:])
         # 2026-11-16 (2단계 Q&A): 트렌드 질문인데 근거 글이 없으면 지어내지 않고 알린 뒤 평소 답을 그대로 둔다
         stage = str(response.get("stage") or "")
         if stage.startswith("shopping") and stage != "shopping_hot" and not answers \
