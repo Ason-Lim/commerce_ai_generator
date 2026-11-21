@@ -214,11 +214,29 @@ def is_same_product(
     return price_diff_ratio <= 0.35
 
 
+def _coupang_item_id(item: dict) -> str | None:
+    ids = extract_url_identity(str(item.get("product_url") or item.get("raw_link") or ""))
+    return ids.get("itemId") or None
+
+
 def deduplicate_market_items(
     items: list[dict],
 ) -> list[dict]:
     unique: list[dict] = []
     key_index: dict[str, int] = {}
+    # 2026-11-21: 상품명이 똑같은데 쿠팡 itemId 가 다른 상품('해표 압착 올리브유' 250ml·500ml·900ml…)은 용량·수량 옵션이다.
+    # 대표 하나로 합치는 것은 그대로 두고, 합친 옵션 수와 가격 범위를 대표에 남긴다 (대화 카드가 '옵션 n개' 로 알린다).
+    option_ids: dict[int, set[str]] = {}
+    option_prices: dict[int, list[float]] = {}
+
+    def note_option(idx: int, item: dict) -> None:
+        item_id = _coupang_item_id(item)
+        if not item_id:
+            return
+        option_ids.setdefault(idx, set()).add(item_id)
+        price = _safe_float(item.get("price"), 0.0)
+        if price > 0:
+            option_prices.setdefault(idx, []).append(price)
 
     for item in items:
         if not isinstance(item, dict):
@@ -238,6 +256,11 @@ def deduplicate_market_items(
 
         for idx, existing in enumerate(unique):
             if is_same_product(item, existing):
+                if normalize_name(str(item.get("product_name") or item.get("name") or "")) == normalize_name(
+                        str(existing.get("product_name") or existing.get("name") or "")):
+                    if idx not in option_ids:
+                        note_option(idx, existing)
+                    note_option(idx, item)
                 unique[idx] = choose_representative(
                     existing,
                     item,
@@ -249,5 +272,11 @@ def deduplicate_market_items(
         if not merged:
             key_index[key] = len(unique)
             unique.append(item)
+
+    for idx, ids in option_ids.items():
+        prices = option_prices.get(idx) or []
+        if len(ids) >= 2 and len(prices) >= 2 and min(prices) != max(prices):
+            unique[idx] = dict(unique[idx], same_name_options={
+                "count": len(ids), "price_min": int(min(prices)), "price_max": int(max(prices))})
 
     return unique

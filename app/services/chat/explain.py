@@ -262,6 +262,20 @@ def weight_note(title: str) -> dict | None:
     return None
 
 
+def card_weight_note(card: dict) -> dict | None:
+    """weight_note + (2026-11-21) 같은 상품명으로 합친 용량·수량 옵션 — '해표 압착 올리브유' 250ml·500ml·900ml 가
+    상품명에 용량 없이 같은 이름으로 와서 하나로 합쳐졌다. 고른 가격이 어느 옵션인지 상품명으로는 알 수 없음을 알린다."""
+    note = weight_note(card.get("title") or "")
+    opts = card.get("same_name_options")
+    if note or not isinstance(opts, dict) or (opts.get("count") or 0) < 2:
+        return note
+    lo, hi = opts.get("price_min"), opts.get("price_max")
+    detail = f"같은 이름 상품 {opts['count']}개"
+    if lo and hi and lo != hi:
+        detail += f" · {lo:,}~{hi:,}원"
+    return {"kind": "options", "label": "용량·수량 옵션이 있어요", "detail": detail}
+
+
 # 2026-11-11: 냉동 상품 — 생과·생물과 쓰임새가 달라 같은 기준(100g당·가성비)으로 견주지 않는다.
 # '무냉동'·'비냉동'·'냉동 아님'·'냉동실 보관'은 냉동 상품이 아니다.
 _FROZEN_RE = re.compile(r"(?<![무비])냉동(?!\s*(?:아님|안\s*함|X(?![A-Za-z])|x(?![A-Za-z])|실|보관))")
@@ -451,7 +465,7 @@ def enrich(card: dict, item: dict) -> dict:
         rocket=rocket,
         free_shipping=free,
         seller_claims=seller_claims(card.get("title") or ""),
-        weight_note=weight_note(card.get("title") or ""),   # 2026-11-11: 중량 옵션·증정분 안내 (화면에 나감)
+        weight_note=card_weight_note(card),     # 2026-11-11: 중량 옵션·증정분 안내 (화면에 나감)
         check_at_mall=True,
         delivery_hint="로켓배송 표시" if rocket else ("무료배송 표시" if free else None),
     )
@@ -490,7 +504,7 @@ def reweigh(card: dict) -> dict:
     basis = _basis(out)
     out["per100g"] = round(basis / weight * 100) if weight and basis else None
     out["per_unit"] = per_unit_price(out, unit)   # p39: 저장 카드의 예전 개당 가격도 남기지 않는다
-    out["weight_note"] = weight_note(card.get("title") or "")   # 2026-11-11
+    out["weight_note"] = card_weight_note(card)                  # 2026-11-11
     _set_volume(out, weight)                                     # 2026-11-12: 액체 100ml당
     return _blocked(out)
 

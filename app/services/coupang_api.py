@@ -59,6 +59,8 @@ def normalize_coupang_product(item: dict, keyword: str = "") -> dict:
         "keyword": keyword,
         "is_coupang": True,
         "is_ad": True,
+        # 2026-11-21: 쿠팡 분류 이름 — 식품 사이트에 신발·가전이 섞이지 않게 대화·검색 서비스에서 본다 (없으면 None)
+        "category_name": item.get("categoryName") or None,
         # 2026-11-01: 판매처 API가 주는 배송 표시를 그대로 남긴다 (값이 없으면 None — 추정하지 않음)
         "is_rocket": item.get("isRocket") if isinstance(item.get("isRocket"), bool) else None,
         "is_free_shipping": item.get("isFreeShipping") if isinstance(item.get("isFreeShipping"), bool) else None,

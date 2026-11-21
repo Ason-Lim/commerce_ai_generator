@@ -40,3 +40,21 @@ def is_non_food_item(name: str | None, category: str | None = None) -> bool:
     if _POT.search(text) and not _BEE_POLLEN.search(text):
         return True
     return bool(_SEED.search(text) and not _EDIBLE_SEED.search(text))
+
+
+# 2026-11-21: 대화 '엑스트라 버전'(엑스트라버진 오타)에 쿠팡이 스케쳐스 신발·크리컷 커팅기를 돌려줬고 그대로 추천됐다.
+# 쿠팡 분류 이름(categoryName)이 분명히 식품 밖이면 대화·검색 서비스 후보에서 뺀다. 분류가 없으면 그대로 둔다
+# (상품명만으로는 판단하지 않음). 주방용품(오일 병·디스펜서)도 먹거리가 아니라 뺀다.
+_NON_FOOD_CATEGORY = re.compile(
+    r"패션|의류|잡화|신발|가방|가전|디지털|컴퓨터|문구|오피스|완구|취미|스포츠|레저|자동차|도서|음반|DVD|"
+    r"가구|인테리어|홈데코|뷰티|화장품|반려|공구|산업|주방용품|생활용품|출산|유아동|침구|캠핑"
+)
+_FOOD_CATEGORY = re.compile(r"식품|건강|음료|과자|간식|농산|수산|축산|정육|과일|채소|쌀|양곡|커피|차(?![가-힣])|조미료|소스|오일|유제품|베이커리")
+
+
+def is_non_food_category(category: str | None) -> bool:
+    """쿠팡 분류 이름이 식품 밖이면 True. 식품 말이 함께 있으면('헬스/건강식품'·'유아동 간식') 식품으로 본다."""
+    text = (category or "").strip()
+    if not text:
+        return False
+    return bool(_NON_FOOD_CATEGORY.search(text) and not _FOOD_CATEGORY.search(text))
