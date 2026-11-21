@@ -70,7 +70,7 @@ def trends_index(posts: Posts):
 
 @router.get("/trends/img/{name}")
 def trends_image(name: str):
-    """보류 글의 AI 대표 그림 (2026-11-20). 이름 모양이 맞고 var/trend_images 안에 있는 png 만."""
+    """보류 글의 AI 대표 그림 (2026-11-20). 이름 모양이 맞고 var/trend_images 안에 있는 png·webp 만 (webp 는 v1.1)."""
     from fastapi.responses import FileResponse
 
     from app.services.trend_posts.cover import image_dir
@@ -79,7 +79,8 @@ def trends_image(name: str):
     path = image_dir() / name
     if not VALID_IMAGE.match(name or "") or not path.is_file():
         return Response(status_code=404)
-    return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+    media = "image/webp" if name.endswith(".webp") else "image/png"
+    return FileResponse(path, media_type=media, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.get("/trends/{post_id}")

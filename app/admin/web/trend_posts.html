@@ -28,6 +28,7 @@ input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:7p
 textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12.5px}
 .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
 .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.danger{color:#b3261e;border-color:#e8b4ae}
 .btn:disabled{opacity:.5;cursor:default}
 .scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
 table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
@@ -154,7 +155,9 @@ function open_(p){S.cur=p;$("detail").hidden=false;$("x-title").textContent=p.ti
  if(p.conclusion==="hold"&&!p.cover_running&&p.status!=="approved")B(p.cover?"그림 다시 만들기 (유료)":"그림 만들기 (유료)",()=>act("cover"));
  if(p.status==="pending"){B("승인 · 게시",()=>{const m=prompt("승인 메모 (선택) — 무엇을 확인했는지 적어 두면 기록에 남아요. 비워도 돼요. 취소하면 승인하지 않아요.");if(m!==null)act("approve",m.trim()||null)},"primary");B("반려",()=>{const r=prompt("반려 사유");if(r)act("reject",r)})}
  if(p.status==="approved")B("내리기",()=>{const r=prompt("내리는 이유");if(r!==null)act("withdraw",r)});
- if(p.status==="withdrawn")B("다시 초안으로",()=>act("reopen"))}
+ if(p.status==="withdrawn")B("다시 초안으로",()=>act("reopen"));
+ if(["draft","rejected","withdrawn"].includes(p.status))B("삭제",del_,"danger")}
+async function del_(){if(!confirm("이 글을 지울까요? 되돌릴 수 없어요.\n"+S.cur.title))return;try{await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/delete",{});S.cur=null;$("detail").hidden=true;list()}catch(e){showErr(e)}}
 async function act(action,note){try{const j=await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/"+action,{note});open_(j);list()}catch(e){showErr(e)}}
 async function save(){const keep=[...document.querySelectorAll("#e-products input")].filter(c=>c.checked).map(c=>S.cur.products[+c.dataset.i]);
  const fields={title:$("e-title").value,summary:$("e-summary").value,why:$("e-why").value.split("\n").map(s=>s.trim()).filter(Boolean),price_note:$("e-note").value,products:keep,conclusion:$("e-hold").checked?"hold":"buy"};

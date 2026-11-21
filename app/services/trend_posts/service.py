@@ -143,6 +143,17 @@ class TrendPosts:
         post = post.model_copy(update={"status": "withdrawn"})
         return self.store.save(self._log(post, "withdraw", reason))
 
+    DELETABLE = ("draft", "rejected", "withdrawn")
+
+    def delete(self, post_id: str) -> Post:
+        """초안·반려·내린 글 지우기 (2026-11-21 v1.1 — 시험 초안 정리). 게시 중·검토 대기 글은 먼저 내리거나 반려.
+        되돌릴 수 없다. 지운 글(지우기 전 내용)을 돌려준다 — 대표 그림 파일 정리는 부르는 쪽."""
+        post = self.get(post_id)
+        if post.status not in self.DELETABLE:
+            raise PostError("초안·반려·내린 글만 지울 수 있어요. 게시된 글은 먼저 내려 주세요.", "bad_status")
+        self.store.delete(post.id)
+        return post
+
     def reopen(self, post_id: str) -> Post:
         """내린 글을 다시 초안으로 (고쳐서 다시 검토 요청)."""
         post = self.get(post_id)

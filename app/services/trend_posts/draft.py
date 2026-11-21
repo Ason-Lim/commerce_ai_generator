@@ -50,8 +50,8 @@ def why_lines(item: dict, data_until: str | None) -> list[str]:
         lines.append(f"검색이 늘기 시작한 때는 {_md(item['onset'])} 무렵이에요.")
     rank = item.get("rank_trend") or {}
     if rank.get("status") == "ok" and rank.get("first") and rank.get("last"):
-        lines.append(f"네이버 식품 검색어 순위는 {_md(rank['first']['date'])} {rank['first']['rank']}위에서 "
-                     f"{_md(rank['last']['date'])} {rank['last']['rank']}위가 됐어요.")
+        lines.append(frame.rank_sentence(_md(rank['first']['date']), rank['first']['rank'],
+                                          _md(rank['last']['date']), rank['last']['rank']))
     blog = item.get("blog") or {}
     if blog.get("status") == "ok" and blog.get("last7"):
         lines.append(f"최근 7일 이 단어가 들어간 블로그 글이 {blog['last7']}건 있었어요.")

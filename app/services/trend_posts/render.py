@@ -81,6 +81,13 @@ def price_short(p: PostProduct, now: datetime | None = None) -> str:
     return f"{p.price_krw:,}원 ({t.month}/{t.day} {t.hour}시 확인)"
 
 
+def per_100g_of(p: PostProduct, now: datetime | None = None) -> str | None:
+    """100g당 값 — 가격 칸에 가격을 그릴 때만 (오래된 가격이면 계산도 안 함)."""
+    if p.price_krw is None or policy.is_stale(p.price_checked_at, now):
+        return None
+    return frame.per_100g(p.title, p.price_krw)
+
+
 def post_url(post: Post) -> str:
     return "/trends/" + quote(post.id)
 
@@ -317,17 +324,23 @@ def _report_body(post: Post, now: datetime) -> list[str]:
     elif post.products:
         out.append("<h2>③ 상품</h2><div class=tbl><table class=pt><thead><tr><th>#</th><th>상품</th><th>중량·수량</th>"
                    "<th>배송 표시</th><th>가격(확인 시각)</th><th></th></tr></thead><tbody>")
+        unit_any = False
         for n, p in enumerate(post.products, start=1):
             amount = "·".join(frame.amounts(p.title)) or "상품명에 표기 없음"
+            # 2026-11-21 report v1.1: 구성이 달라도 견줄 수 있게 100g당 값 (가격이 살아 있고 상품명 중량으로 계산될 때만)
+            unit = per_100g_of(p, now)
+            unit_any = unit_any or bool(unit)
             ship = f"{e(p.platform)} · 로켓배송" if p.rocket else e(p.platform)
             img = (f'<img class=tthumb src="{e(p.image_url)}" alt="" loading=lazy referrerpolicy=no-referrer '
                    f'width=48 height=48>' if p.image_url and policy.coupang_image(p.image_url) else "")
             out.append(f"<tr><td class=n>{n}</td><td class=t>{img}{e(p.title)}</td>"
                        f"<td data-k=\"중량·수량\">{e(amount)}</td><td data-k=\"배송 표시\">{ship}</td>"
-                       f"<td class=price data-k=\"가격\">{e(price_short(p, now))}</td>"
+                       f"<td class=price data-k=\"가격\">{e(price_short(p, now))}"
+                       + (f"<br><small class=unit>{e(unit)}</small>" if unit else "") + "</td>"
                        f'<td class=g><a class=go href="{post_url(post)}/go/{n}" rel="sponsored nofollow noopener" '
                        f"target=_blank>판매처에서 보기</a></td></tr>")
-        out.append("</tbody></table></div><p class=muted>중량·수량은 상품명 표기, 배송은 확인한 시점의 검색 결과 표시 기준이에요.</p>")
+        out.append("</tbody></table></div><p class=muted>중량·수량은 상품명 표기, 배송은 확인한 시점의 검색 결과 표시 기준이에요."
+                   + (" 100g당 값은 상품명에 적힌 중량으로 계산했어요." if unit_any else "") + "</p>")
         if post.checklist:
             out.append(f"<p><b>결제 전 확인</b> — {e(post.checklist)}</p>")
         if post.constraints:

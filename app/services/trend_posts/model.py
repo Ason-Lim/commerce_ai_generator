@@ -57,7 +57,7 @@ class PostSection(_M):
 class PostImage(_M):
     """2026-11-20 대표 그림 — 보류 글의 AI 그림 (var/trend_images/<file>). 구매 글은 따로 저장하지 않고
     상품 사진(쿠팡) 중 첫 장을 대표로 그린다."""
-    file: str                                    # 예: 2026-11-19-페레로로쉐.png (VALID_IMAGE)
+    file: str                                    # 예: 2026-11-19-페레로로쉐.webp (VALID_IMAGE, 예전 글은 .png)
     kind: Literal["ai"] = "ai"
     caption: str = "AI로 만든 그림 · 실제 상품 사진이 아니에요"
     created_at: Optional[str] = None
@@ -137,5 +137,5 @@ def post_id(day: str, topic: str) -> str:
     return f"{day}-{topic_slug(topic)}"
 
 
-VALID_IMAGE = re.compile(r"^\d{4}-\d{2}-\d{2}-[0-9a-z가-힣-]{1,40}(?:-\d+)?\.png$")
+VALID_IMAGE = re.compile(r"^\d{4}-\d{2}-\d{2}-[0-9a-z가-힣-]{1,40}(?:-\d+)?\.(?:png|webp)$")   # v1.1: webp
 VALID_ID = re.compile(r"^\d{4}-\d{2}-\d{2}-[0-9a-z가-힣-]{1,40}$")

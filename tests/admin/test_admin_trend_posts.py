@@ -79,7 +79,7 @@ def test_report_post_through_admin_and_public_routes(admin_client, posts_dir, mo
     monkeypatch.delenv("TREND_POST_FORMAT", raising=False)
     d = admin_client.post("/admin/api/trend-posts/draft", json={"keyword": "대방어"}, headers=H).json()
     pid = d["id"]
-    assert d["format"] == "report" and d["rules_version"] == "report v1.0" and d["issues"] == []
+    assert d["format"] == "report" and d["rules_version"] == "report v1.1" and d["issues"] == []
     ev = "11월 10일 ○○수산 축제 개막 보도 (출처: https://news.example/a1)"
     r = admin_client.post(f"/admin/api/trend-posts/{pid}/update",
                           json={"fields": {"data_events": [ev], "conclusion": "hold"}}, headers=H).json()
@@ -98,3 +98,26 @@ def test_report_post_through_admin_and_public_routes(admin_client, posts_dir, mo
     assert "class=pt" not in page and "/go/" not in page and "sponsored" not in page
     go = public.get(f"/trends/{pid}/go/1", follow_redirects=False)
     assert go.status_code == 303 and go.headers["location"] == "/trends"          # 보류 글은 판매처 이동 거부
+
+
+def test_delete_draft_through_admin(admin_client, posts_dir, tmp_path, monkeypatch):
+    """2026-11-21 v1.1 — 초안·내린 글만 지운다. 게시 중이면 409, 대표 그림 파일도 함께 지운다."""
+    from app.services.trend_posts import cover
+
+    monkeypatch.setattr(cover, "image_dir", lambda: tmp_path / "imgs")
+    pid = admin_client.post("/admin/api/trend-posts/draft", json={"keyword": "대방어"}, headers=H).json()["id"]
+    admin_client.post(f"/admin/api/trend-posts/{pid}/submit", json={}, headers=H)
+    admin_client.post(f"/admin/api/trend-posts/{pid}/approve", json={}, headers=H)
+    assert admin_client.post(f"/admin/api/trend-posts/{pid}/delete", json={}, headers=H).status_code == 409
+    admin_client.post(f"/admin/api/trend-posts/{pid}/withdraw", json={"note": "시험"}, headers=H)
+    from app.services.trend_posts.model import PostImage
+    from app.services.trend_posts.store import FilePostStore
+    st = FilePostStore(posts_dir)
+    st.save(st.get(pid).model_copy(update={"cover": PostImage(file=pid + ".webp", created_at="2026-11-21T00:00:00+00:00")}))
+    (tmp_path / "imgs").mkdir()
+    (tmp_path / "imgs" / (pid + ".webp")).write_bytes(b"x")
+    r = admin_client.post(f"/admin/api/trend-posts/{pid}/delete", json={}, headers=H)
+    assert r.status_code == 200 and r.json() == {"deleted": True, "id": pid}
+    assert not (tmp_path / "imgs" / (pid + ".webp")).exists()
+    assert admin_client.get(f"/admin/trend-posts/{pid}/preview", headers=H).status_code == 404
+    assert admin_client.get("/admin/api/trend-posts", headers=H).json()["items"] == []

@@ -1677,6 +1677,15 @@ def trend_posts_action(post_id: str, action: str, body: _PostNoteIn | None = Non
         if not cover.start(svc, post_id):
             raise HTTPException(400, "그림을 만들 수 없어요 (이미 만드는 중이거나 그림 도구가 꺼져 있어요).")
         return {**_post_out(svc, post), "cover_running": True}
+    if action == "delete":                       # 2026-11-21 v1.1 초안·반려·내린 글 지우기 (대표 그림 파일도)
+        from app.services.trend_posts import cover
+
+        post = _post_call(svc.delete, post_id)
+        if post.cover:
+            for f in cover.image_dir().glob(post.id + "*"):
+                if f.suffix in (".png", ".webp"):
+                    f.unlink(missing_ok=True)
+        return {"deleted": True, "id": post.id}
     calls = {"submit": lambda: svc.submit(post_id), "approve": lambda: svc.approve(post_id, note),
              "reject": lambda: svc.reject(post_id, note or ""), "withdraw": lambda: svc.withdraw(post_id, note),
              "reopen": lambda: svc.reopen(post_id)}

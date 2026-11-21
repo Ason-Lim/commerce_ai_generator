@@ -79,9 +79,9 @@ def start(
                 return
             folder = image_dir()
             folder.mkdir(parents=True, exist_ok=True)
-            n = sum(1 for _ in folder.glob(post.id + "*.png"))
-            name = f"{post.id}.png" if n == 0 else f"{post.id}-{n + 1}.png"
-            shutil.copyfile(res["image_path"], folder / name)
+            n = sum(1 for f in folder.glob(post.id + "*") if f.suffix in (".png", ".webp"))
+            stem = post.id if n == 0 else f"{post.id}-{n + 1}"
+            name = save_image(Path(res["image_path"]), folder, stem)
             svc.store.save(
                 post.model_copy(
                     update={
@@ -101,6 +101,28 @@ def start(
     else:
         work()
     return True
+
+
+MAX_WIDTH = 1024
+
+
+def save_image(src: Path, folder: Path, stem: str) -> str:
+    """2026-11-21 report v1.1: 1536px PNG(약 2MB) 그대로 두지 않고 폭 1024 WebP 로 줄여 저장 (보통 100KB 안팎).
+    Pillow 가 없거나 변환이 실패하면 원본 PNG 를 그대로 복사한다. 저장한 파일 이름을 돌려준다."""
+    try:
+        from PIL import Image
+
+        with Image.open(src) as im:
+            im = im.convert("RGB")
+            if im.width > MAX_WIDTH:
+                im = im.resize((MAX_WIDTH, round(im.height * MAX_WIDTH / im.width)), Image.LANCZOS)
+            name = stem + ".webp"
+            im.save(folder / name, "WEBP", quality=82, method=6)
+            return name
+    except Exception:  # noqa: BLE001 — 줄이지 못해도 그림은 붙인다
+        name = stem + ".png"
+        shutil.copyfile(src, folder / name)
+        return name
 
 
 def running(post_id: str) -> bool:
