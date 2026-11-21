@@ -611,8 +611,14 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                 for it in items}
     chosen_of = {}
     head = []
+
+    def cause_text(it: dict) -> str:
+        c = it.get("cause")
+        return c["cause"] if c and c.get("kind") != "불명" and _public(c) else ""
+
     if only_coupang:                          # 블로그 말투(channel='blog'): 리포트 숫자 도입 → 결론부터 → 직접 사용 아님
-        chosen_of = {it["keyword"]: (templates.hold(it["keyword"], status=it.get("status"), channel="blog") if hold else
+        chosen_of = {it["keyword"]: (templates.hold(it["keyword"], status=it.get("status"), channel="blog",
+                                                    cause=cause_text(it)) if hold else
                                      templates.choose(it["keyword"], status=it.get("status"),
                                                       products=links_of[it["keyword"]],
                                                       recipe=(recipes or {}).get(it["keyword"]), override=template,
@@ -625,15 +631,18 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         kind = chosen_of[lead].kind if len(kinds) == 1 else "general"   # 주제가 섞인 글은 일반 문장으로 시작
         topic = lead if len(names) == 1 else "·".join(names[:2]) + " 같은 식품"
         hook = frame.blog_hook(items[0])
+        lead_ch = chosen_of[lead]
         head = ([hook, ""] if hook else []) + [
-            frame.question(topic, "blog", kind), frame.heading("answer", lead, "blog"),
-            " ".join(templates.hold_answer(topic, kind, "blog") if hold else
+            lead_ch.question if hold else frame.question(topic, "blog", kind), frame.heading("answer", lead, "blog"),
+            " ".join(lead_ch.answer if hold else
                      frame.answer(topic, any_links, any(x.get("rocket") for v in links_of.values() for x in v), "blog",
                                   kind)),
-            frame.experience_line(lead, "blog"), ""]
+            frame.experience_line(lead, "blog", hold), ""]
     lines = [*top, *([""] if top else []), *head,
              f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
              "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
+    seen_lines: set[str] = set()              # 2026-11-20 v1.3: 여러 키워드 글에서 같은 절·기준을 되풀이하지 않는다
+    crit_at: dict[tuple, int] = {}
     for n, it in enumerate(items, 1):
         lines.append(f"■ {n}. {it['keyword']}")
         if it["status"] == "surging":
@@ -649,23 +658,35 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                          f"{rank['last']['date']} {rank['last']['rank']}위")
         blog = it["blog"]
         if blog.get("status") == "ok":
-            clue = ", ".join(f"{k} {v}건" for k, v in list((blog.get("clues") or {}).items())[:3])
+            clue = frame.clue_phrase(blog.get("clues"))
             lines.append(f"- 블로그: 최근 글 {blog['posts']}건 중 최근 7일 {blog['last7']}건"
-                         + (f" · 제목 단서 {clue}" if clue else ""))
+                         + (f" (제목으로 보면 {clue})" if clue else ""))
         if it["google"].get("status") == "ok":
             lines.append("- 구글 트렌드 급상승 검색어에도 나왔어요.")
-        if it.get("cause") and it["cause"]["kind"] != "불명" and _public(it["cause"]):
-            lines.append(f"- 계기(추정): {it['cause']['cause']} — 블로그 제목을 바탕으로 한 추정이에요.")
-        lines.append(f"- 함께 확인된 신호 {it['cross']['n']}/{it['cross']['of']}개 (블로그 글 증가 · 식품 순위 상승 · 구글 트렌드)")
+        if cause_text(it):
+            lines.append(f"- 계기(추정): {cause_text(it)} — 블로그 제목을 바탕으로 한 추정이에요.")
+        else:
+            lines.append("- 왜 늘었는지는 아직 확인되지 않았어요.")
+        sig = frame.signals_line(_public_cross(it, report) if it.get("cross") else None)
+        if sig:
+            lines.append(f"- {sig}")
         links = links_of[it["keyword"]]
         if only_coupang:                      # 글 틀 절 → 주제별 기준
             kw = it["keyword"]
             ch = chosen_of[kw]
             for head_line, sec in ch.sections:
-                lines.append(head_line)
-                lines += [f"- {x}" for x in sec]
-            lines.append(templates.HOLD_CRITERIA_HEAD["blog"] if hold else frame.heading("criteria", names[0], "blog", n - 1))
-            lines += [f"{i}. {c}" for i, c in enumerate(frame.criteria(kw, "blog", ch.kind), 1)]
+                new = [x for x in sec if x not in seen_lines]
+                if new:                       # 앞 키워드와 같은 줄은 빼고, 다 같으면 절째로 뺀다
+                    lines.append(head_line)
+                    lines += [f"- {x}" for x in new]
+                    seen_lines.update(new)
+            crit = ch.criteria if hold else frame.criteria(kw, "blog", ch.kind)
+            if tuple(crit) in crit_at:
+                lines.append(f"고르는 기준은 위 {crit_at[tuple(crit)]}번과 같아요.")
+            else:
+                crit_at[tuple(crit)] = n
+                lines.append(templates.HOLD_CRITERIA_HEAD["blog"] if hold else frame.heading("criteria", names[0], "blog", n - 1))
+                lines += [f"{i}. {c}" for i, c in enumerate(crit, 1)]
         if only_coupang and links:
             lines.append(frame.checklist(names[0], "blog", n - 1))
             lines.append("▶ 쿠팡에서 보기")
@@ -688,15 +709,24 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         lines += [templates.HOLD_LINE["blog"], ""]
     lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
               "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요."]
-    if not hold:
+    if not hold and not (only_coupang and any(links_of.values())):   # 쿠팡용은 '구매 전에 알아 둘 것'에 이미 있음
         lines.append("가격·재고는 판매처에서 확인해 주세요.")
     if only_coupang and not hold:
         lines.append(COUPANG_DISCLOSURE)
     tags = names + ["트렌드리포트", "요즘뜨는식품"] + ([] if hold else ["쿠팡파트너스" if only_coupang else "쇼핑커넥트"])
     picked = {k: {"id": c.id, "name": c.name, "kind": c.kind, "kind_label": frame.TYPE_LABEL.get(c.kind, c.kind),
                   "note": c.note} for k, c in chosen_of.items()}
+    # 2026-11-20 대표 그림: 보류 글은 AI 그림, 구매 글은 첫 쿠팡 상품 사진 (판매처 이미지)
+    cover = None
+    if only_coupang and hold:
+        cover = {"kind": "ai"}
+    elif only_coupang:
+        first = next((x for kw in names for x in links_of[kw] if x.get("image_url")), None)
+        if first:
+            cover = {"kind": "seller", "url": first["image_url"],
+                     "caption": f"쿠팡 상품 사진 · {(first.get('title') or '')[:40]} (판매처 이미지)"}
     return {"title": title, "tags": tags[:10], "body": "\n".join(lines), "keywords": names, "variant": variant,
-            "templates": picked, "hold": hold}
+            "templates": picked, "hold": hold, "cover": cover}
 
 
 # ── wiring from the server environment (keys stay in .env; nothing printed) ─────────────────────────

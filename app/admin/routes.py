@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import json
 import re
 from datetime import date, timedelta
 from functools import lru_cache
@@ -432,7 +433,8 @@ def trends_blog_draft(body: _DraftIn):
         raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들어 주세요.")
     try:
         first = surge.blog_draft(report, body.keywords)
-        coupang = _coupang_links(first["keywords"]) if body.with_coupang else None
+        # 2026-11-20 v1.3: 보류 결론이면 쿠팡 상품을 찾지 않는다 (링크를 넣지 않으므로)
+        coupang = _coupang_links(first["keywords"]) if body.with_coupang and not body.hold else None
         recipes = _blog_recipes(report, first["keywords"], coupang or {}, body.template)
         drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
                                             connect_ok=blog_connect_approved()),
@@ -441,6 +443,11 @@ def trends_blog_draft(body: _DraftIn):
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     keywords = drafts["naver"]["keywords"]
+    # 2026-11-20 세부 질문 후보 · 제목 유사도 (네이버 공식 검색 API 블로그 제목, 실패해도 초안은 만든다) — 운영 메모에만
+    serp = _blog_serp(keywords)
+    status_of = {it["keyword"]: it.get("status") for it in report.get("items") or []}
+    subq = _subquestions(keywords, serp, status_of)
+    sims = {v: _title_similarity(d["title"], keywords, serp) for v, d in drafts.items()}
     # 2026-11-02: 초안 키워드 중 쇼핑커넥트 링크 발급이 필요한 것 — 파일 맨 위 운영 메모 + 화면 표시 (본문에는 넣지 않음)
     needs = _link_needs(keywords)
     missing = [k for k in keywords if coupang is not None and not coupang.get(k)]
@@ -449,9 +456,13 @@ def trends_blog_draft(body: _DraftIn):
     stem = f"trend_{report['data_until']}_{'_'.join(keywords)[:40]}"
     for variant, d in drafts.items():
         memo = _operator_memo(needs) if variant == "naver" else ""
-        extra = []
+        extra = [x.memo_line() for x in subq.values()] + [_ts().memo_line(sims[variant])]
         if missing and variant == "coupang":                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
             extra.append("쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing))
+        if variant == "coupang" and d.get("hold"):
+            extra.append("구매 보류 결론 — 쿠팡 링크·광고 고지를 넣지 않아요. 대표 그림은 AI 그림(승인할 때 만들어요, 유료).")
+        elif variant == "coupang" and d.get("cover"):
+            extra.append("대표 그림: 쿠팡 상품 사진 1장 (승인할 때 글 위쪽에 넣어요)")
         if variant == "coupang" and d.get("templates"):       # 2026-11-20 글 틀
             extra.append("글 틀: " + " · ".join(f"{k} {t['id']} {t['name']}({t['kind_label']})"
                                                + (f" — {t['note']}" if t["note"] else "")
@@ -462,8 +473,12 @@ def trends_blog_draft(body: _DraftIn):
         path = folder / (f"{stem}.txt" if variant == "naver" else f"{stem}_쿠팡용.txt")
         path.write_text(_draft_text(memo, d["title"], d["tags"], d["body"]), encoding="utf-8")
         d["file"] = str(path.relative_to(surge.ROOT))
+        d["title_similarity"] = sims[variant]
+        _save_cover(path, d.get("cover"))
+    _save_serp(folder / f"{stem}.serp.json", keywords, serp, subq)
     out = drafts["naver"]
     return {**out, "link_needs": needs, "drafts": drafts,
+            "subquestions": {k: v.as_dict() for k, v in subq.items()},
             "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in keywords}}
 
 
@@ -603,8 +618,33 @@ def trends_blog_draft_approve(body: _DraftApproveIn):
         raise HTTPException(400, {"message": "확인이 필요한 곳이 있어 임시저장을 시작하지 않았어요.", "issues": issues})
     keywords = [t for t in d["tags"] if t not in ("트렌드리포트", "요즘뜨는식품", "쿠팡파트너스", "쇼핑커넥트")] or [d["title"]]
     rec = bas.start(path, variant=variant, title=d["title"], tags=d["tags"], body=d["body"], keywords=keywords,
-                    with_image=body.with_image)
-    return {"file": body.file, "approval": rec}
+                    with_image=body.with_image, cover=_read_cover(path))
+    # 2026-11-20 고친 제목으로 유사도 다시 (초안 때 받아 둔 상위 제목으로 — 승인 때는 검색을 다시 하지 않음, 막지 않음)
+    return {"file": body.file, "approval": rec, "title_similarity": _title_similarity_cached(path, d["title"], keywords)}
+
+
+def _cover_path(draft_path: Path) -> Path:
+    return draft_path.with_name(draft_path.name[:-len(".txt")] + ".cover.json")
+
+
+def _save_cover(draft_path: Path, cover: dict | None) -> None:
+    """2026-11-20 대표 그림 정보 — 초안 옆 .cover.json (쿠팡용만: 구매 = 쿠팡 상품 사진, 보류 = AI 그림)."""
+    p = _cover_path(draft_path)
+    try:
+        if cover:
+            p.write_text(json.dumps(cover, ensure_ascii=False), encoding="utf-8")
+        elif p.exists():
+            p.unlink()
+    except OSError:
+        pass
+
+
+def _read_cover(draft_path: Path) -> dict | None:
+    try:
+        data = json.loads(_cover_path(draft_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) and data.get("kind") in ("ai", "seller") else None
 
 
 @router.get("/admin/api/trends/blog-draft/approval", dependencies=[api])
@@ -642,9 +682,72 @@ def _coupang_links(keywords: list[str]) -> dict[str, list[dict]]:
             found = post_draft.products_from_result(wiring.find_products(kw), keyword=kw)
         except Exception:  # noqa: BLE001 — 쿠팡을 못 불러도 초안은 만든다
             found = []
-        out[kw] = [{"title": p.title, "url": p.url, "rocket": p.rocket} for p in found
+        out[kw] = [{"title": p.title, "url": p.url, "rocket": p.rocket, "image_url": p.image_url} for p in found
                    if p.link_type == "affiliate"][:surge.COUPANG_PER_KEYWORD]
     return out
+
+
+# ── 2026-11-20 세부 질문 후보 · 제목 유사도 ─────────────────────────────────────────────
+def _ts():
+    from app.services.trends import title_similarity
+
+    return title_similarity
+
+
+def _blog_serp(keywords: list[str]) -> dict[str, list[str]]:
+    """키워드마다 블로그 제목(정확도순 최대 100, 공식 검색 API). 꺼짐(BLOG_SERP=0)·키 없음·실패면 빈 목록."""
+    from app.services.trends import subquestions
+
+    search = subquestions.title_search_from_env()
+    out: dict[str, list[str]] = {}
+    for kw in keywords:
+        try:
+            out[kw] = search(kw) if search else []
+        except Exception:  # noqa: BLE001 — 검색을 못 해도 초안은 만든다
+            out[kw] = []
+    return out
+
+
+def _subquestions(keywords: list[str], serp: dict[str, list[str]], status_of: dict) -> dict:
+    from app.services.trends import subquestions
+
+    return {kw: subquestions.suggest(kw, serp.get(kw) or [], status=status_of.get(kw)) for kw in keywords}
+
+
+def _title_similarity(title: str, keywords: list[str], serp: dict[str, list[str]]) -> dict:
+    """첫 키워드의 상위 제목과 비교 (제목이 첫 키워드를 앞세우므로). 첫 키워드 자료가 없으면 다음 키워드."""
+    pool = next((serp[k] for k in keywords if serp.get(k)), [])
+    return _ts().compare(title, pool, keywords)
+
+
+def _save_serp(path, keywords: list[str], serp: dict, subq: dict) -> None:
+    import json as _json
+    from datetime import datetime as _dt, timezone as _tz
+
+    data = {"fetched_at": _dt.now(_tz.utc).isoformat(timespec="seconds"), "keywords": keywords,
+            "titles": {k: (serp.get(k) or [])[:30] for k in keywords},
+            "subquestions": {k: v.as_dict() for k, v in subq.items()}}
+    try:
+        path.write_text(_json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _serp_path(draft_path):
+    name = draft_path.name
+    if name.endswith(COUPANG_SUFFIX):
+        name = name[:-len(COUPANG_SUFFIX)] + ".txt"
+    return draft_path.with_name(name[:-len(".txt")] + ".serp.json")
+
+
+def _title_similarity_cached(draft_path, title: str, keywords: list[str]) -> dict:
+    import json as _json
+
+    try:
+        data = _json.loads(_serp_path(draft_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"status": "none", "compared": 0}
+    return _title_similarity(title, data.get("keywords") or keywords, data.get("titles") or {})
 
 
 def _blog_recipes(report: dict, keywords: list[str], coupang: dict, override: str | None) -> dict:
@@ -1292,8 +1395,12 @@ def _post_out(svc, post) -> dict:
     from app.services.trend_posts.model import STATUS_LABEL
     from app.services.trend_posts.render import post_url
 
+    from app.services.trend_posts import cover as _cover
+    from app.services.trend_posts.render import cover as hero
+
     return {**post.model_dump(mode="json"), "status_label": STATUS_LABEL[post.status],
-            "issues": svc.check(post), "public_url": post_url(post) if post.status == "approved" else None}
+            "issues": svc.check(post), "public_url": post_url(post) if post.status == "approved" else None,
+            "hero": hero(post), "cover_running": _cover.running(post.id)}
 
 
 def _post_call(fn, *args):
@@ -1365,6 +1472,10 @@ def trend_posts_update(post_id: str, body: _PostEditIn):
         post = _post_call(svc.update, post_id, body.fields)
     except ValueError as exc:                    # 칸 모양이 틀림 (pydantic)
         raise HTTPException(400, {"message": "칸 모양이 맞지 않아요.", "detail": str(exc)[:300]}) from exc
+    if post.conclusion == "hold" and post.cover is None:   # 2026-11-20 보류 글 대표 그림 (AI, 한 번)
+        from app.services.trend_posts import cover
+
+        cover.start(svc, post.id)
     return _post_out(svc, post)
 
 
@@ -1380,6 +1491,15 @@ def trend_posts_refresh(post_id: str):
 def trend_posts_action(post_id: str, action: str, body: _PostNoteIn | None = None):
     svc = _trend_posts()
     note = body.note if body else None
+    if action == "cover":                        # 2026-11-20 보류 글 AI 대표 그림 다시 만들기
+        from app.services.trend_posts import cover
+
+        post = _post_call(svc.get, post_id)
+        if post.conclusion != "hold":
+            raise HTTPException(400, "AI 그림은 보류 글에만 만들어요 (구매 글은 상품 사진을 써요).")
+        if not cover.start(svc, post_id):
+            raise HTTPException(400, "그림을 만들 수 없어요 (이미 만드는 중이거나 그림 도구가 꺼져 있어요).")
+        return {**_post_out(svc, post), "cover_running": True}
     calls = {"submit": lambda: svc.submit(post_id), "approve": lambda: svc.approve(post_id, note),
              "reject": lambda: svc.reject(post_id, note or ""), "withdraw": lambda: svc.withdraw(post_id, note),
              "reopen": lambda: svc.reopen(post_id)}

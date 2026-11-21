@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from app.services.commerce.nonfood import is_non_food_item
 from app.services.trend_posts import frame, policy
 from app.services.trend_posts.model import (HistoryEntry, Post, PostProduct, PostRecipe, PostSection, PostSource,
                                             now_iso, post_id)
@@ -21,6 +22,14 @@ SOURCE_LABEL = {"naver_datalab": ("네이버 데이터랩 검색어 트렌드", 
                 "naver_food_rank": ("네이버 식품 검색어 순위", None),
                 "naver_blog": ("네이버 블로그 검색 (글 제목·날짜만)", None),
                 "youtube": ("유튜브 영상 제목·게시일", None)}
+
+
+NO_CAUSE = {"site": "왜 늘었는지는 아직 확인되지 않았어요.", "blog": "- 왜 늘었는지는 아직 확인되지 않았어요."}
+
+
+def cause_of(post: Post) -> str:
+    """글의 '계기(추정)' 문장 (보류 글의 선물 변형 판단용). 없으면 ''."""
+    return next((w for w in post.why if w.startswith("계기(추정)")), "")
 
 
 def _md(day: str | None) -> str:
@@ -36,7 +45,7 @@ def why_lines(item: dict, data_until: str | None) -> list[str]:
     if item.get("status") == "surging" and item.get("ratio_recent"):
         lines.append(f"{until}최근 3일 '{kw}' 네이버 검색량이 평소(약 한 달 전)의 약 {item['ratio_recent']:.1f}배예요.")
     else:
-        lines.append(f"'{kw}'은(는) 한 달 전에는 거의 검색되지 않다가 최근 검색되기 시작했어요.")
+        lines.append(f"'{kw}'{frame._j(kw, '은', '는')} 한 달 전에는 거의 검색되지 않다가 최근 검색되기 시작했어요.")
     if item.get("onset"):
         lines.append(f"검색이 늘기 시작한 때는 {_md(item['onset'])} 무렵이에요.")
     rank = item.get("rank_trend") or {}
@@ -49,6 +58,8 @@ def why_lines(item: dict, data_until: str | None) -> list[str]:
     cause = item.get("cause")
     if cause and cause.get("kind") != "불명" and _public(cause):
         lines.append(f"계기(추정): {cause['cause']} — 블로그 제목을 바탕으로 한 추정이라 확정된 사실은 아니에요.")
+    else:                                     # 2026-11-20 v1.3: 계기가 없으면 없다고 (빈칸으로 두지 않음)
+        lines.append(NO_CAUSE["site"])
     lines.append("숫자는 그 단어의 평소 검색량과 비교한 배수이고, 다른 단어와 검색량 크기를 비교한 값은 아니에요.")
     return lines
 
@@ -63,6 +74,8 @@ def products_from_result(result: dict | None, now: datetime | None = None, keywo
         offer, prod = it.get("offer") or {}, it.get("product") or {}
         url = offer.get("product_url")
         if not url or not policy.coupang_url(url):
+            continue
+        if is_non_food_item(prod.get("title"), prod.get("category")):   # 2026-11-21 씨앗·모종 등 재배용 제외
             continue
         out.append(PostProduct(
             title=prod.get("title") or "", url=url, platform=offer.get("platform") or "쿠팡",
@@ -97,11 +110,12 @@ def apply_conclusion(post: Post, conclusion: str) -> Post:
     from app.services.trend_posts import templates
     status = "new" if post.topic_kind == "viral" else None
     if conclusion == "hold":
-        ch = templates.hold(post.topic, status=status, channel="site")
+        ch = templates.hold(post.topic, status=status, channel="site", cause=cause_of(post))
         return post.model_copy(update={
             "conclusion": "hold", "title": ch.title, "template": ch.id, "topic_kind": ch.kind,
             "summary": f"'{post.topic}' 검색이 왜 늘었는지 데이터로 보고, 지금 꼭 사야 하는지 정리했어요.",
-            "answer": templates.hold_answer(post.topic, ch.kind, "site"), "constraints": [], "checklist": None,
+            "question": ch.question, "answer": ch.answer, "criteria": ch.criteria,
+            "constraints": [], "checklist": None,
             "sections": [PostSection(heading=h, items=lines) for h, lines in ch.sections]})
     prods = [p for p in post.products]
     ch = templates.choose(post.topic, status=status, recipe=post.recipe, channel="site",
@@ -109,6 +123,7 @@ def apply_conclusion(post: Post, conclusion: str) -> Post:
     return post.model_copy(update={
         "conclusion": "buy", "title": ch.title, "template": ch.id, "topic_kind": ch.kind,
         "summary": f"'{post.topic}' 검색이 왜 늘었는지 데이터로 보고, 함께 볼 레시피와 상품을 정리했어요.",
+        "question": frame.question(post.topic, "site", ch.kind), "criteria": frame.criteria(post.topic, "site", ch.kind),
         "answer": frame.answer(post.topic, bool(prods), any(p.rocket for p in prods), "site", ch.kind),
         "constraints": frame.constraints(post.topic, "site", ch.kind),
         "checklist": frame.checklist(post.topic, "site") if prods else None,
