@@ -47,7 +47,7 @@ table.pt th{font-size:13px;color:#5d635c;font-weight:600}table.pt .go{margin-top
  table.pt td[data-k]::before{content:attr(data-k) " · ";color:#6b706a;font-size:13px}table.pt td.g{margin-top:6px}}
 .go{display:inline-block;margin-top:6px;padding:7px 12px;border-radius:8px;background:#1d211d;color:#fff;text-decoration:none;font-size:14px}
 .fb{margin-top:28px;padding:14px 16px;border:1px solid #e3e5df;border-radius:12px;background:#fff}.fb h2{margin:0 0 8px;font-size:17px}
-.fbrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}.fbrow .muted{width:100%;font-size:13px}
+.fbrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}.fb [hidden]{display:none}.fbrow .muted{width:100%;font-size:13px}
 .fb button{font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;border:1px solid #d9dcd5;background:#fff;color:#1d211d;cursor:pointer}
 .fb button[aria-pressed=true]{background:#1d211d;color:#fff;border-color:#1d211d}.fbnote{font-size:12px;margin:8px 0 0}.fbmsg{margin:6px 0 0;font-size:13px}
 small.unit{color:#5d635c;font-size:12px}
