@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 import io
 
 from app.services.trend_posts import cover, draft, frame, render, templates
@@ -10,6 +12,12 @@ from app.services.trends import blog_autosave as bas
 from app.services.trends import surge as S
 
 from .helpers import approved, item, report, search_result, service
+
+
+@pytest.fixture(autouse=True)
+def _frame04_format(monkeypatch):
+    """이 파일은 프레임 0.4 사이트 글을 검사한다 — 2026-11-21 부터 새 글 기본은 보고서형(test_report.py)."""
+    monkeypatch.setenv("TREND_POST_FORMAT", "frame04")
 
 
 # ── 문장 (v1.3) ─────────────────────────────────────────────────────────

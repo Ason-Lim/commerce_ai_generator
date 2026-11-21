@@ -1,10 +1,18 @@
 """프레임 0.4 (2026-11-20) — 쿠팡 사이트 글: 고지 → 질문과 조건부 답 → 선택 기준 → 구매 전 제약·결제 전 확인 → 근거 붙은 상품."""
 from __future__ import annotations
 
+import pytest
+
 from app.services.trend_posts import frame, policy, render
 from app.services.trend_posts.model import Post
 
 from .helpers import T0, report, search_result, service
+
+
+@pytest.fixture(autouse=True)
+def _frame04_format(monkeypatch):
+    """이 파일은 프레임 0.4 사이트 글을 검사한다 — 2026-11-21 부터 새 글 기본은 보고서형(test_report.py)."""
+    monkeypatch.setenv("TREND_POST_FORMAT", "frame04")
 
 
 def _made(tmp_path):

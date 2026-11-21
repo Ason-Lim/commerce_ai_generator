@@ -16,6 +16,12 @@ from app.services.trend_posts.store import FilePostStore
 from .helpers import T0, Clock, approved, item, recipe_result, report, search_result, service
 
 
+@pytest.fixture(autouse=True)
+def _frame04_format(monkeypatch):
+    """이 파일은 프레임 0.4 사이트 글을 검사한다 — 2026-11-21 부터 새 글 기본은 보고서형(test_report.py)."""
+    monkeypatch.setenv("TREND_POST_FORMAT", "frame04")
+
+
 def codes(issues):
     return {i["code"] for i in issues}
 

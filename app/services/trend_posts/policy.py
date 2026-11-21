@@ -14,6 +14,8 @@ check(post, others, now) → 위반 목록.  하나라도 있으면 승인할 �
   price_time      가격이 있는 상품은 확인 시각 필수
   stale_price     승인 시점에 확인한 지 30일(STALE_DAYS)이 넘은 가격 → 가격을 다시 확인한 뒤 승인
   experience      (2026-11-20 프레임 0.4) 직접 사용 기록이 없는 글(experience=data)에 사용 후기 표현 금지
+  report_data     (2026-11-21 보고서형) 데이터 절 필수 줄(관심 변화·확인되지 않은 부분), 요약 1~3줄, 행사·보도는 출처 주소
+  report_title    (2026-11-21 보고서형) 출처 있는 행사·보도가 없으면 제목에 '왜 뜨는지·이유'를 쓰지 않음
   duplicate       최근 30일 안에 같은 주제로 게시된 글이 있으면 새 글 대신 그 글을 갱신
 """
 from __future__ import annotations
@@ -96,6 +98,8 @@ def _texts(post: Post) -> list[tuple[str, str]]:
     out += [(f"products[{i}].title", p.title) for i, p in enumerate(post.products)]
     out += [(f"products[{i}].facts[{j}]", f) for i, p in enumerate(post.products) for j, f in enumerate(p.facts)]
     out += [(f"sources[{i}].label", s.label) for i, s in enumerate(post.sources)]
+    for name in ("summary_lines", "data_change", "data_events", "data_reading", "data_unknown"):   # 2026-11-21 보고서형
+        out += [(f"{name}[{i}]", x) for i, x in enumerate(getattr(post, name))]
     return out
 
 
@@ -160,6 +164,20 @@ def check(post: Post, others: list[Post] | tuple = (), now: datetime | None = No
         for where, text in _texts(post):
             if _FIRST_HAND.search(text or ""):
                 bad("experience", "직접 사용 기록이 없는 글에 '써 봤어요'·'내돈내산' 같은 사용 후기 표현이 있어요.", where)
+    # 보고서형 (report v1.0): 데이터 절 필수 줄 · 제목은 근거 수준에 맞춤
+    if post.format == "report":
+        if not post.data_change:
+            bad("report_data", "보고서형 글의 ① 데이터 절에 '관심 변화' 줄이 없어요.", "data_change")
+        if not post.data_unknown:
+            bad("report_data", "보고서형 글의 ① 데이터 절에 '확인되지 않은 부분' 줄이 없어요.", "data_unknown")
+        if not 1 <= len(post.summary_lines) <= 3:
+            bad("report_data", "요약은 1~3줄이어야 해요 (무엇이·얼마나·왜).", "summary_lines")
+        if not post.data_events and re.search(r"왜\s*뜨|이유", post.title):
+            bad("report_title", "출처로 확인된 행사·보도가 없으면 제목에 '왜 뜨는지·이유'를 쓰지 않아요 (변화 중심 제목).",
+                "title")
+        for i, x in enumerate(post.data_events):
+            if not re.search(r"https?://", x):
+                bad("report_data", "'확인된 관련 행사·보도'에는 출처 주소가 있어야 해요.", f"data_events[{i}]")
     # 중복
     for o in others:
         if o.id == post.id or o.topic != post.topic or o.status != "approved":
