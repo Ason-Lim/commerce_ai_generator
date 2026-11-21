@@ -129,3 +129,31 @@ def test_blemish_tip_only_for_fruit_and_vegetables():
     assert ("올리브 가정용", "용량·구성 표기와 교환·반품 조건을 확인하세요") in naver_search_links("올리브", "올리브")
     assert ("사과 가정용", "흠과·못난이 여부와 교환·반품 조건을 확인하세요") in naver_search_links("사과", "사과")
     assert ("양파 가정용", "흠과·못난이 여부와 교환·반품 조건을 확인하세요") in naver_search_links("양파", "양파")
+
+
+# 2026-11-21 2차 확인(PDF): '생올리브' → '엑스트라 버전' ─────────────────────
+
+def test_oil_only_qualifier_does_not_stick_to_a_non_oil_search():
+    st = {"mode": "shopping", "pending": {"kind": "budget", "query": "생올리브"}}
+    assert refine_followup("엑스트라 버전", st) is None                 # '엑스트라버진 생올리브'로 잇지 않음
+    assert refine_followup("국산은요?", st)["text"] == "국산 생올리브"
+    oil = {"mode": "shopping", "pending": {"kind": "budget", "query": "올리브유"}}
+    assert refine_followup("엑스트라 버전", oil)["text"] == "엑스트라버진 올리브유"
+    assert refine_followup("압착", {"mode": "shopping", "pending": {"kind": "budget", "query": "참기름"}})["text"] == "압착 참기름"
+
+
+def test_oil_only_follow_up_after_olives_searches_the_word_alone(sqlite_db, monkeypatch):
+    monkeypatch.delenv("NAVER_CONNECT_REGISTRY_CSV", raising=False)
+    shop = FakeShopping(items=[_cp("리치스 그린 올리브 365g", 5300, 2), EVOO, SHOES])
+    svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
+    first = svc.handle(None, message="생올리브")
+    res = svc.handle(first["session_id"], message="엑스트라 버전")
+    assert shop.calls[-1][0] == "엑스트라버진"
+    assert not any("스케쳐스" in i["title"] for i in items_of(res))
+
+
+def test_attached_fresh_word():
+    assert fresh_request("생올리브", "생올리브") == "올리브"
+    assert fresh_request("생연어 추천", "생연어") == "연어"
+    for t in ("생강", "생수", "생크림", "생일 케이크", "생닭"):
+        assert fresh_request(t, t) is None, t
