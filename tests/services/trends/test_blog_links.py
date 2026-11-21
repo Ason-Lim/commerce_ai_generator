@@ -46,6 +46,8 @@ def test_connect_options_exact_keyword_first_and_skips_bad_rows():
     assert o["by_keyword"]["비상식량"] == [] and len(o["all"]) == 2
     body, used = bl.auto_naver(NAVER_BODY, o, DISCLOSURE)                          # 자동은 키워드 같은 것만
     assert used == {"절임배추": 1} and "naver.me/aaa" in body and "naver.me/bbb" not in body
+    same, none = bl.auto_naver("절 없는 본문", o, DISCLOSURE)                       # 절이 없으면 건너뜀 (오류 아님)
+    assert same == "절 없는 본문" and none == {}
 
 
 COUPANG_BODY = (f"{COUPANG_DISCLOSURE}\n{SITE_OPS}\n\n먼저 답부터\n\n■ 1. 절임배추\n- 데이터\n결제 전 확인 줄\n▶ 쿠팡에서 보기\n"
