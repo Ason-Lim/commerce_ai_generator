@@ -97,11 +97,14 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     from app.services.partners import feed as partner_feed
     from app.services.public_price import kamis
 
-    text = req.text.strip()
+    text = fix_typos(req.text.strip())
     priority = req.priority or _priority(text, nlu_parse)
     budget = parse_budget(text)
     search_text = strip_budget(text) if budget and not budget.get("none") else text
     query, terms = shopping_terms(search_text, keyword_extractor)
+    fresh_item = fresh_request(search_text, query)
+    if fresh_item and not re.search(r"(?:^|\s)생\s*" + re.escape(fresh_item), query):
+        query = f"생 {query}"                   # 2026-11-21: '생 올리브'의 '생'이 검색어에서 빠져 '올리브'와 같은 답이 나왔다
     label = _label(query)
 
     raw: dict[str, dict] = {}
@@ -135,6 +138,13 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         from app.services.commerce import relevance_assist
 
         cards = relevance_assist.apply(query, cards)
+    # 2026-11-21: 쿠팡 분류가 분명히 식품 밖(신발·가전·문구…)이면 뺀다 — '엑스트라 버전'에 신발·커팅기가 추천됐다
+    from app.services.commerce.nonfood import is_non_food_category
+
+    non_food = sum(1 for c in cards if is_non_food_category(c.get("category")))
+    if non_food:
+        cards = [c for c in cards if not is_non_food_category(c.get("category"))]
+    fresh_miss = bool(fresh_item and cards and not any(_says_fresh(c["title"], fresh_item) for c in cards))
     # 2026-11-11: 냉동 상품은 고객이 냉동을 찾지 않았으면 따로 보기로 나눈다 (생과와 같은 기준으로 견주지 않음).
     # 냉동이 아닌 후보가 하나도 없으면 나누지 않는다.
     frozen_list: list[dict] = []
@@ -181,7 +191,38 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         connect = [dict(c, rank=n) for n, c in enumerate(connect, 1)]
     return dict(query=query, label=label, terms=terms, priority=priority, budget=budget, picked=picked,
                 partner_list=partner_list, frozen_list=frozen_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
-                recommendation_path=recommendation_path)
+                recommendation_path=recommendation_path, non_food=non_food,
+                fresh_miss=fresh_note(fresh_item) if fresh_miss else None)
+
+
+# ── 2026-11-21 대화 확인(올리브·올리브유·엑스트라 버전)에서 나온 고침 ─────────────────
+# '엑스트라 버전'은 '엑스트라버진'(올리브유 등급)의 흔한 오타 — 그대로 찾으면 '와이드핏VER' 신발이 걸린다.
+_TYPOS = ((re.compile(r"엑스트라\s*(?:버[전젼진]|virgin)", re.IGNORECASE), "엑스트라버진"),
+          (re.compile(r"(?<![가-힣])엑버(?![가-힣])"), "엑스트라버진"))
+
+
+def fix_typos(text: str) -> str:
+    for pattern, word in _TYPOS:
+        text = pattern.sub(word, text or "")
+    return text
+
+
+def fresh_request(text: str, query: str) -> str | None:
+    """'생 올리브'·'생 연어' — 띄어 쓴 '생' 뒤의 품목 (없으면 None). '생수'·'생크림'·'생일'처럼 붙은 말은 보지 않는다."""
+    m = re.search(r"(?:^|\s)생\s+([가-힣A-Za-z]{1,15})", text or "")
+    if not m:
+        return None
+    item = m.group(1)
+    return item if item in (query or "") else None
+
+
+def _says_fresh(title: str, item: str) -> bool:
+    return bool(re.search(r"생\s*" + re.escape(item) + r"|생물|생과|fresh", title or "", re.IGNORECASE))
+
+
+def fresh_note(item: str) -> str:
+    return (f"상품명에 '생 {item}' 표기가 있는 상품이 없어요 · 아래 후보는 절임·가공 등 다른 형태일 수 있으니 "
+            f"상품명과 판매처 표시를 확인해 주세요")
 
 
 # ── 공통 모델로 투영 ───────────────────────────────────────
@@ -389,6 +430,8 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
     warnings = ["평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 판매처 페이지에서 확인해 주세요."]
     from app.services.chat.explain import amount_miss_note
 
+    if got.get("fresh_miss"):                                               # 2026-11-21: '생 올리브'
+        warnings.append(got["fresh_miss"] + ".")
     if picked and (note := amount_miss_note(picked.get("amount_miss"))):   # 2026-11-21: 말씀하신 양이 없으면 없다고
         warnings.append(note + ".")
     if picked and picked["budget_miss"]:

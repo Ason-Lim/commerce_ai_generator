@@ -124,6 +124,11 @@ def item_to_card(item: dict, rank: int) -> dict:
     if reviews not in (None, "", 0):
         badges.append(f"후기 {reviews}")
     card["badges"] = badges
+    if item.get("category_name"):               # 2026-11-21: 쿠팡 분류 이름 (식품 밖 상품 거르기)
+        card["category"] = str(item["category_name"])
+    opts = item.get("same_name_options")
+    if isinstance(opts, dict) and opts.get("count"):   # 2026-11-21: 같은 상품명의 용량·수량 옵션을 하나로 합침
+        card["same_name_options"] = dict(opts)
     if item.get("seen_at"):                     # 저장해 둔 결과의 수집 시각 (화면: '○○ 확인 가격 · 지금은 다를 수 있어요')
         card["seen_at"] = str(item["seen_at"])
     return card
@@ -926,6 +931,12 @@ class ChatService:
         from app.domain.commerce.requests import SearchRequest
         from app.services.commerce.search import collect
 
+        # 2026-11-21: '올리브유' 다음 '엑스트라 버전' — 꾸밈말만 말하면 앞서 찾은 상품에 이어 붙여 찾는다
+        refined = refine_followup(text, state)
+        if refined:
+            lead_blocks = list(lead_blocks or []) + [B.text(
+                f"앞서 찾은 '{refined['previous']}'에 이어서 **{refined['text']}** 로 찾아봤어요.")]
+            text = refined["text"]
         priority = self._priority(text, memo)
         got = collect(SearchRequest(text=(text or " ")[:500], priority=priority, session_id=sid, limit=MAX_PRODUCTS),
                       shopping=self.shopping, keyword_extractor=self.keyword_extractor,
@@ -943,6 +954,8 @@ class ChatService:
         items: list = []
         pending = None
         if picked:
+            if got.get("fresh_miss"):
+                blocks.append(B.notice(got["fresh_miss"] + "."))
             blocks += self._result_blocks(sid, label, picked, budget, got["found"], frozen=frozen_list)
             all_cards = picked["picks"] + picked["others"]
             items = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in all_cards]
@@ -1099,6 +1112,43 @@ def shopping_terms(text: str, extractor: Callable | None = None) -> tuple[str, l
         if 2 <= len(word) <= 30 and re.sub(r"\s+", "", word) in re.sub(r"\s+", "", text):
             return word, [word]
     return tokens[0], tokens          # a sentence is never sent whole: its first product-like word
+
+
+# 2026-11-21: 앞서 찾은 상품에 붙여 다시 찾는 꾸밈말 — 이 말만 했을 때만 ('엑스트라버진', '국산은요?', '냉동으로').
+_REFINE_WORDS = ("엑스트라버진", "압착", "저온압착", "유기농", "무농약", "국산", "국내산", "수입", "수입산", "냉장", "냉동",
+                 "무가당", "무설탕", "저염", "저당", "생", "소포장", "소용량", "대용량")
+_REFINE_TAIL = re.compile(r"(?:으로|로|은|는|이요|요|도|만)?\s*(?:있어(?:요)?|없어(?:요)?|찾아\s*줘|보여\s*줘|추천해\s*줘|해\s*줘|"
+                          r"은요|는요|으로요|로요)?\s*[?.!~]*$")
+
+
+def refine_followup(text: str, state: dict) -> dict | None:
+    """{'text': '엑스트라버진 올리브유', 'previous': '올리브유'} 또는 None. 직전이 쇼핑 답일 때만."""
+    from app.services.commerce.search import fix_typos
+
+    if (state or {}).get("mode") != "shopping":
+        return None
+    pending = state.get("pending") or {}
+    previous = pending.get("query") if pending.get("kind") == "budget" else None
+    if not previous:
+        seen = state.get("seen") or []
+        previous = seen[-1].get("query") if seen else None
+    if not previous:
+        return None
+    words = [w for w in re.split(r"\s+", fix_typos(text or "").strip()) if w]
+    if not words or len(words) > 3:
+        return None
+    core = []
+    for w in words:
+        w = _REFINE_TAIL.sub("", w)
+        if not w:
+            continue
+        if w not in _REFINE_WORDS:
+            return None
+        core.append(w)
+    core = [w for w in core if w not in previous.split()]
+    if not core:
+        return None
+    return {"text": " ".join(core + [previous]), "previous": previous}
 
 
 def _bigrams(text: str) -> set[str]:
@@ -1281,6 +1331,18 @@ def _kg(weight_g) -> str | None:
     return f"{g:g}g"
 
 
+_VEGETABLES = ("배추", "양배추", "무", "감자", "고구마", "양파", "당근", "오이", "토마토", "방울토마토", "호박", "애호박",
+               "단호박", "대파", "쪽파", "마늘", "버섯", "상추", "깻잎", "시금치", "브로콜리", "고추", "파프리카", "가지",
+               "옥수수", "콩나물", "숙주", "부추", "미나리", "연근", "우엉", "생강", "도라지", "더덕", "아스파라거스")
+
+
+def _fresh_produce(label: str) -> bool:
+    """과일·채소 검색어인지 (낱말 단위) — 가공식품('올리브'·'올리브유'·'사과즙')은 아니다."""
+    words = re.split(r"\s+", (label or "").strip())
+    produce = set(_KIND_WORDS["과일"]) | set(_VEGETABLES) | {"과일", "채소", "야채"}
+    return any(w in produce for w in words)
+
+
 def naver_search_links(label: str, text: str, picks: list[dict] | None = None) -> list[tuple[str, str]]:
     """조건별 네이버쇼핑 검색어 (최대 3개) — (검색어, 확인할 점).  상품을 고르지 않고 검색 화면으로만 보낸다.
     검색어는 고객이 쓴 상품어 + 고른 후보의 중량 · 선물/가정용 용도만 쓴다 (없는 말은 지어내지 않음)."""
@@ -1298,7 +1360,10 @@ def naver_search_links(label: str, text: str, picks: list[dict] | None = None) -
     if gift and "선물" not in base:
         out.append((f"{base} 선물세트", "포장 상태와 배송일 지정 가능 여부를 확인하세요"))
     elif not gift and "가정용" not in base:
-        out.append((f"{base} 가정용", "흠과·못난이 여부와 교환·반품 조건을 확인하세요"))
+        # 2026-11-21: '흠과·못난이'는 과일·채소에만 맞는 말 — '올리브 가정용'(병·캔 절임)에도 붙었다
+        note = ("흠과·못난이 여부와 교환·반품 조건을 확인하세요" if _fresh_produce(base)
+                else "용량·구성 표기와 교환·반품 조건을 확인하세요")
+        out.append((f"{base} 가정용", note))
     seen, uniq = set(), []
     for q, note in out:
         if q not in seen:
@@ -1437,7 +1502,8 @@ def _safe_url(url) -> str | None:
     return url
 
 
-PRIVATE_CARD_KEYS = frozenset({"_q", "weight_source", "weight_formula", "weight_found", "weight_verified", "volume_formula"})   # 서버 기록용 (화면 응답에서 뺌)
+PRIVATE_CARD_KEYS = frozenset({"_q", "weight_source", "weight_formula", "weight_found", "weight_verified", "volume_formula",
+                               "category", "same_name_options"})  # 2026-11-21: 화면에는 weight_note 로만 알림   # 서버 기록용 (화면 응답에서 뺌)
 
 
 def _public(card: dict, *, go: str | None = None, saved: bool = False) -> dict:
