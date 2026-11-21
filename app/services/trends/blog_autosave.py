@@ -160,7 +160,7 @@ def _run_worker(module: str, payload: dict, env=None, timeout: int = 420) -> dic
 def start(draft_path: Path, *, variant: str, title: str, tags: list[str], body: str, keywords: list[str],
           with_image: bool, env=None, worker: Callable[[str, dict], dict] | None = None,
           background: bool = True, cover: dict | None = None,
-          fetch_image: Callable[[str, Path, str], Path | None] | None = None) -> dict:
+          fetch_image: Callable[[str, Path, str], Path | None] | None = None, extra: dict | None = None) -> dict:
     """승인 기록을 남기고 임시저장 작업을 시작한다. 같은 초안이 이미 진행 중이면 그 기록을 돌려준다.
     2026-11-20 대표 그림(cover, 초안 만들 때 정함): {'kind': 'ai'} = 보류 글 → AI 그림,
     {'kind': 'seller', 'url', 'caption'} = 구매 글 → 쿠팡 상품 사진(판매처 이미지). with_image=True 면 늘 AI 그림.
@@ -179,7 +179,8 @@ def start(draft_path: Path, *, variant: str, title: str, tags: list[str], body: 
                               datetime.now(timezone.utc).isoformat(timespec="seconds"),
                               "with_image": use_ai, "cover": "ai" if use_ai else ("seller" if use_seller else None),
                               "status": "running", "step": "그림 만들기" if use_ai else
-                              ("상품 사진 받기" if use_seller else "네이버 임시저장"), "message": ""})
+                              ("상품 사진 받기" if use_seller else "네이버 임시저장"), "message": "",
+                              **(extra or {})})   # 2026-11-21 승인 때 남길 것 (제목 유사도·확인 여부)
 
     def work():
         try:

@@ -1,3 +1,5 @@
+import contextlib
+import contextvars
 import os
 import hmac
 import hashlib
@@ -64,14 +66,38 @@ def normalize_coupang_product(item: dict, keyword: str = "") -> dict:
     }
 
 
+_SUB_ID_OVERRIDE: contextvars.ContextVar = contextvars.ContextVar("coupang_sub_id_override", default=None)
+
+
+def _valid_sub_id(v: str | None) -> str | None:
+    import re
+
+    v = (v or "").strip()
+    return v if re.fullmatch(r"[A-Za-z0-9]{8,20}", v) else None
+
+
 def coupang_sub_id() -> str | None:
     """쿠팡 파트너스 채널 아이디(subId) — 실적 보고서에서 '어디서 생긴 클릭·구매인지' 나눈다 (2026-11-13).
     .env COUPANG_SUB_ID (예: commerce). 파트너스 '채널 아이디 관리'에서 만든 이름만 쓴다.
-    파트너스 규칙(생성 화면): 8~20자 숫자·영어 대소문자 — 규칙에 맞지 않으면 붙이지 않음."""
-    import re
+    파트너스 규칙(생성 화면): 8~20자 숫자·영어 대소문자 — 규칙에 맞지 않으면 붙이지 않음.
+    2026-11-21: sub_id_channel() 안에서는 그 채널 아이디를 쓴다 (블로그 초안 링크를 사이트와 나눠 집계)."""
+    override = _SUB_ID_OVERRIDE.get()
+    return override if override else _valid_sub_id(os.getenv("COUPANG_SUB_ID"))
 
-    v = (os.getenv("COUPANG_SUB_ID") or "").strip()
-    return v if re.fullmatch(r"[A-Za-z0-9]{8,20}", v) else None
+
+def coupang_blog_sub_id() -> str | None:
+    """블로그(applesodda) 전용 채널 아이디 — .env COUPANG_BLOG_SUB_ID. 없거나 규칙에 안 맞으면 None (2026-11-21 결정)."""
+    return _valid_sub_id(os.getenv("COUPANG_BLOG_SUB_ID"))
+
+
+@contextlib.contextmanager
+def sub_id_channel(sub_id: str | None):
+    """이 블록 안의 쿠팡 검색 링크에 sub_id 채널을 붙인다. None 이면 기본 채널 그대로."""
+    token = _SUB_ID_OVERRIDE.set(_valid_sub_id(sub_id))
+    try:
+        yield
+    finally:
+        _SUB_ID_OVERRIDE.reset(token)
 
 
 def search_coupang_products(keyword: str, limit: int = 10):

@@ -75,7 +75,7 @@ def test_blog_draft_route_adds_memo_lines_and_serp_snapshot(admin_client, tmp_pa
     serp = ["휘태커스초콜릿 선물 세트 포장", "휘태커스초콜릿 선물 추천", "휘태커스초콜릿 보관 냉장",
             "휘태커스초콜릿 보관 여름", "요즘 검색이 갑자기 늘어난 식품 휘태커스초콜릿"]
     monkeypatch.setattr(sq, "title_search_from_env", lambda env=None: (lambda kw: serp))
-    monkeypatch.setattr("app.admin.routes._coupang_links", lambda kws: {k: [] for k in kws})
+    monkeypatch.setattr("app.admin.routes._coupang_links", lambda kws, **kw: {k: [] for k in kws})
     h = {"X-Access-Token": "test-token"}
     out = admin_client.post("/admin/api/trends/blog-draft", headers=h,
                             json={"keywords": ["휘태커스초콜릿"], "with_coupang": False}).json()
@@ -89,3 +89,91 @@ def test_blog_draft_route_adds_memo_lines_and_serp_snapshot(admin_client, tmp_pa
         assert d["title_similarity"]["status"] == "ok"
     snap = next((tmp_path / "var" / "blog_drafts").glob("*.serp.json"))
     assert "휘태커스초콜릿" in snap.read_text(encoding="utf-8")
+
+
+
+# ── 2026-11-21 결정: 고른 세부 질문만 본문에 · 쿠팡 블로그 채널 · 유사도 '높음'은 한 번 확인 ─────────────────
+def test_faq_only_answerable_facets_and_no_facts_or_prices():
+    qa = sq.faq("절임배추", ["timing", "prep", "price", "store", "timing"])
+    assert [q for q, _ in qa] == ["절임배추는 언제 주문하고 언제 받는 게 좋을까요?",
+                                  "절임배추는 어떻게 보관하고 얼마나 두고 먹을 수 있나요?"]   # 손질·가격은 넣지 않음, 중복 한 번
+    assert "전날이나 당일 도착" in qa[0][1][0]                          # 절임배추 전용 문장
+    assert "판매 페이지" in sq.faq("귤", ["timing"])[0][1][0]          # 일반 문장
+    assert all(not any(ch.isdigit() for ch in a) for _, ans in qa for a in ans)   # 숫자(기간·가격) 단정 없음
+    out = sq.suggest("절임배추", TITLES)
+    assert {q.facet: q.answerable for q in out.questions}["timing"] is True
+
+
+def test_blog_draft_puts_picked_questions_after_criteria(data_dirs):
+    ranks, google = data_dirs
+    report = S.run(datalab=S.DataLab("id", "s", http=fake_http([]), pause=0), blog_search=blog_posts,
+                   rank_dir=ranks, google_dir=google, end=END)
+    kw = report["items"][0]["keyword"]
+    plain = S.blog_draft(report, [kw], variant="coupang")
+    d = S.blog_draft(report, [kw], variant="coupang", faq={kw: sq.faq(kw, ["gift"])})
+    assert sq.FAQ_HEAD not in plain["body"] and sq.FAQ_HEAD in d["body"]
+    body = d["body"]
+    assert body.index(sq.FAQ_HEAD) < body.index("※ 검색량은")
+    assert f"Q. {kw}" in body
+    naver = S.blog_draft(report, [kw], variant="naver", faq={kw: sq.faq(kw, ["gift"])})
+    assert sq.FAQ_HEAD not in naver["body"]                               # 네이버 블로그용(쇼핑커넥트판)은 그대로
+    held = S.blog_draft(report, [kw], variant="coupang", hold=True, faq={kw: sq.faq(kw, ["gift"])})
+    assert sq.FAQ_HEAD not in held["body"]                                # 보류 글엔 넣지 않음
+
+
+def test_blog_channel_sub_id_overrides_only_inside_block(monkeypatch):
+    from app.services import coupang_api as C
+
+    monkeypatch.setenv("COUPANG_SUB_ID", "commercesite")
+    monkeypatch.setenv("COUPANG_BLOG_SUB_ID", "applesodda01")
+    assert C.coupang_sub_id() == "commercesite"
+    with C.sub_id_channel(C.coupang_blog_sub_id()):
+        assert C.coupang_sub_id() == "applesodda01"
+    assert C.coupang_sub_id() == "commercesite"
+    monkeypatch.setenv("COUPANG_BLOG_SUB_ID", "bad id!")
+    assert C.coupang_blog_sub_id() is None
+    with C.sub_id_channel(None):
+        assert C.coupang_sub_id() == "commercesite"                      # 블로그 채널이 없으면 기본 채널 그대로
+
+
+def test_coupang_links_blog_channel_and_memo(monkeypatch):
+    from app.admin import routes as R
+    from app.services import coupang_api as C
+
+    seen = []
+    monkeypatch.setattr(R, "_coupang_links_now", lambda kws: (seen.append(C.coupang_sub_id()), {})[1])
+    monkeypatch.setenv("COUPANG_SUB_ID", "commercesite")
+    monkeypatch.setenv("COUPANG_BLOG_SUB_ID", "applesodda01")
+    R._coupang_links(["귤"], channel="blog")
+    R._coupang_links(["귤"])
+    assert seen == ["applesodda01", "commercesite"]
+    assert "블로그 전용 'applesodda01'" in R._channel_memo()
+    monkeypatch.delenv("COUPANG_BLOG_SUB_ID")
+    assert "COUPANG_BLOG_SUB_ID" in R._channel_memo()
+
+
+def test_approve_asks_once_when_title_is_too_similar(admin_client, tmp_path, monkeypatch):
+    import json as _json
+
+    from app.services.trends import blog_autosave as bas
+
+    monkeypatch.setattr(S, "ROOT", tmp_path)
+    folder = tmp_path / "var" / "blog_drafts"
+    folder.mkdir(parents=True)
+    title = "[광고] 절임배추 10kg 주문 전 알아 둘 것"
+    draft = folder / "trend_2026-11-20_절임배추_쿠팡용.txt"
+    draft.write_text(f"{title}\n\n태그: 절임배추\n\n{S.COUPANG_DISCLOSURE}\n본문\n", encoding="utf-8")
+    (folder / "trend_2026-11-20_절임배추.serp.json").write_text(_json.dumps(
+        {"keywords": ["절임배추"], "titles": {"절임배추": ["절임배추 10kg 주문 전 알아 둘 것"]}}, ensure_ascii=False),
+        encoding="utf-8")
+    started = []
+    monkeypatch.setattr(bas, "enabled", lambda env=None: True)
+    monkeypatch.setattr(bas, "mcp_python", lambda env=None: draft)       # 있는 파일이면 됨
+    monkeypatch.setattr(bas, "start", lambda path, **kw: (started.append(kw.get("extra")), {"status": "running"})[1])
+    h = {"X-Access-Token": "test-token"}
+    rel = "var/blog_drafts/" + draft.name
+    r = admin_client.post("/admin/api/trends/blog-draft/approve", headers=h, json={"file": rel})
+    assert r.status_code == 409 and r.json()["detail"]["need_confirm"] == "title_similarity" and not started
+    r = admin_client.post("/admin/api/trends/blog-draft/approve", headers=h, json={"file": rel, "confirm_similar": True})
+    assert r.status_code == 200 and started[0]["similar_confirmed"] is True
+    assert started[0]["title_similarity"]["level"] == "높음"
