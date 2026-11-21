@@ -165,3 +165,49 @@ def test_saved_drafts_can_be_listed_and_reopened(client, monkeypatch):
     for bad in ("../.env", "var/blog_drafts/../../.env", "var/blog_drafts/trend_없음.txt"):
         assert c.get("/admin/api/trends/blog-draft/file", headers=H, params={"file": bad}).status_code == 404
     assert c.get("/admin/api/trends/blog-drafts").status_code == 401
+
+
+# ── 2026-11-21 네이버 탭 재설계: 만들 글 고르기 · 고른 쇼핑커넥트 링크 · 링크 키워드로 리포트 찾기 ──
+def test_blog_draft_only_requested_variant(client):
+    c, root = client
+    out = c.post("/admin/api/trends/blog-draft", headers=H, json={"keywords": ["두쫀쿠"], "variants": ["naver"]}).json()
+    assert list(out["drafts"]) == ["naver"] and out["coupang"] is None            # 쿠팡용을 안 만들면 쿠팡 검색도 안 함
+    assert not list((root / "var" / "blog_drafts").glob("*_쿠팡용.txt"))
+    only_c = c.post("/admin/api/trends/blog-draft", headers=H, json={"keywords": ["두쫀쿠"], "variants": ["coupang"]}).json()
+    assert list(only_c["drafts"]) == ["coupang"] and only_c["file"].endswith("_쿠팡용.txt")
+    assert c.post("/admin/api/trends/blog-draft", headers=H, json={"variants": []}).status_code == 422
+
+
+def test_blog_draft_puts_picked_connect_links(client, monkeypatch):
+    from app.services.trends import surge
+
+    body = "고지 자리\n\n■ 1. 두쫀쿠\n- 데이터\n▶ [여기에 스마트에디터 '쇼핑커넥트'로 상품 삽입: 두쫀쿠]\n\n※ 출처"
+    monkeypatch.setattr(surge, "blog_draft", lambda report, kws=None, **kw: {
+        "title": "[광고] 제목", "tags": ["두쫀쿠"], "body": body, "keywords": kws or ["두쫀쿠"]})
+    monkeypatch.setenv("SC_BLOG_APPROVED", "1")
+    c, root = client
+    reg = root / "reg.csv"
+    reg.write_text(HEAD + "카페블룸 두쫀쿠 50g,카페 블룸,3900,https://naver.me/d,두쫀쿠\n"
+                          "쫀득 쿠키 세트,쿠키집,9900,https://naver.me/e,쿠키\n", encoding="utf-8-sig")
+    out = c.post("/admin/api/trends/blog-draft", headers=H, json={
+        "keywords": ["두쫀쿠"], "variants": ["naver"], "connect": {"두쫀쿠": ["https://naver.me/e", "https://evil.example/x"]}}).json()
+    n = out["drafts"]["naver"]
+    assert "- 쫀득 쿠키 세트: https://naver.me/e" in n["body"] and "naver.me/d" not in n["body"]   # 고른 것이 자동보다 먼저
+    assert "evil.example" not in n["body"] and n["connect_picked"] == {"두쫀쿠": 1} and n["connect_auto"] == {}
+    auto = c.post("/admin/api/trends/blog-draft", headers=H, json={"keywords": ["두쫀쿠"], "variants": ["naver"]}).json()
+    assert "https://naver.me/d" in auto["drafts"]["naver"]["body"] and auto["drafts"]["naver"]["connect_auto"] == {"두쫀쿠": 1}
+
+
+def test_report_for_keywords_finds_latest_report_with_most(client, monkeypatch):
+    from app.services.trends import surge
+
+    reps = {"2026-11-19": {"items": [{"keyword": "사과"}]}, "2026-11-20": {"items": [{"keyword": "사과"}, {"keyword": "감태"}]},
+            "2026-11-21": {"items": [{"keyword": "감태"}]}}
+    monkeypatch.setattr(surge, "history_dates", lambda env=None: sorted(reps))
+    monkeypatch.setattr(surge, "load", lambda date=None, env=None: reps.get(date))
+    c, _ = client
+    get = lambda q: c.get("/admin/api/trends/report-for-keywords", headers=H, params={"keywords": q}).json()
+    assert get("사과,감태") == {"date": "2026-11-20", "found": ["사과", "감태"], "missing": []}
+    assert get("감태") == {"date": "2026-11-21", "found": ["감태"], "missing": []}
+    assert get("사과,없는것") == {"date": "2026-11-20", "found": ["사과"], "missing": ["없는것"]}
+    assert get("없는것") == {"date": None, "found": [], "missing": ["없는것"]}
