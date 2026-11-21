@@ -454,22 +454,27 @@ def trends_blog_draft(body: _DraftIn):
     from app.services.trends import surge
 
     report = surge.load(body.date)
+    # 2026-11-21 상품 소개형: 고른 키워드 중 리포트에 없는 것은 데이터 줄 없이 '상품 소개'로 쓴다 (예: 사과)
+    in_report = {it.get("keyword") for it in (report or {}).get("items") or []}
+    intro = [k for k in (body.keywords or []) if k not in in_report]
     if not report:
-        raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들어 주세요.")
+        if not intro:
+            raise HTTPException(404, "리포트가 없어요. 먼저 리포트를 만들거나, 키워드를 직접 넣어 상품 소개형으로 만들어 주세요.")
+        report = {"items": [], "data_until": date.today().isoformat()}
     want = [v for v in ("naver", "coupang") if v in body.variants]
     if not want:
         raise HTTPException(400, "만들 글(네이버 블로그용·쿠팡용)을 하나 이상 골라 주세요.")
     try:
-        first = surge.blog_draft(report, body.keywords)
+        first = surge.blog_draft(report, body.keywords, intro=intro)
         # 2026-11-20 v1.3: 보류 결론이면 쿠팡 상품을 찾지 않는다 (링크를 넣지 않으므로). 쿠팡용을 안 만들면 찾지 않음
         coupang = _coupang_links(first["keywords"], channel="blog") \
             if body.with_coupang and not body.hold and "coupang" in want else None
         recipes = _blog_recipes(report, first["keywords"], coupang or {}, body.template)
         drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
-                                            connect_ok=blog_connect_approved()),
+                                            connect_ok=blog_connect_approved(), intro=intro),
                   "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang",
                                               recipes=recipes, template=body.template, hold=body.hold,
-                                              faq=_faq(first["keywords"], body.questions))}
+                                              faq=_faq(first["keywords"], body.questions), intro=intro)}
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     drafts["coupang"]["faq"] = {} if body.hold else {k: [q for q, _ in v] for k, v in
@@ -506,7 +511,8 @@ def trends_blog_draft(body: _DraftIn):
     missing = [k for k in keywords if coupang is not None and not coupang.get(k)]
     folder = surge.ROOT / "var" / "blog_drafts"
     folder.mkdir(parents=True, exist_ok=True)
-    stem = f"trend_{report['data_until']}_{'_'.join(keywords)[:40]}"
+    stem = (f"trend_{date.today().isoformat()}_소개_{'_'.join(keywords)[:36]}" if set(first.get("intro") or []) == set(keywords)
+            else f"trend_{report['data_until']}_{'_'.join(keywords)[:40]}")
     for variant, d in drafts.items():
         memo = _operator_memo(needs) if variant == "naver" else ""
         extra = [x.memo_line() for x in subq.values()] + [_ts().memo_line(sims[variant])]
@@ -525,6 +531,8 @@ def trends_blog_draft(body: _DraftIn):
             extra.append("구매 보류 결론 — 쿠팡 링크·광고 고지를 넣지 않아요. 대표 그림은 AI 그림(승인할 때 만들어요, 유료).")
         elif variant == "coupang" and d.get("cover"):
             extra.append("대표 그림: 쿠팡 상품 사진 1장 (승인할 때 글 위쪽에 넣어요)")
+        if d.get("intro"):                                     # 2026-11-21 상품 소개형
+            extra.append("상품 소개형(리포트에 없는 키워드 — 검색량 데이터 없이): " + ", ".join(d["intro"]))
         if variant == "coupang" and d.get("templates"):       # 2026-11-20 글 틀
             extra.append("글 틀: " + " · ".join(f"{k} {t['id']} {t['name']}({t['kind_label']})"
                                                + (f" — {t['note']}" if t["note"] else "")
@@ -542,7 +550,7 @@ def trends_blog_draft(body: _DraftIn):
     if "naver" in drafts:
         drafts["naver"]["connect_auto"] = naver_auto
         drafts["naver"]["connect_picked"] = naver_picked
-    return {**out, "link_needs": needs, "drafts": drafts,
+    return {**out, "link_needs": needs, "drafts": drafts, "intro": first.get("intro") or [],
             "subquestions": {k: v.as_dict() for k, v in subq.items()},
             "coupang": None if coupang is None else {k: len(coupang.get(k) or []) for k in keywords}}
 

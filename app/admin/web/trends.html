@@ -109,6 +109,10 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
       <li><b>① 주제</b>
         <div class="row" style="margin-top:6px"><button class="btn" id="pick-surge">급상승 키워드에서 고르기</button><button class="btn" id="pick-link">등록된 쇼핑커넥트 링크에서 고르기</button>
           <button class="btn" id="pick-clear" hidden>모두 빼기</button></div>
+        <div class="row" style="margin-top:6px"><label class="note" for="kw-free">직접 넣기</label>
+          <input id="kw-free" maxlength="30" placeholder="예: 사과" aria-label="키워드 직접 넣기" style="width:140px">
+          <button class="btn" id="kw-free-add">더하기</button>
+          <small class="note">리포트에 없는 키워드는 검색량 데이터 없이 <b>상품 소개형</b>으로 써요.</small></div>
         <div id="pick-chips" class="chips" aria-live="polite"></div></li>
       <li><b>② 만들 글</b>
         <div class="row" style="margin-top:6px">
@@ -357,20 +361,21 @@ function reqTrendsLabel(){const b=$("#req-trends"),v=$("#date").value;if(b)b.tex
 $("#run").onclick=async()=>{const d=await api("/admin/api/trends/run",{method:"POST"});job(d.job);
   const t=setInterval(async()=>{const s=await api("/admin/api/trends");job(s.job);if(!s.job.running){clearInterval(t);load()}},5000)};
 // ── 2026-11-21 화면 재설계: 블로그 초안 주제 고르기 (화면 안 창 — 고르면 닫히고 초안 자리로 돌아옴) ──
-const SEL={date:null,keywords:[],links:{}};   // links = {키워드: [{title,url}]} — 네이버 블로그용에 넣을 쇼핑커넥트 링크
+const SEL={date:null,keywords:[],links:{},intro:[]};   // links = {키워드: [{title,url}]} — 네이버 블로그용에 넣을 쇼핑커넥트 링크
 const MAXKW=3;
 const repDate=()=>{const v=$("#date").value;return v&&v!=="리포트 없음"?v:null};
 function renderChips(){const box=$("#pick-chips");if(!box)return;
   $("#pick-clear").hidden=!SEL.keywords.length;
   box.innerHTML=SEL.keywords.length?SEL.keywords.map(k=>{const n=(SEL.links[k]||[]).length;
-      return `<span class="chip"><b>${esc(k)}</b><small>${n?"쇼핑커넥트 링크 "+n+"개 고름":"링크는 자동(등록부 키워드 같은 것)"}</small><button type="button" data-rm="${esc(k)}" aria-label="${esc(k)} 빼기">×</button></span>`}).join("")+
+      const intro=(SEL.intro||[]).includes(k);
+      return `<span class="chip"><b>${esc(k)}</b>${intro?'<small class="pill p-hold">상품 소개형</small>':""}<small>${n?"쇼핑커넥트 링크 "+n+"개 고름":"링크는 자동(등록부 키워드 같은 것)"}</small><button type="button" data-rm="${esc(k)}" aria-label="${esc(k)} 빼기">×</button></span>`}).join("")+
       `<span class="note" style="align-self:center">리포트 ${esc(SEL.date||repDate()||"")}</span>`
     :`<span class="note">아직 고르지 않았어요 — 그대로 만들면 최신 리포트의 급상승 상위 ${MAXKW}개로 만들어요.</span>`;
-  box.querySelectorAll("button[data-rm]").forEach(b=>b.onclick=()=>{SEL.keywords=SEL.keywords.filter(k=>k!==b.dataset.rm);delete SEL.links[b.dataset.rm];
+  box.querySelectorAll("button[data-rm]").forEach(b=>b.onclick=()=>{SEL.keywords=SEL.keywords.filter(k=>k!==b.dataset.rm);delete SEL.links[b.dataset.rm];SEL.intro=(SEL.intro||[]).filter(k=>k!==b.dataset.rm);
     document.querySelectorAll(".pick").forEach(c=>{if(c.value===b.dataset.rm)c.checked=false});renderChips()})}
 window.pickHint=renderChips;
 function setKeywords(date,kws,links){
-  if(SEL.date&&date&&SEL.date!==date){SEL.keywords=[];SEL.links={}}
+  if(SEL.date&&date&&SEL.date!==date){SEL.keywords=[];SEL.links={};SEL.intro=[]}
   SEL.date=date;for(const k of kws)if(!SEL.keywords.includes(k))SEL.keywords.push(k);
   for(const [k,v] of Object.entries(links||{}))SEL.links[k]=v.slice(0,3);
   const over=SEL.keywords.length>MAXKW;if(over){for(const k of SEL.keywords.slice(MAXKW))delete SEL.links[k];SEL.keywords=SEL.keywords.slice(0,MAXKW)}
@@ -380,7 +385,7 @@ function setKeywords(date,kws,links){
 document.addEventListener("change",e=>{if(!(e.target.classList&&e.target.classList.contains("pick")))return;const k=e.target.value;
   if(e.target.checked){if(SEL.date&&SEL.date!==repDate()){SEL.keywords=[];SEL.links={}}SEL.date=repDate();if(!SEL.keywords.includes(k)&&SEL.keywords.length<MAXKW)SEL.keywords.push(k)}
   else{SEL.keywords=SEL.keywords.filter(x=>x!==k);delete SEL.links[k]}renderChips()});
-$("#pick-clear").onclick=()=>{SEL.keywords=[];SEL.links={};document.querySelectorAll(".pick").forEach(c=>c.checked=false);renderChips()};
+$("#pick-clear").onclick=()=>{SEL.keywords=[];SEL.links={};SEL.intro=[];document.querySelectorAll(".pick").forEach(c=>c.checked=false);renderChips()};
 document.querySelectorAll("dialog [data-close]").forEach(b=>b.onclick=()=>b.closest("dialog").close());
 // ① 급상승 키워드 창
 function kwRows(){const tb=$("#kw-rows");const items=(REPORT&&REPORT.items)||[];
@@ -392,13 +397,13 @@ function kwRows(){const tb=$("#kw-rows");const items=(REPORT&&REPORT.items)||[];
       <td><small>${it.cause?esc(it.cause.cause):"—"}</small></td></tr>`}).join("")
     :`<tr><td colspan="7" class="note">이 날짜 리포트에 급상승 키워드가 없어요.</td></tr>`;
   tb.querySelectorAll("tr[data-i]").forEach(tr=>tr.onclick=e=>{if(e.target.classList.contains("kwc"))return;
-    const it=REPORT.items[+tr.dataset.i];SEL.keywords=[];SEL.links={};setKeywords(repDate(),[it.keyword]);$("#kw-dlg").close()})}
+    const it=REPORT.items[+tr.dataset.i];SEL.keywords=[];SEL.links={};SEL.intro=[];setKeywords(repDate(),[it.keyword]);$("#kw-dlg").close()})}
 $("#pick-surge").onclick=()=>{const d=$("#kw-date");d.innerHTML=$("#date").innerHTML;d.value=$("#date").value;$("#kw-note").textContent="";kwRows();$("#kw-dlg").showModal()};
 $("#kw-date").onchange=async e=>{$("#date").value=e.target.value;await load(e.target.value);kwRows()};
 $("#kw-ok").onclick=()=>{const ks=[...document.querySelectorAll("#kw-rows .kwc:checked")].map(c=>c.value);
   if(!ks.length){$("#kw-note").textContent="키워드를 하나 이상 체크해 주세요.";return}
   if(ks.length>MAXKW){$("#kw-note").textContent=`한 글에는 ${MAXKW}개까지예요.`;return}
-  SEL.keywords=[];SEL.links={};setKeywords(repDate(),ks);$("#kw-dlg").close()};
+  SEL.keywords=[];SEL.links={};SEL.intro=[];setKeywords(repDate(),ks);$("#kw-dlg").close()};
 // ① 등록된 링크 창
 function lnRows(){const q=$("#ln-q").value.trim().replace(/\s/g,"");const tb=$("#ln-rows");
   const rows=LINKROWS.map((r,i)=>[r,i]).filter(([r])=>!q||((r["상품명"]||"")+(r["키워드"]||"")).replace(/\s/g,"").includes(q)).slice(0,120);
@@ -418,13 +423,20 @@ async function pickLinks(rows,note){note=note||$("#dnote");
   const kws=Object.keys(by).slice(0,MAXKW);
   note.textContent="이 키워드가 들어 있는 급상승 리포트를 찾는 중…";
   try{const f=await api("/admin/api/trends/report-for-keywords?keywords="+encodeURIComponent(kws.join(",")));
-    if(!f.date){note.textContent=`최근 30일 급상승 리포트에 '${kws.join(", ")}'가 없어요 — 초안은 리포트 데이터로 쓰기 때문에 지금은 만들 수 없어요. 급상승 키워드에서 골라 주세요.`;return false}
-    if($("#date").value!==f.date){$("#date").value=f.date;await load(f.date)}
-    SEL.keywords=[];SEL.links={};
-    setKeywords(f.date,f.found,Object.fromEntries(f.found.map(k=>[k,by[k]])));
-    $("#dnote").textContent=f.missing.length?`리포트(${f.date})에 없는 키워드는 뺐어요: ${f.missing.join(", ")}`:`리포트 ${f.date} 데이터로 만들어요.`;
+    // 2026-11-21: 리포트에 없는 키워드도 빼지 않고 '상품 소개형'(검색량 데이터 없이)으로 쓴다
+    if(f.date&&$("#date").value!==f.date){$("#date").value=f.date;await load(f.date)}
+    SEL.keywords=[];SEL.links={};SEL.intro=[...f.missing];
+    setKeywords(f.date||SEL.date||repDate(),kws,Object.fromEntries(kws.map(k=>[k,by[k]])));
+    $("#dnote").textContent=f.missing.length?`리포트${f.date?"("+f.date+")":""}에 없는 키워드는 상품 소개형으로 써요: ${f.missing.join(", ")}`:`리포트 ${f.date} 데이터로 만들어요.`;
     location.hash="#blog";return true}
   catch(e){note.textContent=e.message;return false}}
+// ① 직접 넣기 (2026-11-21 상품 소개형) — 지금 고른 리포트에 없으면 상품 소개형
+$("#kw-free-add").onclick=()=>{const k=$("#kw-free").value.trim();if(!k)return;
+  const inRep=(REPORT&&REPORT.items||[]).some(it=>it.keyword===k);
+  if(!inRep){SEL.intro=[...new Set([...(SEL.intro||[]),k])]}
+  setKeywords(SEL.date||repDate(),[k]);$("#kw-free").value="";
+  $("#dnote").textContent=inRep?`리포트 데이터로 써요: ${k}`:`'${k}'는 리포트에 없어 상품 소개형(검색량 데이터 없이)으로 써요.`};
+$("#kw-free").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("#kw-free-add").click()}};
 // ② 만들 글
 const syncVariants=()=>{$("#coupang-opts").style.display=$("#v-coupang").checked?"":"none"};
 $("#v-coupang").onchange=syncVariants;syncVariants();

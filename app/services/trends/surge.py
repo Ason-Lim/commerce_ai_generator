@@ -576,7 +576,8 @@ VARIANTS = ("naver", "coupang")
 def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                coupang: dict[str, list[dict]] | None = None, variant: str = "naver",
                connect_ok: bool = True, recipes: dict | None = None, template: str | None = None,
-               hold: bool = False, faq: dict[str, list[tuple[str, list[str]]]] | None = None) -> dict:
+               hold: bool = False, faq: dict[str, list[tuple[str, list[str]]]] | None = None,
+               intro: list[str] | None = None) -> dict:
     """{'title', 'tags', 'body'} — data facts and title clues only; no prices, no copied posts; cause marked as estimate.
 
     2026-11-17 두 판 (사용자 결정):
@@ -588,6 +589,8 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
       recipes = {키워드: PostRecipe} (레시피 틀 26 용), template = 관리자가 지정한 틀 번호.
       hold=True (쿠팡용, 55종 v1.2): 결론이 '구매 보류'인 글 — 쿠팡 링크·고지·[광고] 없이 보류 결론 문장을 넣는다.
       faq = {키워드: [(질문, [답 문장])]} (쿠팡용, 2026-11-21): 관리자가 고른 세부 질문 — 키워드 블록의 기준 뒤에 '자주 찾는 질문'.
+      intro = [키워드] (2026-11-21 '상품 소개형'): 리포트에 없는 키워드(예: 사과) — 검색량·순위·블로그 데이터 줄 없이
+      글 틀 절·기준·상품만 쓴다. 모든 키워드가 소개형이면 제목·도입·출처 줄도 트렌드 리포트 말 대신 상품 소개 말로.
     가격은 어느 판에도 넣지 않는다(게시 뒤 바뀌어도 고칠 수 없음)."""
     if variant not in VARIANTS:
         raise ValueError("알 수 없는 초안 종류예요.")
@@ -595,14 +598,26 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
     hold = hold and only_coupang
     if hold:
         coupang = {}
-    items = [it for it in report["items"] if it["status"] in ("surging", "new")]
+    report_items = report.get("items") or []
+    items = [it for it in report_items if it["status"] in ("surging", "new")]
     if keywords:
-        items = [it for it in report["items"] if it["keyword"] in keywords]
+        items = [it for it in report_items if it["keyword"] in keywords]
+    have = {it["keyword"] for it in items}
+    order = list(keywords or []) + [k for k in (intro or []) if k not in (keywords or [])]
+    extra = [{"keyword": k, "status": INTRO} for k in order if k in (intro or []) and k not in have]
+    if keywords:                              # 고른 순서대로 (리포트 항목·소개형 섞여도)
+        pos = {k: i for i, k in enumerate(order)}
+        items = sorted(items + extra, key=lambda it: pos.get(it["keyword"], len(pos)))
+    else:
+        items = items + extra
     items = items[:limit]
     if not items:
         raise ValueError("리포트에 급상승 항목이 없어요.")
     names = [it["keyword"] for it in items]
-    title = f"[트렌드 리포트] 요즘 검색이 갑자기 늘어난 식품 — {', '.join(names[:2])}{' 외' if len(names) > 2 else ''}"
+    all_intro = all(it["status"] == INTRO for it in items)
+    title = (f"{names[0]} 고르는 법 — 상품 고를 때 볼 기준{' (+' + '·'.join(names[1:3]) + ')' if len(names) > 1 else ''}"
+             if all_intro else
+             f"[트렌드 리포트] 요즘 검색이 갑자기 늘어난 식품 — {', '.join(names[:2])}{' 외' if len(names) > 2 else ''}")
     top = ([] if hold else [COUPANG_DISCLOSURE, SITE_OPS]) if only_coupang else ([DISCLOSURE] if connect_ok else [])
     if top:                                   # 2026-11-20: 광고 글 제목은 늘 [광고]로 시작 (사용자 규칙)
         title = f"{AD_PREFIX} {title}"
@@ -639,38 +654,26 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                      frame.answer(topic, any_links, any(x.get("rocket") for v in links_of.values() for x in v), "blog",
                                   kind)),
             frame.experience_line(lead, "blog", hold), ""]
-    lines = [*top, *([""] if top else []), *head,
-             f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
-             "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
+    if all_intro:                             # 상품 소개형: 검색량 이야기 없이
+        lines = [*top, *([""] if top else []), *head, INTRO_LEAD.format(k=frame_topic(names)), ""]
+    else:
+        lines = [*top, *([""] if top else []), *head,
+                 f"네이버 데이터랩 검색어 트렌드로 {report['data_until']}까지의 검색량을 살펴보니, 평소보다 검색이 크게 늘어난 식품이 있었어요.",
+                 "숫자는 '그 키워드의 평소(약 한 달 전) 검색량'과 비교한 배수예요. 키워드끼리의 검색량 크기를 비교한 값은 아니에요.", ""]
     seen_lines: set[str] = set()              # 2026-11-20 v1.3: 여러 키워드 글에서 같은 절·기준을 되풀이하지 않는다
     crit_at: dict[tuple, int] = {}
     for n, it in enumerate(items, 1):
         lines.append(f"■ {n}. {it['keyword']}")
-        if it["status"] == "surging":
+        if it["status"] == INTRO:
+            if not all_intro:                 # 섞인 글: 이 키워드만 데이터가 없다고 밝힌다
+                lines.append(INTRO_ITEM_LINE)
+        elif it["status"] == "surging":
             lines.append(f"- 최근 3일 검색량이 평소의 약 {it['ratio_recent']:.1f}배예요 (최근 7일 최고 약 {it['ratio_peak']:.1f}배"
                          + (f", {it['peak_day']}" if it.get("peak_day") else "") + ").")
         else:
             lines.append("- 한 달 전에는 거의 검색되지 않다가 최근 검색되기 시작했어요.")
-        if it.get("onset"):
-            lines.append(f"- 늘어나기 시작한 날: {it['onset']} 무렵")
-        rank = it["rank_trend"]
-        if rank.get("status") == "ok":
-            lines.append(f"- 네이버 식품 키워드 순위: {rank['first']['date']} {rank['first']['rank']}위 → "
-                         f"{rank['last']['date']} {rank['last']['rank']}위")
-        blog = it["blog"]
-        if blog.get("status") == "ok":
-            clue = frame.clue_phrase(blog.get("clues"))
-            lines.append(f"- 블로그: 최근 글 {blog['posts']}건 중 최근 7일 {blog['last7']}건"
-                         + (f" (제목으로 보면 {clue})" if clue else ""))
-        if it["google"].get("status") == "ok":
-            lines.append("- 구글 트렌드 급상승 검색어에도 나왔어요.")
-        if cause_text(it):
-            lines.append(f"- 계기(추정): {cause_text(it)} — 블로그 제목을 바탕으로 한 추정이에요.")
-        else:
-            lines.append("- 왜 늘었는지는 아직 확인되지 않았어요.")
-        sig = frame.signals_line(_public_cross(it, report) if it.get("cross") else None)
-        if sig:
-            lines.append(f"- {sig}")
+        if it["status"] != INTRO:
+            lines += _data_lines(it, report, cause_text(it))
         links = links_of[it["keyword"]]
         if only_coupang:                      # 글 틀 절 → 주제별 기준
             kw = it["keyword"]
@@ -716,13 +719,17 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
         lines += [frame.heading("constraints", names[0], "blog")] + [f"- {c}" for c in notes] + [""]
     if hold:                                  # 결론 문장은 기준 뒤 한 번 (구매 안내 대신)
         lines += [templates.HOLD_LINE["blog"], ""]
-    lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
-              "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요."]
+    if all_intro:
+        lines += [INTRO_SOURCE_LINE]
+    else:
+        lines += ["※ 검색량은 네이버 데이터랩 검색어 트렌드(상대 지수), 순위는 네이버 식품 키워드 일별 순위, "
+                  "블로그 정보는 네이버 블로그 검색 결과의 제목·날짜 기준이에요. 원인은 확정된 사실이 아니라 추정이에요."]
     if not hold and not (only_coupang and any(links_of.values())):   # 쿠팡용은 '구매 전에 알아 둘 것'에 이미 있음
         lines.append("가격·재고는 판매처에서 확인해 주세요.")
     if only_coupang and not hold:
         lines.append(COUPANG_DISCLOSURE)
-    tags = names + ["트렌드리포트", "요즘뜨는식품"] + ([] if hold else ["쿠팡파트너스" if only_coupang else "쇼핑커넥트"])
+    tags = names + (["식품고르는법", "장보기"] if all_intro else ["트렌드리포트", "요즘뜨는식품"]) \
+        + ([] if hold else ["쿠팡파트너스" if only_coupang else "쇼핑커넥트"])
     picked = {k: {"id": c.id, "name": c.name, "kind": c.kind, "kind_label": frame.TYPE_LABEL.get(c.kind, c.kind),
                   "note": c.note} for k, c in chosen_of.items()}
     # 2026-11-20 대표 그림: 보류 글은 AI 그림, 구매 글은 첫 쿠팡 상품 사진 (판매처 이미지)
@@ -735,7 +742,50 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
             cover = {"kind": "seller", "url": first["image_url"],
                      "caption": f"쿠팡 상품 사진 · {(first.get('title') or '')[:40]} (판매처 이미지)"}
     return {"title": title, "tags": tags[:10], "body": "\n".join(lines), "keywords": names, "variant": variant,
-            "templates": picked, "hold": hold, "cover": cover}
+            "templates": picked, "hold": hold, "cover": cover,
+            "intro": [it["keyword"] for it in items if it["status"] == INTRO]}
+
+
+# ── 2026-11-21 상품 소개형 (리포트에 없는 키워드) ─────────────────────────────────
+INTRO = "intro"
+INTRO_LEAD = ("이 글은 검색량 변화를 다룬 트렌드 리포트가 아니라, {k} 고를 때 볼 기준과 상품을 정리한 글이에요.")
+INTRO_ITEM_LINE = "- 이번 급상승 리포트에 없는 키워드라 검색량 변화는 넣지 않았어요."
+INTRO_SOURCE_LINE = "※ 상품 정보는 판매처가 보여 주는 상품명·배송 표시 기준이에요. 검색량·유행 여부는 이 글에서 다루지 않았어요."
+
+
+def frame_topic(names: list[str]) -> str:
+    from app.services.trend_posts.frame import _j
+
+    k = names[0] if len(names) == 1 else "·".join(names[:2])
+    return f"{k}{_j(k, '을', '를')}"
+
+
+def _data_lines(it: dict, report: dict, cause: str) -> list[str]:
+    """리포트 항목의 데이터 줄 (시작일 · 순위 · 블로그 · 구글 · 계기 · 함께 움직인 신호)."""
+    from app.services.trend_posts import frame
+
+    out = []
+    if it.get("onset"):
+        out.append(f"- 늘어나기 시작한 날: {it['onset']} 무렵")
+    rank = it.get("rank_trend") or {}
+    if rank.get("status") == "ok":
+        out.append(f"- 네이버 식품 키워드 순위: {rank['first']['date']} {rank['first']['rank']}위 → "
+                   f"{rank['last']['date']} {rank['last']['rank']}위")
+    blog = it.get("blog") or {}
+    if blog.get("status") == "ok":
+        clue = frame.clue_phrase(blog.get("clues"))
+        out.append(f"- 블로그: 최근 글 {blog['posts']}건 중 최근 7일 {blog['last7']}건"
+                   + (f" (제목으로 보면 {clue})" if clue else ""))
+    if (it.get("google") or {}).get("status") == "ok":
+        out.append("- 구글 트렌드 급상승 검색어에도 나왔어요.")
+    if cause:
+        out.append(f"- 계기(추정): {cause} — 블로그 제목을 바탕으로 한 추정이에요.")
+    else:
+        out.append("- 왜 늘었는지는 아직 확인되지 않았어요.")
+    sig = frame.signals_line(_public_cross(it, report) if it.get("cross") else None)
+    if sig:
+        out.append(f"- {sig}")
+    return out
 
 
 # ── wiring from the server environment (keys stay in .env; nothing printed) ─────────────────────────
