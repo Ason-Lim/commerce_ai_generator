@@ -78,3 +78,5 @@ def _isolated_trend_posts(monkeypatch, tmp_path):
 # 2026-11-21: 고객 문장 작업의 OpenAI 전환(llm_client.customer_route)은 .env 키가 있는 맥에서 기존 테스트의 공급자를 바꾼다 —
 # 기존 테스트는 예전 공급자 그대로 두고, 전환 자체는 tests/services/nlu/test_customer_route.py 가 env 를 넘겨 시험한다.
 _os.environ.setdefault("CUSTOMER_LLM_PROVIDER", "deepseek")
+# 2026-11-21: 테스트 대화가 로컬 모델 학습 데이터셋(var/dataset)을 쌓지 않게 — 데이터셋 테스트는 스스로 켠다
+_os.environ.setdefault("DATASET_CAPTURE", "0")
