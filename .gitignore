@@ -43,5 +43,7 @@ var/logs/
 var/trends/posts/
 # 2026-11-21 글 끝 피드백(독자 평가 원본)·보류 글 AI 대표 그림 — git 에 넣지 않음
 var/trends/feedback.sqlite3*
+# 2026-11-21 대화 답 피드백 원본 (세션 값·평가) — 저장소에 넣지 않음
+var/chat/
 var/trend_images/
 frontend/src/data

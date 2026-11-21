@@ -13,9 +13,12 @@ export interface ChatActionsValue {
   openTrendPost: (p: TrendPostRef) => void;
   busy: boolean;
   sessionId: string | null;
+  /** 2026-11-21: 판매처 이동·♡ 저장 뒤 — 대화당 한 번 '도움이 됐나요?' 블록을 대화에 붙인다 */
+  askFeedback: (signal: "go" | "save") => void;
 }
 
 export const ChatActions = createContext<ChatActionsValue>({
   send: () => {}, shop: () => {}, basket: [], openDetail: () => {}, openTrendPost: () => {}, busy: false, sessionId: null,
+  askFeedback: () => {},
 });
 export const useChatActions = () => useContext(ChatActions);

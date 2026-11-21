@@ -1,3 +1,4 @@
+import { useChatActions } from "./ChatActions";
 import { useEffect, useRef, useState } from "react";
 import type { Candidate, ReviewPoint, SourceRef } from "../types/blocks";
 import { goHref, logDirectClick } from "../api/client";
@@ -229,6 +230,7 @@ function PurchaseConfirm({ c }: { c: Candidate }) {
 }
 
 function GoButton({ c, sessionId }: { c: Candidate; sessionId: string | null }) {
+  const { askFeedback } = useChatActions();
   // 유료 소개는 추천 순위(last_items)에 없으므로 /go 대신 판매처 URL 로 직접 이동 (rel=sponsored)
   if (c.isSponsored && c.url) {
     return <a href={c.url} target="_blank" rel="sponsored noopener noreferrer" className="primary-btn flex-1">{c.source}에서 결제하기 ↗</a>;
@@ -245,7 +247,7 @@ function GoButton({ c, sessionId }: { c: Candidate; sessionId: string | null }) 
   return (
     <div className="flex flex-1 flex-col gap-1">
       <a href={href} target="_blank" rel={c.affiliate ? "sponsored noopener" : "noopener"} className="primary-btn"
-        onClick={() => logDirectClick(c, sessionId)}>{c.source}에서 결제하기 ↗</a>
+        onClick={() => { logDirectClick(c, sessionId); askFeedback("go"); }}>{c.source}에서 결제하기 ↗</a>
       {c.affiliate && (
         <p className="text-center text-[11px] leading-snug text-ink3">
           {c.affiliateProgram ?? "제휴"} 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다. 수수료는 본 사이트 운영에 도움이 됩니다.
