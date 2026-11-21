@@ -112,19 +112,33 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     raw: dict[str, dict] = {}
     error = None
     recommendation_path = None
-    try:
-        result = shopping(query, priority, req.session_id) or {}
+
+    def fetch(q: str) -> list[dict]:
+        nonlocal recommendation_path
+        result = shopping(q, priority, req.session_id) or {}
         recommendation_path = result.get("recommendation_path")
         if not isinstance(recommendation_path, str):
             recommendation_path = None
         if recommendation_path == "provider_failed":
             # 2026-11-16 R3 ④: 주 경로 실패 — 예비 경로 없이 예외와 같은 '불러오지 못했어요'
             raise RuntimeError("shopping provider failed (no db fallback)")
-        cards = []
+        got_cards = []
         for it in (result.get("items") or [])[:req.limit]:
             card = dict(explain.enrich(item_to_card(it, 0), it), _q=query)
             raw[card["key"]] = it
-            cards.append(card)
+            got_cards.append(card)
+        return got_cards
+
+    searched_as = None
+    try:
+        cards = fetch(query)
+        # 2026-11-22: 쿠팡은 '엑스트라버진 올리브유'(붙여 씀)에 0건을 돌려줬다 ('올리브유 엑스트라'·'버진 올리브유'는 나옴).
+        # 0건이면 띄어 쓴 말 → 등급 말을 뺀 품목 이름 순으로 한 번씩만 다시 찾는다 (쿠팡 호출 최대 2번 더).
+        for alt in ([] if cards else retry_queries(query)):
+            cards = fetch(alt)
+            if cards:
+                searched_as = alt
+                break
     except Exception as e:  # noqa: BLE001 — 같은 상황에서 웹은 '불러오지 못했어요' 안내
         log.exception("shopping provider failed")
         cards, error = [], CommerceError(code="source_unavailable", message=f"'{query}' 상품을 불러오지 못했어요.",
@@ -140,6 +154,7 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         from app.services.commerce import relevance_assist
 
         cards = relevance_assist.apply(query, cards)
+    cards, grade_info = grade_filter(query, cards)
     # 2026-11-21: 쿠팡 분류가 분명히 식품 밖(신발·가전·문구…)이면 뺀다 — '엑스트라 버전'에 신발·커팅기가 추천됐다
     from app.services.commerce.nonfood import is_non_food_category
 
@@ -179,6 +194,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         for c in picked["picks"] + picked["others"]:
             if c.get("partner_note") and c["partner_note"] not in (c.get("why") or []):
                 c["why"] = (c.get("why") or []) + [c["partner_note"]]
+            if c.get("grade_note") and c["grade_note"] not in (c.get("why") or []):
+                c["why"] = (c.get("why") or []) + [c["grade_note"]]
         start = max([c["rank"] for c in picked["picks"] + picked["others"]] or [0])
         partner_list = [dict(c, rank=start + n, why=[c["partner_note"]]) for n, c in enumerate(partner_list, 1)]
         start = max([start] + [c["rank"] for c in partner_list])
@@ -194,7 +211,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     return dict(query=query, label=label, terms=terms, priority=priority, budget=budget, picked=picked,
                 partner_list=partner_list, frozen_list=frozen_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
                 recommendation_path=recommendation_path, non_food=non_food,
-                fresh_miss=fresh_note(fresh_item) if fresh_miss else None)
+                fresh_miss=fresh_note(fresh_item) if fresh_miss else None,
+                search_note=search_note(query, searched_as, grade_info) if picked else None)
 
 
 # ── 2026-11-21 대화 확인(올리브·올리브유·엑스트라 버전)에서 나온 고침 ─────────────────
@@ -207,6 +225,51 @@ def fix_typos(text: str) -> str:
     for pattern, word in _TYPOS:
         text = pattern.sub(word, text or "")
     return text
+
+
+# ── 2026-11-22 대화 확인(올리브유 → 엑스트라 버전 → 쿠팡 0건) ─────────────────
+# 등급 말: 고객이 엑스트라버진을 찾으면 다른 등급(포마스·퓨어·정제)이라고 적힌 상품은 빼고,
+# 등급 표기가 없는 상품은 엑스트라버진 표기 상품이 모자랄 때만 '판매처에서 등급 확인' 말을 붙여 남긴다.
+_GRADE = re.compile(r"엑스트라\s*버진|extra\s*virgin|\bEVOO\b", re.IGNORECASE)
+_OTHER_GRADE = re.compile(r"포마스|pomace|퓨어|pure|정제|라이트|light", re.IGNORECASE)
+GRADE_WORD = "엑스트라버진"
+GRADE_UNKNOWN_NOTE = {"text": "상품명에 '엑스트라버진' 표기가 없어요 — 등급은 판매처에서 확인해 주세요", "basis": "mall"}
+
+
+def retry_queries(query: str) -> list[str]:
+    """쿠팡이 0건일 때 다시 찾을 말 — ['엑스트라 버진 올리브유', '올리브유'] (등급 말이 없으면 [])."""
+    if not _GRADE.search(query or ""):
+        return []
+    spaced = re.sub(r"엑스트라\s*버진", "엑스트라 버진", query)
+    base = " ".join(_GRADE.sub(" ", query).split())
+    return [q for q in dict.fromkeys([spaced, base]) if q and q != query]
+
+
+def grade_filter(query: str, cards: list[dict]) -> tuple[list[dict], dict | None]:
+    """엑스트라버진을 찾을 때 — (남길 카드, {'stated': n, 'unknown': n, 'dropped': n}). 등급 말이 없으면 그대로."""
+    if not _GRADE.search(query or ""):
+        return cards, None
+    stated = [c for c in cards if _GRADE.search(c.get("title") or "")]
+    others = [c for c in cards if not _GRADE.search(c.get("title") or "")
+              and not _OTHER_GRADE.search(c.get("title") or "")]
+    dropped = len(cards) - len(stated) - len(others)
+    keep_unknown = len(stated) < 2               # 표기 상품이 둘 이상이면 표기 없는 상품은 견주지 않는다
+    unknown = [dict(c, grade_note=GRADE_UNKNOWN_NOTE) for c in others] if keep_unknown else []
+    return stated + unknown, {"stated": len(stated), "unknown": len(unknown), "dropped": dropped + len(others) - len(unknown)}
+
+
+def search_note(query: str, searched_as: str | None, grade: dict | None) -> str | None:
+    """다시 찾았거나 등급으로 거른 경우 고객에게 한 줄."""
+    parts = []
+    if searched_as:
+        parts.append(f"쿠팡이 '{query}'로는 상품을 주지 않아 '{searched_as}'로 다시 찾았어요")
+    if grade and grade["stated"]:
+        parts.append(f"상품명에 엑스트라버진 표기가 있는 상품 {grade['stated']}개를 먼저 견줬어요")
+    elif grade:
+        parts.append("상품명에 엑스트라버진 표기가 있는 상품은 없었어요 — 등급은 판매처에서 확인해 주세요")
+    if grade and grade["dropped"]:
+        parts.append(f"포마스·퓨어 등 다른 등급이거나 등급 표기가 없는 상품 {grade['dropped']}개는 뺐어요")
+    return " · ".join(parts) or None
 
 
 # '생'으로 시작하지만 '생 ○○'(날것)이 아닌 낱말 — 붙여 쓴 '생올리브'를 볼 때 뺀다
@@ -444,6 +507,8 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
 
     if got.get("fresh_miss"):                                               # 2026-11-21: '생 올리브'
         warnings.append(got["fresh_miss"] + ".")
+    if got.get("search_note"):                                              # 2026-11-22: '엑스트라버진 올리브유'
+        warnings.append(got["search_note"] + ".")
     if picked and (note := amount_miss_note(picked.get("amount_miss"))):   # 2026-11-21: 말씀하신 양이 없으면 없다고
         warnings.append(note + ".")
     if picked and picked["budget_miss"]:
