@@ -102,6 +102,8 @@ const newId = (): string =>
 // 대화 세션 id 를 이 브라우저에 기억해 새로고침·재접속해도 서버에 저장된 레시피 기록(남은 양·부족 답변)을 이어 쓴다.
 // 화면의 지난 메시지는 다시 그리지 않는다(첫 화면 그대로). '새 대화'를 누르면 지운다. 저장소가 막힌 브라우저에서는 그냥 새 세션.
 const SESSION_KEY = 'ai-food-chat-session';
+// 2026-11-21: 보내기 전에 보이는 안내 (서버 app/services/privacy/pii.INPUT_HINT 와 같은 뜻)
+const PII_HINT = '이름·전화번호 등 개인정보는 적지 마세요';
 const loadSession = (): string | null => { try { return window.localStorage.getItem(SESSION_KEY); } catch { return null; } };
 const saveSession = (sid: string | null) => {
     try { if (sid) window.localStorage.setItem(SESSION_KEY, sid); else window.localStorage.removeItem(SESSION_KEY); } catch { /* 기억 못 해도 동작에는 지장 없음 */ }
@@ -441,7 +443,7 @@ export default function ChatWindow() {
                     <label htmlFor="prompt" className="sr-only">쇼핑 질문</label>
                     <textarea id="prompt" value={input} onChange={e => setInput(e.target.value)} rows={2} maxLength={4000} placeholder={inRecipe ? '재료나 만드는 방법을 물어보세요' : '어떤 상품을 찾으세요? 예산과 원하는 조건을 알려주세요.'} className="max-h-40 min-h-14 w-full resize-y bg-transparent px-2 py-1 text-sm leading-6 outline-none placeholder:text-stone-400" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit(input); } }} />
                     <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] text-stone-400">추천 정보는 판매처에서 최종 확인해 주세요</span>
+                        <span className="text-[11px] text-stone-400">추천 정보는 판매처에서 최종 확인해 주세요 · {PII_HINT}</span>
                         {busy ? (
                             <button type="button" aria-label="응답 중단" className="send" onClick={() => controller.current?.abort('cancelled')}><Square size={15} /></button>
                         ) : (
