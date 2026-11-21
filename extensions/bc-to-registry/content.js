@@ -163,10 +163,10 @@
     return el;
   }
 
-  // ── 창 옮기기 (0.7.0): 머리줄을 길게(0.35초) 누르면 끌어서 옮긴다. 위치는 저장돼 다음에도 그 자리. 머리줄 두 번 누르면 처음 자리로 ──
+  // ── 창 옮기기 (0.7.0, 0.7.1 고침): 머리줄을 누른 채 끌거나 길게(0.35초) 누르면 옮긴다. 위치는 저장돼 다음에도 그 자리. 머리줄 두 번 누르면 처음 자리로 ──
   const POS = self.BcPanelPos;
   const POS_KEY = 'bcr_panel_pos';
-  const drag = { timer: null, on: false, start: null, offset: null, justMoved: false };
+  const drag = { timer: null, on: false, down: false, start: null, offset: null, justMoved: false };
 
   function placeAt(el, pos) {
     if (!POS.valid(pos)) { el.style.left = el.style.top = ''; el.style.right = el.style.bottom = ''; return; }
@@ -180,27 +180,33 @@
   function dragSetup(el) {
     try { chrome.storage.local.get(POS_KEY, (v) => placeAt(el, v && v[POS_KEY])); } catch (e) {}
     const cancel = () => { clearTimeout(drag.timer); drag.timer = null; };
+    const begin = (e) => {                     // 옮기기 시작 (길게 눌렀거나, 누른 채 끌었을 때)
+      cancel();
+      if (drag.on) return;
+      const r = el.getBoundingClientRect();
+      drag.on = true;
+      drag.offset = { x: drag.start.x - r.left, y: drag.start.y - r.top };
+      el.classList.add('bcr-dragging');
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    };
     el.addEventListener('pointerdown', (e) => {
       if (!e.target.closest('.bcr-head') || e.button !== 0) return;
       if (e.target.closest('.bcr-reload, .bcr-options')) return;
       drag.start = { x: e.clientX, y: e.clientY };
+      drag.down = true;
       cancel();
-      drag.timer = setTimeout(() => {
-        const r = el.getBoundingClientRect();
-        drag.on = true;
-        drag.offset = { x: drag.start.x - r.left, y: drag.start.y - r.top };
-        el.classList.add('bcr-dragging');
-        try { el.setPointerCapture(e.pointerId); } catch (err) {}
-      }, POS.HOLD_MS);
+      drag.timer = setTimeout(() => begin(e), POS.HOLD_MS);
     });
     el.addEventListener('pointermove', (e) => {
-      if (drag.timer && !drag.on && POS.moved(drag.start, { x: e.clientX, y: e.clientY })) cancel();
+      // 0.7.1: 누른 채 SLOP 이상 끌면 바로 옮기기 (0.7.0 은 0.35초 전에 움직이면 취소돼 '안 움직이는' 것처럼 보였음)
+      if (drag.down && !drag.on && POS.moved(drag.start, { x: e.clientX, y: e.clientY })) begin(e);
       if (!drag.on) return;
       e.preventDefault();
       placeAt(el, { left: e.clientX - drag.offset.x, top: e.clientY - drag.offset.y });
     });
     const end = () => {
       cancel();
+      drag.down = false;
       if (!drag.on) return;
       drag.on = false;
       drag.justMoved = true;
@@ -211,6 +217,7 @@
     };
     el.addEventListener('pointerup', end);
     el.addEventListener('pointercancel', end);
+    addEventListener('pointerup', end, true);       // 창 밖에서 손을 떼도 '누르는 중' 을 풀어 둔다
     el.addEventListener('dblclick', (e) => {
       if (!e.target.closest('.bcr-head') || e.target.closest('button:not(.bcr-toggle)')) return;
       placeAt(el, null);
@@ -226,10 +233,10 @@
     const ids = linkedIds();
     const focused = document.activeElement && document.activeElement.classList.contains('bcr-kw');
     if (focused) { renderList(el, ids); return; }   // 키워드 입력 중에는 입력칸을 다시 그리지 않는다
-    el.className = state.open ? 'bcr-open' : 'bcr-closed';
+    el.className = (state.open ? 'bcr-open' : 'bcr-closed') + (drag.on ? ' bcr-dragging' : '');   // 옮기는 중 다시 그려도 표시 유지
     el.innerHTML = `
       <div class="bcr-head">
-        <button class="bcr-toggle" title="눌러서 접기/펴기 · 길게 눌러 옮기기 · 두 번 눌러 처음 자리로">commerce_ai 등록부 ${state.open ? '▾' : '▸'}</button>
+        <button class="bcr-toggle" title="눌러서 접기/펴기 · 끌어서 옮기기 · 두 번 눌러 처음 자리로">commerce_ai 등록부 ${state.open ? '▾' : '▸'}</button>
         <span class="bcr-server ${state.server.ok === false ? 'bcr-err' : ''}">${esc(state.server.text || '')}</span>
         <button class="bcr-reload" title="등록부 다시 읽기">↻</button>
         <button class="bcr-options" title="서버 주소·관리자 토큰">⚙</button>
