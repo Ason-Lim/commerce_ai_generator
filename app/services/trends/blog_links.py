@@ -121,9 +121,13 @@ def auto_naver(body: str, options: dict, disclosure: str, n: int = 2) -> tuple[s
     used = {}
     for kw, opts in options.get("by_keyword", {}).items():
         exact = [o for o in opts if o["match"] == "키워드 같음"][:n]
-        if exact:
+        if not exact:
+            continue
+        try:
             body = set_naver_links(body, kw, exact, disclosure)
-            used[kw] = len(exact)
+        except LinkError:          # 절을 못 찾으면(본문 모양이 다르면) 그 키워드만 건너뛴다 — 초안 만들기를 막지 않음
+            continue
+        used[kw] = len(exact)
     return body, used
 
 
