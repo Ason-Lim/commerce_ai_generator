@@ -29,6 +29,7 @@ textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size
 .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
 .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
 .btn.danger{color:#b3261e;border-color:#e8b4ae}
+section h3{font-size:14.5px;margin:16px 0 6px}
 .btn:disabled{opacity:.5;cursor:default}
 .scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
 table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
@@ -69,7 +70,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
 <aside>
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/b2b">B2B</a></nav>
-  <nav aria-label="트렌드 메뉴"><a href="/admin/trends">급상승 키워드</a><a href="/admin/trend-posts" aria-current="page">글 검토 대기열</a><a href="/admin/trends#blog">블로그 초안 (네이버)</a><a href="/trends" target="_blank" rel="noopener">공개 페이지 /trends</a></nav>
+  <nav aria-label="트렌드 메뉴"><a href="/admin/trends">급상승 키워드</a><a href="/admin/trend-posts" aria-current="page">글 검토 대기열</a><a href="/admin/trend-posts#feedback">글 피드백</a><a href="/admin/trends#blog">블로그 초안 (네이버)</a><a href="/trends" target="_blank" rel="noopener">공개 페이지 /trends</a></nav>
   <div class="railnote">이 화면은 <b>사이트(/trends)에 올리는 트렌드 글</b>이에요. 네이버 블로그용·쿠팡용 블로그 초안은 '블로그 초안' 메뉴에 있어요.<br><br>급상승 키워드 → 초안 → 검토 요청 → <b>승인</b>(정책 검사를 통과해야 함) → /trends 게시.<br>자동 게시는 없어요. 30일이 넘은 가격은 공개 페이지에서 저절로 숨겨지고, 승인도 막혀요.</div>
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
 </aside>
@@ -86,6 +87,20 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   <h2>글 목록</h2>
   <div class="row" id="tabs"></div>
   <div class="scroll"><table><thead><tr><th>상태</th><th>제목</th><th>주제</th><th>검사</th><th>고친 시각</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<section id="feedback">
+  <h2>글 피드백</h2><p class="lede">게시 글 끝의 '좋음·보통·나쁨' 평가예요. 운영자(관리자 로그인 브라우저) 평가는 고객 집계에서 빼고 아래에 따로 보여요. 피드백으로 글을 자동으로 고치거나 내리지 않아요 — 사람이 확인하고 조치해요.</p>
+  <h3>확인 필요 <small class="note">'상품이 주제와 안 맞아요'·'정보가 틀린 것 같아요' 1표라도 — 당일 확인</small></h3>
+  <div class="scroll"><table><thead><tr><th>시각</th><th>글 · 판</th><th>평가</th><th>이유</th><th></th></tr></thead><tbody id="fb-check"></tbody></table></div>
+  <h3>글 판별 집계 <small class="note">도움 평가 = 응답자 중 좋음 비율 · 칩 비율은 여러 개 선택이라 합이 100%를 넘을 수 있어요 · 30표 미만은 '관찰'</small></h3>
+  <div class="scroll"><table><thead><tr><th>글 · 판</th><th>형식 · 규칙 판</th><th>응답</th><th>좋음/보통/나쁨</th><th>도움 평가</th><th>칩 비율</th></tr></thead><tbody id="fb-ver"></tbody></table></div>
+  <p class="note" id="fb-op"></p>
+  <h3>개선 기록</h3>
+  <div class="row"><input id="i-day" type="date"><select id="i-scope"><option value="post">그 글</option><option value="rule">규칙</option></select>
+   <input id="i-post" placeholder="글 id (그 글일 때)" style="min-width:200px"><input id="i-from" placeholder="규칙 판 전 (예: report v1.0)"><input id="i-to" placeholder="규칙 판 후"></div>
+  <div class="row"><input id="i-basis" placeholder="근거 — 칩·응답 수·비율·글 판" style="flex:1;min-width:260px"><input id="i-change" placeholder="바꾼 것" style="flex:1;min-width:220px">
+   <input id="i-approver" placeholder="승인자" style="width:110px"><input id="i-due" type="date" title="효과 확인 예정일 (4주와 30표 중 늦은 쪽)"><button class="btn primary" id="i-add">기록 추가</button></div>
+  <div class="scroll"><table><thead><tr><th>날짜</th><th>범위</th><th>근거</th><th>바꾼 것</th><th>규칙 판</th><th>승인자</th><th>확인 예정</th><th>결과</th></tr></thead><tbody id="fb-imp"></tbody></table></div>
 </section>
 <section id="detail" hidden>
   <h2 id="x-title"></h2><p class="lede"><span id="x-status" class="pill"></span> <span id="x-id" class="note"></span> · <a id="x-preview" target="_blank" rel="noopener">미리 보기</a> <a id="x-public" target="_blank" rel="noopener"></a></p>
@@ -165,6 +180,31 @@ async function save(){const keep=[...document.querySelectorAll("#e-products inpu
  try{const j=await post("/admin/api/trend-posts/"+encodeURIComponent(S.cur.id)+"/update",{fields});open_(j);list()}catch(e){showErr(e)}}
 $("d-date").addEventListener("change",fillKw);$("d-go").addEventListener("click",makeDraft);
 loadDates().catch(showErr);list().catch(showErr);
+const pct=x=>x==null?"—":Math.round(x*100)+"%";
+async function loadFb(){const j=await api("/admin/api/trend-feedback");
+ const c=$("fb-check");c.replaceChildren();
+ if(!j.needs_check.length)c.append(el("tr",{},el("td",{colspan:"5",class:"note"},"확인할 것이 없어요")));
+ for(const x of j.needs_check)c.append(el("tr",{},el("td",{},x.at.replace("T"," ").slice(0,16)),el("td",{},x.post_id+" · "+x.post_version+"판"),
+  el("td",{},j.labels.ratings[x.rating]),el("td",{},x.reasons.join(", ")),
+  el("td",{},el("button",{class:"btn",onclick:async()=>{const n=prompt("확인 메모 (선택) — 무엇을 했는지");if(n===null)return;try{await post("/admin/api/trend-feedback/"+x.id+"/checked",{note:n||null});loadFb()}catch(e){showErr(e)}}},"확인함"))));
+ const v=$("fb-ver");v.replaceChildren();
+ if(!j.by_version.length)v.append(el("tr",{},el("td",{colspan:"6",class:"note"},"아직 고객 평가가 없어요")));
+ for(const g of j.by_version)v.append(el("tr",{},el("td",{},g.post_id+" · "+g.post_version+"판"+(g.review?" ⚠ 점검":"")),
+  el("td",{},(g.format||"")+" · "+(g.rules_version||"")+(g.conclusion==="hold"?" · 보류":"")),
+  el("td",{},String(g.n)+(g.n<30?" (관찰)":"")),el("td",{},g.good+"/"+g.ok+"/"+g.bad),el("td",{},pct(g.helpful_rate)),
+  el("td",{},Object.entries(g.chip_rates).map(([k,r])=>k+" "+pct(r)).join(" · ")||"—")));
+ $("fb-op").textContent=j.operator.length?"운영자 평가: "+j.operator.map(g=>g.post_id+" "+g.post_version+"판 "+g.n+"건(좋음 "+g.good+")").join(" · "):"";
+ const im=$("fb-imp");im.replaceChildren();
+ for(const r of j.improvements)im.append(el("tr",{},el("td",{},r.day),el("td",{},r.scope==="post"?"그 글"+(r.post_id?" "+r.post_id:""):"규칙"),
+  el("td",{},r.basis),el("td",{},r.change),el("td",{},(r.rules_from||"")+(r.rules_to?" → "+r.rules_to:"")),el("td",{},r.approver),el("td",{},r.check_due||""),
+  el("td",{},r.result||el("select",{onchange:async e=>{if(!e.target.value)return;try{await post("/admin/api/trend-feedback/improvements/"+r.id+"/result",{result:e.target.value});loadFb()}catch(er){showErr(er)}}},
+   el("option",{value:""},"결과 고르기"),el("option",{},"유지"),el("option",{},"되돌림"),el("option",{},"자료 부족")))))}
+$("i-add").addEventListener("click",async()=>{const V=id=>$(id).value.trim()||null;
+ try{await post("/admin/api/trend-feedback/improvements",{day:V("i-day"),scope:$("i-scope").value,post_id:V("i-post"),rules_from:V("i-from"),rules_to:V("i-to"),basis:V("i-basis"),change:V("i-change"),approver:V("i-approver"),check_due:V("i-due")});
+  for(const id of ["i-post","i-from","i-to","i-basis","i-change","i-due"])$(id).value="";loadFb()}catch(e){showErr(e)}});
+$("i-day").value=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+loadFb().catch(showErr);
+
 </script>
 </body>
 </html>

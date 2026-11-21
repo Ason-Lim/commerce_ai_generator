@@ -101,7 +101,7 @@ def test_pages_share_the_app_menu_and_link_back(env):
     page = client.get(f"/trends/{post.id}").text
     assert 'href="/?ask=%EC%9A%94%EC%A6%98%20%EB%8C%80%EB%B0%A9%EC%96%B4%20%EC%99%9C%20%EC%9C%A0%ED%96%89%ED%95%B4%3F"' in page
     assert 'href="/#/hot">지금 뜨는 식품 전체 보기' in page
-    assert page.count("<script") == 1 and '<script type="application/ld+json">' in page   # 구조화 데이터만, 실행 스크립트 없음
+    assert page.count("<script") == 2 and '<script type="application/ld+json">' in page   # 구조화 데이터 + 글 끝 피드백(11-21)만
 
 
 from urllib.parse import quote  # noqa: E402

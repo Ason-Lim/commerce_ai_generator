@@ -1694,6 +1694,71 @@ def trend_posts_action(post_id: str, action: str, body: _PostNoteIn | None = Non
     return _post_out(svc, _post_call(calls[action]))
 
 
+# ── 트렌드 글 피드백 (2026-11-21 첫 버전, 설계 §6-8): 확인 필요 목록 · 글 판별 집계 · 개선 기록. 자동 수정·내림 없음 ──
+def _feedback_call(fn, *args):
+    from app.services.trend_posts.feedback import FeedbackError
+
+    try:
+        return fn(*args)
+    except FeedbackError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.get("/admin/api/trend-feedback", dependencies=[api])
+def trend_feedback_overview():
+    from app.services.trend_posts import feedback as fb
+
+    st = fb.FeedbackStore()
+    return {"needs_check": st.needs_check(), "by_version": st.by_version("customer"),
+            "operator": st.by_version("operator"), "improvements": st.improvements(),
+            "labels": {"ratings": fb.RATINGS, "neg": fb.NEG_REASONS, "pos": fb.POS_REASONS}}
+
+
+class _CheckedIn(BaseModel):
+    note: str | None = Field(None, max_length=200)
+
+
+@router.post("/admin/api/trend-feedback/{fid}/checked", dependencies=[api])
+def trend_feedback_checked(fid: int, body: _CheckedIn | None = None):
+    from app.services.trend_posts import feedback as fb
+
+    if not fb.FeedbackStore().mark_checked(fid, body.note if body else None):
+        raise HTTPException(404, "없거나 이미 확인한 평가예요.")
+    return {"ok": True}
+
+
+class _ImprovementIn(BaseModel):
+    day: str = Field(..., pattern=r"^\d{4}-\d{2}-\d{2}$")
+    basis: str = Field(..., min_length=1, max_length=500)
+    change: str = Field(..., min_length=1, max_length=500)
+    scope: str = Field(..., pattern="^(post|rule)$")
+    post_id: str | None = Field(None, max_length=120)
+    rules_from: str | None = Field(None, max_length=40)
+    rules_to: str | None = Field(None, max_length=40)
+    approver: str = Field(..., min_length=1, max_length=60)
+    check_due: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+@router.post("/admin/api/trend-feedback/improvements", dependencies=[api])
+def trend_feedback_add_improvement(body: _ImprovementIn):
+    from app.services.trend_posts import feedback as fb
+
+    return _feedback_call(fb.FeedbackStore().add_improvement, body.model_dump())
+
+
+class _ResultIn(BaseModel):
+    result: str = Field(..., max_length=10)
+
+
+@router.post("/admin/api/trend-feedback/improvements/{iid}/result", dependencies=[api])
+def trend_feedback_result(iid: int, body: _ResultIn):
+    from app.services.trend_posts import feedback as fb
+
+    if not _feedback_call(fb.FeedbackStore().set_result, iid, body.result):
+        raise HTTPException(404, "없는 개선 기록이에요.")
+    return {"ok": True}
+
+
 @router.get("/admin/trend-posts/{post_id}/preview")
 def trend_posts_preview(post_id: str, request: Request):
     """승인 전 미리 보기 (관리자만, 검색 노출 차단).  공개 페이지와 같은 그리기 — 상품 링크는 눌러도 공개 쪽에서 막힌다."""

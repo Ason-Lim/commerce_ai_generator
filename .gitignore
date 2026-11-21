@@ -41,4 +41,7 @@ var/logs/
 
 # 트렌드 글 저장소 (2단계 — 운영 데이터, 백업은 3단계 운영 배치에서)
 var/trends/posts/
+# 2026-11-21 글 끝 피드백(독자 평가 원본)·보류 글 AI 대표 그림 — git 에 넣지 않음
+var/trends/feedback.sqlite3*
+var/trend_images/
 frontend/src/data
