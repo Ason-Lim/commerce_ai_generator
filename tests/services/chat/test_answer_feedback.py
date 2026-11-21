@@ -117,3 +117,20 @@ def test_api_rejects_extra_keys(sqlite_db, tmp_path):
     ok = c.post("/api/chat/answer-feedback", json={"session_id": sid, "rating": "ok", "reasons": ["thin"]})
     assert ok.status_code == 200 and "helpful_rate" not in ok.text and "n" not in ok.json()
     assert c.post("/api/chat/answer-feedback", json={"session_id": sid, "rating": "meh"}).status_code == 400
+
+
+def test_answers_are_rolled_up_before_purge(tmp_path):
+    from datetime import datetime, timezone
+    import sqlite3
+
+    clock = {"t": datetime(2025, 1, 10, tzinfo=timezone.utc)}
+    st = afb.AnswerFeedbackStore(tmp_path / "f.sqlite3", clock=lambda: clock["t"])
+    old = "00000000-0000-4000-8000-000000000009"
+    st.ask(old, "go", SHOWN)
+    st.record(old, "bad", ["thin"], operator=False)
+    clock["t"] = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    st.ask("00000000-0000-4000-8000-00000000000a", "save", SHOWN)     # 묻기 기록할 때 1년 지난 것을 접고 지움
+    con = sqlite3.connect(tmp_path / "f.sqlite3")
+    assert con.execute("SELECT COUNT(*) FROM answers").fetchone()[0] == 0
+    assert con.execute("SELECT month, signal, rating, reasons, n FROM answers_rollup").fetchall() == [
+        ("2025-01", "go", "bad", "thin", 1)]

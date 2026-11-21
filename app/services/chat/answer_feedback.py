@@ -5,7 +5,7 @@ claude/trend_post_format_feedback_2026-11-20.md §5·§6-7).
   '좁히기 끝'(조건을 2번 이상 바꾼 뒤 후보 1~2개)은 대화 이어 묻기 1단계(조건 스택)가 들어오면 더한다.
 * 대화(세션)당 한 번만 묻는다. 닫으면 그 대화에서 다시 묻지 않는다. 직전 답이 쇼핑 추천(후보를 보여 준 답)일 때만.
 * 저장: 세션 값 · 평가 · 칩 · 신호 종류 · 직전 조건 요약(허용 키만: 상품어·예산 라벨·보여 준 후보 수) · 규칙 판 · 시각.
-  대화 문장 원문·IP·기기 정보·자유 입력은 저장하지 않는다. 원본은 1년 보관 뒤 지운다.
+  대화 문장 원문·IP·기기 정보·자유 입력은 저장하지 않는다. 원본은 1년 보관 뒤 숫자로 접고 지운다.
 * **편향**: 신호가 있을 때만 묻기 때문에 상품을 못 찾고 떠난 대화는 응답에 없다 — '대화 전체 만족도'로 쓰지 않는다.
 * 추천 순위·순서에는 쓰지 않는다(베타 전 순위 동결). 집계는 관리자 화면에서만.
 저장소: SQLite 하나 (CHAT_FEEDBACK_DB, 기본 var/chat/answer_feedback.sqlite3 — git 에 넣지 않음).
@@ -81,6 +81,10 @@ CREATE TABLE IF NOT EXISTS asks (
   session_id TEXT PRIMARY KEY, signal TEXT NOT NULL, summary TEXT NOT NULL DEFAULT '{}',
   asked_at TEXT NOT NULL, closed_at TEXT
 );
+CREATE TABLE IF NOT EXISTS answers_rollup (
+  month TEXT NOT NULL, signal TEXT NOT NULL, rating TEXT NOT NULL, reasons TEXT NOT NULL, source TEXT NOT NULL,
+  rules_version TEXT NOT NULL, n INTEGER NOT NULL, rolled_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS answers (
   session_id TEXT PRIMARY KEY, rating TEXT NOT NULL, reasons TEXT NOT NULL DEFAULT '',
   signal TEXT NOT NULL, summary TEXT NOT NULL DEFAULT '{}', rules_version TEXT NOT NULL,
@@ -146,6 +150,11 @@ class AnswerFeedbackStore:
 
     def _purge(self, con: sqlite3.Connection) -> None:
         cut = _iso(self.clock() - timedelta(days=KEEP_DAYS))
+        # 2026-11-21 결정: 집계는 계속 보관 — 원본을 지우기 전에 월·신호·평가·칩별 숫자로 접는다 (세션 값 없음)
+        con.execute("INSERT INTO answers_rollup SELECT substr(updated_at, 1, 7), signal, rating, reasons, source,"
+                    " rules_version, COUNT(*), ? FROM answers WHERE updated_at < ?"
+                    " GROUP BY substr(updated_at, 1, 7), signal, rating, reasons, source, rules_version",
+                    (_iso(self.clock()), cut))
         con.execute("DELETE FROM answers WHERE updated_at < ?", (cut,))
         con.execute("DELETE FROM asks WHERE asked_at < ?", (cut,))
 
