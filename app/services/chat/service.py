@@ -641,6 +641,8 @@ class ChatService:
             # 2026-11-12: 대용량은 요청할 때만 — 뒤로 둔 것을 숨기지 않고 알린다
             blocks.append(B.notice(f"대용량 상품 {picked['bulk_held']}개는 업소·대가족용으로 보고 다른 후보 맨 뒤에 두었어요. "
                                    f"대용량이 필요하면 '대용량 {query}'라고 말씀해 주세요."))
+        if note := explain.amount_miss_note(picked.get("amount_miss")):   # 2026-11-21: 말씀하신 양이 없으면 없다고
+            blocks.append(B.notice(note))
         if picked["budget_miss"]:
             blocks.append(B.notice(f"예산 {budget['label']} 안에 드는 후보가 없어요. 가격이 낮은 순으로 보여 드려요. "
                                    f"새로 찾아볼까요? 예: '{budget['label']} {query}'", "warn"))

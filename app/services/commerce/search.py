@@ -387,6 +387,10 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
     items += [to_item(c, "connect") for c in got["connect"]]
 
     warnings = ["평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 판매처 페이지에서 확인해 주세요."]
+    from app.services.chat.explain import amount_miss_note
+
+    if picked and (note := amount_miss_note(picked.get("amount_miss"))):   # 2026-11-21: 말씀하신 양이 없으면 없다고
+        warnings.append(note + ".")
     if picked and picked["budget_miss"]:
         warnings.append(f"예산 {got['budget']['label']} 안에 드는 후보가 없어 가격이 낮은 순으로 보여 줍니다.")
     if got["preview"]:
