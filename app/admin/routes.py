@@ -418,6 +418,8 @@ class _DraftIn(BaseModel):
     with_coupang: bool = True        # 2026-11-17: 키워드마다 쿠팡 파트너스 링크를 쇼핑커넥트 자리 앞에
     template: str | None = Field(None, pattern=r"^\d{2}$")    # 2026-11-20 쿠팡용 글 틀 번호 (없으면 주제별 기본)
     hold: bool = False               # 2026-11-20 구매 보류 결론 — 쿠팡용에 링크·고지를 넣지 않는다
+    # 2026-11-21 관리자가 고른 세부 질문 {키워드: [면 id]} — 답 문장이 있는 면만 쿠팡용 본문 '자주 찾는 질문'으로
+    questions: dict[str, list[str]] | None = Field(None, max_length=5)
 
 
 @router.post("/admin/api/trends/blog-draft", dependencies=[api])
@@ -434,14 +436,17 @@ def trends_blog_draft(body: _DraftIn):
     try:
         first = surge.blog_draft(report, body.keywords)
         # 2026-11-20 v1.3: 보류 결론이면 쿠팡 상품을 찾지 않는다 (링크를 넣지 않으므로)
-        coupang = _coupang_links(first["keywords"]) if body.with_coupang and not body.hold else None
+        coupang = _coupang_links(first["keywords"], channel="blog") if body.with_coupang and not body.hold else None
         recipes = _blog_recipes(report, first["keywords"], coupang or {}, body.template)
         drafts = {"naver": surge.blog_draft(report, body.keywords, variant="naver",
                                             connect_ok=blog_connect_approved()),
                   "coupang": surge.blog_draft(report, body.keywords, coupang=coupang or {}, variant="coupang",
-                                              recipes=recipes, template=body.template, hold=body.hold)}
+                                              recipes=recipes, template=body.template, hold=body.hold,
+                                              faq=_faq(first["keywords"], body.questions))}
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
+    drafts["coupang"]["faq"] = {} if body.hold else {k: [q for q, _ in v] for k, v in
+                                                     _faq(first["keywords"], body.questions).items() if v}
     keywords = drafts["naver"]["keywords"]
     # 2026-11-20 세부 질문 후보 · 제목 유사도 (네이버 공식 검색 API 블로그 제목, 실패해도 초안은 만든다) — 운영 메모에만
     serp = _blog_serp(keywords)
@@ -459,6 +464,10 @@ def trends_blog_draft(body: _DraftIn):
         extra = [x.memo_line() for x in subq.values()] + [_ts().memo_line(sims[variant])]
         if missing and variant == "coupang":                  # 운영 메모 안(구분선 위)에 — 블로그에 붙일 본문에는 넣지 않는다
             extra.append("쿠팡 링크를 찾지 못한 키워드(주류는 넣지 않음): " + ", ".join(missing))
+        if variant == "coupang" and coupang is not None:   # 2026-11-21 블로그 쿠팡 링크 채널
+            extra.append(_channel_memo())
+        if variant == "coupang" and d.get("faq"):
+            extra.append("본문 '자주 찾는 질문'에 넣은 질문: " + " · ".join(f"{k}: {', '.join(v)}" for k, v in d["faq"].items()))
         if variant == "coupang" and d.get("hold"):
             extra.append("구매 보류 결론 — 쿠팡 링크·광고 고지를 넣지 않아요. 대표 그림은 AI 그림(승인할 때 만들어요, 유료).")
         elif variant == "coupang" and d.get("cover"):
@@ -588,6 +597,7 @@ COUPANG_SUFFIX = "_쿠팡용.txt"
 class _DraftApproveIn(BaseModel):
     file: str = Field(..., max_length=200)
     with_image: bool = False          # gpt-image 보조 그림 1장 (유료, 캡션 앞에 'AI로 만든 그림')
+    confirm_similar: bool = False     # 2026-11-21 제목 유사도 '높음'이어도 진행 (관리자가 한 번 확인)
 
 
 def _draft_path_or_404(rel: str) -> Path:
@@ -617,10 +627,19 @@ def trends_blog_draft_approve(body: _DraftApproveIn):
     if issues:
         raise HTTPException(400, {"message": "확인이 필요한 곳이 있어 임시저장을 시작하지 않았어요.", "issues": issues})
     keywords = [t for t in d["tags"] if t not in ("트렌드리포트", "요즘뜨는식품", "쿠팡파트너스", "쇼핑커넥트")] or [d["title"]]
+    # 2026-11-21 결정: 고친 제목으로 유사도 다시 (초안 때 받아 둔 상위 제목 — 승인 때는 검색을 다시 하지 않음).
+    # '높음'이면 막지 않고 한 번 확인받는다 (confirm_similar). 확인한 것은 승인 기록에 남긴다 — 기준선 조정 자료.
+    sim = _title_similarity_cached(path, d["title"], keywords)
+    if sim.get("level") == "높음" and not body.confirm_similar:
+        raise HTTPException(409, {"message": "제목이 검색 상위 글과 많이 비슷해요. 그래도 진행할까요?",
+                                  "need_confirm": "title_similarity", "title_similarity": sim})
+    extra = {"title_similarity": {k: sim.get(k) for k in ("percent", "level", "nearest", "compared")}} \
+        if sim.get("status") == "ok" else {}
+    if sim.get("level") == "높음":
+        extra["similar_confirmed"] = True
     rec = bas.start(path, variant=variant, title=d["title"], tags=d["tags"], body=d["body"], keywords=keywords,
-                    with_image=body.with_image, cover=_read_cover(path))
-    # 2026-11-20 고친 제목으로 유사도 다시 (초안 때 받아 둔 상위 제목으로 — 승인 때는 검색을 다시 하지 않음, 막지 않음)
-    return {"file": body.file, "approval": rec, "title_similarity": _title_similarity_cached(path, d["title"], keywords)}
+                    with_image=body.with_image, cover=_read_cover(path), extra=extra)
+    return {"file": body.file, "approval": rec, "title_similarity": sim}
 
 
 def _cover_path(draft_path: Path) -> Path:
@@ -668,8 +687,36 @@ def _draft_warnings(file: str, text: str) -> list[str]:
     return out
 
 
-def _coupang_links(keywords: list[str]) -> dict[str, list[dict]]:
-    """키워드마다 쿠팡 파트너스 상품 링크 (공통 검색 picks 순서 그대로, 제휴 링크만, 주류 제외). 실패하면 빈 목록."""
+def _coupang_links(keywords: list[str], channel: str | None = None) -> dict[str, list[dict]]:
+    """키워드마다 쿠팡 파트너스 상품 링크 (공통 검색 picks 순서 그대로, 제휴 링크만, 주류 제외). 실패하면 빈 목록.
+    2026-11-21: channel='blog' 이면 .env COUPANG_BLOG_SUB_ID 채널로 링크를 받는다(없으면 기본 채널 그대로)."""
+    import contextlib
+
+    from app.services import coupang_api
+
+    sub = coupang_api.coupang_blog_sub_id() if channel == "blog" else None
+    with coupang_api.sub_id_channel(sub) if sub else contextlib.nullcontext():
+        return _coupang_links_now(keywords)
+
+
+def _channel_memo() -> str:
+    from app.services import coupang_api
+
+    blog = coupang_api.coupang_blog_sub_id()
+    if blog:
+        return f"쿠팡 채널: 블로그 전용 '{blog}' (사이트와 따로 집계)"
+    return ("쿠팡 채널: 블로그 전용 채널이 없어 사이트와 같은 채널"
+            + (f" '{coupang_api.coupang_sub_id()}'" if coupang_api.coupang_sub_id() else "")
+            + "로 집계돼요 — 파트너스 '채널 아이디 관리'에서 만든 뒤 .env COUPANG_BLOG_SUB_ID")
+
+
+def _faq(keywords: list[str], picked: dict[str, list[str]] | None) -> dict[str, list[tuple[str, list[str]]]]:
+    from app.services.trends import subquestions
+
+    return {kw: subquestions.faq(kw, (picked or {}).get(kw) or []) for kw in keywords if (picked or {}).get(kw)}
+
+
+def _coupang_links_now(keywords: list[str]) -> dict[str, list[dict]]:
     from app.services.trend_posts import draft as post_draft, policy, wiring
     from app.services.trends import surge
 

@@ -81,15 +81,34 @@ def check(variant: str, title: str, body: str, warnings: list[str], coupang_disc
         if coupang_disclosure not in first and connect_disclosure_mark not in first:
             issues.append("광고 고지는 본문 첫 줄에 있어야 해요 (상품 링크보다 먼저).")
     # 55종 템플릿 '작성 완료 확인': [입력]·[상품] 같은 빈칸이 남지 않았는가 ([광고]·[트렌드 리포트]·[[이미지1]]·쇼핑커넥트 자리 제외)
-    # 2026-11-20 실제 초안 검증: 링크가 있는 줄(쿠팡 상품명 '[로켓프레시] …: https://…')의 대괄호는 상품명이라 빈칸이 아니다
-    text = "\n".join(ln for ln in (title + "\n" + body).split("\n") if "http://" not in ln and "https://" not in ln)
-    left = [m for m in re.findall(r"(?<!\[)\[([^\[\]\n]{1,20})\](?!\])", text)
-            if m not in ("광고", "트렌드 리포트") and not m.startswith("여기에")]
+    # 2026-11-20 실제 초안 검증: 링크가 있는 줄(쿠팡 상품명 '[로켓프레시] …: https://…')의 대괄호는 상품명이라 빈칸이 아니다.
+    # 2026-11-21 (외부 검토) 링크 줄을 통째로 빼면 같은 줄의 진짜 '[상품]' 빈칸도 통과한다 → 링크 줄에서는
+    #   상품명 대괄호만 허용하고, 템플릿 자리표시자(PLACEHOLDER·'입력'·'○○' 들어간 것)는 그대로 잡는다.
+    left = []
+    for ln in (title + "\n" + body).split("\n"):
+        link_line = "http://" in ln or "https://" in ln
+        for m in re.findall(r"(?<!\[)\[([^\[\]\n]{1,20})\](?!\])", ln):
+            if m in ("광고", "트렌드 리포트") or m.startswith("여기에"):
+                continue
+            if link_line and not is_placeholder(m):
+                continue
+            left.append(m)
     if left:
         issues.append("채우지 않은 빈칸이 있어요: " + ", ".join(f"[{m}]" for m in left[:5]))
     if variant == "coupang" and re.search(r"내돈내산|직접\s*(?:먹어|써|사용해)\s*봤", body):
         issues.append("직접 사용 기록이 없는 글에 사용 후기 표현이 있어요.")
     return issues
+
+
+# 55종 템플릿 자리표시자 (글 틀 문서 part1~3에서 쓰는 이름) — 링크 줄에서도 남아 있으면 막는다
+PLACEHOLDER = {"입력", "상품", "상품명", "상품 링크", "링크", "키워드", "주제", "날짜", "기간", "가격", "수량", "중량", "용량",
+               "지역", "산지", "이름", "숫자", "제목", "내용", "메모", "레시피", "요리", "재료", "브랜드", "판매처", "옵션",
+               "URL", "url", "N", "n", "X", "x"}
+
+
+def is_placeholder(text: str) -> bool:
+    t = text.strip()
+    return t in PLACEHOLDER or "입력" in t or "○" in t or "OO" in t
 
 
 def with_image_mark(body: str) -> str:
@@ -160,7 +179,7 @@ def _run_worker(module: str, payload: dict, env=None, timeout: int = 420) -> dic
 def start(draft_path: Path, *, variant: str, title: str, tags: list[str], body: str, keywords: list[str],
           with_image: bool, env=None, worker: Callable[[str, dict], dict] | None = None,
           background: bool = True, cover: dict | None = None,
-          fetch_image: Callable[[str, Path, str], Path | None] | None = None) -> dict:
+          fetch_image: Callable[[str, Path, str], Path | None] | None = None, extra: dict | None = None) -> dict:
     """승인 기록을 남기고 임시저장 작업을 시작한다. 같은 초안이 이미 진행 중이면 그 기록을 돌려준다.
     2026-11-20 대표 그림(cover, 초안 만들 때 정함): {'kind': 'ai'} = 보류 글 → AI 그림,
     {'kind': 'seller', 'url', 'caption'} = 구매 글 → 쿠팡 상품 사진(판매처 이미지). with_image=True 면 늘 AI 그림.
@@ -179,7 +198,8 @@ def start(draft_path: Path, *, variant: str, title: str, tags: list[str], body: 
                               datetime.now(timezone.utc).isoformat(timespec="seconds"),
                               "with_image": use_ai, "cover": "ai" if use_ai else ("seller" if use_seller else None),
                               "status": "running", "step": "그림 만들기" if use_ai else
-                              ("상품 사진 받기" if use_seller else "네이버 임시저장"), "message": ""})
+                              ("상품 사진 받기" if use_seller else "네이버 임시저장"), "message": "",
+                              **(extra or {})})   # 2026-11-21 승인 때 남길 것 (제목 유사도·확인 여부)
 
     def work():
         try:

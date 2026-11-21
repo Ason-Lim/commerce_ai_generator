@@ -32,6 +32,10 @@ def test_check_blocks_unfilled_template_blanks():
              "\n- [프리미엄][당일생산]해남 절임배추 [BZN], 10kg: https://link.coupang.com/re/y")
     assert bas.check("coupang", TITLE, BODY + links, [], COUPANG_DISCLOSURE) == []
     assert any("빈칸" in x for x in bas.check("coupang", TITLE, BODY + links + "\n[상품] 확인", [], COUPANG_DISCLOSURE))
+    # 2026-11-21 외부 검토: 링크와 같은 줄에 남은 진짜 자리표시자는 여전히 막는다 (링크 줄 통째 제외는 우회가 넓음)
+    for blank in ("[상품]", "[상품명]", "[입력]", "[○○ 입력]", "[링크]"):
+        same_line = f"\n- {blank} 1kg: https://link.coupang.com/re/z"
+        assert any(blank in x for x in bas.check("coupang", TITLE, BODY + same_line, [], COUPANG_DISCLOSURE)), blank
 
 
 def test_image_mark_goes_after_the_answer_block():

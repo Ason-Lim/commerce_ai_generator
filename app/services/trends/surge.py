@@ -576,7 +576,7 @@ VARIANTS = ("naver", "coupang")
 def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                coupang: dict[str, list[dict]] | None = None, variant: str = "naver",
                connect_ok: bool = True, recipes: dict | None = None, template: str | None = None,
-               hold: bool = False) -> dict:
+               hold: bool = False, faq: dict[str, list[tuple[str, list[str]]]] | None = None) -> dict:
     """{'title', 'tags', 'body'} — data facts and title clues only; no prices, no copied posts; cause marked as estimate.
 
     2026-11-17 두 판 (사용자 결정):
@@ -587,6 +587,7 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
       2026-11-20: 키워드마다 주제(frame) → 글 틀(templates, 55종 중 자동 8종) — 제목·키워드 블록 절이 틀을 따른다.
       recipes = {키워드: PostRecipe} (레시피 틀 26 용), template = 관리자가 지정한 틀 번호.
       hold=True (쿠팡용, 55종 v1.2): 결론이 '구매 보류'인 글 — 쿠팡 링크·고지·[광고] 없이 보류 결론 문장을 넣는다.
+      faq = {키워드: [(질문, [답 문장])]} (쿠팡용, 2026-11-21): 관리자가 고른 세부 질문 — 키워드 블록의 기준 뒤에 '자주 찾는 질문'.
     가격은 어느 판에도 넣지 않는다(게시 뒤 바뀌어도 고칠 수 없음)."""
     if variant not in VARIANTS:
         raise ValueError("알 수 없는 초안 종류예요.")
@@ -687,6 +688,14 @@ def blog_draft(report: dict, keywords: list[str] | None = None, limit: int = 3,
                 crit_at[tuple(crit)] = n
                 lines.append(templates.HOLD_CRITERIA_HEAD["blog"] if hold else frame.heading("criteria", names[0], "blog", n - 1))
                 lines += [f"{i}. {c}" for i, c in enumerate(crit, 1)]
+            qa = [] if hold else (faq or {}).get(kw) or []     # 보류 글엔 넣지 않음 (답이 '판매 페이지 확인' 안내라서)
+            if qa:                            # 2026-11-21: 관리자가 고른 세부 질문만 (답 문장은 확인 방법 안내 — 사실 단정 없음)
+                from app.services.trends.subquestions import FAQ_HEAD
+
+                lines.append(FAQ_HEAD)
+                for q, ans in qa:
+                    lines.append(f"Q. {q}")
+                    lines += [f"- {a}" for a in ans]
         if only_coupang and links:
             lines.append(frame.checklist(names[0], "blog", n - 1))
             lines.append("▶ 쿠팡에서 보기")

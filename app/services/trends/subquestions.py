@@ -6,7 +6,8 @@
 자료: 네이버 **공식 검색 API**(블로그, 정확도순 100건)의 제목만. 글 본문·쇼핑몰 화면은 읽지 않는다(스크래핑 금지 원칙).
 남이 쓴 제목은 운영 메모에서 사람이 판단하는 재료로만 쓰고, 블로그 본문에는 옮기지 않는다.
 
-출력은 '후보'다 — 본문에 자동으로 넣지 않는다. 관리자가 다음 글 주제나 글 틀 절로 고른다.
+출력은 '후보'다 — 본문에 자동으로 넣지 않는다. 관리자가 초안 화면에서 고른 질문만, 답 문장(ANSWERS)이 있는 면에
+한해 쿠팡용 초안의 키워드 블록에 '자주 찾는 질문' 절로 들어간다(2026-11-21 결정). 나머지는 다음 글 주제 후보.
 제외: 효능·다이어트(건강 표현 제한), 후기·내돈내산(직접 써 본 척 금지), 맛집·식당(상품이 아님).
 """
 from __future__ import annotations
@@ -62,6 +63,49 @@ MIN_SHARE = 0.03       # 키워드가 든 제목의 3% 이상
 MAX_QUESTIONS = 5
 
 
+# 2026-11-21 결정: 본문 절로 넣는 건 관리자가 고른 질문만, 그리고 **근거 없이도 틀릴 수 없는 안내 문장**이 있는 면만.
+# 사실(보관 기간·도착 소요일·가격)을 단정하지 않고 '판매 페이지·포장 표시에서 확인'으로 답한다. 손질·먹는 법·종류 차이는
+# 품목마다 사실이 달라 '다음 글 주제'로만 둔다. 가격은 본문에 숫자를 넣지 않는 규칙이라 넣지 않는다.
+ANSWERS = {
+    "timing": ["받을 날짜를 먼저 정하고, 판매 페이지의 출고·도착 예정일을 그 날짜에 맞춰 보세요.",
+               "예약·산지 발송 상품은 주문한 날과 받는 날이 며칠 차이 날 수 있어요."],
+    "amount": ["어디에 몇 번 쓸지를 먼저 정하고, 판매 페이지의 중량·수량 표기를 같은 단위로 맞춰 비교해 보세요.",
+               "한 번에 다 쓰지 못하는 양이면 나눠 보관할 수 있는지도 함께 보세요."],
+    "store": ["보관 방법과 기간은 상품마다 달라요. 받으면 포장의 보관 방법과 소비기한 표시부터 확인해 주세요.",
+              "바로 먹지 못할 양은 받는 날 나눠서, 표시된 방법대로 넣어 두는 게 좋아요."],
+    "gift": ["받는 사람 수, 받을 날짜, 포장(선물 포장·메시지 카드)을 먼저 정해 보세요.",
+             "신선식품이라면 받는 사람이 집에 있는 날로 도착일을 맞추는 게 안전해요."],
+    "choose": ["판매 페이지에서 원산지·등급(또는 크기)·손질 상태를 같은 기준으로 비교해 보세요.",
+               "표기가 없는 항목은 상세 설명이나 판매자 문의로 확인해 주세요."],
+}
+# 품목별로 더 맞는 문장 (frame.kimjang_part 와 같은 구분)
+ANSWERS_PART = {("timing", "cabbage"): ["절임배추는 받는 날 바로(늦어도 다음 날) 쓰는 게 기본이라, 김장하는 날 전날이나 "
+                                        "당일 도착으로 맞춰 주세요.",
+                                        "판매 페이지의 발송일·도착 예정일을 김장 날짜와 함께 확인해 주세요."]}
+ANSWERABLE = tuple(ANSWERS)
+FAQ_HEAD = "자주 찾는 질문"
+
+
+def answer(facet: str, keyword: str) -> list[str]:
+    """고른 세부 질문의 본문 답 문장. 답 문장이 없는 면이면 빈 목록 (넣지 않음)."""
+    if facet not in ANSWERS:
+        return []
+    from app.services.trend_posts.frame import kimjang_part
+
+    return list(ANSWERS_PART.get((facet, kimjang_part(keyword)), ANSWERS[facet]))
+
+
+def faq(keyword: str, facets: list[str]) -> list[tuple[str, list[str]]]:
+    """[(질문, [답 문장])] — 답할 수 있는 면만, 고른 순서대로, 같은 면은 한 번."""
+    out, seen = [], set()
+    for f in facets:
+        if f in seen or not answer(f, keyword):
+            continue
+        seen.add(f)
+        out.append((_question(f, keyword)[1], answer(f, keyword)))
+    return out
+
+
 @dataclass
 class Question:
     facet: str
@@ -71,6 +115,7 @@ class Question:
     share: float = 0.0             # 키워드가 든 제목 중 비율
     source: str = "블로그 제목"     # '블로그 제목' | '주제 기본'
     note: str = ""
+    answerable: bool = False       # 본문 절로 넣을 수 있는지 (ANSWERS 에 있는 면)
 
 
 @dataclass
@@ -139,13 +184,14 @@ def suggest(keyword: str, titles: list[str], kind: str | None = None, status: st
     out = []
     for f in picked[:limit]:
         label, q = _question(f, keyword)
-        out.append(Question(f, label, q, facet_hits[f], round(facet_hits[f] / n, 3), "블로그 제목", NOTE.get(f, "")))
+        out.append(Question(f, label, q, facet_hits[f], round(facet_hits[f] / n, 3), "블로그 제목", NOTE.get(f, ""),
+                            f in ANSWERS))
     for f in DEFAULTS.get(kind, DEFAULTS["general"]):
         if len(out) >= min(3, limit):
             break
         if f not in {q.facet for q in out}:
             label, q = _question(f, keyword)
-            out.append(Question(f, label, q, 0, 0.0, "주제 기본", NOTE.get(f, "")))
+            out.append(Question(f, label, q, 0, 0.0, "주제 기본", NOTE.get(f, ""), f in ANSWERS))
     others = sorted(((w, c) for w, c in words.items() if c >= MIN_COUNT), key=lambda x: (-x[1], x[0]))[:8]
     return Suggestion(keyword, kind, n, out, others, dict(excluded))
 
