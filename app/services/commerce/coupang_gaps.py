@@ -81,7 +81,120 @@ def retry_queries(query: str, table: list[tuple[str, str]] | None = None) -> lis
         return [x for x in dict.fromkeys(out) if x and x != q][:MAX_GRADE_RETRY]
     else:
         out = [q.replace(a, b) for a, b in (table if table is not None else synonyms()) if a in q]
+        if not out and table is None:
+            # 2026-11-22: 표에 없는 잘못 쓴 이름 — 식품 키워드 낱말 중 자모가 가장 가까운 말로 ('브레타' → '부라타')
+            fixed = similar_query(q)
+            if fixed:
+                out = [fixed]
     return [x for x in dict.fromkeys(out) if x and x != q][:MAX_RETRY]
+
+
+# ── 2026-11-22 비슷한 말 (자모 거리) ─────────────────────────────────────────
+# 쿠팡 사이트 검색은 '브레타 치즈'를 '부라타'로 고쳐 60개를 보여 주지만 파트너스 검색 API 는 고치지 않는다.
+# 낱말 사전: 네이버 식품 키워드 순위 파일(NAVER_DAILY_RANK_DIR / NAVER_DAILY_DIR, 최근 VOCAB_FILES 개)의 낱말
+#            + 바꿔 쓸 말 표의 오른쪽 말. 고쳐 찾았으면 안내 줄이 '비슷한 말'로 찾았다고 밝힌다 (search.search_note).
+_CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"
+_JUNG = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"
+_JONG = " ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ"
+VOCAB_FILES = 60
+_vocab_cache: tuple[tuple, set[str]] | None = None
+
+
+def jamo(word: str) -> str:
+    out = []
+    for ch in word or "":
+        code = ord(ch) - 0xAC00
+        if 0 <= code < 11172:
+            out += [_CHO[code // 588], _JUNG[(code % 588) // 28]]
+            if code % 28:
+                out.append(_JONG[code % 28])
+        else:
+            out.append(ch.lower())
+    return "".join(out)
+
+
+def jamo_distance(a: str, b: str) -> int:
+    x, y = jamo(a), jamo(b)
+    prev = list(range(len(y) + 1))
+    for i, cx in enumerate(x, 1):
+        cur = [i]
+        for j, cy in enumerate(y, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (cx != cy)))
+        prev = cur
+    return prev[-1]
+
+
+def _rank_dirs() -> list[Path]:
+    dirs = []
+    for key in ("NAVER_DAILY_RANK_DIR", "NAVER_DAILY_DIR"):
+        raw = (os.environ.get(key) or "").strip()
+        if raw and Path(raw).expanduser().exists():
+            dirs.append(Path(raw).expanduser())
+    return dirs
+
+
+def vocab() -> set[str]:
+    """식품 낱말 (한글 2~6자). 순위 폴더가 없으면 바꿔 쓸 말 표만."""
+    global _vocab_cache
+    files = []
+    for d in _rank_dirs():
+        files += sorted(d.glob("food_????-??-??.csv"))[-VOCAB_FILES:]
+    key = tuple((str(f), f.stat().st_mtime) for f in files[-3:]) + (len(files),)
+    if _vocab_cache and _vocab_cache[0] == key:
+        return _vocab_cache[1]
+    words: set[str] = {b for _, b in synonyms() for b in b.split()}
+    for f in files:
+        try:
+            with f.open(encoding="utf-8-sig") as fh:
+                for row in csv.DictReader(fh):
+                    words.update(re.findall(r"[가-힣]{2,6}", row.get("keyword") or ""))
+        except (OSError, csv.Error):
+            continue
+    _vocab_cache = (key, words)
+    return words
+
+
+def similar_word(word: str, words: set[str] | None = None) -> str | None:
+    """사전에 없는 한글 낱말(3자 이상)을 자모 거리 2 이하·길이 ±1 인 가장 가까운 사전 낱말로. 애매하면 None."""
+    if not re.fullmatch(r"[가-힣]{3,8}", word or ""):
+        return None
+    words = vocab() if words is None else words
+    if word in words:
+        return None
+    best: list[tuple[int, str]] = []
+    for w in words:
+        if abs(len(w) - len(word)) > 1 or w[0] != word[0] and jamo(w)[0] != jamo(word)[0]:
+            continue
+        d = jamo_distance(word, w)
+        if d <= 2:
+            best.append((d, w))
+    if not best:
+        return None
+    best.sort()
+    if len(best) > 1 and best[0][0] == best[1][0]:
+        return None                          # 똑같이 가까운 말이 둘 이상이면 고르지 않는다
+    return best[0][1]
+
+
+def similar_query(query: str, words: set[str] | None = None) -> str | None:
+    """검색어 낱말 중 하나를 비슷한 말로 바꾼 검색어 (없으면 None)."""
+    parts = query.split()
+    for i, part in enumerate(parts):
+        fix = similar_word(part, words)
+        if fix:
+            return " ".join(parts[:i] + [fix] + parts[i + 1:])
+    return None
+
+
+def similar_pair(query: str, alt: str) -> tuple[str, str] | None:
+    """(바뀐 낱말, 바꾼 말) — 비슷한 말로 고친 다시 찾기였으면."""
+    a, b = (query or "").split(), (alt or "").split()
+    if len(a) != len(b):
+        return None
+    diff = [(x, y) for x, y in zip(a, b) if x != y]
+    if len(diff) == 1 and jamo_distance(*diff[0]) <= 2:
+        return diff[0]
+    return None
 
 
 def enabled() -> bool:

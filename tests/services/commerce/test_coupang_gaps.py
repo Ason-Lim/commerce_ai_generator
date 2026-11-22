@@ -112,3 +112,29 @@ def test_deeplink_probe_builds_search_url():
         "%EC%97%91%EC%8A%A4%ED%8A%B8%EB%9D%BC%20%EB%B2%84%EC%A7%84%20"
         "%EC%98%AC%EB%A6%AC%EB%B8%8C%EC%9C%A0"
     )
+
+
+# ── 2026-11-22 '브레타 치즈' — 파트너스 검색 API 는 잘못 쓴 이름을 고치지 않는다 ─────────────
+
+def test_typo_rows_in_table():
+    assert cg.retry_queries("브레타 치즈") == ["부라타 치즈"]
+
+
+def test_similar_word_by_jamo_distance():
+    words = {"부라타", "블루베리", "바나나", "브로콜리", "바질"}
+    assert cg.jamo_distance("브레타", "부라타") == 2
+    assert cg.similar_word("블루배리", words) == "블루베리"
+    assert cg.similar_word("브로컬리", words) == "브로콜리"
+    assert cg.similar_word("바나나", words) is None            # 이미 사전에 있는 말
+    assert cg.similar_word("감", words) is None                 # 짧은 말은 고치지 않음
+    assert cg.similar_query("블루배리 1kg", words) == "블루베리 1kg"
+    assert cg.similar_pair("블루배리 1kg", "블루베리 1kg") == ("블루배리", "블루베리")
+    assert cg.similar_pair("올리브유", "올리브오일") is None
+
+
+def test_vocab_reads_rank_files(tmp_path, monkeypatch):
+    (tmp_path / "food_2026-11-21.csv").write_text("date,rank,keyword\n2026-11-21,1,부라타치즈\n2026-11-21,2,홍시\n",
+                                                   encoding="utf-8")
+    monkeypatch.setenv("NAVER_DAILY_RANK_DIR", str(tmp_path))
+    monkeypatch.setattr(cg, "_vocab_cache", None)
+    assert {"부라타치즈", "홍시"} <= cg.vocab()

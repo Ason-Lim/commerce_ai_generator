@@ -200,3 +200,14 @@ def test_size_variant_finds_labelled_evoo(sqlite_db):
     assert [c["title"] for c in lists_[0]["items"]] == ["오뚜기 엑스트라버진 올리브유"]
     assert any((d.get("title") or "").startswith("등급 확인 필요") for d in lists_)
     assert "용량을 붙인 '엑스트라버진 올리브유 500ml'로 다시 찾았어요" in md(res)
+
+
+def test_typo_name_searches_similar_word(sqlite_db):
+    """2026-11-22 17:31: '브레타 치즈' — 쿠팡 사이트는 '부라타'로 고쳐 60개, 파트너스 검색 API 는 고치지 않음."""
+    burrata = [_cp("벨지오이오조 부라타 치즈 113g", 7900, 80), _cp("코스트코 벨지오이오소 부라타치즈 453G", 17590, 81)]
+    shop = ByQuery({"부라타 치즈": burrata})
+    svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
+    res = svc.handle(None, message="브레타 치즈")
+    assert shop.calls[:2] == ["브레타 치즈", "부라타 치즈"]
+    assert "벨지오이오조 부라타 치즈 113g" in titles(res)
+    assert "비슷한 말 **'부라타'**(으)로 보고 찾았어요" in md(res)
