@@ -3,7 +3,7 @@
 from app.services.commerce import coupang_gaps
 
 RANKS = {"캡슐레이션효소": 54, "카무트효소": 98, "효소": 300, "여주발효효소": 410, "명가효소": 5,
-         "막걸리효소": 6, "사과": 7, "효소": 300}
+         "막걸리효소": 6, "사과": 7}
 
 
 def test_siblings_share_the_head_word():
