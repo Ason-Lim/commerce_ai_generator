@@ -48,3 +48,28 @@ def test_forget_route_refuses_settings(sqlite_db):
 
     with pytest.raises(ValidationError):
         ShelfIn(owner=None, sessions=[], avoid=["땅콩"])
+
+
+def test_other_owner_cannot_see_or_clear(sqlite_db):
+    """로그인 없는 보관함 — 무작위 주인 값이 곧 접근 수단. 다른 값·빠진 값으로는 보이지도 지워지지도 않는다."""
+    s = svc(sqlite_db)
+    a_owner, b_owner = str(uuid.uuid4()), str(uuid.uuid4())
+    sid = s.handle(None, message="사과")["session_id"]
+    key = s.shelf_view(a_owner, [sid])["recent"][0]["cards"][0]["key"]
+    assert s.set_saved(a_owner, sid, key, True)["ok"]
+    assert s.shelf_view(b_owner, [])["saved"] == []
+    assert s.shelf_view(None, [])["saved"] == [] and s.shelf_view("", [])["saved"] == []
+    assert s.shelf_view("not-a-uuid", [])["saved"] == []
+    s.forget(b_owner, [])                       # 다른 주인 값으로 지우기
+    s.forget(None, [])                          # 주인 값 빠짐
+    assert len(s.shelf_view(a_owner, [])["saved"]) == 1
+
+
+def test_forget_clears_every_listed_session(sqlite_db):
+    """이 브라우저가 쓴 대화 세션 여러 개를 한 번에 — 이전 세션의 최근 검색도 지워진다."""
+    s = svc(sqlite_db)
+    owner = str(uuid.uuid4())
+    sids = [s.handle(None, message=q)["session_id"] for q in ("사과", "귤", "사과")]
+    assert len(s.shelf_view(owner, sids)["recent"]) == 2
+    assert s.forget(owner, sids)["sessions"] >= 3
+    assert s.shelf_view(owner, sids)["recent"] == []

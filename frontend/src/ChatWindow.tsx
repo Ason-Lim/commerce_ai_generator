@@ -438,7 +438,8 @@ export default function ChatWindow() {
                             </section>
                         ))}
                         <ShoppingPanel entries={basket} busy={busy}
-                            onRemove={name => void shop({ message: `${name} 충분해요` }, name, true)} />
+                            onDrop={name => setBasket(prev => prev.filter(e => e.ingredient !== name))}
+                            onHave={name => void shop({ message: `${name} 충분해요` }, name, true)} />
                         <div role="status">{busy && <BusyStatus kind={waitKind} />}</div>
                     </div>
                 )}

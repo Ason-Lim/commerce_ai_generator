@@ -49,6 +49,12 @@ const uuid4 = (): string =>
         const r = (Math.random() * 16) | 0;
         return (ch === "x" ? r : (r & 0x3) | 0x8).toString(16);
       });
+/** 2026-11-22 (3-B 후속): 기록을 지운 뒤 보관함 주인 값을 새로 — 지운 보관함 값으로 다시 닿지 않게. */
+export function resetSavedOwner(): void {
+  ownerMemo = null;
+  try { window.localStorage.removeItem(OWNER_KEY); } catch { /* 없음 */ }
+}
+
 export function savedOwner(): string {
   if (ownerMemo) return ownerMemo;
   try { ownerMemo = window.localStorage.getItem(OWNER_KEY); } catch { /* 저장소 막힘 */ }

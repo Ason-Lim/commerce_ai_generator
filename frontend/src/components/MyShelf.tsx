@@ -8,10 +8,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Heart, History, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
 import type { ApiCard, SavedView } from "../types/blocks";
 import { cardToCandidate } from "../api/adapt";
-import { fetchShelf, forgetShelf, goHref, logDirectClick } from "../api/client";
+import { fetchShelf, forgetShelf, goHref, logDirectClick, resetSavedOwner, sendChat } from "../api/client";
 import { cx, won } from "../lib/format";
 import { clearLocalShelf, knownSessions, useBasket, usePrefs, type Prefs } from "../state/shelf";
 import { BlockRenderer } from "./BlockRenderer";
+import { BasketControls } from "./ShoppingPanel";
 import { ChatActions, type ChatActionsValue } from "./ChatActions";
 import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteNav } from "./SiteNav";
 import { PENDING_ASK } from "./TrendsPage";
@@ -78,12 +79,14 @@ function PrefsForm() {
           onChange={(e) => setPrefs({ ...prefs, vegetarian: e.target.checked })} />채식 (고기 상품 표시)</label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.mild}
           onChange={(e) => setPrefs({ ...prefs, mild: e.target.checked })} />맵지 않은 것 (매운 상품 표시)</label>
-        <label className="flex items-center gap-2">가구 인원
+        <label className="flex flex-wrap items-center gap-2">가구 인원
           <select value={prefs.household} onChange={(e) => setPrefs({ ...prefs, household: e.target.value as Prefs["household"] })}
             className="rounded-lg border border-line px-2 py-1">
             {HOUSEHOLD.map((h) => <option key={h.v} value={h.v}>{h.label}</option>)}
           </select>
+          <span className="text-xs text-ink3">저장만 해요 — 추천에는 아직 쓰지 않아요</span>
         </label>
+        <p className="text-xs text-ink3">채식·맵기는 <b>상품명</b>에 든 말로만 표시해요. 상품명에 없으면 표시되지 않으니 판매처 정보를 확인해 주세요.</p>
       </fieldset>
       <fieldset className="space-y-2">
         <legend className="font-semibold">피하고 싶은 재료</legend>
@@ -108,6 +111,7 @@ function PrefsForm() {
         )}
         <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.hideAvoided}
           onChange={(e) => setPrefs({ ...prefs, hideAvoided: e.target.checked })} />표시 대신 목록에서 숨기기</label>
+        <p className="text-xs text-ink3">숨기면 대화 목록 아래에 숨긴 개수가 보이고, 여기서 체크를 끄면 다시 보여요.</p>
         <p className="text-xs text-warn">상품명으로만 찾아 표시해요. 알레르기는 판매처 상품 정보(원재료·알레르기 표시)를 꼭 확인하세요.</p>
       </fieldset>
     </div>
@@ -119,6 +123,7 @@ export function MyShelf() {
   const [loaded, setLoaded] = useState(false);
   const [basket, setBasket] = useBasket();
   const [cleared, setCleared] = useState("");
+  const [busyName, setBusyName] = useState("");
   const load = useCallback(async (signal?: AbortSignal) => {
     try { setView(await fetchShelf(knownSessions(), signal)); } catch { /* 못 읽어도 장보기·설정은 보인다 */ }
     setLoaded(true);
@@ -141,12 +146,31 @@ export function MyShelf() {
   const comparable = [...groups.values()].some((g) => g.length >= 2);
 
   async function forget() {
-    if (!window.confirm("최근 검색·관심 상품·장보기 목록·설정을 모두 지울까요? 되돌릴 수 없어요.")) return;
-    const ok = await forgetShelf(knownSessions());
+    if (!window.confirm("관심 상품, 이 브라우저의 최근 대화 기록(최근 검색 포함), 장보기 목록, 설정을 모두 지울까요? 되돌릴 수 없어요.")) return;
+    let ok = false;
+    try { ok = await forgetShelf(knownSessions()); } catch { ok = false; }
+    if (!ok) {
+      // 서버를 못 지웠으면 아무것도 지우지 않는다 — 세션 값을 남겨 다시 시도할 수 있게
+      setCleared("서버 기록을 지우지 못했어요. 이 기기의 기록도 그대로 두었으니 잠시 후 다시 눌러 주세요.");
+      return;
+    }
     clearLocalShelf();
-    try { window.localStorage.removeItem("ai-food-chat-session"); } catch { /* 없음 */ }
+    resetSavedOwner();
     setView({ saved: [], recent: [] });
-    setCleared(ok ? "기록을 모두 지웠어요." : "이 기기의 장보기·설정은 지웠지만 서버 기록은 지우지 못했어요. 잠시 후 다시 눌러 주세요.");
+    setCleared("기록을 모두 지웠어요. 다른 탭에 열린 대화는 새로고침해 주세요.");
+  }
+
+  // '가지고 있어요' — 그 재료의 레시피 대화에 '충분해요'를 보내고 목록에서 뺀다 (대화 칸과 같은 뜻)
+  async function have(name: string, sessionId?: string | null) {
+    setBusyName(name);
+    try {
+      if (sessionId) await sendChat({ session_id: sessionId, message: `${name} 충분해요` });
+      setBasket((prev) => prev.filter((x) => x.ingredient !== name));
+    } catch {
+      setCleared(`'${name}'를 레시피에 반영하지 못했어요. 목록에서만 빼려면 '목록에서 빼기'를 눌러 주세요.`);
+    } finally {
+      setBusyName("");
+    }
   }
 
   return (
@@ -210,17 +234,18 @@ export function MyShelf() {
           <Section id="shelf-basket" icon={ShoppingBasket} title="장보기 목록" count={basket.length}>
             {basket.length ? (
               <div className="space-y-4">
-                <p className="text-xs leading-relaxed text-ink3">레시피에서 '부족해요'·'없어요'를 누른 재료예요. 도착일은 판매처에서 확인해 주세요.</p>
+                <p className="text-xs leading-relaxed text-ink3">
+                  레시피에서 '부족해요'·'없어요'를 누른 재료예요. '목록에서 빼기'는 이 목록에서만, '가지고 있어요'는 레시피 대화에도 알려요.
+                  도착일은 판매처에서 확인해 주세요.
+                </p>
                 {basket.map((e) => (
                   <div key={e.ingredient} className="rounded-2xl bg-stone-50 p-3">
                     <div className="mb-2 flex items-center gap-2">
                       <span className="text-sm font-bold">{e.ingredient}</span>
                       <span className="tag bg-chip text-ink2">{e.mode === "absent" ? "없음" : "부족"}</span>
-                      <button type="button" aria-label={`${e.ingredient} 장보기 목록에서 빼기`}
-                        onClick={() => setBasket((prev) => prev.filter((x) => x.ingredient !== e.ingredient))}
-                        className="ml-auto inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-xs text-ink2">
-                        <X size={12} aria-hidden />빼기
-                      </button>
+                      <BasketControls name={e.ingredient} busy={busyName === e.ingredient}
+                        onDrop={() => setBasket((prev) => prev.filter((x) => x.ingredient !== e.ingredient))}
+                        onHave={e.sessionId ? () => void have(e.ingredient, e.sessionId) : undefined} />
                     </div>
                     <BlockRenderer blocks={e.blocks} />
                   </div>
@@ -236,9 +261,12 @@ export function MyShelf() {
           <div className="pt-2">
             <button type="button" onClick={() => void forget()}
               className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-700">
-              <Trash2 size={15} aria-hidden />기록 지우기
+              <Trash2 size={15} aria-hidden />보관함·최근 대화 기록 지우기
             </button>
-            <p className="mt-1.5 text-xs text-ink3">최근 검색·관심 상품·장보기 목록·설정을 모두 지워요.</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-ink3">
+              지우는 것: 관심 상품, 이 브라우저의 최근 대화 5개(최근 검색·대화 기록), 장보기 목록, 설정.
+              서비스 운영에 쓰는 검색·클릭 기록(누가 했는지 알 수 없게 바꾼 기록)은 개인정보 처리방침의 보존 기간에 따라 따로 관리돼요.
+            </p>
           </div>
         </main>
         <MobileTabBar current="me" />
