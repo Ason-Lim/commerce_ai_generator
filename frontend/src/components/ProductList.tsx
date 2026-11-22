@@ -186,7 +186,10 @@ export function ProductList({ block }: { block: ProductListBlock }) {
   const hits = new Map(all.map((it) => [it, prefHits(it.title, prefs)]));
   const items = prefs.hideAvoided ? all.filter((it) => !(hits.get(it) ?? []).length) : all;
   const hidden = all.length - items.length;
-  if (!items.length) return hidden ? <p className="my-3 text-xs text-ink3">내 보관함 설정으로 상품 {hidden}개를 숨겼어요.</p> : null;
+  if (!items.length) return hidden ? (
+    <p className="my-3 text-xs text-ink3">내 보관함 설정으로 상품 {hidden}개를 숨겼어요 ·{" "}
+      <a href="/#/me" className="underline underline-offset-2">설정에서 다시 보이게 하기</a></p>
+  ) : null;
   const reference = items.every((c) => c.rankable === false);
   const { title, note, collapsed } = block.data;
   const cards = items.map((it) => <ProductCard key={`${it.key ?? it.rank}-${it.title}`} c={cardToCandidate(it)} prefHit={hits.get(it)} />);
@@ -209,7 +212,10 @@ export function ProductList({ block }: { block: ProductListBlock }) {
       {note && <p className="-mt-2 text-xs text-ink3">{note}</p>}
       {reference && <p className="text-xs font-semibold text-warn">참고용 후보</p>}
       {cards}
-      {hidden > 0 && <p className="text-xs text-ink3">내 보관함 설정으로 상품 {hidden}개를 숨겼어요 (순서는 그대로).</p>}
+      {hidden > 0 && (
+        <p className="text-xs text-ink3">내 보관함 설정으로 상품 {hidden}개를 숨겼어요 (순서는 그대로) ·{" "}
+          <a href="/#/me" className="underline underline-offset-2">설정에서 다시 보이게 하기</a></p>
+      )}
     </section>
   );
 }

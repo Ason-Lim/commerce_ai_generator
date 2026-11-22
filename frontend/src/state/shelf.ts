@@ -78,11 +78,12 @@ export function rememberSession(sid: string | null): void {
 
 export const knownSessions = (): string[] => read<string[]>(KEYS.sessions, []);
 
-/** 장보기·설정·세션 목록을 지운다 (서버 기록은 api forgetShelf 가). */
+/** 장보기·설정·세션 목록·지금 대화 값을 지운다 — **서버 삭제가 성공한 뒤에만** 부른다(실패하면 세션 값을 남겨 다시 시도할 수 있게). */
 export function clearLocalShelf(): void {
   write(KEYS.basket, null);
   write(KEYS.prefs, null);
   write(KEYS.sessions, null);
+  try { window.localStorage.removeItem("ai-food-chat-session"); } catch { /* 없음 */ }
 }
 
 const MEAT = ["소고기", "쇠고기", "한우", "돼지", "삼겹", "목살", "닭", "오리", "양고기", "육포", "햄", "소시지", "베이컨", "차돌", "갈비", "등심", "안심"];
