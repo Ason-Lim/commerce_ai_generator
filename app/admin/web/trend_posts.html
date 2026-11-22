@@ -106,6 +106,9 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   <h3>최근 '나쁨' <small class="note">주간 사람 검수 샘플 — 대화 원문은 저장하지 않아요 (상품어·예산·보여 준 후보 수만)</small></h3>
   <div class="scroll"><table><thead><tr><th>시각</th><th>신호</th><th>이유</th><th>직전 조건</th></tr></thead><tbody id="cf-bad"></tbody></table></div>
   <p class="note" id="cf-op"></p>
+  <h3>쿠팡 빈칸 <small class="note">최근 28일 · 쿠팡 파트너스 검색이 0건이거나 받은 것이 모두 걸러진 검색어 — 쿠팡 사이트에 없다는 뜻은 아니에요</small></h3>
+  <div class="scroll"><table><thead><tr><th>검색어</th><th>0건</th><th>모두 걸러짐</th><th>다시 찾아 나옴</th><th>다시 찾은 말</th><th>마지막</th></tr></thead><tbody id="gap-rows"></tbody></table></div>
+  <p class="note" id="gap-syn"></p>
 </section>
 <section id="detail" hidden>
   <h2 id="x-title"></h2><p class="lede"><span id="x-status" class="pill"></span> <span id="x-id" class="note"></span> · <a id="x-preview" target="_blank" rel="noopener">미리 보기</a> <a id="x-public" target="_blank" rel="noopener"></a></p>
@@ -222,6 +225,14 @@ async function loadCf(){const j=await api("/admin/api/chat-feedback");$("cf-bias
   el("td",{},x.reasons.join(", ")||"—"),el("td",{},[x.summary.query,x.summary.budget,x.summary.shown!=null?"후보 "+x.summary.shown+"개":""].filter(Boolean).join(" · "))));
  const op=j.operator.by_signal.reduce((a,g)=>a+g.n,0);$("cf-op").textContent=op?"운영자 평가 "+op+"건 (고객 집계에서 뺌)":""}
 loadCf().catch(showErr);
+// 2026-11-22 쿠팡 빈칸 (claude/coupang_gap_design_2026-11-22.md) — 바꿔 쓸 말은 data/query_synonyms.csv
+async function loadGaps(){const j=await api("/admin/api/coupang-gaps");const t=$("gap-rows");t.replaceChildren();
+ if(!j.enabled)t.append(el("tr",{},el("td",{colspan:"6",class:"note"},"기록 꺼짐 (.env COUPANG_GAPS=off)")));
+ else if(!j.items.length)t.append(el("tr",{},el("td",{colspan:"6",class:"note"},"아직 없어요")));
+ for(const g of j.items)t.append(el("tr",{},el("td",{},g.query),el("td",{},String(g.zero)),el("td",{},String(g.filtered)),
+  el("td",{},String(g.retry_found)),el("td",{},g.alts.join(", ")||"—"),el("td",{},g.last)));
+ $("gap-syn").textContent="바꿔 쓸 말 "+j.synonyms.length+"개 (data/query_synonyms.csv): "+j.synonyms.slice(0,8).map(x=>x.from+"→"+x.to).join(", ")+(j.synonyms.length>8?" …":"")}
+loadGaps().catch(showErr);
 
 </script>
 </body>

@@ -54,7 +54,7 @@ def titles(res):
 
 def test_retry_queries():
     assert retry_queries("엑스트라버진 올리브유") == ["엑스트라 버진 올리브유", "올리브유"]
-    assert retry_queries("올리브유") == []
+    assert retry_queries("올리브유") == ["올리브오일"]          # 2026-11-22: 바꿔 쓸 말 표 (data/query_synonyms.csv)
     assert retry_queries("참기름") == []
 
 

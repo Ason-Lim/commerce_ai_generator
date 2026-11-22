@@ -130,14 +130,19 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         return got_cards
 
     searched_as = None
+    from app.services.commerce import coupang_gaps
+
     try:
         cards = fetch(query)
         # 2026-11-22: 쿠팡은 '엑스트라버진 올리브유'(붙여 씀)에 0건을 돌려줬다 ('올리브유 엑스트라'·'버진 올리브유'는 나옴).
-        # 0건이면 띄어 쓴 말 → 등급 말을 뺀 품목 이름 순으로 한 번씩만 다시 찾는다 (쿠팡 호출 최대 2번 더).
+        # 0건이면 띄어 쓴 말 → 등급 말을 뺀 품목 이름(또는 바꿔 쓸 말 표) 순으로 한 번씩만 다시 찾는다 (쿠팡 호출 최대 2번 더).
+        if not cards:
+            coupang_gaps.record(query, "zero")
         for alt in ([] if cards else retry_queries(query)):
             cards = fetch(alt)
             if cards:
                 searched_as = alt
+                coupang_gaps.record(query, "retry_found", alt)
                 break
     except Exception as e:  # noqa: BLE001 — 같은 상황에서 웹은 '불러오지 못했어요' 안내
         log.exception("shopping provider failed")
@@ -148,6 +153,7 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
             cards += [dict(explain.enrich(dict(c), {}), _q=query) for c in (extra_cards(query, terms) or [])]
         except Exception:  # noqa: BLE001
             log.exception("extra card source failed")
+    received = len(cards)                       # 2026-11-22: 걸러지기 전 받은 수 ('쿠팡 빈칸' filtered 판정)
     if terms:
         cards = [c for c in cards if relevant(c["title"], terms)]
         # 2026-11-12: Jev 관련성 보조 — 기본 꺼짐(RELEVANCE_ASSIST=off). 실패·지연이면 카드 그대로 (규칙이 기본)
@@ -161,6 +167,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     non_food = sum(1 for c in cards if is_non_food_category(c.get("category")))
     if non_food:
         cards = [c for c in cards if not is_non_food_category(c.get("category"))]
+    if received and not cards and error is None:
+        coupang_gaps.record(query, "filtered")     # 2026-11-22: 받았지만 관련성·비식품·등급으로 모두 빠짐
     fresh_miss = bool(fresh_item and cards and not any(_says_fresh(c["title"], fresh_item) for c in cards))
     # 2026-11-11: 냉동 상품은 고객이 냉동을 찾지 않았으면 따로 보기로 나눈다 (생과와 같은 기준으로 견주지 않음).
     # 냉동이 아닌 후보가 하나도 없으면 나누지 않는다.
@@ -237,12 +245,11 @@ GRADE_UNKNOWN_NOTE = {"text": "상품명에 '엑스트라버진' 표기가 없�
 
 
 def retry_queries(query: str) -> list[str]:
-    """쿠팡이 0건일 때 다시 찾을 말 — ['엑스트라 버진 올리브유', '올리브유'] (등급 말이 없으면 [])."""
-    if not _GRADE.search(query or ""):
-        return []
-    spaced = re.sub(r"엑스트라\s*버진", "엑스트라 버진", query)
-    base = " ".join(_GRADE.sub(" ", query).split())
-    return [q for q in dict.fromkeys([spaced, base]) if q and q != query]
+    """쿠팡이 0건일 때 다시 찾을 말 — 등급 말이면 ['엑스트라 버진 올리브유', '올리브유'], 아니면 바꿔 쓸 말 표
+    (data/query_synonyms.csv, 2026-11-22 일반화 — app/services/commerce/coupang_gaps.py)."""
+    from app.services.commerce import coupang_gaps
+
+    return coupang_gaps.retry_queries(query)
 
 
 def grade_filter(query: str, cards: list[dict]) -> tuple[list[dict], dict | None]:
