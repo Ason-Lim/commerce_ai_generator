@@ -3,6 +3,7 @@ import type { Candidate, ProductListBlock, SponsoredListBlock, WhyBasis, WhyLine
 import { cardToCandidate } from "../api/adapt";
 import { cx } from "../lib/format";
 import { useSaved } from "../state/saved";
+import { prefHits, usePrefs } from "../state/shelf";
 import { useChatActions } from "./ChatActions";
 import { MallCheckNote, SourceMeta, Thumb, TotalPrice, UnverifiedTags, VarietyMixTag, WeightNoteTag } from "./ui";
 
@@ -123,7 +124,7 @@ function uniqueByTitle<T extends { title: string }>(items: T[]): T[] {
 }
 
 /** 세로로 쌓이는 개별 상품 카드 — 썸네일 왼쪽, 정보 오른쪽 */
-function ProductCard({ c, sponsored }: { c: Candidate; sponsored?: boolean }) {
+function ProductCard({ c, sponsored, prefHit }: { c: Candidate; sponsored?: boolean; prefHit?: string[] }) {
   const { openDetail } = useChatActions();
   const { tags, name } = splitTitle(c.title);
   // 미확인 태그는 실제 데이터(c.unverified)에서만, 중복 없이 표시
@@ -158,6 +159,11 @@ function ProductCard({ c, sponsored }: { c: Candidate; sponsored?: boolean }) {
           className="line-clamp-2 block text-left text-base font-bold leading-snug hover:underline">
           {name}
         </button>
+        {prefHit && prefHit.length > 0 && (
+          <p className="rounded-lg bg-warnSoft px-2.5 py-1.5 text-xs text-warn">
+            내 보관함 설정: 상품명에 '{prefHit.join("·")}'가 있어요 — 원재료·알레르기 표시는 판매처에서 꼭 확인하세요
+          </p>
+        )}
         <TotalPrice c={c} size="lg" />
         {!sponsored && (c.why?.length
           ? <WhyList c={c} />
@@ -174,11 +180,16 @@ function ProductCard({ c, sponsored }: { c: Candidate; sponsored?: boolean }) {
 
 /** product_list — 후보가 1~2개이거나, 순위 비교에서 분리된 참고용 목록 */
 export function ProductList({ block }: { block: ProductListBlock }) {
-  const items = uniqueByTitle(block.data.items);
-  if (!items.length) return null;
+  // 2026-11-22 (3-B): 내 보관함 설정(기기 안에만)으로 표시·숨기기 — 순서는 그대로, 서버로 보내지 않음
+  const [prefs] = usePrefs();
+  const all = uniqueByTitle(block.data.items);
+  const hits = new Map(all.map((it) => [it, prefHits(it.title, prefs)]));
+  const items = prefs.hideAvoided ? all.filter((it) => !(hits.get(it) ?? []).length) : all;
+  const hidden = all.length - items.length;
+  if (!items.length) return hidden ? <p className="my-3 text-xs text-ink3">내 보관함 설정으로 상품 {hidden}개를 숨겼어요.</p> : null;
   const reference = items.every((c) => c.rankable === false);
   const { title, note, collapsed } = block.data;
-  const cards = items.map((it) => <ProductCard key={`${it.key ?? it.rank}-${it.title}`} c={cardToCandidate(it)} />);
+  const cards = items.map((it) => <ProductCard key={`${it.key ?? it.rank}-${it.title}`} c={cardToCandidate(it)} prefHit={hits.get(it)} />);
   if (collapsed) {
     return (
       <details className="my-3 rounded-2xl border border-line bg-surface/60 px-4 py-2">
@@ -198,6 +209,7 @@ export function ProductList({ block }: { block: ProductListBlock }) {
       {note && <p className="-mt-2 text-xs text-ink3">{note}</p>}
       {reference && <p className="text-xs font-semibold text-warn">참고용 후보</p>}
       {cards}
+      {hidden > 0 && <p className="text-xs text-ink3">내 보관함 설정으로 상품 {hidden}개를 숨겼어요 (순서는 그대로).</p>}
     </section>
   );
 }

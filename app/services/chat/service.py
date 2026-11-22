@@ -481,6 +481,54 @@ class ChatService:
                                "cards": [_public(c, go=f"/go/{session_id}/k/{c.get('key')}") for c in s.get("cards") or []]})
         return {"saved": [_public(c, go=f"/go/s/{owner}/{c.get('key')}") for c in saved], "recent": recent}
 
+    # ── 2026-11-22 창 3-B '내 보관함' (/#/me) ─────────────────────────────────────
+    SHELF_RECENT = 5
+
+    def shelf_view(self, owner: str | None, sessions: list[str]) -> dict:
+        """관심 상품 + 최근 검색 5개 (이 브라우저가 쓴 대화 세션들에서, 최근 순). 설정은 받지도 돌려주지도 않는다."""
+        saved = self.saved_view(owner, None)["saved"]
+        recent = []
+        for sid in [x for x in dict.fromkeys(sessions or []) if SESSION_RE.fullmatch(x or "")][:5]:
+            state, _rev, _ = self._load(sid)
+            for s in state.get("seen") or []:
+                recent.append({"query": s.get("query"), "at": s.get("at"), "budget": s.get("budget"), "session_id": sid,
+                               "cards": [_public(c, go=f"/go/{sid}/k/{c.get('key')}") for c in s.get("cards") or []]})
+        recent.sort(key=lambda r: r.get("at") or "", reverse=True)
+        seen_q, out = set(), []
+        for r in recent:                       # 같은 검색어는 가장 최근 것 하나만
+            if r["query"] in seen_q:
+                continue
+            seen_q.add(r["query"])
+            out.append(r)
+        return {"saved": saved, "recent": out[:self.SHELF_RECENT]}
+
+    def forget(self, owner: str | None, sessions: list[str]) -> dict:
+        """'기록 지우기' — 관심 상품(서버 보관함)과 이 브라우저 대화 세션의 기록(최근 검색·대화 상태)을 지운다.
+        장보기·설정은 브라우저 안에만 있으므로 화면이 지운다."""
+        if self.db is None:
+            return {"ok": False, "error": "storage"}
+        from app.services.chat.state_store import new_state
+
+        done = {"saved": False, "sessions": 0}
+        try:
+            with self.db.write() as conn:
+                if owner and SESSION_RE.fullmatch(owner):
+                    store = saved_mod.SavedStore(conn, self.db.sql)
+                    _items, rev = store.load(owner)
+                    store.save(owner, [], rev)
+                    done["saved"] = True
+                states = ChatStateStore(conn, self.db.sql)
+                for sid in [x for x in dict.fromkeys(sessions or []) if SESSION_RE.fullmatch(x or "")][:20]:
+                    for key in (sid, "recipe:" + sid):
+                        _st, rev = states.load(key)
+                        if rev:
+                            states.save(key, new_state(), rev)
+                            done["sessions"] += 1
+        except Exception:  # noqa: BLE001
+            log.exception("forget failed")
+            return {"ok": False, "error": "storage", **done}
+        return {"ok": True, **done}
+
     def set_saved(self, owner: str, session_id: str, key: str, on: bool) -> dict:
         """♡ — on=True 면 이 세션에서 보여 준 후보를 보관함에 복사, False 면 뺀다.  처리 후 보관함 전체를 돌려준다."""
         if not (owner and SESSION_RE.fullmatch(owner)) or not re.fullmatch(r"[0-9a-f]{12}", key or ""):

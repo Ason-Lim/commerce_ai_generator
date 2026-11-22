@@ -516,5 +516,5 @@ export interface SavedView {
   ok?: boolean;
   error?: string;
   saved: ApiCard[];
-  recent: { query: string; at: string; budget?: string | null; cards: ApiCard[] }[];
+  recent: { query: string; at: string; budget?: string | null; cards: ApiCard[]; session_id?: string }[];
 }

@@ -19,7 +19,7 @@ export function Thumb({ c, size = "md" }: { c: Pick<Candidate, "image" | "title"
 /** 2026-11-13: 배송비 상태별 한 줄 — 무료 '표시'·적힌 금액은 조건부라 총액으로 합치지 않는다 */
 export function shippingLine(c: Candidate) {
   switch (c.shippingStatus) {
-    case "confirmed": return <>상품가 {won(c.price)} + 배송비 {c.shippingFee ? won(c.shippingFee) : "0원"} (주문 단계 계산)</>;
+    case "confirmed": return <>상품가 {won(c.price)} + 배송비 {c.shippingFee ? won(c.shippingFee) : "0원"} (판매처 결제 단계에서 계산)</>;
     case "free_label": return <>{c.rocket ? "로켓배송 · " : ""}무료배송 <span className="text-ink3">(판매처 표시)</span></>;
     case "fee_label": return <>{c.rocket ? "로켓배송 · " : ""}상품가 {won(c.price)} + 배송비 {won(c.shippingFee ?? 0)} <span className="text-ink3">(판매처 표시)</span></>;
     case "unknown": return <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>;

@@ -1,5 +1,4 @@
 import { ShoppingBasket, X } from "lucide-react";
-import type { Block } from "../types/blocks";
 import { BlockRenderer } from "./BlockRenderer";
 
 /**
@@ -7,11 +6,8 @@ import { BlockRenderer } from "./BlockRenderer";
  * 누를 때마다 새 메시지를 쌓지 않고 이 칸 하나에 재료별로 모은다. 다시 누르거나 '빼기'를 누르면 빠진다.
  * 상품은 재료마다 3개(+ 접힌 더 보기), 필요량 맞음 → 작은 포장 순. 도착일은 약속하지 않는다(판매처 표시만).
  */
-export interface PanelEntry {
-  ingredient: string;
-  mode: "short" | "absent";
-  blocks: Block[];
-}
+export type { BasketEntry as PanelEntry } from "../state/shelf";
+import type { BasketEntry as PanelEntry } from "../state/shelf";
 
 export function ShoppingPanel({ entries, onRemove, busy }: {
   entries: PanelEntry[];
@@ -24,6 +20,7 @@ export function ShoppingPanel({ entries, onRemove, busy }: {
       <h3 className="flex items-center gap-2 text-base font-bold">
         <ShoppingBasket size={18} aria-hidden />부족한 재료 장보기
         <span className="text-sm font-semibold text-warn">{entries.length}</span>
+        <a href="/#/me" className="ml-auto text-xs font-semibold text-ink2 underline underline-offset-2">내 보관함에서 보기</a>
       </h3>
       <p className="mt-1 text-xs leading-relaxed text-ink3">
         레시피 분량에 맞는 작은 포장부터 재료마다 3개씩 보여 드려요. 로켓배송·로켓프레시는 판매처 표시이고, 도착일은 판매처에서 확인해 주세요.

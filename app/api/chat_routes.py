@@ -204,6 +204,24 @@ def saved_set(body: SavedIn, service: ChatService = Depends(get_chat_service)):
     return service.set_saved(body.owner, body.session_id, body.key, body.on)
 
 
+class ShelfIn(BaseModel):
+    """2026-11-22 '내 보관함' 기록 지우기 — 보관함 주인 값과 이 브라우저의 대화 세션만 (설정 값은 받지 않음)."""
+    model_config = ConfigDict(extra="forbid")
+    owner: str | None = Field(None, max_length=64)
+    sessions: list[str] = Field(default_factory=list, max_length=20)
+
+
+@router.get("/api/me")
+def shelf_view(owner: str | None = Query(None, max_length=64), sessions: str = Query("", max_length=800),
+               service: ChatService = Depends(get_chat_service)):
+    return service.shelf_view(owner, [s for s in sessions.split(",") if s][:5])
+
+
+@router.post("/api/me/forget")
+def shelf_forget(body: ShelfIn, service: ChatService = Depends(get_chat_service)):
+    return service.forget(body.owner, body.sessions)
+
+
 class AnswerSignalIn(BaseModel):
     """2026-11-21 대화 답 피드백 — 화면이 판매처 이동·♡ 저장 뒤 보낸다 (그 밖의 키 거부)."""
     model_config = ConfigDict(extra="forbid")
