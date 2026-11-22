@@ -30,7 +30,12 @@ def main(argv=None) -> int:
     ap.add_argument("--min-seen", type=int, default=1, help="gold 가 아닌 예시는 이 횟수 이상 본 것만")
     ap.add_argument("--out", default=str(ROOT / "var" / "dataset" / "export"))
     args = ap.parse_args(argv)
-    from dotenv import load_dotenv
+    from app.services.ai import dataset
+
+    # 2026-11-22: 학습 안 함 결정 — 내보내기 막음 (학습 칸 0건 유지)
+    print(f"내보내기 사용 안 함 — 고객 문장으로 학습하지 않기로 함({dataset.TRAINING_OFF_SINCE}).", file=sys.stderr)
+    return 2
+    from dotenv import load_dotenv  # noqa: E402 — 아래는 다시 켤 때를 위해 남겨 둠
 
     load_dotenv(ROOT / ".env")
     from app.services.ai.dataset import DatasetStore

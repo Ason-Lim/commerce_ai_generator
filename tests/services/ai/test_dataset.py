@@ -134,7 +134,7 @@ def test_similar_sentences_share_a_split_and_test_is_gold_only(store):
 
 
 def test_pii_seen_turn_is_not_captured(tmp_path, monkeypatch):
-    monkeypatch.setenv("DATASET_CAPTURE", "1")
+    monkeypatch.setattr(ds, "enabled", lambda: True)     # 2026-11-22 학습 안 함 — 코드 경로 자체만 시험
     monkeypatch.setenv("DATASET_DB", str(tmp_path / "p.sqlite3"))
     token = ds.PII_SEEN.set(True)
     try:
@@ -178,7 +178,7 @@ def test_purge(store, monkeypatch):
 def test_llm_client_captures_on_customer_fast_tasks(tmp_path, monkeypatch):
     from app.services.nlu.llm_client import LLMClient
 
-    monkeypatch.setenv("DATASET_CAPTURE", "1")
+    monkeypatch.setattr(ds, "enabled", lambda: True)     # 2026-11-22 학습 안 함 — 코드 경로 자체만 시험
     monkeypatch.setenv("DATASET_DB", str(tmp_path / "live.sqlite3"))
     env = {"OPENAI_API_KEY": "o", "CUSTOMER_LLM_PROVIDER": "openai", "DEEPSEEK_API_KEY": "d", "DEEPSEEK_MODEL": "m"}
 
@@ -202,3 +202,54 @@ def test_capture_off_by_env(tmp_path, monkeypatch):
     monkeypatch.setenv("DATASET_DB", str(tmp_path / "off.sqlite3"))
     ds.capture("shop_keyword", "사과", {"keyword": "사과"}, "openai:m", SYSTEM)
     assert not (tmp_path / "off.sqlite3").exists()
+
+
+# ── 2026-11-22 22:10 사용자 결정: 학습 안 함 (3-D ①) ─────────────────────────────
+def test_setting_on_still_captures_nothing(tmp_path, monkeypatch, caplog):
+    """설정을 켜도 담지 않는다 (경고만)."""
+    monkeypatch.setenv("DATASET_CAPTURE", "1")
+    monkeypatch.setenv("DATASET_DB", str(tmp_path / "on.sqlite3"))
+    monkeypatch.setattr(ds, "_WARNED", False)
+    with caplog.at_level("WARNING"):
+        assert ds.enabled() is False and ds.requested() is True
+        ds.capture("shop_keyword", "사과 추천", {"keyword": "사과"}, "openai:m", SYSTEM)
+        ds.note_query("사과", ["상품"])
+    assert not (tmp_path / "on.sqlite3").exists()
+    assert any("무시" in r.getMessage() for r in caplog.records)
+
+
+def test_llm_client_captures_nothing_even_when_setting_on(tmp_path, monkeypatch):
+    from app.services.nlu.llm_client import LLMClient
+
+    monkeypatch.setenv("DATASET_CAPTURE", "1")
+    monkeypatch.setenv("DATASET_DB", str(tmp_path / "live2.sqlite3"))
+    env = {"OPENAI_API_KEY": "o", "CUSTOMER_LLM_PROVIDER": "openai", "DEEPSEEK_API_KEY": "d", "DEEPSEEK_MODEL": "m"}
+
+    def factory(**kw):
+        def create(**req):
+            msg = SimpleNamespace(content='{"keyword": "사과"}')
+            return SimpleNamespace(choices=[SimpleNamespace(message=msg)], usage=None, model=req["model"])
+        return SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+
+    LLMClient(SYSTEM, provider="deepseek", env=env, task="shop_keyword", openai_factory=factory).chat_json("사과 추천해줘")
+    assert not (tmp_path / "live2.sqlite3").exists()
+
+
+def test_export_script_refuses(tmp_path):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(
+        "export_dataset_off", Path(__file__).resolve().parents[3] / "scripts" / "export_dataset.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    assert m.main(["--task", "shop_keyword", "--out", str(tmp_path / "x")]) == 2
+    assert not (tmp_path / "x").exists()
+
+
+def test_admin_shows_off(tmp_path, monkeypatch):
+    monkeypatch.setenv("DATASET_DB", str(tmp_path / "admin.sqlite3"))
+    from app.admin.routes import ai_dataset
+
+    got = ai_dataset(None)
+    assert got["status"] == "off" and got["off_since"] == ds.TRAINING_OFF_SINCE and got["queue"] == []

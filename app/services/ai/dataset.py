@@ -16,7 +16,8 @@
 * 세션 값은 '임시 칸'(staging)에만, 클릭 신호를 붙이는 데 쓰고 **90일 뒤 지운다**(대화 문장과 같은 기간).
   학습 칸(examples)에는 세션 값·시각 없이 문장·정답·출처·날짜(일)·횟수만 — 가명정보로 기술 개발에 쓰는 형태.
 * 학습 칸 보관: 마지막으로 본 날부터 DATASET_KEEP_DAYS(기본 730일) — 사용자 결정 전 기본값, 처리방침에 적을 값.
-* **기본 꺼짐** (2026-11-22 검토 의견: 목적·보유 기간·출력 이용 조건을 정한 뒤 DATASET_CAPTURE=1 로 켠다).
+* **사용 안 함** (2026-11-22 22:10 사용자 결정 — 학습하지 않음). enabled() 는 설정과 상관없이 False, 내보내기도 막음.
+* (이전) **기본 꺼짐** (2026-11-22 검토 의견: 목적·보유 기간·출력 이용 조건을 정한 뒤 DATASET_CAPTURE=1 로 켠다).
   저장소: DATASET_DB (기본 var/dataset/dataset.sqlite3, git 에 넣지 않음). 내보낸 파일은 var/dataset/export 에
   DATASET_EXPORT_KEEP_DAYS(기본 30일)만 두고 매일 지운다 — 학습 산출물(어댑터·GGUF)은 manifest 를 보고 함께 관리.
 
@@ -83,9 +84,28 @@ def _env(name: str, default: str = "") -> str:
     return (os.environ.get(name) or default).strip()
 
 
-def enabled() -> bool:
-    """기본 꺼짐 (2026-11-22) — DATASET_CAPTURE=1 일 때만 담는다."""
+# 2026-11-22 22:10 사용자 결정: 고객 문장으로 모델을 학습하지 않는다 (claude/improve_without_training_proposal §1).
+# 설정을 켜도 담지 않는다 — 코드는 남겨 두되(나중에 다시 검토), 다시 켜려면 이 상수를 바꾸는 PR 과
+# '기록 지우기'의 학습 칸 삭제 보완이 먼저다.
+TRAINING_OFF_SINCE = "2026-11-22"
+_WARNED = False
+
+
+def requested() -> bool:
+    """설정(DATASET_CAPTURE)이 켜져 있는가 — 관리자 표시·경고용. 실제로 담는지는 enabled()."""
     return _env("DATASET_CAPTURE", "0") in ("1", "on", "true")
+
+
+def enabled() -> bool:
+    """항상 False (2026-11-22 학습 안 함 결정). 설정이 켜져 있으면 한 번 경고만 남긴다."""
+    global _WARNED
+    if requested() and not _WARNED:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "DATASET_CAPTURE 가 켜져 있지만 무시합니다 — 학습 안 함 결정(%s)", TRAINING_OFF_SINCE)
+        _WARNED = True
+    return False
 
 
 def tasks() -> frozenset[str]:
