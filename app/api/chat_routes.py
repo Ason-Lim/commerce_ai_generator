@@ -7,6 +7,7 @@
     GET  /go/{sid}/{rank}    click log + redirect to a product shown in that session
     GET  /go/{sid}/k/{key}   same, by the card's key (cards of earlier questions keep their own product)
     GET  /go/s/{owner}/{key} same, for a product in the 관심 상품 보관함
+    GET  /go/q/{sid}/{lid}   쿠팡 검색 결과 링크 (2026-11-22, 상품 아님 — selected_section=search_link)
     GET  /api/chat/saved     ?owner=&session_id= → 관심 상품 + 최근 본 상품
     POST /api/chat/saved     {owner, session_id, key, on} → ♡ 담기/빼기 (서버가 보여 준 후보에서만 복사)
 
@@ -311,6 +312,18 @@ def click(body: ClickIn, request: Request, service: ChatService = Depends(get_ch
         except Exception:  # noqa: BLE001 — 기록 실패가 화면에 영향을 주지 않는다
             log.warning("direct click log failed")
     return Response(status_code=204)
+
+
+@router.get("/go/q/{sid}/{lid}")
+def go_search_link(sid: str, lid: int, request: Request):
+    """2026-11-22 쿠팡 검색 결과 링크 (대화 '쿠팡에서 직접 찾아보기') — 클릭 기록 후 파트너스 링크로."""
+    from app.services.commerce import coupang_gaps
+
+    link = coupang_gaps.GapStore().link_by_id(lid)
+    if not link:
+        return RedirectResponse("/")
+    return _redirect(sid, link["url"], section="search_link", request=request,
+                     shown={"url": link["url"], "title": f"쿠팡 검색: {link['query']}", "mall": "쿠팡"})
 
 
 @router.get("/go/{sid}/k/{key}")

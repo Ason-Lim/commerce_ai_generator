@@ -9,6 +9,11 @@
   일별 집계로 남긴다 (세션 값·손님 문장 없음, 긴 문장·개인정보 형식은 privacy.retention.agg_text 로 묶음).
   관리자 '트렌드 글·피드백' 화면 '쿠팡 빈칸' 표 → 운영자가 바꿔 쓸 말 추가 / 트렌드 글 주제 / 셀러 입점 후보로 판단.
 끄기: COUPANG_GAPS=off. 저장: COUPANG_GAPS_DB (기본 var/commerce/coupang_gaps.sqlite3, git 제외).
+
+2단계(2026-11-22 오후)
+* 쿠팡 검색 결과 링크: 0건이거나 쓸 상품이 없을 때(다시 찾아 나온 경우도) 대화에 '쿠팡에서 직접 찾아보기' — 쿠팡 검색
+  결과 화면으로 가는 파트너스 딥링크 하나(상품·가격 없이, 쿠팡 순서). 링크는 검색어별로 LINK_KEEP_DAYS(30일) 저장해
+  다시 쓴다(딥링크 API 호출 최소화). 클릭은 /go/q/{세션}/{번호} 로 기록. 끄기: COUPANG_SEARCH_LINK=off.
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ ROOT = Path(__file__).resolve().parents[3]
 SYNONYMS = ROOT / "data" / "query_synonyms.csv"
 KST = timezone(timedelta(hours=9))
 MAX_RETRY = 2
+LINK_KEEP_DAYS = 30
 OUTCOMES = ("zero", "filtered", "retry_found")
 
 _GRADE = re.compile(r"엑스트라\s*버진|extra\s*virgin|\bEVOO\b", re.IGNORECASE)
@@ -90,6 +96,35 @@ class GapStore:
         )
         return con
 
+    def link(self, query: str, make) -> dict | None:
+        """{'id', 'query', 'url'} — 저장된 링크가 30일 안이면 그대로, 아니면 make(query) 로 만들어 저장."""
+        q = " ".join((query or "").split())[:60]
+        if not q:
+            return None
+        now = self.clock()
+        with self._db() as con:
+            con.execute("CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY, query TEXT UNIQUE, url TEXT,"
+                        " made_at TEXT)")
+            row = con.execute("SELECT id, url, made_at FROM links WHERE query=?", (q,)).fetchone()
+        if row and row["url"] and datetime.fromisoformat(row["made_at"]) > now - timedelta(days=LINK_KEEP_DAYS):
+            return {"id": row["id"], "query": q, "url": row["url"]}
+        url = make(q)
+        if not url:
+            return None
+        with _lock, self._db() as con:
+            con.execute("INSERT INTO links (query, url, made_at) VALUES (?,?,?) ON CONFLICT (query) DO UPDATE SET"
+                        " url=excluded.url, made_at=excluded.made_at", (q, url, now.isoformat()))
+            lid = con.execute("SELECT id FROM links WHERE query=?", (q,)).fetchone()["id"]
+        return {"id": lid, "query": q, "url": url}
+
+    def link_by_id(self, lid: int) -> dict | None:
+        try:
+            with self._db() as con:
+                row = con.execute("SELECT id, query, url FROM links WHERE id=?", (int(lid),)).fetchone()
+        except sqlite3.OperationalError:
+            return None
+        return dict(row) if row else None
+
     def record(self, query: str, outcome: str, alt: str | None = None) -> None:
         if outcome not in OUTCOMES:
             raise ValueError(outcome)
@@ -139,3 +174,22 @@ def record(query: str, outcome: str, alt: str | None = None) -> None:
         import logging
 
         logging.getLogger(__name__).warning("coupang gap record failed", exc_info=True)
+
+
+def search_link_on() -> bool:
+    return (os.environ.get("COUPANG_SEARCH_LINK") or "on").strip().lower() not in ("off", "0", "false")
+
+
+def search_link(query: str) -> dict | None:
+    """대화용 쿠팡 검색 결과 링크 {'id','query','url'} — 꺼져 있거나 만들 수 없으면 None."""
+    if not search_link_on():
+        return None
+    try:
+        from app.services.coupang_api import search_deeplink
+
+        return GapStore().link(query, search_deeplink)
+    except Exception:  # noqa: BLE001
+        import logging
+
+        logging.getLogger(__name__).warning("coupang search link failed", exc_info=True)
+        return None
