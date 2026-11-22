@@ -380,6 +380,7 @@ def grade_filter(query: str, cards: list[dict]) -> tuple[list[dict], dict | None
 
 def search_note(query: str, searched_as: str | None, grade: dict | None) -> str | None:
     """다시 찾았거나 등급으로 거른 경우 고객에게 한 줄."""
+    from app.services.commerce import coupang_gaps
     parts = []
     bare = bool(_GRADE.search(query or "")) and not _GRADE.sub(" ", query or "").strip()
     if searched_as and bare:
@@ -388,6 +389,9 @@ def search_note(query: str, searched_as: str | None, grade: dict | None) -> str 
     elif searched_as and re.search(r"\d\s*(?:ml|L)$", searched_as) and not re.search(r"\d\s*(?:ml|L)", query or ""):
         parts.append(f"쿠팡이 '{query}'로는 맞는 상품을 주지 않아 용량을 붙인 '{searched_as}'로 다시 찾았어요 "
                      "(용량은 상품마다 달라요)")
+    elif searched_as and (pair := coupang_gaps.similar_pair(query, searched_as)):
+        parts.append(f"쿠팡에서 '{pair[0]}'로는 상품이 나오지 않아 비슷한 말 **'{pair[1]}'**(으)로 보고 찾았어요 "
+                     "— 찾으시던 상품이 맞는지 확인해 주세요")
     elif searched_as:
         parts.append(f"쿠팡이 '{query}'로는 맞는 상품을 주지 않아 '{searched_as}'로 다시 찾았어요")
     if grade and grade["stated"]:
