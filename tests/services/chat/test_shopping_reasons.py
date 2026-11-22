@@ -72,9 +72,10 @@ def test_picks_have_roles_and_grounded_reasons(sqlite_db):
     assert not any("1++" in w["text"] for c in main for w in c["why"])
     # 평점·후기를 지어내지 않는다
     assert not any(c.get("badges") for c in main)
-    assert "평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요" in md(res)
-    # 나머지 후보는 접어서
-    assert lists(res)[1]["data"]["collapsed"] is True
+    assert "평점·후기·도착일은 판매처 페이지에서 확인해 주세요" in md(res)
+    # 나머지 후보 — 2026-11-22: 3개 이하면 펼쳐 둔다 (많으면 접음: test_more_on_few_2026_11_22)
+    others = lists(res)[1]["data"]
+    assert others.get("collapsed") is (True if len(others["items"]) > 3 else None)
 
 
 def test_gift_role_only_when_the_customer_asks_for_a_gift(sqlite_db):

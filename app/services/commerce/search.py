@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import math
 import uuid
@@ -190,6 +191,37 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         frozen_list = [dict(c, frozen=True) for c in cards if explain.is_frozen(c["title"])]
         cards = [c for c in cards if not explain.is_frozen(c["title"])]
 
+    # 2026-11-22 (쿠팡 빈칸 3단계 앞당김): 견줄 후보가 적으면 바꿔 쓸 말로 더 찾아 **따로** 붙인다.
+    # 위 후보·순서는 그대로(순위 동결) — 더 찾은 상품은 '추천순 아님' 칸에, 같은 관련성·등급·식품 거르기를 지난 것만.
+    more_list: list[dict] = []
+    more_as: list[str] = []
+    if error is None and cards and len(cards) <= FEW_RESULTS and more_on_few_on():
+        seen = {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list}
+        for alt in [a for a in retry_queries(searched_as or query) if a not in (query, searched_as)][:MORE_CALLS]:
+            try:
+                got_more = fetch(alt)
+            except Exception:  # noqa: BLE001 — 더 찾기는 덤: 실패하면 위 후보만
+                log.warning("more-on-few search failed: %s", alt)
+                break
+            keep = list(terms or []) + [alt] + ([searched_as] if searched_as else [])
+            got_more = [c for c in got_more if (not terms or relevant(c["title"], keep))
+                        and not is_non_food_category(c.get("category"))
+                        and (explain.wants_frozen(text) or not explain.is_frozen(c["title"]))]
+            got_more, _ = grade_filter(query, got_more)
+            added = 0
+            for c in got_more:
+                k = _title_key(c["title"])
+                if c["key"] in seen or k in seen:
+                    continue
+                seen |= {c["key"], k}
+                more_list.append(dict(c, more_as=alt))
+                added += 1
+            if added:
+                more_as.append(alt)
+            if len(more_list) >= MORE_MAX:
+                break
+        more_list = more_list[:MORE_MAX]
+
     partner_terms = terms or _content_tokens(label)
     partner_cards = [ChatService._partner_card(it, query) for it in
                      (partner_feed.offers(lambda t: partner_match(t, partner_terms), preview=allow_preview)
@@ -224,17 +256,43 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         frozen_list = [dict(c, rank=start + n, why=[{"text": FROZEN_NOTE, "basis": "calc"}])
                        for n, c in enumerate(frozen_list, 1)]
         start = max([start] + [c["rank"] for c in frozen_list])
+        more_list = [dict(c, rank=start + n, why=[{"text": more_note(c["more_as"]), "basis": "calc"}])
+                     for n, c in enumerate(more_list, 1)]
+        start = max([start] + [c["rank"] for c in more_list])
         connect = [dict(c, rank=start + n) for n, c in enumerate(connect, 1)]
     else:
         partner_list = []                       # 웹도 쿠팡 결과가 없으면 업체 목록을 보여 주지 않는다
         frozen_list = []
+        more_list, more_as = [], []
         connect = [dict(c, rank=n) for n, c in enumerate(connect, 1)]
     return dict(query=query, label=label, terms=terms, priority=priority, budget=budget, picked=picked,
-                partner_list=partner_list, frozen_list=frozen_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
+                partner_list=partner_list, frozen_list=frozen_list, more_list=more_list, more_as=more_as,
+                connect=connect, raw=raw, error=error, preview=preview, found=found,
                 recommendation_path=recommendation_path, non_food=non_food,
                 fresh_miss=fresh_note(fresh_item) if fresh_miss else None,
                 search_note=search_note(query, searched_as, grade_info) if picked else None,
                 searched_as=searched_as)
+
+
+# ── 2026-11-22 후보가 적을 때 더 보여 주기 ─────────────────
+CHECK_AT_MALL = "평점·후기·도착일은 판매처 페이지에서 확인해 주세요."
+FEW_RESULTS = 4      # 견줄 후보가 이만큼 이하면 바꿔 쓸 말로 더 찾는다 (고른 상품이 최대 4개라 이때는 '다른 후보'가 없음)
+FEW_OTHERS = 3       # '다른 후보'가 이만큼 이하면 접지 않고 펼친다
+MORE_CALLS = 2       # 더 찾기 쿠팡 호출 상한
+MORE_MAX = 6         # 더 찾은 상품 칸 상한
+
+
+def more_on_few_on() -> bool:
+    """끄기: COUPANG_MORE_ON_FEW=off."""
+    return (os.environ.get("COUPANG_MORE_ON_FEW") or "on").strip().lower() not in ("off", "0", "false")
+
+
+def _title_key(title: str) -> str:
+    return re.sub(r"[\s\W_]+", "", (title or "").lower())
+
+
+def more_note(alt: str) -> str:
+    return f"'{alt}'(으)로 더 찾은 상품 — 위 후보와 같은 기준으로 견주지 않았어요"
 
 
 # ── 2026-11-21 대화 확인(올리브·올리브유·엑스트라 버전)에서 나온 고침 ─────────────────
@@ -531,7 +589,8 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
     items += [to_item(c, "frozen_list") for c in got["frozen_list"]]
     items += [to_item(c, "connect") for c in got["connect"]]
 
-    warnings = ["평점·후기·도착일은 쿠팡·네이버 검색 API가 제공하지 않아요. 판매처 페이지에서 확인해 주세요."]
+    items += [to_item(c, "more_list") for c in got.get("more_list") or []]
+    warnings = [CHECK_AT_MALL]
     from app.services.chat.explain import amount_miss_note
 
     if got.get("fresh_miss"):                                               # 2026-11-21: '생 올리브'
