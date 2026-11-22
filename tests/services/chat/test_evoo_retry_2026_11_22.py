@@ -53,7 +53,7 @@ def titles(res):
 
 
 def test_retry_queries():
-    assert retry_queries("엑스트라버진 올리브유") == ["엑스트라 버진 올리브유", "올리브유"]
+    assert retry_queries("엑스트라버진 올리브유") == ["엑스트라버진 올리브유 500ml", "엑스트라버진 올리브유 1L", "올리브유"]
     assert retry_queries("올리브유") == ["올리브오일"]          # 2026-11-22: 바꿔 쓸 말 표 (data/query_synonyms.csv)
     assert retry_queries("참기름") == []
 
@@ -84,7 +84,7 @@ def test_chat_retries_when_coupang_returns_nothing(sqlite_db):
     shop = ByQuery({"올리브유": BASE})
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="엑스트라 버진 올리브유")
-    assert shop.calls == ["엑스트라버진 올리브유", "엑스트라 버진 올리브유", "올리브유"]
+    assert shop.calls == ["엑스트라버진 올리브유", "엑스트라버진 올리브유 500ml", "엑스트라버진 올리브유 1L", "올리브유"]
     got = titles(res)
     assert BASE[2]["product_name"] in got and BASE[3]["product_name"] in got
     assert not any("포마스" in t for t in got) and "해표 압착 올리브유" not in got
@@ -114,7 +114,7 @@ def test_still_empty_after_retries(sqlite_db):
     shop = ByQuery({})
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="엑스트라버진 올리브유")
-    assert len(shop.calls) == 3
+    assert len(shop.calls) == 4
     assert "찾지 못했어요" in md(res)
 
 
@@ -127,10 +127,11 @@ JUNK = [dict(_cp(t, 9000 + i, 50 + i), category_name=c) for i, (c, t) in enumera
 
 
 def test_unrelated_results_also_trigger_retry(sqlite_db):
-    shop = ByQuery({"엑스트라버진 올리브유": JUNK, "엑스트라 버진 올리브유": JUNK, "올리브유": BASE})
+    shop = ByQuery({"엑스트라버진 올리브유": JUNK, "엑스트라버진 올리브유 500ml": JUNK, "엑스트라버진 올리브유 1L": JUNK,
+                    "올리브유": BASE})
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="엑스트라 버진 올리브유")
-    assert shop.calls == ["엑스트라버진 올리브유", "엑스트라 버진 올리브유", "올리브유"]
+    assert shop.calls == ["엑스트라버진 올리브유", "엑스트라버진 올리브유 500ml", "엑스트라버진 올리브유 1L", "올리브유"]
     got = titles(res)
     assert BASE[2]["product_name"] in got and not any("건전지" in t or "아쿠아리움" in t for t in got)
     assert "'올리브유'로 다시 찾았어요" in md(res)
@@ -178,11 +179,24 @@ def test_link_store_and_go_route(tmp_path, monkeypatch):
 
 def test_bare_grade_word_in_new_chat_searches_olive_oil(sqlite_db):
     """2026-11-22 15:31 PDF: 새 대화 '엑스트라 버진'만 → 품목 이름이 없어 '찾지 못했어요'였다."""
-    assert retry_queries("엑스트라버진") == ["엑스트라 버진 올리브유", "올리브유"]
+    assert retry_queries("엑스트라버진") == ["엑스트라버진 올리브유 500ml", "엑스트라버진 올리브유 1L", "올리브유"]
     shop = ByQuery({"엑스트라버진": JUNK, "올리브유": BASE})
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="엑스트라 버진")
-    assert shop.calls == ["엑스트라버진", "엑스트라 버진 올리브유", "올리브유"]
+    assert shop.calls == ["엑스트라버진", "엑스트라버진 올리브유 500ml", "엑스트라버진 올리브유 1L", "올리브유"]
     assert BASE[2]["product_name"] in titles(res)
     # 2026-11-22 외부 검토 2: 어떻게 해석했는지 밝힌다
     assert "'엑스트라버진'만 말씀하셔서 **엑스트라버진 올리브유**를 찾는 것으로 보고 '올리브유'로 찾았어요" in md(res)
+
+
+def test_size_variant_finds_labelled_evoo(sqlite_db):
+    """2026-11-22 17:2x 운영 확인: '엑스트라버진 올리브유'·'올리브오일' 은 해표 압착만, '…500ml' 은 오뚜기 엑스트라버진."""
+    evoo = _cp("오뚜기 엑스트라버진 올리브유", 10950, 70)
+    shop = ByQuery({"엑스트라버진 올리브유": JUNK, "엑스트라버진 올리브유 500ml": [evoo, BASE[0]], "올리브유": [BASE[0]]})
+    svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
+    res = svc.handle(None, message="엑스트라버진 올리브유")
+    assert shop.calls[:2] == ["엑스트라버진 올리브유", "엑스트라버진 올리브유 500ml"]
+    lists_ = [b["data"] for b in res["blocks"] if b["type"] == "product_list"]
+    assert [c["title"] for c in lists_[0]["items"]] == ["오뚜기 엑스트라버진 올리브유"]
+    assert any((d.get("title") or "").startswith("등급 확인 필요") for d in lists_)
+    assert "용량을 붙인 '엑스트라버진 올리브유 500ml'로 다시 찾았어요" in md(res)

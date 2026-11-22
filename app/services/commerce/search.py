@@ -385,6 +385,9 @@ def search_note(query: str, searched_as: str | None, grade: dict | None) -> str 
     if searched_as and bare:
         # 2026-11-22 외부 검토 2: 품목 없이 등급 말만 — 어떻게 해석했는지 밝힌다
         parts.append(f"'{query}'만 말씀하셔서 **엑스트라버진 올리브유**를 찾는 것으로 보고 '{searched_as}'로 찾았어요")
+    elif searched_as and re.search(r"\d\s*(?:ml|L)$", searched_as) and not re.search(r"\d\s*(?:ml|L)", query or ""):
+        parts.append(f"쿠팡이 '{query}'로는 맞는 상품을 주지 않아 용량을 붙인 '{searched_as}'로 다시 찾았어요 "
+                     "(용량은 상품마다 달라요)")
     elif searched_as:
         parts.append(f"쿠팡이 '{query}'로는 맞는 상품을 주지 않아 '{searched_as}'로 다시 찾았어요")
     if grade and grade["stated"]:

@@ -21,7 +21,31 @@ def _base(name):  # Mac: ~/name, 원격 점검 환경: ~/mnt/name
             return p
     return HOME / name
 
-NAVER_DIR = Path(os.environ.get("NAVER_DAILY_DIR", _base("food_recommend") / "daily_food_data"))
+def _env_file(key):
+    """launchd 는 .env 를 읽지 않으므로 저장소 .env 에서 이 키만 읽는다 (표준 라이브러리만)."""
+    try:
+        for line in (Path(__file__).resolve().parents[1] / ".env").read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith(key + "="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return ""
+
+
+def _rank_dir():
+    """(폴더, 종류). 2026-11-22: 홈 예시가 며칠째 그대로(수능 끝난 뒤에도 '수능선물추천')였다 — 예전 폴더 daily_food_data 는
+    2026-07-09 부터 '최근 30일 묶음' 순위라 하루하루 거의 안 움직인다. 하루 단위 폴더(NAVER_DAILY_RANK_DIR,
+    기본 ~/food_recommend/daily_food_rank)를 먼저 쓴다 (app/services/trends/period.py 와 같은 순서)."""
+    daily = os.environ.get("NAVER_DAILY_RANK_DIR") or _env_file("NAVER_DAILY_RANK_DIR")
+    for cand in ([Path(daily).expanduser()] if daily else []) + [_base("food_recommend") / "daily_food_rank"]:
+        files = sorted(glob.glob(str(cand / "food_????-??-??.csv")))
+        # 하루 단위 폴더가 최근에 채워지고 있을 때만 (백필만 하고 매일 수집이 멈췄으면 예전 폴더로)
+        if files and (date.today() - date.fromisoformat(Path(files[-1]).stem[5:])).days <= 3:
+            return cand, "daily"
+    return Path(os.environ.get("NAVER_DAILY_DIR", _base("food_recommend") / "daily_food_data")), "mixed"
+
+
+NAVER_DIR, NAVER_KIND = _rank_dir()
 GOOGLE_DIR = Path(os.environ.get("GOOGLE_DATA_DIR", _base("food-trend-automation") / "data/google_food_data"))
 REPO = Path(__file__).resolve().parents[1]          # commerce_ai_generator
 OUT_DIR = Path(os.environ.get("TREND_EXAMPLES_DIR") or REPO / "frontend" / "src" / "data")
@@ -32,6 +56,9 @@ ICONS = {"선물용": "Gift", "간식/디저트": "Cookie", "제철요리": "Ute
 
 MAX_RANK = 200      # 현재 순위가 이보다 낮으면 후보 제외
 LOOKBACK = 14       # 비교 기준: 약 2주 전
+FALL_LIMIT = 10     # 최근 3일 중앙값이 바로 앞 4일보다 이만큼 넘게 나빠졌으면 '내려가는 중' (예: 끝난 행사)
+REPEAT_DAYS = 3     # 최근 이만큼 날의 예시에 나온 키워드는 다른 후보가 있으면 쉬게 한다
+STALE_DAYS = 2      # 순위 데이터가 이보다 오래되면 경고
 
 # 카테고리: (UI 태그, 키워드 → 질문 문장(없으면 템플릿), 정규식 보조 규칙, 기본 템플릿들)
 CATEGORIES = [
@@ -196,13 +223,32 @@ def classify(kw):
             return i
     return None
 
+def recent_keywords(days=REPEAT_DAYS):
+    """최근 며칠(오늘 제외) 예시 파일에 나온 키워드."""
+    seen = set()
+    for n in range(1, days + 1):
+        f = OUT_DIR / f"trend_examples_{(date.today() - timedelta(days=n)).isoformat()}.json"
+        try:
+            seen |= {r.get("keyword") for r in json.loads(f.read_text(encoding="utf-8")) if isinstance(r, dict)}
+        except (OSError, ValueError):
+            continue
+    return seen - {None}
+
+
 def main(dry=False):
     data = load_naver()
     if len(data) < 4:
         sys.exit(f"네이버 순위 파일이 부족합니다: {NAVER_DIR}")
     dates = sorted(data)
     latest = dates[-1]
+    print(f"  순위 폴더: {NAVER_DIR} ({'하루 단위' if NAVER_KIND == 'daily' else '예전 폴더 — 30일 묶음 순위라 느리게 바뀜'}),"
+          f" 최신 {latest}", file=sys.stderr)
+    if (date.today() - latest).days > STALE_DAYS:
+        print(f"  경고: 순위 데이터가 {latest} 로 {(date.today() - latest).days}일 지났어요 — 순위 수집을 확인하세요",
+              file=sys.stderr)
     recent = dates[-3:]
+    prior = dates[-7:-3] or dates[:-3]
+    shown_before = recent_keywords()
     target = latest - timedelta(days=LOOKBACK)
     past_pool = sorted(dates, key=lambda d: abs((d - target).days))[:3]
     gterms = load_google_terms()
@@ -218,17 +264,23 @@ def main(dry=False):
                 continue
             before = median_rank(data, past_pool, kw)
             rise = before - now
+            falling = now - median_rank(data, prior, kw) > FALL_LIMIT    # 최근 며칠 내려가는 중 (끝난 행사 등)
             score = rise / (now ** 0.5) + (3 if kw in gterms else 0) + (1 if kw in lex else 0)
-            cands.append((score, kw, int(now), int(before), rise))
+            cands.append((score, kw, int(now), int(before), rise, falling))
         if not cands:
             continue
-        rising = [c for c in cands if c[4] > 0]
-        score, kw, now, before, rise = max(rising or cands)
+        # 고르는 순서: 2주 전보다 오름 · 최근 내려가지 않음 · 최근 3일 예시에 없음 → 차례로 조건을 풀어 가며
+        pools = [[c for c in cands if c[4] > 0 and not c[5] and c[1] not in shown_before],
+                 [c for c in cands if c[4] > 0 and not c[5]],
+                 [c for c in cands if c[4] > 0],
+                 cands]
+        score, kw, now, before, rise, falling = max(next(p for p in pools if p))
         text = lex.get(kw) or templates[latest.toordinal() % len(templates)].format(kw=kw)
         picks.append({
             "category": cat, "icon": ICONS[cat], "keyword": kw, "question": text,
         })
-        print(f"  {cat}: {kw} (순위 {before if before <= 500 else '밖'} → {now}){' +구글' if kw in gterms else ''}", file=sys.stderr)
+        print(f"  {cat}: {kw} (순위 {before if before <= 500 else '밖'} → {now}){' +구글' if kw in gterms else ''}"
+              f"{' · 최근 내려가는 중' if falling else ''}{' · 최근 예시와 같음' if kw in shown_before else ''}", file=sys.stderr)
 
     out = picks
     txt = json.dumps(out, ensure_ascii=False, indent=2)
