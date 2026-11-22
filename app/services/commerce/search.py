@@ -201,7 +201,9 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     more_tried: list[str] = []
     if error is None and cards and len(cards) <= FEW_RESULTS and more_on_few_on():
         more_list, more_as = search_more(
-            query, terms, [a for a in retry_queries(searched_as or query) + size_variants(searched_as or query, cards)
+            query, terms, [a for a in dict.fromkeys(retry_queries(searched_as or query)
+                                                    + size_variants(searched_as or query, cards)
+                                                    + coupang_gaps_siblings(searched_as or query))
                            if a not in (query, searched_as)],
             fetch, {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list},
             text=text, searched_as=searched_as, tried=more_tried)
@@ -304,6 +306,16 @@ def options_line(card: dict) -> dict | None:
     span = f" ({lo:,}~{hi:,}원)" if lo and hi and lo != hi else ""
     return {"text": f"같은 이름 옵션 {opts['count']}개{span}를 한 장으로 묶었어요 — 보이는 가격은 그중 하나예요. "
                     "용량·수량은 판매처에서 골라 주세요", "basis": "mall"}
+
+
+def coupang_gaps_siblings(query: str) -> list[str]:
+    """2026-11-22 캡슐레이션효소: 끝말이 같은 다른 순위 키워드 (coupang_gaps.sibling_queries)."""
+    from app.services.commerce import coupang_gaps
+
+    try:
+        return coupang_gaps.sibling_queries(query)
+    except Exception:  # noqa: BLE001 — 순위 파일 문제로 검색을 막지 않는다
+        return []
 
 
 def more_on_few_on() -> bool:

@@ -159,6 +159,66 @@ def vocab() -> set[str]:
     return words
 
 
+# ── 2026-11-22 같은 종류 말 (후보가 적을 때 더 찾기) ─────────────────────────────
+# 운영 확인(11-22 23:0x): 쿠팡 파트너스 검색 API 는 '캡슐레이션효소'·'파로효소'·'효소 캡슐'·'효소' 모두 한 상품
+# (그레인온 골드 파로효소, 옵션 10개)만 준다 — 같은 이름 옵션을 한 장으로 묶으면 후보 1개. '카무트효소'·'소화효소'에는
+# 다른 상품이 나온다. 그래서 순위 파일에서 **끝말(머리 낱말)이 같은 다른 키워드**를 더 찾기 검색어로 쓴다
+# (예: 캡슐레이션효소 → 카무트효소·여주발효효소). 결과는 '다른 검색어로 찾은 추가 후보' 칸에만 (순위 동결).
+SIBLING_FILES = 3
+SIBLING_MAX = 2
+_SHOPISH = re.compile(r"떡집|떡방|상회|농원|농장|목장|식품|푸드|마켓|상점|본점|명가|본가|할매|원조|정육점|방앗간")
+_rank_cache: tuple[tuple, dict[str, int]] | None = None
+
+
+def ranked_keywords() -> dict[str, int]:
+    """최근 순위 파일 몇 개의 {키워드: 가장 좋은 순위}. 순위 폴더가 없으면 빈 표."""
+    global _rank_cache
+    files = []
+    for d in _rank_dirs():
+        files += sorted(d.glob("food_????-??-??.csv"))[-SIBLING_FILES:]
+    try:
+        key = tuple((str(f), f.stat().st_mtime) for f in files)
+    except OSError:
+        return {}
+    if _rank_cache and _rank_cache[0] == key:
+        return _rank_cache[1]
+    out: dict[str, int] = {}
+    for f in files:
+        try:
+            with f.open(encoding="utf-8-sig") as fh:
+                for row in csv.DictReader(fh):
+                    kw, rank = (row.get("keyword") or "").strip(), (row.get("rank") or "").strip()
+                    if kw and rank.isdigit():
+                        out[kw] = min(out.get(kw, 10**6), int(rank))
+        except (OSError, csv.Error):
+            continue
+    _rank_cache = (key, out)
+    return out
+
+
+def sibling_queries(query: str, ranks: dict[str, int] | None = None, limit: int = SIBLING_MAX) -> list[str]:
+    """붙여 쓴 한 낱말 검색어('캡슐레이션효소')와 끝말이 같은 다른 순위 키워드 — 끝말이 긴 것부터, 순위 좋은 순.
+    끝말 자체('효소')는 마지막 후보. 술·가게 이름·영문 섞인 말은 쓰지 않는다."""
+    q = (query or "").strip()
+    if not re.fullmatch(r"[가-힣]{3,10}", q):
+        return []
+    from app.domain.commerce import policies
+
+    ranks = ranked_keywords() if ranks is None else ranks
+    words = {k: r for k, r in ranks.items()
+             if re.fullmatch(r"[가-힣]{2,10}", k) and k != q and not _SHOPISH.search(k)
+             and not policies.is_alcohol_request(k)}
+    for n in range(len(q) - 1, 1, -1):
+        head = q[-n:]
+        sibs = sorted((r, k) for k, r in words.items() if k.endswith(head) and k != head)
+        if sibs:
+            out = [k for _r, k in sibs][:limit]
+            if len(out) < limit and head in words:
+                out.append(head)
+            return out
+    return []
+
+
 def similar_word(word: str, words: set[str] | None = None) -> str | None:
     """사전에 없는 한글 낱말(3자 이상)을 자모 거리 2 이하·길이 ±1 인 가장 가까운 사전 낱말로. 애매하면 None."""
     if not re.fullmatch(r"[가-힣]{3,8}", word or ""):
