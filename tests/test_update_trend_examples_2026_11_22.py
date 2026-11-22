@@ -52,3 +52,13 @@ def test_recent_example_keyword_is_rotated(tmp_path):
     (ex / f"trend_examples_{yesterday}.json").write_text(json.dumps([{"keyword": "답례품"}]), encoding="utf-8")
     picks, _ = _run(tmp_path)
     assert picks["선물용"] == "결혼식답례품"
+
+
+def test_shop_names_are_skipped(tmp_path):
+    """2026-11-22 사용자: 가게 이름은 빼기 ('명가삼대떡집' 이 간식 예시에 뽑혔다)."""
+    (tmp_path / "rk").mkdir()
+    (tmp_path / "ex").mkdir()
+    _ranks(tmp_path / "rk", [("명가삼대떡집", lambda b: 400 if b >= 12 else 30),
+                             ("답례품", lambda b: 200 if b >= 12 else 100)])
+    picks, _ = _run(tmp_path)
+    assert picks.get("선물용") == "답례품" and "명가삼대떡집" not in picks.values()

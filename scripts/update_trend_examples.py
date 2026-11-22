@@ -224,6 +224,16 @@ def classify(kw):
             return i
     return None
 
+# 2026-11-22 사용자: 가게 이름은 빼기 ('명가삼대떡집'·'정가네찹쌀견과호떡' 같은 가게·상호가 예시에 뽑혔다)
+_SHOP = re.compile(r"(떡집|떡방|상회|농원|농장|목장|식품|푸드|몰$|마켓|상점|본점|공방|제과|베이커리|방앗간|정육점|수산$|"
+                   r"명가|삼대|대가|본가|할매|할머니|엄마손|원조|[가-힣]{1,3}네(?=[가-힣])|[가-힣]{2}네$)")
+SHOP_MAX_LEN = 8    # 이보다 긴 낱말은 상품명·상호인 경우가 많아 예시에서 뺀다 ('무화과호두파이무설탕')
+
+
+def is_shop_name(kw):
+    return bool(_SHOP.search(kw)) or len(kw) > SHOP_MAX_LEN
+
+
 def recent_keywords(days=REPEAT_DAYS):
     """최근 며칠(오늘 제외) 예시 파일에 나온 키워드."""
     seen = set()
@@ -260,7 +270,7 @@ def main(dry=False):
     for i, (cat, tag, lex, pat, templates) in enumerate(CATEGORIES):
         cands = []
         for kw in data[latest]:
-            if classify(kw) != i:
+            if classify(kw) != i or is_shop_name(kw):
                 continue
             now = median_rank(data, recent, kw)
             if now > MAX_RANK:
