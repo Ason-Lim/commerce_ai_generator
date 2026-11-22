@@ -82,9 +82,10 @@ def test_few_others_are_not_collapsed(sqlite_db):
     assert other and not other[0].get("collapsed")
 
 
-def test_many_others_stay_collapsed(sqlite_db):
+def test_many_others_also_shown_open(sqlite_db):
+    """2026-11-22 사용자: 쿠팡이 준 상품은 많아도 접지 않는다."""
     shop = ByQuery({"참기름": [_cp(f"참기름 {n}호 300ml", 6900 + n * 700, n) for n in range(1, 9)]})
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="참기름")
     other = [d for t, d in lists(res).items() if t and t.startswith("다른 후보")]
-    assert other and other[0].get("collapsed")
+    assert other and not other[0].get("collapsed")

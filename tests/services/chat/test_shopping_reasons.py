@@ -73,9 +73,8 @@ def test_picks_have_roles_and_grounded_reasons(sqlite_db):
     # 평점·후기를 지어내지 않는다
     assert not any(c.get("badges") for c in main)
     assert "평점·후기·도착일은 판매처 페이지에서 확인해 주세요" in md(res)
-    # 나머지 후보 — 2026-11-22: 3개 이하면 펼쳐 둔다 (많으면 접음: test_more_on_few_2026_11_22)
-    others = lists(res)[1]["data"]
-    assert others.get("collapsed") is (True if len(others["items"]) > 3 else None)
+    # 나머지 후보 — 2026-11-22 사용자: 쿠팡이 준 상품은 접지 않고 다 보여 준다
+    assert not lists(res)[1]["data"].get("collapsed")
 
 
 def test_gift_role_only_when_the_customer_asks_for_a_gift(sqlite_db):
