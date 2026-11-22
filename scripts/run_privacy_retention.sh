@@ -14,5 +14,11 @@ PY=.venv/bin/python
     exit 1
   fi
   PYTHONUNBUFFERED=1 "$PY" scripts/privacy_retention.py
-  echo "=== $(date '+%Y-%m-%d %H:%M:%S') 끝 (종료 코드 $?)"
+  CODE=$?
+  echo "=== $(date '+%Y-%m-%d %H:%M:%S') 끝 (종료 코드 $CODE)"
+  # 2026-11-22: 실패하면 상태 파일 + 맥 알림 — 다음 날 같은 시각에 다시 돈다(남은 것부터 이어서 처리)
+  echo "$(date '+%Y-%m-%d %H:%M:%S') $CODE" > var/log/privacy_retention.status
+  if [ "$CODE" -ne 0 ] && command -v osascript >/dev/null 2>&1; then
+    osascript -e 'display notification "var/log/privacy_retention.log 를 확인해 주세요" with title "commerce_ai 보존 기간 작업 실패"' || true
+  fi
 } >>"$LOG" 2>&1

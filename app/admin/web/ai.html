@@ -115,7 +115,7 @@ a{color:var(--acc)}
   </section>
   <section id="dataset" aria-labelledby="dataset-h">
     <h2 id="dataset-h">학습 데이터 <small class="note">로컬 모델(Ollama) 준비</small></h2>
-    <p class="lede">짧은 정리 작업(상품어·문장 뜻·보유량·인분…)의 손님 문장과 AI 답이 쌓여요. 개인정보 모양이 있던 문장은 담지 않고, 세션 값 없이 보관해요. 결과를 받고 30분 안에 판매처로 이동한 것은 <b>silver</b>, 사람이 확인하면 <b>gold</b> — 학습은 gold 우선이에요. 매일 04:40 승격·정리(scripts/dataset_daily.py), 내보내기·견주기는 scripts/export_dataset.py · eval_local_model.py.</p>
+    <p class="lede">짧은 정리 작업(상품어·문장 뜻·보유량·인분…)의 손님 문장과 AI 답이 쌓여요. <b>기본 꺼짐</b> — 목적·보유 기간·출력 이용 조건을 정한 뒤 .env DATASET_CAPTURE=1 로 켜요. 개인정보를 가린 차례는 담지 않고, 세션 값 없이 보관해요(가리기가 모든 개인정보를 잡지는 못해 익명 자료로 보지 않음). 그 차례에 보여 준 상품으로 30분 안에 판매처로 이동한 것은 <b>silver</b>(행동 신호가 있는 미검수 후보 — 정답 증거 아님), 사람이 확인하면 <b>gold</b> — 내보내기 기본과 시험 칸은 gold 만. 고쳐도 원래 출처는 그대로 남아요. 매일 04:40 승격·정리(scripts/dataset_daily.py), 내보내기·견주기는 scripts/export_dataset.py · eval_local_model.py.</p>
     <p class="note" id="dsinfo"></p>
     <div class="scroll"><table><thead><tr><th>작업</th><th class="n">candidate</th><th class="n">silver</th><th class="n">gold</th><th class="n">버림</th></tr></thead><tbody id="dsrows"></tbody></table></div>
     <h3>확인할 것 <small class="note">많이 나온 문장부터 — 맞으면 ‘맞음’, 틀리면 ‘고침’(정답 JSON), 쓸모없으면 ‘버림’</small></h3>
@@ -173,7 +173,7 @@ async function dsPost(id,body){const r=await fetch("/admin/api/ai/dataset/"+id+"
 async function loadDataset(){
   let d; try{d=await api("/admin/api/ai/dataset"+($("#dstask").value?"?task="+encodeURIComponent($("#dstask").value):""))}catch(e){if(e.message!=="auth")showErr(e);return}
   const sel=$("#dstask");if(sel.options.length===1)d.tasks.forEach(t=>sel.add(new Option(t,t)));
-  $("#dsinfo").textContent=(d.stats.enabled?"모으는 중":"꺼짐 (.env DATASET_CAPTURE=0)")+` · 승격 대기 ${num(d.stats.waiting)}건 · 보관 ${d.stats.keep_days}일 · 출처 `+(d.stats.teachers.map(t=>t.teacher+" "+num(t.n)).join(", ")||"없음");
+  $("#dsinfo").textContent=(d.stats.enabled?"모으는 중":"꺼짐 (켜려면 .env DATASET_CAPTURE=1)")+` · 승격 대기 ${num(d.stats.waiting)}건 · 보관 ${d.stats.keep_days}일 · 출처 `+(d.stats.teachers.map(t=>t.teacher+" "+num(t.n)).join(", ")||"없음");
   const by={};for(const r of d.stats.by_task){(by[r.task]=by[r.task]||{})[r.label]=r.n}
   $("#dsrows").innerHTML=Object.keys(by).length?Object.entries(by).map(([t,c])=>`<tr><td>${esc(t)}</td>${["candidate","silver","gold","dropped"].map(l=>`<td class="n">${num(c[l])}</td>`).join("")}</tr>`).join(""):'<tr><td colspan="5" class="note">아직 없어요</td></tr>';
   const q=$("#dsqueue");q.innerHTML=d.queue.length?"":'<tr><td colspan="6" class="note">확인할 것이 없어요</td></tr>';

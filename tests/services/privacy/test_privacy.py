@@ -157,3 +157,30 @@ def test_trend_feedback_is_rolled_up_before_purge(tmp_path):
     con = sqlite3.connect(tmp_path / "f.sqlite3")
     assert con.execute("SELECT COUNT(*) FROM feedback").fetchone()[0] == 1
     assert con.execute("SELECT rating, reasons, n FROM feedback_rollup").fetchall() == [("bad", "generic", 1)]
+
+
+# 2026-11-22 검토 의견 6: 가명 흐름 최종 삭제 · 집계에 긴/가린 문장 남기지 않기 ──────────────
+
+def test_pseudonymized_rows_are_deleted_after_keep_days_but_daily_counts_stay(engine, tmp_path, monkeypatch):
+    monkeypatch.setenv("PRIVACY_PSEUDO_KEEP_DAYS", "399")             # 400일 된 줄이 지워질 기간
+    Retention(engine, now=NOW, pseudo_key=KEY, signal_dir=tmp_path / "none").run()
+    assert {r[0] for r in _q(engine, "SELECT session_id FROM search_log")} == {"new-1"}
+    assert _q(engine, "SELECT COUNT(*) FROM product_click_log")[0][0] == 0
+    assert _q(engine, "SELECT COUNT(*) FROM user_product_preference")[0][0] == 0
+    daily = {(r[0], r[1]): r[3] for r in _q(engine, "SELECT * FROM search_daily")}
+    assert daily[((NOW - timedelta(days=400)).date().isoformat(), "사과")] == 2   # 집계는 남음
+
+
+def test_default_keep_keeps_rows_younger_than_three_years(engine, tmp_path, monkeypatch):
+    monkeypatch.delenv("PRIVACY_PSEUDO_KEEP_DAYS", raising=False)
+    report = Retention(engine, now=NOW, pseudo_key=KEY, signal_dir=tmp_path / "none").run()
+    assert _q(engine, "SELECT COUNT(*) FROM search_log")[0][0] == 4
+    assert {r["step"] for r in report} >= {"delete_pseudo"}
+
+
+def test_aggregate_hides_long_or_masked_queries():
+    from app.services.privacy.retention import AGG_HIDDEN, agg_text
+
+    assert agg_text("사과 5kg") == "사과 5kg"
+    assert agg_text("사과 010-1234-5678 로 연락") == AGG_HIDDEN
+    assert agg_text("가" * 41) == AGG_HIDDEN

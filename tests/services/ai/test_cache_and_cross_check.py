@@ -32,7 +32,8 @@ class FakeCompletions:
 
 
 def _client(fake, cache):
-    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m"}
+    # 2026-11-22: 고객 작업(shop_keyword)은 OpenAI·Claude 키가 없으면 보내지 않는다 — 이 시험은 예전 DeepSeek 경로를 본다
+    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m", "CUSTOMER_LLM_PROVIDER": "deepseek"}
     chat = type("Chat", (), {"completions": fake})
     return LLMClient("시스템", provider="deepseek", env=env, cache=cache,
                      openai_factory=lambda **kw: type("O", (), {"chat": chat})())
@@ -105,7 +106,7 @@ def test_deepseek_thinking_is_sent_only_when_asked(monkeypatch):
             msg = type("M", (), {"content": '{"ok": 1}'})
             return type("R", (), {"choices": [type("C", (), {"message": msg})], "usage": None, "model": "deepseek-flash"})
 
-    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "deepseek-flash"}
+    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "deepseek-flash", "CUSTOMER_LLM_PROVIDER": "deepseek"}
     LLMClient("s", provider="deepseek", env=env, openai_factory=Fake).chat_json("a")
     LLMClient("s", provider="deepseek", env=env, openai_factory=Fake, thinking=False).chat_json("a")
     LLMClient("s", provider="deepseek", env={**env, "DEEPSEEK_THINKING": "off"}, openai_factory=Fake).chat_json("a")

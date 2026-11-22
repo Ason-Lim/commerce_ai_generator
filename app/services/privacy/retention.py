@@ -1,7 +1,9 @@
 """보존 기간 작업 — '접고 지우기' (2026-11-21 사용자 결정, claude/privacy_policy_draft_2026-11-21.md §3).
 
 결정
-* 대화 문장(대화 상태·레시피 대화 상태)·실수 신호: **90일** 뒤 지움.
+* 대화 문장(대화 상태·레시피 대화 상태)·실수 신호: **90일** 뒤 지움. 대화 90일·보관함 1년은 **마지막 활동(updated_at)**부터,
+  검색·클릭 1년은 **기록한 날(created_at)**부터, 실수 신호 90일은 파일 날짜부터 센다.
+* 가명 흐름(1년 뒤 세션 값을 바꾼 원본 줄)은 기록한 날부터 PRIVACY_PSEUDO_KEEP_DAYS(기본 3년) 뒤 지움 (2026-11-22).
 * 관심 상품 보관함: 마지막 사용 뒤 **1년** 지나면 지움.
 * 세션이 붙은 검색·클릭·노출 기록과 클릭 선호: **1년** 원본, 그 뒤 세션 값을 가명 값으로 바꿔 흐름만 남김
   (가명 키 PRIVACY_PSEUDO_KEY 는 .env 에 따로 — 키가 없으면 가명 처리는 건너뛰고 알림).
@@ -29,6 +31,11 @@ CHAT_DAYS = 90
 SIGNAL_DAYS = 90
 SAVED_DAYS = 365
 LOG_DAYS = 365
+# 2026-11-22 (검토 의견 6): 가명 흐름의 최종 삭제 — 만든 날부터 이 기간이 지나면 원본 줄을 지운다(집계는 남음).
+# 사용자 결정 전 기본값 3년. PRIVACY_PSEUDO_KEEP_DAYS 로 바꿈 (처리방침 '가명정보 보유 기간' 칸과 같은 값).
+PSEUDO_KEEP_DAYS_DEFAULT = 1095
+AGG_TEXT_MAX = 40
+AGG_HIDDEN = "(긴 문장·가린 문장)"
 PSEUDO_PREFIX = "p_"
 
 ROLLUP_DDL = (
@@ -51,9 +58,21 @@ ROLLUP_DDL = (
 )
 
 # 원본 → 집계: (원본 표, 집계 표, 고르는 칼럼, 묶는 열쇠 만들기, 더하는 값들)
+def agg_text(q: str | None) -> str:
+    """집계 표에 남길 검색어 — 개인정보 모양이 있거나 너무 긴 문장(한 사람만 쓸 법한)은 '(긴 문장·가린 문장)' 하나로 묶는다.
+    2026-11-22 검토 의견 6: 검색어별 집계에 드문 개인정보성 문장이 그대로 남지 않게."""
+    from app.services.privacy import pii
+
+    text = " ".join(str(q or "").split())
+    masked, kinds = pii.mask(text)
+    if kinds or masked != text or "***" in text or len(text) > AGG_TEXT_MAX:
+        return AGG_HIDDEN
+    return text
+
+
 _ROLLUPS = {
     "search_log": ("search_daily", "query, priority, result_count",
-                   lambda r: (r["query"] or "", r["priority"] or ""),
+                   lambda r: (agg_text(r["query"]), r["priority"] or ""),
                    lambda r: {"searches": 1, "zero_results": 1 if (r["result_count"] or 0) == 0 else 0},
                    ("query", "priority")),
     "product_click_log": ("click_daily", "query, product_name, platform, selected_section",
@@ -61,7 +80,7 @@ _ROLLUPS = {
                                      r["selected_section"] or ""),
                           lambda r: {"clicks": 1}, ("channel", "product_name", "platform", "section")),
     "impression_log": ("impression_daily", "query, product_name, selected_section",
-                       lambda r: (r["query"] or "", r["product_name"] or "", r["selected_section"] or ""),
+                       lambda r: (agg_text(r["query"]), r["product_name"] or "", r["selected_section"] or ""),
                        lambda r: {"impressions": 1}, ("query", "product_name", "section")),
 }
 # 1년 뒤 세션 값을 가명으로: (표, 시각 칼럼)
@@ -111,6 +130,7 @@ class Retention:
             self.rollup(conn, have)
             self.pseudonymize(conn, have)
             self.delete_chat(conn, have)
+            self.delete_pseudo(conn, have)
         self.signals()
         return self.report
 
@@ -187,6 +207,26 @@ class Retention:
             else:
                 n = conn.execute(text("DELETE " + sql).bindparams(_ts("c")), {"c": cut}).rowcount or 0
             self._log(conn, "delete", f"{table} ({label})", n, cut)
+
+    # ── ⑤ 가명 흐름 최종 삭제 (2026-11-22) ──
+    def delete_pseudo(self, conn, have: set[str]) -> None:
+        raw = os.environ.get("PRIVACY_PSEUDO_KEEP_DAYS", "").strip()
+        try:
+            keep = int(raw) if raw else PSEUDO_KEEP_DAYS_DEFAULT
+        except ValueError:
+            keep = PSEUDO_KEEP_DAYS_DEFAULT
+        if keep <= LOG_DAYS:                     # 가명 처리보다 먼저 지우지 않는다 (집계는 매일 먼저 접혀 있음)
+            keep = LOG_DAYS + 1
+        cut = self.now - timedelta(days=keep)
+        for table, col in _PSEUDO:
+            if table not in have:
+                continue
+            sql = f"FROM {table} WHERE {col} < :c"  # noqa: S608 — 고정 이름
+            if self.dry_run:
+                n = conn.execute(text("SELECT COUNT(*) " + sql).bindparams(_ts("c")), {"c": cut}).scalar() or 0
+            else:
+                n = conn.execute(text("DELETE " + sql).bindparams(_ts("c")), {"c": cut}).rowcount or 0
+            self._log(conn, "delete_pseudo", table, n, cut)
 
     # ── ④ 실수 신호 파일 ──
     def signals(self) -> None:

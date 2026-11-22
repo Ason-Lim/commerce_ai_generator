@@ -545,8 +545,10 @@ def from_env(env=None):
                 # 2026-11-11: 생각 모드 끔 — 이름 뽑기는 추론이 필요 없고, 켜져 있으면 41초(화면은 30초에 포기)
                 clients[system] = LLMClient(system, provider="deepseek", env=source,
                                             timeout=75.0 if system == TREND_PROMPT else 30.0,
-                                            cache="recipe_discover", cache_days=7,   # 2026-11-11: 같은 뉴스·목록이면 다시 쓰기
-                                            thinking=False)
+                                            # 2026-11-11: 같은 뉴스·목록이면 다시 쓰기. 2026-11-22: 요리 이름 읽기는
+                                            # 고객 문장을 보내므로 고객 작업 이름(recipe_dish_name → OpenAI/Claude)
+                                            cache="recipe_dish_name" if system == NAME_PROMPT else "recipe_discover",
+                                            cache_days=7, thinking=False)
             return clients[system].chat_json(json.dumps(payload, ensure_ascii=False), temperature=0)
     return Discovery(provider, interpreter, video=video, social=social, surge=surge_reader, cafe=True, signals=True,
                      history=history)

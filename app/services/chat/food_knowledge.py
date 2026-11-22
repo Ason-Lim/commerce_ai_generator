@@ -85,6 +85,11 @@ def _review(food: str, text: str, got: dict, review: Callable | None) -> dict | 
                                       for (k, i, _t), v in zip(lines, verdicts) if not v["ok"]]}
 
 
+def same_family(writer: str | None) -> bool:
+    """작성한 AI 가 검토 AI(Claude)와 같은 회사면 True — 그때는 '다른 AI 가 검토'라고 하지 않는다."""
+    return str(writer or "").startswith(("anthropic", "claude"))
+
+
 def answer(text: str, food: str, generate: Callable | None, review: Callable | None = None) -> dict:
     """{'got': 검증된 답, 'food': 식품 이름, 'review': {'by','flags'}|None, 'saved_at': str|None, 'from_cache': bool}"""
     key, label = key_of(food, text)
@@ -93,7 +98,7 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
         got = dict(hit["value"])
         rev = hit["review"]
         stale = rev is None or rev.get("v") != REVIEW_VERSION
-        if stale and review is not None:                # 검토 없이 저장됐거나 예전 기준 검토 — 이번에 검토해 남긴다
+        if stale and review is not None and not same_family(hit.get("model")):                # 검토 없이 저장됐거나 예전 기준 검토 — 이번에 검토해 남긴다
             rev = _review(got.get("_food") or food, text, got, review)
             if rev is not None:
                 ai_cache.set_review(TASK, key, rev)
@@ -105,7 +110,11 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
         return {"got": got, "food": name, "review": rev,
                 "saved_at": hit["created_at"], "from_cache": True, "safety": is_safety(text),
                 "cross_on": review is not None}
+    from app.services.nlu.llm_client import LAST_ROUTE
+
+    LAST_ROUTE.set(None)
     raw = generate(text) if generate is not None else None
+    writer = LAST_ROUTE.get() or "deepseek"
     got = food_tips.validated(raw, text)
     name = ((raw or {}).get("food") or "").strip() if isinstance(raw, dict) else ""
     if not (name and re.sub(r"\s+", "", name) in re.sub(r"\s+", "", text) and 2 <= len(name) <= 20):
@@ -115,12 +124,14 @@ def answer(text: str, food: str, generate: Callable | None, review: Callable | N
     rev = None
     safety = is_safety(text)
     if got["tips"] or got.get("season") or got.get("varieties"):
-        rev = _review(name, text, got, review)
+        # 2026-11-22 (검토 의견 1): OpenAI 가 실패해 Claude 가 대신 썼으면 Claude 검토는 '다른 AI 검토'가 아니다 —
+        # 검토 없이 보여 주고(화면: '아직 다른 AI 의 검토 전이에요') 저장하지 않아 다음에 다시 만든다.
+        rev = None if same_family(writer) else _review(name, text, got, review)
         # 저장 규칙 (2026-11-11 검토 반영): 검토를 켜 두었는데 실패했거나, 안전 질문인데 검토가 없으면 저장하지 않는다
         # → 다음에 다시 만들고 검토한다. 검토를 아예 끈 경우(키 없음)의 일반 질문만 미검토로 저장.
         if rev is not None or (review is None and not safety):
             ai_cache.put(TASK, key, dict(got, _food=name), days=DAYS, label=label, review=rev,
-                         model="deepseek" + (f" · 검토 {rev['by']}" if rev else ""))
+                         model=writer + (f" · 검토 {rev['by']}" if rev else ""))
     return {"got": got, "food": name, "review": rev, "saved_at": None, "from_cache": False, "safety": safety,
             "cross_on": review is not None}
 
