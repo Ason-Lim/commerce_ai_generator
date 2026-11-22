@@ -85,7 +85,7 @@ CATEGORIES = [
         "수험생선물": "수험생선물, 응원하려는데 3만 원 안쪽으로 2~3개 비교해 줘",
         "수능간식": "수능간식, 시험 날 수험생이 먹기 부담 없는 걸로 추천해 줘",
         "합격엿": "합격엿, 수험생 응원용으로 포장 깔끔한 거 2~3개 비교해 줘",
-    }, r"선물|답례", [
+    }, "gift", [
         "{kw} 선물하려는데 받는 분이 좋아할 만한 구성으로 5만 원 안쪽 추천해 줘",
         "{kw} 보내려는데 포장 깔끔한 거 2~3개 비교해 줘",   # 2026-11-16: 받는 사람(부모님)을 지어 넣지 않음
     ]),
@@ -115,7 +115,7 @@ CATEGORIES = [
         "구운계란": "다이어트 간식으로 구운계란 30구 가성비 좋은 거 찾아줘",
         "땅콩버터": "무가당 땅콩버터 중에 꾸덕한 거 추천해 줘",
         "트러플하몽크래커": "트러플하몽크래커 어디서 사는 게 싸?",
-    }, r"과자|쿠키|떡$|말랭이|초콜릿|견과|크래커|정과|설기|화편", [
+    }, "snack", [
         "{kw} 중에 너무 달지 않고 아이랑 같이 먹기 좋은 거 추천해 줘",
         "요즘 인기 있는 {kw}, 가성비 좋은 거 2~3개 비교해 줘",
     ]),
@@ -162,7 +162,7 @@ CATEGORIES = [
         "햅쌀": "햅쌀로 밥 맛있게 지으려면 물 양을 어떻게 맞춰?",
         "햇밤": "햇밤으로 밤밥 지으려면 껍질 쉽게 까는 법도 알려줘",
         "밤": "가을 밤으로 밤조림이나 밤밥 만드는 법 알려줘",
-    }, r"게$|새우|오징어|김장|절임|버섯|^굴|조개", [
+    }, "seafood|cook+season", [
         "가을 제철 {kw}로 집에서 만들기 좋은 요리랑 필요한 재료 알려줘",
         "제철 {kw}로 4인분 저녁 메뉴 만들려면 뭐 사야 해?",
     ]),
@@ -189,7 +189,7 @@ CATEGORIES = [
         "유자": "유자청 담그려면 유자 몇 kg이랑 설탕 얼마나 필요해?",
         "포도": "요즘 맛있는 포도 품종 추천해 줘",
         "딸기": "딸기 언제부터 맛있어? 품종별 차이 알려줘",
-    }, r"사과$|감$|귤|배$|포도|머스켓|무화과|대추$", [
+    }, "fruit", [
         "요즘 제철 {kw} 맛있는 거 고르는 법이랑 산지 추천해 줘",
         "{kw} 5kg 사려는데 크기별로 뭐가 맛있어?",
     ]),
@@ -215,12 +215,35 @@ def load_google_terms(days=7):
 def median_rank(data, dates, kw):
     return statistics.median(data[d].get(kw, 501) for d in dates)
 
+# 2026-11-22 (창 3-C ①): 카테고리 정규식을 태그 규칙표(data/keyword_tags.csv, app/services/trends/tags.py)로 옮김 —
+# 홈 '지금 순위' 카테고리 탭과 같은 표. CATEGORIES 넷째 칸 = 태그 규칙 ("a|b" 하나라도, "a+b" 모두).
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from app.services.trends import tags as _tags  # noqa: E402  (표준 라이브러리만 쓰는 모듈)
+
+_SEASON = None
+
+
+def _kw_tags(kw):
+    global _SEASON
+    if _SEASON is None:
+        try:
+            _SEASON = _tags.season_events(date.today())
+        except Exception:  # noqa: BLE001 — 달력이 없으면 시즌 없이
+            _SEASON = []
+    return set(_tags.tags_for(kw, events=_SEASON))
+
+
+def _rule_hit(rule, have):
+    return any(all(t in have for t in alt.split("+")) for alt in rule.split("|"))
+
+
 def classify(kw):
-    for i, (_, _, lex, pat, _) in enumerate(CATEGORIES):
+    for i, (_, _, lex, _rule, _) in enumerate(CATEGORIES):
         if kw in lex:
             return i
-    for i, (_, _, _, pat, _) in enumerate(CATEGORIES):
-        if re.search(pat, kw):
+    have = _kw_tags(kw)
+    for i, (_, _, _, rule, _) in enumerate(CATEGORIES):
+        if _rule_hit(rule, have):
             return i
     return None
 

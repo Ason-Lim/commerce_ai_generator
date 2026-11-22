@@ -16,7 +16,7 @@ from typing import Annotated
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.trend_posts import render
@@ -52,6 +52,15 @@ def trends_posts_json(posts: Posts, limit: int = Query(3, ge=1, le=20)):
     for p in published:                       # 최신순이므로 처음 본 것이 그 주제의 최신 글
         by_topic.setdefault(_flat(p.topic), render.card(p))
     return {"items": [render.card(p) for p in published[:limit]], "by_topic": by_topic, "count": len(published)}
+
+
+@router.get("/api/home/rankings")
+def home_rankings(view: str = Query("home", pattern="^(home|full)$")):
+    """홈 '지금 순위' (창 3-C, 2026-11-22) — 급상승 · 카테고리 · 트렌드 상품. 저장된 자료만 읽는다(외부 호출 0), 5분 캐시.
+    view=home 은 요약(6·6·4+2), view=full 은 탭 '지금 뜨는 식품' 전체 화면 — 같은 선정 규칙."""
+    from app.services.trends import home_rankings as hr
+
+    return JSONResponse(hr.build(view), headers={"Cache-Control": "public, max-age=60"})
 
 
 @router.get("/sitemap.xml")
@@ -123,7 +132,6 @@ class _FeedbackIn(BaseModel):
 def trends_feedback(post_id: str, body: _FeedbackIn, request: Request, posts: Posts):
     """글 끝 피드백 저장 (2026-11-21). 판·규칙 판은 서버가 게시본에서 정한다. 관리자 로그인 브라우저는 운영자 평가로 따로.
     IP 는 저장하지 않는다 — 무작위 브라우저 식별자(쿠키 tg_fb)와 평가만. 집계는 돌려주지 않는다."""
-    from fastapi.responses import JSONResponse
 
     from app.admin.auth import request_ok
     from app.services.trend_posts import feedback as fb
