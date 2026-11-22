@@ -56,6 +56,7 @@ ICONS = {"선물용": "Gift", "간식/디저트": "Cookie", "제철요리": "Ute
 
 MAX_RANK = 200      # 현재 순위가 이보다 낮으면 후보 제외
 LOOKBACK = 14       # 비교 기준: 약 2주 전
+RECENT_FILES = int(os.environ.get("TREND_EXAMPLES_RECENT_FILES") or (2 if NAVER_KIND == "daily" else 1))   # 지금 순위: 하루 단위면 최근 2일, 2일 묶음 파일이면 1개
 FALL_LIMIT = 10     # 최근 3일 중앙값이 바로 앞 4일보다 이만큼 넘게 나빠졌으면 '내려가는 중' (예: 끝난 행사)
 REPEAT_DAYS = 3     # 최근 이만큼 날의 예시에 나온 키워드는 다른 후보가 있으면 쉬게 한다
 STALE_DAYS = 2      # 순위 데이터가 이보다 오래되면 경고
@@ -241,13 +242,15 @@ def main(dry=False):
         sys.exit(f"네이버 순위 파일이 부족합니다: {NAVER_DIR}")
     dates = sorted(data)
     latest = dates[-1]
-    print(f"  순위 폴더: {NAVER_DIR} ({'하루 단위' if NAVER_KIND == 'daily' else '예전 폴더 — 30일 묶음 순위라 느리게 바뀜'}),"
+    print(f"  순위 폴더: {NAVER_DIR} ({'하루 단위' if NAVER_KIND == 'daily' else 'daily_food_data — 11-22부터 파일마다 최근 2일 묶음 (그전 7-09~11-21 은 30일 묶음)'}),"
           f" 최신 {latest}", file=sys.stderr)
     if (date.today() - latest).days > STALE_DAYS:
         print(f"  경고: 순위 데이터가 {latest} 로 {(date.today() - latest).days}일 지났어요 — 순위 수집을 확인하세요",
               file=sys.stderr)
-    recent = dates[-3:]
-    prior = dates[-7:-3] or dates[:-3]
+    # 2026-11-22: 수집기(~/food_recommend/trend_pipeline/collect_datalab_popular.py)가 이제 파일마다 '최근 2일 묶음'
+    # 순위를 저장한다 (이전 30일 묶음) → 지금 순위는 최신 파일 하나로 본다 (이미 2일로 다듬어져 있음).
+    recent = dates[-RECENT_FILES:]
+    prior = dates[-(RECENT_FILES + 4):-RECENT_FILES] or dates[:-RECENT_FILES]
     shown_before = recent_keywords()
     target = latest - timedelta(days=LOOKBACK)
     past_pool = sorted(dates, key=lambda d: abs((d - target).days))[:3]
@@ -270,9 +273,12 @@ def main(dry=False):
         if not cands:
             continue
         # 고르는 순서: 2주 전보다 오름 · 최근 내려가지 않음 · 최근 3일 예시에 없음 → 차례로 조건을 풀어 가며
+        # 2026-11-22 사용자: '매일 바뀌게' — 최근 3일 예시에 나온 키워드는 오르는 후보가 없어도 되도록 피한다
         pools = [[c for c in cands if c[4] > 0 and not c[5] and c[1] not in shown_before],
+                 [c for c in cands if c[4] > 0 and c[1] not in shown_before],
+                 [c for c in cands if not c[5] and c[1] not in shown_before],
+                 [c for c in cands if c[1] not in shown_before],
                  [c for c in cands if c[4] > 0 and not c[5]],
-                 [c for c in cands if c[4] > 0],
                  cands]
         score, kw, now, before, rise, falling = max(next(p for p in pools if p))
         text = lex.get(kw) or templates[latest.toordinal() % len(templates)].format(kw=kw)
