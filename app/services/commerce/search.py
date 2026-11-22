@@ -196,31 +196,10 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     more_list: list[dict] = []
     more_as: list[str] = []
     if error is None and cards and len(cards) <= FEW_RESULTS and more_on_few_on():
-        seen = {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list}
-        for alt in [a for a in retry_queries(searched_as or query) if a not in (query, searched_as)][:MORE_CALLS]:
-            try:
-                got_more = fetch(alt)
-            except Exception:  # noqa: BLE001 — 더 찾기는 덤: 실패하면 위 후보만
-                log.warning("more-on-few search failed: %s", alt)
-                break
-            keep = list(terms or []) + [alt] + ([searched_as] if searched_as else [])
-            got_more = [c for c in got_more if (not terms or relevant(c["title"], keep))
-                        and not is_non_food_category(c.get("category"))
-                        and (explain.wants_frozen(text) or not explain.is_frozen(c["title"]))]
-            got_more, _ = grade_filter(query, got_more)
-            added = 0
-            for c in got_more:
-                k = _title_key(c["title"])
-                if c["key"] in seen or k in seen:
-                    continue
-                seen |= {c["key"], k}
-                more_list.append(dict(c, more_as=alt))
-                added += 1
-            if added:
-                more_as.append(alt)
-            if len(more_list) >= MORE_MAX:
-                break
-        more_list = more_list[:MORE_MAX]
+        more_list, more_as = search_more(
+            query, terms, [a for a in retry_queries(searched_as or query) if a not in (query, searched_as)],
+            fetch, {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list},
+            text=text, searched_as=searched_as)
 
     partner_terms = terms or _content_tokens(label)
     partner_cards = [ChatService._partner_card(it, query) for it in
@@ -289,6 +268,56 @@ def more_on_few_on() -> bool:
 
 def _title_key(title: str) -> str:
     return re.sub(r"[\s\W_]+", "", (title or "").lower())
+
+
+def search_more(query: str, terms: list[str] | None, alts: list[str], fetch: Callable[[str], list[dict]],
+                seen: set[str], *, text: str = "", searched_as: str | None = None,
+                max_calls: int = MORE_CALLS) -> tuple[list[dict], list[str]]:
+    """바꿔 쓸 말로 더 찾기 — (더 찾은 카드, 실제로 상품이 나온 말).  collect(후보가 적을 때)와 대화 '더 찾아보기'가 같이 쓴다.
+    같은 관련성·식품 분류·등급 거르기, 냉동은 찾지 않았으면 뺌, seen(키·이름)에 있는 상품은 뺌, 최대 MORE_MAX."""
+    from app.services.chat import explain
+    from app.services.chat.service import relevant
+    from app.services.commerce.nonfood import is_non_food_category
+
+    more_list: list[dict] = []
+    more_as: list[str] = []
+    seen = set(seen)
+    for alt in alts[:max_calls]:
+        try:
+            got_more = fetch(alt)
+        except Exception:  # noqa: BLE001 — 더 찾기는 덤: 실패하면 있는 후보만
+            log.warning("more search failed: %s", alt)
+            break
+        keep = list(terms or []) + [alt] + ([searched_as] if searched_as else [])
+        got_more = [c for c in got_more if (not terms or relevant(c["title"], keep))
+                    and not is_non_food_category(c.get("category"))
+                    and (explain.wants_frozen(text) or not explain.is_frozen(c["title"]))]
+        got_more, _ = grade_filter(query, got_more)
+        added = 0
+        for c in got_more:
+            k = _title_key(c["title"])
+            if c["key"] in seen or k in seen:
+                continue
+            seen |= {c["key"], k}
+            more_list.append(dict(c, more_as=alt))
+            added += 1
+        if added:
+            more_as.append(alt)
+        if len(more_list) >= MORE_MAX:
+            break
+    return more_list[:MORE_MAX], more_as
+
+
+def fetch_cards(shopping: Callable, q: str, *, query: str, priority: str | None, session_id: str | None,
+                limit: int = 10) -> list[dict]:
+    """쇼핑 검색 한 번 → 카드 (collect 밖에서 쓰는 더 찾기용).  주 경로 실패면 예외."""
+    from app.services.chat import explain
+    from app.services.chat.service import item_to_card
+
+    result = shopping(q, priority, session_id) or {}
+    if result.get("recommendation_path") == "provider_failed":
+        raise RuntimeError("shopping provider failed")
+    return [dict(explain.enrich(item_to_card(it, 0), it), _q=query) for it in (result.get("items") or [])[:limit]]
 
 
 def more_note(alt: str) -> str:
