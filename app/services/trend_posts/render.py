@@ -22,6 +22,10 @@ CHECK_AT_MALL = "가격은 판매처에서 확인해 주세요"
 SITE = "AI 식품 추천"
 
 NAV_ITEMS = (("chat", "대화", "/#"), ("hot", "지금 뜨는 식품", "/#/hot"), ("posts", "트렌드 글", "/trends"))
+# 2026-11-22 창 3-B: 모바일 아래 탭 4번째 '내 보관함', PC 는 머리줄 오른쪽 사람 아이콘 (앱 SiteNav 와 같게)
+ME_ITEM = ("me", "내 보관함", "/#/me")
+_PERSON_SVG = ('<svg width=17 height=17 viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 aria-hidden=true>'
+               '<circle cx=12 cy=8 r=5></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg>')
 
 CSS = """body{margin:0;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;background:#f6f7f4;color:#1d211d;line-height:1.65}
 main{max-width:720px;margin:0 auto;padding:20px 18px 60px}a{color:#24533a}nav{font-size:14px;margin-bottom:14px}
@@ -57,8 +61,8 @@ small.unit{color:#5d635c;font-size:12px}
 .logo{font-weight:700;font-size:17px;color:#1d211d;text-decoration:none}
 .menu{display:flex;gap:8px}.menu a{padding:7px 14px;border-radius:999px;color:#4d534c;text-decoration:none;font-size:14px}
 .menu a[aria-current=page]{background:#1d211d;color:#fff;font-weight:600}
-.tabbar{display:none}
-@media (max-width:639px){.menu{display:none}main{padding-bottom:96px}
+.tabbar{display:none}.right{display:flex;align-items:center;gap:6px}.me{display:flex;padding:7px;border-radius:8px;color:#4d534c}
+@media (max-width:639px){.menu{display:none}.me{display:none}main{padding-bottom:96px}
  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;height:60px;padding-bottom:env(safe-area-inset-bottom);background:rgba(246,247,244,.96);border-top:1px solid #e3e5df;z-index:5}
  .tabbar a{flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:#6b706a;text-decoration:none}
  .tabbar a[aria-current=page]{color:#24533a;font-weight:700}}"""
@@ -98,9 +102,10 @@ def post_url(post: Post) -> str:
 
 
 def _menu(current: str, cls: str) -> str:
+    items = NAV_ITEMS + ((ME_ITEM,) if cls == "tabbar" else ())
     return (f'<nav class={cls} aria-label="주요 메뉴">'
             + "".join(f'<a href="{href}"' + (' aria-current=page' if key == current else "") + f">{label}</a>"
-                      for key, label, href in NAV_ITEMS) + "</nav>")
+                      for key, label, href in items) + "</nav>")
 
 
 def site_url() -> str:
@@ -111,7 +116,9 @@ def site_url() -> str:
 def _page(title: str, body: str, description: str = "", current: str = "posts", head: str = "") -> str:
     """앱(대화·지금 뜨는 식품)과 같은 공통 머리줄 — 로고는 본문 왼쪽 끝, 메뉴는 오른쪽 (2026-11-18 헤더 B안),
     모바일은 아래 탭. head: canonical·구조화 데이터 같은 <head> 추가분."""
-    top = f'<header class=top><div class=in><a class=logo href="/#">{SITE}</a>{_menu(current, "menu")}</div></header>'
+    top = (f'<header class=top><div class=in><a class=logo href="/#">{SITE}</a>'
+           f'<span class=right>{_menu(current, "menu")}<a class=me href="/#/me" aria-label="내 보관함">{_PERSON_SVG}</a></span>'
+           '</div></header>')
     return (f"<!doctype html><html lang=ko><head><meta charset=utf-8>"
             f"<meta name=viewport content=\"width=device-width,initial-scale=1\">"
             f"<title>{escape(title)} | {SITE}</title>"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
-import { MobileTabBar, MOBILE_TAB_H, SiteNav } from "./SiteNav";
+import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteNav } from "./SiteNav";
 import { fetchTrends, type TrendItem, type TrendView } from "../api/client";
 
 /**
@@ -80,7 +80,7 @@ export function TrendsPage() {
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
             AI 식품 추천
           </a>
-          <SiteNav current="hot" />
+          <div className="flex items-center gap-2"><SiteNav current="hot" /><ShelfLink /></div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-[900px] px-4 pt-8 sm:px-8 sm:!pb-12" style={{ paddingBottom: MOBILE_TAB_H + 32 }}>

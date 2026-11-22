@@ -1,0 +1,248 @@
+/**
+ * 내 보관함 /#/me (2026-11-22, 창 3-B — roadmap '고객 화면 상세: 내 보관함').
+ * 칸 넷: 최근 검색 · 관심 상품 · 장보기 목록 · 설정.  로그인 없음(4단계), 판매·결제를 하지 않으므로 구매 버튼은 '판매처에서 보기'.
+ * - 관심 상품·최근 검색: 서버(브라우저별 보관함 주인 값 · 이 브라우저가 쓴 대화 세션)
+ * - 장보기 목록·설정: 브라우저 안에만. 설정은 서버로 보내지 않는다(화면 표시·숨기기에만, 순위 불변).
+ */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Heart, History, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
+import type { ApiCard, SavedView } from "../types/blocks";
+import { cardToCandidate } from "../api/adapt";
+import { fetchShelf, forgetShelf, goHref, logDirectClick } from "../api/client";
+import { cx, won } from "../lib/format";
+import { clearLocalShelf, knownSessions, useBasket, usePrefs, type Prefs } from "../state/shelf";
+import { BlockRenderer } from "./BlockRenderer";
+import { ChatActions, type ChatActionsValue } from "./ChatActions";
+import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteNav } from "./SiteNav";
+import { PENDING_ASK } from "./TrendsPage";
+import { Thumb } from "./ui";
+
+function ask(text: string) {
+  try { sessionStorage.setItem(PENDING_ASK, text); } catch { /* 막혀도 대화 화면으로는 간다 */ }
+  window.location.hash = "";
+}
+
+function Item({ card, note }: { card: ApiCard; note?: string | null }) {
+  const c = cardToCandidate(card);
+  const href = goHref(c, null);
+  return (
+    <li className="flex items-start gap-3 py-3">
+      <Thumb c={c} size="sm" />
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="line-clamp-2 text-sm font-semibold leading-snug">{c.title}</p>
+        <p className="text-sm font-bold">{won(c.total ?? c.price)}
+          <span className="ml-1 text-[11px] font-normal text-ink3">{c.total != null ? "배송비 포함" : "상품가"}{note ? ` · ${note}` : ""}</span>
+        </p>
+        {href && (
+          <a href={href} target="_blank" rel={c.affiliate ? "sponsored noopener" : "noopener"} onClick={() => logDirectClick(c, null)}
+            className="text-xs font-semibold text-ink2 underline underline-offset-2">{c.source}에서 보기 ↗</a>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function Section({ id, icon: Icon, title, count, children }: {
+  id: string; icon: typeof Heart; title: string; count?: number; children: React.ReactNode;
+}) {
+  return (
+    <section aria-labelledby={id} className="rounded-3xl border border-stone-200 bg-white px-5 py-4">
+      <h2 id={id} className="flex items-center gap-2 text-base font-bold">
+        <Icon size={18} aria-hidden />{title}{count != null && count > 0 && <span className="text-sm font-semibold text-accent">{count}</span>}
+      </h2>
+      <div className="mt-2">{children}</div>
+    </section>
+  );
+}
+
+const HOUSEHOLD: { v: Prefs["household"]; label: string }[] = [
+  { v: "", label: "정하지 않음" }, { v: "1", label: "1인" }, { v: "2", label: "2인" }, { v: "3-4", label: "3~4인" }, { v: "5+", label: "5인 이상" },
+];
+
+function PrefsForm() {
+  const [prefs, setPrefs] = usePrefs();
+  const [word, setWord] = useState("");
+  const add = () => {
+    const w = word.trim().slice(0, 20);
+    if (w && !prefs.avoid.includes(w)) setPrefs({ ...prefs, avoid: [...prefs.avoid, w].slice(0, 20) });
+    setWord("");
+  };
+  return (
+    <div className="space-y-4 text-sm">
+      <p className="text-xs leading-relaxed text-ink3">
+        이 기기 안에만 저장돼요 — 서버로 보내지 않고, 추천 순서도 바꾸지 않아요. 대화에서 보이는 상품에 표시하거나 숨기는 데만 써요.
+      </p>
+      <fieldset className="space-y-2">
+        <legend className="font-semibold">선호 조건</legend>
+        <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.vegetarian}
+          onChange={(e) => setPrefs({ ...prefs, vegetarian: e.target.checked })} />채식 (고기 상품 표시)</label>
+        <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.mild}
+          onChange={(e) => setPrefs({ ...prefs, mild: e.target.checked })} />맵지 않은 것 (매운 상품 표시)</label>
+        <label className="flex items-center gap-2">가구 인원
+          <select value={prefs.household} onChange={(e) => setPrefs({ ...prefs, household: e.target.value as Prefs["household"] })}
+            className="rounded-lg border border-line px-2 py-1">
+            {HOUSEHOLD.map((h) => <option key={h.v} value={h.v}>{h.label}</option>)}
+          </select>
+        </label>
+      </fieldset>
+      <fieldset className="space-y-2">
+        <legend className="font-semibold">피하고 싶은 재료</legend>
+        <div className="flex gap-2">
+          <label htmlFor="avoid-word" className="sr-only">피하고 싶은 재료 입력</label>
+          <input id="avoid-word" value={word} onChange={(e) => setWord(e.target.value)} maxLength={20}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+            placeholder="예: 땅콩, 새우" className="min-w-0 flex-1 rounded-lg border border-line px-3 py-1.5" />
+          <button type="button" onClick={add} className="rounded-lg border border-line px-3 py-1.5 font-semibold">추가</button>
+        </div>
+        {prefs.avoid.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5">
+            {prefs.avoid.map((w) => (
+              <li key={w} className="flex items-center gap-1 rounded-full bg-chip px-2.5 py-1 text-xs">
+                {w}
+                <button type="button" aria-label={`${w} 빼기`} onClick={() => setPrefs({ ...prefs, avoid: prefs.avoid.filter((x) => x !== w) })}>
+                  <X size={12} aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.hideAvoided}
+          onChange={(e) => setPrefs({ ...prefs, hideAvoided: e.target.checked })} />표시 대신 목록에서 숨기기</label>
+        <p className="text-xs text-warn">상품명으로만 찾아 표시해요. 알레르기는 판매처 상품 정보(원재료·알레르기 표시)를 꼭 확인하세요.</p>
+      </fieldset>
+    </div>
+  );
+}
+
+export function MyShelf() {
+  const [view, setView] = useState<SavedView>({ saved: [], recent: [] });
+  const [loaded, setLoaded] = useState(false);
+  const [basket, setBasket] = useBasket();
+  const [cleared, setCleared] = useState("");
+  const load = useCallback(async (signal?: AbortSignal) => {
+    try { setView(await fetchShelf(knownSessions(), signal)); } catch { /* 못 읽어도 장보기·설정은 보인다 */ }
+    setLoaded(true);
+  }, []);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    void load(ctrl.signal);
+    document.title = "내 보관함 | AI 식품 추천";
+    return () => ctrl.abort();
+  }, [load]);
+
+  // 보관함 안의 장보기 상품 카드는 대화 동작 없이 보여 준다 (상세·담기 버튼은 대화 화면에서)
+  const actions: ChatActionsValue = useMemo(() => ({
+    send: () => {}, shop: () => {}, basket: basket.map((e) => e.ingredient), openDetail: () => {}, openTrendPost: () => {},
+    busy: false, sessionId: null, askFeedback: () => {},
+  }), [basket]);
+
+  const groups = new Map<string, ApiCard[]>();
+  for (const c of view.saved) groups.set(c.query ?? "기타", [...(groups.get(c.query ?? "기타") ?? []), c]);
+  const comparable = [...groups.values()].some((g) => g.length >= 2);
+
+  async function forget() {
+    if (!window.confirm("최근 검색·관심 상품·장보기 목록·설정을 모두 지울까요? 되돌릴 수 없어요.")) return;
+    const ok = await forgetShelf(knownSessions());
+    clearLocalShelf();
+    try { window.localStorage.removeItem("ai-food-chat-session"); } catch { /* 없음 */ }
+    setView({ saved: [], recent: [] });
+    setCleared(ok ? "기록을 모두 지웠어요." : "이 기기의 장보기·설정은 지웠지만 서버 기록은 지우지 못했어요. 잠시 후 다시 눌러 주세요.");
+  }
+
+  return (
+    <ChatActions.Provider value={actions}>
+      <div className="min-h-screen bg-paper text-ink">
+        <header className="sticky top-0 z-10 border-b border-stone-200/70 bg-paper/95 backdrop-blur">
+          <div className="mx-auto flex h-[64px] w-full max-w-[900px] items-center justify-between gap-3 px-4 sm:px-8">
+            <a href="/#" className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} aria-hidden /></span>
+              AI 식품 추천
+            </a>
+            <div className="flex items-center gap-2"><SiteNav current="me" /><ShelfLink current count={view.saved.length} /></div>
+          </div>
+        </header>
+        <main className="mx-auto w-full max-w-[900px] space-y-4 px-4 pt-8 sm:px-8 sm:!pb-12" style={{ paddingBottom: MOBILE_TAB_H + 32 }}>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">내 보관함</h1>
+          <p className="text-sm leading-7 text-stone-600">이 브라우저에만 모아 두는 곳이에요. 로그인 없이 쓰고, 다른 기기와는 아직 같이 쓰지 않아요.</p>
+          {cleared && <p role="status" className="rounded-xl bg-chip px-4 py-3 text-sm">{cleared}</p>}
+
+          <Section id="shelf-recent" icon={History} title="최근 검색" count={view.recent.length}>
+            {view.recent.length ? (
+              <ul className="divide-y divide-line">
+                {view.recent.map((r) => (
+                  <li key={`${r.session_id}-${r.query}`} className="flex items-center gap-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{r.query}</p>
+                      <p className="text-xs text-ink3">{r.at}{r.budget ? ` · 예산 ${r.budget}` : ""} · 후보 {r.cards.length}개</p>
+                    </div>
+                    <button type="button" onClick={() => ask(`${r.query} 추천해 줘`)}
+                      className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-semibold">다시 묻기</button>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="py-3 text-sm text-ink3">{loaded ? "아직 검색한 상품이 없어요." : "불러오는 중…"}</p>}
+          </Section>
+
+          <Section id="shelf-saved" icon={Heart} title="관심 상품" count={view.saved.length}>
+            {view.saved.length ? (
+              <>
+                {[...groups.entries()].map(([q, cards]) => (
+                  <div key={q} className="border-b border-line py-1 last:border-0">
+                    <h3 className="pt-2 text-xs font-bold text-ink3">'{q}' 에서 담은 상품 {cards.length}개</h3>
+                    <ul className="divide-y divide-line">
+                      {cards.map((c) => <Item key={c.key} card={c} note={c.seen_at ? `${c.seen_at} 확인 가격` : null} />)}
+                    </ul>
+                  </div>
+                ))}
+                <button type="button" disabled={!comparable} onClick={() => ask("관심 상품 비교해줘")}
+                  className={cx("primary-btn mt-3 w-full", !comparable && "opacity-50")}>관심 상품 비교하기</button>
+                <p className="mt-1.5 text-center text-[11px] text-ink3">
+                  {comparable ? "대화 화면에서 같은 검색에서 담은 상품끼리 비교해요" : "같은 검색에서 2개 이상 담으면 비교할 수 있어요"}
+                </p>
+              </>
+            ) : (
+              <p className="py-3 text-sm leading-relaxed text-ink3">
+                아직 담은 상품이 없어요. 대화에서 상품 카드의 <Heart size={13} className="inline" aria-hidden /> 관심 을 누르면 여기에 모여요.
+              </p>
+            )}
+          </Section>
+
+          <Section id="shelf-basket" icon={ShoppingBasket} title="장보기 목록" count={basket.length}>
+            {basket.length ? (
+              <div className="space-y-4">
+                <p className="text-xs leading-relaxed text-ink3">레시피에서 '부족해요'·'없어요'를 누른 재료예요. 도착일은 판매처에서 확인해 주세요.</p>
+                {basket.map((e) => (
+                  <div key={e.ingredient} className="rounded-2xl bg-stone-50 p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-sm font-bold">{e.ingredient}</span>
+                      <span className="tag bg-chip text-ink2">{e.mode === "absent" ? "없음" : "부족"}</span>
+                      <button type="button" aria-label={`${e.ingredient} 장보기 목록에서 빼기`}
+                        onClick={() => setBasket((prev) => prev.filter((x) => x.ingredient !== e.ingredient))}
+                        className="ml-auto inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-xs text-ink2">
+                        <X size={12} aria-hidden />빼기
+                      </button>
+                    </div>
+                    <BlockRenderer blocks={e.blocks} />
+                  </div>
+                ))}
+              </div>
+            ) : <p className="py-3 text-sm text-ink3">레시피 대화에서 부족한 재료를 고르면 여기에 모여요.</p>}
+          </Section>
+
+          <Section id="shelf-prefs" icon={Settings2} title="설정">
+            <PrefsForm />
+          </Section>
+
+          <div className="pt-2">
+            <button type="button" onClick={() => void forget()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-700">
+              <Trash2 size={15} aria-hidden />기록 지우기
+            </button>
+            <p className="mt-1.5 text-xs text-ink3">최근 검색·관심 상품·장보기 목록·설정을 모두 지워요.</p>
+          </div>
+        </main>
+        <MobileTabBar current="me" />
+      </div>
+    </ChatActions.Provider>
+  );
+}

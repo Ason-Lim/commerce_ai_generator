@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUp, ArrowRight, Plus, Sparkles, ShoppingBag, Utensils, Square, Gift, Cookie, Leaf, Heart, type LucideIcon } from 'lucide-react';
-import { SavedPanel } from './components/SavedPanel';
+import { ArrowUp, ArrowRight, Plus, Sparkles, ShoppingBag, Utensils, Square, Gift, Cookie, Leaf, type LucideIcon } from 'lucide-react';
 import { SavedProvider, useSaved } from './state/saved';
 import { PENDING_ASK } from './components/TrendsPage';
 import { BlockRenderer } from './components/BlockRenderer';
 import { ProductDetail } from './components/ProductDetail';
-import { MobileTabBar, MOBILE_TAB_H, SiteNav } from './components/SiteNav';
+import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteNav } from './components/SiteNav';
 import { TrendPostPanel } from './components/TrendPost';
 import { FlowStepper } from './components/FlowStepper';
 import { ChatActions, type ChatActionsValue } from './components/ChatActions';
@@ -16,6 +15,7 @@ import { answerFeedbackSignal, API_MODE, sendChat } from './api/client';
 import { pageTitle } from './lib/pageTitle';
 import { BusyStatus } from './components/BusyStatus';
 import { ShoppingPanel, type PanelEntry } from './components/ShoppingPanel';
+import { rememberSession, useBasket } from './state/shelf';
 import { BUSY_TIMEOUT_MS, TIMEOUT_MESSAGE, busyKind, type BusyKind } from './lib/busyStages';
 
 // ── 홈 화면 예시 질문: src/data/trend_examples_YYYY-MM-DD.json 중 최신 파일을 읽는다 ──
@@ -132,11 +132,12 @@ export default function ChatWindow() {
         b.type === 'product_list' && b.data.items.some(it => it.affiliate_program === '네이버 쇼핑커넥트'))), [messages]);
     const [input, setInput] = useState('');
     const [sessionId, setSessionIdState] = useState<string | null>(loadSession);
-    const setSessionId = (sid: string | null) => { setSessionIdState(sid); saveSession(sid); };
+    const setSessionId = (sid: string | null) => { setSessionIdState(sid); saveSession(sid); rememberSession(sid); };
     const [busy, setBusy] = useState(false);
     const [waitKind, setWaitKind] = useState<BusyKind>('shopping');
     // 2026-11-16: 부족한 재료 장보기 칸 — 재료별 상품 (새 메시지를 쌓지 않는다)
-    const [basket, setBasket] = useState<PanelEntry[]>([]);
+    // 2026-11-22 (3-B): 브라우저에 두고 '내 보관함'과 같은 내용 — '새 대화'를 눌러도 남는다
+    const [basket, setBasket] = useBasket();
     // 2026-11-20: 첫 화면 '오늘의 트렌드' 줄은 뺐다 — 트렌드 글은 위쪽 '트렌드 글' 메뉴에서 본다.
     const [error, setError] = useState('');
     const [detail, setDetail] = useState<Candidate | null>(null);
@@ -303,6 +304,7 @@ export default function ChatWindow() {
                     ingredient: response.panel.ingredient || ingredient,
                     mode: response.panel.mode,
                     blocks: response.blocks.filter(b => b.type !== 'notice'),
+                    sessionId: response.session_id,
                 };
                 setBasket(prev => [...prev.filter(e => e.ingredient !== entry.ingredient), entry]);
             } else {
@@ -366,8 +368,8 @@ export default function ChatWindow() {
                     <div className="flex shrink-0 items-center gap-2">
                         <SiteNav current="chat" />
                         <span className="mx-1 hidden h-5 w-px bg-stone-200 sm:block" aria-hidden />
-                        {messages.length > 0 && <SavedButton />}
-                        <button className="flex items-center gap-1 whitespace-nowrap rounded-lg p-2 text-xs hover:bg-stone-100" disabled={busy} onClick={() => { setMessages([]); setSessionId(null); setError(''); setInput(''); setBasket([]); closeDetail(); }}>
+                        <ShelfButton />
+                        <button className="flex items-center gap-1 whitespace-nowrap rounded-lg p-2 text-xs hover:bg-stone-100" disabled={busy} onClick={() => { setMessages([]); setSessionId(null); setError(''); setInput(''); closeDetail(); }}>
                             <Plus size={16} /><span className="hidden sm:inline">새 대화</span>
                         </button>
                     </div>
@@ -461,7 +463,6 @@ export default function ChatWindow() {
                 {messages.length > 0 && <p className="mt-3 text-center text-[10px] text-stone-400">쿠팡 파트너스 활동의 일환으로 일정액의 수수료를 제공받습니다.{hasConnect && ' 네이버 쇼핑커넥트 링크로 구매하셔도 수수료를 제공받습니다.'} 수수료는 본 사이트 운영에 도움이 됩니다. 가격·배송·리뷰는 확인 시점에 따라 달라질 수 있어요.</p>}
             </footer>
 
-            <SavedPanel />
             <MobileTabBar current="chat" />
             {mobile && <div aria-hidden style={{ height: MOBILE_TAB_H }} />}
             {trendPost && <TrendPostPanel key={trendPost.id} post={trendPost} onClose={closeTrendPost} />}
@@ -472,14 +473,8 @@ export default function ChatWindow() {
     );
 }
 
-// 관심 상품 버튼 — 대화를 시작한 뒤에만 보인다 (첫 화면 디자인은 그대로, 2026-11-01)
-function SavedButton() {
-    const { view, setOpen } = useSaved();
-    return (
-        <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-1 rounded-lg p-2 text-xs hover:bg-stone-100" aria-label={`관심 상품 ${view.saved.length}개`}>
-            <Heart size={16} className={view.saved.length ? 'text-[#c62828]' : ''} fill={view.saved.length ? 'currentColor' : 'none'} />
-            <span className="hidden sm:inline">관심 상품</span>
-            {view.saved.length > 0 && <span className="rounded-full bg-ink px-1.5 text-[10px] font-bold text-white">{view.saved.length}</span>}
-        </button>
-    );
+// 2026-11-22 (3-B): 관심 상품 버튼을 '내 보관함' 사람 아이콘으로 합침 (관심 상품 수 표시)
+function ShelfButton() {
+    const { view } = useSaved();
+    return <ShelfLink count={view.saved.length} />;
 }

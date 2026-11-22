@@ -1,4 +1,4 @@
-import { MessageCircle, Newspaper, TrendingUp, type LucideIcon } from "lucide-react";
+import { MessageCircle, Newspaper, TrendingUp, UserRound, type LucideIcon } from "lucide-react";
 
 /**
  * 고객 화면 공통 내비게이션 (2026-11-17 설계).
@@ -7,14 +7,28 @@ import { MessageCircle, Newspaper, TrendingUp, type LucideIcon } from "lucide-re
  *  - 트렌드 글       /trends    (운영자가 승인한 글 · 서버가 그리는 페이지, 같은 메뉴를 서버 쪽에도 그림)
  * PC: 머리줄 가운데 글자 메뉴 / 모바일: 화면 아래 고정 탭 3개 (MobileTabBar).
  */
-export type NavKey = "chat" | "hot" | "posts";
+export type NavKey = "chat" | "hot" | "posts" | "me";
 export const HOT_HASH = "#/hot";
+export const ME_HASH = "#/me";        // 2026-11-22 창 3-B 내 보관함
 
 const ITEMS: { key: NavKey; label: string; href: string; icon: LucideIcon }[] = [
   { key: "chat", label: "대화", href: "/#", icon: MessageCircle },
   { key: "hot", label: "지금 뜨는 식품", href: "/" + HOT_HASH, icon: TrendingUp },
   { key: "posts", label: "트렌드 글", href: "/trends", icon: Newspaper },
 ];
+// 모바일 아래 탭 4번째 — PC 는 머리줄 오른쪽 사람 아이콘(ShelfLink)
+const ME_ITEM = { key: "me" as NavKey, label: "내 보관함", href: "/" + ME_HASH, icon: UserRound };
+
+/** PC 머리줄 '새 대화' 옆 사람 아이콘 — 관심 상품 버튼을 합쳤다 (count = 관심 상품 수). */
+export function ShelfLink({ current, count = 0 }: { current?: boolean; count?: number }) {
+  return (
+    <a href={"/" + ME_HASH} aria-label={`내 보관함${count ? ` (관심 상품 ${count}개)` : ""}`} aria-current={current ? "page" : undefined}
+      className={`hidden items-center gap-1 rounded-lg p-2 text-xs sm:flex ${current ? "bg-ink text-white" : "hover:bg-stone-100"}`}>
+      <UserRound size={17} aria-hidden />
+      {count > 0 && <span className={`rounded-full px-1.5 text-[10px] font-bold ${current ? "bg-white text-ink" : "bg-ink text-white"}`}>{count}</span>}
+    </a>
+  );
+}
 
 export function SiteNav({ current }: { current: NavKey }) {
   return (
@@ -37,7 +51,7 @@ export function MobileTabBar({ current }: { current: NavKey }) {
   return (
     <nav aria-label="주요 메뉴" style={{ height: `calc(${MOBILE_TAB_H}px + env(safe-area-inset-bottom))` }}
       className="fixed inset-x-0 bottom-0 z-30 flex border-t border-stone-200 bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
-      {ITEMS.map(({ key, label, href, icon: Icon }) => (
+      {[...ITEMS, ME_ITEM].map(({ key, label, href, icon: Icon }) => (
         <a key={key} href={href} aria-current={key === current ? "page" : undefined}
           className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${key === current
             ? "font-semibold text-accent" : "text-stone-500"}`}>

@@ -141,3 +141,24 @@ export async function sendAnswerFeedback(sessionId: string, body: { rating?: str
   });
   return r.ok;
 }
+
+/** 2026-11-22 '내 보관함' — 관심 상품 + 최근 검색(이 브라우저가 쓴 대화들). 설정 값은 보내지 않는다. */
+export async function fetchShelf(sessions: string[], signal?: AbortSignal): Promise<SavedView> {
+  if (API_MODE === "mock") return { saved: [], recent: [] };
+  const q = new URLSearchParams({ owner: savedOwner(), sessions: sessions.slice(0, 5).join(",") });
+  const r = await fetch(`/api/me?${q}`, { signal });
+  if (!r.ok) throw new Error(`me ${r.status}`);
+  return (await r.json()) as SavedView;
+}
+
+/** '기록 지우기' — 서버의 관심 상품·대화 기록. 장보기·설정은 브라우저에서 따로 지운다. */
+export async function forgetShelf(sessions: string[]): Promise<boolean> {
+  if (API_MODE === "mock") return true;
+  const r = await fetch("/api/me/forget", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ owner: savedOwner(), sessions: sessions.slice(0, 20) }),
+  });
+  if (!r.ok) return false;
+  return Boolean(((await r.json()) as { ok?: boolean }).ok);
+}
