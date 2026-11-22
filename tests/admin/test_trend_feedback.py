@@ -188,3 +188,15 @@ def test_improvement_log(app_client, env):
     assert app_client.post(f"/admin/api/trend-feedback/improvements/{r['id']}/result", json={"result": "유지"},
                            headers=H).json()["ok"]
     assert app_client.get("/admin/api/trend-feedback", headers=H).json()["improvements"][0]["result"] == "유지"
+
+
+def test_rating_buttons_bad_left_good_right_2026_11_22():
+    """사용자 결정(11-22 22:10): 글 끝 평가 버튼은 왼쪽 나쁨 → 보통 → 오른쪽 좋음. 저장 값(bad/ok/good)은 그대로."""
+    from app.services.trend_posts.render import feedback_block
+
+    class _P:
+        status = "approved"
+        id = "p1"
+
+    html = feedback_block(_P())  # type: ignore[arg-type]
+    assert html.index('data-r="bad"') < html.index('data-r="ok"') < html.index('data-r="good"')

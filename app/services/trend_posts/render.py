@@ -296,8 +296,10 @@ def feedback_block(post: Post) -> str:
     if post.status != "approved":
         return ""
     e = escape
-    rate = "".join(f'<button type=button class=fbr data-r="{k}" aria-pressed=false>{icon} {e(v)}</button>'
-                   for (k, v), icon in zip(fb.RATINGS.items(), ("🙂", "😐", "🙁")))
+    # 2026-11-22 사용자 결정: 왼쪽 나쁨 → 오른쪽 좋음 (저장 값·집계 순서는 그대로)
+    icons = {"bad": "🙁", "ok": "😐", "good": "🙂"}
+    rate = "".join(f'<button type=button class=fbr data-r="{k}" aria-pressed=false>{icons[k]} {e(fb.RATINGS[k])}</button>'
+                   for k in ("bad", "ok", "good"))
     neg = "".join(f'<button type=button class=fbc data-c="{k}" aria-pressed=false>{e(v)}</button>' for k, v in fb.NEG_REASONS.items())
     pos = "".join(f'<button type=button class=fbc data-c="{k}" aria-pressed=false>{e(v)}</button>' for k, v in fb.POS_REASONS.items())
     url = "/api/trends/posts/" + quote(post.id) + "/feedback"
