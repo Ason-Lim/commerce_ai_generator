@@ -15,6 +15,8 @@ YESTERDAY="$(date -v-1d +%F 2>/dev/null || date -d yesterday +%F)"
   if [ -f "$BACKFILL" ] && [ ! -f "$RANK_DIR/food_$YESTERDAY.csv" ]; then
     echo "-- 어제($YESTERDAY) 하루 순위 받기"; "$PY" "$BACKFILL" --daily || echo "-- 하루 순위 받기 실패 (있는 자료로 계속)"
   fi
+  # 2026-11-22 (3-C): ③칸 '오늘의 생활' — 오늘 날씨를 한 번 받아 var/weather/ 에 (실패해도 계속, ③은 레시피 카드로)
+  "$PY" scripts/fetch_weather.py || echo "-- 날씨 받기 실패 (③칸은 레시피 카드)"
   "$PY" scripts/update_trend_examples.py
   # 2026-11-22: 올리기 전에 예시를 실제로 검색해 보고 엉뚱한 결과·메인에 맞지 않는 예시는 다음 후보로 (uv 필요)
   UV="$(command -v uv || echo "$HOME/.local/bin/uv")"

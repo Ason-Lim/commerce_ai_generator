@@ -3,6 +3,8 @@
 data/*
 !data/query_synonyms.csv
 !data/event_calendar.csv
+# 2026-11-22: 태그 규칙표 — data/* 에 걸려 PR #61 에 들어가지 못했다 (운영 맥에도 없음 → 홈 카테고리 탭이 빔)
+!data/keyword_tags.csv
 
 # Python
 __pycache__/

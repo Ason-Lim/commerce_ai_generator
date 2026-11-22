@@ -5,9 +5,11 @@
 
 순서 (scripts/run_trend_examples.sh 가 update_trend_examples.py 다음에 실행):
   1. frontend/src/data/trend_examples_candidates_<오늘>.json (칸마다 후보 6개, 고른 순서)을 읽는다.
-  2. 칸마다 후보를 차례로 실제 대화와 같은 검색(collect)에 넣고 규칙 검사:
+  2. 칸마다 후보를 차례로 실제 대화와 같은 검색(collect)에 넣고 규칙 검사 (앞 칸에서 고른 키워드는 건너뜀):
      - 상품이 2개 이상 나옴 · 검색어가 키워드와 맞음(엉뚱한 말로 찾지 않음) · '비슷한 말'로 고쳐 찾지 않음
      - 고른 상품 절반 이상이 상품명에 키워드(핵심말)를 가짐 · 술 아님 · 식품 아닌 분류 없음
+     - 레시피 카드(kind=recipe, 2026-11-22 3-C): 재료 → 레시피 서비스(food_get_recipe 와 같은 get_recipe)로 실제 요리
+       이름을 찾고, 그 이름으로 다시 열어 레시피 한 장 + 재료 2개 이상이면 통과. 질문은 '<요리> 레시피 알려줘'로 바꿔 씀.
   3. EXAMPLES_AI_REVIEW (2026-11-22 사용자 결정: 기본 켬, off 로 끔) — Claude 가 '메인 화면 예시로 적절한가'를 한 번 더 봄 (질문·키워드·상품명만 보냄, 고객 문장 없음).
      실패·키 없음이면 규칙 결과만 씀.
   4. 통과한 예시로 trend_examples_<오늘>.json 을 다시 쓴다 (3개 미만이면 원래 파일 그대로 두고 경고).
@@ -97,6 +99,61 @@ def ai_review(item: dict, got: dict) -> str | None:
         return None
 
 
+MIN_INGREDIENTS = 2   # 레시피 카드 통과 기준 (사용자 11-22: 누르면 레시피 답 + 재료 2개 이상)
+_RESOLVER = None
+
+
+def _resolver():
+    global _RESOLVER
+    if _RESOLVER is None:
+        from app.api.chat_routes import build_default_service
+
+        _RESOLVER = build_default_service().recipe.resolver
+    return _RESOLVER
+
+
+def recipe_card(dish: str, resolver) -> dict | None:
+    """요리 이름이 레시피 한 장으로 바로 열리면 {title, ingredients}, 아니면 None (후보 고르기·빈 결과는 실패)."""
+    from app.domain.commerce.requests import RecipeRequest
+    from app.services.commerce.recipes import get_recipe
+
+    res = get_recipe(RecipeRequest(dish_name=dish), resolver=resolver)
+    if res.status != "ok" or not res.items:
+        return None
+    item = res.items[0]
+    return {"title": item.title, "ingredients": [i.name for i in item.ingredients]}
+
+
+def resolve_recipe(item: dict, resolver) -> tuple[dict | None, list[str]]:
+    """재료 키워드(item['ingredient']) → 실제 요리 이름 → 그 이름으로 다시 열어 재료 수 검사.
+    통과하면 (질문을 '<요리> 레시피 알려줘'로 바꾼 카드, []), 아니면 (None, 문제)."""
+    from app.domain.commerce.requests import RecipeRequest
+    from app.services.commerce.recipes import get_recipe
+    from app.services.trends import home_cards
+
+    ing = item.get("ingredient") or item["keyword"]
+    res = get_recipe(RecipeRequest(dish_name=ing), resolver=resolver)
+    if res.status == "ok" and res.items:
+        dishes = [res.items[0].title]
+    elif res.status == "needs_followup" and res.followup:
+        dishes = [o["label"] for o in res.followup.options][:4]
+    else:
+        return None, [f"레시피 없음 ('{ing}')"]
+    problems = []
+    for dish in dishes:
+        card = recipe_card(dish, resolver)     # 누르면 실제로 나갈 질문의 요리 이름으로 다시 연다
+        if card is None:
+            problems.append(f"'{dish}' 바로 안 열림")
+            continue
+        if len(card["ingredients"]) < MIN_INGREDIENTS:
+            problems.append(f"'{dish}' 재료 {len(card['ingredients'])}개")
+            continue
+        out = dict(item, keyword=dish, question=home_cards.recipe_question(dish),
+                   note=f"{item.get('note') or ''} · {ing}".strip(" ·"), ingredients=card["ingredients"][:6])
+        return out, []
+    return None, problems or ["레시피 없음"]
+
+
 def search(question: str):
     from app.domain.commerce.requests import SearchRequest
     from app.services.chat.service import default_shopping
@@ -129,9 +186,31 @@ def main(argv: list[str]) -> int:
     _bind()
     log = [f"# 홈 예시 검증 {today}", "", "| 칸 | 후보 | 결과 | 검색어 | 고른 상품 |", "|---|---|---|---|---|"]
     final = []
+    used: set[str] = set()       # 칸 사이 같은 키워드·요리 금지 (홈 4장이 서로 달라야 함)
     for cat, items in candidates.items():
         chosen = None
         for item in items:
+            if item["keyword"] in used:
+                continue
+            if item.get("kind") == "recipe":
+                try:
+                    card, problems = resolve_recipe(item, _resolver())
+                except Exception as e:  # noqa: BLE001
+                    log.append(f"| {cat} | {item['keyword']} | 오류 {type(e).__name__} | | |")
+                    continue
+                if card and card["keyword"] in used:
+                    card, problems = None, [f"'{card['keyword']}' 이미 다른 칸"]
+                if card and (note := ai_review(card, {"picked": {"picks": [{"title": t} for t in card["ingredients"]]}})):
+                    problems = [note]
+                    card = None
+                log.append(f"| {cat} | {item['keyword']} | {'통과 → ' + card['keyword'] if card else ' · '.join(problems)} | "
+                           f"레시피 | {' / '.join((card or {}).get('ingredients', [])[:3])} |")
+                print(f"  {cat}: {item['keyword']} → {'통과 ' + card['keyword'] if card else ', '.join(problems)}",
+                      file=sys.stderr)
+                if card:
+                    chosen = {k: v for k, v in card.items() if k != "ingredients"}
+                    break
+                continue
             try:
                 got = search(item["question"])
             except Exception as e:  # noqa: BLE001
@@ -149,6 +228,7 @@ def main(argv: list[str]) -> int:
                 chosen = item
                 break
         if chosen:
+            used.add(chosen["keyword"])
             final.append(chosen)
     log += ["", f"통과 {len(final)}칸: " + ", ".join(f"{i['category']}={i['keyword']}" for i in final)]
     logs = ROOT / "var" / "logs"

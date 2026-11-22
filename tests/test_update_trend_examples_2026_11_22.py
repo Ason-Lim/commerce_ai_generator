@@ -25,7 +25,8 @@ def _ranks(folder: Path, rows):
 
 def _run(tmp_path, env_extra=None):
     env = {"NAVER_DAILY_RANK_DIR": str(tmp_path / "rk"), "TREND_EXAMPLES_DIR": str(tmp_path / "ex"),
-           "GOOGLE_DATA_DIR": str(tmp_path / "none"), "PATH": "/usr/bin:/bin", **(env_extra or {})}
+           "GOOGLE_DATA_DIR": str(tmp_path / "none"), "TREND_SURGE_DIR": str(tmp_path / "none"),
+           "WEATHER_DIR": str(tmp_path / "none"), "PATH": "/usr/bin:/bin", **(env_extra or {})}
     out = subprocess.run([sys.executable, str(SCRIPT), "--dry-run"], capture_output=True, text=True, env=env, check=True)
     return {r["category"]: r["keyword"] for r in json.loads(out.stdout)}, out.stderr
 
@@ -38,7 +39,7 @@ def test_falling_event_keyword_is_rested(tmp_path):
         ("답례품", lambda b: 200 if b >= 12 else 100),
     ])
     picks, log = _run(tmp_path)
-    assert picks["선물용"] == "답례품"
+    assert picks["지금 오르는"] == "답례품"
     assert "하루 단위" in log
 
 
@@ -51,7 +52,7 @@ def test_recent_example_keyword_is_rotated(tmp_path):
     yesterday = date.today() - timedelta(days=1)
     (ex / f"trend_examples_{yesterday}.json").write_text(json.dumps([{"keyword": "답례품"}]), encoding="utf-8")
     picks, _ = _run(tmp_path)
-    assert picks["선물용"] == "결혼식답례품"
+    assert picks["지금 오르는"] == "결혼식답례품"
 
 
 def test_shop_names_are_skipped(tmp_path):
@@ -61,7 +62,7 @@ def test_shop_names_are_skipped(tmp_path):
     _ranks(tmp_path / "rk", [("명가삼대떡집", lambda b: 400 if b >= 12 else 30),
                              ("답례품", lambda b: 200 if b >= 12 else 100)])
     picks, _ = _run(tmp_path)
-    assert picks.get("선물용") == "답례품" and "명가삼대떡집" not in picks.values()
+    assert picks.get("지금 오르는") == "답례품" and "명가삼대떡집" not in picks.values()
 
 
 def _mod():
