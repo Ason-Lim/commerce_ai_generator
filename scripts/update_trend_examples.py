@@ -163,7 +163,7 @@ CATEGORIES = [
         "햇밤": "햇밤으로 밤밥 지으려면 껍질 쉽게 까는 법도 알려줘",
         "밤": "가을 밤으로 밤조림이나 밤밥 만드는 법 알려줘",
     }, "seafood|cook+season", [
-        "가을 제철 {kw}로 집에서 만들기 좋은 요리랑 필요한 재료 알려줘",
+        "{season} 제철 {kw}로 집에서 만들기 좋은 요리랑 필요한 재료 알려줘",
         "제철 {kw}로 4인분 저녁 메뉴 만들려면 뭐 사야 해?",
     ]),
     ("제철과일", "제철과일", {
@@ -235,6 +235,67 @@ def _kw_tags(kw):
 
 def _rule_hit(rule, have):
     return any(all(t in have for t in alt.split("+")) for alt in rule.split("|"))
+
+
+# 2026-11-22 사용자: '제철 해남절임배추로 4인분 저녁 메뉴…' — 절임배추를 사는 이유는 김장철이기 때문.
+# 행사 준비 기간(태그 규칙표의 시즌 = 행사 달력)에 든 키워드는 그 행사에 맞는 질문으로 묻는다.
+EVENT_QUESTIONS = {
+    "김장 시즌": ["{kw}로 김장하려는데 4인 가족이면 얼마나 사고 양념 재료는 뭐가 필요해?",
+                 "김장용 {kw} 고를 때 뭘 봐야 하고 같이 살 재료 알려줘"],
+    "설날": ["설에 쓸 {kw}, 가족 모임 인원에 맞게 얼마나 사야 해?",
+             "설 명절 {kw} 고르는 법이랑 같이 준비할 것 알려줘"],
+    "추석": ["추석에 쓸 {kw}, 가족 모임 인원에 맞게 얼마나 사야 해?",
+             "추석 명절 {kw} 고르는 법이랑 같이 준비할 것 알려줘"],
+    "동지": ["동지에 {kw}로 만들 음식이랑 필요한 재료 알려줘"],
+    "정월대보름": ["정월대보름에 {kw} 준비하려는데 얼마나 사야 해?"],
+}
+EVENT_GENERIC = "{event} 준비로 {kw} 사려는데 고르는 법이랑 같이 살 것 알려줘"
+SEASON_NAMES = {12: "겨울", 1: "겨울", 2: "겨울", 3: "봄", 4: "봄", 5: "봄", 6: "여름", 7: "여름", 8: "여름"}
+
+
+_SEASON_BY_DAY = {}
+
+
+def _season_on(day):
+    if day not in _SEASON_BY_DAY:
+        try:
+            _SEASON_BY_DAY[day] = _tags.season_events(day)
+        except Exception:  # noqa: BLE001 — 달력이 없으면 시즌 없이
+            _SEASON_BY_DAY[day] = []
+    return _SEASON_BY_DAY[day]
+
+
+def ro(word):
+    """'(으)로' — 받침 있으면 '으로'(ㄹ 받침은 '로'), 영문 단위(kg·g)는 '으로'."""
+    w = (word or "").strip()
+    if not w:
+        return "로"
+    last = w[-1]
+    if "가" <= last <= "힣":
+        jong = (ord(last) - 0xAC00) % 28
+        return "로" if jong in (0, 8) else "으로"
+    return "으로" if w.lower().endswith(("kg", "g")) else "로"
+
+
+def season_word(d=None):
+    return SEASON_NAMES.get((d or date.today()).month, "가을")
+
+
+def question_for(kw, lex, templates, day):
+    """키워드의 예시 질문 — ① 직접 적은 문장 ② 행사 준비 기간이면 그 행사 질문 ③ 칸 기본 틀(계절 말은 오늘 기준)."""
+    if kw in lex:
+        return lex[kw]
+    events = _tags.season_match(kw, _season_on(day))
+    if events:
+        ev = events[0]
+        qs = EVENT_QUESTIONS.get(ev) or []
+        stem = ev.split()[0]
+        qs = [q for q in qs if not (stem in kw and stem + "용" in q)] or qs    # '김장용 김장용생새우' 방지
+        if qs:
+            return qs[day.toordinal() % len(qs)].replace("{kw}로", "{kw}{ro}").format(kw=kw, ro=ro(kw))
+        return EVENT_GENERIC.format(event=ev, kw=kw)
+    t = templates[day.toordinal() % len(templates)].replace("{kw}로", "{kw}{ro}")
+    return t.format(kw=kw, ro=ro(kw), season=season_word(day))
 
 
 def classify(kw):
@@ -315,7 +376,7 @@ def main(dry=False):
                  [c for c in cands if c[4] > 0 and not c[5]],
                  cands]
         score, kw, now, before, rise, falling = max(next(p for p in pools if p))
-        text = lex.get(kw) or templates[latest.toordinal() % len(templates)].format(kw=kw)
+        text = question_for(kw, lex, templates, latest)
         # 2026-11-22: 검증(scripts/verify_trend_examples.py)이 떨어뜨리면 다음 후보로 — 고른 순서대로 6개까지
         ordered = []
         for pool in pools:
@@ -323,7 +384,7 @@ def main(dry=False):
                 if c[1] not in ordered:
                     ordered.append(c[1])
         alternates[cat] = [{"category": cat, "icon": ICONS[cat], "keyword": k,
-                            "question": lex.get(k) or templates[latest.toordinal() % len(templates)].format(kw=k)}
+                            "question": question_for(k, lex, templates, latest)}
                            for k in ordered[:6]]
         picks.append({
             "category": cat, "icon": ICONS[cat], "keyword": kw, "question": text,

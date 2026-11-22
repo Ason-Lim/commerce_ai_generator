@@ -62,3 +62,31 @@ def test_shop_names_are_skipped(tmp_path):
                              ("답례품", lambda b: 200 if b >= 12 else 100)])
     picks, _ = _run(tmp_path)
     assert picks.get("선물용") == "답례품" and "명가삼대떡집" not in picks.values()
+
+
+def _mod():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("ute_q", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def test_kimjang_items_get_kimjang_questions():
+    """사용자 11-22 23:19: '제철 해남절임배추로 4인분 저녁 메뉴…' — 절임배추는 김장철이라 사는 것."""
+    m = _mod()
+    cook = next(c for c in m.CATEGORIES if c[0] == "제철요리")
+    for day in (date(2026, 11, 22), date(2026, 11, 23)):
+        q = m.question_for("해남절임배추", {}, cook[4], day)
+        assert "김장" in q and "저녁 메뉴" not in q
+    assert m.question_for("절임배추20kg", {}, cook[4], date(2026, 11, 22)).startswith("절임배추20kg으로 김장")
+    assert "김장용 김장용" not in m.question_for("김장용생새우", {}, cook[4], date(2026, 11, 23))
+    # 김장 시즌 밖이면 칸 기본 질문, 계절 말은 날짜 기준
+    q = m.question_for("해남절임배추", {}, cook[4], date(2026, 3, 2))
+    assert "김장" not in q and ("봄 제철" in q or "저녁 메뉴" in q)
+
+
+def test_particle_ro():
+    m = _mod()
+    assert [m.ro(w) for w in ("대방어", "전복", "쌀20kg", "귤", "", "물")] == ["로", "으로", "으로", "로", "로", "로"]
