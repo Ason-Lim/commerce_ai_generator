@@ -1458,9 +1458,36 @@ def shopping_terms(text: str, extractor: Callable | None = None) -> tuple[str, l
             word = ((extractor(text) or {}).get("keyword") or "").strip()
         except Exception:  # noqa: BLE001
             word = ""
-        if 2 <= len(word) <= 30 and re.sub(r"\s+", "", word) in re.sub(r"\s+", "", text):
+        # 2026-11-22: '돌잔치 하객 답례품으로 … 먹거리 추천해 줘' 에서 AI 가 '먹거리'를 뽑아 막걸리가 나왔다 — 두루뭉술한 말은 버린다
+        if (2 <= len(word) <= 30 and re.sub(r"\s+", "", word) in re.sub(r"\s+", "", text)
+                and word not in GENERIC_WORDS):
             return word, [word]
-    return tokens[0], tokens          # a sentence is never sent whole: its first product-like word
+    picked = _known_food_word(tokens)
+    if picked:                        # 2026-11-22: 식품 키워드 순위에 있는 낱말을 먼저 ('답례품', '해남절임배추')
+        return picked, [picked] + [t for t in tokens if t != picked]
+    rest = [t for t in tokens if t not in GENERIC_WORDS]
+    return (rest or tokens)[0], tokens   # a sentence is never sent whole: its first product-like word
+
+
+# 2026-11-22: 상품어로 쓰지 않는 두루뭉술한 말 (AI 가 뽑아도 버림)
+GENERIC_WORDS = frozenset({"먹거리", "먹을거리", "음식", "식품", "제품", "상품", "물건", "간식거리", "메뉴", "요리", "재료",
+                           "제철", "저녁", "아침", "점심", "간식", "선물", "답례", "하객", "사람"})
+
+
+def _known_food_word(tokens: list[str]) -> str | None:
+    """문장 낱말 중 식품 키워드 낱말 사전(coupang_gaps.vocab — 네이버 식품 키워드 순위)에 있는 첫 말 (조사 뗌)."""
+    try:
+        from app.services.commerce import coupang_gaps
+
+        words = coupang_gaps.vocab()
+    except Exception:  # noqa: BLE001
+        return None
+    for t in tokens:
+        base = _PARTICLE.sub("", t) if len(t) > 2 else t
+        for w in (t, base, re.sub(r"(?:으로|로)$", "", t) if len(t) > 2 else t):
+            if w in words and w not in GENERIC_WORDS:
+                return w
+    return None
 
 
 # 2026-11-21: 앞서 찾은 상품에 붙여 다시 찾는 꾸밈말 — 이 말만 했을 때만 ('엑스트라버진', '국산은요?', '냉동으로').
