@@ -211,3 +211,14 @@ def test_typo_name_searches_similar_word(sqlite_db):
     assert shop.calls[:2] == ["브레타 치즈", "부라타 치즈"]
     assert "벨지오이오조 부라타 치즈 113g" in titles(res)
     assert "비슷한 말 **'부라타'**(으)로 보고 찾았어요" in md(res)
+
+
+def test_generic_word_from_ai_is_ignored(monkeypatch):
+    """2026-11-22: 홈 예시 '돌잔치 하객 답례품으로 … 먹거리 추천해 줘' — AI 가 '먹거리'를 뽑았다."""
+    from app.services.chat import service as S
+    from app.services.commerce import coupang_gaps
+
+    monkeypatch.setattr(coupang_gaps, "vocab", lambda: {"답례품", "해남절임배추"})
+    text = "돌잔치 하객 답례품으로 1만 원대에 받는 사람이 좋아할 만한 먹거리 추천해 줘"
+    assert S.shopping_terms(text, lambda t: {"keyword": "먹거리"})[0] == "답례품"
+    assert S.shopping_terms("제철 해남절임배추로 4인분 저녁 메뉴 만들려면 뭐 사야 해?")[0] == "해남절임배추"

@@ -267,6 +267,7 @@ def main(dry=False):
     gterms = load_google_terms()
 
     picks = []
+    alternates = {}
     for i, (cat, tag, lex, pat, templates) in enumerate(CATEGORIES):
         cands = []
         for kw in data[latest]:
@@ -292,6 +293,15 @@ def main(dry=False):
                  cands]
         score, kw, now, before, rise, falling = max(next(p for p in pools if p))
         text = lex.get(kw) or templates[latest.toordinal() % len(templates)].format(kw=kw)
+        # 2026-11-22: 검증(scripts/verify_trend_examples.py)이 떨어뜨리면 다음 후보로 — 고른 순서대로 6개까지
+        ordered = []
+        for pool in pools:
+            for c in sorted(pool, reverse=True):
+                if c[1] not in ordered:
+                    ordered.append(c[1])
+        alternates[cat] = [{"category": cat, "icon": ICONS[cat], "keyword": k,
+                            "question": lex.get(k) or templates[latest.toordinal() % len(templates)].format(kw=k)}
+                           for k in ordered[:6]]
         picks.append({
             "category": cat, "icon": ICONS[cat], "keyword": kw, "question": text,
         })
@@ -308,6 +318,8 @@ def main(dry=False):
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
         fh.write(txt + "\n")
     os.replace(tmp, OUT)
+    (OUT_DIR / f"trend_examples_candidates_{date.today().isoformat()}.json").write_text(
+        json.dumps(alternates, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] 저장: {OUT} (순위 데이터 {latest}, {len(picks)}개)")
 
 if __name__ == "__main__":

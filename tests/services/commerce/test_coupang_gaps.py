@@ -138,3 +138,11 @@ def test_vocab_reads_rank_files(tmp_path, monkeypatch):
     monkeypatch.setenv("NAVER_DAILY_RANK_DIR", str(tmp_path))
     monkeypatch.setattr(cg, "_vocab_cache", None)
     assert {"부라타치즈", "홍시"} <= cg.vocab()
+
+
+def test_similar_word_keeps_consonants_and_never_alcohol():
+    """2026-11-22: '먹거리' → '막걸리'(술)로 고쳐 찾았다."""
+    words = {"막걸리", "부라타", "블루베리"}
+    assert cg.similar_word("먹거리", words) is None
+    assert cg.similar_word("브레타", words) == "부라타"
+    assert cg.similar_word("막걸러", {"막걸리"}) is None      # 술 이름으로는 고치지 않음

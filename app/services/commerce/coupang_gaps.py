@@ -113,6 +113,11 @@ def jamo(word: str) -> str:
     return "".join(out)
 
 
+def _consonants(word: str) -> str:
+    """초성·종성만 (모음 뺌) — '부라타' → 'ㅂㄹㅌ'."""
+    return "".join(ch for ch in jamo(word) if ch not in _JUNG)
+
+
 def jamo_distance(a: str, b: str) -> int:
     x, y = jamo(a), jamo(b)
     prev = list(range(len(y) + 1))
@@ -161,9 +166,14 @@ def similar_word(word: str, words: set[str] | None = None) -> str | None:
     words = vocab() if words is None else words
     if word in words:
         return None
+    from app.domain.commerce import policies
+
     best: list[tuple[int, str]] = []
+    skeleton = _consonants(word)
     for w in words:
-        if abs(len(w) - len(word)) > 1 or w[0] != word[0] and jamo(w)[0] != jamo(word)[0]:
+        # 2026-11-22: '먹거리' → '막걸리'(술)로 고쳐 찾았다 — 자음 뼈대가 같고 모음만 다른 말(브레타→부라타, 블루배리→블루베리)만,
+        # 술 이름으로는 고치지 않는다
+        if len(w) != len(word) or _consonants(w) != skeleton or policies.is_alcohol_request(w):
             continue
         d = jamo_distance(word, w)
         if d <= 2:
