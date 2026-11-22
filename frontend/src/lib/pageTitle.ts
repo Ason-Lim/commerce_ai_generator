@@ -17,6 +17,8 @@ const STAGE_TITLES: Record<string, string> = {
   recipe_products: "Ingredient Shopping",
   recipe_products_none: "Ingredient Shopping",
   shopping: "Product Picks",
+  shopping_followup: "Product Picks",   // 2026-11-22 대화 이어 묻기
+  shopping_budget: "Product Picks",
 };
 
 export interface TitleState {

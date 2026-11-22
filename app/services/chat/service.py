@@ -267,6 +267,13 @@ class ChatService:
         pending = state.get("pending") or {}
         if text and not answers and pending.get("kind") == "budget" and is_budget_answer(text):
             return self._budget_turn(sid, text, state, revision, persist, pending)
+        # 2026-11-22 대화 이어 묻기 1단계: 방금 추천에 이어 '싼 순으로'·'로켓배송만'·'2kg으로'·'더 찾아보기'·'처음 조건으로'
+        if text and not answers:
+            from app.services.chat import followup as fu_mod
+
+            fu_intent = fu_mod.parse(text)
+            if fu_intent and fu_mod.base_set(state):
+                return self._followup_turn(sid, text, fu_intent, state, revision, persist)
 
         # 2026-11-16 (2단계): '요즘 대방어 왜 유행해?' — 게시된 트렌드 글만 근거로 답하고 원문 보기 카드
         if text and not answers:
@@ -702,7 +709,7 @@ class ChatService:
             log.warning("chat state not saved")
 
     def _result_blocks(self, sid, query, picked, budget, found, rechecked=False, frozen: list | None = None,
-                       more: list | None = None, more_as: list | None = None):
+                       more: list | None = None, more_as: list | None = None, more_few: bool = True):
         picks, others = picked["picks"], picked["others"]
         go = lambda c: f"/go/{sid}/k/{c['key']}"  # noqa: E731
         head = (f"예산 **{budget['label']}** 에 맞춰 앞서 찾은 '{query}' 후보 {found}개를 다시 견줬어요."
@@ -747,8 +754,9 @@ class ChatService:
         if more:                                # 2026-11-22: 후보가 적어 바꿔 쓸 말로 더 찾은 상품 (추천순 아님)
             said = "·".join(f"'{a}'" for a in (more_as or []))
             blocks.append(B.product_list([_public(c, go=go(c)) for c in more], title=f"다른 말로 더 찾은 상품 {len(more)}개",
-                                         note=f"후보가 많지 않아 {said}(으)로 더 찾았어요. 추천 순서가 아니고, "
-                                              "위 후보와 같은 기준으로 견주지 않았어요."))
+                                         note=(f"후보가 많지 않아 {said}(으)로 더 찾았어요. " if more_few else
+                                               f"{said}(으)로 더 찾은 상품이에요. ") +
+                                              "추천 순서가 아니고, 위 후보와 같은 기준으로 견주지 않았어요."))
         # 2026-11-09 A안: 일반 상품 추천에도 목록 끝 비교 카드 (같은 검색 후보 2개 이상)
         if len(picks) + len(others) >= 2:
             from app.services.chat import product_compare
@@ -993,7 +1001,8 @@ class ChatService:
             log.warning("chat state not saved for variety turn")
         return self._response(sid, "shopping", blocks)
 
-    def _shopping_turn(self, sid, text, state, revision, persist, memo, lead_blocks: list | None = None):
+    def _shopping_turn(self, sid, text, state, revision, persist, memo, lead_blocks: list | None = None,
+                       changed: dict | None = None):
         # 2026-11-02 (3단계): 검색·선택은 공통 서비스(services/commerce/search.collect)가 하고, 여기서는 화면 블록·상태만 만든다.
         # collect 는 이전 이 함수와 같은 함수를 같은 순서로 부른다 — 예산은 말에서 읽어 검색어에서 빼고(2026-11-01),
         # 문장은 상품어로 검색해 관련 상품만 남기고(2026-10-31), 업체 제공 상품(2026-11-02)·쇼핑커넥트 등록부(주류 질문 제외)를
@@ -1067,6 +1076,11 @@ class ChatService:
                 pending = {"kind": "budget", "query": label}
                 blocks.append(B.text("💬 예산이 있으면 편하게 말씀해 주세요. 예: **3만원 이하**, **5만원 정도**, **10만원대** — "
                                      "찾은 후보 안에서 바로 다시 골라 드릴게요."))
+            # 2026-11-22 대화 이어 묻기: 조건 바꾸기 칩 + 이어 물을 때 쓸 정보 (어떤 말로 이미 찾았는지)
+            followup_info = self._followup_info(label, query, got, changed, state)
+            chips = self._followup_chips(all_cards, followup_info, state, changed=bool(changed))
+            if chips:
+                blocks.append(B.chips(chips))
         elif got["error"] is not None:
             # 2026-11-16 R3 ④: 쿠팡을 불러오지 못하면 DB 예비 경로(과거 가격) 대신 안내 + 네이버쇼핑 검색 링크 + 다시 찾기
             if connect:
@@ -1101,12 +1115,181 @@ class ChatService:
         elif len(blocks) == len(lead_blocks or []):
             blocks.append(B.text(f"'{query}' 조건에 맞는 상품을 찾지 못했어요."))
         state = dict(state, mode="shopping", last_items=items, pending=pending)
+        if picked:
+            state["followup"] = followup_info
         state = _log_turn(state, text, "shopping", path=got.get("recommendation_path"))
         try:
             self._commit(sid, state, revision, [], persist)
         except Exception:  # noqa: BLE001 — results are still shown; /go may not resolve
             log.warning("chat state not saved for shopping turn")
         return self._response(sid, "shopping", blocks)
+
+    # ── 2026-11-22 대화 이어 묻기 1단계 (app/services/chat/followup.py) ─────────────────
+    @staticmethod
+    def _followup_info(label, query, got, changed, state) -> dict:
+        used = [query] + ([got["searched_as"]] if got.get("searched_as") else []) + list(got.get("more_as") or [])
+        prev = state.get("followup") or {}
+        if changed:                     # 조건을 바꿔 이어 찾은 묶음 — 앞서 써 본 말도 이어 받는다 ('더 찾아보기' 중복 방지)
+            used = list(prev.get("used") or []) + used
+        origin = (changed or {}).get("origin") or label
+        origin_search = (changed or {}).get("origin_search") or (prev.get("origin_search") if changed else None) or query
+        return {"query": label, "search": got.get("searched_as") or query, "used": list(dict.fromkeys(used)),
+                "origin": origin, "origin_search": origin_search}
+
+    @staticmethod
+    def _more_left(info: dict) -> list[str]:
+        from app.services.commerce.search import retry_queries
+
+        used = set(info.get("used") or [])
+        alts = retry_queries(info.get("search") or info.get("query") or "")
+        if info.get("origin_search") and info.get("origin_search") != info.get("search"):
+            alts += retry_queries(info["origin_search"])
+        return [a for a in dict.fromkeys(alts) if a not in used]
+
+    def _followup_chips(self, cards, info, state, *, changed: bool) -> list[str]:
+        from app.services.chat import followup as fu
+
+        searches_left = int(state.get("followup_searches") or 0) < fu.search_max()
+        return fu.chips_after(cards, more_left=searches_left and bool(self._more_left(info)), changed=changed)
+
+    def _followup_turn(self, sid, text, intent, state, revision, persist):
+        """보여 준 후보로 보기 바꾸기(새 검색 없음) · 양·수량·선물로 새로 찾기 · 더 찾아보기 · 처음 조건으로."""
+        from app.services.chat import followup as fu
+
+        base = fu.base_set(state)
+        info = dict(state.get("followup") or {})
+        label = base.get("query") or ""
+        info.setdefault("query", label)
+        info.setdefault("search", label)
+        info.setdefault("origin", label)
+        info.setdefault("origin_search", info["search"])
+        kind = intent["kind"]
+        state = dict(state, pending=None)
+        if kind in fu.RESEARCH_KINDS:
+            n = int(state.get("followup_searches") or 0)
+            if n >= fu.search_max():
+                blocks = [B.notice(f"이 대화에서는 쿠팡을 다시 찾는 횟수({fu.search_max()}번)를 다 썼어요. 새 대화에서 "
+                                   f"원하는 조건을 붙여 찾아 주세요. 예: '{label} 2kg'", "warn")]
+                cps = coupang_search_block(sid, info["search"])
+                if cps:
+                    blocks += [B.notice("**광고** · " + COUPANG_DISCLOSURE), cps]
+                return self._followup_done(sid, text, state, revision, persist, blocks)
+            state["followup_searches"] = n + 1
+            if kind == "more":
+                return self._more_turn(sid, text, base, info, state, revision, persist)
+            new_text = fu.research_text(kind, info["search"], intent.get("value"))
+            lead = [B.text(f"앞서 찾은 '{label}'에서 조건을 **{fu.describe(intent)}**(으)로 바꿔 **{new_text}** 로 다시 찾았어요.")]
+            return self._shopping_turn(sid, new_text, state, revision, persist, {}, lead_blocks=lead,
+                                       changed={"origin": info["origin"], "origin_search": info["origin_search"]})
+        if kind == "reset":
+            return self._reset_turn(sid, text, info, state, revision, persist)
+        cards = fu.compared(list(base.get("cards") or []))
+        desc = fu.describe(intent)
+        go = lambda c: f"/go/{sid}/k/{c['key']}"  # noqa: E731
+        blocks: list = []
+        if kind == "sort":
+            view, unknown = fu.sort_view(cards, intent["by"])
+            what = "100g당 가격" if intent["by"] == "per100g" else "가격(배송비 포함 확인된 값)"
+            note = (f"추천 순서가 아니에요. 앞서 보여 드린 '{label}' 후보 {len(cards)}개를 {what}이 낮은 순으로 늘어놓았어요. "
+                    "가격은 확인한 시각 기준이라 판매처에서 바뀌었을 수 있어요.")
+            if unknown:
+                note += f" 값을 계산하지 못한 {unknown}개는 맨 뒤에 두었어요."
+            blocks += [B.text(f"앞서 찾은 '{label}' 후보를 **{desc}** 으로 보여 드려요. 새로 찾지는 않았어요."),
+                       B.product_list([_public(c, go=go(c)) for c in view], title=f"{desc} 보기 · 추천순 아님", note=note)]
+        else:
+            view = fu.filter_view(cards, intent["field"]) if kind == "filter" else fu.exclude_view(cards, intent["word"])
+            if not view:
+                why = (f"{desc.replace(' 상품만', '')}가 있는 상품이 없어요" if kind == "filter"
+                       else f"모두 상품명에 '{intent['word']}'가 들어 있어요")
+                blocks.append(B.text(f"앞서 보여 드린 '{label}' 후보 {len(cards)}개 중에는 {why}. "
+                                     "'더 찾아보기'로 다른 말로 찾아보거나 조건을 바꿔 말씀해 주세요."))
+            elif len(view) == len(cards):
+                blocks.append(B.text(f"앞서 보여 드린 '{label}' 후보 {len(cards)}개가 모두 이 조건에 맞아요 "
+                                     f"({desc}). 추천 순서 그대로예요."))
+            else:
+                blocks += [B.text(f"앞서 찾은 '{label}' 후보 중 **{desc}** 보여 드려요. 새로 찾지는 않았어요."),
+                           B.product_list([_public(c, go=go(c)) for c in view], title=f"{desc} {len(view)}개 · 추천 순서 그대로",
+                                          note=("배송 표시는 검색 결과 기준이에요. 받는 날은 판매처에서 확인해 주세요."
+                                                if kind == "filter" else f"상품명에 '{intent['word']}'가 있는 후보를 뺐어요."))]
+        blocks.append(B.notice(CHECK_AT_MALL))
+        chips = ["처음 조건으로"] + [c for c in self._followup_chips(base.get("cards") or [], info, state, changed=False)
+                                    if fu.parse(c) != intent]       # 방금 고른 조건 칩은 빼고
+        blocks.append(B.chips(list(dict.fromkeys(chips))))
+        state = dict(state, followup=info)
+        return self._followup_done(sid, text, state, revision, persist, blocks)
+
+    def _more_turn(self, sid, text, base, info, state, revision, persist):
+        from app.services.commerce.search import _title_key, fetch_cards, more_note, search_more
+
+        label = base.get("query") or ""
+        alts = self._more_left(info)
+        blocks: list = []
+        if alts:
+            seen = {c.get("key") for c in base.get("cards") or []} | {_title_key(c.get("title")) for c in base.get("cards") or []}
+            _q, terms = shopping_terms(info["search"], self.keyword_extractor)
+            fetch = lambda q: fetch_cards(self.shopping, q, query=info["search"], priority=None, session_id=sid)  # noqa: E731
+            more, more_as = search_more(info["search"], terms, alts, fetch, seen, text=label)
+            info = dict(info, used=list(dict.fromkeys(list(info.get("used") or []) + alts[:2])))
+        else:
+            more, more_as = [], []
+        if more:
+            start = max([c.get("rank") or 0 for c in base.get("cards") or []] or [0])
+            more = [dict(c, rank=start + n, why=[{"text": more_note(c["more_as"]), "basis": "calc"}])
+                    for n, c in enumerate(more, 1)]
+            said = "·".join(f"'{a}'" for a in more_as)
+            blocks += [B.text(f"'{label}'를 {said}(으)로 더 찾아봤어요."),
+                       B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in more],
+                                      title=f"다른 말로 더 찾은 상품 {len(more)}개",
+                                      note="추천 순서가 아니고, 앞서 보여 드린 후보와 같은 기준으로 견주지 않았어요.")]
+            sets = [dict(s) for s in state.get("seen") or []]
+            for s in sets:
+                if s.get("query") == label:
+                    s["cards"] = list(s.get("cards") or []) + [saved_mod.compact(c) for c in more]
+            state = dict(state, seen=sets)
+        else:
+            tried = "·".join(f"'{a}'" for a in alts[:2])
+            blocks.append(B.text(f"{tried}(으)로도 찾아봤지만 새로 보여 드릴 상품이 없었어요." if alts else
+                                 f"'{label}'를 더 찾아볼 다른 말이 없어요."))
+            cps = coupang_search_block(sid, info["search"])
+            if cps:
+                blocks += [B.notice("**광고** · " + COUPANG_DISCLOSURE), cps]
+        nav = naver_search_block(label, label)
+        if nav:
+            blocks.append(nav)
+        blocks.append(B.notice(CHECK_AT_MALL))
+        blocks.append(B.chips(["처음 조건으로"] + [c for c in self._followup_chips(base.get("cards") or [], info, state,
+                                                                               changed=False) if c != "더 찾아보기"]))
+        return self._followup_done(sid, text, dict(state, followup=info), revision, persist, blocks)
+
+    def _reset_turn(self, sid, text, info, state, revision, persist):
+        origin = info.get("origin") or info.get("query")
+        set_ = next((s for s in reversed(state.get("seen") or []) if s.get("query") == origin), None)
+        if not set_:
+            return self._shopping_turn(sid, origin, state, revision, persist, {})
+        from app.services.chat import followup as fu
+
+        cards = list(set_.get("cards") or [])
+        main = fu.compared(cards)
+        picked = {"picks": [c for c in main if c.get("role")], "others": [c for c in main if not c.get("role")],
+                  "budget_miss": False}
+        blocks = [B.text(f"처음 조건으로 돌아왔어요. 새로 찾지 않고 처음 찾은 **{origin}** 후보를 추천 순서대로 보여 드려요.")]
+        blocks += self._result_blocks(sid, origin, picked, None, len(main),
+                                      frozen=[c for c in cards if c.get("frozen")],
+                                      more=[c for c in cards if c.get("more_as")],
+                                      more_as=list(dict.fromkeys(c["more_as"] for c in cards if c.get("more_as"))),
+                                      more_few=False)
+        info = {"query": origin, "search": info.get("origin_search") or origin, "used": info.get("used") or [],
+                "origin": origin, "origin_search": info.get("origin_search") or origin}
+        chips = self._followup_chips(cards, info, state, changed=False)
+        if chips:
+            blocks.append(B.chips(chips))
+        state = saved_mod.push_seen(dict(state, followup=info, mode="shopping"), origin, cards, set_.get("budget"))
+        return self._followup_done(sid, text, state, revision, persist, blocks)
+
+    def _followup_done(self, sid, text, state, revision, persist, blocks):
+        state = _log_turn(dict(state, mode="shopping"), text, "shopping_followup")
+        self._try_commit(sid, state, revision, persist)
+        return self._response(sid, "shopping_followup", blocks)
 
     @staticmethod
     def _response(sid, stage, blocks):
