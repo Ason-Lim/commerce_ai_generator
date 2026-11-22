@@ -81,3 +81,66 @@ def test_cache_key_and_cost_use_the_routed_model():
     c = LLMClient("x", provider="deepseek", env=ENV, cache="shop_keyword")
     assert f"{c.provider}:{c._model_name()}" == "openai:gpt-5.4-mini"
     assert pricing.price_of("openai:gpt-5.4-mini")["out"] == 4.50 and pricing.price_of("gpt-5.4")["in"] == 2.50
+
+
+# 2026-11-22 검토 의견 2: 호출 경로 전수 확인 ────────────────────────────────
+
+def test_customer_task_without_openai_or_claude_key_is_not_sent_to_deepseek():
+    import pytest
+
+    from app.services.nlu.llm_client import BLOCKED, LLMClient, LLMConfigError
+
+    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m"}            # OpenAI·Claude 키 없음
+    c = LLMClient("s", provider="deepseek", env=env, task="shop_keyword",
+                  openai_factory=lambda **kw: (_ for _ in ()).throw(AssertionError("DeepSeek 로 보냄")))
+    assert c.provider == BLOCKED
+    with pytest.raises(LLMConfigError):
+        c.chat_json("사과 추천")
+    internal = LLMClient("s", provider="deepseek", env=env, task="trend_cause")
+    assert internal.provider == "deepseek"                            # 내부 작업은 그대로
+
+
+def test_dish_name_reading_is_a_customer_task():
+    from app.services.nlu.llm_client import CUSTOMER_FAST_TASKS, LLMClient
+
+    assert "recipe_dish_name" in CUSTOMER_FAST_TASKS
+    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m", "OPENAI_API_KEY": "o"}
+    assert LLMClient("s", provider="deepseek", env=env, cache="recipe_dish_name").provider == "openai"
+    assert LLMClient("s", provider="deepseek", env=env, cache="recipe_discover").provider == "deepseek"
+
+
+def test_last_route_records_who_answered():
+    from types import SimpleNamespace
+
+    from app.services.nlu.llm_client import LAST_ROUTE, LLMClient
+
+    def factory(**kw):
+        def create(**req):
+            return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content='{"a": 1}'))], usage=None,
+                                   model=req["model"])
+        return SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+
+    env = {"OPENAI_API_KEY": "o", "DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m"}
+    LLMClient("s", provider="deepseek", env=env, task="food_knowledge", openai_factory=factory).chat_json("딸기")
+    assert LAST_ROUTE.get() == "openai:gpt-5.4"
+
+
+def test_trend_chat_terms_need_two_sessions():
+    import json
+
+    from app.services.trends import surge
+
+    class Db:
+        def read(self):
+            import contextlib
+
+            rows = [{"state_json": json.dumps({"turns": [{"stage": "shopping", "text": t}]})}
+                    for t in ("사과 추천", "사과 5kg", "희귀한낱말상품 추천")]
+
+            class Conn:
+                def execute(self, *_a, **_k):
+                    return type("R", (), {"mappings": lambda s: type("M", (), {"all": lambda s2: rows})()})()
+            return contextlib.nullcontext(Conn())
+
+    terms = surge.chat_search_terms(Db())
+    assert "사과" in terms and not any("희귀" in t for t in terms)

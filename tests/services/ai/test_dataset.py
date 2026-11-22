@@ -3,6 +3,8 @@
 넘어가는 기준: 짧은 정리 작업만 담음(글 생성 작업·내부 작업은 안 담음), 개인정보 모양 문장은 담지 않음, 학습 칸에 세션 값 없음,
 클릭이면 silver · 사람 확인이면 gold(이후 승격이 gold 를 덮지 않음), 내보내기는 문장 해시로 학습·시험 고정·gold 우선·출처 거르기,
 임시 칸 90일·학습 칸 보관 기간 뒤 지움, 대화 경로에서 실제로 담기(LLMClient).
+2026-11-22 검토 의견 반영: 기본 꺼짐 · 클릭은 그 차례에 보여 준 상품만 · 비슷한 문장 묶음으로 나눔 · 시험 칸은 gold 만 ·
+고쳐도 출처 유지(edited) · 입구에서 가린 차례는 담지 않음 · 내보낸 파일 정리.
 """
 from __future__ import annotations
 
@@ -36,11 +38,19 @@ def test_capture_only_short_tasks_and_no_personal_info(store):
 
 
 def test_promote_signal_review_and_no_session_in_examples(store):
-    store.capture("shop_keyword", "사과  5kg 추천해줘", {"keyword": "사과"}, "openai:gpt-5.4-mini", SYSTEM, "clicker")
-    store.capture("shop_keyword", "사과 5kg 추천해줘", {"keyword": "사과"}, "openai:gpt-5.4-mini", SYSTEM, "other")
-    store.capture("chat_intent", "고마워 근데 배도", {"intent": "shop"}, "openai:gpt-5.4-mini", SYSTEM, "x")
+    store.capture("shop_keyword", "사과  5kg 추천해줘", {"keyword": "사과"}, "openai:gpt-5.4-mini", SYSTEM, "clicker", "t1")
+    store.capture("shop_keyword", "사과 5kg 추천해줘", {"keyword": "사과"}, "openai:gpt-5.4-mini", SYSTEM, "other", "t2")
+    store.capture("chat_intent", "고마워 근데 배도", {"intent": "shop"}, "openai:gpt-5.4-mini", SYSTEM, "x", "t3")
+    store.note_query("t1", "사과 5kg", ["경북 사과 5kg"])
+    store.note_query("t2", "사과 5kg", ["경북 사과 5kg"])
     store._clock["t"] = T0 + timedelta(hours=2)
-    done = store.promote(lambda sid, a, b: sid == "clicker")
+    seen = []
+
+    def clicks(sid, a, b, shown):
+        seen.append((sid, shown))
+        return sid in ("clicker", "x") and "경북 사과 5kg" in shown
+    done = store.promote(clicks)
+    assert ("x", ["경북 사과 5kg"]) not in seen          # 상품을 보여 주지 않은 차례(t3)는 클릭을 묻지도 않는다
     assert done == {"promoted": 3, "silver": 1}
     q = {(x["task"], x["input"]): x for x in store.queue()}
     kw = q[("shop_keyword", "사과 5kg 추천해줘")]
@@ -67,30 +77,92 @@ def test_promote_signal_review_and_no_session_in_examples(store):
     assert labels[("chat_intent", "dropped")] == 1
 
 
+FOODS = ["사과", "배", "감", "귤", "딸기", "포도", "수박", "참외", "복숭아", "자두", "망고", "키위", "레몬", "자몽", "체리",
+         "블루베리", "바나나", "파인애플", "멜론", "석류", "한우", "돼지고기", "닭가슴살", "연어", "고등어", "갈치", "새우",
+         "오징어", "전복", "굴", "김치", "두부", "계란", "우유", "치즈", "버터", "쌀", "현미", "보리", "감자"]
+
+
+def _gold_all(store):
+    for x in store.queue(limit=200):
+        store.review(x["id"], "ok")
+
+
 def test_export_split_is_stable_and_gold_first(store):
-    for i in range(40):
-        store.capture("shop_keyword", f"상품 {i} 추천", {"keyword": f"상품{i}"}, "openai:gpt-5.4-mini", SYSTEM, f"s{i}")
-    store.capture("shop_keyword", "상품 1 추천", {"keyword": "틀림"}, "deepseek:flash", SYSTEM, "z")
+    for i, food in enumerate(FOODS):
+        store.capture("shop_keyword", f"{food} 추천", {"keyword": food}, "openai:gpt-5.4-mini", SYSTEM, f"s{i}")
+    store.capture("shop_keyword", "배 추천", {"keyword": "틀림"}, "deepseek:flash", SYSTEM, "z")
     store._clock["t"] = T0 + timedelta(hours=2)
-    store.promote(lambda sid, a, b: True)
+    store.promote(None)
+    assert store.export("shop_keyword") == {"train": [], "test": []}       # 기본은 gold 만 — 아직 확인 전
+    _gold_all(store)
     first = store.export("shop_keyword")
     assert len(first["train"]) + len(first["test"]) == 40                 # 같은 문장은 하나만
+    assert first["test"]                                                   # 시험 칸이 비지 않음 (40개 중 10% 안팎)
     assert first == store.export("shop_keyword")                          # 다시 내보내도 같음
     for split, rows in first.items():
         for r in rows:
             assert ds.split_of("shop_keyword", r["messages"][1]["content"]) == split
             assert r["messages"][0]["content"] == SYSTEM and json.loads(r["messages"][2]["content"])
-    no_ds = store.export("shop_keyword", exclude_teachers=("openai",))
-    assert [r["teacher"] for rows in no_ds.values() for r in rows] == ["deepseek:flash"]
-    wrong = next(x for x in store.queue(limit=100) if json.loads(json.dumps(x["output"])) == {"keyword": "틀림"})
-    store.review(wrong["id"], "fix", output={"keyword": "상품1"})
-    row = next(r for rows in store.export("shop_keyword").values() for r in rows if r["messages"][1]["content"] == "상품 1 추천")
-    assert row["label"] == "gold" and json.loads(row["messages"][2]["content"]) == {"keyword": "상품1"}
-    # 고친 정답이 새 값이면 출처는 사람
-    other = next(x for x in store.queue(limit=100) if x["input"] == "상품 2 추천")
-    store.review(other["id"], "fix", output={"keyword": "상품 둘"})
-    row2 = next(r for rows in store.export("shop_keyword").values() for r in rows if r["messages"][1]["content"] == "상품 2 추천")
-    assert row2["label"] == "gold" and row2["teacher"] == "human:operator"
+    no_oa = store.export("shop_keyword", exclude_teachers=("openai",))
+    assert [r["teacher"] for rows in no_oa.values() for r in rows] == ["deepseek:flash"]
+
+
+def test_fix_keeps_original_teacher(store):
+    store.capture("shop_keyword", "배 추천", {"keyword": "틀림"}, "deepseek:flash", SYSTEM, "z")
+    store._clock["t"] = T0 + timedelta(hours=2)
+    store.promote(None)
+    wrong = store.queue()[0]
+    store.review(wrong["id"], "fix", output={"keyword": "배"})
+    rows = [r for rows in store.export("shop_keyword").values() for r in rows]
+    assert len(rows) == 1
+    r = rows[0]
+    assert r["label"] == "gold" and json.loads(r["messages"][2]["content"]) == {"keyword": "배"}
+    assert r["teacher"] == "deepseek:flash" and r["edited"] is True and r["reviewed_by"] == "operator"
+
+
+def test_similar_sentences_share_a_split_and_test_is_gold_only(store):
+    assert ds.group_of("사과 3kg 주세요") == ds.group_of("사과5kg  주세요!")
+    assert ds.split_of("t", "사과 3kg 주세요") == ds.split_of("t", "사과5kg 주세요!")
+    # 시험 묶음에 걸린 silver 는 시험에도 학습에도 넣지 않는다
+    test_food = next(f for f in FOODS + [f"{a}{b}" for a in FOODS for b in FOODS]
+                     if ds.split_of("shop_keyword", f"{f} 추천") == "test")
+    store.capture("shop_keyword", f"{test_food} 추천", {"keyword": test_food}, "openai:m", SYSTEM, "s", "t1")
+    store.note_query("t1", test_food, ["상품"])
+    store._clock["t"] = T0 + timedelta(hours=2)
+    store.promote(lambda *a: True)
+    assert store.export("shop_keyword", labels=("gold", "silver")) == {"train": [], "test": []}
+
+
+def test_pii_seen_turn_is_not_captured(tmp_path, monkeypatch):
+    monkeypatch.setenv("DATASET_CAPTURE", "1")
+    monkeypatch.setenv("DATASET_DB", str(tmp_path / "p.sqlite3"))
+    token = ds.PII_SEEN.set(True)
+    try:
+        ds.capture("shop_keyword", "사과 [전화번호]", {"keyword": "사과"}, "openai:m", SYSTEM)
+    finally:
+        ds.PII_SEEN.reset(token)
+    assert not (tmp_path / "p.sqlite3").exists()
+    ds.capture("shop_keyword", "사과", {"keyword": "사과"}, "openai:m", SYSTEM)
+    assert (tmp_path / "p.sqlite3").exists()
+
+
+def test_off_by_default(monkeypatch):
+    monkeypatch.delenv("DATASET_CAPTURE", raising=False)
+    assert not ds.enabled()
+
+
+def test_purge_exports(tmp_path, monkeypatch):
+    import os
+
+    d = tmp_path / "export"
+    d.mkdir()
+    old, new = d / "a_train.jsonl", d / "b_train.jsonl"
+    old.write_text("{}\n")
+    new.write_text("{}\n")
+    now = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    os.utime(old, (now.timestamp() - 40 * 86400,) * 2)
+    os.utime(new, (now.timestamp() - 1 * 86400,) * 2)
+    assert ds.purge_exports(d, now) == 1 and not old.exists() and new.exists()
 
 
 def test_purge(store, monkeypatch):

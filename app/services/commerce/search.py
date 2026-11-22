@@ -491,8 +491,16 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
                     nlu_parse: Callable | None = None, annotate_prices: bool = True,
                     request_id: str | None = None, allow_preview: bool | None = None,
                     extra_cards: Callable | None = None) -> CommerceResult:
-    got = collect(req, shopping=shopping, keyword_extractor=keyword_extractor, nlu_parse=nlu_parse,
-                  annotate_prices=annotate_prices, allow_preview=allow_preview, extra_cards=extra_cards)
+    from app.services.ai import dataset as _dataset
+    from app.services.privacy import pii
+
+    # 2026-11-22 (검토 의견 3): MCP·검색 서비스 경로도 입력에서 가린 일이 있으면 이 요청은 학습 데이터에 담지 않는다
+    token = _dataset.PII_SEEN.set(_dataset.PII_SEEN.get() or bool(pii.mask(req.text or "")[1]))
+    try:
+        got = collect(req, shopping=shopping, keyword_extractor=keyword_extractor, nlu_parse=nlu_parse,
+                      annotate_prices=annotate_prices, allow_preview=allow_preview, extra_cards=extra_cards)
+    finally:
+        _dataset.PII_SEEN.reset(token)
     raw, picked = got["raw"], got["picked"]
     items: list[ShoppingItem] = []
     if picked:

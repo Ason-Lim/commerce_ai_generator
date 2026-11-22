@@ -17,6 +17,8 @@ mutate ``os.environ``.
 """
 from __future__ import annotations
 
+import contextvars
+
 import json
 import os
 import re
@@ -54,11 +56,20 @@ THINKING_BY_TASK: dict[str, bool] = {
 CUSTOMER_FAST_TASKS = frozenset({
     "shop_keyword", "shop_terms", "chat_intent", "food_nlu", "stock_chat", "dish_amounts", "recipe_servings",
     "ai_recipe_identify",
+    # 2026-11-22 (검토 의견 2 — 호출 경로 전수 확인): 요리 찾기의 '요리 이름 읽기'(discover.NAME_PROMPT)는
+    # 고객 문장 {"message": …} 을 보낸다 — 같은 recipe_discover 저장 이름이라 DeepSeek 로 가고 있었다.
+    "recipe_dish_name",
 })
 CUSTOMER_WRITE_TASKS = frozenset({"food_knowledge", "recipe_consult", "menu_plan", "ai_recipe", "ai_recipe_check"})
 CUSTOMER_TASKS = CUSTOMER_FAST_TASKS | CUSTOMER_WRITE_TASKS
-# 내부 작업(고객 문장 없음 — DeepSeek 유지): recipe_supplement·recipe_easy_view(공공 레시피 원문), recipe_discover·trend_cause
-# (뉴스·블로그 제목), warm_classify(순위 키워드). 관리자·B2B 는 app/admin/shared/llm.py(ADMIN_LLM_PROVIDER).
+# 내부 작업(고객 문장 없음 — DeepSeek 유지): recipe_supplement·recipe_easy_view(공공 레시피 원문), recipe_discover
+# (뉴스·블로그 제목 목록), trend_cause(키워드 + 블로그 제목 — 키워드에는 여러 세션이 찾은 상품 낱말이 섞일 수 있음,
+# trends.surge.chat_search_terms), warm_classify(순위 키워드). 관리자·B2B 는 app/admin/shared/llm.py(ADMIN_LLM_PROVIDER).
+# 경로별 '무엇을 보내나' 표: claude/privacy_policy_draft_2026-11-21.md §2-1.
+
+# 마지막으로 답을 준 공급자:모델 (대신 처리했으면 대신한 쪽) — 식품 지식이 '다른 AI 검토'를 말해도 되는지 가릴 때 쓴다
+LAST_ROUTE: contextvars.ContextVar[str | None] = contextvars.ContextVar("llm_last_route", default=None)
+BLOCKED = "blocked"
 DEFAULT_OPENAI_FAST = "gpt-5.4-mini"
 DEFAULT_OPENAI_WRITE = "gpt-5.4"
 DEFAULT_CLAUDE_FAST = "claude-haiku-5-5"
@@ -130,9 +141,12 @@ class LLMClient:
                 self.fallback = (route[2], route[3]) if route[2] else None
             elif self.task in CUSTOMER_TASKS and (self._get("CUSTOMER_LLM_PROVIDER", "openai") or "").strip().lower() \
                     not in ("deepseek", "off", "none"):
+                # 2026-11-22 (검토 의견 2): 키가 없다고 고객 문장을 DeepSeek 로 보내지 않는다 — 호출이 실패하고
+                # 각 기능은 규칙 경로로 돈다. 되돌리려면 CUSTOMER_LLM_PROVIDER=deepseek (처리방침 국외 이전 항목도 바꿔야 함).
                 import logging
 
-                logging.getLogger(__name__).warning("customer task %s: no OpenAI/Claude key — still DeepSeek", self.task)
+                logging.getLogger(__name__).warning("customer task %s: no OpenAI/Claude key — not sent", self.task)
+                self.provider = BLOCKED
 
     # ── settings ──────────────────────────────────────────
     def _get(self, name: str, default: str = "") -> str:
@@ -203,6 +217,7 @@ class LLMClient:
             backup = LLMClient(self.system, provider=self.fallback[0], env=self._env, openai_factory=self._openai_factory,
                                http_post=self._http_post, timeout=self.timeout, task=self.task, model=self.fallback[1])
             out, teacher = backup._chat_json_once(user_text, temperature), f"{backup.provider}:{backup._model_name()}"
+        LAST_ROUTE.set(teacher)
         # 2026-11-21: 로컬 모델 학습 데이터셋 — 짧은 정리 작업만, 개인정보 모양이 있으면 담지 않음 (app/services/ai/dataset.py)
         if self.task in CUSTOMER_FAST_TASKS and self.provider != "ollama":
             from app.services.ai import dataset
@@ -219,6 +234,8 @@ class LLMClient:
             raw = self._openai(user_text, temperature)
         elif self.provider == "ollama":
             raw = self._ollama(user_text, temperature)
+        elif self.provider == BLOCKED:
+            raise LLMConfigError("고객 문장 작업인데 OpenAI·Claude 키가 없어 보내지 않았어요")
         else:
             raise LLMConfigError("지원하지 않는 LLM_PROVIDER")
         self._record()

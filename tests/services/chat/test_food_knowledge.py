@@ -165,3 +165,39 @@ def test_without_cross_check_general_answers_are_still_saved():
     K.answer("냉동 블루베리 해동 어떻게 해?", "블루베리", gen2, None)
     K.answer("냉동 블루베리 해동 어떻게 해?", "블루베리", gen2, None)
     assert gen2.calls == 2                                    # 안전 질문은 검토 없이는 저장하지 않는다
+
+
+def test_claude_written_fallback_is_not_called_reviewed_by_another_ai():
+    """2026-11-22 검토 의견 1: OpenAI 가 실패해 Claude 가 대신 썼으면 Claude 검토는 '다른 AI 검토'가 아니다."""
+    from app.services.nlu.llm_client import LAST_ROUTE
+
+    class ClaudeGen(Gen):
+        def __call__(self, text):
+            LAST_ROUTE.set("anthropic:claude-haiku-5-5")
+            return super().__call__(text)
+
+    calls = []
+
+    def reviewer(context, items):
+        calls.append(items)
+        return review_flagging_geumsil(context, items)
+
+    got = K.answer("딸기 언제부터 맛있어? 품종별 차이 알려줘", "딸기", ClaudeGen(), reviewer)
+    assert got["review"] is None and calls == [] and got["cross_on"]
+    assert "다른 AI 가 한 번 더 검토" not in __import__("app.services.chat.service", fromlist=["x"])._knowledge_note(got)
+    again = K.answer("딸기 언제부터 맛있어? 품종별 차이 알려줘", "딸기", Gen(), reviewer)
+    assert not again["from_cache"]                                     # 저장하지 않아 다음에 다시 만든다
+
+
+def test_openai_written_answer_records_its_writer():
+    from app.services.nlu.llm_client import LAST_ROUTE
+
+    class OpenAIGen(Gen):
+        def __call__(self, text):
+            LAST_ROUTE.set("openai:gpt-5.4")
+            return super().__call__(text)
+
+    K.answer("딸기 언제부터 맛있어? 품종별 차이 알려줘", "딸기", OpenAIGen(), review_flagging_geumsil)
+    assert ai_cache.stats()[0]["task"] == "food_knowledge"
+    hit = ai_cache.get(K.TASK, K.key_of("딸기", "딸기 언제부터 맛있어? 품종별 차이 알려줘")[0])
+    assert hit["model"].startswith("openai:gpt-5.4 · 검토")

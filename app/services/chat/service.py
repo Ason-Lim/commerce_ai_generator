@@ -199,7 +199,14 @@ class ChatService:
         from app.services.privacy import pii
 
         message, pii_kinds = pii.mask(message) if message else (message, [])
-        response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
+        from app.services.ai import dataset as _dataset
+
+        # 2026-11-22 (검토 의견 3): 입구에서 가린 일이 있으면 이 차례는 학습 데이터에 담지 않는다 (가린 뒤 문장만 보면 놓침)
+        pii_token = _dataset.PII_SEEN.set(bool(pii_kinds))
+        try:
+            response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
+        finally:
+            _dataset.PII_SEEN.reset(pii_token)
         if pii_kinds:
             blocks = list(response.get("blocks") or [])
             at = 1 if blocks and (blocks[0].get("data") or {}).get("affiliate") else 0
@@ -225,6 +232,7 @@ class ChatService:
         from app.services.ai import dataset as _dataset      # 2026-11-21: 학습 데이터에 클릭 신호를 붙일 세션 (임시 칸에만)
 
         _dataset.CURRENT_SESSION.set(sid)
+        _dataset.CURRENT_TURN.set(uuid.uuid4().hex)       # 2026-11-22: 클릭은 이 차례에 보여 준 상품에만 잇는다
         recipe_sid = "recipe:" + sid
         text = (message or chip or "").strip()
 
@@ -1010,6 +1018,9 @@ class ChatService:
         items: list = []
         pending = None
         if picked:
+            from app.services.ai import dataset as _dataset
+
+            _dataset.note_query(query, [c.get("title") for c in picked["picks"] + picked["others"]])
             if got.get("fresh_miss"):
                 blocks.append(B.notice(got["fresh_miss"] + "."))
             if got.get("search_note"):

@@ -92,8 +92,11 @@ def parse_with_llm(text: str, base: BidRequirement | None = None) -> BidRequirem
     llm = LLMClient()
     if not llm.enabled or not req.missing():
         return req
+    # 2026-11-22 (검토 의견 2): 공고문에는 담당자 이름·전화·이메일이 흔하다 — 조건 추출에는 필요 없으니 가리고 보낸다
+    from app.services.privacy import pii
+
     try:
-        data = llm.chat_json(LLM_SYSTEM, text[:6000])
+        data = llm.chat_json(LLM_SYSTEM, pii.mask(text[:6000])[0])
     except Exception:
         return req
     for k, v in data.items():

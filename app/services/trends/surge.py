@@ -123,14 +123,21 @@ def chat_search_terms(db, days: int = 14, limit: int = 100) -> list[str]:
             state = json.loads(row["state_json"])
         except (TypeError, ValueError):
             continue
+        mine = set()
         for turn in state.get("turns") or []:
             if turn.get("stage") != "shopping":
                 continue
             query, _terms = shopping_terms(turn.get("text") or "")
             words = _content_tokens(query)
             if words:
-                counts[words[0]] += 1
-    return [w for w, _n in counts.most_common(limit)]
+                mine.add(words[0])
+        counts.update(mine)
+    # 2026-11-22 (검토 의견 2): 이 낱말은 급상승 원인 찾기(DeepSeek)에 키워드로 갈 수 있다 — 한 사람만 찾은 낱말은
+    # 그 사람의 문장 조각일 수 있어 빼고, 둘 이상의 대화에서 나온 상품 낱말만 쓴다.
+    return [w for w, n in counts.most_common(limit) if n >= MIN_CHAT_SESSIONS]
+
+
+MIN_CHAT_SESSIONS = 2
 
 
 # ── NAVER DataLab ─────────────────────────────────────────────────────────────
