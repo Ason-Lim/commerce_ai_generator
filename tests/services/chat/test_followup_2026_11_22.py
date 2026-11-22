@@ -117,7 +117,7 @@ def test_sort_view_uses_shown_candidates_without_new_search(sqlite_db):
     res = svc.handle(first["session_id"], message="싼 순으로")
     assert res["stage"] == "shopping_followup" and len(shop.calls) == n
     view = lists(res)[0]
-    assert view["title"] == "가격 낮은 순 보기 · 추천순 아님" and "추천 순서가 아니에요" in view["note"]
+    assert view["title"] == f"가격 낮은 순 · {len(view['items'])}개 · 추천순 아님" and "추천 순서가 아니에요" in view["note"]
     prices = [c.get("total") or c["price"] for c in view["items"]]
     assert prices == sorted(prices)
     assert all(c["go"].startswith(f"/go/{first['session_id']}/k/") for c in view["items"])
@@ -162,9 +162,9 @@ def test_more_uses_unused_synonym(sqlite_db):
     res = svc.handle(first["session_id"], message="더 찾아보기")
     assert shop.calls[-1] == "올리브오일"
     more = lists(res)[0]
-    assert more["title"] == "다른 말로 더 찾은 상품 1개" and "추천 순서가 아니고" in more["note"]
+    assert more["title"] == "다른 검색어로 찾은 추가 후보 1개" and "함께 정렬하지 않았어요" in more["note"]
     again = svc.handle(first["session_id"], message="더 찾아보기")
-    assert "더 찾아볼 다른 말이 없어요" in md(again)
+    assert "더 찾아볼 다른 검색어가 없어요" in md(again)
 
 
 def test_research_cap_per_session(sqlite_db, monkeypatch):
@@ -174,7 +174,7 @@ def test_research_cap_per_session(sqlite_db, monkeypatch):
     svc.handle(first["session_id"], message="2kg으로")
     n = len(shop.calls)
     res = svc.handle(first["session_id"], message="선물용으로")
-    assert len(shop.calls) == n and "다시 찾는 횟수(1번)를 다 썼어요" in md(res)
+    assert len(shop.calls) == n and "다시 찾는 한도(다시 찾기 요청 1번)를 다 썼어요" in md(res)
 
 
 def test_no_hijack_without_previous_shopping(sqlite_db):
@@ -188,3 +188,82 @@ def test_new_product_sentence_still_searches(sqlite_db):
     first = svc.handle(None, message="올리브유")
     res = svc.handle(first["session_id"], message="사과 2kg")
     assert res["stage"] == "shopping"
+
+
+# ── 2026-11-22 외부 검토 반영 ─────────────────────────────────────────────
+
+def test_call_meter_counts_real_calls_and_dedupes_within_turn(sqlite_db):
+    # '엑스트라버진 올리브유' → 0건 → '엑스트라 버진 올리브유' 0건 → '올리브유' (3번) — 같은 차례 같은 말은 한 번만
+    svc, shop = chat(sqlite_db, {"올리브유": OLIVE})
+    res = svc.handle(None, message="엑스트라버진 올리브유")
+    assert res["meta"]["coupang_calls"] == len(shop.calls) == len(set(shop.calls))
+    assert res["meta"]["session_coupang_calls"] == len(shop.calls)
+
+
+def test_api_call_cap_blocks_followup_research(sqlite_db, monkeypatch):
+    monkeypatch.setenv("CHAT_FOLLOWUP_API_MAX", "1")
+    svc, shop = chat(sqlite_db, {"올리브유": OLIVE})
+    first = svc.handle(None, message="올리브유")          # 1번 호출 → 세션 상한 도달
+    n = len(shop.calls)
+    res = svc.handle(first["session_id"], message="2kg으로")
+    assert len(shop.calls) == n and "쿠팡 호출 1회" in md(res)
+    assert lists(svc.handle(first["session_id"], message="싼 순으로"))    # 보기 바꾸기는 계속 됨
+
+
+def test_meta_is_not_sent_to_customers():
+    from app.api.chat_routes import public
+
+    assert "meta" not in public({"session_id": "s", "stage": "shopping", "blocks": [], "meta": {"coupang_calls": 1}})
+
+
+def test_conditions_stack_and_carry_into_research(sqlite_db):
+    one_l = [OLIVE[1], _cp("해표 올리브유 1L", 12900, 11) | {"is_rocket": True},
+             _cp("코스트코 올리브유 1L", 14900, 12) | {"is_rocket": True}]
+    svc, shop = chat(sqlite_db, {"올리브유": OLIVE, "올리브유 1L": one_l})
+    sid = svc.handle(None, message="올리브유")["session_id"]
+    r1 = svc.handle(sid, message="로켓배송만")
+    assert all(c.get("rocket") for c in lists(r1)[0]["items"])
+    r2 = svc.handle(sid, message="해표 빼고")              # 쌓임: 로켓배송만 + 해표 빼고
+    assert "로켓배송 표시 상품만 · '해표' 빼고" in md(r2)
+    assert [c["title"] for c in lists(r2)[0]["items"]] == ["커클랜드 엑스트라버진 올리브유 3L"]
+    r3 = svc.handle(sid, message="1L짜리로")               # 다시 찾아도 조건 이어 적용
+    assert "앞서 고른 조건(로켓배송 표시 상품만 · '해표' 빼고)도 이어서 적용해요" in md(r3)
+    carried = [d for d in lists(r3) if (d.get("title") or "").startswith("로켓배송 표시 상품만")]
+    assert carried and [c["title"] for c in carried[0]["items"]] == ["코스트코 올리브유 1L"]
+    back = svc.handle(sid, message="처음 조건으로")
+    assert "한 단계 되돌리기가 아니라 **처음 찾은 후보**" in md(back) and "풀린 조건" in md(back)
+    assert "1L" in md(back)                                # 풀린 조건에 양 바꾸기도 적힘
+    r5 = svc.handle(sid, message="싼 순으로")              # 처음으로 돌아간 뒤에는 조건이 비어 있음
+    assert "지금 조건: 가격 낮은 순" in md(r5)
+
+
+def test_failed_research_keeps_previous_candidates(sqlite_db):
+    svc, shop = chat(sqlite_db, {"올리브유": OLIVE})
+    sid = svc.handle(None, message="올리브유")["session_id"]
+    svc.handle(sid, message="로켓배송만")
+    res = svc.handle(sid, message="3kg으로")              # '올리브유 3kg' 결과 없음
+    assert "앞서 보여 드린 '올리브유' 후보와 조건은 그대로예요" in md(res)
+    after = svc.handle(sid, message="싼 순으로")
+    assert "로켓배송 표시 상품만 · 가격 낮은 순" in md(after)
+    assert all(c.get("rocket") for c in lists(after)[0]["items"])
+
+
+def test_grade_unlabelled_goes_to_separate_section(sqlite_db):
+    from tests.services.chat.test_evoo_retry_2026_11_22 import BASE
+
+    svc, shop = chat(sqlite_db, {"엑스트라버진 올리브유": [BASE[0], BASE[2], BASE[4]]})
+    res = svc.handle(None, message="엑스트라버진 올리브유")
+    titles_by = {d.get("title"): [c["title"] for c in d["items"]] for d in lists(res)}
+    main = titles_by[None]
+    assert main == [BASE[2]["product_name"]]               # 표기 상품만 추천 후보
+    unk = next(v for k, v in titles_by.items() if k and k.startswith("등급 확인 필요"))
+    assert set(unk) == {BASE[0]["product_name"], BASE[4]["product_name"]}
+
+
+def test_only_unlabelled_shows_grade_section_not_picks(sqlite_db):
+    from tests.services.chat.test_evoo_retry_2026_11_22 import BASE
+
+    svc, shop = chat(sqlite_db, {"엑스트라버진 올리브유": [BASE[0], BASE[4]]})
+    res = svc.handle(None, message="엑스트라버진 올리브유")
+    assert "**엑스트라버진** 표기가 있는 '엑스트라버진 올리브유' 상품은 찾지 못했어요" in md(res)
+    assert [d["title"] for d in lists(res)] == ["등급 확인 필요 2개 · 엑스트라버진 표기 없음"]

@@ -28,7 +28,8 @@ PATH_LABEL = {
 }
 SECTION_LABEL = {"picks": "추천", "others": "다른 후보", "partner_list": "업체 제공",
                  "frozen_list": "냉동 상품 (따로 둠)",
-                 "more_list": "더 찾은 상품 (추천순 아님)", "connect": "쇼핑커넥트"}
+                 "more_list": "더 찾은 상품 (추천순 아님)",
+                 "grade_unknown": "등급 확인 필요 (추천 후보 아님)", "connect": "쇼핑커넥트"}
 
 # 가격 우위를 말하는 문구 — 근거가 약할 때 나오면 검사 경고
 PER100G_WORDS = re.compile(r"100g당 ?(가장|[\d,]+원)|가성비|양이 가장 많")
@@ -264,6 +265,7 @@ def build_report(text: str, *, shopping: Callable, keyword_extractor: Callable |
         sections += [("picks", c) for c in picked["picks"]] + [("others", c) for c in picked["others"]]
     sections += [("partner_list", c) for c in got["partner_list"]] + [("frozen_list", c) for c in got.get("frozen_list") or []]
     sections += [("more_list", c) for c in got.get("more_list") or []]
+    sections += [("grade_unknown", c) for c in got.get("grade_unknown") or []]
     sections += [("connect", c) for c in got["connect"]]
     for display_rank, (section, card) in enumerate(sections, start=1):
         raw = raw_by_key.get(card.get("key")) or {}
