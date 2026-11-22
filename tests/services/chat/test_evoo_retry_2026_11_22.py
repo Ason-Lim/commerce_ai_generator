@@ -114,3 +114,61 @@ def test_still_empty_after_retries(sqlite_db):
     res = svc.handle(None, message="엑스트라버진 올리브유")
     assert len(shop.calls) == 3
     assert "찾지 못했어요" in md(res)
+
+
+# ── 2026-11-22 오후: 쿠팡이 무관한 10개(건전지·클렌징 폼·놀이공원 표…)를 준 경우 · 쿠팡 검색 결과 링크 ──────────────
+
+JUNK = [dict(_cp(t, 9000 + i, 50 + i), category_name=c) for i, (c, t) in enumerate([
+    ("생활용품", "듀라셀 알카라인 AA 건전지"), ("뷰티", "센카 퍼펙트 휩 프레시 클렌징 폼"),
+    ("도서/음반", "타이거 은행놀이 (리뉴얼)"), ("국내투어", "★롯데월드 아쿠아리움 1인권"),
+    ("로켓프레시", "손질 코다리토막 (냉동)")])]
+
+
+def test_unrelated_results_also_trigger_retry(sqlite_db):
+    shop = ByQuery({"엑스트라버진 올리브유": JUNK, "엑스트라 버진 올리브유": JUNK, "올리브유": BASE})
+    svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
+    res = svc.handle(None, message="엑스트라 버진 올리브유")
+    assert shop.calls == ["엑스트라버진 올리브유", "엑스트라 버진 올리브유", "올리브유"]
+    got = titles(res)
+    assert BASE[2]["product_name"] in got and not any("건전지" in t or "아쿠아리움" in t for t in got)
+    assert "'올리브유'로 다시 찾았어요" in md(res)
+
+
+def test_coupang_search_link_block_when_nothing_usable(sqlite_db, tmp_path, monkeypatch):
+    monkeypatch.setenv("COUPANG_SEARCH_LINK", "on")
+    monkeypatch.setenv("COUPANG_GAPS_DB", str(tmp_path / "g.sqlite3"))
+    made = []
+    monkeypatch.setattr("app.services.coupang_api.search_deeplink",
+                        lambda q: made.append(q) or "https://link.coupang.com/a/test123")
+    shop = ByQuery({})
+    svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
+    res = svc.handle(None, message="엑스트라 버진 올리브유")
+    links = [b for b in res["blocks"] if b["type"] == "search_links"]
+    cp = next(b for b in links if b["data"]["title"] == "쿠팡에서 직접 찾아보기")
+    assert cp["data"]["links"][0]["url"].startswith(f"/go/q/{res['session_id']}/")
+    assert "우리가 고르거나 견준 상품이 아니에요" in cp["data"]["links"][0]["check"]
+    kinds = [b["type"] for b in res["blocks"]]
+    notice_at = next(i for i, b in enumerate(res["blocks"]) if b["type"] == "notice" and "쿠팡 파트너스" in b["data"]["md"])
+    assert notice_at < kinds.index("search_links")                      # 고지가 링크보다 먼저
+    svc.handle(None, message="엑스트라 버진 올리브유")
+    assert made == ["엑스트라버진 올리브유"]                               # 두 번째는 저장된 링크 재사용
+
+
+def test_link_store_and_go_route(tmp_path, monkeypatch):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.api import chat_routes
+    from app.services.commerce import coupang_gaps as cg
+
+    monkeypatch.setenv("COUPANG_GAPS_DB", str(tmp_path / "g.sqlite3"))
+    link = cg.GapStore().link("엑스트라 버진 올리브유", lambda q: "https://link.coupang.com/a/abc")
+    assert cg.GapStore().link_by_id(link["id"])["url"] == "https://link.coupang.com/a/abc"
+    clicks = []
+    monkeypatch.setattr("app.services.analytics_logger.log_product_click", lambda **kw: clicks.append(kw))
+    app = FastAPI()
+    app.include_router(chat_routes.router)
+    r = TestClient(app).get(f"/go/q/sid1/{link['id']}", follow_redirects=False)
+    assert r.status_code in (302, 307) and r.headers["location"] == "https://link.coupang.com/a/abc"
+    assert clicks and clicks[0]["product"]["selected_section"] == "search_link"
+    assert TestClient(app).get("/go/q/sid1/9999", follow_redirects=False).headers["location"] == "/"

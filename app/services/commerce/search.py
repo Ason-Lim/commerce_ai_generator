@@ -132,18 +132,30 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     searched_as = None
     from app.services.commerce import coupang_gaps
 
+    from app.services.commerce.nonfood import is_non_food_category
+
+    def usable(cs: list[dict], q: str) -> bool:
+        """걸러도 남을 상품이 하나라도 있나 — 관련성(검색어 묶음 + 이번에 찾은 말)·식품 분류."""
+        keep = list(terms or []) + [q]
+        return any((not terms or relevant(c["title"], keep)) and not is_non_food_category(c.get("category"))
+                   for c in cs)
+
+    gap_logged = False
     try:
         cards = fetch(query)
         # 2026-11-22: 쿠팡은 '엑스트라버진 올리브유'(붙여 씀)에 0건을 돌려줬다 ('올리브유 엑스트라'·'버진 올리브유'는 나옴).
-        # 0건이면 띄어 쓴 말 → 등급 말을 뺀 품목 이름(또는 바꿔 쓸 말 표) 순으로 한 번씩만 다시 찾는다 (쿠팡 호출 최대 2번 더).
-        if not cards:
-            coupang_gaps.record(query, "zero")
-        for alt in ([] if cards else retry_queries(query)):
-            cards = fetch(alt)
-            if cards:
-                searched_as = alt
-                coupang_gaps.record(query, "retry_found", alt)
-                break
+        # 같은 날 오후에는 같은 말에 **건전지·클렌징 폼·놀이공원 표 같은 무관한 10개**를 돌려줬다(쿠팡이 맞는 상품이
+        # 없을 때 채우는 결과로 보임) → 0건이거나 쓸 상품이 하나도 없으면 띄어 쓴 말 → 등급 말을 뺀 품목 이름
+        # (또는 바꿔 쓸 말 표) 순으로 한 번씩만 다시 찾는다 (쿠팡 호출 최대 2번 더).
+        if not usable(cards, query):
+            coupang_gaps.record(query, "zero" if not cards else "filtered")
+            gap_logged = True
+            for alt in retry_queries(query):
+                alt_cards = fetch(alt)
+                if usable(alt_cards, alt):
+                    cards, searched_as = alt_cards, alt
+                    coupang_gaps.record(query, "retry_found", alt)
+                    break
     except Exception as e:  # noqa: BLE001 — 같은 상황에서 웹은 '불러오지 못했어요' 안내
         log.exception("shopping provider failed")
         cards, error = [], CommerceError(code="source_unavailable", message=f"'{query}' 상품을 불러오지 못했어요.",
@@ -155,19 +167,20 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
             log.exception("extra card source failed")
     received = len(cards)                       # 2026-11-22: 걸러지기 전 받은 수 ('쿠팡 빈칸' filtered 판정)
     if terms:
-        cards = [c for c in cards if relevant(c["title"], terms)]
+        # 다시 찾았으면 그 말도 관련성 기준에 넣는다 — '올리브유'로 받은 상품이 '엑스트라버진 올리브유' 묶음과
+        # 글자 겹침이 모자라 빠지지 않게 (등급은 grade_filter 가 거름)
+        keep_terms = list(terms) + ([searched_as] if searched_as else [])
+        cards = [c for c in cards if relevant(c["title"], keep_terms)]
         # 2026-11-12: Jev 관련성 보조 — 기본 꺼짐(RELEVANCE_ASSIST=off). 실패·지연이면 카드 그대로 (규칙이 기본)
         from app.services.commerce import relevance_assist
 
         cards = relevance_assist.apply(query, cards)
     cards, grade_info = grade_filter(query, cards)
     # 2026-11-21: 쿠팡 분류가 분명히 식품 밖(신발·가전·문구…)이면 뺀다 — '엑스트라 버전'에 신발·커팅기가 추천됐다
-    from app.services.commerce.nonfood import is_non_food_category
-
     non_food = sum(1 for c in cards if is_non_food_category(c.get("category")))
     if non_food:
         cards = [c for c in cards if not is_non_food_category(c.get("category"))]
-    if received and not cards and error is None:
+    if received and not cards and error is None and not gap_logged:
         coupang_gaps.record(query, "filtered")     # 2026-11-22: 받았지만 관련성·비식품·등급으로 모두 빠짐
     fresh_miss = bool(fresh_item and cards and not any(_says_fresh(c["title"], fresh_item) for c in cards))
     # 2026-11-11: 냉동 상품은 고객이 냉동을 찾지 않았으면 따로 보기로 나눈다 (생과와 같은 기준으로 견주지 않음).
@@ -220,7 +233,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
                 partner_list=partner_list, frozen_list=frozen_list, connect=connect, raw=raw, error=error, preview=preview, found=found,
                 recommendation_path=recommendation_path, non_food=non_food,
                 fresh_miss=fresh_note(fresh_item) if fresh_miss else None,
-                search_note=search_note(query, searched_as, grade_info) if picked else None)
+                search_note=search_note(query, searched_as, grade_info) if picked else None,
+                searched_as=searched_as)
 
 
 # ── 2026-11-21 대화 확인(올리브·올리브유·엑스트라 버전)에서 나온 고침 ─────────────────

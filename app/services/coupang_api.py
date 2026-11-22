@@ -102,6 +102,37 @@ def sub_id_channel(sub_id: str | None):
         _SUB_ID_OVERRIDE.reset(token)
 
 
+DEEPLINK_PATH = "/v2/providers/affiliate_open_api/apis/openapi/v1/deeplink"
+
+
+def coupang_search_page(keyword: str) -> str:
+    """쿠팡 사이트 검색 결과 주소 (파트너스 링크로 바꾸기 전)."""
+    return "https://www.coupang.com/np/search?q=" + quote(" ".join((keyword or "").split()))
+
+
+def search_deeplink(keyword: str, timeout: float = 5.0) -> str | None:
+    """쿠팡 검색 결과 화면으로 가는 파트너스 링크 (2026-11-22 확인: 딥링크 API 가 검색 주소를 받아
+    link.coupang.com/a/… 를 줌, subid 반영). 키가 없거나 실패하면 None — 호출하는 쪽이 저장해 두고 다시 쓴다."""
+    if not is_coupang_available() or not (keyword or "").strip():
+        return None
+    from app.services import coupang_rate
+
+    if not coupang_rate.acquire():
+        return None
+    body = {"coupangUrls": [coupang_search_page(keyword)]}
+    sub = coupang_sub_id()
+    if sub:
+        body["subId"] = sub
+    try:
+        r = requests.post(COUPANG_DOMAIN + DEEPLINK_PATH, timeout=timeout, json=body,
+                          headers={"Authorization": _build_authorization("POST", DEEPLINK_PATH, "")})
+        data = (r.json() or {}).get("data") or []
+        url = (data[0] or {}).get("shortenUrl") if data else None
+    except Exception:  # noqa: BLE001 — 링크가 없으면 블록을 빼면 된다
+        return None
+    return url if isinstance(url, str) and url.startswith("https://link.coupang.com/") else None
+
+
 def search_coupang_products(keyword: str, limit: int = 10):
     if not is_coupang_available():
         return []

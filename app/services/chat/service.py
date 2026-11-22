@@ -1047,6 +1047,11 @@ class ChatService:
                                              note=CONNECT_LIST_NOTE + " " + CONNECT_DISCLOSURE))
                 items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
                           for c in connect]
+            if got.get("searched_as"):
+                # 2026-11-22: 다른 말로 다시 찾아 보여 줬으면, 원래 말의 쿠팡 검색 결과로 가는 링크도 함께
+                cps = coupang_search_block(sid, query)
+                if cps:
+                    blocks.append(cps)
             nav = naver_search_block(label, text, picked["picks"])
             if nav:
                 blocks.append(nav)
@@ -1077,6 +1082,11 @@ class ChatService:
                 blocks.append(B.notice(
                     f"네이버 쇼핑커넥트(브랜드커넥트)에 등록한 **{query}** 링크도 아직 없어요. 브랜드커넥트에서 링크를 발급해 "
                     "등록부에 적어 두시면 다음부터 함께 보여 드려요."))
+            # 2026-11-22 (쿠팡 빈칸 2단계): 쿠팡 검색 API 가 쓸 상품을 주지 않으면 쿠팡 사이트 검색 결과로 가는 제휴 링크 —
+            # 광고 고지를 링크보다 먼저, 우리가 고른 상품이 아님을 분명히 (claude/coupang_gap_design_2026-11-22.md)
+            cps = coupang_search_block(sid, query)
+            if cps:
+                blocks += [B.notice("**광고** · " + COUPANG_DISCLOSURE), cps]
             nav = naver_search_block(label, text)
             if nav:
                 blocks.append(nav)
@@ -1447,6 +1457,22 @@ def naver_search_links(label: str, text: str, picks: list[dict] | None = None) -
             seen.add(q)
             uniq.append((q, note))
     return uniq[:3]
+
+
+def coupang_search_block(sid: str | None, query: str) -> dict | None:
+    """쿠팡 검색 결과 화면으로 가는 파트너스 링크 하나 (상품·가격 없이, 쿠팡 순서). 클릭은 /go/q/{세션}/{번호}."""
+    if not sid or not query:
+        return None
+    from app.services.commerce import coupang_gaps
+
+    link = coupang_gaps.search_link(query)
+    if not link:
+        return None
+    return B.search_links(
+        [{"query": f"쿠팡에서 '{link['query']}' 검색 결과 보기", "url": f"/go/q/{sid}/{link['id']}",
+          "check": "쿠팡 검색 순서 그대로예요 — 우리가 고르거나 견준 상품이 아니에요. 등급·용량·원산지는 상품마다 확인해 주세요."}],
+        title="쿠팡에서 직접 찾아보기", badge="제휴 링크 · 수수료를 받을 수 있어요",
+        note="쿠팡 검색 결과 화면으로 연결돼요. 가격·재고·배송비는 쿠팡에서 확인해 주세요.")
 
 
 def naver_search_block(label: str, text: str, picks: list[dict] | None = None) -> dict | None:
