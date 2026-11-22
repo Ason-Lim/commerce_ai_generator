@@ -8,6 +8,9 @@ import { useChatActions } from "./ChatActions";
  * 좋음·보통·나쁨 → 보통·나쁨이면 이유 칩(여러 개). 다시 누르면 바꿀 수 있다. × 로 닫으면 이 대화에서 다시 묻지 않는다.
  * 자유 입력 칸은 없다. 집계는 보여 주지 않는다.
  */
+/** 화면 순서 — 2026-11-22 사용자 결정: 왼쪽 나쁨 → 오른쪽 좋음 (저장 값·집계 순서는 그대로) */
+const DISPLAY_ORDER = ["bad", "ok", "good"];
+
 export function AnswerFeedback({ block }: { block: AnswerFeedbackBlock }) {
   const { sessionId } = useChatActions();
   const { question, ratings, reasons, note } = block.data;
@@ -47,7 +50,7 @@ export function AnswerFeedback({ block }: { block: AnswerFeedbackBlock }) {
         <button type="button" onClick={() => void close()} aria-label="의견 묻기 닫기" className="text-ink3 hover:text-ink">×</button>
       </div>
       <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="평가">
-        {Object.entries(ratings).map(([k, label]) => (
+        {Object.entries(ratings).sort(([a], [b]) => DISPLAY_ORDER.indexOf(a) - DISPLAY_ORDER.indexOf(b)).map(([k, label]) => (
           <button key={k} type="button" aria-pressed={rating === k} onClick={() => pickRating(k)}
             className={`rounded-full border px-3.5 py-1.5 text-sm ${rating === k ? "border-accent bg-accentSoft font-semibold text-ink" : "border-stone-300 text-ink2"}`}>
             {k === "good" ? "👍 " : k === "ok" ? "🙂 " : "👎 "}{label}
