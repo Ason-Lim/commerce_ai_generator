@@ -8,7 +8,7 @@
   2. 칸마다 후보를 차례로 실제 대화와 같은 검색(collect)에 넣고 규칙 검사:
      - 상품이 2개 이상 나옴 · 검색어가 키워드와 맞음(엉뚱한 말로 찾지 않음) · '비슷한 말'로 고쳐 찾지 않음
      - 고른 상품 절반 이상이 상품명에 키워드(핵심말)를 가짐 · 술 아님 · 식품 아닌 분류 없음
-  3. (선택) EXAMPLES_AI_REVIEW=on 이면 Claude 가 '메인 화면 예시로 적절한가'를 한 번 더 봄 (질문·키워드·상품명만 보냄, 고객 문장 없음).
+  3. EXAMPLES_AI_REVIEW (2026-11-22 사용자 결정: 기본 켬, off 로 끔) — Claude 가 '메인 화면 예시로 적절한가'를 한 번 더 봄 (질문·키워드·상품명만 보냄, 고객 문장 없음).
      실패·키 없음이면 규칙 결과만 씀.
   4. 통과한 예시로 trend_examples_<오늘>.json 을 다시 쓴다 (3개 미만이면 원래 파일 그대로 두고 경고).
   기록: var/logs/trend_examples_verify_<오늘>.md
@@ -81,7 +81,7 @@ def check(item: dict, got: dict) -> list[str]:
 
 def ai_review(item: dict, got: dict) -> str | None:
     """문제 한 줄 또는 None. 끔·키 없음·실패면 None (규칙 결과만)."""
-    if (os.environ.get("EXAMPLES_AI_REVIEW") or "off").strip().lower() not in ("on", "1", "true"):
+    if (os.environ.get("EXAMPLES_AI_REVIEW") or "on").strip().lower() in ("off", "0", "false"):
         return None
     try:
         from app.services.nlu.llm_client import LLMClient
