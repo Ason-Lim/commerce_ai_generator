@@ -1759,6 +1759,18 @@ def chat_feedback_overview():
             "bias_note": "상품을 거의 골랐다는 신호가 있을 때만 물어요 — 못 찾고 떠난 대화는 여기 없어요."}
 
 
+@router.get("/admin/api/coupang-gaps", dependencies=[api])
+def coupang_gaps_overview(days: int = 28):
+    """2026-11-22 '쿠팡 빈칸' — 쿠팡이 0건을 주거나 받은 것이 모두 걸러진 검색어, 바꿔 쓸 말로 다시 찾아 나온 것.
+    검색어·날짜·횟수만(세션·손님 문장 없음). 운영자가 바꿔 쓸 말 표·트렌드 글 주제·셀러 입점 후보로 판단."""
+    from app.services.commerce import coupang_gaps as cg
+
+    days = max(1, min(int(days or 28), 365))
+    return {"days": days, "enabled": cg.enabled(), "items": cg.GapStore().overview(days),
+            "synonyms": [{"from": a, "to": b} for a, b in cg.synonyms()],
+            "note": "쿠팡 파트너스 검색 API 기준 — 쿠팡 사이트에 상품이 없다는 뜻은 아니에요."}
+
+
 class _CheckedIn(BaseModel):
     note: str | None = Field(None, max_length=200)
 

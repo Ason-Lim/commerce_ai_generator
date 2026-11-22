@@ -80,3 +80,4 @@ def _isolated_trend_posts(monkeypatch, tmp_path):
 _os.environ.setdefault("CUSTOMER_LLM_PROVIDER", "deepseek")
 # 2026-11-21: 테스트 대화가 로컬 모델 학습 데이터셋(var/dataset)을 쌓지 않게 — 데이터셋 테스트는 스스로 켠다
 _os.environ.setdefault("DATASET_CAPTURE", "0")
+_os.environ.setdefault("COUPANG_GAPS", "off")      # 2026-11-22: 테스트가 var/commerce 에 쿠팡 빈칸 기록을 남기지 않게
