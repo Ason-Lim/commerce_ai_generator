@@ -103,7 +103,7 @@ export function cardToCandidate(c: ApiCard): Candidate {
       ],
       reviews: null,
       notes: [c.check_at_mall
-        ? `평점·후기·도착일은 판매처 검색 API가 제공하지 않아요. ${c.source ?? "판매처"} 상품 페이지에서 확인해 주세요.`
+        ? `평점·후기·도착일은 ${c.source ?? "판매처"} 상품 페이지에서 확인해 주세요.`
         : "리뷰 요약은 상품 상세 API 연결 후 표시됩니다."],
     },
   };
