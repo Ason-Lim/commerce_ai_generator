@@ -172,3 +172,14 @@ def test_link_store_and_go_route(tmp_path, monkeypatch):
     assert r.status_code in (302, 307) and r.headers["location"] == "https://link.coupang.com/a/abc"
     assert clicks and clicks[0]["product"]["selected_section"] == "search_link"
     assert TestClient(app).get("/go/q/sid1/9999", follow_redirects=False).headers["location"] == "/"
+
+
+def test_bare_grade_word_in_new_chat_searches_olive_oil(sqlite_db):
+    """2026-11-22 15:31 PDF: 새 대화 '엑스트라 버진'만 → 품목 이름이 없어 '찾지 못했어요'였다."""
+    assert retry_queries("엑스트라버진") == ["엑스트라 버진 올리브유", "올리브유"]
+    shop = ByQuery({"엑스트라버진": JUNK, "올리브유": BASE})
+    svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
+    res = svc.handle(None, message="엑스트라 버진")
+    assert shop.calls == ["엑스트라버진", "엑스트라 버진 올리브유", "올리브유"]
+    assert BASE[2]["product_name"] in titles(res)
+    assert "맞는 상품을 주지 않아 '올리브유'로 다시 찾았어요" in md(res)

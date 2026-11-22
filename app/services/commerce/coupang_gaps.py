@@ -66,7 +66,9 @@ def retry_queries(query: str, table: list[tuple[str, str]] | None = None) -> lis
     if _GRADE.search(q):
         spaced = re.sub(r"엑스트라\s*버진", "엑스트라 버진", q)
         base = " ".join(_GRADE.sub(" ", q).split())
-        out = [spaced, base]
+        # 2026-11-22: 새 대화에서 '엑스트라 버진'만 말하면 품목 이름이 없다 — 이 등급 말은 거의 올리브유라
+        # '엑스트라 버진 올리브유' → '올리브유' 로 찾는다 (search_note 가 어떻게 찾았는지 알림)
+        out = [spaced, base] if base else [f"{spaced} 올리브유", "올리브유"]
     else:
         out = [q.replace(a, b) for a, b in (table if table is not None else synonyms()) if a in q]
     return [x for x in dict.fromkeys(out) if x and x != q][:MAX_RETRY]

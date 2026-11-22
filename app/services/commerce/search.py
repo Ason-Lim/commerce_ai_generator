@@ -283,7 +283,7 @@ def search_note(query: str, searched_as: str | None, grade: dict | None) -> str 
     """다시 찾았거나 등급으로 거른 경우 고객에게 한 줄."""
     parts = []
     if searched_as:
-        parts.append(f"쿠팡이 '{query}'로는 상품을 주지 않아 '{searched_as}'로 다시 찾았어요")
+        parts.append(f"쿠팡이 '{query}'로는 맞는 상품을 주지 않아 '{searched_as}'로 다시 찾았어요")
     if grade and grade["stated"]:
         parts.append(f"상품명에 엑스트라버진 표기가 있는 상품 {grade['stated']}개를 먼저 견줬어요")
     elif grade:
