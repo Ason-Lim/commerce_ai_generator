@@ -65,12 +65,12 @@ def run(messages: list[str], service) -> list[dict]:
         res = service.handle(sid, message=msg)
         sid = res["session_id"]
         meta = res.get("meta") or {}
-        state, _rev, _persist = service._load(sid)
+        state, _rev, persist = service._load(sid)
         info = state.get("followup") or {}
         lists = [b["data"] for b in res["blocks"] if b["type"] == "product_list"]
         texts = [b["data"].get("md", "") for b in res["blocks"] if b["type"] in ("text", "notice")]
         rows.append({
-            "n": n, "msg": msg, "stage": res["stage"],
+            "n": n, "msg": msg, "stage": res["stage"], "persist": bool(persist),
             "cond": fu.describe_conds(info.get("conds")) or "—",
             "base": info.get("query") or "—", "origin": info.get("origin") or "—",
             "calls": meta.get("coupang_calls", 0), "session_calls": meta.get("session_coupang_calls", 0),
@@ -98,9 +98,18 @@ def main(argv: list[str]) -> None:
     if fake:
         service = fake_service()
     else:
-        from app.api.chat_routes import get_chat_service
+        # 웹 서버(main.py lifespan)처럼 DB 연결을 먼저 등록해야 대화 상태가 저장된다 — 안 하면 차례마다 새 대화가 된다
+        # (11-22 17:23 첫 실행: 'chat state unavailable' · '로켓배송만'을 새 검색으로 처리)
+        from app.db.engine_provider import bind_engine, is_bound
+        from app.db.lifecycle import EngineLifecycle
 
-        service = get_chat_service()
+        if not is_bound():
+            lifecycle = EngineLifecycle()
+            lifecycle.initialize()
+            bind_engine(lifecycle.engine)
+        from app.api.chat_routes import build_default_service
+
+        service = build_default_service()
     rows = run(messages, service)
     md = table(rows)
     print(md)
@@ -110,6 +119,8 @@ def main(argv: list[str]) -> None:
     out.write_text(f"# 이어 묻기 다중 차례 시험 ({stamp}{', 가짜 검색' if fake else ', 실제 쿠팡 API'})\n\n"
                    f"시나리오: {' → '.join(messages)}\n\n{md}\n", encoding="utf-8")
     print(f"\n저장: {out.relative_to(ROOT)}")
+    if rows and not rows[0]["persist"]:
+        sys.exit("주의: 대화 상태를 저장하지 못해(DB 연결 확인) 이어 묻기를 시험하지 못했어요. 위 표는 차례마다 새 대화예요.")
 
 
 if __name__ == "__main__":

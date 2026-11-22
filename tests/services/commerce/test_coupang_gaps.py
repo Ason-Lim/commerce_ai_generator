@@ -44,7 +44,7 @@ def gaps(tmp_path, monkeypatch):
 def test_retry_queries_from_table_and_grade():
     table = [("올리브유", "올리브오일"), ("포도씨유", "포도씨오일")]
     assert cg.retry_queries("포도씨유", table) == ["포도씨오일"]
-    assert cg.retry_queries("엑스트라버진 올리브유", table) == ["엑스트라 버진 올리브유", "올리브유"]
+    assert cg.retry_queries("엑스트라버진 올리브유", table) == ["엑스트라버진 올리브유 500ml", "엑스트라버진 올리브유 1L", "올리브유"]
     assert cg.retry_queries("사과", table) == []
     assert len(cg.retry_queries("올리브유 포도씨유", table)) <= cg.MAX_RETRY
 

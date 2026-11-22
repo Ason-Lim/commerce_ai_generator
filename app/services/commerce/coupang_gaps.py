@@ -30,6 +30,9 @@ ROOT = Path(__file__).resolve().parents[3]
 SYNONYMS = ROOT / "data" / "query_synonyms.csv"
 KST = timezone(timedelta(hours=9))
 MAX_RETRY = 2
+MAX_GRADE_RETRY = 3        # 등급 말: 용량 붙인 말 2개 + 품목 이름 (2026-11-22 운영 확인)
+GRADE_SIZES = ("500ml", "1L")
+_SIZE = re.compile(r"\d+(?:\.\d+)?\s*(?:ml|l|L|리터|g|kg)\b", re.IGNORECASE)
 LINK_KEEP_DAYS = 30
 OUTCOMES = ("zero", "filtered", "retry_found")
 
@@ -68,7 +71,14 @@ def retry_queries(query: str, table: list[tuple[str, str]] | None = None) -> lis
         base = " ".join(_GRADE.sub(" ", q).split())
         # 2026-11-22: 새 대화에서 '엑스트라 버진'만 말하면 품목 이름이 없다 — 이 등급 말은 거의 올리브유라
         # '엑스트라 버진 올리브유' → '올리브유' 로 찾는다 (search_note 가 어떻게 찾았는지 알림)
-        out = [spaced, base] if base else [f"{spaced} 올리브유", "올리브유"]
+        item = base or "올리브유"
+        if _SIZE.search(item):
+            out = [spaced, item]
+        else:
+            # 2026-11-22 17:2x 운영 확인: 쿠팡 검색 API 는 '엑스트라버진 올리브유'·'올리브오일'·'올리브 오일'에 해표 압착만,
+            # '엑스트라버진 올리브유 500ml' 에는 오뚜기 엑스트라버진을 줬다 → 용량을 붙인 말을 먼저 (등급 표기는 grade_filter)
+            out = [f"엑스트라버진 {item} {size}" for size in GRADE_SIZES] + [item]
+        return [x for x in dict.fromkeys(out) if x and x != q][:MAX_GRADE_RETRY]
     else:
         out = [q.replace(a, b) for a, b in (table if table is not None else synonyms()) if a in q]
     return [x for x in dict.fromkeys(out) if x and x != q][:MAX_RETRY]
