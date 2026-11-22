@@ -41,6 +41,9 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
+site_hidden: list[str] = []
+
+
 @pytest.fixture(scope="module")
 def site(tmp_path_factory):
     if not (DIST / "index.html").is_file():
@@ -54,6 +57,20 @@ def site(tmp_path_factory):
 
     svc = service(tmp_path_factory.mktemp("posts"))
     post = approved(svc, "대방어")
+    # 2026-11-22 (3-A): 공개되면 안 되는 글 — 검토 대기·반려·내린 글 (주소로 직접 들어가도 안 보여야 함)
+    from tests.services.trend_posts.helpers import item, report, search_result
+
+    hidden = []
+    for topic, step in (("방어회", "pending"), ("과메기", "rejected"), ("굴", "withdrawn")):
+        draft, _ = svc.create_from_surge(report(item(topic)), topic, find_products=lambda k: search_result())
+        svc.submit(draft.id)
+        if step == "rejected":
+            svc.reject(draft.id, "시험")
+        if step == "withdrawn":
+            svc.approve(draft.id)
+            svc.withdraw(draft.id, "시험")
+        hidden.append(draft.id)
+    site_hidden.extend(hidden)
     app = FastAPI()
 
     @app.get("/api/trends/surge")
@@ -157,3 +174,44 @@ def test_mobile_uses_the_bottom_tabs(site, browser):
         assert tabs.is_visible() and tabs.locator("a[aria-current=page]").inner_text().strip() == "지금 뜨는 식품"
     finally:
         ctx.close()
+
+
+# ── 2026-11-22 창 3-A 넘어가는 기준: 이름 없는 버튼·링크 0 · 미승인 글 차단 · 사이트맵 승인 글만 ──────────
+
+NAMELESS_JS = """() => [...document.querySelectorAll('button, a[href], [role=button], input:not([type=hidden]), textarea, select')]
+  .filter(el => el.offsetParent !== null || el.getClientRects().length)
+  .filter(el => {
+    const name = (el.getAttribute('aria-label') || el.getAttribute('title') || el.innerText || el.value ||
+                  el.getAttribute('placeholder') || (el.labels && el.labels[0] && el.labels[0].innerText) ||
+                  (el.getAttribute('aria-labelledby') && document.getElementById(el.getAttribute('aria-labelledby'))?.innerText) ||
+                  [...el.querySelectorAll('img[alt]')].map(i => i.alt).join('') || '').trim();
+    return !name;
+  })
+  .map(el => el.outerHTML.slice(0, 120))"""
+
+
+def test_no_nameless_buttons_or_links(site, page):
+    base, post = site
+    for path in ("/", "/#/hot", "/trends", f"/trends/{post.id}"):
+        page.goto(base + path)
+        page.wait_for_load_state("networkidle")
+        nameless = page.evaluate(NAMELESS_JS)
+        assert nameless == [], f"{path}: 이름 없는 버튼·링크 {nameless}"
+
+
+def test_unapproved_posts_are_not_reachable(site, page):
+    base, post = site
+    assert len(site_hidden) == 3
+    for pid in site_hidden:
+        resp = page.goto(f"{base}/trends/{pid}")
+        assert resp.status == 404, pid
+    page.goto(base + "/trends")
+    links = page.locator("a[href^='/trends/']").evaluate_all("els => els.map(e => e.getAttribute('href'))")
+    assert not any(pid in (h or "") for pid in site_hidden for h in links)
+
+
+def test_sitemap_lists_only_approved_posts(site, page):
+    base, post = site
+    xml = page.request.get(base + "/sitemap.xml").text()
+    assert post.id in xml or quote(post.id) in xml
+    assert not any(pid in xml or quote(pid) in xml for pid in site_hidden)
