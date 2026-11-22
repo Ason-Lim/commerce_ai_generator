@@ -62,7 +62,7 @@ def test_grade_filter_drops_other_grades_and_unlabelled_when_enough():
     cards = [{"title": t["product_name"]} for t in BASE]
     kept, info = grade_filter("엑스트라버진 올리브유", cards)
     assert [c["title"] for c in kept] == [BASE[2]["product_name"], BASE[3]["product_name"]]
-    assert info == {"stated": 2, "unknown": 0, "dropped": 3}
+    assert info == {"stated": 2, "unknown": 0, "unknown_cards": [], "dropped": 3}
 
 
 def test_grade_filter_keeps_unlabelled_with_note_when_few():
@@ -72,9 +72,11 @@ def test_grade_filter_keeps_unlabelled_with_note_when_few():
         {"title": "프리모셰프 포마스 올리브오일"},
     ]
     kept, info = grade_filter("엑스트라버진 올리브유", cards)
-    assert [c["title"] for c in kept] == ["커클랜드 엑스트라버진 올리브유 3L", "피에트로코리첼리 올리브유"]
-    assert "grade_note" in kept[1] and "grade_note" not in kept[0]
-    assert info == {"stated": 1, "unknown": 1, "dropped": 1}
+    # 2026-11-22 외부 검토 2: 표기 없는 상품은 견주는 후보에 섞지 않고 따로('등급 확인 필요')
+    assert [c["title"] for c in kept] == ["커클랜드 엑스트라버진 올리브유 3L"]
+    assert [c["title"] for c in info["unknown_cards"]] == ["피에트로코리첼리 올리브유"]
+    assert "grade_note" in info["unknown_cards"][0]
+    assert {k: info[k] for k in ("stated", "unknown", "dropped")} == {"stated": 1, "unknown": 1, "dropped": 1}
     assert grade_filter("올리브유", cards) == (cards, None)
 
 
@@ -182,4 +184,5 @@ def test_bare_grade_word_in_new_chat_searches_olive_oil(sqlite_db):
     res = svc.handle(None, message="엑스트라 버진")
     assert shop.calls == ["엑스트라버진", "엑스트라 버진 올리브유", "올리브유"]
     assert BASE[2]["product_name"] in titles(res)
-    assert "맞는 상품을 주지 않아 '올리브유'로 다시 찾았어요" in md(res)
+    # 2026-11-22 외부 검토 2: 어떻게 해석했는지 밝힌다
+    assert "'엑스트라버진'만 말씀하셔서 **엑스트라버진 올리브유**를 찾는 것으로 보고 '올리브유'로 찾았어요" in md(res)

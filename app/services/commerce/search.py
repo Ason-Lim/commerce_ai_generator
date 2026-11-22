@@ -177,10 +177,13 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
 
         cards = relevance_assist.apply(query, cards)
     cards, grade_info = grade_filter(query, cards)
+    grade_unknown = list((grade_info or {}).get("unknown_cards") or [])
     # 2026-11-21: 쿠팡 분류가 분명히 식품 밖(신발·가전·문구…)이면 뺀다 — '엑스트라 버전'에 신발·커팅기가 추천됐다
     non_food = sum(1 for c in cards if is_non_food_category(c.get("category")))
     if non_food:
         cards = [c for c in cards if not is_non_food_category(c.get("category"))]
+    grade_unknown = [c for c in grade_unknown if not is_non_food_category(c.get("category"))
+                     and (explain.wants_frozen(text) or not explain.is_frozen(c["title"]))]
     if received and not cards and error is None and not gap_logged:
         coupang_gaps.record(query, "filtered")     # 2026-11-22: 받았지만 관련성·비식품·등급으로 모두 빠짐
     fresh_miss = bool(fresh_item and cards and not any(_says_fresh(c["title"], fresh_item) for c in cards))
@@ -195,11 +198,12 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     # 위 후보·순서는 그대로(순위 동결) — 더 찾은 상품은 '추천순 아님' 칸에, 같은 관련성·등급·식품 거르기를 지난 것만.
     more_list: list[dict] = []
     more_as: list[str] = []
+    more_tried: list[str] = []
     if error is None and cards and len(cards) <= FEW_RESULTS and more_on_few_on():
         more_list, more_as = search_more(
             query, terms, [a for a in retry_queries(searched_as or query) if a not in (query, searched_as)],
             fetch, {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list},
-            text=text, searched_as=searched_as)
+            text=text, searched_as=searched_as, tried=more_tried)
 
     partner_terms = terms or _content_tokens(label)
     partner_cards = [ChatService._partner_card(it, query) for it in
@@ -226,8 +230,6 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         for c in picked["picks"] + picked["others"]:
             if c.get("partner_note") and c["partner_note"] not in (c.get("why") or []):
                 c["why"] = (c.get("why") or []) + [c["partner_note"]]
-            if c.get("grade_note") and c["grade_note"] not in (c.get("why") or []):
-                c["why"] = (c.get("why") or []) + [c["grade_note"]]
         start = max([c["rank"] for c in picked["picks"] + picked["others"]] or [0])
         partner_list = [dict(c, rank=start + n, why=[c["partner_note"]]) for n, c in enumerate(partner_list, 1)]
         start = max([start] + [c["rank"] for c in partner_list])
@@ -238,18 +240,23 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         more_list = [dict(c, rank=start + n, why=[{"text": more_note(c["more_as"]), "basis": "calc"}])
                      for n, c in enumerate(more_list, 1)]
         start = max([start] + [c["rank"] for c in more_list])
+        grade_unknown = [dict(c, rank=start + n, why=[c["grade_note"]]) for n, c in enumerate(grade_unknown, 1)]
+        start = max([start] + [c["rank"] for c in grade_unknown])
         connect = [dict(c, rank=start + n) for n, c in enumerate(connect, 1)]
     else:
         partner_list = []                       # 웹도 쿠팡 결과가 없으면 업체 목록을 보여 주지 않는다
         frozen_list = []
         more_list, more_as = [], []
-        connect = [dict(c, rank=n) for n, c in enumerate(connect, 1)]
+        # 표기 상품이 없고 표기 없는 상품만 있으면 그 칸만 (추천 후보 아님)
+        grade_unknown = [dict(c, rank=n, why=[c["grade_note"]]) for n, c in enumerate(grade_unknown, 1)]
+        connect = [dict(c, rank=len(grade_unknown) + n) for n, c in enumerate(connect, 1)]
     return dict(query=query, label=label, terms=terms, priority=priority, budget=budget, picked=picked,
                 partner_list=partner_list, frozen_list=frozen_list, more_list=more_list, more_as=more_as,
+                grade_unknown=grade_unknown, more_tried=more_tried,
                 connect=connect, raw=raw, error=error, preview=preview, found=found,
                 recommendation_path=recommendation_path, non_food=non_food,
                 fresh_miss=fresh_note(fresh_item) if fresh_miss else None,
-                search_note=search_note(query, searched_as, grade_info) if picked else None,
+                search_note=search_note(query, searched_as, grade_info) if (picked or grade_unknown) else None,
                 searched_as=searched_as)
 
 
@@ -272,7 +279,7 @@ def _title_key(title: str) -> str:
 
 def search_more(query: str, terms: list[str] | None, alts: list[str], fetch: Callable[[str], list[dict]],
                 seen: set[str], *, text: str = "", searched_as: str | None = None,
-                max_calls: int = MORE_CALLS) -> tuple[list[dict], list[str]]:
+                max_calls: int = MORE_CALLS, tried: list[str] | None = None) -> tuple[list[dict], list[str]]:
     """바꿔 쓸 말로 더 찾기 — (더 찾은 카드, 실제로 상품이 나온 말).  collect(후보가 적을 때)와 대화 '더 찾아보기'가 같이 쓴다.
     같은 관련성·식품 분류·등급 거르기, 냉동은 찾지 않았으면 뺌, seen(키·이름)에 있는 상품은 뺌, 최대 MORE_MAX."""
     from app.services.chat import explain
@@ -283,6 +290,8 @@ def search_more(query: str, terms: list[str] | None, alts: list[str], fetch: Cal
     more_as: list[str] = []
     seen = set(seen)
     for alt in alts[:max_calls]:
+        if tried is not None:           # 2026-11-22: 상품이 안 나온 말도 '써 봄'으로 남겨 다음 '더 찾아보기'에서 다시 부르지 않는다
+            tried.append(alt)
         try:
             got_more = fetch(alt)
         except Exception:  # noqa: BLE001 — 더 찾기는 덤: 실패하면 있는 후보만
@@ -321,7 +330,7 @@ def fetch_cards(shopping: Callable, q: str, *, query: str, priority: str | None,
 
 
 def more_note(alt: str) -> str:
-    return f"'{alt}'(으)로 더 찾은 상품 — 위 후보와 같은 기준으로 견주지 않았어요"
+    return f"다른 검색어 '{alt}'(으)로 찾은 추가 후보 — 기존 추천 목록과 함께 정렬하지 않았어요"
 
 
 # ── 2026-11-21 대화 확인(올리브·올리브유·엑스트라 버전)에서 나온 고침 ─────────────────
@@ -361,20 +370,29 @@ def grade_filter(query: str, cards: list[dict]) -> tuple[list[dict], dict | None
     others = [c for c in cards if not _GRADE.search(c.get("title") or "")
               and not _OTHER_GRADE.search(c.get("title") or "")]
     dropped = len(cards) - len(stated) - len(others)
-    keep_unknown = len(stated) < 2               # 표기 상품이 둘 이상이면 표기 없는 상품은 견주지 않는다
+    keep_unknown = len(stated) < 2               # 표기 상품이 둘 이상이면 표기 없는 상품은 보여 주지 않는다
     unknown = [dict(c, grade_note=GRADE_UNKNOWN_NOTE) for c in others] if keep_unknown else []
-    return stated + unknown, {"stated": len(stated), "unknown": len(unknown), "dropped": dropped + len(others) - len(unknown)}
+    # 2026-11-22 외부 검토 2: 표기 없는 상품은 견주는 후보에 섞지 않고 '등급 확인 필요' 칸으로 따로 (요청 등급을 만족한다고
+    # 보지 않음).  반환 카드는 표기 상품만, 표기 없는 상품은 info['unknown_cards'].
+    return stated, {"stated": len(stated), "unknown": len(unknown), "unknown_cards": unknown,
+                    "dropped": dropped + len(others) - len(unknown)}
 
 
 def search_note(query: str, searched_as: str | None, grade: dict | None) -> str | None:
     """다시 찾았거나 등급으로 거른 경우 고객에게 한 줄."""
     parts = []
-    if searched_as:
+    bare = bool(_GRADE.search(query or "")) and not _GRADE.sub(" ", query or "").strip()
+    if searched_as and bare:
+        # 2026-11-22 외부 검토 2: 품목 없이 등급 말만 — 어떻게 해석했는지 밝힌다
+        parts.append(f"'{query}'만 말씀하셔서 **엑스트라버진 올리브유**를 찾는 것으로 보고 '{searched_as}'로 찾았어요")
+    elif searched_as:
         parts.append(f"쿠팡이 '{query}'로는 맞는 상품을 주지 않아 '{searched_as}'로 다시 찾았어요")
     if grade and grade["stated"]:
-        parts.append(f"상품명에 엑스트라버진 표기가 있는 상품 {grade['stated']}개를 먼저 견줬어요")
+        parts.append(f"상품명에 엑스트라버진 표기가 있는 상품 {grade['stated']}개만 견줬어요")
     elif grade:
-        parts.append("상품명에 엑스트라버진 표기가 있는 상품은 없었어요 — 등급은 판매처에서 확인해 주세요")
+        parts.append("상품명에 엑스트라버진 표기가 있는 상품은 찾지 못했어요")
+    if grade and grade.get("unknown"):
+        parts.append(f"표기가 없는 상품 {grade['unknown']}개는 '등급 확인 필요' 칸에 따로 두었어요")
     if grade and grade["dropped"]:
         parts.append(f"포마스·퓨어 등 다른 등급이거나 등급 표기가 없는 상품 {grade['dropped']}개는 뺐어요")
     return " · ".join(parts) or None
@@ -619,6 +637,7 @@ def search_products(req: SearchRequest, *, shopping: Callable, keyword_extractor
     items += [to_item(c, "connect") for c in got["connect"]]
 
     items += [to_item(c, "more_list") for c in got.get("more_list") or []]
+    items += [to_item(c, "grade_unknown") for c in got.get("grade_unknown") or []]
     warnings = [CHECK_AT_MALL]
     from app.services.chat.explain import amount_miss_note
 

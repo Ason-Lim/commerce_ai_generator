@@ -183,7 +183,8 @@ def public(response: dict) -> dict:
         return response
     blocks = [dict(b, data={k: v for k, v in b["data"].items() if k != "trace"})
               if isinstance(b.get("data"), dict) else b for b in response.get("blocks") or []]
-    return {**response, "blocks": blocks}
+    # 2026-11-22: 쿠팡 호출 수(meta)도 확인용 — 고객 응답에는 싣지 않는다 (scripts/followup_scenario.py 는 서버 안에서 읽음)
+    return {**{k: v for k, v in response.items() if k != "meta"}, "blocks": blocks}
 
 
 @router.post("/api/chat")

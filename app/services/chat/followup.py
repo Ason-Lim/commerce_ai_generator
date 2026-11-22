@@ -16,6 +16,11 @@
 * 문장 전체가 조건 말일 때만 잡는다 — '사과 2kg'·'올리브유 싼 거'처럼 품목이 들어가면 새 검색(평소 경로).
 * 기본 추천순·고른 상품은 바꾸지 않는다(순위 동결). 정렬 보기는 '추천순 아님' 라벨 (사용자 결정 11-22).
 * 쿠팡 다시 찾기는 대화(세션)당 FOLLOWUP_SEARCH_MAX(기본 10, 사용자 결정 11-22) — 넘으면 새로 찾지 않고 알린다.
+  2026-11-22 외부 검토 1: '고객이 요청한 다시 찾기 횟수'(followup_searches)와 '실제 쿠팡 호출 수'(api_calls — 첫 검색·
+  자동 다시 찾기·후보가 적을 때 더 찾기·실패 호출 포함, 같은 차례 같은 말은 한 번만)를 따로 센다. 이어 묻기 다시 찾기는
+  둘 중 하나라도 상한(10번 / FOLLOWUP_API_MAX 40회)이면 하지 않는다.
+* 보기 조건(정렬·배송 표시·빼기)은 쌓이고, 양·수량·선물·더 찾아보기로 다시 찾아도 이어 적용한다 (외부 검토 4).
+  '처음 조건으로'는 한 단계 되돌리기가 아니라 **처음 찾은 후보로** 돌아가며 모든 조건을 푼다.
 """
 
 from __future__ import annotations
@@ -54,6 +59,16 @@ def search_max() -> int:
         return max(0, int(os.environ.get("CHAT_FOLLOWUP_SEARCH_MAX") or FOLLOWUP_SEARCH_MAX))
     except ValueError:
         return FOLLOWUP_SEARCH_MAX
+
+
+FOLLOWUP_API_MAX = 40      # 이어 묻기로 다시 찾을 때 세션 전체의 실제 쿠팡 호출 수 상한 (자동 다시 찾기·더 찾기 포함)
+
+
+def api_max() -> int:
+    try:
+        return max(0, int(os.environ.get("CHAT_FOLLOWUP_API_MAX") or FOLLOWUP_API_MAX))
+    except ValueError:
+        return FOLLOWUP_API_MAX
 
 
 def base_set(state: dict) -> dict | None:
@@ -161,6 +176,39 @@ def describe(intent: dict) -> str:
     return "처음 조건"
 
 
+VIEW_KINDS = ("sort", "filter", "exclude")
+
+
+def merge_cond(conds: list[dict], intent: dict) -> list[dict]:
+    """보기 조건 쌓기 — 정렬은 하나(새 것으로 바꿈), 배송 표시는 칸별 하나, 빼기 말은 모아 둔다."""
+    out = [c for c in conds or [] if not (
+        (intent["kind"] == "sort" and c["kind"] == "sort")
+        or (intent["kind"] == "filter" and c["kind"] == "filter" and c["field"] == intent["field"])
+        or (intent["kind"] == "exclude" and c["kind"] == "exclude" and c["word"] == intent["word"]))]
+    return out + [intent]
+
+
+def apply_conds(cards: list[dict], conds: list[dict]) -> tuple[list[dict], int, dict | None]:
+    """(조건에 맞는 후보, 정렬 값이 없어 뒤로 둔 수, 정렬 조건) — 거르기·빼기 뒤 정렬. 정렬이 없으면 추천 순서 그대로."""
+    view = list(cards)
+    sort = None
+    for c in conds or []:
+        if c["kind"] == "filter":
+            view = filter_view(view, c["field"])
+        elif c["kind"] == "exclude":
+            view = exclude_view(view, c["word"])
+        elif c["kind"] == "sort":
+            sort = c
+    unknown = 0
+    if sort:
+        view, unknown = sort_view(view, sort["by"])
+    return view, unknown, sort
+
+
+def describe_conds(conds: list[dict]) -> str:
+    return " · ".join(describe(c) for c in conds or [])
+
+
 def chips_after(cards: list[dict], *, more_left: bool, changed: bool) -> list[str]:
     """쇼핑 답 끝 칩 — 누르면 그 말을 보낸다 (parse 가 받는 말만)."""
     base = compared(cards)
@@ -177,4 +225,4 @@ def chips_after(cards: list[dict], *, more_left: bool, changed: bool) -> list[st
 
 
 __all__ = ["parse", "base_set", "compared", "sort_view", "filter_view", "exclude_view", "research_text", "describe",
-           "chips_after", "search_max", "FOLLOWUP_SEARCH_MAX", "RESEARCH_KINDS"]
+           "chips_after", "search_max", "merge_cond", "apply_conds", "describe_conds", "VIEW_KINDS", "api_max", "FOLLOWUP_SEARCH_MAX", "RESEARCH_KINDS"]

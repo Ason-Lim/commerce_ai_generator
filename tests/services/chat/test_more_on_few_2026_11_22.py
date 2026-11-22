@@ -35,9 +35,9 @@ def test_few_results_search_more_with_synonym(sqlite_db):
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="올리브유")
     assert shop.calls == ["올리브유", "올리브오일"]
-    more = lists(res)["다른 말로 더 찾은 상품 1개"]
+    more = lists(res)["다른 검색어로 찾은 추가 후보 1개"]
     assert [i["title"] for i in more["items"]] == ["올리타리아 엑스트라버진 올리브오일 1L"]
-    assert "추천 순서가 아니고" in more["note"] and "'올리브오일'" in more["note"]
+    assert "기존 추천 목록과 함께 정렬하지 않았어요" in more["note"] and "'올리브오일'" in more["note"]
     assert not more.get("collapsed")
     assert CHECK_AT_MALL in md(res) and "검색 API" not in md(res)
 
@@ -47,7 +47,7 @@ def test_many_results_do_not_search_more(sqlite_db):
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="올리브유")
     assert shop.calls == ["올리브유"]
-    assert not any(t and t.startswith("다른 말로 더 찾은") for t in lists(res))
+    assert not any(t and t.startswith("다른 검색어로 찾은") for t in lists(res))
 
 
 def test_off_switch(sqlite_db, monkeypatch):
