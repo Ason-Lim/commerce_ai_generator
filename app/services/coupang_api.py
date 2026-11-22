@@ -133,9 +133,40 @@ def search_deeplink(keyword: str, timeout: float = 5.0) -> str | None:
     return url if isinstance(url, str) and url.startswith("https://link.coupang.com/") else None
 
 
+# 2026-11-22: 같은 검색어 결과를 잠깐 저장해 다시 쓴다 — 후보가 적을 때 더 찾기·이어 묻기로 호출이 늘어도
+# 1분 한도(넘기면 24시간 막힘)를 지키게. 빈 결과·오류는 저장하지 않는다. 가격은 저장한 시각 기준이라 짧게.
+# COUPANG_SEARCH_CACHE_MINUTES (기본 60, 0 이면 끔).
+_SEARCH_CACHE: dict[tuple[str, int, str], tuple[float, list]] = {}
+_SEARCH_CACHE_MAX = 500
+
+
+def _cache_minutes() -> float:
+    try:
+        return max(0.0, float(os.getenv("COUPANG_SEARCH_CACHE_MINUTES", "60")))
+    except ValueError:
+        return 60.0
+
+
 def search_coupang_products(keyword: str, limit: int = 10):
     if not is_coupang_available():
         return []
+    import time as _time
+
+    minutes = _cache_minutes()
+    key = (" ".join((keyword or "").split()), int(limit), coupang_sub_id() or "")
+    hit = _SEARCH_CACHE.get(key) if minutes else None
+    if hit and _time.time() - hit[0] < minutes * 60:
+        return [dict(x) for x in hit[1]]
+    items = _search_coupang_products(keyword, limit)
+    if minutes and items:
+        if len(_SEARCH_CACHE) >= _SEARCH_CACHE_MAX:
+            for old_key in sorted(_SEARCH_CACHE, key=lambda k: _SEARCH_CACHE[k][0])[:_SEARCH_CACHE_MAX // 5]:
+                _SEARCH_CACHE.pop(old_key, None)
+        _SEARCH_CACHE[key] = (_time.time(), [dict(x) for x in items])
+    return items
+
+
+def _search_coupang_products(keyword: str, limit: int = 10):
     from app.services import coupang_rate
 
     if not coupang_rate.acquire():          # 1분 한도(문서: 50번) 직전 — 넘기면 24시간 사용 제한

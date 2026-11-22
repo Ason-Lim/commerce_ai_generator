@@ -201,7 +201,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     more_tried: list[str] = []
     if error is None and cards and len(cards) <= FEW_RESULTS and more_on_few_on():
         more_list, more_as = search_more(
-            query, terms, [a for a in retry_queries(searched_as or query) if a not in (query, searched_as)],
+            query, terms, [a for a in retry_queries(searched_as or query) + size_variants(searched_as or query, cards)
+                           if a not in (query, searched_as)],
             fetch, {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list},
             text=text, searched_as=searched_as, tried=more_tried)
 
@@ -230,6 +231,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         for c in picked["picks"] + picked["others"]:
             if c.get("partner_note") and c["partner_note"] not in (c.get("why") or []):
                 c["why"] = (c.get("why") or []) + [c["partner_note"]]
+            if (line := options_line(c)) and line not in (c.get("why") or []):
+                c["why"] = (c.get("why") or []) + [line]
         start = max([c["rank"] for c in picked["picks"] + picked["others"]] or [0])
         partner_list = [dict(c, rank=start + n, why=[c["partner_note"]]) for n, c in enumerate(partner_list, 1)]
         start = max([start] + [c["rank"] for c in partner_list])
@@ -262,9 +265,45 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
 
 # ── 2026-11-22 후보가 적을 때 더 보여 주기 ─────────────────
 CHECK_AT_MALL = "평점·후기·도착일은 판매처 페이지에서 확인해 주세요."
-FEW_RESULTS = 4      # 견줄 후보가 이만큼 이하면 바꿔 쓸 말로 더 찾는다 (고른 상품이 최대 4개라 이때는 '다른 후보'가 없음)
+FEW_RESULTS = 5      # 견줄 후보(서로 다른 상품)가 6개 미만이면 다른 검색어로 더 찾는다 (2026-11-22 사용자 결정, 전 4)
 MORE_CALLS = 2       # 더 찾기 쿠팡 호출 상한
 MORE_MAX = 6         # 더 찾은 상품 칸 상한
+
+
+# 2026-11-22: 용량을 붙인 검색어 — 쿠팡 검색 API 는 '엑스트라버진 올리브유'에 해표만, '…500ml' 에는 다른 상품을 줬다.
+_LIQUID = re.compile(r"(?:유|오일|기름|식초|간장|소스|주스|우유|두유|청|시럽|액젓|육수|음료|물)$")
+_HAS_SIZE = re.compile(r"\d+(?:\.\d+)?\s*(?:ml|l|리터|g|kg|킬로|근|개|입|팩|봉|병)", re.IGNORECASE)
+
+
+def size_variants(query: str, cards: list[dict] | None = None) -> list[str]:
+    """['올리브유 500ml', '올리브유 1L'] — 검색어에 양이 없을 때만. 액체(상품명 용량·이름 끝말)면 ml·L, 무게 표기
+    상품이 많으면 kg·g. 어느 쪽인지 모르면 붙이지 않는다."""
+    q = " ".join((query or "").split())
+    if not q or _HAS_SIZE.search(q):
+        return []
+    cards = cards or []
+    liquid = sum(1 for c in cards if c.get("volume_ml")) + (2 if _LIQUID.search(q.split()[-1]) else 0)
+    solid = sum(1 for c in cards if c.get("weight_g") and not c.get("volume_ml"))
+    if liquid and liquid >= solid:
+        return [f"{q} 500ml", f"{q} 1L"]
+    if solid >= 2:
+        import statistics
+
+        mid = statistics.median(c["weight_g"] for c in cards if c.get("weight_g") and not c.get("volume_ml"))
+        sizes = ("200g", "500g") if mid < 400 else ("500g", "1kg") if mid < 1500 else ("2kg", "5kg")
+        return [f"{q} {x}" for x in sizes]
+    return []
+
+
+def options_line(card: dict) -> dict | None:
+    """같은 이름으로 합친 옵션을 근거 줄로 — 카드 표시(weight_note)보다 잘 보이게 (2026-11-22 사용자: 묶음 유지·표시 개선)."""
+    opts = card.get("same_name_options")
+    if not isinstance(opts, dict) or (opts.get("count") or 0) < 2:
+        return None
+    lo, hi = opts.get("price_min"), opts.get("price_max")
+    span = f" ({lo:,}~{hi:,}원)" if lo and hi and lo != hi else ""
+    return {"text": f"같은 이름 옵션 {opts['count']}개{span}를 한 장으로 묶었어요 — 보이는 가격은 그중 하나예요. "
+                    "용량·수량은 판매처에서 골라 주세요", "basis": "mall"}
 
 
 def more_on_few_on() -> bool:
