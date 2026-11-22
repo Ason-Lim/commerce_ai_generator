@@ -6,4 +6,15 @@ mkdir -p var/logs
 LOG="var/logs/trend_examples_$(date +%Y%m%d).log"
 PY=/usr/bin/python3
 [ -x "$PY" ] || PY="$(command -v python3)"
-{ echo "== $(date '+%F %T') 시작 ($PY)"; "$PY" scripts/update_trend_examples.py; echo "== 종료 exit=$?"; } >> "$LOG" 2>&1
+# 2026-11-22: 어제 하루 순위가 아직 없으면 먼저 받는다 (순위 수집기 실행 시각과 상관없이 그날 순위로 예시를 만들게)
+RANK_DIR="${NAVER_DAILY_RANK_DIR:-$HOME/food_recommend/daily_food_rank}"
+BACKFILL="$HOME/food_recommend/trend_pipeline/backfill_datalab_rank.py"
+YESTERDAY="$(date -v-1d +%F 2>/dev/null || date -d yesterday +%F)"
+{
+  echo "== $(date '+%F %T') 시작 ($PY)"
+  if [ -f "$BACKFILL" ] && [ ! -f "$RANK_DIR/food_$YESTERDAY.csv" ]; then
+    echo "-- 어제($YESTERDAY) 하루 순위 받기"; "$PY" "$BACKFILL" --daily || echo "-- 하루 순위 받기 실패 (있는 자료로 계속)"
+  fi
+  "$PY" scripts/update_trend_examples.py
+  echo "== 종료 exit=$?"
+} >> "$LOG" 2>&1
