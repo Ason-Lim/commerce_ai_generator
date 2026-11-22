@@ -7,6 +7,7 @@ import { ProductDetail } from './components/ProductDetail';
 import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteNav } from './components/SiteNav';
 import { TrendPostPanel } from './components/TrendPost';
 import { FlowStepper } from './components/FlowStepper';
+import { HomeRankings } from './components/HomeRankings';
 import { ChatActions, type ChatActionsValue } from './components/ChatActions';
 import type { FlowStep, SendPayload } from './state/useConversation';
 import type { Message } from './types';
@@ -422,6 +423,8 @@ export default function ChatWindow() {
                             })}
                         </div>
                         {examplesDate && <p className="mt-3 text-right text-[11px] text-stone-400">예시 질문 기준일 {examplesDate} · 네이버 식품 키워드 순위</p>}
+                        {/* 창 3-C (2026-11-22): 지금 순위 — 예시 질문 아래 */}
+                        <HomeRankings view="home" busy={busy} onAsk={submit} />
                     </section>
                 ) : (
                     <div className="space-y-8">

@@ -168,3 +168,32 @@ export async function forgetShelf(sessions: string[]): Promise<boolean> {
   if (!r.ok) return false;
   return Boolean(((await r.json()) as { ok?: boolean }).ok);
 }
+
+/** 홈 '지금 순위' (창 3-C, 2026-11-22) — GET /api/home/rankings?view=home|full. 서버는 저장 자료만 읽는다. */
+export interface RankSurgeItem { n: number; keyword: string; status: string; times: number | null; rank: number | null; onset: string | null; ask: string }
+export interface RankKeyword {
+  rank: number; keyword: string; ask: string; tags: string[]; season: string[];
+  state: "steady" | "other" | "insufficient"; window_days: number; observed_days: number; top100_days: number;
+  change_7d: number | null; change_kind: "compared" | "entered" | "no_compare"; rising: boolean;
+}
+export interface RankTab {
+  tag: string; label: string; icon: string; default_filter: "rising" | "not_steady" | "all";
+  counts: { all: number; rising: number; steady: number; insufficient: number }; items: RankKeyword[];
+}
+export interface PickCard {
+  product_id: string; title: string; mall: string; price_krw: number | null; price_checked_at: string | null; price_hidden: boolean;
+  image: string | null; rocket: boolean; why: string; post_title: string; post_url: string; go_url: string;
+  badges: ("keyword_steady" | "multi_post")[]; post_count: number;
+}
+export interface HomeRankings {
+  generated_at: string; view: "home" | "full";
+  surge: { status: "ok" | "none" | "empty" | "stale"; data_until: string | null; updated_at: string | null; items: RankSurgeItem[] };
+  categories: { status: "ok" | "none" | "stale"; rank_date: string | null; compare_date?: string | null; observed_days?: number; tabs: RankTab[]; note: string };
+  picks: { status: "ok" | "none"; disclosure: string; groups: { recent: PickCard[]; steady: PickCard[] }; placement_note: string; badge_notes: Record<string, string> };
+}
+export async function fetchHomeRankings(view: "home" | "full", signal?: AbortSignal): Promise<HomeRankings | null> {
+  if (API_MODE === "mock") return null;
+  const r = await fetch(`/api/home/rankings?view=${view}`, { signal });
+  if (!r.ok) throw new Error(`rankings ${r.status}`);
+  return (await r.json()) as HomeRankings;
+}
