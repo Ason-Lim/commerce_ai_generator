@@ -1,4 +1,4 @@
-"""2026-11-11: 냉동 상품은 생과와 같은 기준으로 견주지 않고 '냉동 상품 N개 따로 보기'로 나눈다."""
+"""2026-11-11: 냉동 상품은 생과와 같은 기준으로 견주지 않고 '냉동 상품 N개' 칸로 나눈다."""
 from app.services.chat import explain
 
 
@@ -27,8 +27,9 @@ def test_frozen_goes_to_its_own_list(sqlite_db, shopping):
     res = ChatService(sqlite_db, shopping=shopping).handle(None, message="딸기 추천해줘")
     lists = _blocks(res, "product_list")
     frozen = [b for b in lists if (b["data"].get("title") or "").startswith("냉동 상품")]
-    assert len(frozen) == 1 and frozen[0]["data"]["collapsed"] is True
-    assert frozen[0]["data"]["title"] == "냉동 상품 1개 따로 보기"
+    # 2026-11-22 사용자: 쿠팡이 준 상품은 접지 않고 다 보여 준다 (냉동은 따로 칸 그대로)
+    assert len(frozen) == 1 and not frozen[0]["data"].get("collapsed")
+    assert frozen[0]["data"]["title"] == "냉동 상품 1개"
     assert [i["title"] for i in frozen[0]["data"]["items"]] == ["감미인 국내산 딸기 (냉동), 1kg"]
     # 화면 WhyList 는 why 줄마다 {"text", "basis"} 를 읽는다 — 문자열이면 화면이 멈춘다
     for b in lists:

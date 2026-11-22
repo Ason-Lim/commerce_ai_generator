@@ -24,7 +24,7 @@ from contextlib import contextmanager
 from app.services.public_price import kamis
 from app.services.partners import feed as partner_feed
 from app.services.chat import blocks as B
-from app.services.commerce.search import CHECK_AT_MALL, FEW_OTHERS
+from app.services.commerce.search import CHECK_AT_MALL
 from app.services.chat import explain, saved as saved_mod
 from app.services.chat import food_tips as food_tips_mod
 from app.services.chat import hot as hot_mod
@@ -743,14 +743,12 @@ class ChatService:
             blocks.append(B.text(f"**고른 기준** {line}"))
         blocks.append(B.product_list([_public(c, go=go(c)) for c in picks]))
         if others:
-            # 2026-11-22: 후보가 적으면 접지 않고 다 보여 준다 (순서 그대로)
-            blocks.append(B.product_list([_public(c, go=go(c)) for c in others], title=f"다른 후보 {len(others)}개",
-                                         collapsed=len(others) > FEW_OTHERS))
+            # 2026-11-22 사용자: 쿠팡이 준 상품은 접지 않고 다 보여 준다 (순서는 우리 규칙 그대로 — 고른 상품 뒤 추천 순)
+            blocks.append(B.product_list([_public(c, go=go(c)) for c in others], title=f"다른 후보 {len(others)}개"))
         if frozen:                              # 2026-11-11: 냉동 상품은 따로 보기 (같은 기준으로 견주지 않음)
-            blocks.append(B.product_list([_public(c, go=go(c)) for c in frozen], title=f"냉동 상품 {len(frozen)}개 따로 보기",
+            blocks.append(B.product_list([_public(c, go=go(c)) for c in frozen], title=f"냉동 상품 {len(frozen)}개",
                                          note="생과·생물과 쓰임새가 달라 위 후보와 같은 기준(100g당 가격·가성비)으로 "
-                                              "견주지 않았어요. 냉동을 찾으시면 '냉동 " + query + "'처럼 말씀해 주세요.",
-                                         collapsed=True))
+                                              "견주지 않았어요. 냉동을 찾으시면 '냉동 " + query + "'처럼 말씀해 주세요."))
         if more:                                # 2026-11-22: 후보가 적어 바꿔 쓸 말로 더 찾은 상품 (추천순 아님)
             said = "·".join(f"'{a}'" for a in (more_as or []))
             blocks.append(B.product_list([_public(c, go=go(c)) for c in more], title=f"다른 검색어로 찾은 추가 후보 {len(more)}개",

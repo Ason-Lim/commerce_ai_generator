@@ -263,7 +263,6 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
 # ── 2026-11-22 후보가 적을 때 더 보여 주기 ─────────────────
 CHECK_AT_MALL = "평점·후기·도착일은 판매처 페이지에서 확인해 주세요."
 FEW_RESULTS = 4      # 견줄 후보가 이만큼 이하면 바꿔 쓸 말로 더 찾는다 (고른 상품이 최대 4개라 이때는 '다른 후보'가 없음)
-FEW_OTHERS = 3       # '다른 후보'가 이만큼 이하면 접지 않고 펼친다
 MORE_CALLS = 2       # 더 찾기 쿠팡 호출 상한
 MORE_MAX = 6         # 더 찾은 상품 칸 상한
 
