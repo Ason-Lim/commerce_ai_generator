@@ -5,6 +5,15 @@ from app.services.market.collector import (
 )
 
 
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _naver_collect_on(monkeypatch):
+    """2026-11-22: 네이버 쇼핑 수집은 서비스 종료로 기본 꺼짐 — 여러 출처를 합치는 계약은 켠 상태로 확인한다."""
+    monkeypatch.setenv("NAVER_SHOPPING_COLLECT", "on")
+
 def test_core_collector_combines_sources() -> None:
     naver_items = [
         {

@@ -34,7 +34,7 @@ def test_few_results_search_more_with_synonym(sqlite_db):
     })
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="올리브유")
-    assert shop.calls == ["올리브유", "올리브오일"]
+    assert shop.calls == ["올리브유", "올리브오일", "올리브유 500ml"]   # 바꿔 쓸 말 → 용량 붙인 말 (최대 2번 더)
     more = lists(res)["다른 검색어로 찾은 추가 후보 1개"]
     assert [i["title"] for i in more["items"]] == ["올리타리아 엑스트라버진 올리브오일 1L"]
     assert "기존 추천 목록과 함께 정렬하지 않았어요" in more["note"] and "'올리브오일'" in more["note"]
@@ -89,3 +89,28 @@ def test_many_others_also_shown_open(sqlite_db):
     res = svc.handle(None, message="참기름")
     other = [d for t, d in lists(res).items() if t and t.startswith("다른 후보")]
     assert other and not other[0].get("collapsed")
+
+
+def test_size_variants_and_option_line(sqlite_db):
+    from app.services.commerce.search import options_line, size_variants
+
+    assert size_variants("올리브유") == ["올리브유 500ml", "올리브유 1L"]
+    assert size_variants("부라타 치즈", [{"weight_g": 100}, {"weight_g": 125}]) == ["부라타 치즈 200g", "부라타 치즈 500g"]
+    assert size_variants("사과 2kg") == [] and size_variants("딸기") == []
+    line = options_line({"same_name_options": {"count": 7, "price_min": 6900, "price_max": 29580}})
+    assert "같은 이름 옵션 7개 (6,900~29,580원)" in line["text"] and line["basis"] == "mall"
+
+
+def test_coupang_search_cache(monkeypatch):
+    from app.services import coupang_api
+
+    calls = []
+    monkeypatch.setattr(coupang_api, "is_coupang_available", lambda: True)
+    monkeypatch.setattr(coupang_api, "_search_coupang_products", lambda k, n: calls.append(k) or [{"product_name": k}])
+    monkeypatch.setattr(coupang_api, "_SEARCH_CACHE", {})
+    monkeypatch.setenv("COUPANG_SEARCH_CACHE_MINUTES", "60")
+    assert coupang_api.search_coupang_products("올리브유") == coupang_api.search_coupang_products("올리브유")
+    assert calls == ["올리브유"]
+    monkeypatch.setenv("COUPANG_SEARCH_CACHE_MINUTES", "0")
+    coupang_api.search_coupang_products("올리브유")
+    assert calls == ["올리브유", "올리브유"]

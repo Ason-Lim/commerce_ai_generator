@@ -139,8 +139,10 @@ def collect_market_products(
     function's architecture boundary.
     """
     results: list[dict] = []
+    # 2026-11-22: 네이버 쇼핑 검색 API 서비스 종료(404) — 기본 끔. 다시 쓰려면 NAVER_SHOPPING_COLLECT=on
+    naver_on = (os.getenv("NAVER_SHOPPING_COLLECT") or "off").strip().lower() in ("on", "1", "true")
 
-    if collect_naver_products:
+    if collect_naver_products and naver_on:
         try:
             collect_naver_products(
                 keyword
@@ -156,6 +158,7 @@ def collect_market_products(
             keyword,
             limit=limit,
         )
+        if naver_on else []
     )
 
     results.extend(
