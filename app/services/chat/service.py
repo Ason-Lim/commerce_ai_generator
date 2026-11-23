@@ -332,7 +332,8 @@ class ChatService:
 
         blocks = list(turn.blocks)
         if turn.shopping:
-            product_blocks, items, cards = self._products(turn.shopping, sid, priority="ranking")
+            product_blocks, items, cards = self._products(turn.shopping, sid, priority="ranking",
+                                                          must=getattr(turn, "shopping_must", None))
             # 2026-11-01: recipe shortage products — package size vs the need, small household packs first
             from app.services.recipe_chat import pack_fit
             product_blocks = pack_fit.apply(product_blocks, getattr(turn, "shopping_needs", None))
@@ -931,13 +932,15 @@ class ChatService:
             return None
         return [dict(explain.enrich(item_to_card(it, 0), it), _q=q) for it in (result.get("items") or [])[:MAX_PRODUCTS]]
 
-    def _products(self, queries, sid, priority, terms=None):
+    def _products(self, queries, sid, priority, terms=None, must=None):
         blocks, cards = [], []
         for q in queries:
             items = self._fetch(q, sid, priority)
             if items is None:
                 blocks.append(B.notice(f"'{q}' 상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", "warn"))
                 continue
+            if must and must.get(q):      # '백숙용 오리' 검색에 섞이는 닭 상품은 뺀다 (2026-11-23)
+                items = [c for c in items if re.search(must[q], c.get("title") or "")]
             if terms:
                 items = [c for c in items if relevant(c["title"], terms)]
                 if not items:
@@ -948,6 +951,8 @@ class ChatService:
             for card in items:
                 cards.append(card)
                 card["rank"] = len(cards)
+            if must and len(queries) > 1:     # 여러 재료를 한 답에 — 칸마다 무엇인지 (2026-11-23)
+                blocks.append(B.text(f"**{q}**"))
             blocks.append(B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in items]))
         last = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")} for c in cards]
         return blocks, last, cards
