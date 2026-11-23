@@ -30,6 +30,7 @@ from app.services.chat import explain, saved as saved_mod
 from app.services.chat import food_tips as food_tips_mod
 from app.services.chat import hot as hot_mod
 from app.services.chat import answer_feedback as answer_fb
+from app.services.chat import turn_metrics
 from app.services.trend_posts import qa as trend_qa
 from app.services.chat.budget import is_budget_answer, parse_budget, strip_budget
 from app.services.chat.state_store import ChatStateStore, new_state
@@ -180,6 +181,7 @@ class ChatService:
     def __init__(self, db: Db | None = None, *, shopping: Callable | None = None,
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
                  keyword_extractor: Callable | None = None, food_tips: Callable | None = None,
+                 domain_reader: Callable | None = None,
                  food_review: Callable | None = None,
                  trend_report: Callable | None = None, trend_posts: Callable | None = None,
                  answer_feedback=None):
@@ -192,6 +194,8 @@ class ChatService:
         self.trend_report = trend_report
         # food_tips(text) -> {"food", "tips": [...], "buy_with": [...]} (DeepSeek, 2026-11-04); validated before shown
         self.food_tips = food_tips
+        # 2026-11-23 창 4 ②: 분야 판단 AI (cs_domain — 고객 문장 작업이라 OpenAI(+Claude) 경로). 0건일 때만 부른다
+        self.domain_reader = domain_reader
         # 2026-11-11: 교차 확인 — (context, lines) → [{"ok","note"}] | None (Claude). 없으면 검토 없이 저장
         self.food_review = food_review
         self.shopping = shopping or default_shopping
@@ -219,6 +223,7 @@ class ChatService:
         started = time.monotonic()
         try:
             response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
+            response = self._domain_after_zero(response, message, answers)   # 2026-11-23 창 4 ②
         finally:
             _dataset.PII_SEEN.reset(pii_token)
             turn_metrics.stop(metrics_token)
@@ -238,7 +243,8 @@ class ChatService:
         # 2026-11-16: 실수 신호 모으기 — 약한 일치·0건·다시 찾기·남은 검토 의견 (대화 결과는 바꾸지 않는다)
         from app.services.chat import miss_signals
 
-        miss_signals.observe(response.get("session_id") or "", (message or chip or "").strip(), response)
+        if not stage.startswith("domain_"):     # 2026-11-23: 식품 아닌 분야(위급·건강 등) 문장은 실수 신호에 남기지 않는다
+            miss_signals.observe(response.get("session_id") or "", (message or chip or "").strip(), response)
         # 2026-11-23 (3-D ②): 지표 분모 — 차례마다 '보여 준 것' 한 줄 (문장은 남기지 않음)
         miss_signals.served(response.get("session_id") or "", response, metrics, internal=turn_metrics.INTERNAL.get())
         return response
@@ -260,6 +266,16 @@ class ChatService:
 
         if not text and not answers:
             return self._response(sid, "empty", [B.text("무엇을 도와드릴까요?")])
+        # 2026-11-23 창 4 ①: 분야 판단 (규칙층) — 위급·식품 안전·건강·주문/배송·식품 아님 등은 고정 안내, 식품은 아래 흐름 그대로
+        #   위급·식품 안전은 구조화 답(answers)이 함께 와도 먼저 본다 (GPT 검토 2026-11-23 ④).
+        if text:
+            from app.services.chat import domain as domain_mod
+
+            decision = domain_mod.by_rules(text) if not answers else domain_mod.safety_by_rules(text)
+            turn_metrics.note("domain", decision.domain if decision else "food")
+            turn_metrics.note("domain_by", decision.by if decision else "default")
+            if decision is not None and decision.domain != "food":
+                return self._domain_turn(sid, decision, state)
 
         # 2026-11-01: 관심 상품 비교 · 예산 답변 ('3만원 이하요') — 새 검색 없이 저장된 후보로 답한다
         if text and not answers and COMPARE_SAVED_RE.search(text):
@@ -1431,6 +1447,44 @@ class ChatService:
         state = _log_turn(dict(state, mode="shopping"), text, "shopping_followup", calls=calls)
         self._try_commit(sid, state, revision, persist)
         return self._response(sid, "shopping_followup", blocks, meta=_turn_meta(state, calls))
+
+    def _domain_after_zero(self, response: dict, message: str | None, answers: dict | None) -> dict:
+        """② 규칙이 모르고 식품 흐름이 상품을 하나도 못 보여 준 차례만 AI 로 분야를 다시 본다 (식품이면 그대로).
+
+        손님이 직접 쓴 문장만 (칩·구조화 답 제외), 쿠팡 장애(불러오지 못함)는 제외 — 0건 안내를 맞는 분야 안내로 바꾼다."""
+        reader = getattr(self, "domain_reader", None)
+        stage = str(response.get("stage") or "")
+        if reader is None or not message or answers or not stage.startswith("shopping") or stage == "shopping_hot":
+            return response
+        import json
+
+        from app.services.chat import domain as domain_mod
+        from app.services.chat import miss_signals as ms
+
+        counts = ms.shown_counts(response.get("blocks") or [])
+        if counts["n_main"] or counts["n_extra"] or counts["n_collapsed"]:
+            return response
+        if "불러오지 못했" in json.dumps(response.get("blocks") or [], ensure_ascii=False):
+            return response
+        decision = domain_mod.read_ai(reader, message)
+        if decision is None:
+            return response
+        turn_metrics.note("domain", decision.domain)
+        turn_metrics.note("domain_by", decision.by)
+        if decision.domain == "food":
+            return response
+        sid = response.get("session_id") or ""
+        state, _rev, _ = self._load(sid) if sid else ({}, 0, False)
+        return self._domain_turn(sid, decision, state)
+
+    def _domain_turn(self, sid: str, decision, state: dict) -> dict:
+        """식품이 아닌 분야 — 고정 안내만 (상품·제휴 링크 없음, 대화 상태는 바꾸지 않음)."""
+        from app.services.chat import domain_answers
+
+        seen = state.get("seen") or []
+        last_query = (seen[-1] or {}).get("query") if seen else None
+        return self._response(sid, "domain_" + decision.domain,
+                              domain_answers.blocks_for(decision.domain, decision.cue, last_query))
 
     @staticmethod
     def _response(sid, stage, blocks, meta: dict | None = None):

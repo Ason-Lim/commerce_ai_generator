@@ -31,6 +31,13 @@ def bump(key: str, n: int = 1) -> None:
         m[key] = int(m.get(key) or 0) + n
 
 
+def note(key: str, value) -> None:
+    """값 하나 적기 (2026-11-23 창 4: 분야 이름·판단 출처 — 문장은 적지 않음)."""
+    m = _CURRENT.get()
+    if m is not None:
+        m[key] = value
+
+
 def flag(key: str, value: bool = True) -> None:
     m = _CURRENT.get()
     if m is not None and value:

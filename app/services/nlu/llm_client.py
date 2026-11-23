@@ -43,6 +43,7 @@ THINKING_BY_TASK: dict[str, bool] = {
     "warm_classify": False,   # scripts/warm_food_knowledge.py — 순위 키워드 분류
     # 2026-11-12 레시피 창: 메뉴 조합은 저장해 다시 쓰는 생성(켬) · 문장 뜻 읽기·상품 검색어는 정리만 하는 일(끔)
     "menu_plan": True, "chat_intent": False, "shop_terms": False,
+    "cs_domain": False,   # 2026-11-23 창 4 ② 분야 판단 — 정리만 하는 일
     # DeepSeek 가 아닌 작업(표에만 둔다): B2B 제안서 본문 작성(Claude) · 검증(GPT)
     "b2b_proposal_write": True, "b2b_proposal_verify": True,
     "ai_recipe_review": True,   # 레시피 교차 검토(GPT) — 2026-11-12
@@ -59,6 +60,8 @@ CUSTOMER_FAST_TASKS = frozenset({
     # 2026-11-22 (검토 의견 2 — 호출 경로 전수 확인): 요리 찾기의 '요리 이름 읽기'(discover.NAME_PROMPT)는
     # 고객 문장 {"message": …} 을 보낸다 — 같은 recipe_discover 저장 이름이라 DeepSeek 로 가고 있었다.
     "recipe_dish_name",
+    # 2026-11-23 창 4 ②: 분야 판단 — 0건일 때만 손님 문장을 보낸다 (개인정보·위급·식품 안전 문장은 규칙에서 끝나 오지 않음)
+    "cs_domain",
 })
 CUSTOMER_WRITE_TASKS = frozenset({"food_knowledge", "recipe_consult", "menu_plan", "ai_recipe", "ai_recipe_check"})
 CUSTOMER_TASKS = CUSTOMER_FAST_TASKS | CUSTOMER_WRITE_TASKS

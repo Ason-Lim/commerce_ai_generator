@@ -40,7 +40,7 @@ TASK_LABELS = {
     "ai_recipe_identify": "AI 레시피 확인", "ai_recipe_check": "AI 레시피 설명 검토",
     "recipe_supplement": "레시피 보완", "recipe_easy_view": "레시피 쉬운 보기", "recipe_discover": "요즘 뜨는 요리",
     "trend_cause": "급상승 원인", "admin_llm": "관리자·B2B", "stock_chat": "보유량 해석", "untagged": "기타",
-    "chat_intent": "문장 뜻 읽기", "shop_terms": "상품 검색어", "menu_plan": "메뉴 조합",
+    "chat_intent": "문장 뜻 읽기", "cs_domain": "분야 판단", "shop_terms": "상품 검색어", "menu_plan": "메뉴 조합",
 }
 
 

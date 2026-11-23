@@ -23,6 +23,7 @@ ROUTES = [
     ("shop_keyword", "deepseek", "원문", "api/chat_routes.py 상품어"),
     ("shop_terms", "deepseek", "원문", "api/chat_routes.py 상품 검색어"),
     ("chat_intent", "deepseek", "원문", "api/chat_routes.py 문장 뜻"),
+    ("cs_domain", "deepseek", "원문(0건일 때만)", "api/chat_routes.py 분야 판단 (창 4 ②, 11-23)"),
     ("food_nlu", None, "원문", "nlu/food_nlu.py (LLM_PROVIDER)"),
     ("stock_chat", "deepseek", "원문", "recipe_session/direct_stock_chat.py 보유량"),
     ("dish_amounts", "deepseek", "원문", "api/chat_routes.py 재료량"),
