@@ -1240,8 +1240,13 @@ class RecipeChat:
                      "재료·도구·단계·팁이 서로 어긋나지 않는지 검사했어요.")
         elif method:
             lead += f"\n기준{method}. 재료·도구·단계·팁이 서로 어긋나지 않는지 검사했어요."
-        if basis.get("guessed"):
-            lead += f"\nAI가 짐작한 재료: {', '.join(basis['guessed'][:4])} — 검색 결과로는 확인하지 못했어요."
+        # 2026-11-23 운영: '들기름'처럼 레시피에 없는 짐작 재료·'국물' 같은 재료 아닌 말은 보여 주지 않는다 (레시피 재료에 든 것만)
+        in_recipe = [re.sub(r"\s+", "", str((i.get("name") if isinstance(i, dict) else getattr(i, "name", "")) or ""))
+                     for i in (getattr(recipe, "ingredients", None) or [])]
+        guessed = [g for g in basis.get("guessed") or []
+                   if any(re.sub(r"\s+", "", g) in n or (n and n in re.sub(r"\s+", "", g)) for n in in_recipe)]
+        if guessed:
+            lead += f"\nAI가 짐작한 재료: {', '.join(guessed[:4])} — 검색 결과로는 확인하지 못했어요."
         # 결과(카드)가 먼저, 설명은 그 아래 (2026-11-12 사용자: 결과를 먼저 보고 싶어 한다)
         at = next((i + 1 for i, b in enumerate(turn.blocks) if b.get("type") == "recipe_card"), 0)
         turn.blocks.insert(at, B.notice(lead))

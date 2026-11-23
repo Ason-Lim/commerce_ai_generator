@@ -1619,10 +1619,34 @@ def _context_word(tok: str, tokens: list[str]) -> bool:
 
 def shopping_terms(text: str, extractor: Callable | None = None) -> tuple[str, list[str] | None]:
     """(search word, words every result must share) — a short request is searched as it always was (no filter)."""
+    n_words = len((text or "").split())
+    # 2026-11-23: '절임배추10kg' — 붙은 양 표기는 떼어 낸다 (양은 크기 확인 단계가 따로 본다; 상품명에 '10kg' 이 없다고 거르지 않게)
+    text = _QTY_GLUE.sub(r"\1 \2", text or "")
     tokens = _content_tokens(text)
     if not tokens:
         return text, None
-    if len((text or "").split()) <= 3:
+    query, terms = _shopping_terms(text, tokens, n_words, extractor)
+    return _with_head_noun(query, terms, tokens)
+
+
+_QTY_GLUE = re.compile(r"([가-힣])(\d+(?:\.\d+)?\s*(?:kg|KG|Kg|g|ml|mL|ML|l|L|개입|개|입|팩|봉|박스|포기|키로|킬로))")
+_USE_MOD = re.compile(r"^[가-힣]{1,6}용$")       # '김장용'·'선물용'·'가정용' — 쓰임새 말 (상품어 아님)
+
+
+def _with_head_noun(query: str, terms: list[str] | None, tokens: list[str]) -> tuple[str, list[str] | None]:
+    """2026-11-23: 검색어가 쓰임새 말 하나('김장용')뿐이면 뒤따르는 상품어를 붙인다 → '김장용 절임배추' (결과는 '절임배추'와 겹쳐야)."""
+    if not _USE_MOD.match(query or "") or query not in tokens:
+        return query, terms
+    i = tokens.index(query)
+    nxt = next((t for t in tokens[i + 1:] if not _USE_MOD.match(t) and t not in GENERIC_WORDS), None)
+    if not nxt:
+        return query, terms
+    rest = [t for t in (terms or []) if t not in (query, nxt)]
+    return f"{query} {nxt}", [nxt] + rest
+
+
+def _shopping_terms(text: str, tokens: list[str], n_words: int, extractor) -> tuple[str, list[str] | None]:
+    if n_words <= 3:
         # 2026-11-02: '사과를 추천해 줘' 를 문장째 검색하면 '종이소녀상만들기' 같은 상품이 섞였다 →
         # 상품어만 검색하고, 결과는 그 말(또는 같은 부류의 말)과 겹쳐야 보여 준다
         items = [t for t in tokens if not _context_word(t, tokens)]

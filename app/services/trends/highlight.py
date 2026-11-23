@@ -34,6 +34,28 @@ def _flat(s: str) -> str:
     return re.sub(r"\s+", "", s or "")
 
 
+def _bigrams(s: str) -> set[str]:
+    f = _flat(s)
+    return {f[i:i + 2] for i in range(len(f) - 1)}
+
+
+def names_keyword(keyword: str, title: str) -> bool:
+    """상품명이 그 키워드 상품인지 — 그대로 들어 있거나, 붙여 쓴 키워드('결혼식답례품')의 두 글자 묶음이 70% 이상 있으면
+    ('답례품 결혼식 …'). 2026-11-23 운영: 붙여 쓴 키워드는 상품명에 그대로 없어 상품이 하나도 안 보였다."""
+    k = _flat(keyword)
+    if k and k in _flat(title):
+        return True
+    want = _bigrams(keyword)
+    return len(k) >= 4 and bool(want) and len(want & _bigrams(title)) / len(want) >= 0.7
+
+
+# 쿠팡 분류가 '출산/유아'(답례품)여도 상품명이 먹거리면 식품으로 본다 (호두정과 답례품 · 쿠키 답례품).
+# 생활용품·가전 등 다른 분류는 그대로 뺀다 ('곶감 말리는 건조망').
+_GIFT_CATEGORY = re.compile(r"출산|유아")
+_FOOD_GIFT = re.compile(r"정과|강정|약과|한과|양갱|쿠키|과자|사탕|초콜릿|젤리|떡|꿀(?!벌)|잼|견과|호두|아몬드|대추|곶감|차\b|꽃차|티백|"
+                        r"커피|홍삼|소금|참기름|들기름|올리브유|김\b|멸치|한우|과일|사과|배\b|귤|한라봉|샤인머스캣")
+
+
 def picks(keyword: str, search=None, limit: int = MAX_ITEMS) -> list[dict]:
     """키워드 → 대표 상품들 (이름에 키워드가 든 식품만, 같은 링크 한 번)."""
     from app.services.commerce.nonfood import is_non_food_category, is_non_food_item
@@ -45,8 +67,9 @@ def picks(keyword: str, search=None, limit: int = MAX_ITEMS) -> list[dict]:
     for it in search(keyword, SEARCH_LIMIT) or []:
         title = str(it.get("product_name") or it.get("name") or "")
         url = _https(it.get("product_url"), LINK_HOSTS)
-        if not title or not url or url in seen or _flat(keyword) not in _flat(title) \
-                or is_non_food_item(title, it.get("category_name")) or is_non_food_category(it.get("category_name")):
+        cat = it.get("category_name")
+        if not title or not url or url in seen or not names_keyword(keyword, title) or is_non_food_item(title, cat) \
+                or (is_non_food_category(cat) and not (_GIFT_CATEGORY.search(cat or "") and _FOOD_GIFT.search(title))):
             continue
         seen.add(url)
         key = hashlib.sha1(url.encode()).hexdigest()[:12]
