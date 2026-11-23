@@ -3,7 +3,7 @@
 검토 claude/home_rank_reco_review_2026-11-23.md §4 의 1차 — **서버에 개인 기록을 새로 만들지 않는다.**
 * 출발점(seeds) = 이 브라우저가 최근 누른 품목 낱말 최대 5개 (브라우저 localStorage, POST 본문으로만 받음 — 주소·기록에 안 남김).
   출발점이 없거나 고객이 '맞춤 끄기'를 하면 → 쿠팡 식품 랭킹 1위 품목을 출발점으로 (personal=false, 문구로 밝힘).
-* 상품 묶음(pool) = 쿠팡 식품 랭킹(메모리 1시간, 파일 저장 없음) + 승인된 트렌드 글 상품.
+* 상품 묶음(pool) = 쿠팡 식품 랭킹(메모리 10분, 파일 저장 없음) + 승인된 트렌드 글 상품.
 * 고르는 순서 (칸마다 이유 한 줄):
   1. 레시피 짝 — 출발점으로 레시피를 찾아(레시피 서비스, 공공 레시피) 함께 쓰는 재료가 든 상품. \"굴 요리(두부굴찌개)에 함께 쓰는 재료\"
   2. 같은 태그 — 출발점과 같은 카테고리 태그(keyword_tags.csv). \"최근 본 귤과 같은 과일\"
@@ -22,7 +22,7 @@ from app.services.trends import coupang_best as cb, tags as tagmod
 
 MAX_SEEDS = 5
 SEED_MAX_LEN = 20
-LIMITS = {"home": 6, "full": 12}
+LIMITS = {"home": 30, "full": 30}     # 2026-11-23 사용자 요청: 30개(화면은 6개 + 더보기)
 TRIVIAL = {"소금", "설탕", "물", "식용유", "참기름", "들기름", "후추", "깨소금", "통깨", "깨", "간장", "식초", "다진마늘",
            "다진파", "마늘", "파", "대파", "청주", "맛술", "올리고당", "물엿", "꿀", "밀가루", "전분", "녹말", "고춧가루"}
 DISCLOSURE = ("이 영역의 상품 링크는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다. "
@@ -87,7 +87,7 @@ def _resolver():
 
 
 def pool(today: dt.date, now: dt.datetime, posts=None, snap=None) -> list[dict]:
-    """쿠팡 식품 랭킹(메모리 1시간) + 승인된 트렌드 글 상품. 같은 상품번호는 한 번."""
+    """쿠팡 식품 랭킹(메모리 10분) + 승인된 트렌드 글 상품. 같은 상품번호는 한 번."""
     items = cb.ranked(today, now, 100, snap=snap)["items"]
     out = [{**it, "source": "coupang_best"} for it in items]
     seen = {it["product_id"] for it in out}
@@ -134,7 +134,7 @@ def build(seeds: list[str], view: str = "home", *, today: dt.date | None = None,
     now = now or dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
     today = today or now.date()
     limit = LIMITS.get(view, LIMITS["home"])
-    snap = snap if snap is not None else cb.current()      # 메모리 1시간 랭킹 (없으면 1번 받음)
+    snap = snap if snap is not None else cb.current()      # 메모리 10분 랭킹 (없으면 1번 받음)
     items = pool(today, now, posts, snap)
     if not items:
         return {"status": "none", "personal": False, "items": [], "disclosure": DISCLOSURE, "note": ""}

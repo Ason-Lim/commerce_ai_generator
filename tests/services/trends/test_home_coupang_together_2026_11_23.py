@@ -133,8 +133,10 @@ def test_home_build_calls_coupang_at_most_once(monkeypatch):
     for _ in range(3):
         out = hr.build("home", now=NOW, use_cache=False, posts=posts)
     assert f.n == 1
-    assert [it["product_id"] for it in out["coupang"]["items"]] == ["11", "22", "33", "44", "55", "66"]
-    assert "쿠팡 파트너스" in out["coupang"]["disclosure"] and "1시간" in out["coupang"]["note"]
+    # 2026-11-23: 홈도 30개까지(화면은 6개 + 더보기) — 시험 자료 9개 전부, 쿠팡 순서 그대로
+    assert [it["product_id"] for it in out["coupang"]["items"]][:6] == ["11", "22", "33", "44", "55", "66"]
+    assert len(out["coupang"]["items"]) == 9
+    assert "쿠팡 파트너스" in out["coupang"]["disclosure"] and "10분" in out["coupang"]["note"]
 
 
 # ── 함께 보면 좋은 상품 ────────────────────────────────────────────────────
