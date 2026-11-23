@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>개선 목록 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,select,input,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
+.logout{margin-top:18px;background:transparent;border:1px solid #23364a;color:#c3d1de;border-radius:10px;padding:7px 11px;cursor:pointer;width:100%}
+main{padding:22px 26px;min-width:0;display:grid;gap:22px;align-content:start}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-width:0}
+h2{font-size:17px;margin:0 0 2px} .lede{color:var(--ink2);margin:0 0 12px;font-size:13.5px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12.5px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap;background:#fafbfc;position:sticky;top:0}
+td small{display:block;color:var(--ink3);font-size:12px}
+tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{background:var(--acc-s)}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p-ok{background:var(--ok-s);color:var(--ok)} .p-off{background:#eef1f4;color:var(--ink3)} .p-err{background:var(--ex-s);color:var(--ex)} .p-hold{background:var(--hold-s);color:var(--hold)}
+.detail{margin-top:14px;display:grid;gap:12px}
+.turns{display:grid;gap:6px;font-size:13.5px} .turn{display:flex;gap:10px} .turn span{color:var(--ink3);font-size:12px;min-width:120px}
+.k{font-size:12px;color:var(--ink3);font-weight:600;margin:0 0 4px}
+.err{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:10px 12px}
+.note{font-size:12.5px;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.sum span{border:1px solid var(--line);border-radius:10px;padding:4px 10px;font-size:12.5px;background:#fafbfc}
+.sum b{font-variant-numeric:tabular-nums}
+.cards{display:grid;gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
+.card h3{font-size:14.5px;margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h3 .rk{font-variant-numeric:tabular-nums;color:var(--ink3);font-weight:600;min-width:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.box{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;min-width:0}
+.box .k{margin:0 0 2px}
+.box ul{margin:4px 0 0;padding-left:16px}
+.warn{background:var(--hold-s);color:var(--hold);border-radius:10px;padding:8px 10px;font-size:13px}
+.bad{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:8px 10px;font-size:13px}
+.mono{font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--ink2);font-size:12.5px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:6px 0 4px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafbfc}
+.kpi .k{margin:0} .kpi b{font-size:20px;font-variant-numeric:tabular-nums;display:block}
+.kpi small{color:var(--ink3);font-size:12px}
+.kpi.save b{color:var(--ok)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} th.n{text-align:right}
+.bars{display:grid;gap:4px;font-size:12.5px}
+.bar{display:grid;grid-template-columns:86px 1fr 92px;gap:8px;align-items:center}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--acc);min-width:2px}
+.bar span{font-variant-numeric:tabular-nums;color:var(--ink2)} .bar span:last-child{text-align:right}
+a{color:var(--acc)}
+
+.tabs2{display:flex;gap:6px;margin:0 0 12px}.tabs2 button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;cursor:pointer}
+.tabs2 button[aria-selected=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} th.n{text-align:right}
+.obs{color:var(--hold);font-size:11.5px;font-weight:700;margin-left:4px}
+.cand-text{font-weight:600}
+.ex{font-size:12px;color:var(--ink3)}
+.verdict{display:flex;gap:4px;flex-wrap:wrap}
+.verdict button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:3px 9px;cursor:pointer;font-size:12.5px}
+.verdict button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.verdict input{width:100%;font-size:12.5px;padding:4px 8px;margin-top:4px}
+.fixform{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+.fixform label{display:grid;gap:2px;font-size:12px;color:var(--ink3);min-width:0}.fixform input{width:100%}
+.due td{background:var(--hold-s)}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve" aria-current="page">개선</a><a href="/admin/b2b">B2B</a></nav>
+  <nav aria-label="개선 메뉴"><a href="#weekly">주간 지표</a><a href="#cands">점검 후보</a><a href="#reviewed">확인 결과</a><a href="#fixes">고침 기록</a></nav>
+  <div class="railnote">월요일 오전에 봐요. 순서: 지표로 눈에 띄는 칸 보기 → 점검 후보에 <b>오류 확인 / 오류 아님 / 판단 보류</b> → 오류 확인만 고침(5개 이하, 영향 큰 것 먼저) → 고침 기록에 PR·영향 질의·확인 예정일.<br><br>점검 후보는 오류의 <b>신호</b>예요 — 손님이 그냥 둘러봤을 수도 있어요. 자동으로 고치지 않아요.<br><br>분모 30 미만은 '관찰' — 비율로 판단하지 않아요.<br><br>메모·영향 질의에는 손님 문장을 그대로 옮기지 말고 <b>유형</b>으로 적어 주세요.</div>
+  <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
+</aside>
+<main>
+  <div id="err" class="err" hidden></div>
+  <section id="weekly" aria-labelledby="weekly-h">
+    <h2 id="weekly-h">주간 지표</h2>
+    <p class="lede" id="wlede">매주 일요일 23:30 에 만들어져요 (scripts/weekly_improve.py). 운영자 시험은 빠져 있어요.</p>
+    <div class="row"><label for="week" class="note">주</label><select id="week"></select>
+      <button class="btn" id="run" type="button">지금 다시 계산</button><span class="note" id="gen"></span></div>
+    <div class="tabs2" role="tablist" id="ptabs"></div>
+    <div class="scroll"><table><thead><tr><th>지표</th><th class="n">비율</th><th class="n">분자 / 분모</th></tr></thead><tbody id="mrows"></tbody></table></div>
+    <div class="scroll" style="margin-top:10px"><table><thead><tr><th>비용·속도 (상품 차례)</th><th class="n">평균</th><th class="n">95번째</th><th class="n">n</th></tr></thead><tbody id="crows"></tbody></table></div>
+  </section>
+  <section id="cands" aria-labelledby="cands-h">
+    <h2 id="cands-h">점검 후보 <small class="note" id="ccount"></small></h2>
+    <p class="lede">같은 종류·같은 말끼리 묶었어요. 확인 안 한 것 → 영향 큰 종류(0건 · 약한 일치 · 다시 묻기 …) → 세션 수 순서예요. 손님 문장은 신호 기록(90일 보존)에서 바로 읽어 보여 줄 뿐 따로 남기지 않아요.</p>
+    <div class="row"><label for="cdays" class="note">기간</label>
+      <select id="cdays"><option value="7" selected>최근 7일</option><option value="14">14일</option><option value="28">28일</option><option value="90">90일</option></select>
+      <label for="ckind" class="note">종류</label><select id="ckind"><option value="">전체</option></select>
+      <label class="note"><input type="checkbox" id="conly" checked> 확인 안 한 것만</label></div>
+    <div class="scroll" style="max-height:620px"><table><thead><tr><th>상태</th><th>종류</th><th>손님 말</th><th class="n">세션 · 건수</th><th>마지막</th><th style="min-width:230px">확인</th></tr></thead><tbody id="crow"></tbody></table></div>
+  </section>
+  <section id="reviewed" aria-labelledby="rev-h">
+    <h2 id="rev-h">확인 결과</h2>
+    <p class="lede">문장 없이 남는 기록이에요 — 신호 기록이 지워져도 남아요. '오류 확인'만 고침 대상이에요.</p>
+    <div class="scroll"><table><thead><tr><th>결과</th><th>종류</th><th>후보 번호</th><th>날짜 · 건수</th><th>메모</th><th>확인한 때</th></tr></thead><tbody id="rrows"></tbody></table></div>
+  </section>
+  <section id="fixes" aria-labelledby="fix-h">
+    <h2 id="fix-h">고침 기록</h2>
+    <p class="lede">고친 날 기준 1·2·4주 지표를 같은 길이 이전 기간과 견줘 결과를 적어요 (계절·주제 차이가 있어 인과로 단정하지 않음). 나빠지면 되돌려요. 확인 예정일이 지난 것은 노랗게 보여요.</p>
+    <form id="fixf" class="fixform">
+      <label>무엇을 고쳤나<input name="title" required maxlength="120" placeholder="예: 요청 말이 붙은 검색어 0건"></label>
+      <label>PR<input name="pr" maxlength="40" placeholder="#69"></label>
+      <label>점검 후보 번호 (쉼표)<input name="candidate_ids" placeholder="확인 결과 칸의 번호"></label>
+      <label>영향 질의 (유형으로)<input name="affected" maxlength="300" placeholder="예: 끝에 요청 말이 붙은 식품 검색어"></label>
+      <label>확인 예정일<input name="check_on" type="date"></label>
+      <label>&nbsp;<button class="btn primary" type="submit">기록 추가</button></label>
+    </form>
+    <div class="scroll"><table><thead><tr><th>#</th><th>고친 것</th><th>PR</th><th>영향 질의</th><th>확인 예정일</th><th>결과</th></tr></thead><tbody id="frows"></tbody></table></div>
+  </section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>Number(v||0).toLocaleString("ko-KR");
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/improve";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{const j=await r.json();m=typeof j.detail==="string"?j.detail:JSON.stringify(j.detail)}catch{}throw new Error(m)}return r.json()}
+const post=(url,body)=>api(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})});
+function showErr(e){if(e.message==="auth")return;const b=$("#err");b.hidden=false;b.textContent="문제가 생겼어요: "+e.message}
+
+// 1. 주간 지표
+let W=null,P="1주";
+function drawWeekly(){
+  const rep=W&&W.report;
+  if(!rep){$("#mrows").innerHTML='<tr><td colspan="3" class="note">아직 주간 지표가 없어요 — ‘지금 다시 계산’을 눌러 보세요.</td></tr>';$("#crows").innerHTML="";$("#ptabs").innerHTML="";return}
+  $("#gen").textContent=`~${rep.end} · 만든 때 ${String(rep.generated_at).replace("T"," ")}`;
+  $("#ptabs").innerHTML=Object.keys(rep.periods).map(n=>`<button type="button" role="tab" aria-selected="${n===P}" data-p="${esc(n)}">${esc(n)} <small>(${rep.periods[n].days}일)</small></button>`).join("");
+  const per=rep.periods[P]||Object.values(rep.periods)[0];
+  $("#mrows").innerHTML=Object.entries(per.metrics).map(([k,v])=>`<tr><td>${esc(k)}</td>
+    <td class="n">${v.den?(v.rate*100).toFixed(1)+"%":"—"}${v.den&&v.observe?'<span class="obs">관찰</span>':""}</td>
+    <td class="n">${v.den?num(v.num)+" / "+num(v.den):"—"}</td></tr>`).join("");
+  const L={coupang_calls:"쿠팡 호출 수",ai_calls:"AI 호출 수",ms:"응답 시간 ms"};
+  $("#crows").innerHTML=Object.entries(per.cost).map(([k,c])=>`<tr><td>${esc(L[k]||k)}</td><td class="n">${c.n?c.mean:"—"}</td><td class="n">${c.n?c.p95:"—"}</td><td class="n">${num(c.n)}</td></tr>`).join("");
+}
+$("#ptabs").addEventListener("click",e=>{const b=e.target.closest("button[data-p]");if(b){P=b.dataset.p;drawWeekly()}});
+async function loadWeekly(week){
+  try{W=await api("/admin/api/improve/weekly"+(week?"?week="+encodeURIComponent(week):""))}catch(e){return showErr(e)}
+  $("#week").innerHTML=W.weeks.length?W.weeks.map(w=>`<option${w===W.week?" selected":""}>${esc(w)}</option>`).join(""):"<option>없음</option>";
+  drawWeekly();
+}
+$("#week").addEventListener("change",()=>loadWeekly($("#week").value));
+$("#run").addEventListener("click",async()=>{const b=$("#run");b.disabled=true;b.textContent="계산하는 중…";
+  try{W=await post("/admin/api/improve/weekly/run");await loadWeekly(W.week)}catch(e){showErr(e)}finally{b.disabled=false;b.textContent="지금 다시 계산"}});
+
+// 2·3. 점검 후보 · 확인 결과
+const VL={confirmed:"오류 확인",not_error:"오류 아님",hold:"판단 보류"};
+const pill=s=>s==="점검 후보"?'<span class="pill p-hold">점검 후보</span>':s==="오류 확인"?'<span class="pill p-err">오류 확인</span>':s==="오류 아님"?'<span class="pill p-off">오류 아님</span>':'<span class="pill p-off">'+esc(s)+'</span>';
+function exText(x){return (x.examples||[]).map(e=>[e.what,e.items&&("보인 상품: "+e.items.slice(0,3).join(" · ")),e.before&&("직전: "+e.before),e.field&&(e.field+"="+e.value)].filter(Boolean).join(" / ")).filter(Boolean).slice(0,2).map(t=>'<div class="ex">'+esc(t)+'</div>').join("")}
+async function loadCands(){
+  let d;try{d=await api("/admin/api/improve/candidates?days="+$("#cdays").value)}catch(e){return showErr(e)}
+  const sel=$("#ckind");if(sel.options.length===1)d.kinds.forEach(k=>sel.add(new Option(k.label,k.kind)));
+  $("#ccount").textContent=`확인 안 한 것 ${num(d.unreviewed)} · 전체 ${num(d.candidates.length)} (~${d.end})`;
+  const list=d.candidates.filter(c=>(!$("#ckind").value||c.kind===$("#ckind").value)&&(!$("#conly").checked||!c.review));
+  const tb=$("#crow");tb.innerHTML=list.length?"":'<tr><td colspan="6" class="note">점검 후보가 없어요</td></tr>';
+  for(const c of list){const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${pill(c.status)}</td><td>${esc(c.label)}</td><td><span class="cand-text">${esc(c.text)||'<span class="note">(문장 없음)</span>'}</span>${exText(c)}</td>
+      <td class="n">${num(c.sessions)} · ${num(c.count)}</td><td><small>${esc((c.last||"").replace("T"," ").slice(5,16))}</small></td><td><div class="verdict"></div></td>`;
+    const box=tr.querySelector(".verdict");
+    const note=document.createElement("input");note.placeholder="메모 (유형으로, 선택)";note.maxLength=300;note.value=c.review?.note||"";
+    for(const [v,l] of Object.entries(VL)){const b=document.createElement("button");b.type="button";b.textContent=l;if(c.review?.verdict===v)b.className="on";
+      b.onclick=async()=>{try{await post(`/admin/api/improve/candidates/${c.id}/review`,{verdict:v,note:note.value});await loadCands()}catch(e){showErr(e)}};box.append(b)}
+    box.append(note);tb.append(tr)}
+  $("#rrows").innerHTML=d.reviewed.length?d.reviewed.map(r=>`<tr><td>${pill(r.verdict_label)}</td><td>${esc(r.kind_label)}</td><td><code>${esc(r.id)}</code></td>
+    <td><small>${esc(r.first)}${r.last&&r.last!==r.first?" ~ "+esc(r.last):""} · ${num(r.count)}건</small></td><td>${esc(r.note)}</td><td><small>${esc((r.at||"").replace("T"," "))}</small></td></tr>`).join("")
+    :'<tr><td colspan="6" class="note">아직 확인한 것이 없어요</td></tr>';
+}
+["#cdays","#ckind","#conly"].forEach(s=>$(s).addEventListener("change",loadCands));
+
+// 4. 고침 기록
+let R={};
+async function loadFixes(){
+  let d;try{d=await api("/admin/api/improve/fixes")}catch(e){return showErr(e)}R=d.results;
+  const tb=$("#frows");tb.innerHTML=d.fixes.length?"":'<tr><td colspan="6" class="note">기록이 없어요</td></tr>';
+  for(const f of d.fixes){const tr=document.createElement("tr");if(f.due)tr.className="due";
+    tr.innerHTML=`<td>${f.id}</td><td>${esc(f.title)}${(f.candidate_ids||[]).length?'<small>후보 '+f.candidate_ids.map(esc).join(", ")+'</small>':""}</td><td>${esc(f.pr)}</td>
+      <td>${esc(f.affected)}</td><td>${esc(f.check_on)}${f.due?' <span class="pill p-hold">확인할 때</span>':""}</td><td></td>`;
+    const s=document.createElement("select");for(const [k,l] of Object.entries(R))s.add(new Option(l,k,false,k===f.result));
+    const n=document.createElement("input");n.placeholder="결과 메모";n.value=f.result_note||"";n.maxLength=300;n.style.marginTop="4px";n.style.width="100%";
+    const save=async()=>{try{await post("/admin/api/improve/fixes/"+f.id,{...f,result:s.value,result_note:n.value});await loadFixes()}catch(e){showErr(e)}};
+    s.onchange=save;n.onchange=save;tr.lastElementChild.append(s,n);tb.append(tr)}
+}
+$("#fixf").addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(e.target);
+  const body={title:fd.get("title"),pr:fd.get("pr"),affected:fd.get("affected"),check_on:fd.get("check_on")||null,
+    candidate_ids:String(fd.get("candidate_ids")||"").split(/[,\s]+/).filter(Boolean),result:"pending"};
+  try{await post("/admin/api/improve/fixes",body);e.target.reset();await loadFixes()}catch(err){showErr(err)}});
+
+loadWeekly();loadCands();loadFixes();
+</script>
+</body>
+</html>
