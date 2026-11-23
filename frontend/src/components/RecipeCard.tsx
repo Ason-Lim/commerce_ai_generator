@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, BookOpen, Check, CheckCircle2, ChefHat, Clock, Flame, Lightbulb, ListChecks, Loader2, ShoppingBasket, Wrench } from "lucide-react";
+import { AlertTriangle, BookOpen, Check, CheckCircle2, ChefHat, ChevronDown, ChevronUp, Clock, Flame, Lightbulb, ListChecks, Loader2, ShoppingBasket, Wrench } from "lucide-react";
 import type { RecipeCardBlock, RecipeEasyStep, RecipeEasyView, RecipeGeneralTips, RecipeHero, RecipeStockStatus, RecipeSupplement } from "../types/blocks";
 import { fetchRecipeEasy } from "../api/client";
 import { useChatActions } from "./ChatActions";
@@ -7,6 +7,7 @@ import { cx } from "../lib/format";
 
 /**
  * 레시피 카드 (commerce /api/chat 의 recipe_card 블록). 순서: 완성 사진 → 특징·전체 진행 → 만드는 순서 → 재료 → 부족한 재료 → 팁 → 출처 (2026-11-12 사용자 요청).
+ * 2026-11-23: 장보기 질문(layout=shopping — '재료 뭐 사야 해')이면 재료 → 만드는 순서(접힘, 펼치기) → 부족한 재료 → 상품 순.
  * - 사진: 공공데이터 사진(이용 조건 확인한 출처만), 없으면 'AI 생성 예시 이미지' 표시를 단 AI 이미지.
  * - 만드는 순서(easy-v2): 번호 목록. 단계마다 할 일 + 완료 신호(원문 구절이면 '원문', 아니면 '일반 제안'),
  *   원문 신호는 원문 구절 그대로 보여 준다(바꿔 쓴 문장은 쓰지 않음, easy-v3).
@@ -50,14 +51,14 @@ function Photo({ src, alt, className }: { src: string | null | undefined; alt: s
   return <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} className={className} />;
 }
 
-function Hero({ hero, title }: { hero: RecipeHero; title: string }) {
+function Hero({ hero, title, compact }: { hero: RecipeHero; title: string; compact?: boolean }) {
   const [failed, setFailed] = useState(false);
   if (failed) return null;
   return (
     <figure className="relative">
       <img src={hero.src} alt={hero.kind === "ai" ? `${title} AI 생성 예시 이미지` : `${title} 완성 사진`}
         referrerPolicy="no-referrer" onError={() => setFailed(true)}
-        className="h-44 w-full bg-chip object-cover sm:h-64" />
+        className={cx("w-full bg-chip object-cover", compact ? "h-28 sm:h-36" : "h-44 sm:h-64")} />
       {hero.kind === "ai" && hero.label && (
         <figcaption className="absolute bottom-2 left-2 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
           {hero.label}
@@ -160,6 +161,7 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
   }, [pending, d.recipe_id, d.easy_key]);
 
   const [checked, setChecked] = useState<Set<string>>(() => new Set());
+  const [stepsOpen, setStepsOpen] = useState(false);   // 장보기 질문(layout=shopping)일 때 만드는 순서 펼침
   // 이 화면에서 '부족/없음'을 눌러 보낸 재료 (서버 응답 전에도 바로 보이게)
   const [marked, setMarked] = useState<Record<string, RecipeStockStatus>>({});
   const keyOf = (i: { id: string | null; name: string }) => i.id ?? i.name;
@@ -215,39 +217,11 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
   const isAi = d.source.level === "ai_suggestion";
   const basisWord = isAi ? "제안" : "원문";
 
-  return (
-    <article className="card my-3 overflow-hidden" aria-label={`${d.title} 레시피`}>
-      {hero ? (
-        <Hero hero={hero} title={d.title} />
-      ) : heroPending ? (
-        <div className="grid h-44 w-full animate-pulse place-items-center bg-chip text-ink3 sm:h-64">
-          <span className="flex items-center gap-1.5 text-xs"><Loader2 size={14} className="animate-spin" aria-hidden />완성 사진을 준비하고 있어요</span>
-        </div>
-      ) : null}
-
-      <div className="space-y-4 p-4 sm:p-5">
-        <header className="flex items-start gap-4">
-          {!hero && !heroPending && (
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-accentSoft text-accent sm:h-20 sm:w-20" aria-hidden>
-              <ChefHat size={30} strokeWidth={1.6} />
-            </div>
-          )}
-          <div className="min-w-0 flex-1 space-y-2">
-            {isAi && <span className="tag bg-reviewSoft text-review">{d.source.label}</span>}
-            <h3 className="text-xl font-bold leading-snug tracking-tight sm:text-2xl">{d.title}</h3>
-            {summary && <p className="text-[15px] leading-relaxed text-ink2">{summary}</p>}
-            {flow && <p className="text-sm leading-relaxed text-ink2"><b className="font-semibold text-ink">전체 진행</b> {flow}</p>}
-            {d.meta.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {d.meta.map((m) => (
-                  <span key={m} className="tag bg-chip text-ink2">{metaIcon(m)}{m}</span>
-                ))}
-                <span className="text-[11px] text-ink3">{basisWord} 표기</span>
-              </div>
-            )}
-          </div>
-        </header>
-
+  // 2026-11-23 (지인 의견 · 사용자 채택): '재료 뭐 사야 해' 같은 장보기 질문이면 재료 → (만드는 순서는 접어 둠) → 재료 상품 순.
+  // 만드는 법을 물으면 지금처럼 만드는 순서가 먼저 (2026-11-12 결정).
+  const shoppingFirst = d.layout === "shopping";
+  const stepsSection = (
+    <>
         {/* 2026-11-12: 만드는 순서를 먼저, 재료·부족한 재료는 그 아래 (사용자 요청) */}
         <section aria-label="만드는 순서" className="space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -311,6 +285,9 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
           </section>
         )}
 
+    </>
+  );
+  const ingredientsSection = (
         <section ref={ingredientsRef} tabIndex={-1} aria-label="재료" className="scroll-mt-24 rounded-2xl border border-line outline-none">
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
             <h4 className="flex items-center gap-1.5 text-sm font-bold">
@@ -401,6 +378,59 @@ export function RecipeCard({ block }: { block: RecipeCardBlock }) {
             <p key={n} className="border-t border-line px-4 py-2 text-xs leading-relaxed text-ink3">{n}</p>
           ))}
         </section>
+  );
+
+  return (
+    <article className="card my-3 overflow-hidden" aria-label={`${d.title} 레시피`}>
+      {hero ? (
+        <Hero hero={hero} title={d.title} compact={shoppingFirst} />
+      ) : heroPending ? (
+        <div className="grid h-44 w-full animate-pulse place-items-center bg-chip text-ink3 sm:h-64">
+          <span className="flex items-center gap-1.5 text-xs"><Loader2 size={14} className="animate-spin" aria-hidden />완성 사진을 준비하고 있어요</span>
+        </div>
+      ) : null}
+
+      <div className="space-y-4 p-4 sm:p-5">
+        <header className="flex items-start gap-4">
+          {!hero && !heroPending && (
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-accentSoft text-accent sm:h-20 sm:w-20" aria-hidden>
+              <ChefHat size={30} strokeWidth={1.6} />
+            </div>
+          )}
+          <div className="min-w-0 flex-1 space-y-2">
+            {isAi && <span className="tag bg-reviewSoft text-review">{d.source.label}</span>}
+            <h3 className="text-xl font-bold leading-snug tracking-tight sm:text-2xl">{d.title}</h3>
+            {summary && <p className="text-[15px] leading-relaxed text-ink2">{summary}</p>}
+            {flow && <p className="text-sm leading-relaxed text-ink2"><b className="font-semibold text-ink">전체 진행</b> {flow}</p>}
+            {d.meta.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {d.meta.map((m) => (
+                  <span key={m} className="tag bg-chip text-ink2">{metaIcon(m)}{m}</span>
+                ))}
+                <span className="text-[11px] text-ink3">{basisWord} 표기</span>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {shoppingFirst ? (
+          <>
+            {ingredientsSection}
+            <section aria-label="만드는 순서 펼치기" className="rounded-2xl border border-line">
+              <button type="button" aria-expanded={stepsOpen} onClick={() => setStepsOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-bold">
+                <span className="flex items-center gap-1.5"><BookOpen size={15} aria-hidden />만드는 순서 {d.steps.length > 0 && <span className="font-normal text-ink3">{d.steps.length}단계</span>}</span>
+                <span className="flex items-center gap-1 text-xs font-semibold text-accent">{stepsOpen ? <>접기 <ChevronUp size={14} aria-hidden /></> : <>펼치기 <ChevronDown size={14} aria-hidden /></>}</span>
+              </button>
+              {stepsOpen && <div className="space-y-2.5 border-t border-line px-4 py-3">{stepsSection}</div>}
+            </section>
+          </>
+        ) : (
+          <>
+            {stepsSection}
+            {ingredientsSection}
+          </>
+        )}
 
         <section aria-label="부족한 재료" className={cx("rounded-2xl px-4 py-3", shortage.length ? "bg-warnSoft/50" : "bg-chip/50")}>
           <h4 className="flex items-center gap-1.5 text-sm font-bold">

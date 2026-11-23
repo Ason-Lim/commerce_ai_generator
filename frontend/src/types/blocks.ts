@@ -259,6 +259,8 @@ export type RecipeEasyStatus = "ready" | "pending" | "unavailable";
 export interface RecipeCardBlock {
   type: "recipe_card";
   data: {
+    /** 2026-11-23: "shopping" = 장보기 질문 — 재료가 먼저, 만드는 순서는 접어 둠 */
+    layout?: "recipe" | "shopping";
     recipe_id: string;
     title: string;
     summary: string;

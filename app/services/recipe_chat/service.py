@@ -318,12 +318,29 @@ class RecipeChat:
                     lead=(f"**{dish}**{_topic(dish)[len(dish):]} {named} 님의 레시피라 그대로 옮기지 않아요. 원문(유튜브·블로그)을 보여 드릴게요 — "
                           f"재료·분량은 원문에서 확인해 주세요. 우리 **{base}** 추천 레시피는 아래 칩으로 볼 수 있어요."))
             if dish:
+                # 2026-11-23: 고기 종류가 갈리는 요리('백숙' → 닭백숙/오리백숙)는 레시피를 만들기 전에 먼저 묻는다
+                from app.services.recipe_chat import shop_first
+
+                amb = shop_first.ambiguous(dish, text)
+                if amb:
+                    key, options = amb
+                    state.update(mode="recipe", pending=None)
+                    return RecipeTurn([B.text(f"어떤 **{key}**{shop_first.ro(key)} 할까요? 고르시면 그 재료로 레시피와 장보기를 정리해 드려요."),
+                                       B.chips(shop_first.option_texts(text, key, options))], state, "recipe_which_dish")
                 turn = self._recommended_recipe(dish, finding, state, db, recipe_sid)
                 if (intent or {}).get("asks_amount") or AMOUNT_Q_RE.search(text):
                     turn = self._with_amount_answer(turn)
                 wants = intent["wants_products"] if intent else bool(WANTS_PRODUCTS_RE.search(text))
-                if wants:
-                    turn = self._with_ingredient_products(turn, (intent or {}).get("product_query"))
+                shopping_q = shop_first.is_shopping_question(text)
+                if wants or shopping_q:
+                    # 손님이 '○○으로'라고 짚은 재료(능이버섯)를 상품 맨 앞에 — 말한 상품 검색어가 있으면 그것이 먼저
+                    query = (intent or {}).get("product_query") or shop_first.named_ingredient(text)
+                    turn = self._with_ingredient_products(turn, query)
+                if shopping_q:
+                    # 2026-11-23 (지인 의견·사용자 채택): 장보기 질문이면 재료 먼저 · 만드는 순서는 접어 둔다
+                    for blk in turn.blocks:
+                        if blk.get("type") == "recipe_card":
+                            blk["data"]["layout"] = "shopping"
                 return turn
             if self.discovery is not None:
                 found = self._discovered_name(text, state)
