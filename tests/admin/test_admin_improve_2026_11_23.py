@@ -91,3 +91,58 @@ def test_run_weekly_from_admin_writes_numbers_only(admin_client, dirs):
     assert w["week"] and w["report"]["periods"]["누적"]["product_turns"] >= 1
     written = "".join(p.read_text(encoding="utf-8") for p in imp.rglob("*.json"))
     assert "합성검색어붙임말" not in written and "aaaa1111" not in written
+
+
+# ── 3-D ⑥ 합성 재현 사례 초안 ─────────────────────────────
+def _confirm_zero(today=TODAY):
+    cid = next(c["id"] for c in improve.candidates(7, today=today)["candidates"] if c["kind"] == "zero")
+    improve.review(cid, "confirmed", "붙임말 유형", today=today)
+    return cid
+
+
+def test_cases_start_four_slots_and_reject_customer_text(dirs):
+    cid = _confirm_zero()
+    slots = improve.start_cases(cid)
+    assert [c["role"] for c in slots] == ["fixed", "normal", "counter", "multiturn"]
+    assert improve.start_cases(cid) == slots                                   # 두 번 눌러도 그대로
+    n = slots[0]["n"]
+    with pytest.raises(ValueError, match="손님 문장과 같아요"):
+        improve.save_case(n, {"turns": ["합성검색어붙임말"], "search": "x"})     # 원래 손님 문장(공백만 다름도) 거절
+    with pytest.raises(ValueError, match="개인정보"):
+        improve.save_case(n, {"turns": ["010-1234-5678 배추"], "search": "배추"})
+    with pytest.raises(ValueError, match="기대 검색어"):
+        improve.save_case(n, {"turns": ["배추추천해줘"], "status": "ready"})
+    with pytest.raises(KeyError):
+        improve.start_cases("abcdefabcdef")                                    # 오류 확인 안 한 후보
+
+
+def test_cases_export_matches_test_file_format(dirs):
+    _, imp = dirs
+    slots = improve.start_cases(_confirm_zero())
+    improve.save_case(slots[0]["n"], {"turns": ["배추추천해줘"], "search": "배추", "fix": "#69", "status": "ready"})
+    improve.save_case(slots[3]["n"], {"turns": ["배추추천해줘", "배추 추천해줘"], "searches": ["배추", "배추"],
+                                      "status": "ready"})
+    with pytest.raises(ValueError, match="둘 이상"):
+        improve.save_case(slots[3]["n"], {"turns": ["배추추천해줘"], "searches": ["배추"], "status": "ready"})
+    view = {c["n"]: c for c in improve.cases_view()}
+    assert view[slots[0]["n"]]["now"] == ["배추"]                               # 지금 코드의 검색어
+    rows = [json.loads(x) for x in improve.export_cases().splitlines()]
+    assert [r["role"] for r in rows] == ["fixed", "multiturn"] and all(r["origin"] == "synthetic" for r in rows)
+    assert rows[0]["signal"] == {"kind": "zero", "date": "2026-11-23"} and rows[0]["expect"] == {"search": "배추"}
+    assert (imp / "synthetic_cases_ready.jsonl").is_file()
+    stored = (imp / "case_drafts.json").read_text(encoding="utf-8") + (imp / "synthetic_cases_ready.jsonl").read_text(encoding="utf-8")
+    assert "합성검색어붙임말" not in stored                                      # 손님 문장은 어디에도 없음
+    # 내보낸 줄은 시험 파일 검사를 그대로 통과하는 형식
+    from tests.services.chat import test_synthetic_cases as t
+
+    for r in rows:
+        assert set(r["expect"]) <= {"search", "search_has", "search_not", "searches"} and r["role"] in t.ROLES
+
+
+def test_cases_api(admin_client, dirs):
+    assert admin_client.get("/admin/api/improve/cases").status_code == 401
+    assert admin_client.post("/admin/api/improve/cases/start/abcdefabcdef", headers=H).status_code == 404
+    p = admin_client.post("/admin/api/improve/cases/preview", headers=H, json={"turns": ["연근알려줘", "연근 알려줘"]}).json()
+    assert p["searches"] == ["연근", "연근"]
+    assert admin_client.post("/admin/api/improve/cases/999", headers=H, json={"turns": ["배추"]}).status_code == 404
+    assert admin_client.get("/admin/api/improve/cases/export", headers=H).status_code == 200

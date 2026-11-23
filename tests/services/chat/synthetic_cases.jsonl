@@ -1,0 +1,5 @@
+{"id": "glued-01", "group": "glued-request", "origin": "synthetic", "signal": {"kind": "zero", "date": "2026-11-23"}, "fix": "#69", "role": "fixed", "turns": ["배추추천해줘"], "expect": {"search": "배추"}}
+{"id": "glued-02", "group": "glued-request", "origin": "synthetic", "signal": {"kind": "zero", "date": "2026-11-23"}, "fix": "#69", "role": "fixed", "turns": ["연근알려줘"], "expect": {"search": "연근"}}
+{"id": "glued-03", "group": "glued-request", "origin": "synthetic", "signal": {"kind": "zero", "date": "2026-11-23"}, "fix": "#69", "role": "normal", "turns": ["연근 알려줘"], "expect": {"search": "연근"}}
+{"id": "glued-04", "group": "glued-request", "origin": "synthetic", "signal": {"kind": "zero", "date": "2026-11-23"}, "fix": "#69", "role": "counter", "turns": ["추천도서"], "expect": {"search": "추천도서"}}
+{"id": "glued-05", "group": "glued-request", "origin": "synthetic", "signal": {"kind": "zero", "date": "2026-11-23"}, "fix": "#69", "role": "multiturn", "turns": ["배추추천해줘", "배추 추천해줘"], "expect": {"searches": ["배추", "배추"]}}
