@@ -91,6 +91,21 @@ function ProductStrip({ items, resetKey }: { items: HighlightItem[]; resetKey: s
   );
 }
 
+/** 쿠팡에서 맞는 식품 상품을 못 찾은 키워드 (예: 정관장) — 네이버쇼핑 검색 화면 링크 (2026-11-23 사용자 요청).
+ *  제휴 아님 · 수수료 없음 — 대화의 '네이버쇼핑에서 직접 찾아보기'와 같은 주소·같은 표기. */
+const NAVER_SEARCH_URL = "https://search.shopping.naver.com/search/all?query=";
+function NaverFallback({ keyword }: { keyword: string }) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-chip/60 px-3 py-2 text-xs text-ink2">
+      <span>쿠팡에서 맞는 식품 상품을 찾지 못했어요.</span>
+      <a href={NAVER_SEARCH_URL + encodeURIComponent(keyword)} target="_blank" rel="nofollow noopener noreferrer"
+        aria-label={`네이버쇼핑에서 ${keyword} 찾아보기 (새 창, 제휴 아님)`}
+        className="font-semibold text-ink underline underline-offset-2">네이버쇼핑에서 '{keyword}' 찾아보기</a>
+      <span className="text-stone-400">제휴 아님 · 수수료 없음</span>
+    </div>
+  );
+}
+
 /** 카테고리 키워드 한 줄 — 순위·늘 인기·변화 + 쿠팡 상품 3개(더보기). 화면에 보일 때만 상품을 부른다. */
 function KeywordShelf({ it, onAsk, disabled }: { it: RankKeyword; onAsk: (t: string) => void; disabled?: boolean }) {
   const ref = useRef<HTMLLIElement>(null);
@@ -125,7 +140,7 @@ function KeywordShelf({ it, onAsk, disabled }: { it: RankKeyword; onAsk: (t: str
       ) : items.length ? (
         <ProductStrip items={items} resetKey={it.keyword} />
       ) : (
-        <p className="mt-2 text-xs text-stone-500">지금 이 키워드로 찾은 식품 상품이 없어요.</p>
+        <NaverFallback keyword={it.keyword} />
       )}
     </li>
   );

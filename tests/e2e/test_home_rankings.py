@@ -330,3 +330,23 @@ def test_category_keyword_products_and_highlight(site, browser, monkeypatch):
         ctx.close()
     finally:
         HIGHLIGHT.clear()
+
+
+def test_keyword_without_coupang_products_links_to_naver(site, browser, monkeypatch):
+    """2026-11-23: 쿠팡에 맞는 식품 상품이 없는 키워드(예: 정관장)는 네이버쇼핑 검색 링크 (제휴 아님 표기)."""
+    from app.services.trends import highlight as hl
+
+    monkeypatch.setattr(hl, "picks", lambda kw, search=None: [] if kw == "대봉감" else [{
+        "keyword": kw, "title": f"{kw} 상품", "image": None, "price_krw": 1000, "rocket": False,
+        "go_url": "/home/hgo/0123456789ab", "fetched_at": "2026-11-23T22:50+09:00"}])
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+    page = ctx.new_page()
+    page.goto(site + "/#")
+    sec = page.get_by_role("region", name="지금 순위")
+    sec.get_by_role("tab", name="카테고리").click()
+    shelf = sec.get_by_role("listitem", name="대봉감 · 식품 검색어 18위")
+    link = shelf.get_by_role("link", name="네이버쇼핑에서 대봉감 찾아보기 (새 창, 제휴 아님)")
+    link.wait_for()
+    assert link.get_attribute("href") == "https://search.shopping.naver.com/search/all?query=%EB%8C%80%EB%B4%89%EA%B0%90"
+    assert "sponsored" not in (link.get_attribute("rel") or "") and shelf.get_by_text("제휴 아님 · 수수료 없음").count() == 1
+    ctx.close()
