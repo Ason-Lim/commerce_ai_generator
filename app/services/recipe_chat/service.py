@@ -327,6 +327,8 @@ class RecipeChat:
                     state.update(mode="recipe", pending=None)
                     return RecipeTurn([B.text(f"어떤 **{key}**{shop_first.ro(key)} 할까요? 고르시면 그 재료로 레시피와 장보기를 정리해 드려요."),
                                        B.chips(shop_first.option_texts(text, key, options))], state, "recipe_which_dish")
+                # 2026-11-23: '능이버섯으로 닭백숙' → '능이버섯 닭백숙' 레시피 (짚은 재료가 재료 목록·사진에 들어가게)
+                dish = shop_first.dish_with(dish, shop_first.named_ingredient(text))
                 turn = self._recommended_recipe(dish, finding, state, db, recipe_sid)
                 if (intent or {}).get("asks_amount") or AMOUNT_Q_RE.search(text):
                     turn = self._with_amount_answer(turn)

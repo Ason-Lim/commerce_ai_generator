@@ -19,7 +19,10 @@ RECIPE_WORDS = re.compile(r"레시피|만드는\s*(법|방법)|요리\s*(법|방
 _VIA = re.compile(r"([가-힣]{2,10}?)(?:으로|로)(?=\s)")
 _NOT_INGREDIENT = {"선물", "간식", "이걸", "그걸", "저걸", "뭘", "무엇", "반찬", "안주", "아침", "점심", "저녁", "야식", "집에서",
                    "에어프라이어", "전자레인지", "냄비", "오븐", "밥솥", "혼자", "가족", "손님", "택배", "쿠팡", "인터넷", "최저가",
-                   "한번", "처음", "오늘", "내일", "주말", "명절", "제사", "다이어트", "간단히", "빨리", "쉽게"}
+                   "한번", "처음", "오늘", "내일", "주말", "명절", "제사", "다이어트", "간단히", "빨리", "쉽게",
+                   "재료", "남은재료", "냉장고", "이것", "그것", "저것", "이거", "그거", "레시피", "방법", "요리",
+                   "프라이팬", "후라이팬", "압력솥", "전기밥솥", "찜기", "뚝배기", "웍", "그릴", "숯불", "캠핑",
+                   "아이", "아기", "부모님", "어른", "회사", "도시락", "생일", "손님상", "보양식", "몸보신"}
 
 
 def ro(word: str) -> str:
@@ -69,4 +72,16 @@ def named_ingredient(text: str | None) -> str | None:
     return None
 
 
-__all__ = ["ro", "AMBIGUOUS", "ambiguous", "option_texts", "is_shopping_question", "named_ingredient"]
+def dish_with(dish: str, ingredient: str | None) -> str:
+    """손님이 짚은 재료를 요리 이름에 붙인다 — '닭백숙' + '능이버섯' → '능이버섯 닭백숙' (2026-11-23 사용자 확인:
+    능이로 백숙을 한다는데 레시피에 능이가 없었다). 이미 들어 있으면('능이백숙') 그대로."""
+    if not dish or not ingredient:
+        return dish
+    flat = re.sub(r"\s+", "", dish)
+    stem = re.sub(r"(버섯|고기|살)$", "", ingredient) or ingredient
+    if ingredient in flat or (len(stem) >= 2 and stem in flat):
+        return dish
+    return f"{ingredient} {dish}"
+
+
+__all__ = ["ro", "dish_with", "AMBIGUOUS", "ambiguous", "option_texts", "is_shopping_question", "named_ingredient"]
