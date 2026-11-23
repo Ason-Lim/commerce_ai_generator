@@ -17,6 +17,8 @@ YESTERDAY="$(date -v-1d +%F 2>/dev/null || date -d yesterday +%F)"
   fi
   # 2026-11-22 (3-C): ③칸 '오늘의 생활' — 오늘 날씨를 한 번 받아 var/weather/ 에 (실패해도 계속, ③은 레시피 카드로)
   "$PY" scripts/fetch_weather.py || echo "-- 날씨 받기 실패 (③칸은 레시피 카드)"
+  # 2026-11-23: 홈 '쿠팡 식품 랭킹' — 하루 한 번 (오늘 파일이 있으면 건너뜀). 실패해도 계속.
+  "$PY" scripts/fetch_coupang_best.py || echo "-- 쿠팡 식품 랭킹 받기 실패 (홈은 전날 자료·빈 상태로)"
   "$PY" scripts/update_trend_examples.py
   # 2026-11-22: 올리기 전에 예시를 실제로 검색해 보고 엉뚱한 결과·메인에 맞지 않는 예시는 다음 후보로 (uv 필요)
   UV="$(command -v uv || echo "$HOME/.local/bin/uv")"

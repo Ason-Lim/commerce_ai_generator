@@ -1,4 +1,4 @@
-"""화면 시험 '지금 순위' (창 3-C, 2026-11-22 — 설계 §4 시나리오).
+"""화면 시험 '지금 순위' (창 3-C, 2026-11-22 — 설계 §4 시나리오 · 2026-11-23 개편: 홈 = 쿠팡 식품 랭킹 · 카테고리 · 함께 보면 좋은 상품).
 
 홈 → 지금 순위 → 탭 셋 전환 → 카테고리 칩 → 키워드 누르면 대화 시작(한 번만) → 상품 고지가 첫 링크보다 앞 →
 링크는 /trends/…/go/… → 전체 보기(지금 뜨는 식품) 전체 화면 · 보기 칩. '장바구니'·'주문' 문구 0, 이름 없는 버튼·링크 0.
@@ -29,11 +29,30 @@ CARD = {"product_id": "111", "title": "부사 사과 3kg 가정용", "mall": "�
         "go_url": "/trends/2026-11-21-a/go/1", "badges": ["multi_post"], "post_count": 2}
 
 
+CP = [{"rank": 1, "product_id": "7230779632", "title": "신선한 대란", "image": None, "price_krw": 7880, "price_hidden": False,
+       "rocket": True, "change_kind": "compared", "change": 2, "seed": "대란", "go_url": "/home/go/7230779632"},
+      {"rank": 3, "product_id": "218520566", "title": "돌 스위티오 바나나", "image": None, "price_krw": 4230, "price_hidden": False,
+       "rocket": True, "change_kind": "new", "change": None, "seed": "바나나", "go_url": "/home/go/218520566"}]
+TOGETHER_SEEN: list[str] = []
+
+
+def together(seeds):
+    personal = bool(seeds)
+    return {"status": "ok", "personal": personal, "disclosure": "쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.",
+            "note": "맞춤 추천 · 이 브라우저에서 최근 누른 품목 기준" if personal else "일반 추천 · 쿠팡 식품 랭킹 1위 '대란' 기준",
+            "basis_date": "2026-11-23", "items": [{
+                "product_id": "1275124832", "title": "곰곰 아삭한 콩나물", "image": None, "price_krw": 1090, "price_hidden": False,
+                "rocket": True, "go_url": "/home/go/1275124832?from=together", "seed": "콩나물", "source": "coupang_best",
+                "kind": "explore", "why": "새로 둘러보기 · 요리/식재료"}]}
+
+
 def data(view):
     full = view == "full"
     fruit = [APPLE, GAM] + ([kw(40, "귤", ["fruit"], "steady", ch=0, rising=False)] if full else [])
     return {
         "generated_at": "2026-11-22T10:05+09:00", "view": view,
+        "coupang": {"status": "ok", "date": "2026-11-23", "fetched_at": "2026-11-23T10:05+09:00", "compare_date": "2026-11-22",
+                    "items": CP, "disclosure": "쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.", "note": "쿠팡 기준"},
         "surge": {"status": "ok", "data_until": "2026-11-21", "updated_at": "x",
                   "items": [{"n": 1, "keyword": "대방어", "status": "surging", "times": 2.7, "rank": 82, "onset": "2026-11-03", "ask": "대방어 추천해 줘"}]},
         "categories": {"status": "ok", "rank_date": "2026-11-21", "note": "네이버 식품 검색어 순위", "tabs": [
@@ -66,6 +85,11 @@ def site():
     @app.get("/api/trends/surge")
     def _surge():
         return SURGE
+
+    @app.post("/api/home/together")
+    def _together(body: dict):                         # (from __future__ annotations — 모듈 밖 이름은 못 씀)
+        TOGETHER_SEEN.append(",".join(body.get("seeds") or []))
+        return together(body.get("seeds") or [])
 
     app.include_router(trend_routes.router)
     mount_frontend(app, DIST)
@@ -102,24 +126,35 @@ def test_home_rankings_flow(site, browser):
     chats: list[str] = []
     page.route("**/api/chat", lambda route: (chats.append(route.request.post_data or ""), route.fulfill(
         status=200, content_type="application/json", body='{"session_id":"s","blocks":[{"type":"text","data":{"text":"좋아요"}}]}'))[1])
+    page.route("**/home/go/**", lambda route: route.fulfill(status=200, body="ok"))
     page.goto(site + "/#")
     sec = page.get_by_role("region", name="지금 순위")
-    sec.get_by_text("대방어").wait_for()
-    assert sec.get_by_text("검색량 11/21까지 자료").count() == 1
+    # 홈 첫 탭 = 쿠팡 식품 랭킹: 고지가 첫 상품 링크보다 앞, 링크는 /home/go 경유, 급상승 탭은 홈에 없음
+    link = sec.get_by_role("link", name="신선한 대란 — 쿠팡에서 보기 (새 창)")
+    link.wait_for()
+    assert [t.inner_text() for t in sec.get_by_role("tab").all()] == ["쿠팡 식품 랭킹", "카테고리", "함께 보면 좋은 상품"]
+    assert link.get_attribute("href") == "/home/go/7230779632" and "sponsored" in link.get_attribute("rel")
+    html = sec.inner_html()
+    assert html.index("쿠팡 파트너스") < html.index("/home/go/")
+    assert sec.get_by_text("새로 진입").count() == 1 and sec.get_by_text("대방어").count() == 0
+    with ctx.expect_page() as popup:
+        sec.get_by_role("link", name="돌 스위티오 바나나 — 쿠팡에서 보기 (새 창)").click()
+    popup.value.close()
     # 카테고리 → 칩 → 오르는 중이 기본, 원래 순위 번호
     sec.get_by_role("tab", name="카테고리").click()
     sec.get_by_role("button", name="사과 대화로 묻기 · 식품 검색어 7위").wait_for()
     assert sec.get_by_text("상위 500위 진입").count() == 1
     sec.get_by_role("button", name="요리/식재료").click()
     sec.get_by_text("7일 전 순위와 비교할 자료가 아직 없어").wait_for()
-    # 트렌드 상품: 고지가 첫 상품 링크보다 앞, 링크는 /go 경유
-    sec.get_by_role("tab", name="트렌드 상품").click()
-    link = sec.get_by_role("link", name="부사 사과 3kg 가정용 — 쿠팡에서 보기 (새 창)")
-    link.wait_for()
-    assert link.get_attribute("href") == "/trends/2026-11-21-a/go/1"
-    assert "sponsored" in link.get_attribute("rel")
-    html = sec.inner_html()
-    assert html.index("쿠팡 파트너스") < html.index("/go/1")
+    # 함께 보면 좋은 상품: 방금 누른 품목(바나나)을 본문으로 보냄 → 맞춤 끄기면 보내지 않음
+    sec.get_by_role("tab", name="함께 보면 좋은 상품").click()
+    sec.get_by_text("맞춤 추천 · 이 브라우저에서 최근 누른 품목 기준").wait_for()
+    assert TOGETHER_SEEN[-1] == "바나나"
+    tl = sec.get_by_role("link", name="곰곰 아삭한 콩나물 — 쿠팡에서 보기 (새 창)")
+    assert tl.get_attribute("href") == "/home/go/1275124832?from=together"
+    sec.get_by_role("button", name="맞춤 추천 끄기").click()
+    sec.get_by_text("일반 추천 · 쿠팡 식품 랭킹 1위").wait_for()
+    assert TOGETHER_SEEN[-1] == ""
     assert page.evaluate(NAMELESS_JS) == []
     body = page.locator("body").inner_text()
     assert "장바구니" not in body and "주문" not in body
@@ -139,6 +174,7 @@ def test_full_screen_on_hot_page(site, browser):
     page.goto(site + "/#/hot")
     sec = page.get_by_role("region", name="지금 순위")
     sec.locator("li.card").first.wait_for()                  # 급상승 탭 = 기존 카드 그대로
+    assert [t.inner_text() for t in sec.get_by_role("tab").all()] == ["급상승", "카테고리", "쿠팡 식품 랭킹"]
     sec.get_by_role("tab", name="카테고리").click()
     sec.get_by_role("button", name="늘 인기 1").click()
     sec.get_by_role("button", name="귤 대화로 묻기 · 식품 검색어 40위").wait_for()

@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Apple, ArrowRight, Beef, CalendarDays, Cookie, Fish, Gift, Heart, Info, Utensils, type LucideIcon } from "lucide-react";
-import { fetchHomeRankings, type HomeRankings as Data, type PickCard, type RankKeyword, type RankTab } from "../api/client";
+import { fetchHomeRankings, fetchTogether, type CoupangRankItem, type HomeRankings as Data, type RankKeyword, type RankTab, type Together, type TogetherCard } from "../api/client";
+import { recentInterests, rememberInterest, useRecoOff } from "../state/shelf";
 
 /**
  * 홈 '지금 순위' (창 3-C, 2026-11-22 — 설계 claude/home_rankings_design_2026-11-20.md §4)
- * 알약 탭 셋: 급상승 · 카테고리 · 트렌드 상품. 홈(view=home)은 각 6개 + '전체 보기'(→ 지금 뜨는 식품),
+ * 2026-11-23 개편(사용자 결정): 홈 = 쿠팡 식품 랭킹 · 카테고리 · 함께 보면 좋은 상품,
+ * 지금 뜨는 식품(full) = 급상승 · 카테고리 · 쿠팡 식품 랭킹 — 홈과 탭이 같은 급상승을 두 번 보여 주지 않게.
+ * (이전) 알약 탭 셋: 급상승 · 카테고리 · 트렌드 상품. 홈(view=home)은 각 6개 + '전체 보기'(→ 지금 뜨는 식품),
  * 지금 뜨는 식품(view=full)은 같은 규칙의 전체 화면. 키워드를 누르면 대화로 묻고(한 번만), 상품은 판매처(/go)로.
  * 순위 = 네이버 식품 검색어 순위(원래 순위 그대로), 상품 = 승인된 트렌드 글 기준(추천 순위 아님). '장바구니'·'주문' 문구 없음.
  */
 const ICONS: Record<string, LucideIcon> = { Gift, Cookie, Apple, Fish, Beef, Utensils, Heart, CalendarDays };
-type Pill = "surge" | "category" | "picks";
+type Pill = "coupang" | "surge" | "category" | "together";
 type Filter = "rising" | "not_steady" | "steady" | "all";
 const FILTER_LABEL: Record<Filter, string> = { rising: "오르는 중", not_steady: "늘 인기 빼고", steady: "늘 인기", all: "전체" };
 const md = (v?: string | null) => (v ? `${Number(v.slice(5, 7))}/${Number(v.slice(8, 10))}` : "");
@@ -41,32 +44,77 @@ function KeywordRow({ it, onAsk, disabled }: { it: RankKeyword; onAsk: (t: strin
   );
 }
 
-function PickTile({ c, onAsk, disabled }: { c: PickCard; onAsk: (t: string) => void; disabled?: boolean }) {
+function ProductTile({ title, image, price, rocket, href, top, why, onOpen }: {
+  title: string; image: string | null; price: ReactNode; rocket: boolean; href: string; top?: ReactNode; why?: string; onOpen: () => void;
+}) {
   return (
     <li className="flex flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white">
-      <a href={c.go_url} target="_blank" rel="sponsored nofollow noopener" className="group flex flex-1 flex-col" aria-label={`${c.title} — ${c.mall}에서 보기 (새 창)`}>
-        <div className="aspect-square w-full bg-chip">
-          {c.image && <img src={c.image} alt="" loading="lazy" className="h-full w-full object-cover" />}
+      <a href={href} target="_blank" rel="sponsored nofollow noopener" onClick={onOpen} className="flex flex-1 flex-col" aria-label={`${title} — 쿠팡에서 보기 (새 창)`}>
+        <div className="relative aspect-square w-full bg-chip">
+          {image && <img src={image} alt="" loading="lazy" className="h-full w-full object-cover" />}
+          {top}
         </div>
         <div className="flex flex-1 flex-col gap-1 p-3">
-          <span className="text-xs text-stone-500">{c.mall}</span>
-          <p className="line-clamp-2 text-sm font-medium leading-snug break-keep">{c.title}</p>
-          <p className="text-sm">
-            {c.price_hidden || c.price_krw == null
-              ? <span className="text-ink2">가격은 판매처에서 확인해 주세요</span>
-              : <><b className="font-semibold">{c.price_krw.toLocaleString()}원</b> <span className="text-xs text-stone-500">{md(c.price_checked_at)} 확인</span></>}
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {c.rocket && <span className="tag bg-chip text-ink2">로켓배송 ({md(c.price_checked_at)} 확인)</span>}
-            {c.badges.includes("keyword_steady") && <span className="tag bg-accentSoft text-accent">관련 키워드 꾸준한 관심</span>}
-            {c.badges.includes("multi_post") && <span className="tag bg-chip text-ink2">트렌드 글 {c.post_count}편에서 소개</span>}
-          </div>
-          <p className="mt-auto line-clamp-1 pt-1 text-xs text-stone-500">{c.why}</p>
+          <span className="text-xs text-stone-500">쿠팡</span>
+          <p className="line-clamp-2 text-sm font-medium leading-snug break-keep">{title}</p>
+          <p className="text-sm">{price}</p>
+          {rocket && <span className="tag w-fit bg-chip text-ink2">로켓배송</span>}
+          {why && <p className="mt-auto line-clamp-2 pt-1 text-xs text-stone-500">{why}</p>}
         </div>
       </a>
-      <button type="button" disabled={disabled} onClick={() => onAsk(`${c.title.split(/[,(]/)[0].slice(0, 30)} 비슷한 상품 추천해 줘`)}
-        className="border-t border-stone-100 px-3 py-2 text-xs text-ink2 hover:bg-chip disabled:opacity-60">대화로 묻기</button>
     </li>
+  );
+}
+
+function CoupangChange({ it }: { it: CoupangRankItem }) {
+  if (it.change_kind === "new") return <span className="tag bg-accentSoft text-accent">새로 진입</span>;
+  if (it.change_kind !== "compared" || !it.change) return null;
+  return it.change > 0
+    ? <span className="text-xs font-semibold text-accent" aria-label={`전날보다 ${it.change}계단 오름`}>↑{it.change}</span>
+    : <span className="text-xs text-ink3" aria-label={`전날보다 ${-it.change}계단 내림`}>↓{-it.change}</span>;
+}
+
+function Disclosure({ text }: { text: string }) {
+  return <p className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs leading-5 text-ink2"><b className="font-semibold text-ink">광고</b> {text}</p>;
+}
+
+const priceOf = (p: number | null, hidden: boolean, when: string) =>
+  hidden || p == null ? <span className="text-ink2">가격은 쿠팡에서 확인해 주세요</span>
+    : <><b className="font-semibold">{p.toLocaleString()}원</b> <span className="text-xs text-stone-500">{when}</span></>;
+
+/** 함께 보면 좋은 상품 — 이 브라우저의 최근 관심 품목(최대 5)을 출발점으로. '맞춤 끄기'면 일반 추천. */
+function TogetherPanel({ view }: { view: "home" | "full" }) {
+  const [off, setOff] = useRecoOff();
+  const [data, setData] = useState<Together | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const ctl = new AbortController();
+    setData(null);
+    fetchTogether(off ? [] : recentInterests(), view, ctl.signal).then(setData).catch(() => { if (!ctl.signal.aborted) setFailed(true); });
+    return () => ctl.abort();
+  }, [off, view]);
+  if (failed) return <p className="mt-3 rounded-xl bg-chip px-4 py-3 text-sm text-ink2">지금은 추천 상품을 불러오지 못했어요.</p>;
+  if (!data) return <p className="mt-3 text-sm text-stone-400" aria-live="polite">추천 상품을 고르는 중…</p>;
+  return (
+    <div className="mt-3">
+      <Disclosure text={data.disclosure} />
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
+        <span>{data.note || "추천할 상품이 아직 없어요."}</span>
+        <button type="button" aria-pressed={!off} onClick={() => setOff(!off)} className="rounded-full bg-chip px-2.5 py-1 text-ink2 hover:text-ink">
+          {off ? "맞춤 추천 켜기" : "맞춤 추천 끄기"}
+        </button>
+      </div>
+      {data.items.length > 0 && (
+        <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {data.items.map((c: TogetherCard) => (
+            <ProductTile key={c.product_id} title={c.title} image={c.image} rocket={c.rocket} href={c.go_url} why={c.why}
+              price={priceOf(c.price_krw, c.price_hidden, data.basis_date ? `${md(data.basis_date)} 확인` : "")}
+              onOpen={() => rememberInterest(c.seed)} />
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-xs leading-5 text-stone-500">레시피에 함께 쓰는 재료 · 같은 카테고리 · 새로 둘러보기 순으로 골라요. 순서는 쿠팡 식품 랭킹을 따르고 수수료와는 상관없어요.</p>
+    </div>
   );
 }
 
@@ -75,7 +123,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
 }) {
   const [data, setData] = useState<Data | null>(null);
   const [failed, setFailed] = useState(false);
-  const [pill, setPill] = useState<Pill>("surge");
+  const [pill, setPill] = useState<Pill>(view === "home" ? "coupang" : "surge");
   const [tag, setTag] = useState<string>("");
   const [filter, setFilter] = useState<Filter | null>(null);
   const [info, setInfo] = useState(false);
@@ -86,8 +134,9 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
     fetchHomeRankings(view, ctl.signal).then((d) => {
       setData(d);
       if (d) {
-        // 첫 탭: 급상승이 비면 카테고리, 그것도 비면 상품
-        if (!d.surge.items.length) setPill(d.categories.tabs.length ? "category" : "picks");
+        // 첫 탭: 홈은 쿠팡 식품 랭킹(비면 카테고리), 지금 뜨는 식품은 급상승(비면 카테고리)
+        const first = view === "home" ? (d.coupang?.items.length ?? 0) : d.surge.items.length;
+        if (!first) setPill("category");
         if (d.categories.tabs.length) setTag(d.categories.tabs[0].tag);
       }
     }).catch(() => { if (!ctl.signal.aborted) setFailed(true); });
@@ -110,12 +159,15 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
 
   if (failed) return surgeFull ? <div className="mt-4">{surgeFull}</div> : null;
   if (!data) return <p className="mt-10 text-sm text-stone-400" aria-live="polite">지금 순위를 불러오는 중…</p>;
-  const hasPicks = data.picks.status === "ok" && data.picks.groups.recent.length + data.picks.groups.steady.length > 0;
-  const pills: [Pill, string][] = [["surge", "급상승"], ["category", "카테고리"], ...(hasPicks ? [["picks", "트렌드 상품"] as [Pill, string]] : [])];
+  const cp = data.coupang;
+  const pills: [Pill, string][] = view === "home"
+    ? [["coupang", "쿠팡 식품 랭킹"], ["category", "카테고리"], ["together", "함께 보면 좋은 상품"]]
+    : [["surge", "급상승"], ["category", "카테고리"], ["coupang", "쿠팡 식품 랭킹"]];
   const stamp = pill === "surge"
     ? (data.surge.data_until ? `검색량 ${md(data.surge.data_until)}까지 자료` : "")
     : pill === "category" ? (data.categories.rank_date ? `순위 ${md(data.categories.rank_date)} 자료 · 네이버 식품 검색어` : "")
-    : "승인된 트렌드 글 기준";
+    : pill === "coupang" ? (cp?.fetched_at ? `쿠팡 식품 베스트 · ${md(cp.fetched_at)} ${hm(cp.fetched_at)} 받음` : "")
+    : "";
   const more = view === "home" ? <a href="/#/hot" className="mt-3 flex items-center justify-center gap-1 text-sm text-stone-500 hover:text-ink">전체 보기 <ArrowRight size={14} aria-hidden /></a> : null;
 
   return (
@@ -129,9 +181,9 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
       </div>
       {info && (
         <p className="mt-2 rounded-xl bg-chip px-3 py-2 text-xs leading-6 text-ink2">
-          급상승은 네이버 데이터랩 검색어 트렌드(상대 지수)로 그 식품의 평소(약 한 달 전)와 비교한 값이에요.
-          카테고리 번호는 네이버 식품 검색어 순위 그대로예요. 상품은 승인된 트렌드 글에 소개한 상품이고 추천 순위가 아니에요.
-          제휴 수수료는 순위·순서에 영향을 주지 않아요.
+          쿠팡 식품 랭킹은 쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요(하루 한 번, 화살표는 전날과 비교).
+          카테고리 번호는 네이버 식품 검색어 순위 그대로예요. 급상승은 네이버 데이터랩 검색어 트렌드(상대 지수)로 평소(약 한 달 전)와 비교한 값이에요.
+          함께 보면 좋은 상품은 이 브라우저에서 최근 누른 품목을 기준으로 골라요(서버에 저장하지 않음, 끌 수 있어요). 제휴 수수료는 순위·순서에 영향을 주지 않아요.
         </p>
       )}
       <div role="tablist" aria-label="순위 종류" className="mt-3 flex justify-center gap-1 rounded-full bg-chip p-1">
@@ -195,7 +247,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
                   <p className="mt-2 text-xs text-stone-500">7일 전 순위와 비교할 자료가 아직 없어 순위순으로 보여 드려요{tab.default_filter === "not_steady" ? " ('늘 인기'는 뺌)" : ""}.</p>
                 )}
                 <ol className="mt-2 rounded-2xl border border-stone-200 bg-white px-1">
-                  {shownKeywords.map((it) => <KeywordRow key={it.keyword} it={it} onAsk={ask} disabled={busy} />)}
+                  {shownKeywords.map((it) => <KeywordRow key={it.keyword} it={it} onAsk={(t) => { rememberInterest(it.keyword); ask(t); }} disabled={busy} />)}
                   {shownKeywords.length === 0 && <li className="px-3 py-3 text-sm text-ink2">이 보기에 맞는 키워드가 없어요.</li>}
                 </ol>
                 {data.categories.status === "stale" && <p className="mt-2 text-xs text-warn">순위 자료가 늦어지고 있어요 — {md(data.categories.rank_date)} 자료예요.</p>}
@@ -205,22 +257,30 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
         </div>
       )}
 
-      {pill === "picks" && hasPicks && (
+      {pill === "coupang" && (
         <div className="mt-3">
-          {/* 고지 — 첫 상품 링크보다 앞 */}
-          <p className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs leading-5 text-ink2"><b className="font-semibold text-ink">광고</b> {data.picks.disclosure}</p>
-          {([["recent", "최근 소개"], ["steady", "관련 키워드 꾸준한 관심"]] as const).map(([g, label]) => data.picks.groups[g].length > 0 && (
-            <div key={g} className="mt-3">
-              <h3 className="mb-2 text-sm font-semibold text-ink2">{label}</h3>
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {data.picks.groups[g].map((c) => <PickTile key={c.product_id} c={c} onAsk={ask} disabled={busy} />)}
-              </ul>
-            </div>
-          ))}
-          <p className="mt-2 text-xs text-stone-500">{data.picks.placement_note} · 가격은 확인 당시 가격이에요.</p>
-          {more}
+          {!cp || cp.items.length === 0
+            ? <p className="rounded-xl bg-chip px-4 py-3 text-sm text-ink2">아직 오늘 쿠팡 식품 랭킹을 받지 못했어요 (매일 한 번 갱신).</p>
+            : <>
+                <Disclosure text={cp.disclosure} />
+                <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {cp.items.map((it) => (
+                    <ProductTile key={it.product_id} title={it.title} image={it.image} rocket={it.rocket} href={it.go_url}
+                      price={priceOf(it.price_krw, it.price_hidden, cp.fetched_at ? `${md(cp.fetched_at)} 확인` : "")}
+                      onOpen={() => rememberInterest(it.seed)}
+                      top={<span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-white/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-ink">
+                        {it.rank}<CoupangChange it={it} /></span>} />
+                  ))}
+                </ul>
+                {cp.status === "stale" && <p className="mt-2 text-xs text-warn">쿠팡 식품 랭킹이 늦어지고 있어요 — {md(cp.date)} 자료예요.</p>}
+                {cp.items.every((i) => i.change_kind === "no_compare") && <p className="mt-2 text-xs text-stone-500">전날 받은 순위가 아직 없어 오르내림은 내일부터 보여요.</p>}
+                {view === "full" && <p className="mt-2 text-xs leading-5 text-stone-500">{cp.note}</p>}
+                {more}
+              </>}
         </div>
       )}
+
+      {pill === "together" && <TogetherPanel view={view} />}
     </section>
   );
 }
