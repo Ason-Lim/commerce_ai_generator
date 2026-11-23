@@ -1857,7 +1857,7 @@ def coupang_gaps_overview(days: int = 28):
 
     days = max(1, min(int(days or 28), 365))
     return {"days": days, "enabled": cg.enabled(), "items": cg.GapStore().overview(days),
-            "synonyms": [{"from": a, "to": b} for a, b in cg.synonyms()],
+            "synonyms": [{k: r[k] for k in ("from", "to", "kind", "when")} for r in cg.synonym_rows()],
             "note": "쿠팡 파트너스 검색 API 기준 — 쿠팡 사이트에 상품이 없다는 뜻은 아니에요."}
 
 

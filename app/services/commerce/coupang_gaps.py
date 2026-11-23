@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 import os
 import re
 import sqlite3
@@ -26,6 +27,7 @@ import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+log = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[3]
 SYNONYMS = ROOT / "data" / "query_synonyms.csv"
 KST = timezone(timedelta(hours=9))
@@ -41,28 +43,66 @@ _lock = threading.Lock()
 _cache: tuple[float, list[tuple[str, str]]] | None = None
 
 
-def synonyms(path: Path | None = None) -> list[tuple[str, str]]:
-    """[(from, to)] — 파일이 바뀌면 다시 읽는다."""
-    global _cache
+# 2026-11-23 (3-D ⑤, 설계 §6): 관계 유형 kind · 쓰는 때 when
+#   kind  typo 잘못 쓴 같은 말 · alias 같은 상품의 다른 이름 · broaden 고객 조건보다 넓은 말
+#   when  zero 0건 다시 찾기만 · few 후보 적을 때 '추가 후보' 칸만 · both 둘 다 (kind·when 이 비면 alias·both = 예전 동작)
+#   broaden 은 **추천 후보로 쓰지 않는다** — 0건 다시 찾기(찾은 상품이 추천 후보가 됨)에서 빼고 '추가 후보' 칸에만,
+#   안내 문구를 붙인다. when 을 zero·both 로 적어도 few 로 본다.
+KINDS = ("typo", "alias", "broaden")
+WHENS = ("zero", "few", "both")
+_rows_cache: tuple[float, list[dict]] | None = None
+
+
+def synonym_rows(path: Path | None = None) -> list[dict]:
+    """[{'from','to','kind','when','note'}] — 파일이 바뀌면 다시 읽는다. 알 수 없는 kind 줄은 빼고 경고."""
+    global _rows_cache
     p = path or SYNONYMS
     try:
         mtime = p.stat().st_mtime
     except OSError:
         return []
-    if path is None and _cache and _cache[0] == mtime:
-        return _cache[1]
+    if path is None and _rows_cache and _rows_cache[0] == mtime:
+        return _rows_cache[1]
     rows = []
     with p.open(encoding="utf-8") as f:
         for row in csv.reader(line for line in f if line.strip() and not line.lstrip().startswith("#")):
-            if len(row) >= 2 and row[0].strip() and row[1].strip() and row[0].strip() != "from":
-                rows.append((row[0].strip(), row[1].strip()))
+            row = [c.strip() for c in row] + [""] * 5
+            a, b, kind, when, note = row[:5]
+            if not a or not b or a == "from":
+                continue
+            kind, when = kind or "alias", when or "both"
+            if kind not in KINDS or when not in WHENS:
+                log.warning("query_synonyms: unknown kind/when %r/%r for %s→%s — skipped", kind, when, a, b)
+                continue
+            if kind == "broaden":
+                when = "few"
+            rows.append({"from": a, "to": b, "kind": kind, "when": when, "note": note})
     if path is None:
-        _cache = (mtime, rows)
+        _rows_cache = (mtime, rows)
     return rows
 
 
-def retry_queries(query: str, table: list[tuple[str, str]] | None = None) -> list[str]:
-    """쿠팡이 0건일 때 다시 찾을 말 (최대 2개, 순서대로 한 번씩)."""
+def synonyms(path: Path | None = None, *, purpose: str = "zero") -> list[tuple[str, str]]:
+    """[(from, to)] — purpose zero: 0건 다시 찾기(추천 후보가 됨)에 쓸 말 (broaden 제외) · few: '추가 후보' 칸 ·
+    all: 전부."""
+    rows = synonym_rows(path)
+    if purpose == "zero":
+        rows = [r for r in rows if r["kind"] != "broaden" and r["when"] in ("zero", "both")]
+    elif purpose == "few":
+        rows = [r for r in rows if r["when"] in ("few", "both")]
+    return [(r["from"], r["to"]) for r in rows]
+
+
+def is_broaden(query: str, alt: str, path: Path | None = None) -> bool:
+    """alt 가 query 에 broaden 줄을 적용해 나온 말인가 — '추가 후보' 칸 안내 문구용."""
+    q = " ".join((query or "").split())
+    return any(r["kind"] == "broaden" and r["from"] in q and q.replace(r["from"], r["to"]) == alt
+               for r in synonym_rows(path))
+
+
+def retry_queries(query: str, table: list[tuple[str, str]] | None = None, *, purpose: str = "zero") -> list[str]:
+    """다시 찾을 말 (최대 2개, 순서대로 한 번씩). purpose zero: 쿠팡 0건 — 찾은 상품이 추천 후보가 되므로 broaden 제외 ·
+    few: 후보가 적을 때 '추가 후보' 칸 (broaden 포함)."""
     q = " ".join((query or "").split())
     if not q:
         return []
@@ -80,7 +120,7 @@ def retry_queries(query: str, table: list[tuple[str, str]] | None = None) -> lis
             out = [f"엑스트라버진 {item} {size}" for size in GRADE_SIZES] + [item]
         return [x for x in dict.fromkeys(out) if x and x != q][:MAX_GRADE_RETRY]
     else:
-        out = [q.replace(a, b) for a, b in (table if table is not None else synonyms()) if a in q]
+        out = [q.replace(a, b) for a, b in (table if table is not None else synonyms(purpose=purpose)) if a in q]
         if not out and table is None:
             # 2026-11-22: 표에 없는 잘못 쓴 이름 — 식품 키워드 낱말 중 자모가 가장 가까운 말로 ('브레타' → '부라타')
             fixed = similar_query(q)
@@ -147,7 +187,7 @@ def vocab() -> set[str]:
     key = tuple((str(f), f.stat().st_mtime) for f in files[-3:]) + (len(files),)
     if _vocab_cache and _vocab_cache[0] == key:
         return _vocab_cache[1]
-    words: set[str] = {b for _, b in synonyms() for b in b.split()}
+    words: set[str] = {w for r in synonym_rows() if r["kind"] != "broaden" for w in r["to"].split()}
     for f in files:
         try:
             with f.open(encoding="utf-8-sig") as fh:
