@@ -1160,7 +1160,10 @@ def ai_dataset(task: str | None = Query(None, max_length=40)):
     from app.services.ai import dataset
 
     st = dataset.DatasetStore()
-    return {"stats": st.stats(), "queue": st.queue(task, 50), "tasks": sorted(dataset.tasks())}
+    # 2026-11-22: 학습 안 함 — 화면에 '사용 안 함'을 띄우고 남은 칸 숫자만 보여 준다 (확인 대기 목록은 비움)
+    return {"status": "off", "off_since": dataset.TRAINING_OFF_SINCE, "capture_setting_on": dataset.requested(),
+            "note": "고객 문장으로 학습하지 않기로 했어요 (2026-11-22). 수집·내보내기는 꺼져 있어요.",
+            "stats": st.stats(), "queue": [], "tasks": sorted(dataset.tasks())}
 
 
 @router.post("/admin/api/ai/dataset/{eid}/review", dependencies=[api])
