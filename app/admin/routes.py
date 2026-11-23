@@ -1263,6 +1263,64 @@ def improve_fix_update(fid: int, body: _FixIn):
         raise HTTPException(400, str(exc)) from exc
 
 
+# 합성 재현 사례 초안 (2026-11-23, 3-D ⑥) — '오류 확인' 후보 → 역할 넷 자리 → 사람이 합성 문장·기대 검색어 → 내보내기
+class _CaseIn(BaseModel):
+    turns: list[str] = Field(default_factory=list, max_length=6)
+    search: str | None = Field(None, max_length=60)
+    search_has: list[str] = Field(default_factory=list, max_length=6)
+    search_not: list[str] = Field(default_factory=list, max_length=6)
+    searches: list[str] = Field(default_factory=list, max_length=6)
+    fix: str | None = Field(None, max_length=20)
+    status: str = Field("draft", pattern="^(draft|ready|dropped)$")
+
+
+class _PreviewIn(BaseModel):
+    turns: list[str] = Field(..., min_length=1, max_length=6)
+
+
+@router.get("/admin/api/improve/cases", dependencies=[api])
+def improve_cases():
+    from app.admin.ops import improve
+
+    return {"cases": improve.cases_view(), "roles": improve.CASE_ROLES, "statuses": improve.CASE_STATUS}
+
+
+@router.post("/admin/api/improve/cases/start/{review_id}", dependencies=[api])
+def improve_cases_start(review_id: str):
+    from app.admin.ops import improve
+
+    try:
+        return {"cases": improve.start_cases(review_id)}
+    except KeyError as exc:
+        raise HTTPException(404, "'오류 확인'한 점검 후보만 재현 사례를 만들 수 있어요") from exc
+
+
+@router.post("/admin/api/improve/cases/preview", dependencies=[api])
+def improve_cases_preview(body: _PreviewIn):
+    from app.admin.ops import improve
+
+    return {"searches": improve.preview([t[:80] for t in body.turns])}
+
+
+@router.post("/admin/api/improve/cases/{n}", dependencies=[api])
+def improve_case_save(n: int, body: _CaseIn):
+    from app.admin.ops import improve
+
+    try:
+        return improve.save_case(n, body.model_dump())
+    except KeyError as exc:
+        raise HTTPException(404, "그 사례가 없어요") from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.get("/admin/api/improve/cases/export", dependencies=[api])
+def improve_cases_export():
+    from app.admin.ops import improve
+
+    return Response(improve.export_cases(), media_type="text/plain; charset=utf-8")
+
+
 # ── 추천 근거 (1단계, 2026-11-10) — 고객 화면과 같은 선택을 읽기만 하고 근거를 나눠 보여 준다 ──
 @router.get("/admin/evidence")
 def admin_evidence(request: Request):

@@ -24,7 +24,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 KST = timezone(timedelta(hours=9))
-_LOCK = threading.Lock()
+_LOCK = threading.RLock()       # 저장 중에 소금 파일을 읽는 경로가 있어 다시 들어갈 수 있게
 
 # 영향 순 (§3 — 0건·조건 약화·안전 관련이 먼저). 숫자가 작을수록 위
 KINDS = {
@@ -240,3 +240,103 @@ def fixes_view(today: date | None = None) -> list[dict]:
     return [dict(f, result_label=RESULTS.get(f.get("result"), "?"),
                  due=bool(f.get("check_on")) and f.get("result") == "pending" and f["check_on"] <= today)
             for f in sorted(load_fixes(), key=lambda f: f["id"], reverse=True)]
+
+
+# ── 5. 합성 재현 사례 초안 (2026-11-23, 3-D ⑥ — 설계 §4·§5) ─────────────────────
+# '오류 확인'한 후보 → 역할 넷(고친 사례·정상 사례·반례·여러 턴) 빈 자리를 만들고, 사람이 합성 문장·기대 검색어를 적는다.
+# 손님 문장과 같은 문장은 받지 않는다(소금 친 후보 번호로 견줌 — 원문을 저장하지 않고도 확인), 개인정보 모양도 받지 않는다.
+# '준비됨' 초안은 tests/services/chat/synthetic_cases.jsonl 형식으로 내보낸다 → Claude PR 로 시험에 등록 (사람 병합).
+CASE_ROLES = {"fixed": "고친 사례", "normal": "정상 사례", "counter": "반례", "multiturn": "여러 턴"}
+CASE_STATUS = {"draft": "초안", "ready": "준비됨", "dropped": "버림"}
+
+
+def load_cases() -> list[dict]:
+    return _read_json(improve_dir() / "case_drafts.json", [])
+
+
+def preview(turns: list[str]) -> list[str]:
+    """지금 코드가 각 문장을 무슨 검색어로 찾는지 (외부 호출 없음 — 규칙만)."""
+    from app.services.chat.service import shopping_terms
+
+    return [shopping_terms(t)[0] for t in turns]
+
+
+def _check_turns(turns: list[str], review_id: str | None, kind: str | None) -> None:
+    from app.services.privacy import pii
+
+    salt = _salt()
+    for t in turns:
+        if pii.mask(t)[1] or re.search(r"\d{6,}", t):
+            raise ValueError("개인정보처럼 보이는 내용이 있어요 — 합성 문장에는 넣지 않아요")
+        if review_id and kind and candidate_id(kind, t, salt) == review_id:
+            raise ValueError("손님 문장과 같아요 — 유형·조건만 남기고 다시 써 주세요")
+
+
+def start_cases(review_id: str) -> list[dict]:
+    """'오류 확인' 후보 하나 → 역할 넷 빈 자리 (이미 있으면 그대로)."""
+    rv = load_reviews().get(review_id)
+    if not rv or rv.get("verdict") != "confirmed":
+        raise KeyError(review_id)
+    with _LOCK:
+        cases = load_cases()
+        if not any(c["review_id"] == review_id for c in cases):
+            n = max([c["n"] for c in cases] or [0])
+            group = f"{rv.get('kind')}-{(rv.get('first') or '').replace('-', '')[2:]}-{review_id[:4]}"
+            for i, role in enumerate(CASE_ROLES, 1):
+                cases.append({"n": n + i, "review_id": review_id, "group": group, "role": role, "turns": [],
+                              "expect": {}, "fix": "", "status": "draft",
+                              "signal": {"kind": rv.get("kind"), "date": rv.get("first")},
+                              "at": datetime.now(KST).isoformat(timespec="minutes")})
+            _write_json(improve_dir() / "case_drafts.json", cases)
+    return [c for c in load_cases() if c["review_id"] == review_id]
+
+
+def save_case(n: int, body: dict) -> dict:
+    turns = [str(t).strip()[:80] for t in (body.get("turns") or []) if str(t).strip()][:6]
+    expect = {}
+    if body.get("search"):
+        expect["search"] = str(body["search"]).strip()[:60]
+    for k in ("search_has", "search_not"):
+        words = [str(w).strip()[:30] for w in (body.get(k) or []) if str(w).strip()][:6]
+        if words:
+            expect[k] = words
+    if body.get("searches"):
+        expect = {"searches": [str(w).strip()[:60] for w in body["searches"]][:6]}
+    status = body.get("status") if body.get("status") in CASE_STATUS else "draft"
+    with _LOCK:
+        cases = load_cases()
+        c = next((x for x in cases if x["n"] == n), None)
+        if c is None:
+            raise KeyError(n)
+        _check_turns(turns, c["review_id"], (c.get("signal") or {}).get("kind"))
+        if status == "ready" and (not turns or not expect):
+            raise ValueError("문장과 기대 검색어를 적어야 '준비됨'으로 바꿀 수 있어요")
+        if status == "ready" and c["role"] == "multiturn" and len(turns) < 2:
+            raise ValueError("여러 턴은 문장이 둘 이상이에요")
+        c.update(turns=turns, expect=expect, fix=str(body.get("fix") or "").strip()[:20], status=status,
+                 updated=datetime.now(KST).isoformat(timespec="minutes"))
+        _write_json(improve_dir() / "case_drafts.json", cases)
+    return c
+
+
+def cases_view() -> list[dict]:
+    return [dict(c, role_label=CASE_ROLES.get(c["role"], c["role"]), status_label=CASE_STATUS.get(c["status"], "?"),
+                 now=preview(c["turns"]) if c["turns"] else [])
+            for c in sorted(load_cases(), key=lambda c: c["n"])]
+
+
+def export_cases() -> str:
+    """'준비됨' 초안 → synthetic_cases.jsonl 줄들. var/improve/synthetic_cases_ready.jsonl 에도 남김 (Claude 가 맥에서 읽어 PR)."""
+    lines = []
+    for c in sorted(load_cases(), key=lambda c: c["n"]):
+        if c["status"] != "ready":
+            continue
+        lines.append(json.dumps({"id": f"{c['group']}-{c['n']:02d}", "group": c["group"], "origin": "synthetic",
+                                 "signal": {k: v for k, v in (c.get("signal") or {}).items() if k in ("kind", "date") and v},
+                                 "fix": c.get("fix") or "", "role": c["role"], "turns": c["turns"], "expect": c["expect"]},
+                                ensure_ascii=False))
+    text = "\n".join(lines) + ("\n" if lines else "")
+    p = improve_dir() / "synthetic_cases_ready.jsonl"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+    return text
