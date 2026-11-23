@@ -325,8 +325,14 @@ class RecipeChat:
                 if amb:
                     key, options = amb
                     state.update(mode="recipe", pending=None)
-                    return RecipeTurn([B.text(f"어떤 **{key}**{shop_first.ro(key)} 할까요? 고르시면 그 재료로 레시피와 장보기를 정리해 드려요."),
-                                       B.chips(shop_first.option_texts(text, key, options))], state, "recipe_which_dish")
+                    ask = RecipeTurn([B.text(f"어떤 **{key}**{shop_first.ro(key)} 할까요? 고르시면 그 재료로 레시피와 장보기를 정리해 드려요."),
+                                      B.chips(shop_first.option_texts(text, key, options))], state, "recipe_which_dish")
+                    # 2026-11-23 사용자 확인: 짚은 재료(능이버섯)는 어느 쪽을 골라도 필요하니 묻는 자리에서 상품을 먼저 보여 준다
+                    named_ing = shop_first.named_ingredient(text)
+                    if named_ing and shop_first.is_shopping_question(text):
+                        ask.blocks.append(B.text(f"**{named_ing}**{shop_first.eun(named_ing)} 어느 쪽이든 들어가니 상품부터 보여 드려요."))
+                        ask.shopping = [named_ing]
+                    return ask
                 # 2026-11-23: '능이버섯으로 닭백숙' → '능이버섯 닭백숙' 레시피 (짚은 재료가 재료 목록·사진에 들어가게)
                 dish = shop_first.dish_with(dish, shop_first.named_ingredient(text))
                 turn = self._recommended_recipe(dish, finding, state, db, recipe_sid)

@@ -25,6 +25,12 @@ _NOT_INGREDIENT = {"선물", "간식", "이걸", "그걸", "저걸", "뭘", "무
                    "아이", "아기", "부모님", "어른", "회사", "도시락", "생일", "손님상", "보양식", "몸보신"}
 
 
+def eun(word: str) -> str:
+    """받침이 있으면 '은', 없으면 '는'."""
+    code = ord(word[-1]) - 0xAC00 if word else -1
+    return "은" if 0 <= code <= 11171 and code % 28 else "는"
+
+
 def ro(word: str) -> str:
     """받침이 있으면(ㄹ 받침 제외) '으로', 아니면 '로'."""
     if not word:
@@ -84,4 +90,4 @@ def dish_with(dish: str, ingredient: str | None) -> str:
     return f"{ingredient} {dish}"
 
 
-__all__ = ["ro", "dish_with", "AMBIGUOUS", "ambiguous", "option_texts", "is_shopping_question", "named_ingredient"]
+__all__ = ["ro", "eun", "dish_with", "AMBIGUOUS", "ambiguous", "option_texts", "is_shopping_question", "named_ingredient"]
