@@ -20,7 +20,8 @@ TTL = 600
 _LOCK = threading.Lock()
 _GO: dict[str, tuple[float, str, str]] = {}          # 키 → (받은 시각, 제휴 링크, 키워드)
 IMAGE_HOSTS = ("coupangcdn.com", "coupang.com")      # 파트너스 API 사진은 ads-partners.coupang.com
-MAX_ITEMS = 12
+MAX_ITEMS = 10
+SEARCH_LIMIT = 10                                   # 쿠팡 검색 API 한 번에 최대 10개 — 넘기면 오류(빈 결과)
 LINK_HOSTS = ("link.coupang.com", "www.coupang.com", "coupang.com")
 
 
@@ -41,7 +42,7 @@ def picks(keyword: str, search=None, limit: int = MAX_ITEMS) -> list[dict]:
         from app.services.coupang_api import search_coupang_products as search
     out, seen = [], set()
     fetched = datetime.now(KST).isoformat(timespec="minutes")
-    for it in search(keyword, 20) or []:
+    for it in search(keyword, SEARCH_LIMIT) or []:
         title = str(it.get("product_name") or it.get("name") or "")
         url = _https(it.get("product_url"), LINK_HOSTS)
         if not title or not url or url in seen or _flat(keyword) not in _flat(title) \
