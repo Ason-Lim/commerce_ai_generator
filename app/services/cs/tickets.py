@@ -177,6 +177,23 @@ def _change(ticket_id: str, fn, by: str) -> dict | None:
     return None
 
 
+def attach_products(ticket_id: str, products: list[dict], blocked_id: str | None = None, *, by: str = "rule") -> dict | None:
+    """식품 안전 신고에 대화에서 보여 준 후보 상품(번호·상품명만)을 붙인다 (2026-11-23 ③-2). 상태는 바꾸지 않는다."""
+    keep = [{"product_id": str(p["product_id"]), "title": str(p.get("title") or "")[:120]} for p in products if p.get("product_id")][:12]
+    with _LOCK:
+        items = _load()
+        for t in items:
+            if t.get("id") == ticket_id:
+                t["products"] = keep
+                if blocked_id:
+                    t["blocked_product"] = str(blocked_id)
+                t["events"].append({"at": _now().isoformat(timespec="seconds"), "kind": "products", "by": by,
+                                    "blocked": blocked_id})
+                _save(items)
+                return t
+    return None
+
+
 def answer(ticket_id: str, text: str, *, by: str) -> dict | None:
     text = " ".join((text or "").split())[:1000]
     if not text:
@@ -210,5 +227,5 @@ def prune(now: datetime | None = None) -> dict:
     return {"cleared": cleared, "removed": removed}
 
 
-__all__ = ["SPEC", "creates_ticket", "create", "followups", "public", "for_owner", "forget_owner", "queue", "answer",
+__all__ = ["SPEC", "creates_ticket", "create", "attach_products", "followups", "public", "for_owner", "forget_owner", "queue", "answer",
            "close", "prune", "store_dir"]

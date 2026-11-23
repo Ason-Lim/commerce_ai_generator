@@ -281,8 +281,10 @@ def picks_part(view: str, now: dt.datetime, *, posts=None, rank_dir: Path | None
         for p in post.products:
             pid = product_id(p.url)
             seen_count[pid] = seen_count.get(pid, 0) + 1
+    from app.services.cs import blocked as cs_blocked
+
     cards: list[dict] = []
-    used: set[str] = set()
+    used: set[str] = set(cs_blocked.blocked_ids())   # 2026-11-23 ③-2 노출 중지 상품은 처음부터 '쓴 것'으로
     for post in published:                           # 최신 승인 글부터 — 같은 상품은 가장 최근 글 하나만
         if post.conclusion == "hold":
             continue

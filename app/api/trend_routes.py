@@ -155,6 +155,10 @@ def go_coupang_best(product_id: str, request: Request):
 
     if not product_id.isdigit() or len(product_id) > 20:
         return RedirectResponse("/", status_code=303)
+    from app.services.cs import blocked as cs_blocked
+
+    if product_id in cs_blocked.blocked_ids():       # 2026-11-23 ③-2 노출 중지 상품으로는 보내지 않음
+        return RedirectResponse("/", status_code=303)
     item = cb.find(product_id)
     if item is None:
         # 2026-11-23 '최근 본 상품'(브라우저에 7일)에서 누를 때 — 지금 랭킹에서 빠진 상품은 쿠팡 상품 페이지로 바로 보낸다
@@ -219,6 +223,10 @@ def trends_go(post_id: str, n: int, request: Request, posts: Posts):
     if post is None or post.conclusion == "hold" or not 1 <= n <= len(post.products):
         return RedirectResponse("/trends", status_code=303)
     product = post.products[n - 1]
+    from app.services.cs import blocked as cs_blocked
+
+    if cs_blocked.is_blocked({"url": product.url}):  # 2026-11-23 ③-2 노출 중지 상품으로는 보내지 않음
+        return RedirectResponse(render.post_url(post), status_code=303)
     try:
         from app.admin.auth import request_ok
         from app.services.analytics_logger import log_product_click

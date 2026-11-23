@@ -155,8 +155,13 @@ def ranked(today: dt.date, now: dt.datetime, limit: int, *, snap: dict | None = 
         return {"status": "none", "fetched_at": None, "compare": False, "items": []}
     compare = compare_on(env)
     before = load_ranks(today - dt.timedelta(days=1), folder(env)) if compare else None
+    from app.services.cs import blocked as cs_blocked
+
+    stop = cs_blocked.blocked_ids()            # 2026-11-23 ③-2 식품 안전 신고 상품은 표시에서만 뺀다 (순위 번호는 그대로)
     out = []
     for it in snap["items"][:limit]:
+        if stop and it["product_id"] in stop:
+            continue
         if not compare or before is None:
             kind, change = "no_compare", None
         elif it["product_id"] in before:

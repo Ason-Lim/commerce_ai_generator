@@ -2008,3 +2008,43 @@ def cs_ticket_close(ticket_id: str):
     if t is None:
         raise HTTPException(404, "ticket not found")
     return {"ok": True, "ticket": t}
+
+
+# ── 식품 안전 신고 상품 노출 임시 중지 — 2026-11-23 창 4 ③-2. 풀기는 여기(관리자 토큰)에서만 ──
+class _CsBlockIn(BaseModel):
+    product_id: str = Field(..., pattern=r"^\d{1,20}$")
+    ticket_id: str | None = Field(None, max_length=40)
+
+
+@router.get("/admin/api/cs/blocked", dependencies=[api])
+def cs_blocked_list():
+    from app.services.cs import blocked
+
+    return {"products": blocked.listing()}
+
+
+@router.post("/admin/api/cs/blocked", dependencies=[api])
+def cs_block(body: _CsBlockIn):
+    """신고 티켓의 후보 상품 중 운영자가 고른 것을 막는다 (후보에 없는 번호는 받지 않음)."""
+    from app.services.cs import blocked, tickets
+
+    title = ""
+    if body.ticket_id:
+        t = next((x for x in tickets.queue() if x["id"] == body.ticket_id), None)
+        if t is None:
+            raise HTTPException(404, "ticket not found")
+        hit = next((p for p in t.get("products") or [] if p["product_id"] == body.product_id), None)
+        if hit is None:
+            raise HTTPException(400, "product is not a candidate of this ticket")
+        title = hit.get("title") or ""
+    return {"ok": True, "product": blocked.block(body.product_id, title=title, ticket_id=body.ticket_id, by="operator")}
+
+
+@router.post("/admin/api/cs/blocked/{product_id}/unblock", dependencies=[api])
+def cs_unblock(product_id: str):
+    from app.services.cs import blocked
+
+    got = blocked.unblock(product_id, by="operator")
+    if got is None:
+        raise HTTPException(404, "not blocked")
+    return {"ok": True, "product": got}

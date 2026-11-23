@@ -195,8 +195,10 @@ def cover(post: Post) -> dict | None:
         if post.cover:
             return {"src": image_url(post.cover.file), "caption": post.cover.caption, "kind": "ai"}
         return None
+    from app.services.cs import blocked as cs_blocked
+
     for n, p in enumerate(post.products, start=1):
-        if p.image_url and policy.coupang_image(p.image_url):
+        if p.image_url and policy.coupang_image(p.image_url) and not cs_blocked.is_blocked({"url": p.url}):
             return {"src": p.image_url, "kind": "product",
                     "caption": f"쿠팡 상품 사진 · 아래 상품 목록 {n}번 (판매처 이미지)"}
     return None
@@ -266,7 +268,13 @@ def post_page(post: Post, now: datetime | None = None) -> str:
         parts.append("<h2>상품 비교</h2>" if framed else "<h2>재료·상품</h2>")
         if framed and post.checklist:
             parts.append(f"<p class=muted>{e(post.checklist)}</p>")
+        from app.services.cs import blocked as cs_blocked
+
         for n, p in enumerate(post.products, start=1):
+            if cs_blocked.is_blocked({"url": p.url}):     # 2026-11-23 ③-2 식품 안전 신고 — 표시에서만 뺌(번호는 그대로)
+                parts.append(f'<div class="card pcard"><div class=info><div class=muted>{n}번 상품은 {e(cs_blocked.HIDDEN_NOTE)}'
+                             '</div></div></div>')
+                continue
             badge = " · 로켓배송" if p.rocket else ""
             img = (f'<img class=thumb src="{e(p.image_url)}" alt="" loading=lazy referrerpolicy=no-referrer '
                    f'width=84 height=84>' if p.image_url and policy.coupang_image(p.image_url) else "")
