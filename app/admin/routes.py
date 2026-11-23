@@ -5,6 +5,7 @@
   트렌드 탭 /admin/trends          검색량 급상승 리포트 (데이터랩 급상승 → 블로그 탐지 → 구글 트렌드 → 교차 확인)
                                    · 블로그 초안(applesodda 임시저장용 텍스트) — 2026-10-31
                                    · 쇼핑커넥트 발급 요청 목록(발급 완료·건너뛰기) — 2026-11-02
+  개선 탭   /admin/improve         주간 지표 · 점검 후보 · 확인 결과 · 고침 기록 — 2026-11-23 (3-D ④)
   AI 탭     /admin/ai              AI 비용 (작업별·모델별, 저장본 재사용으로 아낀 호출) · 확인된 사실 — 2026-11-11
   B2B 탭    /admin/b2b             B2B 콘솔 (자연어 지시 → 공고 분석 · 후보 · 원가 · 견적요청서 · 제안서)
             /admin/b2b/monitor     선물 입찰 모니터 · 트렌드 · 평가표 · 엑셀
@@ -1173,6 +1174,92 @@ def ai_dataset_review(eid: int, body: _DatasetReviewIn):
     try:
         return dataset.DatasetStore().review(eid, body.verdict, output=body.output, note=body.note)
     except dataset.DatasetError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+# ── 개선 목록 (2026-11-23, 3-D ④) — 주간 지표 · 점검 후보 · 확인 결과 · 고침 기록 (자동 수정 없음) ──
+class _ReviewIn(BaseModel):
+    verdict: str = Field(..., pattern="^(confirmed|not_error|hold)$")
+    note: str | None = Field(None, max_length=300)
+
+
+class _FixIn(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+    pr: str | None = Field(None, max_length=40)
+    candidate_ids: list[str] = Field(default_factory=list, max_length=20)
+    affected: str | None = Field(None, max_length=300)
+    check_on: str | None = Field(None, pattern=r"^(\d{4}-\d{2}-\d{2})?$")
+    result: str = Field("pending", pattern="^(pending|better|same|worse|reverted)$")
+    result_note: str | None = Field(None, max_length=300)
+
+
+@router.get("/admin/improve")
+def admin_improve(request: Request):
+    return _page(request, WEB / "improve.html")
+
+
+@router.get("/admin/api/improve/weekly", dependencies=[api])
+def improve_weekly(week: str | None = Query(None, pattern=r"^\d{4}-W\d{2}$")):
+    from app.admin.ops import improve
+
+    return improve.weekly(week)
+
+
+@router.post("/admin/api/improve/weekly/run", dependencies=[api])
+def improve_weekly_run():
+    from app.admin.ops import improve
+
+    try:
+        return improve.run_weekly()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"주간 지표를 만들지 못했어요 ({type(exc).__name__})") from exc
+
+
+@router.get("/admin/api/improve/candidates", dependencies=[api])
+def improve_candidates(days: int = Query(7, ge=1, le=90)):
+    from app.admin.ops import improve
+
+    return improve.candidates(days) | {"reviewed": improve.reviewed_list()}
+
+
+@router.post("/admin/api/improve/candidates/{cid}/review", dependencies=[api])
+def improve_review(cid: str, body: _ReviewIn):
+    from app.admin.ops import improve
+
+    try:
+        return improve.review(cid, body.verdict, body.note)
+    except KeyError as exc:
+        raise HTTPException(404, "그 점검 후보를 찾지 못했어요 (신호 기록 보존 기간이 지났을 수 있어요)") from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.get("/admin/api/improve/fixes", dependencies=[api])
+def improve_fixes():
+    from app.admin.ops import improve
+
+    return {"fixes": improve.fixes_view(), "results": improve.RESULTS}
+
+
+@router.post("/admin/api/improve/fixes", dependencies=[api])
+def improve_fix_add(body: _FixIn):
+    from app.admin.ops import improve
+
+    try:
+        return improve.save_fix(body.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.post("/admin/api/improve/fixes/{fid}", dependencies=[api])
+def improve_fix_update(fid: int, body: _FixIn):
+    from app.admin.ops import improve
+
+    try:
+        return improve.save_fix(body.model_dump(), fid)
+    except KeyError as exc:
+        raise HTTPException(404, "그 고침 기록이 없어요") from exc
+    except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
 
 

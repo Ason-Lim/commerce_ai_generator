@@ -77,7 +77,7 @@ a{color:var(--acc)}
 <div class="app">
 <aside>
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai" aria-current="page">AI</a><a href="/admin/b2b">B2B</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai" aria-current="page">AI</a><a href="/admin/improve">개선</a><a href="/admin/b2b">B2B</a></nav>
   <nav aria-label="AI 메뉴"><a href="#cost">비용</a><a href="#tasks">작업별</a><a href="#models">모델·요금</a><a href="#saved">저장된 결과</a><a href="#facts">확인된 사실</a><a href="#dataset">학습 데이터</a></nav>
   <div class="railnote">고객 문장이 들어가는 일은 OpenAI(안 되면 Claude), 내부 작업은 DeepSeek 가 해요. 저장해 다시 쓰는 답은 Claude 가 교차 확인해요. AI 가 만든 결과는 저장해 다시 쓰고, 출처로 확인한 사실은 기한 없이 AI 답보다 우선해요.<br><br>비용은 호출마다 기록한 토큰 × 요금표로 계산한 값이에요. 실제 청구액은 각 회사 콘솔에서 확인해 주세요.</div>
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
@@ -115,7 +115,7 @@ a{color:var(--acc)}
   </section>
   <section id="dataset" aria-labelledby="dataset-h">
     <h2 id="dataset-h">학습 데이터 <small class="note">사용 안 함 (2026-11-22 결정)</small></h2>
-    <p class="lede"><b>고객 문장으로 모델을 학습하지 않기로 했어요 (2026-11-22).</b> .env 에 DATASET_CAPTURE=1 이 있어도 담지 않고, 내보내기(scripts/export_dataset.py)도 막혀 있어요. 아래는 남은 칸 숫자 확인용이에요. 개선은 '개선 목록'(점검 후보 → 사람 확인 → 규칙·사전 고침)으로 해요.</p>
+    <p class="lede"><b>고객 문장으로 모델을 학습하지 않기로 했어요 (2026-11-22).</b> .env 에 DATASET_CAPTURE=1 이 있어도 담지 않고, 내보내기(scripts/export_dataset.py)도 막혀 있어요. 아래는 남은 칸 숫자 확인용이에요. 개선은 <a href="/admin/improve">'개선 목록'</a>(점검 후보 → 사람 확인 → 규칙·사전 고침)으로 해요.</p>
     <p class="note">(이전 설명) 짧은 정리 작업(상품어·문장 뜻·보유량·인분…)의 손님 문장과 AI 답이 쌓여요. <b>기본 꺼짐</b> — 목적·보유 기간·출력 이용 조건을 정한 뒤 .env DATASET_CAPTURE=1 로 켜요. 개인정보를 가린 차례는 담지 않고, 세션 값 없이 보관해요(가리기가 모든 개인정보를 잡지는 못해 익명 자료로 보지 않음). 그 차례에 보여 준 상품으로 30분 안에 판매처로 이동한 것은 <b>silver</b>(행동 신호가 있는 미검수 후보 — 정답 증거 아님), 사람이 확인하면 <b>gold</b> — 내보내기 기본과 시험 칸은 gold 만. 고쳐도 원래 출처는 그대로 남아요. 매일 04:40 승격·정리(scripts/dataset_daily.py), 내보내기·견주기는 scripts/export_dataset.py · eval_local_model.py.</p>
     <p class="note" id="dsinfo"></p>
     <div class="scroll"><table><thead><tr><th>작업</th><th class="n">candidate</th><th class="n">silver</th><th class="n">gold</th><th class="n">버림</th></tr></thead><tbody id="dsrows"></tbody></table></div>
