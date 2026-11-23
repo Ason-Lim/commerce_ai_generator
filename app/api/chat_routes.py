@@ -142,8 +142,16 @@ def build_default_service() -> ChatService:
     from app.services.ai import cross_check
 
     food_review = cross_check.reviewer("food_knowledge") if food_tips is not None else None
+    domain_reader = None
+    if ready:      # 2026-11-23 창 4 ②: 분야 판단 — 규칙이 모르고 상품 0건일 때만 (고객 작업 → OpenAI·장애 시 Claude)
+        from app.services.chat import domain as domain_mod
+        from app.services.nlu.llm_client import LLMClient
+
+        domain_client = LLMClient(domain_mod.AI_PROMPT, provider="deepseek", timeout=15.0, cache="cs_domain", cache_days=30,
+                                  task="cs_domain", thinking=False)
+        domain_reader = lambda text: domain_client.chat_json(text, temperature=0)  # noqa: E731
     return ChatService(db, nlu_loader=load_food_nlu, recipe_chat=recipe, keyword_extractor=keyword_extractor,
-                       food_tips=food_tips, food_review=food_review)
+                       food_tips=food_tips, food_review=food_review, domain_reader=domain_reader)
 
 
 def get_chat_service() -> ChatService:

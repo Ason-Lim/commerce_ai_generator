@@ -181,6 +181,7 @@ class ChatService:
     def __init__(self, db: Db | None = None, *, shopping: Callable | None = None,
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
                  keyword_extractor: Callable | None = None, food_tips: Callable | None = None,
+                 domain_reader: Callable | None = None,
                  food_review: Callable | None = None,
                  trend_report: Callable | None = None, trend_posts: Callable | None = None,
                  answer_feedback=None):
@@ -193,6 +194,8 @@ class ChatService:
         self.trend_report = trend_report
         # food_tips(text) -> {"food", "tips": [...], "buy_with": [...]} (DeepSeek, 2026-11-04); validated before shown
         self.food_tips = food_tips
+        # 2026-11-23 창 4 ②: 분야 판단 AI (cs_domain — 고객 문장 작업이라 OpenAI(+Claude) 경로). 0건일 때만 부른다
+        self.domain_reader = domain_reader
         # 2026-11-11: 교차 확인 — (context, lines) → [{"ok","note"}] | None (Claude). 없으면 검토 없이 저장
         self.food_review = food_review
         self.shopping = shopping or default_shopping
@@ -220,6 +223,7 @@ class ChatService:
         started = time.monotonic()
         try:
             response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
+            response = self._domain_after_zero(response, message, answers)   # 2026-11-23 창 4 ②
         finally:
             _dataset.PII_SEEN.reset(pii_token)
             turn_metrics.stop(metrics_token)
@@ -1443,6 +1447,35 @@ class ChatService:
         state = _log_turn(dict(state, mode="shopping"), text, "shopping_followup", calls=calls)
         self._try_commit(sid, state, revision, persist)
         return self._response(sid, "shopping_followup", blocks, meta=_turn_meta(state, calls))
+
+    def _domain_after_zero(self, response: dict, message: str | None, answers: dict | None) -> dict:
+        """② 규칙이 모르고 식품 흐름이 상품을 하나도 못 보여 준 차례만 AI 로 분야를 다시 본다 (식품이면 그대로).
+
+        손님이 직접 쓴 문장만 (칩·구조화 답 제외), 쿠팡 장애(불러오지 못함)는 제외 — 0건 안내를 맞는 분야 안내로 바꾼다."""
+        reader = getattr(self, "domain_reader", None)
+        stage = str(response.get("stage") or "")
+        if reader is None or not message or answers or not stage.startswith("shopping") or stage == "shopping_hot":
+            return response
+        import json
+
+        from app.services.chat import domain as domain_mod
+        from app.services.chat import miss_signals as ms
+
+        counts = ms.shown_counts(response.get("blocks") or [])
+        if counts["n_main"] or counts["n_extra"] or counts["n_collapsed"]:
+            return response
+        if "불러오지 못했" in json.dumps(response.get("blocks") or [], ensure_ascii=False):
+            return response
+        decision = domain_mod.read_ai(reader, message)
+        if decision is None:
+            return response
+        turn_metrics.note("domain", decision.domain)
+        turn_metrics.note("domain_by", decision.by)
+        if decision.domain == "food":
+            return response
+        sid = response.get("session_id") or ""
+        state, _rev, _ = self._load(sid) if sid else ({}, 0, False)
+        return self._domain_turn(sid, decision, state)
 
     def _domain_turn(self, sid: str, decision, state: dict) -> dict:
         """식품이 아닌 분야 — 고정 안내만 (상품·제휴 링크 없음, 대화 상태는 바꾸지 않음)."""

@@ -98,3 +98,5 @@
 {"id": "domain-099", "origin": "synthetic", "source": "gpt-review-2026-11-23", "turns": ["여기서 살 수 있어?"], "expect": {"domain": "affiliate"}}
 {"id": "domain-100", "origin": "synthetic", "source": "gpt-review-2026-11-23", "turns": ["이 사이트 사용법 알려줘"], "expect": {"domain": "site_help"}}
 {"id": "domain-101", "origin": "synthetic", "source": "gpt-review-2026-11-23", "turns": ["보관함 사용법"], "expect": {"domain": "site_help"}}
+{"id": "domain-101", "origin": "synthetic", "turns": ["콜레스테롤 낮추는 과일 추천"], "expect": {"domain": "health"}}
+{"id": "domain-102", "origin": "synthetic", "turns": ["혈당 관리에 좋은 간식"], "expect": {"domain": "health"}}
