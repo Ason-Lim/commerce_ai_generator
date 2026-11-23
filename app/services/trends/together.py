@@ -89,8 +89,10 @@ def _resolver():
 def pool(today: dt.date, now: dt.datetime, posts=None, snap=None) -> list[dict]:
     """쿠팡 식품 랭킹(메모리 10분) + 승인된 트렌드 글 상품. 같은 상품번호는 한 번."""
     items = cb.ranked(today, now, 100, snap=snap)["items"]
-    out = [{**it, "source": "coupang_best"} for it in items]
-    seen = {it["product_id"] for it in out}
+    from app.services.cs import blocked as cs_blocked
+
+    out = [{**it, "source": "coupang_best"} for it in items]       # cb.ranked 가 노출 중지 상품을 이미 뺌
+    seen = {it["product_id"] for it in out} | set(cs_blocked.blocked_ids())
     try:
         from app.services.trend_posts import policy, render
         from app.services.trend_posts.service import TrendPosts

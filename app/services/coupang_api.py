@@ -48,6 +48,7 @@ def is_coupang_available() -> bool:
 def normalize_coupang_product(item: dict, keyword: str = "") -> dict:
     return {
         "product_name": item.get("productName", ""),
+        "product_id": str(item.get("productId")) if item.get("productId") else None,   # 2026-11-23 ③-2 노출 중지 대조용
         "name": item.get("productName", ""),
         "price": item.get("productPrice", 0),
         "product_url": item.get("productUrl", ""),
@@ -149,6 +150,16 @@ def _cache_minutes() -> float:
 
 
 def search_coupang_products(keyword: str, limit: int = 10):
+    """쿠팡 검색 (메모리 캐시) — 식품 안전 신고로 노출 중지된 상품은 돌려주기 직전에 뺀다 (2026-11-23 창 4 ③-2,
+    캐시 뒤에서 거르므로 관리자가 풀면 바로 다시 보인다)."""
+    from app.services.cs import blocked
+
+    items = _search_coupang_products_cached(keyword, limit)
+    kept, _hidden = blocked.visible(items or [])
+    return kept
+
+
+def _search_coupang_products_cached(keyword: str, limit: int = 10):
     if not is_coupang_available():
         return []
     import time as _time

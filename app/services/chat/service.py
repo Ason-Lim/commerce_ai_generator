@@ -930,7 +930,13 @@ class ChatService:
         except Exception:  # noqa: BLE001
             log.exception("shopping provider failed")
             return None
-        return [dict(explain.enrich(item_to_card(it, 0), it), _q=q) for it in (result.get("items") or [])[:MAX_PRODUCTS]]
+        cards = [dict(explain.enrich(item_to_card(it, 0), it), _q=q) for it in (result.get("items") or [])[:MAX_PRODUCTS]]
+        from app.services.cs import blocked as cs_blocked          # 2026-11-23 ③-2: 식품 안전 신고 상품은 표시에서 뺀다
+
+        cards, hidden = cs_blocked.visible(cards)
+        if hidden:
+            turn_metrics.bump("blocked_hidden", hidden)
+        return cards
 
     def _products(self, queries, sid, priority, terms=None, must=None):
         blocks, cards = [], []
@@ -1528,13 +1534,43 @@ class ChatService:
                 log.exception("ticket create failed")
                 ticket = None
 
+        hidden = None
+        if ticket and decision.domain == "food_safety":
+            hidden = self._block_reported(ticket, text or "", state)
         seen = state.get("seen") or []
         last_query = (seen[-1] or {}).get("query") if seen else None
-        return self._response(sid, "domain_" + decision.domain,
-                              domain_answers.blocks_for(decision.domain, decision.cue, last_query, ticket=ticket))
+        out = domain_answers.blocks_for(decision.domain, decision.cue, last_query, ticket=ticket)
+        if hidden:
+            out.append(B.notice(f"말씀하신 상품(**{hidden[:60]}**)은 확인이 끝날 때까지 이 사이트에서 잠시 보여 드리지 않아요.", "info"))
+        return self._response(sid, "domain_" + decision.domain, out)
+
+    @staticmethod
+    def _block_reported(ticket: dict, text: str, state: dict) -> str | None:
+        """2026-11-23 창 4 ③-2: 식품 안전 신고 — 대화에서 보여 준 상품 중 하나로 알아보면 노출 임시 중지(푸는 건 관리자만).
+        알아볼 수 없으면 후보만 티켓에 붙여 운영자가 고른다. 돌려주는 값: 막은 상품명(없으면 None)."""
+        from app.services.cs import blocked as cs_blocked
+        from app.services.cs import tickets as cs_tickets
+
+        try:
+            hit, cands = cs_blocked.identify(text, state)
+            pid = cs_blocked.product_id(hit) if hit else None
+            if pid:
+                cs_blocked.block(pid, title=hit.get("title") or "", ticket_id=ticket.get("id"), by="rule")
+            if cands or pid:
+                cs_tickets.attach_products(ticket["id"], [{"product_id": cs_blocked.product_id(c), "title": c.get("title")}
+                                                          for c in cands], pid)
+            return (hit.get("title") or "이 상품") if pid else None
+        except Exception:  # noqa: BLE001 — 막지 못했으면 막았다고 말하지 않는다
+            log.exception("food safety block failed")
+            return None
 
     @staticmethod
     def _response(sid, stage, blocks, meta: dict | None = None):
+        if turn_metrics.get("blocked_hidden") and any(b.get("type") == "product_list" for b in blocks):
+            from app.services.cs import blocked as cs_blocked     # 2026-11-23 ③-2: 식품 안전 신고 상품은 뺐다고 알림
+
+            blocks = list(blocks) + [B.notice(f"검색 결과 중 {turn_metrics.get('blocked_hidden')}개는 "
+                                              + cs_blocked.HIDDEN_NOTE, "info")]
         out = {"session_id": sid, "stage": stage, "blocks": with_affiliate_notice(blocks)}
         if meta:                    # 2026-11-22 외부 검토 1: 쿠팡 호출 수 (이 차례 · 세션 누적 · 다시 찾기 요청 수)
             out["meta"] = meta
@@ -2069,8 +2105,21 @@ class _CallMeter:
             return self._memo[key]
         self.calls += 1
         result = self.shopping(q, priority, session_id)
+        result = _without_blocked(result)
         self._memo[key] = result
         return result
+
+
+def _without_blocked(result):
+    """2026-11-23 창 4 ③-2: 식품 안전 신고로 노출 중지된 상품은 화면 고르기 전에 뺀다 (목록이 비어 있으면 그대로)."""
+    from app.services.cs import blocked as cs_blocked
+
+    if not isinstance(result, dict) or not result.get("items") or not cs_blocked.blocked_ids():
+        return result
+    kept, hidden = cs_blocked.visible(list(result["items"]))
+    if hidden:
+        turn_metrics.bump("blocked_hidden", hidden)
+    return dict(result, items=kept)
 
 
 def _turn_meta(state: dict, calls: int) -> dict:
