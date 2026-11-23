@@ -141,8 +141,6 @@ export default function ChatWindow() {
     // 2026-11-16: 부족한 재료 장보기 칸 — 재료별 상품 (새 메시지를 쌓지 않는다)
     // 2026-11-22 (3-B): 브라우저에 두고 '내 보관함'과 같은 내용 — '새 대화'를 눌러도 남는다
     const [basket, setBasket] = useBasket();
-    const thisBasket = basket.filter(e => !e.sessionId || e.sessionId === sessionId);
-    const otherBasket = basket.length - thisBasket.length;
     // 2026-11-20: 첫 화면 '오늘의 트렌드' 줄은 뺐다 — 트렌드 글은 위쪽 '트렌드 글' 메뉴에서 본다.
     const [error, setError] = useState('');
     const [detail, setDetail] = useState<Candidate | null>(null);
@@ -153,6 +151,10 @@ export default function ChatWindow() {
     // 레시피 대화 중에는 입력 안내를 레시피 질문으로 (첫 화면·쇼핑 대화는 그대로)
     const lastStage = [...messages].reverse().find(m => m.role === 'assistant')?.stage ?? '';
     const inRecipe = lastStage.startsWith('recipe');
+    // 2026-11-23 운영: 닭백숙에서 담은 '닭'이 같은 대화의 절임배추 질문 아래에도 펼쳐졌다 →
+    // 상품째 펼치는 건 이 대화에서 담았고 지금 레시피 이야기 중일 때만. 그 밖에는 재료 이름과 보관함 링크 한 줄.
+    const thisBasket = inRecipe ? basket.filter(e => !e.sessionId || e.sessionId === sessionId) : [];
+    const restBasket = basket.filter(e => !thisBasket.includes(e));
     const header = useRef<HTMLElement>(null);
     const footer = useRef<HTMLElement>(null);
     const answer = useRef<HTMLElement>(null);
@@ -452,9 +454,9 @@ export default function ChatWindow() {
                             </section>
                         ))}
                         {/* 2026-11-23: 다른 대화(예: 닭백숙)에서 담은 재료 상품은 이 대화(배추속댓국)에 펼치지 않는다 — 보관함 안내 한 줄만 */}
-                        {otherBasket > 0 && (
-                            <p className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-xs text-ink2">
-                                다른 대화에서 담은 부족한 재료 {otherBasket}개가 있어요.{' '}
+                        {restBasket.length > 0 && (
+                            <p role="note" aria-label="담아 둔 부족한 재료" className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-xs text-ink2">
+                                앞서 담아 둔 부족한 재료: <b className="font-semibold text-ink">{restBasket.slice(0, 3).map(e => e.ingredient).join(', ')}{restBasket.length > 3 ? ` 외 ${restBasket.length - 3}개` : ''}</b>.{' '}
                                 <a href="/#/me" className="font-semibold text-ink underline underline-offset-2">내 보관함에서 보기</a>
                             </p>
                         )}
