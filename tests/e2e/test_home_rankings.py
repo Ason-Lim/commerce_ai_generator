@@ -168,20 +168,17 @@ def test_home_rankings_flow(site, browser):
     ctx.close()
 
 
-def test_full_screen_on_hot_page(site, browser):
+def test_hot_page_shows_only_surge_foods(site, browser):
+    """2026-11-23 사용자 요청: 지금 뜨는 식품은 예전처럼 급상승 식품만 — 급상승·카테고리·쿠팡 식품 랭킹 탭 없음."""
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, locale="ko-KR")
     page = ctx.new_page()
     page.goto(site + "/#/hot")
-    sec = page.get_by_role("region", name="지금 순위")
-    sec.locator("li.card").first.wait_for()                  # 급상승 탭 = 기존 카드 그대로
-    assert [t.inner_text() for t in sec.get_by_role("tab").all()] == ["급상승", "카테고리", "쿠팡 식품 랭킹"]
-    sec.get_by_role("tab", name="카테고리").click()
-    sec.get_by_role("button", name="늘 인기 1").click()
-    sec.get_by_role("button", name="귤 대화로 묻기 · 식품 검색어 40위").wait_for()
-    assert sec.get_by_text("대봉감").count() == 0
+    page.get_by_role("heading", name="지금 뜨는 식품", level=1).wait_for()
+    page.locator("li.card").first.wait_for()                   # 급상승 카드 그대로
+    assert page.get_by_role("region", name="지금 순위").count() == 0
+    assert page.get_by_role("tab").count() == 0
+    assert page.get_by_text("쿠팡 식품 랭킹").count() == 0 and page.get_by_text("순위 전체").count() == 0
     assert page.evaluate(NAMELESS_JS) == []
-    sec.get_by_role("button", name="귤 대화로 묻기 · 식품 검색어 40위").click()
-    page.wait_for_function("location.hash === '' || location.hash === '#'")
     ctx.close()
 
 

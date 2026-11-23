@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteFooter, SiteNav } from "./SiteNav";
 import { fetchTrends, type TrendItem, type TrendView } from "../api/client";
-import { HomeRankings } from "./HomeRankings";
 
 /**
  * 지금 뜨는 식품 (2026-10-31) — 네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품.
@@ -92,18 +91,17 @@ export function TrendsPage() {
           네이버 데이터랩에서 검색량이 <b>평소보다 크게 늘어난</b> 식품이에요. 배수는 그 식품의 평소(약 한 달 전) 검색량과 비교한 값이고,
           블로그 글·식품 검색어 순위·유튜브 영상이 함께 늘었는지도 표시해요.
         </p>
-        {/* 창 3-C (2026-11-22): 홈 '지금 순위'의 전체 화면 — 급상승(아래 카드) · 카테고리 100위 · 트렌드 상품 */}
-        <HomeRankings view="full" onAsk={askInChat} surgeFull={<>
-          {view?.data_until && <p className="mt-1 text-sm text-stone-500">{view.data_until}까지의 검색량 기준 · 하루 한 번 갱신</p>}
-          {error && <p className="mt-6 rounded-xl bg-warnSoft px-4 py-3 text-sm text-warn">불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>}
-          {!view && !error && <p className="mt-6 text-sm text-stone-500">불러오는 중…</p>}
-          {view && view.items.length === 0 && (
-            <p className="mt-6 rounded-xl bg-chip px-4 py-3 text-[15px] text-ink2">
-              {view.status === "empty" ? "아직 오늘의 리포트가 없어요." : "지금은 평소보다 크게 늘어난 식품이 없어요."}
-            </p>
-          )}
-          {view && view.items.length > 0 && <ul className="mt-6 grid gap-4">{view.items.map((it) => <Card key={it.keyword} it={it} />)}</ul>}
-        </>} />
+        {/* 2026-11-23 사용자 요청: 지금 뜨는 식품은 예전처럼 급상승 식품만 — 급상승·카테고리·쿠팡 식품 랭킹 탭(창 3-C 전체 화면)은 뺌.
+            홈 '지금 순위'는 그대로. */}
+        {view?.data_until && <p className="mt-1 text-sm text-stone-500">{view.data_until}까지의 검색량 기준 · 하루 한 번 갱신</p>}
+        {error && <p className="mt-6 rounded-xl bg-warnSoft px-4 py-3 text-sm text-warn">불러오지 못했어요. 잠시 후 다시 열어 주세요.</p>}
+        {!view && !error && <p className="mt-6 text-sm text-stone-500">불러오는 중…</p>}
+        {view && view.items.length === 0 && (
+          <p className="mt-6 rounded-xl bg-chip px-4 py-3 text-[15px] text-ink2">
+            {view.status === "empty" ? "아직 오늘의 리포트가 없어요." : "지금은 평소보다 크게 늘어난 식품이 없어요."}
+          </p>
+        )}
+        {view && view.items.length > 0 && <ul className="mt-6 grid gap-4">{view.items.map((it) => <Card key={it.keyword} it={it} />)}</ul>}
         <p className="mt-8 text-[13px] leading-6 text-stone-500">
           검색량은 네이버 데이터랩 검색어 트렌드(상대 지수)로 계산했어요. 검색이 늘어난 원인은 확인된 사실이 아니라 블로그 제목에서 찾은 단서와 AI 추정이에요.
         </p>
