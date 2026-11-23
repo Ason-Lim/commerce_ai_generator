@@ -263,10 +263,11 @@ class ChatService:
         if not text and not answers:
             return self._response(sid, "empty", [B.text("무엇을 도와드릴까요?")])
         # 2026-11-23 창 4 ①: 분야 판단 (규칙층) — 위급·식품 안전·건강·주문/배송·식품 아님 등은 고정 안내, 식품은 아래 흐름 그대로
-        if text and not answers:
+        #   위급·식품 안전은 구조화 답(answers)이 함께 와도 먼저 본다 (GPT 검토 2026-11-23 ④).
+        if text:
             from app.services.chat import domain as domain_mod
 
-            decision = domain_mod.by_rules(text)
+            decision = domain_mod.by_rules(text) if not answers else domain_mod.safety_by_rules(text)
             turn_metrics.note("domain", decision.domain if decision else "food")
             turn_metrics.note("domain_by", decision.by if decision else "default")
             if decision is not None and decision.domain != "food":

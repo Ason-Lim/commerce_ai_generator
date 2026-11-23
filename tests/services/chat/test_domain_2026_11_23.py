@@ -65,6 +65,13 @@ def test_answers_have_no_products_links_or_forbidden_words(domain):
         assert w not in dumped, (domain, w)
 
 
+def test_answers_do_not_promise_staff_follow_up_yet():
+    """접수·알림(③)을 붙이기 전에는 '운영팀이 확인한다'는 말을 하지 않는다 (GPT 검토 2026-11-23 ①)."""
+    for domain in D.DOMAINS:
+        dumped = json.dumps(A.blocks_for(domain), ensure_ascii=False)
+        assert "운영팀" not in dumped and "표시해 둘게요" not in dumped and "접수" not in dumped, domain
+
+
 def test_emergency_answer_has_no_phone_numbers():
     """사용자 결정 2026-11-23 — 위급 안내에 전화번호를 넣지 않는다."""
     import re
@@ -120,3 +127,53 @@ def test_served_row_records_domain_without_sentence(sqlite_db, tmp_path, monkeyp
     served = [r for r in rows if r.get("kind") == "served"]
     assert served and served[-1]["domain"] == "food_safety" and served[-1]["domain_by"] == "rule"
     assert all("굴" not in json.dumps(r, ensure_ascii=False) for r in rows)   # 문장·실수 신호 없음
+
+
+# ── GPT 검토 2026-11-23 ②·④ · 다중 대화 ──
+class _Spy:
+    def __init__(self):
+        self.calls = []
+
+    def __call__(self, text, *a, **k):
+        self.calls.append(text)
+        return {}
+
+
+@pytest.mark.parametrize("text", ["내 이름 지워줘", "연락처 삭제해줘", "죽고 싶어요", "어제 산 굴 먹고 배탈 났어요"])
+def test_privacy_and_safety_turns_make_no_ai_calls(sqlite_db, text):
+    """개인정보·위급·식품 안전 문장은 외부 AI 로 가지 않는다 (결정 D) — 규칙에서 끝난다."""
+    kw, tips, intent = _Spy(), _Spy(), _Spy()
+    recipe = RecipeChat(statement_factory=str)
+    recipe.intent_reader = intent
+    svc = ChatService(sqlite_db, shopping=FakeShopping(items=ITEM), nlu_loader=lambda: _NLU(), recipe_chat=recipe,
+                      keyword_extractor=kw, food_tips=tips)
+    res = svc.handle(None, message=text)
+    assert D.by_rules(text).domain in D.NO_AI
+    assert res["stage"].startswith("domain_") and kw.calls == tips.calls == intent.calls == []
+
+
+def test_safety_is_checked_even_with_structured_answers(sqlite_db):
+    shop = FakeShopping(items=ITEM)
+    res = _svc(sqlite_db, shop).handle(None, message="받은 김치에 벌레가 들어 있었어요", answers={"budget": "3만원"})
+    assert res["stage"] == "domain_food_safety" and shop.calls == []
+
+
+def test_structured_answers_keep_non_safety_domains_in_the_food_flow():
+    """answers 가 있을 때는 위급·식품 안전만 본다 (나머지 분야로 빼앗지 않음)."""
+    assert D.safety_by_rules("배송 언제 와요?") is None
+    assert D.safety_by_rules("딸기에 곰팡이가 피어 있어요").domain == "food_safety"
+
+
+def test_multi_turn_recommend_then_report_then_continue(sqlite_db):
+    apple = [{"product_name": "부사 사과 2kg", "price": 19900, "product_url": "https://www.coupang.com/p",
+              "platform_name": "coupang", "is_coupang": True}]
+    shop = FakeShopping(items=apple)
+    svc = _svc(sqlite_db, shop)
+    first = svc.handle(None, message="사과 추천해줘")
+    sid = first["session_id"]
+    assert not first["stage"].startswith("domain_") and len(shop.calls) == 1
+    report = svc.handle(sid, message="받은 사과에 곰팡이가 피어 있어요")
+    assert report["stage"] == "domain_food_safety" and len(shop.calls) == 1
+    assert not any((b.get("data") or {}).get("affiliate") for b in report["blocks"])
+    after = svc.handle(sid, message="다른 사과 추천해줘")
+    assert not after["stage"].startswith("domain_") and len(shop.calls) == 2   # 신고 뒤에도 식품 흐름은 그대로
