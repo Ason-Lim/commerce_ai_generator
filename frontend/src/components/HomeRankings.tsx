@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Apple, ArrowRight, Beef, CalendarDays, Cookie, Fish, Gift, Heart, Info, Utensils, type LucideIcon } from "lucide-react";
 import { fetchHomeRankings, fetchTogether, type CoupangRankItem, type HomeRankings as Data, type RankKeyword, type RankTab, type Together, type TogetherCard } from "../api/client";
 import { recentInterests, rememberInterest, useRecoOff } from "../state/shelf";
+import { PrivacyLink } from "./SiteNav";
 
 /**
  * 홈 '지금 순위' (창 3-C, 2026-11-22 — 설계 claude/home_rankings_design_2026-11-20.md §4)
@@ -100,9 +101,12 @@ function TogetherPanel({ view }: { view: "home" | "full" }) {
       <Disclosure text={data.disclosure} />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
         <span>{data.note || "추천할 상품이 아직 없어요."}</span>
-        <button type="button" aria-pressed={!off} onClick={() => setOff(!off)} className="rounded-full bg-chip px-2.5 py-1 text-ink2 hover:text-ink">
-          {off ? "맞춤 추천 켜기" : "맞춤 추천 끄기"}
-        </button>
+        <span className="flex items-center gap-2">
+          <PrivacyLink />
+          <button type="button" aria-pressed={!off} onClick={() => setOff(!off)} className="rounded-full bg-chip px-2.5 py-1 text-ink2 hover:text-ink">
+            {off ? "맞춤 추천 켜기" : "맞춤 추천 끄기"}
+          </button>
+        </span>
       </div>
       {data.items.length > 0 && (
         <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -183,7 +187,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
         <p className="mt-2 rounded-xl bg-chip px-3 py-2 text-xs leading-6 text-ink2">
           쿠팡 식품 랭킹은 쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요(하루 한 번, 화살표는 전날과 비교).
           카테고리 번호는 네이버 식품 검색어 순위 그대로예요. 급상승은 네이버 데이터랩 검색어 트렌드(상대 지수)로 평소(약 한 달 전)와 비교한 값이에요.
-          함께 보면 좋은 상품은 이 브라우저에서 최근 누른 품목을 기준으로 골라요(서버에 저장하지 않음, 끌 수 있어요). 제휴 수수료는 순위·순서에 영향을 주지 않아요.
+          함께 보면 좋은 상품은 이 브라우저에서 최근 누른 품목으로 골라요. 제휴 수수료는 순위·순서에 영향을 주지 않아요.
         </p>
       )}
       <div role="tablist" aria-label="순위 종류" className="mt-3 flex justify-center gap-1 rounded-full bg-chip p-1">

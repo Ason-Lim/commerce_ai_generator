@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PrivacyLink } from './SiteNav';
 import { cx } from "../lib/format";
 
 interface Props {
@@ -39,7 +40,7 @@ export function Composer({ onSend, busy, placeholder = "조건을 바꾸거나 �
         ↑
       </button>
     </form>
-    <p className="mt-1.5 px-3 text-[11px] text-ink3">이름·전화번호 등 개인정보는 적지 마세요 — 입력한 문장은 답을 만들기 위해 외부 AI로 보내져요.</p>
+    <p className="mt-1.5 px-3 text-[11px] text-ink3">이름·전화번호 등 개인정보는 적지 마세요 — 입력한 문장은 답을 만들기 위해 외부 AI로 보내져요. <PrivacyLink /></p>
     </>
   );
 }

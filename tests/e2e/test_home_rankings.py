@@ -183,3 +183,21 @@ def test_full_screen_on_hot_page(site, browser):
     sec.get_by_role("button", name="귤 대화로 묻기 · 식품 검색어 40위").click()
     page.wait_for_function("location.hash === '' || location.hash === '#'")
     ctx.close()
+
+
+def test_privacy_in_one_place(site, browser):
+    """2026-11-23: 개인정보 설명은 처리방침 한 곳 — 입력창 안내·맞춤 추천 칸·바닥글의 링크가 모두 /#/privacy."""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+    page = ctx.new_page()
+    page.goto(site + "/#")
+    page.get_by_role("region", name="지금 순위").get_by_role("tab", name="함께 보면 좋은 상품").wait_for()
+    links = page.get_by_role("link", name="개인정보처리방침")
+    assert links.count() >= 2 and {links.nth(i).get_attribute("href") for i in range(links.count())} == {"/#/privacy"}
+    assert "서버에 저장하지 않" not in page.locator("body").inner_text()
+    links.last.click()
+    page.get_by_role("heading", name="개인정보처리방침", level=1).wait_for()
+    for h in ("1. 처리하는 정보와 목적", "3. 보유 기간과 파기", "4. 국외 이전"):
+        assert page.get_by_role("heading", name=h).count() == 1
+    assert page.get_by_text("맞춤 추천 끄기").count() >= 1 and page.get_by_text("시행 전 안내").count() == 1
+    assert page.evaluate(NAMELESS_JS) == []
+    ctx.close()

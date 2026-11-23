@@ -10,6 +10,17 @@ import { MessageCircle, Newspaper, TrendingUp, UserRound, type LucideIcon } from
 export type NavKey = "chat" | "hot" | "posts" | "me";
 export const HOT_HASH = "#/hot";
 export const ME_HASH = "#/me";        // 2026-11-22 창 3-B 내 보관함
+export const PRIVACY_HASH = "#/privacy";   // 2026-11-23 개인정보처리방침 — 화면 곳곳의 개인정보 설명은 이 한 곳으로 잇는다
+
+/** 개인정보처리방침 링크 (입력창 안내·바닥글·맞춤 추천 칸에서 같은 모양). */
+export function PrivacyLink({ className = "" }: { className?: string }) {
+  return <a href={"/" + PRIVACY_HASH} className={`underline underline-offset-2 hover:text-ink ${className}`}>개인정보처리방침</a>;
+}
+
+/** 화면 바닥글 — 개인정보처리방침 링크 하나. */
+export function SiteFooter() {
+  return <footer className="mt-12 border-t border-stone-200 pt-4 text-xs text-stone-500"><PrivacyLink /></footer>;
+}
 
 const ITEMS: { key: NavKey; label: string; href: string; icon: LucideIcon }[] = [
   { key: "chat", label: "대화", href: "/#", icon: MessageCircle },

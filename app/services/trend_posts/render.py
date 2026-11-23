@@ -61,6 +61,7 @@ small.unit{color:#5d635c;font-size:12px}
 .logo{font-weight:700;font-size:17px;color:#1d211d;text-decoration:none}
 .menu{display:flex;gap:8px}.menu a{padding:7px 14px;border-radius:999px;color:#4d534c;text-decoration:none;font-size:14px}
 .menu a[aria-current=page]{background:#1d211d;color:#fff;font-weight:600}
+.foot{margin-top:40px;padding-top:12px;border-top:1px solid #e3e5df;font-size:12px}.foot a{color:#6b706a}
 .tabbar{display:none}.right{display:flex;align-items:center;gap:6px}.me{display:flex;padding:7px;border-radius:8px;color:#4d534c}
 @media (max-width:639px){.menu{display:none}.me{display:none}main{padding-bottom:96px}
  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;height:60px;padding-bottom:env(safe-area-inset-bottom);background:rgba(246,247,244,.96);border-top:1px solid #e3e5df;z-index:5}
@@ -113,6 +114,10 @@ def site_url() -> str:
     return (os.environ.get("SITE_URL") or "https://app.trendguide.kr").rstrip("/")
 
 
+# 2026-11-23: 개인정보처리방침은 앱 한 곳(/#/privacy)으로 — 서버가 그리는 글 화면도 같은 링크
+_FOOT = '<footer class=foot><a href="/#/privacy">개인정보처리방침</a></footer>'
+
+
 def _page(title: str, body: str, description: str = "", current: str = "posts", head: str = "") -> str:
     """앱(대화·지금 뜨는 식품)과 같은 공통 머리줄 — 로고는 본문 왼쪽 끝, 메뉴는 오른쪽 (2026-11-18 헤더 B안),
     모바일은 아래 탭. head: canonical·구조화 데이터 같은 <head> 추가분."""
@@ -124,7 +129,7 @@ def _page(title: str, body: str, description: str = "", current: str = "posts", 
             f"<title>{escape(title)} | {SITE}</title>"
             + (f"<meta name=description content=\"{escape(description)}\">" if description else "")
             + head
-            + f"<style>{CSS}</style></head><body>{top}<main>{body}</main>{_menu(current, 'tabbar')}</body></html>")
+            + f"<style>{CSS}</style></head><body>{top}<main>{body}{_FOOT}</main>{_menu(current, 'tabbar')}</body></html>")
 
 
 def _canonical(path: str) -> str:

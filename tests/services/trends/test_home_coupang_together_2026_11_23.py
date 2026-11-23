@@ -146,7 +146,7 @@ def test_has_ingredient():
 
 def test_recipe_then_tag_then_explore():
     out = build(["굴"])
-    assert out["status"] == "ok" and out["personal"] is True and "서버에 저장하지 않아요" in out["note"]
+    assert out["status"] == "ok" and out["personal"] is True and out["note"].startswith("맞춤 추천")
     kinds = [it["kind"] for it in out["items"]]
     assert kinds[:2] == ["recipe", "recipe"] and kinds[-1] == "explore"
     assert [it["title"] for it in out["items"][:2]] == ["국내산 무", "풀무원 찌개두부"]   # 쿠팡 순위 순
@@ -208,3 +208,11 @@ def test_route_together_and_go(base, monkeypatch):
 
 
 ORIG_POOL = tg.pool
+
+
+def test_server_pages_link_privacy():
+    """서버가 그리는 트렌드 글 화면도 같은 처리방침 링크 (한 곳)."""
+    from app.services.trend_posts import render
+
+    html = render.index_page([])
+    assert '<a href="/#/privacy">개인정보처리방침</a>' in html

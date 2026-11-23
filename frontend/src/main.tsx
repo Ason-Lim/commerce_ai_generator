@@ -2,7 +2,8 @@ import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import ChatWindow from "./ChatWindow"; // App 대신 ChatWindow를 불러옵니다.
 import { TrendsPage } from "./components/TrendsPage";
-import { HOT_HASH, ME_HASH } from "./components/SiteNav";
+import { HOT_HASH, ME_HASH, PRIVACY_HASH } from "./components/SiteNav";
+import { PrivacyPage } from "./components/PrivacyPage";
 import { MyShelf } from "./components/MyShelf";
 import "./index.css";
 
@@ -21,6 +22,7 @@ function Root() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   if (hash === ME_HASH) return <MyShelf />;          // 2026-11-22 창 3-B 내 보관함
+  if (hash === PRIVACY_HASH) return <PrivacyPage />; // 2026-11-23 개인정보처리방침 (한 곳으로 모음)
   return hash === HOT_HASH ? <TrendsPage /> : <ChatWindow />;
 }
 
