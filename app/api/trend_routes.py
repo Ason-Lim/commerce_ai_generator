@@ -84,6 +84,48 @@ def home_together(body: _TogetherIn):
     return JSONResponse(out, headers={"Cache-Control": "no-store"})
 
 
+@router.get("/api/home/highlight")
+def home_highlight(kw: str = Query(..., min_length=1, max_length=40)):
+    """홈 카테고리 '이번 주 주목' 대표 상품 (2026-11-23 저녁). 지금 홈 응답의 주목 키워드만 받는다 — 아무 검색어나 쿠팡에 보내지 않음.
+    쿠팡 검색 1번(메모리 10분 캐시), 저장 없음."""
+    from app.services.trends import highlight as hl
+    from app.services.trends import home_rankings as hr
+
+    allowed = {(t.get("highlight") or {}).get("keyword") for t in (hr.build("home").get("categories") or {}).get("tabs") or []}
+    if kw not in allowed:
+        return JSONResponse({"status": "unknown"}, status_code=404)
+    try:
+        item = hl.pick(kw)
+    except Exception:  # noqa: BLE001 — 사진 하나 못 받아도 카드는 보인다
+        log.warning("home highlight failed")
+        item = None
+    body = {"status": "ok" if item else "none", "item": item, "disclosure": hr.DISCLOSURE}
+    return JSONResponse(body, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/home/hgo/{key}")
+def go_highlight(key: str, request: Request):
+    """'이번 주 주목' 상품 클릭 — 메모리 표의 제휴 링크로(10분), 지나면 쿠팡 검색 화면. 클릭 기록에 상품명은 남기지 않음."""
+    import re as _re
+
+    from app.services.trends import highlight as hl
+
+    if not _re.fullmatch(r"[0-9a-f]{12}", key or ""):
+        return RedirectResponse("/", status_code=303)
+    url, affiliate = hl.target(key)
+    if affiliate:
+        try:
+            from app.admin.auth import request_ok
+            from app.services.analytics_logger import log_product_click
+
+            log_product_click(session_id="home", query="home_internal" if request_ok(request) else "home", product={
+                "product_url": url, "product_name": url, "mall_name": "쿠팡", "rank": 0,
+                "selected_section": "category_highlight", "recommendation_mode": "ranking"})
+        except Exception:  # noqa: BLE001
+            log.warning("highlight click log failed")
+    return RedirectResponse(url, status_code=302 if url.startswith("http") else 303)
+
+
 @router.get("/home/go/{product_id}")   # /go/{sid}/{rank}(대화)와 겹치지 않게 /home/go
 def go_coupang_best(product_id: str, request: Request):
     """쿠팡 식품 랭킹·함께 보면 좋은 상품 클릭 (2026-11-23) — 지금 메모리 랭킹에 있는 상품만, 클릭 기록 뒤 쿠팡 링크로."""

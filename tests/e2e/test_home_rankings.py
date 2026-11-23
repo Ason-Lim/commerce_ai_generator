@@ -34,7 +34,8 @@ CP = [{"rank": 1, "product_id": "7230779632", "title": "신선한 대란", "imag
       {"rank": 3, "product_id": "218520566", "title": "돌 스위티오 바나나", "image": None, "price_krw": 4230, "price_hidden": False,
        "rocket": True, "change_kind": "new", "change": None, "seed": "바나나", "go_url": "/home/go/218520566"}]
 TOGETHER_SEEN: list[str] = []
-EXTRA_FRUIT: list[dict] = []      # 11-23 저녁: 카테고리 6개 + 더보기 시험에서만 채움
+EXTRA_FRUIT: list[dict] = []
+HIGHLIGHT: list[dict] = []        # 11-23 저녁 B: '이번 주 주목' 시험에서만 채움      # 11-23 저녁: 카테고리 6개 + 더보기 시험에서만 채움
 
 
 def together(seeds):
@@ -58,7 +59,8 @@ def data(view):
                   "items": [{"n": 1, "keyword": "대방어", "status": "surging", "times": 2.7, "rank": 82, "onset": "2026-11-03", "ask": "대방어 추천해 줘"}]},
         "categories": {"status": "ok", "rank_date": "2026-11-21", "note": "네이버 식품 검색어 순위", "tabs": [
             {"tag": "fruit", "label": "과일", "icon": "Apple", "default_filter": "rising",
-             "counts": {"all": len(fruit), "rising": 2, "steady": int(full), "insufficient": 2}, "items": fruit},
+             "counts": {"all": len(fruit), "rising": 2, "steady": int(full), "insufficient": 2}, "items": fruit,
+             "highlight": HIGHLIGHT[0] if HIGHLIGHT else None},
             {"tag": "cook", "label": "요리/식재료", "icon": "Utensils", "default_filter": "all",
              "counts": {"all": 1, "rising": 0, "steady": 1, "insufficient": 0}, "items": [RICE]}]},
         "picks": {"status": "ok", "disclosure": "쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.",
@@ -284,3 +286,34 @@ def test_home_category_shows_six_then_more(site, browser):
         ctx.close()
     finally:
         EXTRA_FRUIT.clear()
+
+
+
+def test_category_cards_spark_and_highlight(site, browser, monkeypatch):
+    """2026-11-23 저녁 A+B: 키워드 카드(30일 순위 그래프) · '이번 주 주목'(대표 상품 사진 1장, 광고 표시가 링크보다 앞)."""
+    from app.services.trends import highlight as hl
+
+    APPLE["spark"] = [30, 28, None, 20, 15, 7]
+    HIGHLIGHT.append({"keyword": "사과", "rank": 7, "change_7d": 5, "change_kind": "compared", "ask": "사과 추천해 줘"})
+    monkeypatch.setattr(hl, "pick", lambda kw, search=None: {
+        "keyword": kw, "title": "경북 부사 사과 3kg", "image": None, "price_krw": 19900, "rocket": True,
+        "go_url": "/home/hgo/0123456789ab", "fetched_at": "2026-11-23T17:30+09:00"})
+    try:
+        ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+        page = ctx.new_page()
+        page.goto(site + "/#")
+        sec = page.get_by_role("region", name="지금 순위")
+        sec.get_by_role("tab", name="카테고리").click()
+        hcard = sec.get_by_role("region", name="이번 주 주목")
+        hcard.get_by_text("7일 새 5계단 올랐어요").wait_for()
+        link = hcard.get_by_role("link", name="경북 부사 사과 3kg — 쿠팡에서 보기 (새 창)")
+        link.wait_for()
+        html = hcard.inner_html()
+        assert html.index("광고") < html.index("/home/hgo/") and "sponsored" in link.get_attribute("rel")
+        card = sec.get_by_role("button", name="사과 대화로 묻기 · 식품 검색어 7위")
+        assert card.locator("svg path").count() == 1                      # 30일 순위 그래프
+        assert page.evaluate(NAMELESS_JS) == []
+        ctx.close()
+    finally:
+        HIGHLIGHT.clear()
+        APPLE.pop("spark", None)

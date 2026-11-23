@@ -175,11 +175,17 @@ export interface RankKeyword {
   rank: number; keyword: string; ask: string; tags: string[]; season: string[];
   state: "steady" | "other" | "insufficient"; window_days: number; observed_days: number; top100_days: number;
   change_7d: number | null; change_kind: "compared" | "entered" | "no_compare"; rising: boolean;
+  /** 2026-11-23 저녁: 최근 30일 순위(없는 날 null) · 100위 밖에서 채운 키워드 */
+  spark?: (number | null)[]; beyond_top?: boolean;
 }
+export interface RankHighlight { keyword: string; rank: number; change_7d: number | null; change_kind: string; ask: string }
 export interface RankTab {
   tag: string; label: string; icon: string; default_filter: "rising" | "not_steady" | "all";
   counts: { all: number; rising: number; steady: number; insufficient: number }; items: RankKeyword[];
+  highlight?: RankHighlight | null;
 }
+/** '이번 주 주목' 대표 상품 (쿠팡 검색 1번, 메모리 10분 — 저장 없음) */
+export interface HighlightItem { keyword: string; title: string; image: string | null; price_krw: number | null; rocket: boolean; go_url: string; fetched_at: string }
 export interface PickCard {
   product_id: string; title: string; mall: string; price_krw: number | null; price_checked_at: string | null; price_hidden: boolean;
   image: string | null; rocket: boolean; why: string; post_title: string; post_url: string; go_url: string;
@@ -209,6 +215,12 @@ export async function fetchTogether(seeds: string[], view: "home" | "full", sign
   const r = await fetch("/api/home/together", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seeds, view }), signal });
   if (!r.ok) throw new Error(`together ${r.status}`);
   return (await r.json()) as Together;
+}
+export async function fetchHighlight(kw: string, signal?: AbortSignal): Promise<{ item: HighlightItem | null; disclosure: string } | null> {
+  if (API_MODE === "mock") return null;
+  const r = await fetch(`/api/home/highlight?kw=${encodeURIComponent(kw)}`, { signal });
+  if (!r.ok) return null;
+  return (await r.json()) as { item: HighlightItem | null; disclosure: string };
 }
 export async function fetchHomeRankings(view: "home" | "full", signal?: AbortSignal): Promise<HomeRankings | null> {
   if (API_MODE === "mock") return null;
