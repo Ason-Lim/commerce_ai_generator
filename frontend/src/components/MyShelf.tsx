@@ -5,8 +5,8 @@
  * - 장보기 목록·설정: 브라우저 안에만. 설정은 서버로 보내지 않는다(화면 표시·숨기기에만, 순위 불변).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Heart, History, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
-import type { ApiCard, SavedView } from "../types/blocks";
+import { Heart, History, MessageSquare, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
+import type { ApiCard, SavedView, ShelfTicket } from "../types/blocks";
 import { cardToCandidate } from "../api/adapt";
 import { fetchShelf, forgetShelf, goHref, logDirectClick, resetSavedOwner, sendChat } from "../api/client";
 import { cx, won } from "../lib/format";
@@ -40,6 +40,37 @@ function Item({ card, note }: { card: ApiCard; note?: string | null }) {
         )}
       </div>
     </li>
+  );
+}
+
+const TICKET_STATUS: Record<ShelfTicket["status"], string> = { open: "확인 중", answered: "답변 있음", closed: "끝남" };
+
+function md(d: string) {
+  return d.length >= 16 ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))} ${d.slice(11, 16)}` : d;
+}
+
+/** 2026-11-23 창 4 ③: 자동 접수된 문의와 회신 (식품 안전 신고·개인정보 요청·분쟁) */
+function Tickets({ items }: { items: ShelfTicket[] }) {
+  return (
+    <ul className="divide-y divide-line">
+      {items.map((t) => (
+        <li key={t.id} className="space-y-1 py-2.5">
+          <p className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold">{t.label}</span>
+            <span className={cx("rounded-full px-2 py-0.5 text-xs", t.status === "open" ? "bg-chip" : "bg-accent/10 text-accent")}>
+              {TICKET_STATUS[t.status]}
+            </span>
+            <span className="text-xs text-ink3">접수 {t.id} · {md(t.created_at)}</span>
+          </p>
+          {t.summary && <p className="text-sm text-ink3">“{t.summary}”</p>}
+          {t.messages.map((m) => (
+            <p key={`${m.kind}-${m.at}`} className="rounded-xl bg-chip px-3 py-2 text-sm">
+              <span className="text-xs text-ink3">{m.kind === "reply" ? "운영팀 답변" : "자동 안내"} · {md(m.at)}</span><br />{m.text}
+            </p>
+          ))}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -190,6 +221,11 @@ export function MyShelf() {
           <p className="text-sm leading-7 text-stone-600">이 브라우저에만 모아 두는 곳이에요. 로그인 없이 쓰고, 다른 기기와는 아직 같이 쓰지 않아요.</p>
           {cleared && <p role="status" className="rounded-xl bg-chip px-4 py-3 text-sm">{cleared}</p>}
 
+          {view.tickets && view.tickets.length > 0 && (
+            <Section id="shelf-tickets" icon={MessageSquare} title="문의" count={view.tickets.length}>
+              <Tickets items={view.tickets} />
+            </Section>
+          )}
           <Section id="shelf-recent" icon={History} title="최근 검색" count={view.recent.length}>
             {view.recent.length ? (
               <ul className="divide-y divide-line">

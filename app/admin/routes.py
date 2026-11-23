@@ -1976,3 +1976,35 @@ def trend_posts_preview(post_id: str, request: Request):
     html = render.post_page(post, svc.clock()).replace(
         "<main>", '<main><p class=ad>미리 보기 — 아직 공개되지 않은 글이에요 (' + post.status + ")</p>", 1)
     return HTMLResponse(html, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow"})
+
+
+# ── 고객 문의(CS) — 2026-11-23 창 4 ③: 사람 필수 대기열. 종결·회신은 여기(관리자 토큰)에서만 ──
+class _CsAnswerIn(BaseModel):
+    text: str = Field(..., min_length=1, max_length=1000)
+
+
+@router.get("/admin/api/cs/tickets", dependencies=[api])
+def cs_tickets_list(status: str | None = Query(None, pattern="^(open|answered|closed)$")):
+    from app.services.cs import tickets
+
+    return {"tickets": tickets.queue(status)}
+
+
+@router.post("/admin/api/cs/tickets/{ticket_id}/answer", dependencies=[api])
+def cs_ticket_answer(ticket_id: str, body: _CsAnswerIn):
+    from app.services.cs import tickets
+
+    t = tickets.answer(ticket_id, body.text, by="operator")
+    if t is None:
+        raise HTTPException(404, "ticket not found")
+    return {"ok": True, "ticket": t}
+
+
+@router.post("/admin/api/cs/tickets/{ticket_id}/close", dependencies=[api])
+def cs_ticket_close(ticket_id: str):
+    from app.services.cs import tickets
+
+    t = tickets.close(ticket_id, by="operator")
+    if t is None:
+        raise HTTPException(404, "ticket not found")
+    return {"ok": True, "ticket": t}

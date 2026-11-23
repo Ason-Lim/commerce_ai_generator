@@ -116,6 +116,13 @@ def make_service(sqlite_db, shopping):
 
 
 @pytest.fixture(autouse=True)
+def _cs_store_in_tmp(monkeypatch, tmp_path):
+    """2026-11-23 창 4 ③: 문의 티켓은 시험마다 임시 폴더에, 운영자 맥 알림은 끔."""
+    monkeypatch.setenv("CS_DIR", str(tmp_path / "cs"))
+    monkeypatch.setenv("OPERATOR_NOTIFY", "off")
+
+
+@pytest.fixture(autouse=True)
 def _no_kamis_network(monkeypatch):
     """대화 테스트는 KAMIS 서버에 접속하지 않는다 (시세 근거는 tests/services/public_price 에서 따로 확인)."""
     monkeypatch.setenv("KAMIS_REFERENCE", "0")

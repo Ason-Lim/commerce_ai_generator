@@ -133,7 +133,21 @@ class Retention:
             self.strip_cards(conn, have)
             self.delete_pseudo(conn, have)
         self.signals()
+        self.cs_tickets()
         return self.report
+
+    # ── ⑥ 문의 티켓 (2026-11-23 창 4 ③): 요약 90일 · 티켓 1년 ──
+    def cs_tickets(self) -> None:
+        from app.services.cs import tickets as cs_tickets
+
+        if self.dry_run:
+            return
+        try:
+            got = cs_tickets.prune(self.now.replace(tzinfo=cs_tickets.KST))
+        except Exception:  # noqa: BLE001
+            return
+        self.report.append({"step": "cs_tickets", "target": "var/cs/tickets.json", "rows": got["cleared"] + got["removed"],
+                            "cutoff": None})
 
     # ── ① 일별 집계로 접기 ──
     def rollup(self, conn, have: set[str]) -> None:

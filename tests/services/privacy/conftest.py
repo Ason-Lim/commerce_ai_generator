@@ -22,3 +22,10 @@ def sqlite_engine(url: str):
 @pytest.fixture
 def make_engine():
     return sqlite_engine
+
+
+@pytest.fixture(autouse=True)
+def _cs_store_in_tmp(monkeypatch, tmp_path):
+    """2026-11-23 창 4 ③: 보존 작업이 문의 티켓 파일을 손대므로 시험에서는 임시 폴더로."""
+    monkeypatch.setenv("CS_DIR", str(tmp_path / "cs"))
+    monkeypatch.setenv("OPERATOR_NOTIFY", "off")

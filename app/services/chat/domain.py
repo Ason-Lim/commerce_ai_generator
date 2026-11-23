@@ -241,8 +241,18 @@ def read_ai(ask, text: str | None) -> Decision | None:
     return Decision(dom, "ai", "ai")
 
 
+# 티켓으로 접수하는 문장 — 개인정보는 '질문'(처리방침이 뭐야?)이 아니라 요청(지워·열람·정정 등)일 때만
+_PRIVACY_REQUEST = re.compile(r"지워|지우|삭제|없애|파기|폐기|열람|정정|바꿔|바꾸|변경|수정|가져|내려\s*받|멈춰|중지|탈퇴")
+
+
+def needs_ticket(domain: str, text: str | None) -> bool:
+    if domain == "privacy":
+        return bool(_PRIVACY_REQUEST.search(text or ""))
+    return domain in ("emergency", "food_safety", "dispute")
+
+
 def is_human_required(domain: str) -> bool:
     return domain in HUMAN_REQUIRED
 
 
-__all__ = ["DOMAINS", "HUMAN_REQUIRED", "NO_AI", "Decision", "by_rules", "safety_by_rules", "is_human_required", "AI_PROMPT", "AI_ALLOWED", "read_ai", "privacy_risk", "sensitive_hint"]
+__all__ = ["DOMAINS", "HUMAN_REQUIRED", "NO_AI", "Decision", "by_rules", "safety_by_rules", "is_human_required", "AI_PROMPT", "AI_ALLOWED", "read_ai", "privacy_risk", "sensitive_hint", "needs_ticket"]
