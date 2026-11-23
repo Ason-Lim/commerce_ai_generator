@@ -141,6 +141,8 @@ export default function ChatWindow() {
     // 2026-11-16: 부족한 재료 장보기 칸 — 재료별 상품 (새 메시지를 쌓지 않는다)
     // 2026-11-22 (3-B): 브라우저에 두고 '내 보관함'과 같은 내용 — '새 대화'를 눌러도 남는다
     const [basket, setBasket] = useBasket();
+    const thisBasket = basket.filter(e => !e.sessionId || e.sessionId === sessionId);
+    const otherBasket = basket.length - thisBasket.length;
     // 2026-11-20: 첫 화면 '오늘의 트렌드' 줄은 뺐다 — 트렌드 글은 위쪽 '트렌드 글' 메뉴에서 본다.
     const [error, setError] = useState('');
     const [detail, setDetail] = useState<Candidate | null>(null);
@@ -449,7 +451,14 @@ export default function ChatWindow() {
                                 )}
                             </section>
                         ))}
-                        <ShoppingPanel entries={basket} busy={busy}
+                        {/* 2026-11-23: 다른 대화(예: 닭백숙)에서 담은 재료 상품은 이 대화(배추속댓국)에 펼치지 않는다 — 보관함 안내 한 줄만 */}
+                        {otherBasket > 0 && (
+                            <p className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-xs text-ink2">
+                                다른 대화에서 담은 부족한 재료 {otherBasket}개가 있어요.{' '}
+                                <a href="/#/me" className="font-semibold text-ink underline underline-offset-2">내 보관함에서 보기</a>
+                            </p>
+                        )}
+                        <ShoppingPanel entries={thisBasket} busy={busy}
                             onDrop={name => setBasket(prev => prev.filter(e => e.ingredient !== name))}
                             onHave={name => void shop({ message: `${name} 충분해요` }, name, true)} />
                         <div role="status">{busy && <BusyStatus kind={waitKind} />}</div>

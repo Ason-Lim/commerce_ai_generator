@@ -185,3 +185,19 @@ def test_basket_drop_vs_have_same_in_both_places(shelf_site, browser):
     assert any("양파 충분해요" in c for c in chats)           # 레시피 대화에 알림
     assert page.evaluate("() => JSON.parse(localStorage.getItem('ai-food-basket'))") == []
     ctx.close()
+
+
+def test_basket_from_another_conversation_is_one_line(shelf_site, browser):
+    """2026-11-23 운영: 닭백숙 대화에서 담은 '닭' 상품이 배추속댓국·절임배추 대화 아래에 펼쳐져 보였다 → 안내 한 줄만."""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+    page = ctx.new_page()
+    page.goto(shelf_site + "/")
+    other = [dict(BASKET[0], ingredient="닭", sessionId="old-session-1234")]
+    page.evaluate("b => localStorage.setItem('ai-food-basket', JSON.stringify(b))", other)
+    page.reload()
+    page.get_by_label("쇼핑 질문").fill("사과")
+    page.get_by_role("button", name="질문 보내기").click()
+    page.get_by_text("다른 대화에서 담은 부족한 재료 1개가 있어요.").wait_for()
+    assert page.get_by_role("region", name="부족한 재료 장보기").count() == 0
+    assert page.get_by_role("link", name="내 보관함에서 보기").count() >= 1
+    ctx.close()
