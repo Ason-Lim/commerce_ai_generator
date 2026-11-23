@@ -55,13 +55,21 @@ def test_report_rates_observe_and_clicks(dirs, monkeypatch):
     sig, imp = dirs
     write(sig, "2026-11-28", [served(f"s{i}", zero=i < 3) for i in range(40)])
     write(sig, "2026-11-10", [served("old", zero=True)])
-    monkeypatch.setattr(wi, "clicks_by_day", lambda a, b: {"2026-11-28": {"chat": 8, "search_link": 2, "chat_extra": 1}})
+    # 판매처로 간 세션: 일반 카드 s0~s7 (+ 분모에 없는 세션 zz), 검색 링크 s1, 추가 후보 s2(추가 후보 칸을 보인 적 없음)
+    monkeypatch.setattr(wi, "clicks_by_day", lambda a, b: {
+        "2026-11-28": {"chat": {f"s{i}" for i in range(8)} | {"zz"}, "search_link": {"s1"}, "chat_extra": {"s2"}},
+        "2026-11-20": {"chat": {"old1", "old2"}}})                    # 분모 기록이 없던 날의 클릭
     days = wi.update_daily(sig, imp, date(2026, 1, 1), END)
     rep = wi.report(END, days)
     w1 = rep["periods"]["1주"]["metrics"]
     assert w1["최종 0건 비율"] == {"num": 3, "den": 40, "rate": 0.075, "observe": False}
-    assert w1["판매처 이동 — 일반 카드"]["num"] == 8 and w1["판매처 이동 — 일반 카드"]["den"] == 40
-    assert w1["판매처 이동 — 추가 후보 칸"]["den"] == 0                  # 추가 후보 칸을 보인 적 없음
+    assert (w1["판매처 이동 — 일반 카드 (세션)"]["num"], w1["판매처 이동 — 일반 카드 (세션)"]["den"]) == (8, 40)
+    assert w1["판매처 이동 — 추가 후보 칸 (세션)"]["den"] == 0           # 추가 후보 칸을 보인 적 없음
+    assert w1["판매처 이동 — 검색 결과 링크 (세션)"]["num"] == 1
+    cum = rep["periods"]["누적"]["metrics"]["판매처 이동 — 일반 카드 (세션)"]
+    assert cum["num"] <= cum["den"]                                   # 분모 없는 날 클릭(11-20)이 분자에 안 들어감 — 100% 넘지 않음
+    daily = "".join(p.read_text(encoding="utf-8") for p in (imp / "daily").glob("*.json"))
+    assert "s0" not in daily and "zz" not in daily                    # 세션 값은 파일에 남기지 않음
     assert rep["periods"]["누적"]["metrics"]["최종 0건 비율"]["num"] == 4   # 11-10 포함
     assert rep["periods"]["4주"]["product_turns"] == 41 and rep["periods"]["1주"]["product_turns"] == 40
     small = wi.summarize({"2026-11-28": wi.from_signals(sig / "2026-11-28.jsonl") | {"product": 5, "zero": 1}}, END, 7)
@@ -128,11 +136,12 @@ def test_clicks_read_from_database_url(tmp_path, monkeypatch):
     """서버 밖(예약 실행)에서도 .env 의 DB 주소로 클릭 기록을 읽는다 — 운영자 시험·다른 칸은 뺌."""
     db = tmp_path / "clicks.sqlite3"
     with sqlite3.connect(db) as c:
-        c.execute("CREATE TABLE product_click_log (created_at TEXT, selected_section TEXT, query TEXT)")
-        c.executemany("INSERT INTO product_click_log VALUES (?,?,?)", [
-            ("2026-11-28 10:00:00", "chat", "chat"), ("2026-11-28 11:00:00", "chat_extra", "chat"),
-            ("2026-11-28 12:00:00", "chat", "chat_internal"), ("2026-11-28 13:00:00", "trend", "trend"),
-            ("2026-11-27 09:00:00", "search_link", "chat")])
+        c.execute("CREATE TABLE product_click_log (created_at TEXT, selected_section TEXT, query TEXT, session_id TEXT)")
+        c.executemany("INSERT INTO product_click_log VALUES (?,?,?,?)", [
+            ("2026-11-28 10:00:00", "chat", "chat", "s1aaaaaa-x"), ("2026-11-28 10:05:00", "chat", "chat", "s1aaaaaa-x"),
+            ("2026-11-28 11:00:00", "chat_extra", "chat", "s2bbbbbb-y"),
+            ("2026-11-28 12:00:00", "chat", "chat_internal", "s9"), ("2026-11-28 13:00:00", "trend", "trend", "t"),
+            ("2026-11-27 09:00:00", "search_link", "chat", "s5cccccc-z")])
     monkeypatch.setattr("app.core.config.resolve_database_url", lambda: f"sqlite:///{db}")
     opened = []
 
@@ -155,4 +164,4 @@ def test_clicks_read_from_database_url(tmp_path, monkeypatch):
     monkeypatch.setattr("sqlalchemy.create_engine", lambda url, **k: opened.append(url) or Engine())
     got = wi.clicks_by_day(date(2026, 11, 1), END)
     assert opened == [f"sqlite:///{db}"]                  # engine_provider 가 아니라 .env 의 DB 주소로
-    assert got == {"2026-11-28": {"chat": 1, "chat_extra": 1}, "2026-11-27": {"search_link": 1}}
+    assert got == {"2026-11-28": {"chat": {"s1aaaaaa"}, "chat_extra": {"s2bbbbbb"}}, "2026-11-27": {"search_link": {"s5cccccc"}}}

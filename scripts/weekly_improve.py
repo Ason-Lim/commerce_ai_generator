@@ -15,7 +15,9 @@
 분모 고정 (운영자 시험 internal 은 모두 뺌):
   최종 0건 · 후보 1~2개 · 불러오기 실패 · 자동 다시 찾기 = served 중 product 차례
   고객 다시 묻기 = requery / 상품을 보여 준 차례(n_main>0)
-  판매처 이동 = 칸별 클릭 / 그 칸을 보여 준 차례 (일반 카드 n_main>0 · 추가 후보 n_extra>0 · 검색 결과 링크 search_links)
+  판매처 이동 = 그 칸을 보여 준 손님 세션 중 그날 그 칸에서 판매처로 간 세션 (일반 카드 n_main>0 · 추가 후보 n_extra>0 ·
+               검색 결과 링크 search_links). 2026-11-23: 클릭 수/차례 수는 한 차례 여러 클릭·분모 기록 전 클릭 때문에
+               300% 같은 값이 나와 세션 기준으로 바꿈. 세션 값은 그날 계산에만 쓰고 파일에 남기지 않음.
   나쁨 비율 = 나쁨 / 평가한 응답 (전체 이용자 아님)
   비용·속도 = 상품 차례의 쿠팡·AI 호출 수, 응답 시간 — 평균과 95번째
 원인 추정·자동 수정은 하지 않는다. 이 표는 '점검 후보'를 고르는 출발점이다 (사람 확인 — 설계 §3).
@@ -45,7 +47,7 @@ COUNT_KEYS = ("product", "zero", "few", "failed", "refetch", "more", "shown_main
 # ── 하루 숫자 ───────────────────────────────────────────────────────────────
 def from_signals(path: Path) -> dict:
     """한 날의 jsonl → 숫자. internal 차례와 그 세션의 다시 묻기는 뺀다."""
-    out = {k: 0 for k in COUNT_KEYS} | {"coupang_calls": [], "ai_calls": [], "ms": []}
+    out = {k: 0 for k in COUNT_KEYS} | {"coupang_calls": [], "ai_calls": [], "ms": [], "_sids": {}}
     rows = []
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         try:
@@ -69,6 +71,10 @@ def from_signals(path: Path) -> dict:
             out["shown_extra"] += (r.get("n_extra") or 0) > 0
             out["shown_links"] += bool(r.get("search_links"))
             out["requery_base"] += (r.get("n_main") or 0) > 0
+            sid = r.get("sid") or ""
+            for sec, field in SECTIONS.items():                 # 그 칸을 보여 준 세션 (계산에만 — 파일에 안 남김)
+                if (r.get(field) or 0) > 0 if field != "search_links" else r.get(field):
+                    out["_sids"].setdefault(sec, set()).add(sid)
             for k in ("coupang_calls", "ai_calls", "ms"):
                 if isinstance(r.get(k), (int, float)):
                     out[k].append(r[k])
@@ -77,8 +83,8 @@ def from_signals(path: Path) -> dict:
     return out
 
 
-def clicks_by_day(start: date, end: date) -> dict[str, dict[str, int]]:
-    """product_click_log — 칸별 클릭 수 (운영자 시험 query '…_internal' 제외). DB 를 못 열면 빈 값."""
+def clicks_by_day(start: date, end: date) -> dict[str, dict[str, set]]:
+    """product_click_log — 날·칸별로 판매처로 간 세션(앞 8자) (운영자 시험 query '…_internal' 제외). DB 를 못 열면 빈 값."""
     try:
         from sqlalchemy import create_engine, text
 
@@ -89,17 +95,17 @@ def clicks_by_day(start: date, end: date) -> dict[str, dict[str, int]]:
         engine = create_engine(resolve_database_url(), pool_pre_ping=True)
         with engine.connect() as conn:
             got = conn.execute(text(
-                "SELECT created_at, selected_section FROM product_click_log "
+                "SELECT created_at, selected_section, session_id FROM product_click_log "
                 "WHERE created_at >= :a AND created_at < :b AND (query IS NULL OR query NOT LIKE '%_internal')"),
                 {"a": start.isoformat(), "b": (end + timedelta(days=1)).isoformat()}).fetchall()
     except Exception as e:  # noqa: BLE001
         print(f"클릭 기록을 읽지 못했어요 ({type(e).__name__}) — 판매처 이동 칸은 비워 둠", file=sys.stderr)
         return {}
-    out: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    for created, section in got:
+    out: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    for created, section, session in got:
         day = str(created)[:10]
         if section in SECTIONS:
-            out[day][section] += 1
+            out[day][section].add(str(session or "")[:8])     # served 의 sid(앞 8자)와 맞춤 — 계산에만 씀
     return {d: dict(v) for d, v in out.items()}
 
 
@@ -139,12 +145,15 @@ def update_daily(signal_dir: Path, improve_dir: Path, start: date, end: date, *,
     touched = set()
     for p in sorted(signal_dir.glob("????-??-??.jsonl")) if signal_dir.is_dir() else []:
         if start.isoformat() <= p.stem <= end.isoformat():
-            days[p.stem] = {**days.get(p.stem, {}), **from_signals(p)}
+            got = from_signals(p)
+            sids = got.pop("_sids")
+            day = {**days.get(p.stem, {}), **got}
+            if db:   # 판매처 이동 = 그 칸을 보여 준 세션 중 그날 그 칸에서 판매처로 간 세션 (100% 를 넘지 않음)
+                clicked = clicks.get(p.stem, {})
+                day["moves"] = {sec: [len(sids.get(sec, set()) & clicked.get(sec, set())), len(sids.get(sec, set()))]
+                                for sec in SECTIONS}
+            days[p.stem] = day
             touched.add(p.stem)
-    for d, v in clicks.items():
-        if start.isoformat() <= d <= end.isoformat():
-            days.setdefault(d, {})["clicks"] = v
-            touched.add(d)
     for d, v in fb.items():
         days.setdefault(d, {})["feedback"] = v
         touched.add(d)
@@ -165,12 +174,13 @@ def summarize(days: dict[str, dict], end: date, length: int | None) -> dict:
     keep = [v for d, v in days.items() if d <= end.isoformat()
             and (length is None or d > (end - timedelta(days=length)).isoformat())]
     tot = {k: sum(v.get(k, 0) for v in keep) for k in COUNT_KEYS}
-    clicks = defaultdict(int)
+    moves = defaultdict(lambda: [0, 0])
     fb = defaultdict(int)
     lists = {k: [x for v in keep for x in v.get(k, [])] for k in ("coupang_calls", "ai_calls", "ms")}
     for v in keep:
-        for s, n in (v.get("clicks") or {}).items():
-            clicks[s] += n
+        for s, (num, den) in (v.get("moves") or {}).items():
+            moves[s][0] += num
+            moves[s][1] += den
         for s, n in (v.get("feedback") or {}).items():
             fb[s] += n
 
@@ -184,9 +194,9 @@ def summarize(days: dict[str, dict], end: date, length: int | None) -> dict:
         "불러오기 실패 비율": rate(tot["failed"], p),
         "자동 다시 찾기 비율": rate(tot["refetch"], p),
         "고객 다시 묻기 비율": rate(tot["requery"], tot["requery_base"]),
-        "판매처 이동 — 일반 카드": rate(clicks["chat"], tot["shown_main"]),
-        "판매처 이동 — 추가 후보 칸": rate(clicks["chat_extra"], tot["shown_extra"]),
-        "판매처 이동 — 검색 결과 링크": rate(clicks["search_link"], tot["shown_links"]),
+        "판매처 이동 — 일반 카드 (세션)": rate(*moves["chat"]),
+        "판매처 이동 — 추가 후보 칸 (세션)": rate(*moves["chat_extra"]),
+        "판매처 이동 — 검색 결과 링크 (세션)": rate(*moves["search_link"]),
         "나쁨 비율 (평가한 응답 중)": rate(fb["bad"], fb["rated"]),
     }
     cost = {k: {"mean": round(sum(v) / len(v), 2) if v else None, "p95": _pct(v, 0.95), "n": len(v)}
