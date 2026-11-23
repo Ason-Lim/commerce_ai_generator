@@ -27,7 +27,7 @@ nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav
 .keyfacts>div{border:1px solid #e3e7ec;border-radius:12px;padding:10px 14px;background:#fafbfc}
 .keyfacts .k{font-size:12px;color:var(--ink3)}.keyfacts .val{font-size:22px;font-weight:800;line-height:1.3;margin-top:2px}
 .keyfacts .sub{font-size:12.5px;color:var(--ink3);margin-top:2px}
-.keyfacts .dday{display:inline-block;font-size:13px;font-weight:800;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle}
+.dday{display:inline-block;font-size:13px;font-weight:800;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle}
 .dd-near{background:var(--hold-s);color:var(--hold)}.dd-ok{background:var(--ok-s);color:var(--ok)}.dd-past{background:#eef1f4;color:var(--ink3)}
 .bidhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;border:1px solid #e3e7ec;border-radius:12px;padding:8px 12px;margin:0 0 10px;background:#fafbfc;font-size:14px}
 .bidhead b{font-size:16px}
@@ -209,7 +209,7 @@ function ddayTag(deadline){
 function keyFacts(b){   // 상태 · 예산 · 마감을 큰 글씨로
   const st=String(b.status||"").split(" ")[0];
   return `<div class="keyfacts" aria-label="공고 핵심">
-    <div><div class="k">입찰 상태</div><div class="val"><span class="pill s-${esc(st)}" style="font-size:16px;padding:3px 12px">${esc(b.status||"-")}</span></div><div class="sub">${esc(b.verification_label||"")}</div></div>
+    <div><div class="k">입찰 상태</div><div class="val"><span class="pill s-${esc(st)}" style="font-size:16px;padding:3px 12px">${esc(b.status||"-")}</span></div></div>
     <div><div class="k">공고 예산</div><div class="val">${b.budget?won(b.budget):"미기재"}</div><div class="sub">${b.headcount?esc(b.headcount)+"명":""}</div></div>
     <div><div class="k">입찰 마감</div><div class="val">${esc((b.deadline||"-").slice(0,10))}${ddayTag(b.deadline)}</div><div class="sub">${esc((b.deadline||"").slice(11,16))}</div></div>
   </div>`;
