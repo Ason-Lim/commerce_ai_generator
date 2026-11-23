@@ -280,3 +280,12 @@ def test_route(monkeypatch):
     assert c.get("/api/home/rankings").json() == {"view": "home"}
     assert c.get("/api/home/rankings?view=full").json() == {"view": "full"}
     assert c.get("/api/home/rankings?view=x").status_code == 422
+
+
+
+def test_home_category_fills_with_rank_order_after_rising():
+    """2026-11-23 저녁: 홈 카테고리는 오르는 중을 먼저, 모자라면 늘 인기 아닌 것 → 늘 인기 순 (화면은 6개 + 더보기)."""
+    rows = [{"keyword": k, "state": st} for k, st in (("a", "insufficient"), ("b", "steady"), ("c", "rising_like"), ("d", "insufficient"))]
+    got = hr._fill([rows[2]], rows)
+    assert [r["keyword"] for r in got] == ["c", "a", "d", "b"]
+    assert hr.LIMITS["home"]["category"] == 30

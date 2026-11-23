@@ -34,6 +34,7 @@ CP = [{"rank": 1, "product_id": "7230779632", "title": "신선한 대란", "imag
       {"rank": 3, "product_id": "218520566", "title": "돌 스위티오 바나나", "image": None, "price_krw": 4230, "price_hidden": False,
        "rocket": True, "change_kind": "new", "change": None, "seed": "바나나", "go_url": "/home/go/218520566"}]
 TOGETHER_SEEN: list[str] = []
+EXTRA_FRUIT: list[dict] = []      # 11-23 저녁: 카테고리 6개 + 더보기 시험에서만 채움
 
 
 def together(seeds):
@@ -48,7 +49,7 @@ def together(seeds):
 
 def data(view):
     full = view == "full"
-    fruit = [APPLE, GAM] + ([kw(40, "귤", ["fruit"], "steady", ch=0, rising=False)] if full else [])
+    fruit = [APPLE, GAM] + EXTRA_FRUIT + ([kw(40, "귤", ["fruit"], "steady", ch=0, rising=False)] if full else [])
     return {
         "generated_at": "2026-11-22T10:05+09:00", "view": view,
         "coupang": {"status": "ok", "fetched_at": "2026-11-23T10:05+09:00", "compare": True, "compare_ready": True,
@@ -145,7 +146,8 @@ def test_home_rankings_flow(site, browser):
     sec.get_by_role("button", name="사과 대화로 묻기 · 식품 검색어 7위").wait_for()
     assert sec.get_by_text("상위 500위 진입").count() == 1
     sec.get_by_role("button", name="요리/식재료").click()
-    sec.get_by_text("7일 전 순위와 비교할 자료가 아직 없어").wait_for()
+    # 11-23 저녁: 홈은 오르는 중 먼저 + 나머지 순위순으로 채우므로 '비교 자료 없음' 안내는 전체 화면에서만
+    sec.get_by_role("button", name="쌀20kg 대화로 묻기 · 식품 검색어 12위").wait_for()
     # 함께 보면 좋은 상품: 방금 누른 품목(바나나)을 본문으로 보냄 → 맞춤 끄기면 보내지 않음
     sec.get_by_role("tab", name="함께 보면 좋은 상품").click()
     sec.get_by_text("맞춤 추천 · 이 브라우저에서 최근 누른 품목 기준").wait_for()
@@ -262,3 +264,26 @@ def test_recent_viewed_and_policy_page(site, browser):
     assert "10분" in page.locator("main").inner_text()
     assert page.evaluate(NAMELESS_JS) == []
     ctx.close()
+
+
+
+def test_home_category_shows_six_then_more(site, browser):
+    """2026-11-23 저녁 사용자 요청: 카테고리도 6개만 보이고 '더보기'로 펼치기·접기, 카테고리를 바꾸면 다시 6개."""
+    EXTRA_FRUIT.extend(kw(50 + i, f"과일{i}", ["fruit"]) for i in range(6))
+    try:
+        ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+        page = ctx.new_page()
+        page.goto(site + "/#")
+        sec = page.get_by_role("region", name="지금 순위")
+        sec.get_by_role("tab", name="카테고리").click()
+        rows = sec.locator("ol li button[aria-label*='대화로 묻기']")
+        rows.first.wait_for()
+        assert rows.count() == 6
+        sec.get_by_role("button", name="더보기 2개").click()
+        assert rows.count() == 8
+        sec.get_by_role("group", name="카테고리").get_by_role("button", name="요리/식재료").click()
+        sec.get_by_role("group", name="카테고리").get_by_role("button", name="과일").click()
+        assert rows.count() == 6                                   # 바꾸면 다시 접힘
+        ctx.close()
+    finally:
+        EXTRA_FRUIT.clear()
