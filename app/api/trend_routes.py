@@ -72,7 +72,7 @@ class _TogetherIn(BaseModel):
 
 @router.post("/api/home/together")
 def home_together(body: _TogetherIn):
-    """홈 '함께 보면 좋은 상품' — 레시피 짝 · 같은 태그 · 새로 둘러보기. 저장 자료 + 레시피 서비스만(쿠팡 호출 0).
+    """홈 '함께 보면 좋은 상품' — 레시피 짝 · 같은 태그 · 새로 둘러보기. 쿠팡 랭킹(메모리 1시간) + 트렌드 글 상품 + 레시피 서비스.
     seeds 가 비면 쿠팡 식품 랭킹 1위 품목 기준(personal=false). seeds 는 로그·파일에 남기지 않는다."""
     from app.services.trends import together
 
@@ -86,14 +86,12 @@ def home_together(body: _TogetherIn):
 
 @router.get("/home/go/{product_id}")   # /go/{sid}/{rank}(대화)와 겹치지 않게 /home/go
 def go_coupang_best(product_id: str, request: Request):
-    """쿠팡 식품 랭킹·함께 보면 좋은 상품 클릭 (2026-11-23) — 최신 저장 파일에 있는 상품만, 클릭 기록 뒤 쿠팡 링크로."""
-    import datetime as _dt
-
+    """쿠팡 식품 랭킹·함께 보면 좋은 상품 클릭 (2026-11-23) — 지금 메모리 랭킹에 있는 상품만, 클릭 기록 뒤 쿠팡 링크로."""
     from app.services.trends import coupang_best as cb
 
     if not product_id.isdigit() or len(product_id) > 20:
         return RedirectResponse("/", status_code=303)
-    item = cb.find(product_id, _dt.date.today())
+    item = cb.find(product_id)
     if item is None:
         return RedirectResponse("/", status_code=303)
     try:

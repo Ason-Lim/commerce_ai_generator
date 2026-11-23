@@ -40,7 +40,7 @@ def together(seeds):
     personal = bool(seeds)
     return {"status": "ok", "personal": personal, "disclosure": "쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.",
             "note": "맞춤 추천 · 이 브라우저에서 최근 누른 품목 기준" if personal else "일반 추천 · 쿠팡 식품 랭킹 1위 '대란' 기준",
-            "basis_date": "2026-11-23", "items": [{
+            "fetched_at": "2026-11-23T10:05+09:00", "items": [{
                 "product_id": "1275124832", "title": "곰곰 아삭한 콩나물", "image": None, "price_krw": 1090, "price_hidden": False,
                 "rocket": True, "go_url": "/home/go/1275124832?from=together", "seed": "콩나물", "source": "coupang_best",
                 "kind": "explore", "why": "새로 둘러보기 · 요리/식재료"}]}
@@ -51,7 +51,7 @@ def data(view):
     fruit = [APPLE, GAM] + ([kw(40, "귤", ["fruit"], "steady", ch=0, rising=False)] if full else [])
     return {
         "generated_at": "2026-11-22T10:05+09:00", "view": view,
-        "coupang": {"status": "ok", "date": "2026-11-23", "fetched_at": "2026-11-23T10:05+09:00", "compare_date": "2026-11-22",
+        "coupang": {"status": "ok", "fetched_at": "2026-11-23T10:05+09:00", "compare": True, "compare_ready": True,
                     "items": CP, "disclosure": "쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.", "note": "쿠팡 기준"},
         "surge": {"status": "ok", "data_until": "2026-11-21", "updated_at": "x",
                   "items": [{"n": 1, "keyword": "대방어", "status": "surging", "times": 2.7, "rank": 82, "onset": "2026-11-03", "ask": "대방어 추천해 줘"}]},

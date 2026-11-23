@@ -185,14 +185,14 @@ export interface PickCard {
   image: string | null; rocket: boolean; why: string; post_title: string; post_url: string; go_url: string;
   badges: ("keyword_steady" | "multi_post")[]; post_count: number;
 }
-/** 쿠팡 식품 랭킹 (2026-11-23) — 쿠팡 파트너스 식품 베스트 그대로, 하루 한 번 저장, 전날과 비교. */
+/** 쿠팡 식품 랭킹 (2026-11-23) — 쿠팡 파트너스 식품 베스트 그대로, 메모리 1시간(저장 없음). 전날 비교는 설정으로 켤 때만. */
 export interface CoupangRankItem {
   rank: number; product_id: string; title: string; image: string | null; price_krw: number | null; price_hidden: boolean;
   rocket: boolean; change_kind: "compared" | "new" | "no_compare"; change: number | null; seed: string; go_url: string;
 }
 export interface HomeRankings {
   generated_at: string; view: "home" | "full";
-  coupang?: { status: "ok" | "none" | "stale"; date: string | null; fetched_at: string | null; compare_date?: string | null;
+  coupang?: { status: "ok" | "none"; fetched_at: string | null; compare: boolean; compare_ready?: boolean;
               items: CoupangRankItem[]; disclosure: string; note: string };
   surge: { status: "ok" | "none" | "empty" | "stale"; data_until: string | null; updated_at: string | null; items: RankSurgeItem[] };
   categories: { status: "ok" | "none" | "stale"; rank_date: string | null; compare_date?: string | null; observed_days?: number; tabs: RankTab[]; note: string };
@@ -203,7 +203,7 @@ export interface TogetherCard {
   product_id: string; title: string; image: string | null; price_krw: number | null; price_hidden: boolean; rocket: boolean;
   go_url: string; seed: string; source: "coupang_best" | "trend_post"; kind: "recipe" | "tag" | "explore"; why: string;
 }
-export interface Together { status: "ok" | "none"; personal: boolean; items: TogetherCard[]; disclosure: string; note: string; basis_date?: string | null }
+export interface Together { status: "ok" | "none"; personal: boolean; items: TogetherCard[]; disclosure: string; note: string; fetched_at?: string | null }
 export async function fetchTogether(seeds: string[], view: "home" | "full", signal?: AbortSignal): Promise<Together | null> {
   if (API_MODE === "mock") return null;
   const r = await fetch("/api/home/together", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seeds, view }), signal });

@@ -1,7 +1,7 @@
 """홈 개편 (2026-11-23, 사용자 결정 10:09): 급상승 → 쿠팡 식품 랭킹, 트렌드 상품 → 함께 보면 좋은 상품.
 
-쿠팡 식품 랭킹: 쿠팡 순위 그대로 · 같은 상품번호 하나만 · 전날과 비교(↑n/새로 진입/비교 자료 없음) · 저장 파일만 ·
-쿠팡 https 링크·그림만 · 받은 지 2일 지난 가격 숨김 · /home/go 는 저장된 상품만.
+쿠팡 식품 랭킹: 쿠팡 순위 그대로 · 같은 상품번호 하나만 · 메모리 1시간(파일 저장 없음, 1시간에 1번 호출 — 약관 제5조 ③) ·
+전날 비교는 COUPANG_RANK_COMPARE=on 일 때만(상품번호·순위만 보관) · 쿠팡 https 링크·그림만 · /home/go 는 메모리에 있는 상품만.
 함께 보면 좋은 상품: 레시피 짝 → 같은 태그 → 새로 둘러보기 · 출발점은 본문으로만 · 없으면 랭킹 1위 기준(personal=false) ·
 수수료와 무관한 순서 · 출발점 품목 자체는 빼기.
 """
@@ -36,13 +36,23 @@ TODAY = [(1, 11, "신선한 대란"), (2, 22, "국내산 무"), (3, 33, "제주�
 YESTERDAY = [(1, 22, "국내산 무"), (2, 11, "신선한 대란"), (3, 33, "제주삼다수 그린 무라벨")]
 
 
-@pytest.fixture
-def base(tmp_path):
-    (tmp_path / "2026-11-23.json").write_text(json.dumps(cb.normalize(raw(*TODAY), "2026-11-23T10:05+09:00"),
-                                                         ensure_ascii=False), encoding="utf-8")
-    (tmp_path / "2026-11-22.json").write_text(json.dumps(cb.normalize(raw(*YESTERDAY), "2026-11-22T10:05+09:00"),
-                                                         ensure_ascii=False), encoding="utf-8")
-    return tmp_path
+@pytest.fixture(autouse=True)
+def _fresh(monkeypatch, tmp_path):
+    cb.clear()
+    monkeypatch.setenv("COUPANG_BEST_DIR", str(tmp_path))
+    monkeypatch.delenv("COUPANG_RANK_COMPARE", raising=False)
+    yield
+    cb.clear()
+
+
+class Fetch:
+    """가짜 쿠팡 호출 — 몇 번 불렸는지 센다."""
+    def __init__(self, rows):
+        self.rows, self.n = rows, 0
+
+    def __call__(self):
+        self.n += 1
+        return raw(*self.rows) if self.rows is not None else None
 
 
 # ── 쿠팡 식품 랭킹 ─────────────────────────────────────────────────────────
@@ -57,25 +67,48 @@ def test_normalize_dedupes_and_keeps_coupang_urls_only():
     assert all(it["url"].startswith("https://link.coupang.com/") for it in snap["items"])
 
 
-def test_ranked_change_against_yesterday(base):
-    r = cb.ranked(NOW.date(), NOW, 6, base)
-    assert r["status"] == "ok" and r["date"] == "2026-11-23" and r["compare_date"] == "2026-11-22"
+def test_memory_only_one_call_per_hour_and_no_files(tmp_path, monkeypatch):
+    f = Fetch(TODAY)
+    a = cb.ranked(NOW.date(), NOW, 6, fetch=f)
+    b = cb.ranked(NOW.date(), NOW, 6, fetch=f)
+    assert f.n == 1 and a["items"] == b["items"] and a["status"] == "ok"
+    assert list(tmp_path.iterdir()) == []                                  # 파일·DB 저장 없음 (약관 제5조 ③)
+    assert a["compare"] is False and {it["change_kind"] for it in a["items"]} == {"no_compare"}
+    assert "url" not in a["items"][0] and a["items"][0]["go_url"] == "/home/go/11"
+    monkeypatch.setattr(cb.time, "monotonic", lambda: 10 ** 9)            # 1시간 지남 → 다시 받음
+    cb.ranked(NOW.date(), NOW, 6, fetch=f)
+    assert f.n == 2
+
+
+def test_fetch_failure_shows_nothing_not_old_data(monkeypatch):
+    cb.ranked(NOW.date(), NOW, 6, fetch=Fetch(TODAY))
+    monkeypatch.setattr(cb.time, "monotonic", lambda: 10 ** 9)
+    assert cb.ranked(NOW.date(), NOW, 6, fetch=Fetch(None))["status"] == "none"
+
+
+def test_compare_on_keeps_only_ids_and_ranks(tmp_path, monkeypatch):
+    monkeypatch.setenv("COUPANG_RANK_COMPARE", "on")
+    (tmp_path / "ranks_2026-11-22.json").write_text(json.dumps({"22": 1, "11": 2, "33": 3}))
+    r = cb.ranked(NOW.date(), NOW, 6, fetch=Fetch(TODAY))
     by = {it["product_id"]: it for it in r["items"]}
+    assert r["compare"] and r["compare_ready"]
     assert (by["11"]["change_kind"], by["11"]["change"]) == ("compared", 1)     # 2 → 1
     assert (by["22"]["change_kind"], by["22"]["change"]) == ("compared", -1)    # 1 → 2
     assert by["44"]["change_kind"] == "new"
-    assert all(it["go_url"] == f"/home/go/{it['product_id']}" for it in r["items"])
-    assert "url" not in by["11"]                                               # 쿠팡 주소는 /home/go 뒤에만
+    saved = json.loads((tmp_path / "ranks_2026-11-23.json").read_text())
+    assert saved["11"] == 1 and all(isinstance(v, int) for v in saved.values())  # 번호·순위만, 상품명·가격 없음
+    assert "신선한 대란" not in (tmp_path / "ranks_2026-11-23.json").read_text()
 
 
-def test_no_compare_stale_and_price_hiding(tmp_path, base):
-    (base / "2026-11-22.json").unlink()
-    r = cb.ranked(NOW.date(), NOW, 3, base)
-    assert {it["change_kind"] for it in r["items"]} == {"no_compare"}
-    later = NOW + dt.timedelta(days=3)
-    r2 = cb.ranked(later.date(), later, 3, base)
-    assert r2["status"] == "stale" and all(it["price_hidden"] and it["price_krw"] is None for it in r2["items"])
-    assert cb.ranked(NOW.date(), NOW, 3, tmp_path / "none")["status"] == "none"
+def test_compare_on_without_yesterday():
+    import os
+
+    os.environ["COUPANG_RANK_COMPARE"] = "on"
+    try:
+        r = cb.ranked(NOW.date(), NOW, 3, fetch=Fetch(TODAY))
+    finally:
+        os.environ.pop("COUPANG_RANK_COMPARE")
+    assert r["compare"] and not r["compare_ready"] and {it["change_kind"] for it in r["items"]} == {"no_compare"}
 
 
 def test_seed_of():
@@ -85,35 +118,23 @@ def test_seed_of():
     assert cb.seed_of("곰곰 대패 우삼겹 (냉동)") == "우삼겹"
 
 
-def test_find_only_stored_products(base):
-    assert cb.find("11", NOW.date(), base)["url"].startswith("https://link.coupang.com/")
-    assert cb.find("123456", NOW.date(), base) is None
+def test_find_only_products_in_memory():
+    f = Fetch(TODAY)
+    assert cb.find("11", fetch=f)["url"].startswith("https://link.coupang.com/")
+    assert cb.find("123456", fetch=f) is None and f.n == 1
 
 
-def test_home_build_has_coupang_and_makes_no_external_call(base, monkeypatch):
+def test_home_build_calls_coupang_at_most_once(monkeypatch):
     from app.services.trends import home_rankings as hr
 
-    def boom(*a, **k):
-        raise AssertionError("홈 응답이 외부를 불렀어요")
-
-    monkeypatch.setattr("urllib.request.urlopen", boom)
-    monkeypatch.setattr("requests.get", boom)
-    out = hr.build("home", now=NOW, env={"COUPANG_BEST_DIR": str(base)}, use_cache=False,
-                   posts=type("P", (), {"published": lambda self: []})())
+    f = Fetch(TODAY)
+    monkeypatch.setattr(cb, "fetch_payload", f)
+    posts = type("P", (), {"published": lambda self: []})()
+    for _ in range(3):
+        out = hr.build("home", now=NOW, use_cache=False, posts=posts)
+    assert f.n == 1
     assert [it["product_id"] for it in out["coupang"]["items"]] == ["11", "22", "33", "44", "55", "66"]
-    assert "쿠팡 파트너스" in out["coupang"]["disclosure"]
-
-
-def test_fetch_script_signature_and_skip_when_today_exists(tmp_path, monkeypatch, capsys):
-    spec = importlib.util.spec_from_file_location("fcb", ROOT / "scripts" / "fetch_coupang_best.py")
-    m = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(m)
-    a = m.authorization("AK", "SK", "limit=100", dt.datetime(2026, 11, 23, 1, 0, tzinfo=dt.timezone.utc))
-    assert a.startswith("CEA algorithm=HmacSHA256, access-key=AK, signed-date=261123T010000Z, signature=")
-    monkeypatch.setenv("COUPANG_BEST_DIR", str(tmp_path))
-    (tmp_path / f"{dt.date.today().isoformat()}.json").write_text("{}")
-    monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: (_ for _ in ()).throw(AssertionError("호출함")))
-    assert m.main([]) == 0 and "이미 있어요" in capsys.readouterr().out
+    assert "쿠팡 파트너스" in out["coupang"]["disclosure"] and "1시간" in out["coupang"]["note"]
 
 
 # ── 함께 보면 좋은 상품 ────────────────────────────────────────────────────
@@ -121,17 +142,12 @@ NO_POSTS = type("P", (), {"published": lambda self: []})()
 RECIPES = {"굴": ("두부굴찌개", ("굴", "두부", "무", "대파", "소금"))}
 
 
-def build(seeds, view="home"):
-    return tg.build(seeds, view, today=NOW.date(), now=NOW, posts=NO_POSTS, base=BASE[0],
+SNAP = cb.normalize(raw(*TODAY), "2026-11-23T10:05+09:00")
+
+
+def build(seeds, view="home", snap=None):
+    return tg.build(seeds, view, today=NOW.date(), now=NOW, posts=NO_POSTS, snap=snap or SNAP,
                     recipe=lambda s: RECIPES.get(s, ("", ())))
-
-
-BASE: list = [None]
-
-
-@pytest.fixture(autouse=True)
-def _base(base):
-    BASE[0] = base
 
 
 def test_clean_seeds():
@@ -173,25 +189,24 @@ def test_no_seeds_uses_rank_1_and_says_so():
     assert any(it["kind"] == "explore" for it in out["items"])
 
 
-def test_order_ignores_commission(base):
-    """제휴 여부 칸을 바꿔도(모두 쿠팡 파트너스) 순서는 쿠팡 순위·규칙만 따른다 — 수수료 칸 자체를 읽지 않음."""
+def test_order_ignores_commission():
+    """수수료 칸이 있어도 순서는 쿠팡 순위·규칙만 따른다 — 수수료 칸 자체를 읽지 않음."""
     a = [it["product_id"] for it in build(["굴"])["items"]]
-    snap = json.loads((base / "2026-11-23.json").read_text(encoding="utf-8"))
+    snap = json.loads(json.dumps(SNAP))
     for it in snap["items"]:
         it["commission"] = 99
-    (base / "2026-11-23.json").write_text(json.dumps(snap, ensure_ascii=False), encoding="utf-8")
-    assert [it["product_id"] for it in build(["굴"])["items"]] == a
+    assert [it["product_id"] for it in build(["굴"], snap=snap)["items"]] == a
 
 
-def test_route_together_and_go(base, monkeypatch):
+def test_route_together_and_go(monkeypatch):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
     from app.api import trend_routes
 
-    monkeypatch.setenv("COUPANG_BEST_DIR", str(base))
+    monkeypatch.setattr(cb, "fetch_payload", Fetch(TODAY))
     monkeypatch.setattr(tg, "_recipe_ingredients", lambda s, d: RECIPES.get(s, ("", ())))
-    monkeypatch.setattr(tg, "pool", lambda today, now, posts=None, _b=None: ORIG_POOL(today, now, NO_POSTS, base))
+    monkeypatch.setattr(tg, "pool", lambda today, now, posts=None, snap=None: ORIG_POOL(today, now, NO_POSTS, snap))
     clicks = []
     monkeypatch.setattr("app.services.analytics_logger.log_product_click", lambda **k: clicks.append(k))
     app = FastAPI()

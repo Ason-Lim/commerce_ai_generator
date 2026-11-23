@@ -112,7 +112,7 @@ function TogetherPanel({ view }: { view: "home" | "full" }) {
         <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {data.items.map((c: TogetherCard) => (
             <ProductTile key={c.product_id} title={c.title} image={c.image} rocket={c.rocket} href={c.go_url} why={c.why}
-              price={priceOf(c.price_krw, c.price_hidden, data.basis_date ? `${md(data.basis_date)} 확인` : "")}
+              price={priceOf(c.price_krw, c.price_hidden, data.fetched_at ? `${hm(data.fetched_at)} 확인` : "")}
               onOpen={() => rememberInterest(c.seed)} />
           ))}
         </ul>
@@ -185,7 +185,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
       </div>
       {info && (
         <p className="mt-2 rounded-xl bg-chip px-3 py-2 text-xs leading-6 text-ink2">
-          쿠팡 식품 랭킹은 쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요(하루 한 번, 화살표는 전날과 비교).
+          쿠팡 식품 랭킹은 쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요(1시간마다 새로 받음).
           카테고리 번호는 네이버 식품 검색어 순위 그대로예요. 급상승은 네이버 데이터랩 검색어 트렌드(상대 지수)로 평소(약 한 달 전)와 비교한 값이에요.
           함께 보면 좋은 상품은 이 브라우저에서 최근 누른 품목으로 골라요. 제휴 수수료는 순위·순서에 영향을 주지 않아요.
         </p>
@@ -270,14 +270,13 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
                 <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {cp.items.map((it) => (
                     <ProductTile key={it.product_id} title={it.title} image={it.image} rocket={it.rocket} href={it.go_url}
-                      price={priceOf(it.price_krw, it.price_hidden, cp.fetched_at ? `${md(cp.fetched_at)} 확인` : "")}
+                      price={priceOf(it.price_krw, it.price_hidden, cp.fetched_at ? `${hm(cp.fetched_at)} 확인` : "")}
                       onOpen={() => rememberInterest(it.seed)}
                       top={<span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-white/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-ink">
                         {it.rank}<CoupangChange it={it} /></span>} />
                   ))}
                 </ul>
-                {cp.status === "stale" && <p className="mt-2 text-xs text-warn">쿠팡 식품 랭킹이 늦어지고 있어요 — {md(cp.date)} 자료예요.</p>}
-                {cp.items.every((i) => i.change_kind === "no_compare") && <p className="mt-2 text-xs text-stone-500">전날 받은 순위가 아직 없어 오르내림은 내일부터 보여요.</p>}
+                {cp.compare && !cp.compare_ready && <p className="mt-2 text-xs text-stone-500">전날 받은 순위가 아직 없어 오르내림은 내일부터 보여요.</p>}
                 {view === "full" && <p className="mt-2 text-xs leading-5 text-stone-500">{cp.note}</p>}
                 {more}
               </>}

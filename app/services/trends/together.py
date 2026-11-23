@@ -3,7 +3,7 @@
 검토 claude/home_rank_reco_review_2026-11-23.md §4 의 1차 — **서버에 개인 기록을 새로 만들지 않는다.**
 * 출발점(seeds) = 이 브라우저가 최근 누른 품목 낱말 최대 5개 (브라우저 localStorage, POST 본문으로만 받음 — 주소·기록에 안 남김).
   출발점이 없거나 고객이 '맞춤 끄기'를 하면 → 쿠팡 식품 랭킹 1위 품목을 출발점으로 (personal=false, 문구로 밝힘).
-* 상품 묶음(pool) = 저장된 쿠팡 식품 랭킹 + 승인된 트렌드 글 상품. 외부 호출 0.
+* 상품 묶음(pool) = 쿠팡 식품 랭킹(메모리 1시간, 파일 저장 없음) + 승인된 트렌드 글 상품.
 * 고르는 순서 (칸마다 이유 한 줄):
   1. 레시피 짝 — 출발점으로 레시피를 찾아(레시피 서비스, 공공 레시피) 함께 쓰는 재료가 든 상품. \"굴 요리(두부굴찌개)에 함께 쓰는 재료\"
   2. 같은 태그 — 출발점과 같은 카테고리 태그(keyword_tags.csv). \"최근 본 귤과 같은 과일\"
@@ -86,9 +86,9 @@ def _resolver():
     return _RESOLVER
 
 
-def pool(today: dt.date, now: dt.datetime, posts=None, base=None) -> list[dict]:
-    """쿠팡 식품 랭킹(저장 파일) + 승인된 트렌드 글 상품. 같은 상품번호는 한 번."""
-    items = cb.ranked(today, now, 100, base)["items"]
+def pool(today: dt.date, now: dt.datetime, posts=None, snap=None) -> list[dict]:
+    """쿠팡 식품 랭킹(메모리 1시간) + 승인된 트렌드 글 상품. 같은 상품번호는 한 번."""
+    items = cb.ranked(today, now, 100, snap=snap)["items"]
     out = [{**it, "source": "coupang_best"} for it in items]
     seen = {it["product_id"] for it in out}
     try:
@@ -129,12 +129,13 @@ def _label(tag: str) -> str:
 
 
 def build(seeds: list[str], view: str = "home", *, today: dt.date | None = None, now: dt.datetime | None = None,
-          posts=None, base=None, recipe=None) -> dict:
+          posts=None, snap=None, recipe=None) -> dict:
     """recipe: 시험용 (seed → (요리, 재료들)) 함수. 기본은 레시피 서비스."""
     now = now or dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
     today = today or now.date()
     limit = LIMITS.get(view, LIMITS["home"])
-    items = pool(today, now, posts, base)
+    snap = snap if snap is not None else cb.current()      # 메모리 1시간 랭킹 (없으면 1번 받음)
+    items = pool(today, now, posts, snap)
     if not items:
         return {"status": "none", "personal": False, "items": [], "disclosure": DISCLOSURE, "note": ""}
     personal = bool(seeds)
@@ -201,4 +202,4 @@ def build(seeds: list[str], view: str = "home", *, today: dt.date | None = None,
         return {"status": "none", "personal": personal, "items": [], "disclosure": DISCLOSURE, "note": ""}
     return {"status": "ok", "personal": personal, "items": picked, "disclosure": DISCLOSURE,
             "note": NOTE_PERSONAL if personal else NOTE_GENERAL.format(seed=seeds[0] if seeds else ""),
-            "basis_date": cb.latest(today, base)[0]}
+            "fetched_at": (snap or {}).get("fetched_at")}
