@@ -80,11 +80,14 @@ def from_signals(path: Path) -> dict:
 def clicks_by_day(start: date, end: date) -> dict[str, dict[str, int]]:
     """product_click_log — 칸별 클릭 수 (운영자 시험 query '…_internal' 제외). DB 를 못 열면 빈 값."""
     try:
-        from sqlalchemy import text
+        from sqlalchemy import create_engine, text
 
-        from app.db.engine_provider import get_engine
+        from app.core.config import resolve_database_url
 
-        with get_engine().connect() as conn:
+        # 2026-11-23: 서버 밖 실행이라 engine_provider 가 묶여 있지 않다(EngineProviderUnboundError) —
+        # 보존 작업(scripts/privacy_retention.py)과 같이 .env 의 DB 주소로 직접 연다
+        engine = create_engine(resolve_database_url(), pool_pre_ping=True)
+        with engine.connect() as conn:
             got = conn.execute(text(
                 "SELECT created_at, selected_section FROM product_click_log "
                 "WHERE created_at >= :a AND created_at < :b AND (query IS NULL OR query NOT LIKE '%_internal')"),
