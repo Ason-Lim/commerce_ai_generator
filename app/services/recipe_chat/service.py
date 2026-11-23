@@ -54,6 +54,8 @@ class RecipeTurn:
     shopping_needs: dict = field(default_factory=dict)
     # 2026-11-16: 장보기 칸에 담을 답 — {'ingredient', 'word', 'mode': absent|short}
     panel: dict | None = None
+    # 2026-11-23: 검색어 → 제목에 꼭 있어야 하는 말 ('백숙용 오리' 검색에 섞이는 닭 상품을 뺀다)
+    shopping_must: dict = field(default_factory=dict)
 
 
 log = logging.getLogger(__name__)
@@ -328,10 +330,16 @@ class RecipeChat:
                     ask = RecipeTurn([B.text(f"어떤 **{key}**{shop_first.ro(key)} 할까요? 고르시면 그 재료로 레시피와 장보기를 정리해 드려요."),
                                       B.chips(shop_first.option_texts(text, key, options))], state, "recipe_which_dish")
                     # 2026-11-23 사용자 확인: 짚은 재료(능이버섯)는 어느 쪽을 골라도 필요하니 묻는 자리에서 상품을 먼저 보여 준다
+                    # 2026-11-23 사용자 확인: 닭·오리 상품도 나란히 — 고르기 전에 비교해 볼 수 있게
                     named_ing = shop_first.named_ingredient(text)
-                    if named_ing and shop_first.is_shopping_question(text):
-                        ask.blocks.append(B.text(f"**{named_ing}**{shop_first.eun(named_ing)} 어느 쪽이든 들어가니 상품부터 보여 드려요."))
-                        ask.shopping = [named_ing]
+                    if shop_first.is_shopping_question(text):
+                        picks = shop_first.option_products(options)
+                        meats = "·".join(w for _, w, _ in picks)
+                        ask.blocks.append(B.text(
+                            (f"**{named_ing}**{shop_first.eun(named_ing)} 어느 쪽이든 들어가요. {named_ing} 상품과 " if named_ing else "")
+                            + f"{key}용 **{meats}** 상품을 함께 보여 드려요. 상품을 보고 골라도 돼요."))
+                        ask.shopping = ([named_ing] if named_ing else []) + [q for q, _, _ in picks]
+                        ask.shopping_must = {q: rx for q, _, rx in picks}
                     return ask
                 # 2026-11-23: '능이버섯으로 닭백숙' → '능이버섯 닭백숙' 레시피 (짚은 재료가 재료 목록·사진에 들어가게)
                 dish = shop_first.dish_with(dish, shop_first.named_ingredient(text))

@@ -14,6 +14,10 @@ AMBIGUOUS: dict[str, tuple[tuple[str, ...], str]] = {
     "갈비찜": (("소갈비찜", "돼지갈비찜"), r"소|돼지|한우|LA|엘에이"),
 }
 
+# 선택지마다 장보기 검색어와 제목에 꼭 있어야 할 말 (2026-11-23)
+OPTION_PRODUCTS = {"닭백숙": ("백숙용 닭", "닭", r"닭|영계|삼계"), "오리백숙": ("백숙용 오리", "오리", r"오리(?!지널)"),
+                   "소갈비찜": ("찜용 소갈비", "소갈비", r"소\s*갈비|한우\s*갈비|LA\s*갈비"),
+                   "돼지갈비찜": ("찜용 돼지갈비", "돼지갈비", r"돼지\s*갈비|돈\s*갈비")}
 SHOPPING_Q = re.compile(r"(재료|뭐|무엇|뭘|뭐뭐)\S{0,4}\s*(사야|살까|사면|사요|구매|준비해야|필요해)|장보기|장\s*볼|사야\s*(해|할|돼|되)")
 RECIPE_WORDS = re.compile(r"레시피|만드는\s*(법|방법)|요리\s*(법|방법)|조리\s*(법|방법)|끓이는\s*법|어떻게\s*만들")
 _VIA = re.compile(r"([가-힣]{2,10}?)(?:으로|로)(?=\s)")
@@ -64,6 +68,11 @@ def option_texts(text: str, key: str, options: tuple[str, ...]) -> list[str]:
     return out
 
 
+def option_products(options: tuple[str, ...]) -> list[tuple[str, str, str]]:
+    """선택지 → [(검색어, 이름, 제목에 꼭 있어야 할 말(정규식))] — '닭백숙' → ('백숙용 닭', '닭', '닭|영계|삼계')."""
+    return [OPTION_PRODUCTS[o] for o in options if o in OPTION_PRODUCTS]
+
+
 def is_shopping_question(text: str | None) -> bool:
     t = text or ""
     return bool(SHOPPING_Q.search(t)) and not RECIPE_WORDS.search(t)
@@ -90,4 +99,4 @@ def dish_with(dish: str, ingredient: str | None) -> str:
     return f"{ingredient} {dish}"
 
 
-__all__ = ["ro", "eun", "dish_with", "AMBIGUOUS", "ambiguous", "option_texts", "is_shopping_question", "named_ingredient"]
+__all__ = ["ro", "eun", "option_products", "dish_with", "AMBIGUOUS", "ambiguous", "option_texts", "is_shopping_question", "named_ingredient"]
