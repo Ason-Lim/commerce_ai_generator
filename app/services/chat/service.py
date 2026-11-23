@@ -168,6 +168,14 @@ def close_context(state: dict) -> dict:
 _QA_MISSING = threading.local()   # 2026-11-16: 이 요청 스레드에서 '근거 트렌드 글 없음'이었던 질문
 
 
+
+def _broad_note(cards: list) -> str:
+    """2026-11-23 (3-D ⑤): 범위를 넓힌 말(broaden)로 찾은 추가 후보 — 안내 문구 필수."""
+    from app.services.commerce.search import BROAD_NOTE
+
+    alts = list(dict.fromkeys(c["more_as"] for c in cards or [] if c.get("more_broad") and c.get("more_as")))
+    return BROAD_NOTE.format(alts="'·'".join(alts)) if alts else ""
+
 class ChatService:
     def __init__(self, db: Db | None = None, *, shopping: Callable | None = None,
                  nlu_loader: Callable | None = None, recipe_chat: RecipeChat | None = None,
@@ -811,7 +819,7 @@ class ChatService:
             blocks.append(B.product_list([_public(c, go=go(c)) for c in more], title=f"다른 검색어로 찾은 추가 후보 {len(more)}개",
                                          note=(f"후보가 많지 않아 다른 검색어 {said}(으)로 찾은 추가 후보예요. " if more_few
                                                else f"다른 검색어 {said}(으)로 찾은 추가 후보예요. ") +
-                                              "기존 추천 목록과 함께 정렬하지 않았어요."))
+                                              _broad_note(more) + "기존 추천 목록과 함께 정렬하지 않았어요."))
         # 2026-11-09 A안: 일반 상품 추천에도 목록 끝 비교 카드 (같은 검색 후보 2개 이상)
         if len(picks) + len(others) >= 2:
             from app.services.chat import product_compare
@@ -1234,9 +1242,9 @@ class ChatService:
         from app.services.commerce.search import retry_queries
 
         used = set(info.get("used") or [])
-        alts = retry_queries(info.get("search") or info.get("query") or "")
+        alts = retry_queries(info.get("search") or info.get("query") or "", purpose="few")   # '추가 후보' 칸 (broaden 포함)
         if info.get("origin_search") and info.get("origin_search") != info.get("search"):
-            alts += retry_queries(info["origin_search"])
+            alts += retry_queries(info["origin_search"], purpose="few")
         return [a for a in dict.fromkeys(alts) if a not in used]
 
     @staticmethod
@@ -1349,14 +1357,14 @@ class ChatService:
             dropped = len(more) - len(shown_more)
         if shown_more:
             start = max([c.get("rank") or 0 for c in base.get("cards") or []] or [0])
-            shown_more = [dict(c, rank=start + n, why=[{"text": more_note(c["more_as"]), "basis": "calc"}])
+            shown_more = [dict(c, rank=start + n, why=[{"text": more_note(c["more_as"], c.get("more_broad")), "basis": "calc"}])
                           for n, c in enumerate(shown_more, 1)]
             said = "·".join(f"'{a}'" for a in more_as)
             cond_note = f" 지금 조건({fu.describe_conds(info['conds'])})에 맞지 않는 {dropped}개는 뺐어요." if dropped else ""
             blocks += [B.text(f"'{label}'를 다른 검색어 {said}(으)로 더 찾아봤어요.{cond_note}"),
                        B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in shown_more],
                                       title=f"다른 검색어로 찾은 추가 후보 {len(shown_more)}개",
-                                      note="기존 추천 목록과 함께 정렬하지 않았어요. 같은 관련성·식품 분류 거르기는 거쳤어요.")]
+                                      note=_broad_note(shown_more) + "기존 추천 목록과 함께 정렬하지 않았어요. 같은 관련성·식품 분류 거르기는 거쳤어요.")]
             sets = [dict(s) for s in state.get("seen") or []]
             for s in sets:
                 if s.get("query") == label:

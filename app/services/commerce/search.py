@@ -205,7 +205,7 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     more_tried: list[str] = []
     if error is None and cards and len(cards) <= FEW_RESULTS and more_on_few_on():
         more_list, more_as = search_more(
-            query, terms, [a for a in dict.fromkeys(retry_queries(searched_as or query)
+            query, terms, [a for a in dict.fromkeys(retry_queries(searched_as or query, purpose="few")
                                                     + size_variants(searched_as or query, cards)
                                                     + coupang_gaps_siblings(searched_as or query))
                            if a not in (query, searched_as)],
@@ -249,7 +249,7 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         frozen_list = [dict(c, rank=start + n, why=[{"text": FROZEN_NOTE, "basis": "calc"}])
                        for n, c in enumerate(frozen_list, 1)]
         start = max([start] + [c["rank"] for c in frozen_list])
-        more_list = [dict(c, rank=start + n, why=[{"text": more_note(c["more_as"]), "basis": "calc"}])
+        more_list = [dict(c, rank=start + n, why=[{"text": more_note(c["more_as"], c.get("more_broad")), "basis": "calc"}])
                      for n, c in enumerate(more_list, 1)]
         start = max([start] + [c["rank"] for c in more_list])
         grade_unknown = [dict(c, rank=start + n, why=[c["grade_note"]]) for n, c in enumerate(grade_unknown, 1)]
@@ -346,7 +346,10 @@ def search_more(query: str, terms: list[str] | None, alts: list[str], fetch: Cal
     more_list: list[dict] = []
     more_as: list[str] = []
     seen = set(seen)
+    from app.services.commerce import coupang_gaps
+
     for alt in alts[:max_calls]:
+        broad = coupang_gaps.is_broaden(searched_as or query, alt) or coupang_gaps.is_broaden(query, alt)
         if tried is not None:           # 2026-11-22: 상품이 안 나온 말도 '써 봄'으로 남겨 다음 '더 찾아보기'에서 다시 부르지 않는다
             tried.append(alt)
         try:
@@ -365,7 +368,7 @@ def search_more(query: str, terms: list[str] | None, alts: list[str], fetch: Cal
             if c["key"] in seen or k in seen:
                 continue
             seen |= {c["key"], k}
-            more_list.append(dict(c, more_as=alt))
+            more_list.append(dict(c, more_as=alt, more_broad=broad))
             added += 1
         if added:
             more_as.append(alt)
@@ -386,8 +389,12 @@ def fetch_cards(shopping: Callable, q: str, *, query: str, priority: str | None,
     return [dict(explain.enrich(item_to_card(it, 0), it), _q=query) for it in (result.get("items") or [])[:limit]]
 
 
-def more_note(alt: str) -> str:
-    return f"다른 검색어 '{alt}'(으)로 찾은 추가 후보 — 기존 추천 목록과 함께 정렬하지 않았어요"
+def more_note(alt: str, broad: bool = False) -> str:
+    base = f"다른 검색어 '{alt}'(으)로 찾은 추가 후보 — 기존 추천 목록과 함께 정렬하지 않았어요"
+    return base + (" · 찾으신 조건보다 넓은 말이라 조건에 맞는지 상품명을 확인해 주세요" if broad else "")
+
+
+BROAD_NOTE = "'{alts}'는 찾으신 조건보다 넓은 말이에요 — 조건에 맞는지 상품명과 판매처 표시를 확인해 주세요. "
 
 
 # ── 2026-11-21 대화 확인(올리브·올리브유·엑스트라 버전)에서 나온 고침 ─────────────────
@@ -411,12 +418,13 @@ GRADE_WORD = "엑스트라버진"
 GRADE_UNKNOWN_NOTE = {"text": "상품명에 '엑스트라버진' 표기가 없어요 — 등급은 판매처에서 확인해 주세요", "basis": "mall"}
 
 
-def retry_queries(query: str) -> list[str]:
-    """쿠팡이 0건일 때 다시 찾을 말 — 등급 말이면 ['엑스트라 버진 올리브유', '올리브유'], 아니면 바꿔 쓸 말 표
-    (data/query_synonyms.csv, 2026-11-22 일반화 — app/services/commerce/coupang_gaps.py)."""
+def retry_queries(query: str, *, purpose: str = "zero") -> list[str]:
+    """다시 찾을 말 — 등급 말이면 ['엑스트라 버진 올리브유', '올리브유'], 아니면 바꿔 쓸 말 표
+    (data/query_synonyms.csv, 2026-11-22 일반화 — app/services/commerce/coupang_gaps.py).
+    purpose zero(쿠팡 0건 — 찾은 상품이 추천 후보) 는 범위 넓힌 말(broaden) 을 쓰지 않고, few('추가 후보' 칸) 만 쓴다."""
     from app.services.commerce import coupang_gaps
 
-    return coupang_gaps.retry_queries(query)
+    return coupang_gaps.retry_queries(query, purpose=purpose)
 
 
 def grade_filter(query: str, cards: list[dict]) -> tuple[list[dict], dict | None]:

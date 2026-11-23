@@ -231,7 +231,7 @@ async function loadGaps(){const j=await api("/admin/api/coupang-gaps");const t=$
  else if(!j.items.length)t.append(el("tr",{},el("td",{colspan:"6",class:"note"},"아직 없어요")));
  for(const g of j.items)t.append(el("tr",{},el("td",{},g.query),el("td",{},String(g.zero)),el("td",{},String(g.filtered)),
   el("td",{},String(g.retry_found)),el("td",{},g.alts.join(", ")||"—"),el("td",{},g.last)));
- $("gap-syn").textContent="바꿔 쓸 말 "+j.synonyms.length+"개 (data/query_synonyms.csv): "+j.synonyms.slice(0,8).map(x=>x.from+"→"+x.to).join(", ")+(j.synonyms.length>8?" …":"")}
+ $("gap-syn").textContent="바꿔 쓸 말 "+j.synonyms.length+"개 (data/query_synonyms.csv): "+j.synonyms.slice(0,8).map(x=>x.from+"→"+x.to+(x.kind==="broaden"?"(넓힘·추가 후보만)":x.kind==="typo"?"(오타)":"")).join(", ")+(j.synonyms.length>8?" …":"")}
 loadGaps().catch(showErr);
 
 </script>
