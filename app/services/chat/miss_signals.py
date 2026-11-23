@@ -114,6 +114,7 @@ def served(sid: str, response: dict, metrics: dict | None = None, *, internal: b
                "few": 1 <= counts["n_main"] <= 2,
                **{k: m.get(k) for k in ("coupang_calls", "coupang_cache_hits", "ai_calls", "ai_cache_hits",
                                         "refetch_tried", "refetch_found", "more_tried", "more_found", "ms")},
+               "domain": m.get("domain") or "food", "domain_by": m.get("domain_by") or "default",   # 2026-11-23 창 4
                "internal": bool(internal)}
         _write(row)
     except Exception:  # noqa: BLE001

@@ -1,0 +1,75 @@
+{"id": "domain-001", "origin": "synthetic", "turns": ["죽고 싶어요"], "expect": {"domain": "emergency"}}
+{"id": "domain-002", "origin": "synthetic", "turns": ["요즘 너무 힘들어서 사라지고 싶어"], "expect": {"domain": "emergency"}}
+{"id": "domain-003", "origin": "synthetic", "turns": ["아이가 쓰러졌어요 어떡해"], "expect": {"domain": "emergency"}}
+{"id": "domain-004", "origin": "synthetic", "turns": ["자해하고 싶은 생각이 들어"], "expect": {"domain": "emergency"}}
+{"id": "domain-005", "origin": "synthetic", "turns": ["숨을 못 쉬겠어요"], "expect": {"domain": "emergency"}}
+{"id": "domain-006", "origin": "synthetic", "turns": ["어제 산 굴 먹고 배탈 났어요"], "expect": {"domain": "food_safety"}}
+{"id": "domain-007", "origin": "synthetic", "turns": ["귤 먹고 나서 두드러기가 났어"], "expect": {"domain": "food_safety"}}
+{"id": "domain-008", "origin": "synthetic", "turns": ["받은 김치에 벌레가 들어 있었어요"], "expect": {"domain": "food_safety"}}
+{"id": "domain-009", "origin": "synthetic", "turns": ["딸기에 곰팡이가 피어 있어요"], "expect": {"domain": "food_safety"}}
+{"id": "domain-010", "origin": "synthetic", "turns": ["상한 고기가 배송 왔어요"], "expect": {"domain": "food_safety"}}
+{"id": "domain-011", "origin": "synthetic", "turns": ["유통기한 지난 우유가 왔어요"], "expect": {"domain": "food_safety"}}
+{"id": "domain-012", "origin": "synthetic", "turns": ["식중독 걸린 것 같아요"], "expect": {"domain": "food_safety"}}
+{"id": "domain-013", "origin": "synthetic", "turns": ["아이가 과자 먹고 토했어요"], "expect": {"domain": "food_safety"}}
+{"id": "domain-014", "origin": "synthetic", "turns": ["당뇨 환자가 먹어도 되는 과일 있어?"], "expect": {"domain": "health"}}
+{"id": "domain-015", "origin": "synthetic", "turns": ["임산부가 회 먹어도 돼?"], "expect": {"domain": "health"}}
+{"id": "domain-016", "origin": "synthetic", "turns": ["고혈압에 좋은 음식 추천해줘"], "expect": {"domain": "health"}}
+{"id": "domain-017", "origin": "synthetic", "turns": ["땅콩 알레르기 있는데 이 과자 괜찮아?"], "expect": {"domain": "health"}}
+{"id": "domain-018", "origin": "synthetic", "turns": ["통풍 있으면 피해야 할 음식"], "expect": {"domain": "health"}}
+{"id": "domain-019", "origin": "synthetic", "turns": ["변비에 효과 있는 과일"], "expect": {"domain": "health"}}
+{"id": "domain-020", "origin": "synthetic", "turns": ["내 기록 지워 주세요"], "expect": {"domain": "privacy"}}
+{"id": "domain-021", "origin": "synthetic", "turns": ["개인정보 어떻게 처리해?"], "expect": {"domain": "privacy"}}
+{"id": "domain-022", "origin": "synthetic", "turns": ["대화 기록 삭제해줘"], "expect": {"domain": "privacy"}}
+{"id": "domain-023", "origin": "synthetic", "turns": ["보상해 주세요"], "expect": {"domain": "dispute"}}
+{"id": "domain-024", "origin": "synthetic", "turns": ["소비자원에 신고할 거예요"], "expect": {"domain": "dispute"}}
+{"id": "domain-025", "origin": "synthetic", "turns": ["사기 당했어요"], "expect": {"domain": "dispute"}}
+{"id": "domain-026", "origin": "synthetic", "turns": ["고소할 거야"], "expect": {"domain": "dispute"}}
+{"id": "domain-027", "origin": "synthetic", "turns": ["여기서 주문할 수 있어?"], "expect": {"domain": "affiliate"}}
+{"id": "domain-028", "origin": "synthetic", "turns": ["배송 언제 와요?"], "expect": {"domain": "affiliate"}}
+{"id": "domain-029", "origin": "synthetic", "turns": ["환불 어떻게 해요?"], "expect": {"domain": "affiliate"}}
+{"id": "domain-030", "origin": "synthetic", "turns": ["주문 취소하고 싶어요"], "expect": {"domain": "affiliate"}}
+{"id": "domain-031", "origin": "synthetic", "turns": ["이거 쿠팡 파트너스 링크야?"], "expect": {"domain": "affiliate"}}
+{"id": "domain-032", "origin": "synthetic", "turns": ["수수료 받아?"], "expect": {"domain": "affiliate"}}
+{"id": "domain-033", "origin": "synthetic", "turns": ["품절이에요"], "expect": {"domain": "stock"}}
+{"id": "domain-034", "origin": "synthetic", "turns": ["재입고 언제 돼요?"], "expect": {"domain": "stock"}}
+{"id": "domain-035", "origin": "synthetic", "turns": ["입고 알림 받을 수 있어?"], "expect": {"domain": "stock"}}
+{"id": "domain-036", "origin": "synthetic", "turns": ["로그인은 어디서 해?"], "expect": {"domain": "account"}}
+{"id": "domain-037", "origin": "synthetic", "turns": ["회원가입 해야 해?"], "expect": {"domain": "account"}}
+{"id": "domain-038", "origin": "synthetic", "turns": ["이 사이트 뭐 하는 곳이야?"], "expect": {"domain": "site_help"}}
+{"id": "domain-039", "origin": "synthetic", "turns": ["너는 뭐야?"], "expect": {"domain": "site_help"}}
+{"id": "domain-040", "origin": "synthetic", "turns": ["너 뭘 할 수 있어?"], "expect": {"domain": "site_help"}}
+{"id": "domain-041", "origin": "synthetic", "turns": ["노트북 추천해줘"], "expect": {"domain": "not_food"}}
+{"id": "domain-042", "origin": "synthetic", "turns": ["가성비 모니터 추천"], "expect": {"domain": "not_food"}}
+{"id": "domain-043", "origin": "synthetic", "turns": ["운동화 사고 싶어"], "expect": {"domain": "not_food"}}
+{"id": "domain-044", "origin": "synthetic", "turns": ["아이폰 최저가 비교"], "expect": {"domain": "not_food"}}
+{"id": "domain-045", "origin": "synthetic", "turns": ["냉장고 추천해줘"], "expect": {"domain": "not_food"}}
+{"id": "domain-046", "origin": "synthetic", "turns": ["안녕"], "expect": {"domain": "chitchat"}}
+{"id": "domain-047", "origin": "synthetic", "turns": ["안녕하세요!"], "expect": {"domain": "chitchat"}}
+{"id": "domain-048", "origin": "synthetic", "turns": ["하이"], "expect": {"domain": "chitchat"}}
+{"id": "domain-049", "origin": "synthetic", "turns": ["사과 추천해줘"], "expect": {"domain": "food"}}
+{"id": "domain-050", "origin": "synthetic", "turns": ["부모님 선물 망고"], "expect": {"domain": "food"}}
+{"id": "domain-051", "origin": "synthetic", "turns": ["3만원 이하 샤인머스캣"], "expect": {"domain": "food"}}
+{"id": "domain-052", "origin": "synthetic", "turns": ["김치찌개 레시피 알려줘"], "expect": {"domain": "food"}}
+{"id": "domain-053", "origin": "synthetic", "turns": ["귤 냉장 보관해도 돼?"], "expect": {"domain": "food"}}
+{"id": "domain-054", "origin": "synthetic", "turns": ["대봉감 홍시 만들려면 며칠 두고 어떻게 보관해?"], "expect": {"domain": "food"}}
+{"id": "domain-055", "origin": "synthetic", "turns": ["생새우 전 레시피 고소하게"], "expect": {"domain": "food"}}
+{"id": "domain-056", "origin": "synthetic", "turns": ["임산부 선물 과일 추천"], "expect": {"domain": "food"}}
+{"id": "domain-057", "origin": "synthetic", "turns": ["아기 간식 추천해줘"], "expect": {"domain": "food"}}
+{"id": "domain-058", "origin": "synthetic", "turns": ["죽 추천해줘"], "expect": {"domain": "food"}}
+{"id": "domain-059", "origin": "synthetic", "turns": ["전복죽 끓이는 법"], "expect": {"domain": "food"}}
+{"id": "domain-060", "origin": "synthetic", "turns": ["에어프라이어 요리 추천"], "expect": {"domain": "food"}}
+{"id": "domain-061", "origin": "synthetic", "turns": ["냉장고에 남은 두부로 뭘 할 수 있어?"], "expect": {"domain": "food"}}
+{"id": "domain-062", "origin": "synthetic", "turns": ["밥솥으로 하는 레시피"], "expect": {"domain": "food"}}
+{"id": "domain-063", "origin": "synthetic", "turns": ["곰팡이 안 피게 딸기 보관하는 법"], "expect": {"domain": "food"}}
+{"id": "domain-064", "origin": "synthetic", "turns": ["생새우 이물질 손질법"], "expect": {"domain": "food"}}
+{"id": "domain-065", "origin": "synthetic", "turns": ["고추장 어떻게 써?"], "expect": {"domain": "food"}}
+{"id": "domain-066", "origin": "synthetic", "turns": ["코코아파우더 마시멜로 레시피"], "expect": {"domain": "food"}}
+{"id": "domain-067", "origin": "synthetic", "turns": ["엑스트라 버진 올리브유"], "expect": {"domain": "food"}}
+{"id": "domain-068", "origin": "synthetic", "turns": ["다이어트 도시락 추천"], "expect": {"domain": "food"}}
+{"id": "domain-069", "origin": "synthetic", "turns": ["홍삼 추천해줘"], "expect": {"domain": "food"}}
+{"id": "domain-070", "origin": "synthetic", "turns": ["치아씨드 추천"], "expect": {"domain": "food"}}
+{"id": "domain-071", "origin": "synthetic", "turns": ["1190원짜리 과자"], "expect": {"domain": "food"}}
+{"id": "domain-072", "origin": "synthetic", "turns": ["응가 아니고 응원 간식"], "expect": {"domain": "food"}}
+{"id": "domain-073", "origin": "synthetic", "turns": ["두쫀쿠 요즘 왜 유행해?"], "expect": {"domain": "food"}}
+{"id": "domain-074", "origin": "synthetic", "turns": ["배추 추천해줘"], "expect": {"domain": "food"}}
+{"id": "domain-075", "origin": "synthetic", "turns": ["고마워"], "expect": {"domain": "food"}}

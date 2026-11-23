@@ -30,6 +30,7 @@ from app.services.chat import explain, saved as saved_mod
 from app.services.chat import food_tips as food_tips_mod
 from app.services.chat import hot as hot_mod
 from app.services.chat import answer_feedback as answer_fb
+from app.services.chat import turn_metrics
 from app.services.trend_posts import qa as trend_qa
 from app.services.chat.budget import is_budget_answer, parse_budget, strip_budget
 from app.services.chat.state_store import ChatStateStore, new_state
@@ -238,7 +239,8 @@ class ChatService:
         # 2026-11-16: 실수 신호 모으기 — 약한 일치·0건·다시 찾기·남은 검토 의견 (대화 결과는 바꾸지 않는다)
         from app.services.chat import miss_signals
 
-        miss_signals.observe(response.get("session_id") or "", (message or chip or "").strip(), response)
+        if not stage.startswith("domain_"):     # 2026-11-23: 식품 아닌 분야(위급·건강 등) 문장은 실수 신호에 남기지 않는다
+            miss_signals.observe(response.get("session_id") or "", (message or chip or "").strip(), response)
         # 2026-11-23 (3-D ②): 지표 분모 — 차례마다 '보여 준 것' 한 줄 (문장은 남기지 않음)
         miss_signals.served(response.get("session_id") or "", response, metrics, internal=turn_metrics.INTERNAL.get())
         return response
@@ -260,6 +262,15 @@ class ChatService:
 
         if not text and not answers:
             return self._response(sid, "empty", [B.text("무엇을 도와드릴까요?")])
+        # 2026-11-23 창 4 ①: 분야 판단 (규칙층) — 위급·식품 안전·건강·주문/배송·식품 아님 등은 고정 안내, 식품은 아래 흐름 그대로
+        if text and not answers:
+            from app.services.chat import domain as domain_mod
+
+            decision = domain_mod.by_rules(text)
+            turn_metrics.note("domain", decision.domain if decision else "food")
+            turn_metrics.note("domain_by", decision.by if decision else "default")
+            if decision is not None and decision.domain != "food":
+                return self._domain_turn(sid, decision, state)
 
         # 2026-11-01: 관심 상품 비교 · 예산 답변 ('3만원 이하요') — 새 검색 없이 저장된 후보로 답한다
         if text and not answers and COMPARE_SAVED_RE.search(text):
@@ -1431,6 +1442,15 @@ class ChatService:
         state = _log_turn(dict(state, mode="shopping"), text, "shopping_followup", calls=calls)
         self._try_commit(sid, state, revision, persist)
         return self._response(sid, "shopping_followup", blocks, meta=_turn_meta(state, calls))
+
+    def _domain_turn(self, sid: str, decision, state: dict) -> dict:
+        """식품이 아닌 분야 — 고정 안내만 (상품·제휴 링크 없음, 대화 상태는 바꾸지 않음)."""
+        from app.services.chat import domain_answers
+
+        seen = state.get("seen") or []
+        last_query = (seen[-1] or {}).get("query") if seen else None
+        return self._response(sid, "domain_" + decision.domain,
+                              domain_answers.blocks_for(decision.domain, decision.cue, last_query))
 
     @staticmethod
     def _response(sid, stage, blocks, meta: dict | None = None):
