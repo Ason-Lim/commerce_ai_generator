@@ -59,7 +59,11 @@ def from_signals(path: Path) -> dict:
     # 신호가 분자에만 들어가 200% 같은 값이 나오지 않게
     shown_sids = {r.get("sid") for r in rows if r.get("kind") == "served" and not r.get("internal")
                   and (r.get("n_main") or 0) > 0}
+    out["domains"] = {}
     for r in rows:
+        if r.get("kind") == "served" and not r.get("internal"):       # 2026-11-23 창 4 ④: 분야별 차례 수 (문장 없음)
+            dom = r.get("domain") or "food"
+            out["domains"][dom] = out["domains"].get(dom, 0) + 1
         if r.get("kind") == "served" and not r.get("internal") and r.get("product"):
             out["product"] += 1
             out["zero"] += bool(r.get("zero"))
@@ -176,6 +180,10 @@ def summarize(days: dict[str, dict], end: date, length: int | None) -> dict:
     tot = {k: sum(v.get(k, 0) for v in keep) for k in COUNT_KEYS}
     moves = defaultdict(lambda: [0, 0])
     fb = defaultdict(int)
+    doms: dict[str, int] = defaultdict(int)
+    for v in keep:
+        for k, n in (v.get("domains") or {}).items():
+            doms[k] += n
     lists = {k: [x for v in keep for x in v.get(k, [])] for k in ("coupang_calls", "ai_calls", "ms")}
     for v in keep:
         for s, (num, den) in (v.get("moves") or {}).items():
@@ -198,10 +206,12 @@ def summarize(days: dict[str, dict], end: date, length: int | None) -> dict:
         "판매처 이동 — 추가 후보 칸 (세션)": rate(*moves["chat_extra"]),
         "판매처 이동 — 검색 결과 링크 (세션)": rate(*moves["search_link"]),
         "나쁨 비율 (평가한 응답 중)": rate(fb["bad"], fb["rated"]),
+        "식품 아닌 분야 차례 비율 (창 4)": rate(sum(n for k, n in doms.items() if k != "food"), sum(doms.values())),
     }
     cost = {k: {"mean": round(sum(v) / len(v), 2) if v else None, "p95": _pct(v, 0.95), "n": len(v)}
             for k, v in lists.items()}
-    return {"days": len(keep), "product_turns": p, "metrics": metrics, "cost": cost}
+    return {"days": len(keep), "product_turns": p, "metrics": metrics, "cost": cost,
+            "domains": dict(sorted(doms.items(), key=lambda kv: -kv[1]))}
 
 
 def report(end: date, days: dict[str, dict]) -> dict:

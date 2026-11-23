@@ -1,9 +1,9 @@
-"""관리자 화면 어디서든 위쪽 탭 6개(운영·트렌드·근거·AI·개선·B2B)가 똑같이 보여야 한다."""
+"""관리자 화면 어디서든 위쪽 탭 7개(운영·트렌드·근거·AI·개선·CS·B2B)가 똑같이 보여야 한다 (CS 는 2026-11-23 창 4 ④)."""
 import re
 from pathlib import Path
 
 PAGES = sorted(Path("app/admin").rglob("*.html"))
-TABS = ["/admin", "/admin/trends", "/admin/evidence", "/admin/ai", "/admin/improve", "/admin/b2b"]
+TABS = ["/admin", "/admin/trends", "/admin/evidence", "/admin/ai", "/admin/improve", "/admin/cs", "/admin/b2b"]
 
 
 def test_every_admin_page_has_all_top_tabs():

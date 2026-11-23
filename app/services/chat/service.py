@@ -247,6 +247,15 @@ class ChatService:
             miss_signals.observe(response.get("session_id") or "", (message or chip or "").strip(), response)
         # 2026-11-23 (3-D ②): 지표 분모 — 차례마다 '보여 준 것' 한 줄 (문장은 남기지 않음)
         miss_signals.served(response.get("session_id") or "", response, metrics, internal=turn_metrics.INTERNAL.get())
+        # 2026-11-23 창 4 ④: 분야 판단 주간 검수 샘플 — 손님이 쓴 문장만(칩·구조화 답 제외), 가린 뒤 문장, 90일
+        if message and not answers and not chip:
+            try:
+                from app.services.cs import review as cs_review
+
+                cs_review.record(response.get("session_id") or "", message, metrics.get("domain"), metrics.get("domain_by"),
+                                 internal=turn_metrics.INTERNAL.get())
+            except Exception:  # noqa: BLE001 — 검수 샘플이 대화를 막지 않는다
+                log.warning("cs review sample failed")
         return response
 
     def _handle_turn(self, session_id: str | None, message: str | None = None,
