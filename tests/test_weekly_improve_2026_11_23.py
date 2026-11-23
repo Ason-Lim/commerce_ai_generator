@@ -111,3 +111,14 @@ def test_requery_without_denominator_is_not_counted(dirs):
     write(sig, "2026-11-20", [{"kind": "requery", "sid": "a", "text": "다른 거"}])
     d = wi.from_signals(sig / "2026-11-20.jsonl")
     assert (d["requery"], d["requery_base"]) == (0, 0)
+
+
+def test_launchd_schedule_sunday_2330():
+    import plistlib
+
+    d = plistlib.load(open(ROOT / "ops" / "launchd" / "com.commerce_ai.weekly_improve.plist", "rb"))
+    assert d["Label"] == "com.commerce_ai.weekly_improve"
+    assert d["StartCalendarInterval"] == {"Weekday": 0, "Hour": 23, "Minute": 30}
+    assert d["ProgramArguments"][-1] == "__REPO__/scripts/run_weekly_improve.sh"
+    run = (ROOT / "scripts" / "run_weekly_improve.sh").read_text(encoding="utf-8")
+    assert "scripts/weekly_improve.py --end" in run
