@@ -103,6 +103,13 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
 .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
 .actions button:hover{border-color:var(--ink2)}
+.period{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;font-size:13px;color:var(--ink2);margin:-2px 0 8px}
+.period b{color:var(--ink);font-size:14px}
+.pchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.pchips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.pchips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.pchips .custom{display:inline-flex;gap:4px;align-items:center;font-size:13px;color:var(--ink2);margin-left:4px}
+.pchips input[type=date]{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;font-size:13px}
 .composer{position:fixed;left:280px;right:0;bottom:0;padding:12px 28px 18px;background:linear-gradient(to top,var(--bg) 75%,transparent)}
 .composer form{max-width:1124px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 6px 24px rgba(20,33,46,.08)}
 .composer textarea{width:100%;border:0;resize:none;outline:none;min-height:46px;max-height:220px}
@@ -193,6 +200,23 @@ async function run(prompt){
   turn.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
+// 입찰 트렌드 분석 기간 (2026-11-23): 분석 기간 · 최종 추출 시각 · 최근 7일/30일/3개월 · 기간 설정
+const ymd=s=>s?String(s).replace(/^(\d{4})-(\d{2})-(\d{2}).*/,"$1.$2.$3."):"-";
+function periodBar(b){
+  const pr=b.period||{},w=document.createElement("div"),tail=b.include_legacy?" 기존 데이터 포함":"";
+  const got=pr.last_collected?`<span>최종 추출 <b>${esc(pr.last_collected)}</b></span>`
+    :`<span>최종 추출 <b>기록 없음</b>${pr.newest_posted?` · 가장 최근 공고 ${esc(pr.newest_posted)}`:""}</span>`;
+  w.innerHTML=`<div class="period" aria-label="분석 기간"><span>분석 기간 <b>${pr.start?esc(ymd(pr.start))+" ~ "+esc(ymd(pr.end)):"공고 없음"}</b> (${esc(pr.label||"전체 기간")} · ${esc(pr.basis||"공고일 기준")})</span>${got}${pr.undated?`<span>날짜 모르는 공고 ${pr.undated}건 제외</span>`:""}</div>
+  <div class="pchips" role="group" aria-label="분석 기간 바꾸기"></div>`;
+  const c=w.querySelector(".pchips");
+  [["all","전체","입찰 트렌드 분석 전체 기간"],["7d","최근 7일","입찰 트렌드 분석 최근 7일"],["30d","최근 30일","입찰 트렌드 분석 최근 30일"],["3m","최근 3개월","입찰 트렌드 분석 최근 3개월"]]
+    .forEach(([k,t,q])=>{const x=document.createElement("button");x.type="button";x.textContent=t;x.setAttribute("aria-pressed",String(pr.key===k));x.onclick=()=>run(q+tail);c.append(x)});
+  const cu=document.createElement("span");cu.className="custom";
+  cu.innerHTML=`기간 설정 <input type="date" aria-label="시작일" value="${esc(pr.key==="custom"?pr.start:"")}"> ~ <input type="date" aria-label="종료일" value="${esc(pr.key==="custom"?pr.end:"")}">`;
+  const go=document.createElement("button");go.type="button";go.textContent="적용";go.setAttribute("aria-pressed",String(pr.key==="custom"));
+  go.onclick=()=>{const [a,z]=cu.querySelectorAll("input");if(!a.value||!z.value){(a.value?z:a).focus();return}run(`입찰 트렌드 분석 기간 ${a.value}~${z.value}${tail}`)};
+  cu.append(go);c.append(cu);return w}
+
 function panel(title,n){const p=document.createElement("div");p.className="panel";p.innerHTML=`<h3>${esc(title)}${n?`<span class="n">${esc(n)}</span>`:""}</h3>`;return p}
 
 // 마감까지 남은 날 (마감 문자열 'YYYY-MM-DD HH:MM' — 날짜만 비교)
@@ -227,6 +251,7 @@ function render(b){
   if(b.type==="checkpoints"){const p=panel(`${b.bid_type} 점검 포인트`,`요구 기업 유형 ${b.company_type}`);p.insertAdjacentHTML("beforeend",`<div class="cp"><div><h4>요구사항</h4><ul>${b.requirements.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
     <div><h4>제안 포인트</h4><ul>${b.strategies.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>-</li>"}</ul></div><div><h4>리스크</h4><ul>${b.risks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div><div class="q" style="margin-top:8px">${esc(b.basis)}</div>`);return p}
   if(b.type==="trends"){const p=panel("입찰 트렌드",`집계 ${b.total}건`+(b.excluded.legacy?` · 미검증 기존 데이터 ${b.excluded.legacy}건 제외`:""));
+    p.append(periodBar(b));
     const hb=(t,rows)=>{const m=Math.max(1,...rows.map(r=>r.count));return `<div><h4>${esc(t)}</h4>${rows.map(r=>`<div class="hb"><span>${esc(r.label)}</span><div class="track"><i style="width:${r.count/m*100}%"></i></div><span class="n">${r.count}건${r.pct!=null?" · "+r.pct+"%":""}</span></div>`).join("")}</div>`};
     p.insertAdjacentHTML("beforeend",`<ul style="margin:0 0 12px;padding-left:18px">${b.report.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><div class="tg">${hb("선물 조달 유형",b.bid_types)}${hb("예산 규모",b.budget_bands)}${hb("요구 기업 유형",b.company_types)}${hb("기관 유형",b.institution_types)}</div>
     <div class="q" style="margin-top:8px">유형·자격요건은 키워드 규칙 분류입니다. 차트 전체는 <a href="/admin/b2b/monitor">선물 입찰 모니터 → 트렌드 분석</a>에서 볼 수 있어요.</div>`);return p}

@@ -14,13 +14,13 @@ import csv
 import hashlib
 import io
 import json
-from datetime import date
+from datetime import date, datetime
 
 import requests
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.admin.b2b.evidence import _upsert, engine, t_bid
+from app.admin.b2b.evidence import _upsert, engine, t_bid, t_doc
 from app.admin.b2b.gift_monitor import classify
 from app.admin.b2b.models import BidRequirement
 from app.admin.b2b.request_parser import parse
@@ -146,6 +146,21 @@ def list_bids() -> list[BidNotice]:
     bids = [BidNotice(**r) for r in rows]
     bids.sort(key=lambda b: (classify.parse_date(b.deadline) or date.min), reverse=True)
     return bids
+
+
+# ── 마지막 수집(추출) 시각 — 트렌드 분석에 '최종 추출' 로 표시 (2026-11-23 사용자 요청) ──
+_COLLECT_DOC = "collect:last"
+
+
+def mark_collected(at: datetime, source: str, found: int, new: int) -> None:
+    payload = {"at": at.isoformat(timespec="minutes"), "source": source, "found": found, "new": new}
+    with engine().begin() as c:
+        _upsert(c, t_doc, "doc_id", dict(doc_id=_COLLECT_DOC, kind="collect_run", bid_id=None, payload=payload))
+
+
+def last_collected() -> dict | None:
+    with engine().connect() as c:
+        return c.execute(select(t_doc.c.payload).where(t_doc.c.doc_id == _COLLECT_DOC)).scalar()
 
 
 def get(bid_id: str) -> BidNotice | None:

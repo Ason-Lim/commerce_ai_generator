@@ -144,8 +144,11 @@ class Console:
 
     def _trends(self, w, p, today):
         legacy = bool(re.search(r"기존|미검증|전체\s*데이터", p))
-        t = trends.analyze(include_unverified=True, include_legacy=legacy, today=today)
-        return [{"type": "text", "md": f"입찰 트렌드를 집계했어요 (대상 {t['total']}건)."},
+        period = trends.parse_period(p, today)
+        t = trends.analyze(include_unverified=True, include_legacy=legacy, today=today, period=period)
+        t["include_legacy"] = legacy
+        span = f"{period['label']} · " if period["key"] != "all" else ""
+        return [{"type": "text", "md": f"입찰 트렌드를 집계했어요 ({span}대상 {t['total']}건)."},
                 {"type": "trends", **t},
                 {"type": "actions", "items": ["입찰중 공고 보여줘", "기존 데이터 포함해서 트렌드 보여줘"]}]
 
