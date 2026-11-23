@@ -51,6 +51,12 @@ def record(task: str, model: str | None, tokens_in: int | None = None, tokens_ou
     """model = 요청한 이름(예: deepseek:deepseek-v4-flash), served = 응답이 알려 준 실제 처리 모델,
     hit = 입력 중 판매사 캐시 적중 토큰 (요금이 다름)."""
     try:
+        from app.services.chat import turn_metrics       # 2026-11-23 3-D ②: 대화 차례 안이면 AI 호출·캐시 수를 센다
+
+        turn_metrics.bump("ai_cache_hits" if cached else "ai_calls")
+    except Exception:  # noqa: BLE001
+        pass
+    try:
         with _conn() as conn:
             conn.execute("INSERT INTO ai_usage (at, task, model, tokens_in, tokens_out, cached, hit_tokens, served) "
                          "VALUES (?,?,?,?,?,?,?,?)",

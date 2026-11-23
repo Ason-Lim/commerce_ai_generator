@@ -60,7 +60,7 @@ def test_chat_shows_notice_search_links_and_retry_not_zero_found(sqlite_db, tmp_
     if main_naver_on():
         assert any(b["type"] == "search_links" for b in res["blocks"])
     kinds = [json.loads(line)["kind"] for p in tmp_path.glob("*.jsonl") for line in p.read_text(encoding="utf-8").splitlines()]
-    assert kinds == ["source_failed"]
+    assert [k for k in kinds if k != "served"] == ["source_failed"]       # served = 분모 줄 (2026-11-23 3-D ②)
 
 
 def main_naver_on() -> bool:

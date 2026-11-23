@@ -10,6 +10,7 @@
 - review_left  레시피 카드에 고쳐 쓴 뒤에도 '검토 AI 의견'이 남음
 - intent_rejected  문장 뜻 읽기(LLM) 답이 검사에서 버려져 규칙으로 넘어감
 - source_failed    쿠팡(주 경로)을 불러오지 못함 — 2026-11-16 R3 ④ 로 DB 예비 경로가 없어져 그대로 안내만 나감
+- served           (2026-11-23 3-D ②) 신호가 아니라 **분모** — 차례마다 보여 준 칸별 상품 수·호출 수·시간. 문장 없음
 
 저장: var/signals/YYYY-MM-DD.jsonl (한 줄에 신호 하나). 데이터베이스를 바꾸지 않고, 실패해도 대화는 그대로 진행된다.
 개인정보: 손님 문장은 앞 200자만, 세션 id 는 앞 8자만 남긴다. 베타 전에 개인정보 처리방침에 '서비스 개선을 위한 대화 기록'을 적는다.
@@ -64,6 +65,67 @@ def record(kind: str, *, text: str | None, sid: str | None = None, stage: str | 
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
     except Exception:  # noqa: BLE001
         log.warning("miss signal not saved", exc_info=True)
+
+
+# ── 2026-11-23 (창 3-D ②): 지표 분모 — 차례마다 '보여 준 것' 한 줄 ─────────────────────────────
+# 실수 신호는 분자뿐이라 '최종 0건 비율'·'후보 1~2개 비율'·'자동 다시 찾기 비율'·판매처 이동 비율의 분모가 없었다
+# (웹 대화는 search_log·impression_log 를 쓰지 않음 — 옛 Streamlit 화면만). 같은 파일에 kind=served 로 남긴다.
+# 남기는 것: 세션 앞 8자 · 단계 · 상품 차례인지 · 칸별 상품 수 · 검색 결과 링크를 보였는지 · 쿠팡/AI 호출·캐시 수 ·
+# 다시 찾기·더 찾기 시도/성공 · 걸린 시간(ms) · 운영자 시험 여부. **손님 문장은 남기지 않는다.**
+EXTRA_TITLE = "추가 후보"
+
+
+def shown_counts(blocks: list[dict]) -> dict:
+    """화면 블록 → 칸별 상품 수. main = 펼친 추천 후보, collapsed = 접힌 '다른 후보', extra = '추가 후보' 칸."""
+    out = {"n_main": 0, "n_collapsed": 0, "n_extra": 0, "search_links": False}
+    for b in blocks or []:
+        data = b.get("data") or {}
+        if b.get("type") == "search_links":
+            out["search_links"] = True
+        if b.get("type") != "product_list":
+            continue
+        n = len(data.get("items") or [])
+        if EXTRA_TITLE in str(data.get("title") or ""):
+            out["n_extra"] += n
+        elif data.get("collapsed"):
+            out["n_collapsed"] += n
+        else:
+            out["n_main"] += n
+    return out
+
+
+def served(sid: str, response: dict, metrics: dict | None = None, *, internal: bool = False) -> None:
+    """한 차례가 끝나면 한 줄 (kind=served). 실패해도 대화는 그대로."""
+    if not enabled():
+        return
+    try:
+        stage = str(response.get("stage") or "")
+        counts = shown_counts(response.get("blocks") or [])
+        m = dict(metrics or {})
+        product = bool(counts["n_main"] or counts["n_extra"] or counts["n_collapsed"]
+                       or m.get("coupang_calls") or m.get("coupang_cache_hits")
+                       or "shop" in stage or "product" in stage)
+        shown_any = counts["n_main"] or counts["n_extra"]
+        # 불러오기 실패(쿠팡 장애)는 '0건'과 따로 센다 — 최종 0건 비율은 찾았는데 보여 줄 게 없는 경우만
+        failed = product and not shown_any and "불러오지 못했" in json.dumps(response.get("blocks") or [], ensure_ascii=False)
+        row = {"at": datetime.now(KST).isoformat(timespec="seconds"), "kind": "served", "sid": (sid or "")[:8],
+               "stage": stage, "product": product, **counts,
+               "zero": product and not shown_any and not failed, "failed": failed,
+               "few": 1 <= counts["n_main"] <= 2,
+               **{k: m.get(k) for k in ("coupang_calls", "coupang_cache_hits", "ai_calls", "ai_cache_hits",
+                                        "refetch_tried", "refetch_found", "more_tried", "more_found", "ms")},
+               "internal": bool(internal)}
+        _write(row)
+    except Exception:  # noqa: BLE001
+        log.warning("served row not saved", exc_info=True)
+
+
+def _write(row: dict) -> None:
+    path = _dir() / f"{row['at'][:10]}.jsonl"
+    with _LOCK:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def words(text: str) -> list[str]:

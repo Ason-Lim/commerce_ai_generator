@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import re
 import threading
+import time
 import uuid
 from collections.abc import Callable
 from contextlib import contextmanager
@@ -204,10 +205,16 @@ class ChatService:
 
         # 2026-11-22 (검토 의견 3): 입구에서 가린 일이 있으면 이 차례는 학습 데이터에 담지 않는다 (가린 뒤 문장만 보면 놓침)
         pii_token = _dataset.PII_SEEN.set(bool(pii_kinds))
+        from app.services.chat import turn_metrics          # 2026-11-23 3-D ②: 차례별 쿠팡·AI 호출 수와 걸린 시간
+
+        metrics, metrics_token = turn_metrics.start()
+        started = time.monotonic()
         try:
             response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
         finally:
             _dataset.PII_SEEN.reset(pii_token)
+            turn_metrics.stop(metrics_token)
+        metrics["ms"] = int((time.monotonic() - started) * 1000)
         if pii_kinds:
             blocks = list(response.get("blocks") or [])
             at = 1 if blocks and (blocks[0].get("data") or {}).get("affiliate") else 0
@@ -224,6 +231,8 @@ class ChatService:
         from app.services.chat import miss_signals
 
         miss_signals.observe(response.get("session_id") or "", (message or chip or "").strip(), response)
+        # 2026-11-23 (3-D ②): 지표 분모 — 차례마다 '보여 준 것' 한 줄 (문장은 남기지 않음)
+        miss_signals.served(response.get("session_id") or "", response, metrics, internal=turn_metrics.INTERNAL.get())
         return response
 
     def _handle_turn(self, session_id: str | None, message: str | None = None,

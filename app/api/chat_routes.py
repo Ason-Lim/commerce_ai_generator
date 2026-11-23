@@ -188,9 +188,16 @@ def public(response: dict) -> dict:
 
 
 @router.post("/api/chat")
-def chat(body: ChatIn, service: ChatService = Depends(get_chat_service)):
-    return public(service.handle(body.session_id, message=body.message, answers=body.answers, chip=body.chip,
-                                 owner=body.owner, fresh=body.fresh))
+def chat(body: ChatIn, request: Request, service: ChatService = Depends(get_chat_service)):
+    # 2026-11-23 (3-D ②): 관리자로 로그인한 브라우저(운영자 시험)의 차례는 지표 분모에서 뺄 수 있게 표시
+    from app.services.chat import turn_metrics
+
+    token = turn_metrics.INTERNAL.set(_click_query(request) == "chat_internal")
+    try:
+        return public(service.handle(body.session_id, message=body.message, answers=body.answers, chip=body.chip,
+                                     owner=body.owner, fresh=body.fresh))
+    finally:
+        turn_metrics.INTERNAL.reset(token)
 
 
 @router.get("/api/chat/saved")
@@ -347,7 +354,10 @@ def go_search_link(sid: str, lid: int, request: Request):
 
 @router.get("/go/{sid}/k/{key}")
 def go_key(sid: str, key: str, request: Request, service: ChatService = Depends(get_chat_service)):
-    return _redirect(sid, service.resolve_go_key(sid, key), shown=service.seen_card(sid, key), request=request)
+    shown = service.seen_card(sid, key)
+    # 2026-11-23 (3-D ②): 판매처 이동 세 갈래 — 일반 카드(chat) · 추가 후보 칸(chat_extra) · 검색 결과 링크(search_link)
+    section = "chat_extra" if (shown or {}).get("more_as") else "chat"
+    return _redirect(sid, service.resolve_go_key(sid, key), section=section, shown=shown, request=request)
 
 
 @router.get("/go/s/{owner}/{key}")
