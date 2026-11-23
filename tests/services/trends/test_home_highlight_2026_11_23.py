@@ -24,7 +24,9 @@ def test_picks_many_with_partner_images():
     many = [{"product_name": f"상주 곶감 {i}호", "product_url": f"https://link.coupang.com/a/p{i}",
              "image_url": f"https://ads-partners.coupang.com/image1/{i}.jpg", "price": 10000 + i} for i in range(15)]
     many.insert(3, dict(many[0]))                                       # 같은 링크는 한 번만
-    got = hl.picks("곶감", search=lambda kw, n: many + ITEMS)
+    asked = []
+    got = hl.picks("곶감", search=lambda kw, n: asked.append(n) or many + ITEMS)
+    assert asked == [10]                                                # 쿠팡 검색은 최대 10개 (20이면 오류로 빈 결과 — 22:08 운영)
     assert len(got) == hl.MAX_ITEMS and got[0]["image"] == "https://ads-partners.coupang.com/image1/0.jpg"
     assert len({g["go_url"] for g in got}) == len(got)
 
