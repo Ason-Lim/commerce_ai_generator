@@ -5,13 +5,14 @@
  * - 장보기 목록·설정: 브라우저 안에만. 설정은 서버로 보내지 않는다(화면 표시·숨기기에만, 순위 불변).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Heart, History, MessageSquare, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
+import { Eye, Heart, History, MessageSquare, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
 import type { ApiCard, SavedView, ShelfTicket } from "../types/blocks";
 import { cardToCandidate } from "../api/adapt";
 import { fetchShelf, forgetShelf, goHref, logDirectClick, resetSavedOwner, sendChat } from "../api/client";
 import { cx, won } from "../lib/format";
 import { clearLocalShelf, knownSessions, useBasket, usePrefs, type Prefs } from "../state/shelf";
 import { BlockRenderer } from "./BlockRenderer";
+import { RecentViewed } from "./RecentViewed";
 import { BasketControls } from "./ShoppingPanel";
 import { ChatActions, type ChatActionsValue } from "./ChatActions";
 import { MobileTabBar, MOBILE_TAB_H, PrivacyLink, ShelfLink, SiteNav } from "./SiteNav";
@@ -177,7 +178,7 @@ export function MyShelf() {
   const comparable = [...groups.values()].some((g) => g.length >= 2);
 
   async function forget() {
-    if (!window.confirm("관심 상품, 이 브라우저의 최근 대화 기록(최근 검색 포함), 장보기 목록, 설정을 모두 지울까요? 되돌릴 수 없어요.")) return;
+    if (!window.confirm("관심 상품, 이 브라우저의 최근 대화 기록(최근 검색 포함), 최근 본 상품, 장보기 목록, 설정을 모두 지울까요? 되돌릴 수 없어요.")) return;
     let ok = false;
     try { ok = await forgetShelf(knownSessions()); } catch { ok = false; }
     if (!ok) {
@@ -243,6 +244,9 @@ export function MyShelf() {
             ) : <p className="py-3 text-sm text-ink3">{loaded ? "아직 검색한 상품이 없어요." : "불러오는 중…"}</p>}
           </Section>
 
+          <Section id="shelf-viewed" icon={Eye} title="최근 본 상품">
+            <RecentViewed variant="shelf" />
+          </Section>
           <Section id="shelf-saved" icon={Heart} title="관심 상품" count={view.saved.length}>
             {view.saved.length ? (
               <>

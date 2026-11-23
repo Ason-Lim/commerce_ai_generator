@@ -201,3 +201,64 @@ def test_privacy_in_one_place(site, browser):
     assert page.get_by_text("맞춤 추천 끄기").count() >= 1 and page.get_by_text("시행 전 안내").count() == 1
     assert page.evaluate(NAMELESS_JS) == []
     ctx.close()
+
+
+def test_home_fold_more_and_category_art_no_full_link(site, browser):
+    """2026-11-23 사용자 요청: 홈 '전체 보기' 링크 없음 · 쿠팡 식품 랭킹 30개까지(처음 6개 + 더보기/접기) · 카테고리는 그림 아이콘 타일."""
+    extra = [dict(CP[0], rank=10 + i, product_id=f"90{i}", title=f"시험 상품 {i}", go_url=f"/home/go/90{i}") for i in range(7)]
+    CP.extend(extra)
+    try:
+        ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+        page = ctx.new_page()
+        page.goto(site + "/#")
+        sec = page.get_by_role("region", name="지금 순위")
+        sec.get_by_role("tab", name="쿠팡 식품 랭킹").wait_for()
+        assert sec.get_by_role("link", name="전체 보기").count() == 0 and page.get_by_text("전체 보기").count() == 0
+        tiles = sec.locator("ul li a[aria-label$='쿠팡에서 보기 (새 창)']")
+        assert tiles.count() == 6
+        more = sec.get_by_role("button", name="더보기 3개")
+        more.click()
+        assert tiles.count() == 9
+        sec.get_by_role("button", name="접기").click()
+        assert tiles.count() == 6
+        sec.get_by_role("tab", name="카테고리").click()
+        grid = sec.get_by_role("group", name="카테고리")
+        assert grid.get_by_role("button", name="과일").get_attribute("aria-pressed") == "true"
+        assert grid.locator("svg").count() >= 2
+        grid.get_by_role("button", name="요리/식재료").click()
+        sec.get_by_role("button", name="쌀20kg 대화로 묻기 · 식품 검색어 12위").wait_for()
+        assert page.evaluate(NAMELESS_JS) == []
+        ctx.close()
+    finally:
+        del CP[len(CP) - len(extra):]
+
+
+def test_recent_viewed_and_policy_page(site, browser):
+    """2026-11-23 사용자 채택: 최근 본 상품(이 브라우저에만, 홈 가로 줄·내 보관함) · 갱신 간격 등 기준은 운영정책(/#/policy) 한 곳에."""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+    ctx.route("**/home/go/**", lambda r: r.fulfill(status=200, body="ok"))   # 판매처로 나가지 않게
+    page = ctx.new_page()
+    page.goto(site + "/#")
+    sec = page.get_by_role("region", name="지금 순위")
+    sec.get_by_role("tab", name="쿠팡 식품 랭킹").wait_for()
+    assert page.get_by_role("region", name="최근 본 상품").count() == 0          # 본 상품이 없으면 줄도 없음
+    sec.get_by_role("button", name="순위 기준 설명").click()
+    assert "10분" not in sec.inner_text() and "1시간" not in sec.inner_text()
+    with ctx.expect_page() as pop:
+        sec.locator("a[aria-label^='신선한 대란']").click()
+    pop.value.close()
+    row = page.get_by_role("region", name="최근 본 상품")
+    row.wait_for()
+    assert row.get_by_role("link", name="신선한 대란 — 판매처에서 보기 (새 창)").get_attribute("href") == "/home/go/7230779632"
+    stored = page.evaluate("localStorage.getItem('ai-food-viewed')")
+    assert "7230779632" in stored and "7880" not in stored                    # 가격은 남기지 않음
+    page.goto(site + "/#/me")
+    page.get_by_role("heading", name="최근 본 상품").wait_for()
+    page.get_by_role("button", name="신선한 대란 최근 본 상품에서 빼기").click()
+    page.get_by_text("최근에 연 상품이 없어요.").wait_for()
+    page.goto(site + "/#")
+    page.get_by_role("link", name="운영정책").first.click()
+    page.get_by_role("heading", name="운영정책", level=1).wait_for()
+    assert "10분" in page.locator("main").inner_text()
+    assert page.evaluate(NAMELESS_JS) == []
+    ctx.close()

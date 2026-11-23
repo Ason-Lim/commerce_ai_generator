@@ -133,8 +133,10 @@ def test_home_build_calls_coupang_at_most_once(monkeypatch):
     for _ in range(3):
         out = hr.build("home", now=NOW, use_cache=False, posts=posts)
     assert f.n == 1
-    assert [it["product_id"] for it in out["coupang"]["items"]] == ["11", "22", "33", "44", "55", "66"]
-    assert "쿠팡 파트너스" in out["coupang"]["disclosure"] and "1시간" in out["coupang"]["note"]
+    # 2026-11-23: 홈도 30개까지(화면은 6개 + 더보기) — 시험 자료 9개 전부, 쿠팡 순서 그대로
+    assert [it["product_id"] for it in out["coupang"]["items"]][:6] == ["11", "22", "33", "44", "55", "66"]
+    assert len(out["coupang"]["items"]) == 9
+    assert "쿠팡 파트너스" in out["coupang"]["disclosure"] and "10분" in out["coupang"]["note"]
 
 
 # ── 함께 보면 좋은 상품 ────────────────────────────────────────────────────
@@ -218,7 +220,9 @@ def test_route_together_and_go(monkeypatch):
     g = c.get("/home/go/11?from=together", follow_redirects=False)
     assert g.status_code == 302 and g.headers["location"].startswith("https://link.coupang.com/")
     assert clicks and clicks[-1]["product"]["selected_section"] == "together"
-    assert c.get("/home/go/999999", follow_redirects=False).headers["location"] == "/"
+    assert "링크" not in clicks[-1]["product"]["product_name"] and clicks[-1]["product"]["product_name"].startswith("https://")
+    # 2026-11-23 최근 본 상품: 지금 랭킹에 없는 상품은 쿠팡 상품 페이지로(제휴 링크 아님, 우리 서버에 상품 정보 없음)
+    assert c.get("/home/go/999999", follow_redirects=False).headers["location"] == "https://www.coupang.com/vp/products/999999"
     assert c.get("/home/go/abc", follow_redirects=False).headers["location"] == "/"
 
 

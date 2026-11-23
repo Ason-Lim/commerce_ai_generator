@@ -3,8 +3,8 @@
 자료: 쿠팡 파트너스 `GET /products/bestcategories/1012` (식품, 최대 100 — 11-23 시험 호출 94개).
 
 **보관 (11-23 10:50 사용자 결정 — 오픈 API 약관 제5조 ③ '복제·저장·전송 금지', claude/coupang_terms_storage_check_2026-11-23.md)**
-* 상품 정보(상품명·가격·그림·링크)는 **파일·DB 에 저장하지 않고 서버 메모리에 1시간만** 둔다. 1시간이 지나면 다시 받는다
-  (홈을 처음 연 사람이 받고, 그 1시간 동안은 모두 같은 결과 — 호출은 1시간에 최대 1번).
+* 상품 정보(상품명·가격·그림·링크)는 **파일·DB 에 저장하지 않고 서버 메모리에 10분만** 둔다(11-23 1시간 → 10분). 10분이 지나면 다시 받는다
+  (홈을 처음 연 사람이 받고, 그 10분 동안은 모두 같은 결과 — 호출은 10분에 최대 1번).
 * 전날 대비 오르내림(↑n·새로 진입)은 **기본 꺼짐**. 쿠팡 답을 받아 `.env COUPANG_RANK_COMPARE=on` 으로 켜면
   그날 처음 받은 순위의 **상품번호·순위만** `var/coupang_best/ranks_YYYY-MM-DD.json` 에 남겨 전날과 비교한다.
 
@@ -92,7 +92,7 @@ def fetch_payload(timeout: float = 6.0) -> dict | None:
 
 
 def current(fetch=None, now: dt.datetime | None = None, env=None) -> dict | None:
-    """메모리에 있는 1시간 안의 랭킹, 없거나 지났으면 한 번 받아 둔다. 저장 파일 없음."""
+    """메모리에 있는 10분 안의 랭킹, 없거나 지났으면 한 번 받아 둔다. 저장 파일 없음."""
     with _LOCK:
         snap = _MEM["snap"]
         if snap and time.monotonic() - _MEM["at"] < TTL_SECONDS:

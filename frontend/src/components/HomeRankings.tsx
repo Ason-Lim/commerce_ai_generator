@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Apple, ArrowRight, Beef, CalendarDays, Cookie, Fish, Gift, Heart, Info, Utensils, type LucideIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { fetchHomeRankings, fetchTogether, type CoupangRankItem, type HomeRankings as Data, type RankKeyword, type RankTab, type Together, type TogetherCard } from "../api/client";
-import { recentInterests, rememberInterest, useRecoOff } from "../state/shelf";
-import { PrivacyLink } from "./SiteNav";
+import { recentInterests, rememberInterest, rememberViewed, useRecoOff } from "../state/shelf";
+import { PolicyLink, PrivacyLink } from "./SiteNav";
+import { CategoryArt } from "./CategoryArt";
 
 /**
  * 홈 '지금 순위' (창 3-C, 2026-11-22 — 설계 claude/home_rankings_design_2026-11-20.md §4)
@@ -12,7 +13,20 @@ import { PrivacyLink } from "./SiteNav";
  * 지금 뜨는 식품(view=full)은 같은 규칙의 전체 화면. 키워드를 누르면 대화로 묻고(한 번만), 상품은 판매처(/go)로.
  * 순위 = 네이버 식품 검색어 순위(원래 순위 그대로), 상품 = 승인된 트렌드 글 기준(추천 순위 아님). '장바구니'·'주문' 문구 없음.
  */
-const ICONS: Record<string, LucideIcon> = { Gift, Cookie, Apple, Fish, Beef, Utensils, Heart, CalendarDays };
+const FOLD = 6;   // 2026-11-23 사용자 요청: 쿠팡 식품 랭킹·함께 보면 좋은 상품은 30개까지, 처음 6개 + 더보기로 펼치고 접기
+
+/** 처음 6개만 보이고 '더보기'로 펼치기·접기 (상품 목록 공용). */
+function useFold<T>(items: T[]): { shown: T[]; button: ReactNode } {
+  const [open, setOpen] = useState(false);
+  const rest = Math.max(0, items.length - FOLD);
+  const button = rest > 0 ? (
+    <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}
+      className="mx-auto mt-3 flex items-center gap-1 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm text-ink2 hover:text-ink">
+      {open ? <>접기 <ChevronUp size={15} aria-hidden /></> : <>더보기 <span className="text-stone-400">{rest}개</span> <ChevronDown size={15} aria-hidden /></>}
+    </button>
+  ) : null;
+  return { shown: open ? items : items.slice(0, FOLD), button };
+}
 type Pill = "coupang" | "surge" | "category" | "together";
 type Filter = "rising" | "not_steady" | "steady" | "all";
 const FILTER_LABEL: Record<Filter, string> = { rising: "오르는 중", not_steady: "늘 인기 빼고", steady: "늘 인기", all: "전체" };
@@ -88,6 +102,7 @@ function TogetherPanel({ view }: { view: "home" | "full" }) {
   const [off, setOff] = useRecoOff();
   const [data, setData] = useState<Together | null>(null);
   const [failed, setFailed] = useState(false);
+  const fold = useFold<TogetherCard>(data?.items ?? []);
   useEffect(() => {
     const ctl = new AbortController();
     setData(null);
@@ -110,14 +125,15 @@ function TogetherPanel({ view }: { view: "home" | "full" }) {
       </div>
       {data.items.length > 0 && (
         <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {data.items.map((c: TogetherCard) => (
+          {fold.shown.map((c: TogetherCard) => (
             <ProductTile key={c.product_id} title={c.title} image={c.image} rocket={c.rocket} href={c.go_url} why={c.why}
               price={priceOf(c.price_krw, c.price_hidden, data.fetched_at ? `${hm(data.fetched_at)} 확인` : "")}
-              onOpen={() => rememberInterest(c.seed)} />
+              onOpen={() => { rememberInterest(c.seed); rememberViewed({ key: `cp:${c.product_id}`, title: c.title, image: c.image, href: c.go_url }); }} />
           ))}
         </ul>
       )}
-      <p className="mt-2 text-xs leading-5 text-stone-500">레시피에 함께 쓰는 재료 · 같은 카테고리 · 새로 둘러보기 순으로 골라요. 순서는 쿠팡 식품 랭킹을 따르고 수수료와는 상관없어요.</p>
+      {fold.button}
+      <p className="mt-2 text-xs leading-5 text-stone-500">고르는 기준은 <PolicyLink />에 있어요. 수수료는 순서에 영향을 주지 않아요.</p>
     </div>
   );
 }
@@ -153,6 +169,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
     onAsk(text);
   };
 
+  const cpFold = useFold<CoupangRankItem>(data?.coupang?.items ?? []);
   const tab: RankTab | undefined = useMemo(() => data?.categories.tabs.find((t) => t.tag === tag), [data, tag]);
   const shownKeywords = useMemo(() => {
     if (!tab) return [];
@@ -172,7 +189,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
     : pill === "category" ? (data.categories.rank_date ? `순위 ${md(data.categories.rank_date)} 자료 · 네이버 식품 검색어` : "")
     : pill === "coupang" ? (cp?.fetched_at ? `쿠팡 식품 베스트 · ${md(cp.fetched_at)} ${hm(cp.fetched_at)} 받음` : "")
     : "";
-  const more = view === "home" ? <a href="/#/hot" className="mt-3 flex items-center justify-center gap-1 text-sm text-stone-500 hover:text-ink">전체 보기 <ArrowRight size={14} aria-hidden /></a> : null;
+  // 2026-11-23 사용자 요청: 홈 '전체 보기'(→ 지금 뜨는 식품) 링크 삭제 — 지금 뜨는 식품은 네이버 급상승 식품만 보여 주므로
 
   return (
     <section aria-label="지금 순위" className={view === "home" ? "mt-12" : "mt-6"}>
@@ -185,9 +202,9 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
       </div>
       {info && (
         <p className="mt-2 rounded-xl bg-chip px-3 py-2 text-xs leading-6 text-ink2">
-          쿠팡 식품 랭킹은 쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요(1시간마다 새로 받음).
-          카테고리 번호는 네이버 식품 검색어 순위 그대로예요. 급상승은 네이버 데이터랩 검색어 트렌드(상대 지수)로 평소(약 한 달 전)와 비교한 값이에요.
-          함께 보면 좋은 상품은 이 브라우저에서 최근 누른 품목으로 골라요. 제휴 수수료는 순위·순서에 영향을 주지 않아요.
+          {/* 2026-11-23 사용자 요청: 갱신 간격 등 자세한 기준은 화면에 적지 않고 운영정책 한 곳에 */}
+          쿠팡 식품 랭킹은 쿠팡 베스트 순위, 카테고리는 네이버 식품 검색어 순위 그대로예요. 제휴 수수료는 순서에 영향을 주지 않아요.
+          자세한 기준은 <PolicyLink />에 있어요.
         </p>
       )}
       <div role="tablist" aria-label="순위 종류" className="mt-3 flex justify-center gap-1 rounded-full bg-chip p-1">
@@ -217,7 +234,6 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
                 ))}
               </ol>}
           {data.surge.status === "stale" && <p className="mt-2 text-xs text-warn">최근 리포트가 늦어지고 있어요 — {md(data.surge.data_until)} 자료예요.</p>}
-          {more}
         </div>
       ))}
 
@@ -226,16 +242,17 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
           {data.categories.tabs.length === 0
             ? <p className="rounded-xl bg-chip px-4 py-3 text-sm text-ink2">아직 오늘 순위가 없어요 (매일 한 번 갱신).</p>
             : <>
-                <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="카테고리">
-                  {data.categories.tabs.map((t) => {
-                    const Icon = ICONS[t.icon] ?? Utensils;
-                    return (
-                      <button key={t.tag} type="button" aria-pressed={tag === t.tag} onClick={() => { setTag(t.tag); setFilter(null); }}
-                        className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-sm ${tag === t.tag ? "border-accent bg-accentSoft font-semibold text-ink" : "border-stone-200 bg-white text-ink2"}`}>
-                        <Icon size={15} aria-hidden />{t.label}
-                      </button>
-                    );
-                  })}
+                {/* 2026-11-23 사용자 요청: 카테고리는 그림 아이콘 타일(둥근 그림 + 이름) — 우리가 그린 그림만 */}
+                <div className="-mx-1 grid grid-cols-4 gap-x-1 gap-y-3 px-1 pb-1 sm:grid-cols-8" role="group" aria-label="카테고리">
+                  {data.categories.tabs.map((t) => (
+                    <button key={t.tag} type="button" aria-pressed={tag === t.tag} onClick={() => { setTag(t.tag); setFilter(null); }}
+                      className="group flex flex-col items-center gap-1.5 rounded-2xl py-1 text-center">
+                      <span className={`rounded-[24px] p-0.5 transition ${tag === t.tag ? "ring-2 ring-accent" : "ring-1 ring-transparent group-hover:ring-stone-200"}`}>
+                        <CategoryArt tag={t.tag} />
+                      </span>
+                      <span className={`text-xs leading-tight break-keep ${tag === t.tag ? "font-semibold text-ink" : "text-ink2"}`}>{t.label}</span>
+                    </button>
+                  ))}
                 </div>
                 {tab && view === "full" && (
                   <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="보기">
@@ -256,7 +273,6 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
                 </ol>
                 {data.categories.status === "stale" && <p className="mt-2 text-xs text-warn">순위 자료가 늦어지고 있어요 — {md(data.categories.rank_date)} 자료예요.</p>}
                 {view === "full" && <p className="mt-2 text-xs leading-5 text-stone-500">{data.categories.note}</p>}
-                {more}
               </>}
         </div>
       )}
@@ -268,17 +284,17 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
             : <>
                 <Disclosure text={cp.disclosure} />
                 <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {cp.items.map((it) => (
+                  {cpFold.shown.map((it) => (
                     <ProductTile key={it.product_id} title={it.title} image={it.image} rocket={it.rocket} href={it.go_url}
                       price={priceOf(it.price_krw, it.price_hidden, cp.fetched_at ? `${hm(cp.fetched_at)} 확인` : "")}
-                      onOpen={() => rememberInterest(it.seed)}
+                      onOpen={() => { rememberInterest(it.seed); rememberViewed({ key: `cp:${it.product_id}`, title: it.title, image: it.image, href: it.go_url }); }}
                       top={<span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-white/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-ink">
                         {it.rank}<CoupangChange it={it} /></span>} />
                   ))}
                 </ul>
+                {cpFold.button}
                 {cp.compare && !cp.compare_ready && <p className="mt-2 text-xs text-stone-500">전날 받은 순위가 아직 없어 오르내림은 내일부터 보여요.</p>}
                 {view === "full" && <p className="mt-2 text-xs leading-5 text-stone-500">{cp.note}</p>}
-                {more}
               </>}
         </div>
       )}
