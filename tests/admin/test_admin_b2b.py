@@ -106,6 +106,11 @@ def test_console_requires_token_and_runs(admin_client):
     h = {"X-Access-Token": "test-token"}
     r = c.post("/admin/b2b/api/run", json={"prompt": "IBK서비스-2026008 분석해줘", "today": "2026-10-16"}, headers=h).json()
     assert r["action"] == "analyze" and any(b["type"] == "candidates" for b in r["blocks"])
+    # 2026-11-23 (지인 의견): 공고 카드에 상태·예산·마감, 후보 판정 표 위에도 그 공고의 마감·예산
+    card = next(b for b in r["blocks"] if b["type"] == "bid_card")
+    assert card["status"] and "deadline" in card and "budget" in card
+    head = next(b for b in r["blocks"] if b["type"] == "candidates")["bid"]
+    assert head["bid_id"] == "IBK서비스-2026008" and head["status"] == card["status"] and head["deadline"] == card["deadline"]
     r2 = c.post("/admin/b2b/api/run", json={"workspace_id": r["workspace_id"], "prompt": "제안서 작성해줘"}, headers=h).json()
     docs = next(b for b in r2["blocks"] if b["type"] == "docs")["items"]
     assert c.get(docs[0]["href"], headers=h).status_code == 200

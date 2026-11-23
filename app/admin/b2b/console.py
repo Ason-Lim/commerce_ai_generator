@@ -194,6 +194,12 @@ class Console:
             w.evals = evidence.evaluate_all(req, today=today)
             cov = sourcing.coverage(req, w.evals)
         w.cost = self._calc_cost(w)
+        # 2026-11-23 (지인 의견): 후보 판정 표 위에도 그 공고의 상태·예산·마감 (공고번호 없이 조건만 넣었으면 없음)
+        bid_head = None
+        if bid:
+            bv = bid.view(today)
+            bid_head = {"bid_id": bid.bid_id, "title": bid.title, "status": bv["status"], "deadline": bid.deadline,
+                        "budget": bid.budget or (req.computed_total() if req else None)}
         blocks = pre + [
             {"type": "text", "md": f"**{req.title or req.bid_id or '입력 조건'}** 조건을 추출하고 후보 {len(w.evals)}개를 판정했어요."
                                    + (f" 후보가 부족한 카테고리는 마켓 검색으로 {discovered}개를 더 찾았어요." if discovered else "")},
@@ -201,7 +207,7 @@ class Console:
                                              for pv in req.provenance], "missing": req.missing(),
              "total": req.computed_total()},
             {"type": "coverage", "rows": cov},
-            self._cand_block(w.evals),
+            dict(self._cand_block(w.evals), bid=bid_head),
             self._cost_block(w.cost),
             {"type": "actions", "items": ["견적 요청서 만들어줘", "분석 리포트 열어줘", "제안서 작성해줘",
                                           "매입가 36000 포장 1500 창고 700(가정) 택배 3500(가정) 반품 300 운영 800 기타 0 관리비 5% 이윤 10% 구축비 300만원으로 비용 계산"]},
