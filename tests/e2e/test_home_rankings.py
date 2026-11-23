@@ -231,3 +231,34 @@ def test_home_fold_more_and_category_art_no_full_link(site, browser):
         ctx.close()
     finally:
         del CP[len(CP) - len(extra):]
+
+
+def test_recent_viewed_and_policy_page(site, browser):
+    """2026-11-23 사용자 채택: 최근 본 상품(이 브라우저에만, 홈 가로 줄·내 보관함) · 갱신 간격 등 기준은 운영정책(/#/policy) 한 곳에."""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+    ctx.route("**/home/go/**", lambda r: r.fulfill(status=200, body="ok"))   # 판매처로 나가지 않게
+    page = ctx.new_page()
+    page.goto(site + "/#")
+    sec = page.get_by_role("region", name="지금 순위")
+    sec.get_by_role("tab", name="쿠팡 식품 랭킹").wait_for()
+    assert page.get_by_role("region", name="최근 본 상품").count() == 0          # 본 상품이 없으면 줄도 없음
+    sec.get_by_role("button", name="순위 기준 설명").click()
+    assert "10분" not in sec.inner_text() and "1시간" not in sec.inner_text()
+    with ctx.expect_page() as pop:
+        sec.locator("a[aria-label^='신선한 대란']").click()
+    pop.value.close()
+    row = page.get_by_role("region", name="최근 본 상품")
+    row.wait_for()
+    assert row.get_by_role("link", name="신선한 대란 — 판매처에서 보기 (새 창)").get_attribute("href") == "/home/go/7230779632"
+    stored = page.evaluate("localStorage.getItem('ai-food-viewed')")
+    assert "7230779632" in stored and "7880" not in stored                    # 가격은 남기지 않음
+    page.goto(site + "/#/me")
+    page.get_by_role("heading", name="최근 본 상품").wait_for()
+    page.get_by_role("button", name="신선한 대란 최근 본 상품에서 빼기").click()
+    page.get_by_text("최근에 연 상품이 없어요.").wait_for()
+    page.goto(site + "/#")
+    page.get_by_role("link", name="운영정책").first.click()
+    page.get_by_role("heading", name="운영정책", level=1).wait_for()
+    assert "10분" in page.locator("main").inner_text()
+    assert page.evaluate(NAMELESS_JS) == []
+    ctx.close()

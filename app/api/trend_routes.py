@@ -93,7 +93,9 @@ def go_coupang_best(product_id: str, request: Request):
         return RedirectResponse("/", status_code=303)
     item = cb.find(product_id)
     if item is None:
-        return RedirectResponse("/", status_code=303)
+        # 2026-11-23 '최근 본 상품'(브라우저에 7일)에서 누를 때 — 지금 랭킹에서 빠진 상품은 쿠팡 상품 페이지로 바로 보낸다
+        # (우리 서버에 그 상품 정보를 남기지 않으므로 제휴 링크를 만들 수 없음 — 수수료 없는 일반 링크).
+        return RedirectResponse(f"https://www.coupang.com/vp/products/{product_id}", status_code=302)
     try:
         from app.admin.auth import request_ok
         from app.services.analytics_logger import log_product_click
@@ -101,7 +103,7 @@ def go_coupang_best(product_id: str, request: Request):
         internal = request_ok(request)
         section = "together" if request.query_params.get("from") == "together" else "coupang_best"
         log_product_click(session_id="home", query="home_internal" if internal else "home", product={
-            "product_url": item["url"], "product_name": item["title"], "mall_name": "쿠팡",
+            "product_url": item["url"], "product_name": item["url"], "mall_name": "쿠팡",   # 11-23: 상품명은 남기지 않음(#82 와 같음)
             "rank": item["rank"], "selected_section": section, "recommendation_mode": "ranking"})
     except Exception:  # noqa: BLE001 — 기록이 이동을 막지 않는다
         log.warning("coupang best click log failed")

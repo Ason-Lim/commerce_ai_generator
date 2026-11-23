@@ -16,7 +16,8 @@ import { answerFeedbackSignal, API_MODE, sendChat } from './api/client';
 import { pageTitle } from './lib/pageTitle';
 import { BusyStatus } from './components/BusyStatus';
 import { ShoppingPanel, type PanelEntry } from './components/ShoppingPanel';
-import { rememberSession, useBasket } from './state/shelf';
+import { rememberSession, rememberViewed, useBasket } from './state/shelf';
+import { RecentViewed } from './components/RecentViewed';
 import { BUSY_TIMEOUT_MS, TIMEOUT_MESSAGE, busyKind, type BusyKind } from './lib/busyStages';
 
 // ── 홈 화면 예시 질문: src/data/trend_examples_YYYY-MM-DD.json 중 최신 파일을 읽는다 ──
@@ -339,7 +340,11 @@ export default function ChatWindow() {
         send: (payload, userText) => void send(payload, userText),
         shop: (payload, ingredient, cancel) => void shop(payload, ingredient, cancel),
         basket: basket.map(e => e.ingredient),
-        openDetail: c => { setDetail(c); setPurchasing(false); },
+        openDetail: c => {
+            setDetail(c); setPurchasing(false);
+            // 2026-11-23 최근 본 상품 — 서버가 정한 고정 이동 주소(/go/{세션}/k/{키})가 있을 때만 (이 브라우저에만)
+            if (c.goPath && /^\/go\/[^/]+\/k\//.test(c.goPath)) rememberViewed({ key: c.goPath, title: c.title, image: c.image, href: c.goPath });
+        },
         openTrendPost: p => setTrendPost(p),
         busy,
         sessionId,
@@ -426,6 +431,7 @@ export default function ChatWindow() {
                         </div>
                         {examplesDate && <p className="mt-3 text-right text-[11px] text-stone-400">예시 질문 기준일 {examplesDate} · 네이버 식품 키워드 순위</p>}
                         {/* 창 3-C (2026-11-22): 지금 순위 — 예시 질문 아래 */}
+                        <RecentViewed variant="home" />
                         <HomeRankings view="home" busy={busy} onAsk={submit} />
                         <SiteFooter />
                     </section>

@@ -26,7 +26,7 @@ export interface Prefs {
 export const DEFAULT_PREFS: Prefs = { vegetarian: false, mild: false, household: "", avoid: [], hideAvoided: false };
 
 const KEYS = { basket: "ai-food-basket", prefs: "ai-food-prefs", sessions: "ai-food-sessions",
-  interests: "ai-food-interests", recoOff: "ai-food-reco-off" } as const;
+  interests: "ai-food-interests", recoOff: "ai-food-reco-off", viewed: "ai-food-viewed" } as const;
 const EVENT = "ai-food-shelf";
 
 function read<T>(key: string, fallback: T): T {
@@ -91,12 +91,36 @@ export const recentInterests = (): string[] => read<string[]>(KEYS.interests, []
 /** '맞춤 추천 끄기' — 켜져 있으면 출발점을 보내지 않고 일반 추천만 본다. */
 export const useRecoOff = () => useStored<boolean>(KEYS.recoOff, false);
 
+/** 최근 본 상품 (2026-11-23 사용자 채택 — 홈 '지금 순위' 위 가로 줄 · 내 보관함 칸).
+ *  **이 브라우저에만**(서버로 보내지 않음 · 서버 저장 없음 — 쿠팡 약관 제5조 ③), 최대 10개, 7일 뒤 사라짐.
+ *  가격은 남기지 않는다(오래된 가격을 보여 주지 않게) — 이름·그림 주소·우리 이동 주소(/go…·/home/go…)만. */
+export interface ViewedItem { key: string; title: string; image?: string | null; href: string; at: number }
+const VIEWED_MAX = 10;
+const VIEWED_DAYS = 7;
+const freshViewed = (list: ViewedItem[]) => list.filter((v) => Date.now() - v.at < VIEWED_DAYS * 86400_000).slice(0, VIEWED_MAX);
+
+export function rememberViewed(item: { key: string; title: string; image?: string | null; href: string | null | undefined }): void {
+  const title = (item.title || "").trim().slice(0, 80);
+  // 우리 이동 주소만 (서버가 클릭을 기록하고 판매처로 보냄) — 외부 주소·자바스크립트 주소는 담지 않는다
+  if (!item.key || !title || !item.href || !/^\/(go|home\/go|trends)\//.test(item.href)) return;
+  const image = item.image && /^https:\/\//.test(item.image) ? item.image : null;
+  const list = read<ViewedItem[]>(KEYS.viewed, []).filter((v) => v.key !== item.key);
+  write(KEYS.viewed, freshViewed([{ key: item.key, title, image, href: item.href, at: Date.now() }, ...list]));
+}
+
+export function useViewed(): [ViewedItem[], (key?: string) => void] {
+  const [list, setList] = useStored<ViewedItem[]>(KEYS.viewed, []);
+  const remove = (key?: string) => setList((prev) => (key ? prev.filter((v) => v.key !== key) : []));
+  return [freshViewed(list), remove];
+}
+
 /** 장보기·설정·세션 목록·지금 대화 값을 지운다 — **서버 삭제가 성공한 뒤에만** 부른다(실패하면 세션 값을 남겨 다시 시도할 수 있게). */
 export function clearLocalShelf(): void {
   write(KEYS.basket, null);
   write(KEYS.prefs, null);
   write(KEYS.sessions, null);
   write(KEYS.interests, null);
+  write(KEYS.viewed, null);
   try { window.localStorage.removeItem("ai-food-chat-session"); } catch { /* 없음 */ }
 }
 

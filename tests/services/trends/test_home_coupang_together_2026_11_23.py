@@ -220,7 +220,9 @@ def test_route_together_and_go(monkeypatch):
     g = c.get("/home/go/11?from=together", follow_redirects=False)
     assert g.status_code == 302 and g.headers["location"].startswith("https://link.coupang.com/")
     assert clicks and clicks[-1]["product"]["selected_section"] == "together"
-    assert c.get("/home/go/999999", follow_redirects=False).headers["location"] == "/"
+    assert "링크" not in clicks[-1]["product"]["product_name"] and clicks[-1]["product"]["product_name"].startswith("https://")
+    # 2026-11-23 최근 본 상품: 지금 랭킹에 없는 상품은 쿠팡 상품 페이지로(제휴 링크 아님, 우리 서버에 상품 정보 없음)
+    assert c.get("/home/go/999999", follow_redirects=False).headers["location"] == "https://www.coupang.com/vp/products/999999"
     assert c.get("/home/go/abc", follow_redirects=False).headers["location"] == "/"
 
 

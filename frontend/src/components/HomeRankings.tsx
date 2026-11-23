@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { fetchHomeRankings, fetchTogether, type CoupangRankItem, type HomeRankings as Data, type RankKeyword, type RankTab, type Together, type TogetherCard } from "../api/client";
-import { recentInterests, rememberInterest, useRecoOff } from "../state/shelf";
-import { PrivacyLink } from "./SiteNav";
+import { recentInterests, rememberInterest, rememberViewed, useRecoOff } from "../state/shelf";
+import { PolicyLink, PrivacyLink } from "./SiteNav";
 import { CategoryArt } from "./CategoryArt";
 
 /**
@@ -128,12 +128,12 @@ function TogetherPanel({ view }: { view: "home" | "full" }) {
           {fold.shown.map((c: TogetherCard) => (
             <ProductTile key={c.product_id} title={c.title} image={c.image} rocket={c.rocket} href={c.go_url} why={c.why}
               price={priceOf(c.price_krw, c.price_hidden, data.fetched_at ? `${hm(data.fetched_at)} 확인` : "")}
-              onOpen={() => rememberInterest(c.seed)} />
+              onOpen={() => { rememberInterest(c.seed); rememberViewed({ key: `cp:${c.product_id}`, title: c.title, image: c.image, href: c.go_url }); }} />
           ))}
         </ul>
       )}
       {fold.button}
-      <p className="mt-2 text-xs leading-5 text-stone-500">레시피에 함께 쓰는 재료 · 같은 카테고리 · 새로 둘러보기 순으로 골라요. 순서는 쿠팡 식품 랭킹을 따르고 수수료와는 상관없어요.</p>
+      <p className="mt-2 text-xs leading-5 text-stone-500">고르는 기준은 <PolicyLink />에 있어요. 수수료는 순서에 영향을 주지 않아요.</p>
     </div>
   );
 }
@@ -202,9 +202,9 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
       </div>
       {info && (
         <p className="mt-2 rounded-xl bg-chip px-3 py-2 text-xs leading-6 text-ink2">
-          쿠팡 식품 랭킹은 쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요(10분마다 새로 받음).
-          카테고리 번호는 네이버 식품 검색어 순위 그대로예요. 급상승은 네이버 데이터랩 검색어 트렌드(상대 지수)로 평소(약 한 달 전)와 비교한 값이에요.
-          함께 보면 좋은 상품은 이 브라우저에서 최근 누른 품목으로 골라요. 제휴 수수료는 순위·순서에 영향을 주지 않아요.
+          {/* 2026-11-23 사용자 요청: 갱신 간격 등 자세한 기준은 화면에 적지 않고 운영정책 한 곳에 */}
+          쿠팡 식품 랭킹은 쿠팡 베스트 순위, 카테고리는 네이버 식품 검색어 순위 그대로예요. 제휴 수수료는 순서에 영향을 주지 않아요.
+          자세한 기준은 <PolicyLink />에 있어요.
         </p>
       )}
       <div role="tablist" aria-label="순위 종류" className="mt-3 flex justify-center gap-1 rounded-full bg-chip p-1">
@@ -287,7 +287,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
                   {cpFold.shown.map((it) => (
                     <ProductTile key={it.product_id} title={it.title} image={it.image} rocket={it.rocket} href={it.go_url}
                       price={priceOf(it.price_krw, it.price_hidden, cp.fetched_at ? `${hm(cp.fetched_at)} 확인` : "")}
-                      onOpen={() => rememberInterest(it.seed)}
+                      onOpen={() => { rememberInterest(it.seed); rememberViewed({ key: `cp:${it.product_id}`, title: it.title, image: it.image, href: it.go_url }); }}
                       top={<span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-white/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-ink">
                         {it.rank}<CoupangChange it={it} /></span>} />
                   ))}
