@@ -102,7 +102,7 @@ const freshViewed = (list: ViewedItem[]) => list.filter((v) => Date.now() - v.at
 export function rememberViewed(item: { key: string; title: string; image?: string | null; href: string | null | undefined }): void {
   const title = (item.title || "").trim().slice(0, 80);
   // 우리 이동 주소만 (서버가 클릭을 기록하고 판매처로 보냄) — 외부 주소·자바스크립트 주소는 담지 않는다
-  if (!item.key || !title || !item.href || !/^\/(go|home\/go|trends)\//.test(item.href)) return;
+  if (!item.key || !title || !item.href || !/^\/(go|home\/go|home\/hgo|trends)\//.test(item.href)) return;
   const image = item.image && /^https:\/\//.test(item.image) ? item.image : null;
   const list = read<ViewedItem[]>(KEYS.viewed, []).filter((v) => v.key !== item.key);
   write(KEYS.viewed, freshViewed([{ key: item.key, title, image, href: item.href, at: Date.now() }, ...list]));

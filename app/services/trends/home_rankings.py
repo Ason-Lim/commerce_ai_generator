@@ -150,6 +150,33 @@ def surge_part(view: str, today: dt.date, env=None) -> dict:
     return {"status": status, "data_until": pv["data_until"], "updated_at": pv["generated_at"], "items": items}
 
 
+SPARK_DAYS = 30
+MIN_PER_TAB = 6
+
+
+def _at_least(items: list[dict], more: list[dict]) -> list[dict]:
+    """2026-11-23 저녁 (C): 상위 100위 안 키워드가 6개보다 적은 카테고리는 그 밖(하루 상위 500) 순위순으로 채운다."""
+    if len(items) >= MIN_PER_TAB:
+        return items
+    seen = {r["keyword"] for r in items}
+    return items + [dict(r, beyond_top=True) for r in more if r["keyword"] not in seen][:MIN_PER_TAB - len(items)]
+
+
+def _with_spark(items: list[dict], hist: dict[str, dict[str, int]], days: list[str]) -> list[dict]:
+    """2026-11-23 저녁 (A): 키워드 카드의 작은 순위 그래프 — 최근 30일 네이버 식품 검색어 순위(우리가 모은 자료, 없는 날은 null)."""
+    return [dict(r, spark=[(hist.get(d) or {}).get(r["keyword"]) for d in days]) for r in items]
+
+
+def _highlight(mine: list[dict]) -> dict | None:
+    """2026-11-23 저녁 (B): 카테고리 맨 위 '이번 주 주목' — 상위 100위 안에서 7일 새 가장 많이 오른(또는 새로 든) 키워드 하나."""
+    rising = [r for r in mine if r.get("rising")]
+    if not rising:
+        return None
+    best = max(rising, key=lambda r: (r["change_kind"] == "compared", r["change_7d"] or 0, -r["rank"]))
+    return {"keyword": best["keyword"], "rank": best["rank"], "change_7d": best["change_7d"],
+            "change_kind": best["change_kind"], "ask": best["ask"]}
+
+
 def _fill(first: list[dict], mine: list[dict]) -> list[dict]:
     """홈 카테고리 (2026-11-23 저녁 사용자 요청 — 6개 + 더보기): 기본 보기(오르는 중 등)를 먼저, 모자라면 '늘 인기'가 아닌 것 →
     '늘 인기' 순으로 원래 순위대로 채운다. 순위 번호는 네이버 순위 그대로."""
@@ -177,26 +204,29 @@ def category_part(view: str, today: dt.date, env=None, rank_dir: Path | None = N
         events = tagmod.season_events(today)
     except Exception:  # noqa: BLE001 — 달력이 없으면 시즌 없이
         events = []
-    rows = []
+    rows, extra_rows = [], []
     for kw, rank in sorted(now.items(), key=lambda x: x[1]):
-        if rank > TOP_BAND:
+        if rank > TOP_BAND and view == "full":
             break
         tg = tagmod.tags_for(kw, tags=table, events=events)
         if not tg:
             continue
         state, obs, top = keyword_state(kw, hist)
         ch, kind = change_7d(kw, rank, before)
-        rows.append({"rank": rank, "keyword": kw, "ask": f"{kw} 추천해 줘", "tags": tg,
-                     "season": tagmod.season_match(kw, events) if "season" in tg else [],
-                     "state": state, "window_days": STEADY_WINDOW, "observed_days": obs, "top100_days": top,
-                     "change_7d": ch, "change_kind": kind})
-    for r in rows:
+        row = {"rank": rank, "keyword": kw, "ask": f"{kw} 추천해 줘", "tags": tg,
+               "season": tagmod.season_match(kw, events) if "season" in tg else [],
+               "state": state, "window_days": STEADY_WINDOW, "observed_days": obs, "top100_days": top,
+               "change_7d": ch, "change_kind": kind}
+        (rows if rank <= TOP_BAND else extra_rows).append(row)
+    for r in rows + extra_rows:
         r["rising"] = is_rising(r)
+    spark_days = sorted(hist)[-SPARK_DAYS:]
     limit = LIMITS[view]["category"]
     tabs = []
     for t in table:
         mine = [r for r in rows if t.tag in r["tags"]]
-        if not mine:
+        more = [r for r in extra_rows if t.tag in r["tags"]]
+        if not mine and not more:
             continue
         rising = [r for r in mine if r["rising"]]
         # 기본 보기 '오르는 중' — 비교 자료가 없어 하나도 없으면 '늘 인기'를 뺀 순위순, 그것도 없으면 전체
@@ -206,7 +236,8 @@ def category_part(view: str, today: dt.date, env=None, rank_dir: Path | None = N
                      "counts": {"all": len(mine), "rising": len(rising),
                                 "steady": sum(r["state"] == "steady" for r in mine),
                                 "insufficient": sum(r["state"] == "insufficient" for r in mine)},
-                     "items": (mine if view == "full" else _fill(shown, mine))[:limit]})
+                     "items": (mine if view == "full" else _with_spark(_at_least(_fill(shown, mine), more), hist, spark_days))[:limit],
+                     "highlight": _highlight(mine) if view == "home" else None})
     status = "stale" if _stale(latest, today, STALE_RANK_DAYS) else "ok"
     return {"status": status, "rank_date": latest, "compare_date": before_day if before is not None else None,
             "observed_days": len(hist), "window_days": STEADY_WINDOW, "tabs": tabs, "note": CATEGORY_NOTE,

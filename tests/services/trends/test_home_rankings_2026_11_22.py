@@ -138,7 +138,10 @@ def test_home_is_the_default_filter_prefix_of_full(ranks):
         f = tab(full, h["tag"])
         pred = {"rising": lambda i: i["rising"], "not_steady": lambda i: i["state"] != "steady",
                 "all": lambda i: True}[h["default_filter"]]
-        assert h["items"] == [i for i in f["items"] if pred(i)][:6]
+        # 11-23 저녁: 홈은 기본 보기를 먼저 두고 모자라면 순위순으로 채움 + 30일 순위 그래프(spark) — 앞부분이 기본 보기와 같은지
+        want = [i for i in f["items"] if pred(i)][:6]
+        got = [{k: v for k, v in i.items() if k not in ("spark", "beyond_top")} for i in h["items"][:len(want)]]
+        assert got == want and all(len(i["spark"]) <= 30 for i in h["items"])
 
 
 def test_insufficient_and_no_compare(tmp_path):
@@ -289,3 +292,22 @@ def test_home_category_fills_with_rank_order_after_rising():
     got = hr._fill([rows[2]], rows)
     assert [r["keyword"] for r in got] == ["c", "a", "d", "b"]
     assert hr.LIMITS["home"]["category"] == 30
+
+
+
+def test_home_cards_spark_fill_and_highlight(tmp_path):
+    """2026-11-23 저녁 A+B+C: 30일 순위 그래프 · 100위 밖으로 6개까지 채움 · 이번 주 주목(가장 많이 오른 것)."""
+    folder = tmp_path / "r"
+    folder.mkdir()
+    base = dt.date(2026, 11, 22)
+    for i in range(10):
+        day = (base - dt.timedelta(days=9 - i)).isoformat()
+        rows = ["곶감"] + [f"자리{n}" for n in range(1, 120)] + ["답례품", "한과 선물세트", "홍삼 선물세트", "과일 선물세트", "떡 선물세트"]
+        if i >= 7:      # 최근 3일: 곶감이 크게 오름
+            rows = ["답례품"] + rows
+        write_day(folder, day, rows)
+    home = cat(folder, "home")
+    gift = tab(home, "gift")
+    assert len(gift["items"]) >= 6 and any(i.get("beyond_top") for i in gift["items"])   # 100위 밖으로 채움
+    assert all(isinstance(i["spark"], list) for i in gift["items"])
+    assert gift["highlight"] is None or gift["highlight"]["keyword"] in {i["keyword"] for i in gift["items"]}
