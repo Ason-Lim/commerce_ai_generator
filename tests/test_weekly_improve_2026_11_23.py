@@ -122,3 +122,37 @@ def test_launchd_schedule_sunday_2330():
     assert d["ProgramArguments"][-1] == "__REPO__/scripts/run_weekly_improve.sh"
     run = (ROOT / "scripts" / "run_weekly_improve.sh").read_text(encoding="utf-8")
     assert "scripts/weekly_improve.py --end" in run
+
+
+def test_clicks_read_from_database_url(tmp_path, monkeypatch):
+    """서버 밖(예약 실행)에서도 .env 의 DB 주소로 클릭 기록을 읽는다 — 운영자 시험·다른 칸은 뺌."""
+    db = tmp_path / "clicks.sqlite3"
+    with sqlite3.connect(db) as c:
+        c.execute("CREATE TABLE product_click_log (created_at TEXT, selected_section TEXT, query TEXT)")
+        c.executemany("INSERT INTO product_click_log VALUES (?,?,?)", [
+            ("2026-11-28 10:00:00", "chat", "chat"), ("2026-11-28 11:00:00", "chat_extra", "chat"),
+            ("2026-11-28 12:00:00", "chat", "chat_internal"), ("2026-11-28 13:00:00", "trend", "trend"),
+            ("2026-11-27 09:00:00", "search_link", "chat")])
+    monkeypatch.setattr("app.core.config.resolve_database_url", lambda: f"sqlite:///{db}")
+    opened = []
+
+    class Conn:                                          # 시험 환경은 실제 엔진을 막아 둠 — sqlite3 로 대신 실행
+        def __enter__(self):
+            self.c = sqlite3.connect(db)
+            return self
+
+        def __exit__(self, *a):
+            self.c.close()
+
+        def execute(self, stmt, params):
+            sql = str(stmt).replace(":a", "?").replace(":b", "?")
+            return self.c.execute(sql, (params["a"], params["b"]))
+
+    class Engine:
+        def connect(self):
+            return Conn()
+
+    monkeypatch.setattr("sqlalchemy.create_engine", lambda url, **k: opened.append(url) or Engine())
+    got = wi.clicks_by_day(date(2026, 11, 1), END)
+    assert opened == [f"sqlite:///{db}"]                  # engine_provider 가 아니라 .env 의 DB 주소로
+    assert got == {"2026-11-28": {"chat": 1, "chat_extra": 1}, "2026-11-27": {"search_link": 1}}
