@@ -16,8 +16,9 @@ import { CategoryArt } from "./CategoryArt";
 const FOLD = 6;   // 2026-11-23 사용자 요청: 쿠팡 식품 랭킹·함께 보면 좋은 상품은 30개까지, 처음 6개 + 더보기로 펼치고 접기
 
 /** 처음 6개만 보이고 '더보기'로 펼치기·접기 (상품 목록 공용). */
-function useFold<T>(items: T[]): { shown: T[]; button: ReactNode } {
+function useFold<T>(items: T[], resetKey?: string): { shown: T[]; button: ReactNode } {
   const [open, setOpen] = useState(false);
+  useEffect(() => { setOpen(false); }, [resetKey]);        // 카테고리를 바꾸면 다시 6개로
   const rest = Math.max(0, items.length - FOLD);
   const button = rest > 0 ? (
     <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}
@@ -177,6 +178,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
     const pick = (i: RankKeyword) => f === "rising" ? i.rising : f === "not_steady" ? i.state !== "steady" : f === "steady" ? i.state === "steady" : true;
     return view === "full" ? tab.items.filter(pick) : tab.items;
   }, [tab, filter, view]);
+  const kwFold = useFold<RankKeyword>(shownKeywords, `${tag}:${filter ?? ""}`);   // 11-23 저녁: 카테고리도 6개 + 더보기
 
   if (failed) return surgeFull ? <div className="mt-4">{surgeFull}</div> : null;
   if (!data) return <p className="mt-10 text-sm text-stone-400" aria-live="polite">지금 순위를 불러오는 중…</p>;
@@ -264,13 +266,14 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
                     ))}
                   </div>
                 )}
-                {tab && tab.default_filter !== "rising" && filter === null && (
+                {view === "full" && tab && tab.default_filter !== "rising" && filter === null && (
                   <p className="mt-2 text-xs text-stone-500">7일 전 순위와 비교할 자료가 아직 없어 순위순으로 보여 드려요{tab.default_filter === "not_steady" ? " ('늘 인기'는 뺌)" : ""}.</p>
                 )}
                 <ol className="mt-2 rounded-2xl border border-stone-200 bg-white px-1">
-                  {shownKeywords.map((it) => <KeywordRow key={it.keyword} it={it} onAsk={(t) => { rememberInterest(it.keyword); ask(t); }} disabled={busy} />)}
+                  {kwFold.shown.map((it) => <KeywordRow key={it.keyword} it={it} onAsk={(t) => { rememberInterest(it.keyword); ask(t); }} disabled={busy} />)}
                   {shownKeywords.length === 0 && <li className="px-3 py-3 text-sm text-ink2">이 보기에 맞는 키워드가 없어요.</li>}
                 </ol>
+                {kwFold.button}
                 {data.categories.status === "stale" && <p className="mt-2 text-xs text-warn">순위 자료가 늦어지고 있어요 — {md(data.categories.rank_date)} 자료예요.</p>}
                 {view === "full" && <p className="mt-2 text-xs leading-5 text-stone-500">{data.categories.note}</p>}
               </>}

@@ -39,7 +39,8 @@ COMPARE_DAYS = 7
 STALE_RANK_DAYS = 3             # 순위 파일이 이보다 오래되면 stale
 STALE_SURGE_DAYS = 3
 # 2026-11-23 사용자 요청: 홈 쿠팡 식품 랭킹 30개(화면은 6개 + 더보기)
-LIMITS = {"home": {"surge": 6, "category": 6, "recent": 4, "steady": 2, "coupang": 30},
+# 11-23 저녁: 카테고리도 30개(화면 6개 + 더보기) — 오르는 중을 먼저, 모자라면 나머지 순위순으로 채움
+LIMITS = {"home": {"surge": 6, "category": 30, "recent": 4, "steady": 2, "coupang": 30},
           "full": {"surge": 100, "category": TOP_BAND, "recent": 16, "steady": 4, "coupang": 100}}
 COUPANG_NOTE = ("쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요 (우리 점수로 다시 줄 세우지 않아요). "
                 "10분마다 새로 받고, 가격은 받은 시각의 가격이에요.")
@@ -149,6 +150,14 @@ def surge_part(view: str, today: dt.date, env=None) -> dict:
     return {"status": status, "data_until": pv["data_until"], "updated_at": pv["generated_at"], "items": items}
 
 
+def _fill(first: list[dict], mine: list[dict]) -> list[dict]:
+    """홈 카테고리 (2026-11-23 저녁 사용자 요청 — 6개 + 더보기): 기본 보기(오르는 중 등)를 먼저, 모자라면 '늘 인기'가 아닌 것 →
+    '늘 인기' 순으로 원래 순위대로 채운다. 순위 번호는 네이버 순위 그대로."""
+    seen = {r["keyword"] for r in first}
+    rest = [r for r in mine if r["keyword"] not in seen]
+    return first + [r for r in rest if r["state"] != "steady"] + [r for r in rest if r["state"] == "steady"]
+
+
 def category_part(view: str, today: dt.date, env=None, rank_dir: Path | None = None) -> dict:
     if rank_dir is None:
         rank_dir, _kind = period.rank_dir_from_env(env)
@@ -197,7 +206,7 @@ def category_part(view: str, today: dt.date, env=None, rank_dir: Path | None = N
                      "counts": {"all": len(mine), "rising": len(rising),
                                 "steady": sum(r["state"] == "steady" for r in mine),
                                 "insufficient": sum(r["state"] == "insufficient" for r in mine)},
-                     "items": (mine if view == "full" else shown)[:limit]})
+                     "items": (mine if view == "full" else _fill(shown, mine))[:limit]})
     status = "stale" if _stale(latest, today, STALE_RANK_DAYS) else "ok"
     return {"status": status, "rank_date": latest, "compare_date": before_day if before is not None else None,
             "observed_days": len(hist), "window_days": STEADY_WINDOW, "tabs": tabs, "note": CATEGORY_NOTE,
