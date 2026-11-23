@@ -22,6 +22,16 @@ aside h2{font-size:11.5px;letter-spacing:.08em;color:#7f93a8;margin:18px 0 8px;t
 .up{display:block;border:1px dashed #3d5a78;border-radius:10px;padding:10px;text-align:center;font-size:12.5px;cursor:pointer;color:#a9bccf}
 nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
 nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+/* 2026-11-23 (지인 의견): 공고의 예산·마감·상태가 가장 중요 — 공고 카드 맨 위에 크게 */
+.keyfacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:4px 0 12px}
+.keyfacts>div{border:1px solid #e3e7ec;border-radius:12px;padding:10px 14px;background:#fafbfc}
+.keyfacts .k{font-size:12px;color:var(--ink3)}.keyfacts .val{font-size:22px;font-weight:800;line-height:1.3;margin-top:2px}
+.keyfacts .sub{font-size:12.5px;color:var(--ink3);margin-top:2px}
+.keyfacts .dday{display:inline-block;font-size:13px;font-weight:800;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle}
+.dd-near{background:var(--hold-s);color:var(--hold)}.dd-ok{background:var(--ok-s);color:var(--ok)}.dd-past{background:#eef1f4;color:var(--ink3)}
+.bidhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;border:1px solid #e3e7ec;border-radius:12px;padding:8px 12px;margin:0 0 10px;background:#fafbfc;font-size:14px}
+.bidhead b{font-size:16px}
+@media (max-width:640px){.keyfacts{grid-template-columns:1fr}}
 .pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
 .s-입찰중{background:var(--ok-s);color:var(--ok)}.s-마감임박{background:var(--hold-s);color:var(--hold)}.s-입찰마감,.s-마감일{background:#eef1f4;color:var(--ink3)}
 .v{font-size:11px;border-radius:6px;padding:1px 6px;white-space:nowrap}.v-verified{background:var(--ok-s);color:var(--ok)}.v-document_provided{background:var(--acc-s);color:var(--acc)}
@@ -185,15 +195,35 @@ async function run(prompt){
 
 function panel(title,n){const p=document.createElement("div");p.className="panel";p.innerHTML=`<h3>${esc(title)}${n?`<span class="n">${esc(n)}</span>`:""}</h3>`;return p}
 
+// 마감까지 남은 날 (마감 문자열 'YYYY-MM-DD HH:MM' — 날짜만 비교)
+function dday(deadline){
+  const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(deadline||"");if(!m)return null;
+  const t=new Date();const a=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());const d=Date.UTC(+m[1],+m[2]-1,+m[3]);
+  return Math.round((d-a)/86400000);
+}
+function ddayTag(deadline){
+  const n=dday(deadline);if(n==null)return "";
+  const cls=n<0?"dd-past":n<=3?"dd-near":"dd-ok";
+  return `<span class="dday ${cls}">${n<0?"마감":n===0?"D-day":"D-"+n}</span>`;
+}
+function keyFacts(b){   // 상태 · 예산 · 마감을 큰 글씨로
+  const st=String(b.status||"").split(" ")[0];
+  return `<div class="keyfacts" aria-label="공고 핵심">
+    <div><div class="k">입찰 상태</div><div class="val"><span class="pill s-${esc(st)}" style="font-size:16px;padding:3px 12px">${esc(b.status||"-")}</span></div><div class="sub">${esc(b.verification_label||"")}</div></div>
+    <div><div class="k">공고 예산</div><div class="val">${b.budget?won(b.budget):"미기재"}</div><div class="sub">${b.headcount?esc(b.headcount)+"명":""}</div></div>
+    <div><div class="k">입찰 마감</div><div class="val">${esc((b.deadline||"-").slice(0,10))}${ddayTag(b.deadline)}</div><div class="sub">${esc((b.deadline||"").slice(11,16))}</div></div>
+  </div>`;
+}
+
 function render(b){
   if(b.type==="text"){const d=document.createElement("div");d.className="txt";d.innerHTML=md(b.md);return d}
   if(b.type==="notice"){const d=document.createElement("div");d.className="notice "+(b.tone||"");d.innerHTML=md(b.md);return d}
   if(b.type==="actions"){const d=document.createElement("div");d.className="actions";b.items.forEach(t=>d.append(btn(t)));return d}
   if(b.type==="bid_list"){const p=panel("공고",b.rows.length+"건");p.insertAdjacentHTML("beforeend",`<div style="overflow-x:auto"><table><thead><tr><th>상태</th><th>공고</th><th>유형</th><th class=num>예산</th><th>마감</th><th>신뢰 등급</th></tr></thead><tbody>${
-    b.rows.map(r=>`<tr><td><span class="pill s-${esc(r.status.split(" ")[0])}">${esc(r.status)}</span></td><td><b>${esc(r.title)}</b><div class=q>${esc(r.bid_id)} · ${esc(r.agency||"")}</div></td><td>${esc(r.bid_type)}</td><td class=num>${r.budget?won(r.budget):"-"}</td><td>${esc((r.deadline||"").slice(0,16))}</td><td><span class="v v-${esc(r.verification)}">${esc(r.verification_label)}</span></td></tr>`).join("")}</tbody></table></div>`);return p}
+    b.rows.map(r=>`<tr><td><span class="pill s-${esc(r.status.split(" ")[0])}">${esc(r.status)}</span></td><td><b>${esc(r.title)}</b><div class=q>${esc(r.bid_id)} · ${esc(r.agency||"")}</div></td><td>${esc(r.bid_type)}</td><td class=num><b style="font-size:15px">${r.budget?won(r.budget):"-"}</b></td><td style="white-space:nowrap"><b style="font-size:15px">${esc((r.deadline||"").slice(0,10))}</b>${ddayTag(r.deadline)}<div class=q>${esc((r.deadline||"").slice(11,16))}</div></td><td><span class="v v-${esc(r.verification)}">${esc(r.verification_label)}</span></td></tr>`).join("")}</tbody></table></div>`);return p}
   if(b.type==="log"){const d=document.createElement("div");d.className="log";d.textContent=b.lines.join("\n");return d}
-  if(b.type==="bid_card"){const p=panel(b.title);p.insertAdjacentHTML("beforeend",`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="pill s-${esc(b.status.split(" ")[0])}">${esc(b.status)}</span><span class="v v-${esc(b.verification)}">${esc(b.verification_label)}</span><span class=tag>${esc(b.bid_type)}</span></div>
-    <div class=q>${esc(b.agency||"기관 미상")} · 예산 ${b.budget?won(b.budget):"미기재"} · 마감 ${esc(b.deadline||"-")} · 출처 ${esc(b.source)}${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">원문</a>`:""}</div>`);return p}
+  if(b.type==="bid_card"){const p=panel(b.title);p.insertAdjacentHTML("beforeend",keyFacts(b)+`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="v v-${esc(b.verification)}">${esc(b.verification_label)}</span><span class=tag>${esc(b.bid_type)}</span></div>
+    <div class=q>${esc(b.agency||"기관 미상")} · 출처 ${esc(b.source)}${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">원문</a>`:""}</div>`);return p}
   if(b.type==="checkpoints"){const p=panel(`${b.bid_type} 점검 포인트`,`요구 기업 유형 ${b.company_type}`);p.insertAdjacentHTML("beforeend",`<div class="cp"><div><h4>요구사항</h4><ul>${b.requirements.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
     <div><h4>제안 포인트</h4><ul>${b.strategies.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>-</li>"}</ul></div><div><h4>리스크</h4><ul>${b.risks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div><div class="q" style="margin-top:8px">${esc(b.basis)}</div>`);return p}
   if(b.type==="trends"){const p=panel("입찰 트렌드",`집계 ${b.total}건`+(b.excluded.legacy?` · 미검증 기존 데이터 ${b.excluded.legacy}건 제외`:""));
@@ -218,7 +248,7 @@ function render(b){
     p.insertAdjacentHTML("beforeend",b.rows.length?`<div style="overflow-x:auto"><table><thead><tr><th>상품</th><th>판매자</th><th>판매 구분</th><th class=num>단가</th><th class=num>최소구매</th><th>배송</th></tr></thead><tbody>${
       b.rows.map(r=>`<tr><td>${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a>`:esc(r.name)}<div class=q>${esc(r.mall)} · 검색어 ${esc(r.query)}${r.category?` · ${esc(r.category)}`:""}</div></td><td><b>${esc(r.seller)}</b>${r.business_only?` <span class=tag>사업자 전용</span>`:""}</td><td><span class="sale sale-${esc(r.sale_kind)}">${esc(r.sale_label)}</span></td><td class=num>${won(r.price)}</td><td class=num>${r.moq?r.moq.toLocaleString()+"개":"-"}</td><td><small>${esc(r.ship)}</small></td></tr>`).join("")
     }</tbody></table></div>`:`<p class="note">검색 결과가 없어요. 다른 검색어로 해 보세요.</p>`);return p}
-  if(b.type==="candidates")return candPanel(b.rows);
+  if(b.type==="candidates")return candPanel(b.rows,b.bid);
   if(b.type==="cost")return costPanel(b);
   if(b.type==="rfq"){const p=panel("견적 요청 초안",b.drafts.length+"건 · 미발송");b.drafts.forEach(d=>{
     const txt=`${d.body}\n${d.common.map((q,i)=>`${i+1}. ${q}`).join("\n")}\n\n${d.items.map(i=>`■ ${i.name} (${i.option||"옵션 미확인"})\n${i.questions.map(q=>"- "+q).join("\n")}`).join("\n\n")}`;
@@ -264,8 +294,10 @@ loadTemplates();
 $("#mkprop").onclick=()=>run("제안서 작성해줘");
 function fmt(f,v){if(["budget_per_person","total_budget","min_online_price"].includes(f))return won(+v);if(f==="headcount")return (+v).toLocaleString()+"명";if(f==="vat_included")return v==="True"?"포함":"별도";return v}
 
-function candPanel(rows){
+function candPanel(rows,bid){
   const p=panel("후보 판정",`${rows.length}개 · 클릭하면 항목별 근거`);
+  // 2026-11-23 (지인 의견): 후보 표만 봐도 어떤 공고의 마감·예산인지 보이게
+  if(bid)p.insertAdjacentHTML("beforeend",`<div class="bidhead"><span class="pill s-${esc(String(bid.status||"").split(" ")[0])}">${esc(bid.status||"")}</span><span>${esc(bid.title||bid.bid_id||"")}</span><span>예산 <b>${bid.budget?won(bid.budget):"미기재"}</b></span><span>마감 <b>${esc((bid.deadline||"-").slice(0,16))}</b>${ddayTag(bid.deadline)}</span></div>`);
   const counts={ALL:rows.length};rows.forEach(r=>counts[r.decision]=(counts[r.decision]||0)+1);
   const f=document.createElement("div");f.className="filters";let cur="NOTEX";
   const NAMES={NOTEX:"제외 숨김",ALL:"전체",ELIGIBLE:"적격",HOLD:"보류",EXCLUDED:"제외"};
