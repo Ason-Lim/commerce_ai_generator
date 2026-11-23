@@ -88,6 +88,28 @@ PRIVACY = _rx(r"개인\s*정보",
               r"(내|제|나의|저의)\s*(기록|정보|데이터|대화)[^.?!]{0,8}(지워|지우|삭제|없애|보여|열람|가져)",
               r"(대화|검색)\s*기록[^.?!]{0,6}(지워|지우|삭제|없애)", r"탈퇴")
 
+# 개인정보 요청 넓게 (GPT 검토 2026-11-23 — 외부 AI 전송은 되돌릴 수 없으므로 놓치지 않는 쪽으로)
+#   '이 과일 이름 알려줘' 같은 식품 질문과 겹치지 않게, 일반 낱말(이름·주소·번호·정보·기록·계정)은 '내·제'가 붙을 때만.
+_PD_STRONG = r"(개인\s*정보|연락처|전화\s*번호|휴대\s*폰\s*번호|핸드폰\s*번호|생년월일|주민\s*(등록\s*)?번호|이메일|메일\s*주소|집\s*주소|계좌|카드\s*번호|위치\s*정보)"
+_PD_MINE = r"(내|제|나의|저의|우리\s*집)\s*(이름|실명|주소|번호|정보|기록|데이터|대화|검색|계정|흔적|사진)"
+_PD_ACT = (r"(지워|지우|삭제|없애|파기|폐기|바꿔|바꾸|변경|수정|보여|알려|열람|확인|가져|내려\s*받|저장|기억|수집|보관|"
+           r"팔|넘기|넘겨|공유|제공|유출|새|쓰는지|쓰고|어디|누가|왜|남기|남겨|적어|적을|보내|드릴|드려)")
+PRIVACY_WIDE = _rx("(" + _PD_STRONG + "|" + _PD_MINE + r")[^.?!]{0,15}" + _PD_ACT,
+                   _PD_ACT + r"[^.?!]{0,10}(" + _PD_STRONG + "|" + _PD_MINE + ")")
+
+
+def privacy_risk(text: str | None) -> bool:
+    """개인정보 요청으로 보일 수 있는 문장 — 규칙 분류(privacy)와 **외부 AI 호출 직전 검사**에 같이 쓴다."""
+    t = " ".join((text or "").split())
+    return bool(t) and bool(PRIVACY.search(t) or PRIVACY_WIDE.search(t))
+
+
+# 건강 낱말만 있고 묻는 말은 없는 문장 ('당뇨 간식 추천') — 규칙으로 단정하지 않고, **상품이 나왔어도** AI 로 한 번 더 본다
+def sensitive_hint(text: str | None) -> bool:
+    t = " ".join((text or "").split())
+    return bool(t) and bool(re.search(_HEALTH_WORD, t))
+
+
 # ── 분쟁 (좁게) ── 보상·법적 대응
 DISPUTE = _rx(r"보상\s*(해|받|요구|청구)", r"배상", r"소송", r"고소(장|\s*(할|하겠|했|당|하려))", r"고발", r"소비자\s*(원|보호원)", r"피해\s*구제",
               r"사기\s*(야|예요|당했|같아|치)", r"법적\s*(으로|조치|대응)", r"민원")
@@ -143,6 +165,7 @@ _ORDER: tuple[tuple[str, object], ...] = (
     ("health", ALLERGY),
     ("health", HEALTH),
     ("privacy", PRIVACY),
+    ("privacy", PRIVACY_WIDE),
     ("dispute", DISPUTE),
     ("affiliate", AFFILIATE),
     ("stock", STOCK),
@@ -202,6 +225,8 @@ def read_ai(ask, text: str | None) -> Decision | None:
     """AI 답 → 분야. 허용 목록 밖·낮은 확신·food·실패는 None (지금 답 그대로)."""
     if ask is None or not text or not text.strip():
         return None
+    if privacy_risk(text):                      # 외부 호출 직전 검사 — 개인정보 요청으로 보이면 보내지 않는다
+        return Decision("privacy", "rule", "privacy_guard")
     try:
         import json
 
@@ -220,4 +245,4 @@ def is_human_required(domain: str) -> bool:
     return domain in HUMAN_REQUIRED
 
 
-__all__ = ["DOMAINS", "HUMAN_REQUIRED", "NO_AI", "Decision", "by_rules", "safety_by_rules", "is_human_required", "AI_PROMPT", "AI_ALLOWED", "read_ai"]
+__all__ = ["DOMAINS", "HUMAN_REQUIRED", "NO_AI", "Decision", "by_rules", "safety_by_rules", "is_human_required", "AI_PROMPT", "AI_ALLOWED", "read_ai", "privacy_risk", "sensitive_hint"]

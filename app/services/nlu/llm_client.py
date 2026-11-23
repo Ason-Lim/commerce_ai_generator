@@ -32,6 +32,10 @@ class LLMConfigError(ValueError):
     """Raised when the LLM provider is not configured correctly."""
 
 
+class PrivacyBlocked(LLMConfigError):
+    """고객 문장이 개인정보 요청으로 보여 외부 AI 로 보내지 않음 (2026-11-23 창 4). 호출하는 곳은 규칙 경로로 돈다."""
+
+
 # 2026-11-11: DeepSeek 생각 모드를 작업마다 정한다 (생각 켬/끔 20문항×2회 비교 — llm_food_compare 문서).
 #   켬: 한 번 만들어 저장해 여러 고객에게 다시 쓰는 답·생성·검토 — 느린 건 처음 한 번, 끔일 때 다른 과일 품종을 섞는 오류가 나왔다
 #   끔: 이름·검색어·양·의도처럼 주어진 글을 정리만 하는 일 — 추론이 필요 없고, 켜면 몇 배 느리다 (제목 정리 41초 → 3.4초)
@@ -166,6 +170,13 @@ class LLMClient:
 
     # ── 공용 진입점 ────────────────────────────────────────
     def chat_json(self, user_text: str, temperature: float = 0.0) -> dict:
+        # 2026-11-23 창 4 (GPT 검토): 고객 문장 작업은 외부 AI 로 보내기 **직전에** 개인정보 요청인지 다시 본다.
+        #   분류(규칙)를 거치지 않은 경로·놓친 문장도 여기서 막는다 — 보낸 뒤 결과를 버려도 전송은 되돌릴 수 없으므로.
+        if self.task in CUSTOMER_TASKS and self.provider != "ollama":
+            from app.services.chat.domain import privacy_risk
+
+            if privacy_risk(user_text):
+                raise PrivacyBlocked("개인정보 요청으로 보이는 문장이라 외부 AI 로 보내지 않았어요")
         if self.cache:
             from app.services.ai import cache as ai_cache
 

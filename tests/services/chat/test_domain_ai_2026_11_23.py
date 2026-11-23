@@ -95,3 +95,60 @@ def test_cs_domain_is_a_customer_task():
     from app.services.nlu.llm_client import CUSTOMER_FAST_TASKS, THINKING_BY_TASK
 
     assert "cs_domain" in CUSTOMER_FAST_TASKS and THINKING_BY_TASK["cs_domain"] is False
+
+
+# ── GPT 검토 2026-11-23 (#80 보완) ──
+SNACK = [{"product_name": "당뇨 간식 무가당 견과 선물세트", "price": 19900, "product_url": "https://www.coupang.com/p",
+          "platform_name": "coupang", "is_coupang": True}]
+@pytest.mark.parametrize("text", ["제 주소 바꿔 주세요", "내 번호 어디에 쓰는지 알려줘", "연락처 저장했어?", "메일 주소 알려줘",
+                                  "전화번호 남겨요", "제 계정 정보 보여 주세요"])
+def test_wide_privacy_requests_are_privacy(text):
+    assert D.privacy_risk(text) and D.by_rules(text).domain == "privacy"
+
+
+@pytest.mark.parametrize("text", ["이 과일 이름 알려줘", "와인 이름 알려줘", "사과 품종 이름", "택배 상자 주소 쓰는 칸", "사과 추천해줘"])
+def test_food_sentences_are_not_privacy_risk(text):
+    assert not D.privacy_risk(text)
+
+
+def test_read_ai_does_not_send_privacy_like_text():
+    reader = _Reader({"domain": "food", "confidence": "high"})
+    assert D.read_ai(reader, "제 주소 바꿔 주세요").domain == "privacy" and reader.calls == []
+
+
+@pytest.mark.parametrize("task", ["chat_intent", "shop_keyword", "food_knowledge", "cs_domain"])
+def test_llm_client_blocks_privacy_text_before_any_external_call(task):
+    """분류를 거치지 않은 경로(구조화 답과 함께 온 문장 등)도 외부 호출 직전에 막는다."""
+    from app.services.nlu.llm_client import LLMClient, PrivacyBlocked
+
+    env = {"LLM_PROVIDER": "deepseek", "DEEPSEEK_API_KEY": "d", "DEEPSEEK_MODEL": "m", "OPENAI_API_KEY": "o",
+           "ANTHROPIC_API_KEY": "a", "CUSTOMER_LLM_PROVIDER": "openai"}
+    calls = []
+    c = LLMClient("x", provider="deepseek", env=env, task=task, openai_factory=lambda **kw: calls.append(kw),
+                  http_post=lambda *a, **k: calls.append(a))
+    with pytest.raises(PrivacyBlocked):
+        c.chat_json('{"문장": "제 연락처 삭제해 주세요"}')
+    assert calls == []
+
+
+def test_internal_tasks_are_not_affected_by_the_guard():
+    from app.services.nlu.llm_client import CUSTOMER_TASKS
+
+    assert "trend_cause" not in CUSTOMER_TASKS and "warm_classify" not in CUSTOMER_TASKS
+
+
+def test_health_hint_is_checked_even_when_products_are_shown(sqlite_db):
+    reader = _Reader({"domain": "health", "confidence": "high"})
+    res = _svc(sqlite_db, SNACK, reader).handle(None, message="당뇨 간식 추천해줘")
+    assert reader.calls and res["stage"] == "domain_health"
+    assert not any(b["type"] == "product_list" for b in res["blocks"])
+    assert not any((b.get("data") or {}).get("affiliate") for b in res["blocks"])
+
+
+@pytest.mark.parametrize("answer", [{"domain": "food", "confidence": "high"}, {"domain": "not_food", "confidence": "high"},
+                                    {"domain": "health", "confidence": "low"}])
+def test_health_hint_keeps_products_unless_ai_says_sensitive(sqlite_db, answer):
+    reader = _Reader(answer)
+    res = _svc(sqlite_db, SNACK, reader).handle(None, message="당뇨 간식 추천해줘")
+    assert reader.calls and not res["stage"].startswith("domain_")
+    assert any(b["type"] == "product_list" for b in res["blocks"])

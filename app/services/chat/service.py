@@ -1449,25 +1449,37 @@ class ChatService:
         return self._response(sid, "shopping_followup", blocks, meta=_turn_meta(state, calls))
 
     def _domain_after_zero(self, response: dict, message: str | None, answers: dict | None) -> dict:
-        """② 규칙이 모르고 식품 흐름이 상품을 하나도 못 보여 준 차례만 AI 로 분야를 다시 본다 (식품이면 그대로).
+        """② 규칙이 모른 문장을 AI 로 분야를 다시 본다 (식품이면 그대로). 두 경우만:
 
-        손님이 직접 쓴 문장만 (칩·구조화 답 제외), 쿠팡 장애(불러오지 못함)는 제외 — 0건 안내를 맞는 분야 안내로 바꾼다."""
+        * 식품 흐름이 상품을 하나도 못 보여 준 차례 (쿠팡 장애 제외) — 0건 안내를 맞는 분야 안내로 바꾼다.
+        * 건강 낱말이 있는 문장('당뇨 간식 추천') — **상품이 나왔어도** 본다 (GPT 검토 2026-11-23: 검색 결과 수는 식품 질문이라는
+          근거가 아니다. 민감 의도는 결과 수와 상관없이). 건강(high)이면 상품 대신 건강 안내.
+        손님이 직접 쓴 문장만 (칩·구조화 답 제외). 개인정보 요청으로 보이면 read_ai 가 보내지 않는다(직전 검사)."""
         reader = getattr(self, "domain_reader", None)
         stage = str(response.get("stage") or "")
-        if reader is None or not message or answers or not stage.startswith("shopping") or stage == "shopping_hot":
+        if reader is None or not message or answers or stage.startswith("domain_") or stage == "shopping_hot":
             return response
         import json
 
         from app.services.chat import domain as domain_mod
         from app.services.chat import miss_signals as ms
 
-        counts = ms.shown_counts(response.get("blocks") or [])
-        if counts["n_main"] or counts["n_extra"] or counts["n_collapsed"]:
-            return response
-        if "불러오지 못했" in json.dumps(response.get("blocks") or [], ensure_ascii=False):
-            return response
+        sensitive = domain_mod.sensitive_hint(message)
+        if not sensitive:
+            if not stage.startswith("shopping"):
+                return response
+            counts = ms.shown_counts(response.get("blocks") or [])
+            if counts["n_main"] or counts["n_extra"] or counts["n_collapsed"]:
+                return response
+            if "불러오지 못했" in json.dumps(response.get("blocks") or [], ensure_ascii=False):
+                return response
         decision = domain_mod.read_ai(reader, message)
         if decision is None:
+            return response
+        if sensitive and decision.domain not in ("health", "privacy", "emergency", "food_safety"):
+            # 건강 낱말 때문에 본 차례는 민감 분야일 때만 바꾼다 (상품이 나온 답을 '식품 아님' 등으로 덮지 않음)
+            turn_metrics.note("domain", "food")
+            turn_metrics.note("domain_by", decision.by)
             return response
         turn_metrics.note("domain", decision.domain)
         turn_metrics.note("domain_by", decision.by)
