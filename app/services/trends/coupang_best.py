@@ -24,7 +24,7 @@ from urllib.parse import quote, urlparse
 
 ROOT = Path(__file__).resolve().parents[3]
 CATEGORY_ID = 1012                 # 식품 (11-23 시험 호출로 확인)
-TTL_SECONDS = 3600                 # 메모리에 두는 시간 (파일 저장 없음)
+TTL_SECONDS = 600                  # 메모리에 두는 시간 (파일 저장 없음) — 11-23 쿠팡 답 뒤 1시간 → 10분
 IMAGE_HOSTS = ("coupangcdn.com",)
 LINK_HOSTS = ("link.coupang.com", "www.coupang.com", "coupang.com")
 PATH = f"/v2/providers/affiliate_open_api/apis/openapi/products/bestcategories/{CATEGORY_ID}"

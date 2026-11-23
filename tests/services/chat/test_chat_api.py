@@ -82,7 +82,8 @@ def test_chip_payload_is_treated_as_message(client):
 
 
 def test_go_click_log_carries_the_shown_product_name(client, monkeypatch):
-    """2026-11-10 (R0): 상품명 없이 기록하면 user_product_preference(NOT NULL)가 실패해 클릭까지 되돌려졌다."""
+    """2026-11-10 (R0): 상품명 없이 기록하면 user_product_preference(NOT NULL)가 실패해 클릭까지 되돌려졌다.
+    2026-11-23 쿠팡 약관 제5조 ③: 상품명은 남기지 않고 이름 자리에 링크(비지 않게) — 이름 함수는 그대로 두고 값만 바꿈."""
     logged = []
     import app.services.analytics_logger as al
     monkeypatch.setattr(al, "log_product_click", lambda **kw: logged.append(kw))
@@ -91,7 +92,7 @@ def test_go_click_log_carries_the_shown_product_name(client, monkeypatch):
     assert r.headers["location"] == "https://shop.example.com/a"
     product = logged[-1]["product"]
     assert product["product_url"] == "https://shop.example.com/a"
-    assert product["product_name"] and product["product_name"] != product["product_url"]
+    assert product["product_name"] == product["product_url"]          # 비지 않음 · 상품명 아님
     assert product["rank"] == ra and product["selected_section"] == "chat"
 
 

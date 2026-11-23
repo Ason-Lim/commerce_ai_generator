@@ -184,3 +184,21 @@ def test_aggregate_hides_long_or_masked_queries():
     assert agg_text("사과 5kg") == "사과 5kg"
     assert agg_text("사과 010-1234-5678 로 연락") == AGG_HIDDEN
     assert agg_text("가" * 41) == AGG_HIDDEN
+
+
+def test_strip_cards_removes_coupang_card_details_after_24h_but_keeps_saved(engine, tmp_path):
+    """2026-11-23 쿠팡 약관 제5조 ③: 24시간 지난 대화의 상품 카드는 키·순위·링크만. 보관함(saved:)은 그대로."""
+    card = {"key": "a" * 12, "rank": 1, "title": "부사 사과 2kg", "price": 19900, "url": "https://link.coupang.com/a/1"}
+    state = json.dumps({"version": 1, "seen": [{"query": "사과", "cards": [card]}], "last_items": [card]}, ensure_ascii=False)
+    ts = DateTime()
+    put = text("INSERT INTO recipe_chat_session VALUES (:s,:j,1,:t,:t)").bindparams(bindparam("t", type_=ts))
+    with engine.begin() as c:
+        c.execute(put, {"s": "chat-day-old", "j": state, "t": NOW - timedelta(hours=30)})
+        c.execute(put, {"s": "chat-fresh", "j": state, "t": NOW - timedelta(hours=3)})
+        c.execute(put, {"s": "saved:owner-new", "j": json.dumps({"version": 1, "saved": [card]}, ensure_ascii=False),
+                        "t": NOW - timedelta(hours=30)})
+    report = Retention(engine, now=NOW, pseudo_key=KEY, signal_dir=tmp_path / "none").run()
+    rows = {r[0]: r[1] for r in _q(engine, "SELECT session_id, state_json FROM recipe_chat_session")}
+    assert "부사 사과" not in rows["chat-day-old"] and '"query": "사과"' in rows["chat-day-old"]
+    assert "부사 사과" in rows["chat-fresh"] and "부사 사과" in rows["saved:owner-new"]
+    assert any(r["step"] == "strip_cards" and r["rows"] == 1 for r in report)

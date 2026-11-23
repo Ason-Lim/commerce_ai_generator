@@ -36,10 +36,12 @@ class ChatStateStore:
 
     def load(self, session_id: str) -> tuple[dict, int]:
         row = self.conn.execute(self.sql(
-            "SELECT state_json, revision FROM recipe_chat_session WHERE session_id=:session_id"),
+            "SELECT state_json, revision, updated_at FROM recipe_chat_session WHERE session_id=:session_id"),
             dict(session_id=session_id)).mappings().first()
+        self.updated_at = None                # 2026-11-23: 카드 24시간 판단용 (card_expiry)
         if row is None:
             return new_state(), 0
+        self.updated_at = row.get("updated_at")
         state = json.loads(row["state_json"])
         if not isinstance(state, dict) or state.get("version") != STATE_VERSION:
             raise ValueError("Unsupported chat state")

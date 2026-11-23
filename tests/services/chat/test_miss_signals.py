@@ -44,7 +44,8 @@ def _weak_then_requery(tmp_path):
     M.observe("sess1", "최강록 쉐프 라면", _products("한일식품 본고장 홍게라면 나베 127g", "청정원 쉐프의 치킨스톡",
                                                     "고메 최강록 셰프 마제소바 2인분"))
     weak = [r for r in _rows(tmp_path) if r["kind"] == "weak_match"]
-    assert len(weak) == 1 and weak[0]["items"] == ["한일식품 본고장 홍게라면 나베 127g", "청정원 쉐프의 치킨스톡"]
+    # 2026-11-23 쿠팡 약관 제5조 ③: 상품명은 남기지 않고 개수만
+    assert len(weak) == 1 and weak[0]["weak"] == 2 and "items" not in weak[0]
     M.observe("sess1", "다른 거 보여줘", _products("고메 최강록 셰프 마제소바 2인분"))
     req = [r for r in _rows(tmp_path) if r["kind"] == "requery"]
     assert req and req[0]["before"] == "최강록 쉐프 라면"

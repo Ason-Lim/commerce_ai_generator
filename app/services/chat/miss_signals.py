@@ -185,15 +185,16 @@ def _observe(sid: str, text: str, response: dict) -> None:
     if last and now - last["at"] <= REQUERY_SECONDS:
         same = set(asked) & set(last["words"])
         if _OTHER_RE.search(text) or (same and shown and text.strip() != last["text"].strip()):
-            record("requery", text=text, sid=sid, stage=stage, before=last["text"][:200], before_items=last["items"][:4])
+            record("requery", text=text, sid=sid, stage=stage, before=last["text"][:200])   # 11-23: 상품명은 남기지 않음
 
     if shown:
         # 낱말이 둘 이상인데 상품명이 그중 절반도 못 담으면 '약한 일치'
         if len(asked) >= 2:
             weak = [n for n in shown[:4] if sum(w in _norm(n) for w in asked) * 2 < len(asked)]
             if weak:
-                record("weak_match", text=text, sid=sid, stage=stage, words=asked, items=weak[:4], shown=len(shown))
-        _LAST[sid] = {"at": now, "text": text, "words": asked, "items": shown[:4]}
+                # 2026-11-23 쿠팡 약관 제5조 ③: 보여 준 상품명은 남기지 않고 개수만 (재현은 검색어로 다시)
+                record("weak_match", text=text, sid=sid, stage=stage, words=asked, weak=len(weak), shown=len(shown))
+        _LAST[sid] = {"at": now, "text": text, "words": asked}
         if len(_LAST) > 5000:                       # 오래된 세션 정리
             for k in sorted(_LAST, key=lambda k: _LAST[k]["at"])[:1000]:
                 _LAST.pop(k, None)

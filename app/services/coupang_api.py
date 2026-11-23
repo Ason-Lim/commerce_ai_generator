@@ -142,9 +142,10 @@ _SEARCH_CACHE_MAX = 500
 
 def _cache_minutes() -> float:
     try:
-        return max(0.0, float(os.getenv("COUPANG_SEARCH_CACHE_MINUTES", "60")))
+        # 2026-11-23 쿠팡 답(오픈 API 약관 제5조 ③) 뒤 사용자 결정: 메모리 캐시 60분 → 10분
+        return max(0.0, float(os.getenv("COUPANG_SEARCH_CACHE_MINUTES", "10")))
     except ValueError:
-        return 60.0
+        return 10.0
 
 
 def search_coupang_products(keyword: str, limit: int = 10):

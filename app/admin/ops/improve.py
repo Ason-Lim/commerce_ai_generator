@@ -149,7 +149,7 @@ def candidates(days: int = 7, *, today: date | None = None) -> dict:
             g["sessions"].add(r.get("sid"))
             at = r.get("at") or ""
             g["first"], g["last"] = min(g["first"] or at, at), max(g["last"] or at, at)
-            ex = {k: r[k] for k in ("stage", "what", "items", "before", "field", "value", "shown") if r.get(k)}
+            ex = {k: r[k] for k in ("stage", "what", "items", "weak", "before", "field", "value", "shown") if r.get(k)}
             if ex and len(g["examples"]) < 3:
                 g["examples"].append(ex)
     out = []
