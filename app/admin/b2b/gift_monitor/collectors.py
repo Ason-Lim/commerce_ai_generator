@@ -253,7 +253,12 @@ def collect_all(days: int = 14, keywords: list[str] | None = None, kinds=G2B_KIN
             results.append({"source": remote, "new": n, "updated": 0, "found": n, "log": [f"[완료] {n}건 (원문 대조 전으로 저장)"]})
         except Exception as e:
             results.append({"source": remote, "new": 0, "updated": 0, "found": 0, "log": [f"[실패] {e}"]})
-    return {"results": results, "new": sum(r["new"] for r in results), "found": sum(r["found"] for r in results)}
+    out = {"results": results, "new": sum(r["new"] for r in results), "found": sum(r["found"] for r in results)}
+    # 한 곳이라도 끝까지 조회했으면 '최종 추출' 시각을 남긴다 (키 없음·인증 오류로 건너뛴 수집은 남기지 않는다)
+    done = [r for r in results if any(line.startswith("[완료]") for line in r["log"])]
+    if done:
+        store.mark_collected(datetime.now(), " · ".join(r["source"] for r in done), out["found"], out["new"])
+    return out
 
 
 # ── 직접 등록 ─────────────────────────────────────────────────

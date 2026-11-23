@@ -5,8 +5,9 @@
 """
 from __future__ import annotations
 
+import re
 from collections import Counter
-from datetime import date
+from datetime import date, timedelta
 
 from app.admin.b2b import bids as store
 from app.admin.b2b.gift_monitor import classify
@@ -23,6 +24,47 @@ def _pool(include_unverified: bool, include_legacy: bool) -> list[store.BidNotic
     return out
 
 
+# ── 분석 기간 (2026-11-23 사용자 요청: 최근 7일·30일·3개월·기간 설정) ──
+PRESETS = {"7d": ("최근 7일", 7), "30d": ("최근 30일", 30), "3m": ("최근 3개월", 91)}
+_RANGE = re.compile(r"(20\d\d[-./]\s*\d{1,2}[-./]\s*\d{1,2})\.?\s*(?:~|-|부터|에서)\s*(20\d\d[-./]\s*\d{1,2}[-./]\s*\d{1,2})")
+
+
+def parse_period(prompt: str | None, today: date | None = None) -> dict:
+    """문장 속 기간 → {key, label, start, end}. 없으면 전체 기간."""
+    today = today or date.today()
+    p = prompt or ""
+    m = _RANGE.search(p)
+    if m:
+        a, b = classify.parse_date(m.group(1)), classify.parse_date(m.group(2))
+        if a and b:
+            a, b = min(a, b), max(a, b)
+            return {"key": "custom", "label": "기간 설정", "start": a, "end": b}
+    if re.search(r"(?:최근|지난)\s*(?:3|세)\s*개월|(?:최근|지난)\s*90\s*일|3m\b", p):
+        key = "3m"
+    elif re.search(r"(?:최근|지난)\s*(?:30\s*일|한\s*달|1\s*개월)|30d\b", p):
+        key = "30d"
+    elif re.search(r"(?:최근|지난)\s*(?:7\s*일|일주일|1\s*주)|7d\b", p):
+        key = "7d"
+    else:
+        return {"key": "all", "label": "전체 기간", "start": None, "end": None}
+    label, days = PRESETS[key]
+    return {"key": key, "label": label, "start": today - timedelta(days=days - 1), "end": today}
+
+
+def _basis_date(b: store.BidNotice) -> date | None:
+    """공고일(게시일) 기준 — 없으면 마감일."""
+    return classify.parse_date(b.posted) or classify.parse_date(b.deadline)
+
+
+def _dt(s: str | None) -> str | None:
+    """'2026-11-20 10:00:00' · '2026-11-20T17:00' → '2026.11.20. 10:00' (시간 없으면 날짜만)."""
+    d = classify.parse_date(s)
+    if not d:
+        return None
+    t = re.search(r"[T\s](\d{1,2}):(\d{2})", str(s))
+    return f"{d:%Y.%m.%d.}" + (f" {int(t.group(1)):02d}:{t.group(2)}" if t else "")
+
+
 def _dist(counter: Counter, order: list[str]) -> list[dict]:
     total = sum(counter.values()) or 1
     keys = order + [k for k in counter if k not in order]
@@ -30,8 +72,20 @@ def _dist(counter: Counter, order: list[str]) -> list[dict]:
             if counter.get(k, 0) or k in order]
 
 
-def analyze(include_unverified: bool = True, include_legacy: bool = False, today: date | None = None) -> dict:
+def analyze(include_unverified: bool = True, include_legacy: bool = False, today: date | None = None,
+            period: dict | None = None) -> dict:
+    period = period or {"key": "all", "label": "전체 기간", "start": None, "end": None}
     pool = _pool(include_unverified, include_legacy)
+    undated = 0
+    if period.get("start") or period.get("end"):
+        kept = []
+        for b in pool:
+            d = _basis_date(b)
+            if d is None:
+                undated += 1
+            elif (not period.get("start") or d >= period["start"]) and (not period.get("end") or d <= period["end"]):
+                kept.append(b)
+        pool = kept
     excluded = {
         "legacy": sum(b.verification == "legacy_unverified" for b in store.list_bids()) if not include_legacy else 0,
         "unverified": sum(b.verification == "unverified" for b in store.list_bids()) if not include_unverified else 0,
@@ -74,11 +128,32 @@ def analyze(include_unverified: bool = True, include_legacy: bool = False, today
         open_n = status.get("입찰중", 0) + status.get("마감임박", 0)
         report.append(f"현재 참여 가능한 공고(입찰중·마감임박)는 {open_n}건입니다.")
     else:
-        report.append("집계할 공고가 없습니다. 나라장터 수집이나 공고 직접 등록으로 데이터를 쌓아 주세요.")
+        report.append("이 기간에 해당하는 공고가 없습니다. 기간을 넓혀 보세요." if period["key"] != "all" else
+                      "집계할 공고가 없습니다. 나라장터 수집이나 공고 직접 등록으로 데이터를 쌓아 주세요.")
     if excluded["legacy"]:
         report.append(f"미검증 기존 데이터 {excluded['legacy']}건은 통계에서 제외했습니다.")
 
+    dates = sorted(d for d in (_basis_date(b) for b in pool) if d)
+    last = store.last_collected()
+    newest = max((b.posted for b in store.list_bids() if classify.parse_date(b.posted)),
+                 key=lambda x: (classify.parse_date(x), str(x)), default=None)
+    info = {
+        "key": period["key"], "label": period["label"],
+        "start": (period.get("start") or (dates[0] if dates else None)),
+        "end": (period.get("end") or (dates[-1] if dates else None)),
+        "basis": "공고일 기준 (공고일이 없으면 마감일)",
+        "undated": undated,
+        "last_collected": _dt(last["at"]) if last else None,
+        "last_source": (last or {}).get("source"),
+        "newest_posted": _dt(newest),
+    }
+    for k in ("start", "end"):
+        info[k] = info[k].isoformat() if info[k] else None
+    if period["key"] != "all":
+        report.insert(0, f"분석 기간은 {period['label']}({period['start']:%Y.%m.%d.} ~ {period['end']:%Y.%m.%d.}, 공고일 기준)입니다."
+                      + (f" 날짜를 알 수 없는 공고 {undated}건은 뺐습니다." if undated else ""))
     return {
+        "period": info,
         "total": total, "excluded": excluded,
         "kpi": {"open": status.get("입찰중", 0), "closing": status.get("마감임박", 0), "closed": status.get("입찰마감", 0),
                 "physical_pct": round(physical * 100 / total) if total else 0,
