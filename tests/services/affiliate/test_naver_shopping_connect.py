@@ -78,6 +78,8 @@ def test_trending_foods_without_links_go_to_the_queue(tmp_path, monkeypatch):
 def test_trend_hook_is_off_unless_enabled(tmp_path, monkeypatch):
     monkeypatch.setattr(sc, "DB_PATH", tmp_path / "hook.sqlite3")
     monkeypatch.delenv("SC_REQUEST_QUEUE", raising=False)
+    # 2026-11-23: 맥의 실제 등록부에 '버터떡' 링크가 생겨 '이미 등록'으로 빠졌다 — 빈 등록부로 (위 시험과 같이)
+    monkeypatch.setenv("NAVER_CONNECT_REGISTRY_CSV", str(_registry(tmp_path, [])))
     report = {"items": [{"keyword": "버터떡", "status": "new"}]}
     assert sc.queue_trends_from_report(report) == [] and not (tmp_path / "hook.sqlite3").exists()
     assert sc.queue_trends_from_report(report, enabled=True) == ["버터떡"]

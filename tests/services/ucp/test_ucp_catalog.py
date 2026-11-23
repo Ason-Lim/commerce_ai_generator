@@ -238,15 +238,25 @@ def test_missing_registry_is_empty(monkeypatch, tmp_path):
     assert registry.load() == []
 
 
+ADMIN_ONLY = "services/trends/forecast/overseas.py"   # /admin/trends 가격 전망의 직구 견적 (2026-11-19, 참고용)
+
+
 def test_not_wired_into_any_app_path_yet():
-    """연결 결정 전에는 ucp 패키지 밖의 어떤 앱 모듈도 불러오지 않는다."""
+    """연결 결정 전에는 ucp 패키지 밖의 고객 경로 앱 모듈이 불러오지 않는다 (관리자 화면은 참고용으로 연결됨)."""
     for path in APP.rglob("*.py"):
-        if "ucp" in path.parts:
+        # 2026-11-23: 관리자 화면(/admin/trends 가격 전망의 직구 견적, 2026-11-19 참고용)은 일부러 연결했다 —
+        # 이 시험은 고객 경로(대화·검색·홈)에 들어가지 않는지만 본다
+        rel = path.relative_to(APP).as_posix()
+        if "ucp" in path.parts or rel.startswith("admin/") or rel == ADMIN_ONLY:
             continue
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             names = ([node.module] if isinstance(node, ast.ImportFrom) and node.module else
                      [a.name for a in node.names] if isinstance(node, ast.Import) else [])
             assert not any(n.startswith("app.services.ucp") for n in names), path
+            # 관리자 전용 직구 견적 모듈도 고객 경로에서 부르지 않는다
+            assert not any(n.startswith("app.services.trends.forecast.overseas") for n in names), path
+            if isinstance(node, ast.ImportFrom) and node.module == "app.services.trends.forecast":
+                assert "overseas" not in [a.name for a in node.names], path
 
 
 # ── p41 (GPT 검토 22:31) ────────────────────────────────────
