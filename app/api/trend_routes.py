@@ -56,11 +56,56 @@ def trends_posts_json(posts: Posts, limit: int = Query(3, ge=1, le=20)):
 
 @router.get("/api/home/rankings")
 def home_rankings(view: str = Query("home", pattern="^(home|full)$")):
-    """홈 '지금 순위' (창 3-C, 2026-11-22) — 급상승 · 카테고리 · 트렌드 상품. 저장된 자료만 읽는다(외부 호출 0), 5분 캐시.
+    """홈 '지금 순위' (창 3-C, 2026-11-22 · 11-23 개편) — 쿠팡 식품 랭킹 · 카테고리 · 급상승(지금 뜨는 식품 화면). 저장된 자료만 읽는다(외부 호출 0), 5분 캐시.
     view=home 은 요약(6·6·4+2), view=full 은 탭 '지금 뜨는 식품' 전체 화면 — 같은 선정 규칙."""
     from app.services.trends import home_rankings as hr
 
     return JSONResponse(hr.build(view), headers={"Cache-Control": "public, max-age=60"})
+
+
+class _TogetherIn(BaseModel):
+    """이 브라우저가 최근 누른 품목 낱말 (2026-11-23) — 본문으로만 받고 저장·기록하지 않는다."""
+    model_config = ConfigDict(extra="forbid")
+    seeds: list[str] = Field(default_factory=list, max_length=10)
+    view: str = Field("home", pattern="^(home|full)$")
+
+
+@router.post("/api/home/together")
+def home_together(body: _TogetherIn):
+    """홈 '함께 보면 좋은 상품' — 레시피 짝 · 같은 태그 · 새로 둘러보기. 쿠팡 랭킹(메모리 1시간) + 트렌드 글 상품 + 레시피 서비스.
+    seeds 가 비면 쿠팡 식품 랭킹 1위 품목 기준(personal=false). seeds 는 로그·파일에 남기지 않는다."""
+    from app.services.trends import together
+
+    try:
+        out = together.build(together.clean_seeds(body.seeds), body.view)
+    except Exception:  # noqa: BLE001
+        log.warning("home together failed")
+        out = {"status": "none", "personal": False, "items": [], "disclosure": together.DISCLOSURE, "note": ""}
+    return JSONResponse(out, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/home/go/{product_id}")   # /go/{sid}/{rank}(대화)와 겹치지 않게 /home/go
+def go_coupang_best(product_id: str, request: Request):
+    """쿠팡 식품 랭킹·함께 보면 좋은 상품 클릭 (2026-11-23) — 지금 메모리 랭킹에 있는 상품만, 클릭 기록 뒤 쿠팡 링크로."""
+    from app.services.trends import coupang_best as cb
+
+    if not product_id.isdigit() or len(product_id) > 20:
+        return RedirectResponse("/", status_code=303)
+    item = cb.find(product_id)
+    if item is None:
+        return RedirectResponse("/", status_code=303)
+    try:
+        from app.admin.auth import request_ok
+        from app.services.analytics_logger import log_product_click
+
+        internal = request_ok(request)
+        section = "together" if request.query_params.get("from") == "together" else "coupang_best"
+        log_product_click(session_id="home", query="home_internal" if internal else "home", product={
+            "product_url": item["url"], "product_name": item["title"], "mall_name": "쿠팡",
+            "rank": item["rank"], "selected_section": section, "recommendation_mode": "ranking"})
+    except Exception:  # noqa: BLE001 — 기록이 이동을 막지 않는다
+        log.warning("coupang best click log failed")
+    return RedirectResponse(item["url"], status_code=302)
 
 
 @router.get("/sitemap.xml")

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
-import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteNav } from "./SiteNav";
+import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteFooter, SiteNav } from "./SiteNav";
 import { fetchTrends, type TrendItem, type TrendView } from "../api/client";
 import { HomeRankings } from "./HomeRankings";
 
@@ -107,6 +107,7 @@ export function TrendsPage() {
         <p className="mt-8 text-[13px] leading-6 text-stone-500">
           검색량은 네이버 데이터랩 검색어 트렌드(상대 지수)로 계산했어요. 검색이 늘어난 원인은 확인된 사실이 아니라 블로그 제목에서 찾은 단서와 AI 추정이에요.
         </p>
+        <SiteFooter />
       </main>
       <MobileTabBar current="hot" />
     </div>

@@ -1,10 +1,11 @@
 """
-홈 '지금 순위' — 급상승 · 카테고리 · 트렌드 상품 (창 3-C ②, 설계 claude/home_rankings_design_2026-11-20.md §2·§3)
+홈 '지금 순위' — 쿠팡 식품 랭킹 · 카테고리 (+ 지금 뜨는 식품 화면의 급상승) (2026-11-23 개편 — 처음: 급상승 · 카테고리 · 트렌드 상품, 창 3-C ②, 설계 claude/home_rankings_design_2026-11-20.md §2·§3)
 =====================================================================================================
 
 `build(view)` 하나가 `GET /api/home/rankings?view=home|full` 응답을 만든다.
 
-* **저장된 자료만** 읽는다 — 급상승 리포트 파일, 하루 단위 식품 순위 CSV, 승인된 트렌드 글. 쿠팡·네이버 호출 0.
+* 저장된 자료를 읽는다 — 급상승 리포트 파일, 하루 단위 식품 순위 CSV, 승인된 트렌드 글. 예외: 쿠팡 식품 랭킹은 메모리 1시간(1시간에 최대 1번 호출, 파일 저장 없음 — 약관 제5조 ③). 네이버 호출 0.
+* 2026-11-23: 홈 탭 = 쿠팡 식품 랭킹 · 카테고리 · 함께 보면 좋은 상품(together.py, POST /api/home/together). picks 는 응답에 남김.
 * 세 영역이 각자 status · 기준일 · items 를 가진다 (부분 실패 — 한 영역이 없어도 나머지는 나옴).
 * home 과 full 은 **같은 선정 규칙**, 개수만 다름. 상품은 묶음(recent/steady)별 앞부분이 일치.
 * 공개 응답 허용 목록: 키워드·순위·배수·시작일·태그·ask·승인 글 제목/링크·상품 카드 칸.
@@ -37,8 +38,10 @@ PICK_WINDOW, PICK_MIN_OBS = 30, 20          # 상품 배지 '관련 키워드 �
 COMPARE_DAYS = 7
 STALE_RANK_DAYS = 3             # 순위 파일이 이보다 오래되면 stale
 STALE_SURGE_DAYS = 3
-LIMITS = {"home": {"surge": 6, "category": 6, "recent": 4, "steady": 2},
-          "full": {"surge": 100, "category": TOP_BAND, "recent": 16, "steady": 4}}
+LIMITS = {"home": {"surge": 6, "category": 6, "recent": 4, "steady": 2, "coupang": 6},
+          "full": {"surge": 100, "category": TOP_BAND, "recent": 16, "steady": 4, "coupang": 100}}
+COUPANG_NOTE = ("쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요 (우리 점수로 다시 줄 세우지 않아요). "
+                "1시간마다 새로 받고, 가격은 받은 시각의 가격이에요.")
 PER_POST = 2                    # 글당 상품 1~2개
 CACHE_SECONDS = 300
 CATEGORY_NOTE = ("네이버 식품 검색어 순위 · 하루 한 번 · 늘 인기 = 최근 90일 창 관측일 60 이상·100위 안 80% 이상 · "
@@ -283,6 +286,14 @@ def picks_part(view: str, now: dt.datetime, *, posts=None, rank_dir: Path | None
             "placement_note": PLACEMENT_NOTE.format(r=lim["recent"], s=lim["steady"]), "badge_notes": BADGE_NOTES}
 
 
+def coupang_part(view: str, now: dt.datetime, env=None) -> dict:
+    """쿠팡 식품 랭킹 (2026-11-23 — 홈 첫 탭). 메모리 1시간(파일 저장 없음) — 1시간에 최대 1번 쿠팡 호출."""
+    from app.services.trends import coupang_best as cb
+
+    out = cb.ranked(now.astimezone(KST).date(), now, LIMITS[view]["coupang"], env=env)
+    return {**out, "disclosure": DISCLOSURE, "note": COUPANG_NOTE}
+
+
 # ── 묶기 ──────────────────────────────────────────────────────────────────
 def build(view: str = "home", *, now: dt.datetime | None = None, env=None, posts=None,
           rank_dir: Path | None = None, use_cache: bool = True) -> dict:
@@ -295,7 +306,8 @@ def build(view: str = "home", *, now: dt.datetime | None = None, env=None, posts
     now = now or dt.datetime.now(KST)
     today = now.astimezone(KST).date()
     out = {"generated_at": now.astimezone(KST).isoformat(timespec="minutes"), "view": view}
-    for name, fn in (("surge", lambda: surge_part(view, today, env)),
+    for name, fn in (("coupang", lambda: coupang_part(view, now, env)),
+                     ("surge", lambda: surge_part(view, today, env)),
                      ("categories", lambda: category_part(view, today, env, rank_dir)),
                      ("picks", lambda: picks_part(view, now, posts=posts, rank_dir=rank_dir, env=env))):
         try:

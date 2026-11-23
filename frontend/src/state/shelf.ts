@@ -25,7 +25,8 @@ export interface Prefs {
 
 export const DEFAULT_PREFS: Prefs = { vegetarian: false, mild: false, household: "", avoid: [], hideAvoided: false };
 
-const KEYS = { basket: "ai-food-basket", prefs: "ai-food-prefs", sessions: "ai-food-sessions" } as const;
+const KEYS = { basket: "ai-food-basket", prefs: "ai-food-prefs", sessions: "ai-food-sessions",
+  interests: "ai-food-interests", recoOff: "ai-food-reco-off" } as const;
 const EVENT = "ai-food-shelf";
 
 function read<T>(key: string, fallback: T): T {
@@ -78,11 +79,24 @@ export function rememberSession(sid: string | null): void {
 
 export const knownSessions = (): string[] => read<string[]>(KEYS.sessions, []);
 
+/** 최근 관심 품목 (2026-11-23, 홈 '함께 보면 좋은 상품'의 출발점) — 이 브라우저에만, 최근 5개.
+ *  홈 순위·추천 상품이나 카테고리 키워드를 누를 때 그 품목 낱말을 남긴다. 서버에는 추천을 부를 때 본문으로만 보낸다. */
+export function rememberInterest(word: string | null | undefined): void {
+  const w = (word || "").trim().slice(0, 20);
+  if (!w) return;
+  const list = read<string[]>(KEYS.interests, []);
+  write(KEYS.interests, [w, ...list.filter((x) => x !== w)].slice(0, 5));
+}
+export const recentInterests = (): string[] => read<string[]>(KEYS.interests, []);
+/** '맞춤 추천 끄기' — 켜져 있으면 출발점을 보내지 않고 일반 추천만 본다. */
+export const useRecoOff = () => useStored<boolean>(KEYS.recoOff, false);
+
 /** 장보기·설정·세션 목록·지금 대화 값을 지운다 — **서버 삭제가 성공한 뒤에만** 부른다(실패하면 세션 값을 남겨 다시 시도할 수 있게). */
 export function clearLocalShelf(): void {
   write(KEYS.basket, null);
   write(KEYS.prefs, null);
   write(KEYS.sessions, null);
+  write(KEYS.interests, null);
   try { window.localStorage.removeItem("ai-food-chat-session"); } catch { /* 없음 */ }
 }
 

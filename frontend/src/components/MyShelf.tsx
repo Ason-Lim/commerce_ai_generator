@@ -14,7 +14,7 @@ import { clearLocalShelf, knownSessions, useBasket, usePrefs, type Prefs } from 
 import { BlockRenderer } from "./BlockRenderer";
 import { BasketControls } from "./ShoppingPanel";
 import { ChatActions, type ChatActionsValue } from "./ChatActions";
-import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteNav } from "./SiteNav";
+import { MobileTabBar, MOBILE_TAB_H, PrivacyLink, ShelfLink, SiteNav } from "./SiteNav";
 import { PENDING_ASK } from "./TrendsPage";
 import { Thumb } from "./ui";
 
@@ -71,7 +71,7 @@ function PrefsForm() {
   return (
     <div className="space-y-4 text-sm">
       <p className="text-xs leading-relaxed text-ink3">
-        이 기기 안에만 저장돼요 — 서버로 보내지 않고, 추천 순서도 바꾸지 않아요. 대화에서 보이는 상품에 표시하거나 숨기는 데만 써요.
+        이 기기 안에만 저장되고, 대화에서 보이는 상품에 표시하거나 숨기는 데만 써요(추천 순서는 그대로).
       </p>
       <fieldset className="space-y-2">
         <legend className="font-semibold">선호 조건</legend>
@@ -264,8 +264,8 @@ export function MyShelf() {
               <Trash2 size={15} aria-hidden />보관함·최근 대화 기록 지우기
             </button>
             <p className="mt-1.5 text-xs leading-relaxed text-ink3">
-              지우는 것: 관심 상품, 이 브라우저의 최근 대화 5개(최근 검색·대화 기록), 장보기 목록, 설정.
-              서비스 운영에 쓰는 검색·클릭 기록(누가 했는지 알 수 없게 바꾼 기록)은 개인정보 처리방침의 보존 기간에 따라 따로 관리돼요.
+              지우는 것: 관심 상품, 이 브라우저의 최근 대화 5개(최근 검색·대화 기록), 장보기 목록, 설정, 최근 누른 품목(맞춤 추천).
+              서비스 운영 기록의 보존 기간은 <PrivacyLink />에 있어요.
             </p>
           </div>
         </main>
