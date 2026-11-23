@@ -1,0 +1,343 @@
+{
+ "session_id": "8c7d016b-29fe-4d4f-bae5-1d850da6090b",
+ "stage": "recipe_guide",
+ "blocks": [
+  {
+   "type": "recipe_card",
+   "data": {
+    "recipe_id": "ai-4f2309ffbb-v3",
+    "title": "능이버섯 닭백숙",
+    "summary": "능이버섯의 진한 향이 밴 국물과 부드러운 닭살을 함께 즐기는 가을 보양 백숙이에요.",
+    "image": null,
+    "source": {
+     "level": "ai_suggestion",
+     "label": "AI 제안 레시피 · 원문 아님",
+     "name": "AI 제안 레시피 (일반 조리 지식 · 원문 아님)",
+     "ref": "ai-4f2309ffbb-v3",
+     "provider": "AI 제안"
+    },
+    "meta": [
+     "2인분"
+    ],
+    "meta_basis": "source",
+    "servings": "2인분",
+    "servings_source": "2인분",
+    "servings_scaled": false,
+    "ingredients": [
+     {
+      "id": "ai-4f2309ffbb-v3:1:닭",
+      "name": "닭",
+      "amount": "1kg",
+      "raw": "1kg",
+      "gauge": null,
+      "source_amount": "1kg",
+      "scaled": false,
+      "reference": null,
+      "quantity_known": true,
+      "status": null,
+      "status_label": null,
+      "stock": null,
+      "status_servings": null,
+      "status_stale": false
+     },
+     {
+      "id": "ai-4f2309ffbb-v3:2:능이버섯",
+      "name": "능이버섯",
+      "amount": "50g",
+      "raw": "50g",
+      "gauge": null,
+      "source_amount": "50g",
+      "scaled": false,
+      "reference": null,
+      "quantity_known": true,
+      "status": null,
+      "status_label": null,
+      "stock": null,
+      "status_servings": null,
+      "status_stale": false
+     },
+     {
+      "id": "ai-4f2309ffbb-v3:3:양파",
+      "name": "양파",
+      "amount": "1개",
+      "raw": "1개",
+      "gauge": null,
+      "source_amount": "1개",
+      "scaled": false,
+      "reference": null,
+      "quantity_known": true,
+      "status": null,
+      "status_label": null,
+      "stock": null,
+      "status_servings": null,
+      "status_stale": false
+     },
+     {
+      "id": "ai-4f2309ffbb-v3:4:대파",
+      "name": "대파",
+      "amount": "2대",
+      "raw": "2대",
+      "gauge": null,
+      "source_amount": "2대",
+      "scaled": false,
+      "reference": null,
+      "quantity_known": true,
+      "status": null,
+      "status_label": null,
+      "stock": null,
+      "status_servings": null,
+      "status_stale": false
+     },
+     {
+      "id": "ai-4f2309ffbb-v3:5:마늘",
+      "name": "마늘",
+      "amount": "10쪽",
+      "raw": "10쪽",
+      "gauge": null,
+      "source_amount": "10쪽",
+      "scaled": false,
+      "reference": null,
+      "quantity_known": true,
+      "status": null,
+      "status_label": null,
+      "stock": null,
+      "status_servings": null,
+      "status_stale": false
+     },
+     {
+      "id": "ai-4f2309ffbb-v3:6:대추",
+      "name": "대추",
+      "amount": "5개",
+      "raw": "5개",
+      "gauge": null,
+      "source_amount": "5개",
+      "scaled": false,
+      "reference": null,
+      "quantity_known": true,
+      "status": null,
+      "status_label": null,
+      "stock": null,
+      "status_servings": null,
+      "status_stale": false
+     },
+     {
+      "id": "ai-4f2309ffbb-v3:7:소금",
+      "name": "소금",
+      "amount": "약간",
+      "raw": "약간",
+      "gauge": null,
+      "source_amount": "약간",
+      "scaled": false,
+      "reference": null,
+      "quantity_known": false,
+      "status": null,
+      "status_label": null,
+      "stock": null,
+      "status_servings": null,
+      "status_stale": false
+     }
+    ],
+    "extra_ingredients": [],
+    "steps": [
+     {
+      "no": 1,
+      "text": "능이버섯은 물에 30분 불리고 불린 물은 국물로 써요.",
+      "image": null
+     },
+     {
+      "no": 2,
+      "text": "닭은 기름 덩어리를 떼고 깨끗이 씻어 주세요.",
+      "image": null
+     },
+     {
+      "no": 3,
+      "text": "냄비에 닭·능이버섯·채소·대추를 넣고 물을 부어 50분 푹 삶아 주세요.",
+      "image": null
+     }
+    ],
+    "tips": [
+     "준비 도구: 냄비, 볼, 칼. 소금은 먹기 직전에 간해요."
+    ],
+    "notes": [],
+    "basis": {
+     "cup_ml": "200",
+     "chosen": false
+    },
+    "easy": null,
+    "easy_status": "unavailable",
+    "easy_key": "8185055b4bffc83b57d32e88",
+    "general_tips": null,
+    "hero": null,
+    "hero_status": "unavailable",
+    "source_gap": null,
+    "supplement": null,
+    "supplement_status": "unavailable",
+    "shortage": [],
+    "generated": {
+     "at": "2026-11-23 17:38",
+     "model": "test-model",
+     "servings": "2인분",
+     "ingredients": 6,
+     "steps": 4,
+     "what": "대추 능이버섯를 닭 피로 감싼 쿠키",
+     "basis": {
+      "core": [],
+      "core_from": "",
+      "unconfirmed": [
+       "대추 페이스트",
+       "능이버섯",
+       "닭"
+      ],
+      "method": "굽지 않고 냉장 굳히기",
+      "method_from": "AI 판단(제목에서 확인 못 함)",
+      "guessed": [
+       "대추 페이스트",
+       "능이버섯",
+       "닭"
+      ]
+     },
+     "version": "ai-recipe-v3",
+     "attempts": 1,
+     "checks": [
+      "재료·도구·단계·팁 일치"
+     ]
+    },
+    "layout": "shopping"
+   }
+  },
+  {
+   "type": "notice",
+   "data": {
+    "md": "**능이버섯 닭백숙** 추천 레시피예요(AI 작성·검토). 일반 조리 지식으로 만든 제안이라 특정 블로그·유명인의 레시피가 아니에요. 분량·시간은 다른 AI로 검토하지 못했어요. 부족한 재료는 '부족해요'를 누른 뒤 상품을 볼 수 있어요.\n기준 · 조리 방식: 굽지 않고 냉장 굳히기(AI 판단(제목에서 확인 못 함)). 재료·도구·단계·팁이 서로 어긋나지 않는지 검사했어요.\nAI가 짐작한 재료: 대추 페이스트, 능이버섯, 닭 — 검색 결과로는 확인하지 못했어요.",
+    "tone": "info"
+   }
+  },
+  {
+   "type": "chips",
+   "data": {
+    "items": [
+     "1인분으로 바꿔 줘",
+     "버터 대신 쓸 수 있는 재료는?"
+    ],
+    "mode": "message"
+   }
+  },
+  {
+   "type": "text",
+   "data": {
+    "md": "네이버 블로그·카페·유튜브·인스타그램 레시피도 소개해 드릴까요?"
+   }
+  },
+  {
+   "type": "chips",
+   "data": {
+    "items": [
+     "네, 능이버섯 닭백숙 다른 레시피도 보여 줘"
+    ],
+    "mode": "message"
+   }
+  },
+  {
+   "type": "text",
+   "data": {
+    "md": "찾으신 **능이버섯** 상품과 레시피 주재료 **닭·능이버섯** 상품도 함께 보여 드려요. 기본양념(소금·간장·식용유 등)은 집에 있다고 보고 뺐어요."
+   }
+  },
+  {
+   "type": "product_list",
+   "data": {
+    "items": [
+     {
+      "rank": 1,
+      "mall": "naver",
+      "pid": null,
+      "title": "테스트 사과 A",
+      "image": null,
+      "price": 12000,
+      "shipping_fee": null,
+      "total": null,
+      "reason": "",
+      "evidence": [],
+      "source": "naver",
+      "url": "https://shop.example.com/a",
+      "rankable": true,
+      "affiliate": false,
+      "affiliate_program": null,
+      "badges": [
+       "평점 4.6",
+       "후기 120"
+      ],
+      "shipping_status": "unknown",
+      "key": "5691698a78ba",
+      "weight_g": null,
+      "unit_count": null,
+      "per100g": null,
+      "per_unit": null,
+      "rocket": null,
+      "free_shipping": null,
+      "seller_claims": [],
+      "weight_note": null,
+      "check_at_mall": true,
+      "delivery_hint": null,
+      "go": "/go/8c7d016b-29fe-4d4f-bae5-1d850da6090b/k/5691698a78ba"
+     },
+     {
+      "rank": 2,
+      "mall": "coupang",
+      "pid": null,
+      "title": "테스트 사과 B",
+      "image": null,
+      "price": 9900,
+      "shipping_fee": 3000,
+      "total": null,
+      "reason": "",
+      "evidence": [],
+      "source": "coupang",
+      "url": "javascript:alert(1)",
+      "rankable": true,
+      "affiliate": false,
+      "affiliate_program": null,
+      "badges": [],
+      "shipping_status": "fee_label",
+      "key": "e45cac108170",
+      "weight_g": null,
+      "unit_count": null,
+      "per100g": null,
+      "per_unit": null,
+      "rocket": null,
+      "free_shipping": null,
+      "seller_claims": [],
+      "weight_note": null,
+      "check_at_mall": true,
+      "delivery_hint": null,
+      "go": "/go/8c7d016b-29fe-4d4f-bae5-1d850da6090b/k/e45cac108170"
+     }
+    ]
+   }
+  },
+  {
+   "type": "text",
+   "data": {
+    "md": "**닭** — 2인분 기준 필요량 **200g**. 포장 용량을 확인해 필요량을 채우는 가정용 소포장부터 보여 드려요. 필요량에 맞는 가정용 포장은 찾지 못했어요. 재료 이름이 제목에 없는 상품 2개는 뺐어요."
+   }
+  },
+  {
+   "type": "text",
+   "data": {
+    "md": "'닭' 상품 중 같은 재료로 볼 수 있는 상품을 찾지 못했어요."
+   }
+  },
+  {
+   "type": "text",
+   "data": {
+    "md": "**능이버섯** — 2인분 기준 필요량 **130g**. 포장 용량을 확인해 필요량을 채우는 가정용 소포장부터 보여 드려요. 필요량에 맞는 가정용 포장은 찾지 못했어요. 재료 이름이 제목에 없는 상품 2개는 뺐어요."
+   }
+  },
+  {
+   "type": "text",
+   "data": {
+    "md": "'능이버섯' 상품 중 같은 재료로 볼 수 있는 상품을 찾지 못했어요."
+   }
+  }
+ ]
+}
