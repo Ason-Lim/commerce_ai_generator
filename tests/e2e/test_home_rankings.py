@@ -289,15 +289,16 @@ def test_home_category_shows_six_then_more(site, browser):
 
 
 
-def test_category_cards_spark_and_highlight(site, browser, monkeypatch):
-    """2026-11-23 저녁 A+B: 키워드 카드(30일 순위 그래프) · '이번 주 주목'(대표 상품 사진 1장, 광고 표시가 링크보다 앞)."""
+def test_category_keyword_products_and_highlight(site, browser, monkeypatch):
+    """2026-11-23 밤: 그래프 없음 · '이번 주 주목'과 키워드마다 쿠팡 상품 사진 3개 + 더보기/접기 · 순위·늘 인기·변화 표기 ·
+    광고 표시가 링크보다 앞."""
     from app.services.trends import highlight as hl
 
-    APPLE["spark"] = [30, 28, None, 20, 15, 7]
     HIGHLIGHT.append({"keyword": "사과", "rank": 7, "change_7d": 5, "change_kind": "compared", "ask": "사과 추천해 줘"})
-    monkeypatch.setattr(hl, "pick", lambda kw, search=None: {
-        "keyword": kw, "title": "경북 부사 사과 3kg", "image": None, "price_krw": 19900, "rocket": True,
-        "go_url": "/home/hgo/0123456789ab", "fetched_at": "2026-11-23T17:30+09:00"})
+    monkeypatch.setattr(hl, "picks", lambda kw, search=None: [{
+        "keyword": kw, "title": f"{kw} 상품 {i}", "image": "data:image/gif;base64,R0lGODlhAQABAAAAACw=", "price_krw": 19900 + i,
+        "rocket": i == 1, "go_url": f"/home/hgo/{abs(hash(kw)) % 10**6:06d}{i:06d}", "fetched_at": "2026-11-23T17:30+09:00"}
+        for i in range(1, 6)])
     try:
         ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
         page = ctx.new_page()
@@ -306,14 +307,26 @@ def test_category_cards_spark_and_highlight(site, browser, monkeypatch):
         sec.get_by_role("tab", name="카테고리").click()
         hcard = sec.get_by_role("region", name="이번 주 주목")
         hcard.get_by_text("7일 새 5계단 올랐어요").wait_for()
-        link = hcard.get_by_role("link", name="경북 부사 사과 3kg — 쿠팡에서 보기 (새 창)")
-        link.wait_for()
+        hcard.get_by_role("link", name="사과 상품 1 — 쿠팡에서 보기 (새 창)").wait_for()
+        assert hcard.get_by_role("link").count() == 3 and hcard.locator("img").count() == 3
         html = hcard.inner_html()
-        assert html.index("광고") < html.index("/home/hgo/") and "sponsored" in link.get_attribute("rel")
-        card = sec.get_by_role("button", name="사과 대화로 묻기 · 식품 검색어 7위")
-        assert card.locator("svg path").count() == 1                      # 30일 순위 그래프
+        assert html.index("광고") < html.index("/home/hgo/")
+        hcard.get_by_role("button", name="더보기 2개").click()
+        fold = hcard.get_by_role("button", name="접기")
+        assert hcard.get_by_role("link").count() == 5 and fold.get_attribute("aria-expanded") == "true"
+        fold.click()
+        assert hcard.get_by_role("link").count() == 3
+        # 키워드마다 상품 3개 + 더보기 · 순위·변화 표기
+        shelf = sec.get_by_role("listitem", name="사과 · 식품 검색어 7위")
+        shelf.get_by_role("link", name="사과 상품 1 — 쿠팡에서 보기 (새 창)").wait_for()
+        assert shelf.get_by_role("link").count() == 3
+        assert shelf.get_by_text("7위").count() >= 1 and shelf.get_by_text("↑", exact=False).count() >= 1
+        shelf.get_by_role("button", name="더보기 2개").click()
+        assert shelf.get_by_role("link").count() == 5
+        assert sec.get_by_role("button", name="사과 대화로 묻기 · 식품 검색어 7위").count() == 1
+        lst = sec.inner_html()
+        assert lst.index("광고") < lst.index("/home/hgo/")
         assert page.evaluate(NAMELESS_JS) == []
         ctx.close()
     finally:
         HIGHLIGHT.clear()
-        APPLE.pop("spark", None)

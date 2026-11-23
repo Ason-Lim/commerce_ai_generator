@@ -95,12 +95,34 @@ def home_highlight(kw: str = Query(..., min_length=1, max_length=40)):
     if kw not in allowed:
         return JSONResponse({"status": "unknown"}, status_code=404)
     try:
-        item = hl.pick(kw)
-    except Exception:  # noqa: BLE001 — 사진 하나 못 받아도 카드는 보인다
+        items = hl.picks(kw)
+    except Exception:  # noqa: BLE001 — 상품을 못 받아도 카드는 보인다
         log.warning("home highlight failed")
-        item = None
-    body = {"status": "ok" if item else "none", "item": item, "disclosure": hr.DISCLOSURE}
+        items = []
+    body = {"status": "ok" if items else "none", "item": items[0] if items else None, "items": items,
+            "disclosure": hr.DISCLOSURE}
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/api/home/kw-products")
+def home_keyword_products(kw: str = Query(..., min_length=1, max_length=40)):
+    """홈 카테고리 키워드마다 쿠팡 상품 (2026-11-23 21:46 사용자 요청: 키워드별 3개 + 더보기, 모든 카테고리).
+    지금 홈 카테고리에 보이는 키워드만 받는다 — 아무 검색어나 쿠팡에 보내지 않음. 쿠팡 검색 1번(메모리 10분), 저장 없음.
+    화면은 카드가 보일 때만 부른다."""
+    from app.services.trends import highlight as hl
+    from app.services.trends import home_rankings as hr
+
+    tabs = (hr.build("home").get("categories") or {}).get("tabs") or []
+    allowed = {i.get("keyword") for t in tabs for i in t.get("items") or []} | {(t.get("highlight") or {}).get("keyword") for t in tabs}
+    if kw not in allowed:
+        return JSONResponse({"status": "unknown"}, status_code=404)
+    try:
+        items = hl.picks(kw)
+    except Exception:  # noqa: BLE001
+        log.warning("home keyword products failed")
+        items = []
+    return JSONResponse({"status": "ok" if items else "none", "items": items, "disclosure": hr.DISCLOSURE},
+                        headers={"Cache-Control": "no-store"})
 
 
 @router.get("/home/hgo/{key}")

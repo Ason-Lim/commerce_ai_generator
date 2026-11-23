@@ -19,6 +19,16 @@ def test_pick_first_food_with_keyword_and_safe_links():
     assert got["go_url"].startswith("/home/hgo/") and "link.coupang" not in got["go_url"]
 
 
+def test_picks_many_with_partner_images():
+    """2026-11-23 21:44: 3개씩 + 더 보기 — 파트너스 API 사진(ads-partners.coupang.com)도 쓴다."""
+    many = [{"product_name": f"상주 곶감 {i}호", "product_url": f"https://link.coupang.com/a/p{i}",
+             "image_url": f"https://ads-partners.coupang.com/image1/{i}.jpg", "price": 10000 + i} for i in range(15)]
+    many.insert(3, dict(many[0]))                                       # 같은 링크는 한 번만
+    got = hl.picks("곶감", search=lambda kw, n: many + ITEMS)
+    assert len(got) == hl.MAX_ITEMS and got[0]["image"] == "https://ads-partners.coupang.com/image1/0.jpg"
+    assert len({g["go_url"] for g in got}) == len(got)
+
+
 def test_target_within_ttl_then_search_fallback(monkeypatch):
     got = hl.pick("곶감", search=lambda kw, n: ITEMS[1:2])
     key = got["go_url"].rsplit("/", 1)[1]
@@ -41,11 +51,34 @@ def test_route_only_accepts_current_highlight_keywords(monkeypatch):
     from app.services.trends import home_rankings as hr
 
     monkeypatch.setattr(hr, "build", lambda view="home", **k: {"categories": {"tabs": [{"tag": "gift", "highlight": {"keyword": "곶감"}}]}})
-    monkeypatch.setattr(hl, "pick", lambda kw, search=None: {"keyword": kw, "title": "곶감", "go_url": "/home/hgo/0123456789ab"})
+    monkeypatch.setattr(hl, "picks", lambda kw, search=None: [{"keyword": kw, "title": "곶감", "go_url": "/home/hgo/0123456789ab"}])
     app = FastAPI()
     app.include_router(trend_routes.router)
     c = TestClient(app)
     assert c.get("/api/home/highlight", params={"kw": "노트북"}).status_code == 404       # 아무 검색어나 쿠팡에 보내지 않음
     r = c.get("/api/home/highlight", params={"kw": "곶감"})
-    assert r.status_code == 200 and r.json()["item"]["title"] == "곶감" and r.headers["cache-control"] == "no-store"
+    assert r.status_code == 200 and r.json()["items"][0]["title"] == "곶감" and r.headers["cache-control"] == "no-store"
     assert c.get("/home/hgo/zz", follow_redirects=False).headers["location"] == "/"
+
+
+def test_keyword_products_route_only_for_home_category_keywords(monkeypatch):
+    """2026-11-23 21:46: 키워드마다 상품 — 지금 홈 카테고리 키워드만 쿠팡에 보낸다."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.api import trend_routes
+    from app.services.trends import home_rankings as hr
+
+    monkeypatch.setattr(hr, "build", lambda view="home", **k: {"categories": {"tabs": [
+        {"tag": "gift", "items": [{"keyword": "답례품"}, {"keyword": "곶감"}], "highlight": {"keyword": "곶감"}},
+        {"tag": "fruit", "items": [{"keyword": "사과"}]}]}})
+    sent = []
+    monkeypatch.setattr(hl, "picks", lambda kw, search=None: sent.append(kw) or [{"keyword": kw, "title": kw, "go_url": "/home/hgo/0123456789ab"}])
+    app = FastAPI()
+    app.include_router(trend_routes.router)
+    c = TestClient(app)
+    assert c.get("/api/home/kw-products", params={"kw": "노트북"}).status_code == 404
+    for k in ("답례품", "사과"):
+        r = c.get("/api/home/kw-products", params={"kw": k})
+        assert r.status_code == 200 and r.json()["items"][0]["title"] == k and r.headers["cache-control"] == "no-store"
+    assert sent == ["답례품", "사과"]

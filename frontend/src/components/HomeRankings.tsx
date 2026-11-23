@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
-import { fetchHighlight, fetchHomeRankings, fetchTogether, type HighlightItem, type RankHighlight, type CoupangRankItem, type HomeRankings as Data, type RankKeyword, type RankTab, type Together, type TogetherCard } from "../api/client";
+import { fetchHighlight, fetchHomeRankings, fetchKeywordProducts, fetchTogether, type HighlightItem, type RankHighlight, type CoupangRankItem, type HomeRankings as Data, type RankKeyword, type RankTab, type Together, type TogetherCard } from "../api/client";
 import { recentInterests, rememberInterest, rememberViewed, useRecoOff } from "../state/shelf";
 import { PolicyLink, PrivacyLink } from "./SiteNav";
 import { CategoryArt } from "./CategoryArt";
@@ -16,17 +16,20 @@ import { CategoryArt } from "./CategoryArt";
 const FOLD = 6;   // 2026-11-23 사용자 요청: 쿠팡 식품 랭킹·함께 보면 좋은 상품은 30개까지, 처음 6개 + 더보기로 펼치고 접기
 
 /** 처음 6개만 보이고 '더보기'로 펼치기·접기 (상품 목록 공용). */
-function useFold<T>(items: T[], resetKey?: string): { shown: T[]; button: ReactNode } {
+// 2026-11-23 21:44·21:46 사용자 요청: 그래프 빼고 · 상품 사진 · 키워드마다 3개 · 더보기/접기
+const PRODUCT_FOLD = 3;
+
+function useFold<T>(items: T[], resetKey?: string, fold: number = FOLD): { shown: T[]; button: ReactNode } {
   const [open, setOpen] = useState(false);
   useEffect(() => { setOpen(false); }, [resetKey]);        // 카테고리를 바꾸면 다시 6개로
-  const rest = Math.max(0, items.length - FOLD);
+  const rest = Math.max(0, items.length - fold);
   const button = rest > 0 ? (
     <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}
       className="mx-auto mt-3 flex items-center gap-1 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm text-ink2 hover:text-ink">
       {open ? <>접기 <ChevronUp size={15} aria-hidden /></> : <>더보기 <span className="text-stone-400">{rest}개</span> <ChevronDown size={15} aria-hidden /></>}
     </button>
   ) : null;
-  return { shown: open ? items : items.slice(0, FOLD), button };
+  return { shown: open ? items : items.slice(0, fold), button };
 }
 type Pill = "coupang" | "surge" | "category" | "together";
 type Filter = "rising" | "not_steady" | "steady" | "all";
@@ -60,78 +63,97 @@ function KeywordRow({ it, onAsk, disabled }: { it: RankKeyword; onAsk: (t: strin
   );
 }
 
-/** 최근 30일 네이버 식품 검색어 순위 — 위로 갈수록 높은 순위. 없는 날은 건너뛴다 (2026-11-23 저녁 A). */
-function Spark({ data, className = "" }: { data?: (number | null)[]; className?: string }) {
-  const pts = (data ?? []).map((v, i) => [i, v] as const).filter(([, v]) => v != null) as [number, number][];
-  if (pts.length < 2) return <span className={`block ${className}`} aria-hidden />;
-  const n = Math.max(1, (data ?? []).length - 1);
-  const lo = Math.min(...pts.map(([, v]) => v)), hi = Math.max(...pts.map(([, v]) => v));
-  const y = (v: number) => (hi === lo ? 12 : 2 + ((v - lo) / (hi - lo)) * 20);   // 순위 숫자가 작을수록 위
-  const d = pts.map(([i, v], k) => `${k ? "L" : "M"}${((i / n) * 96 + 2).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const up = pts[pts.length - 1][1] <= pts[0][1];
+/** 쿠팡 상품 줄 — 3개 + 더보기/접기 (2026-11-23 21:46). 광고 표시는 목록 위에 한 번. */
+function ProductStrip({ items, resetKey }: { items: HighlightItem[]; resetKey: string }) {
+  const { shown, button } = useFold(items, resetKey, PRODUCT_FOLD);
+  if (!items.length) return null;
   return (
-    <svg viewBox="0 0 100 24" preserveAspectRatio="none" className={className} aria-hidden>
-      <path d={d} fill="none" stroke={up ? "#2f7d4f" : "#a8a29e"} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <>
+      <ul className="mt-2 grid grid-cols-3 gap-2 sm:gap-3">
+        {shown.map((item) => (
+          <li key={item.go_url} className="min-w-0">
+            <a href={item.go_url} target="_blank" rel="sponsored nofollow noopener" aria-label={`${item.title} — 쿠팡에서 보기 (새 창)`}
+              onClick={() => rememberViewed({ key: `hl:${item.go_url}`, title: item.title, image: item.image, href: item.go_url })}
+              className="flex h-full flex-col overflow-hidden rounded-xl border border-stone-200 bg-white sm:flex-row">
+              <span className="block aspect-square w-full shrink-0 bg-chip sm:w-24">{item.image && <img src={item.image} alt="" loading="lazy" className="h-full w-full object-cover" />}</span>
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5 p-2">
+                <span className="line-clamp-2 text-xs font-medium leading-snug break-keep">{item.title}</span>
+                {item.price_krw != null && <span className="mt-auto block text-sm"><b>{item.price_krw.toLocaleString()}원</b></span>}
+                {item.rocket && <span className="text-[11px] text-ink2">로켓배송</span>}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-[11px] text-stone-500">가격은 {hm(shown[0].fetched_at)} 확인 · 판매처에서 달라질 수 있어요</p>
+      {button}
+    </>
   );
 }
 
-/** 키워드 카드 (2026-11-23 저녁 A) — 순위 · 키워드 · 변화 · 30일 순위 그래프. 누르면 대화로 묻기. */
-function KeywordCard({ it, onAsk, disabled }: { it: RankKeyword; onAsk: (t: string) => void; disabled?: boolean }) {
+/** 카테고리 키워드 한 줄 — 순위·늘 인기·변화 + 쿠팡 상품 3개(더보기). 화면에 보일 때만 상품을 부른다. */
+function KeywordShelf({ it, onAsk, disabled }: { it: RankKeyword; onAsk: (t: string) => void; disabled?: boolean }) {
+  const ref = useRef<HTMLLIElement>(null);
+  const [seen, setSeen] = useState(false);
+  const [items, setItems] = useState<HighlightItem[] | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || seen) return;
+    if (typeof IntersectionObserver === "undefined") { setSeen(true); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { setSeen(true); io.disconnect(); } }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [seen]);
+  useEffect(() => {
+    if (!seen) return;
+    const ctl = new AbortController();
+    fetchKeywordProducts(it.keyword, ctl.signal).then(setItems).catch(() => setItems([]));
+    return () => ctl.abort();
+  }, [seen, it.keyword]);
   return (
-    <li>
-      <button type="button" disabled={disabled} onClick={() => onAsk(it.ask)} aria-label={`${it.keyword} 대화로 묻기 · 식품 검색어 ${it.rank}위`}
-        className="flex h-full w-full flex-col gap-1.5 rounded-2xl border border-stone-200 bg-white p-3 text-left transition hover:border-stone-300 hover:shadow-sm disabled:opacity-60">
-        <span className="flex items-center gap-2">
-          <span className="text-xs font-semibold tabular-nums text-ink3">{it.rank}위</span>
-          <span className="ml-auto flex items-center gap-1">
-            {it.state === "steady" && <span className="tag bg-chip text-ink2">늘 인기</span>}
-            <Change it={it} />
-          </span>
-        </span>
-        <span className="truncate text-[15px] font-semibold">{it.keyword}</span>
-        <Spark data={it.spark} className="h-6 w-full" />
-        <span className="text-[11px] text-stone-400">30일 순위</span>
-      </button>
+    <li ref={ref} aria-label={`${it.keyword} · 식품 검색어 ${it.rank}위`} className="rounded-2xl border border-stone-200 bg-white p-3">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold tabular-nums text-ink3">{it.rank}위</span>
+        <span className="min-w-0 truncate text-[15px] font-semibold">{it.keyword}</span>
+        {it.state === "steady" && <span className="tag bg-chip text-ink2">늘 인기</span>}
+        <Change it={it} />
+        <button type="button" disabled={disabled} onClick={() => onAsk(it.ask)} aria-label={`${it.keyword} 대화로 묻기 · 식품 검색어 ${it.rank}위`}
+          className="ml-auto shrink-0 rounded-full border border-stone-200 px-3 py-1 text-xs text-ink2 hover:text-ink disabled:opacity-60">대화로 묻기</button>
+      </div>
+      {items === null ? (
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:gap-3" aria-hidden>{[0, 1, 2].map((i) => <span key={i} className="aspect-square rounded-xl bg-chip sm:aspect-auto sm:h-24" />)}</div>
+      ) : items.length ? (
+        <ProductStrip items={items} resetKey={it.keyword} />
+      ) : (
+        <p className="mt-2 text-xs text-stone-500">지금 이 키워드로 찾은 식품 상품이 없어요.</p>
+      )}
     </li>
   );
 }
 
 /** 카테고리 맨 위 '이번 주 주목' (2026-11-23 저녁 B) — 가장 많이 오른 키워드 + 대표 상품 사진 1장(쿠팡 검색 1번, 저장 없음). */
-function HighlightCard({ h, spark, onAsk, disabled }: { h: RankHighlight; spark?: (number | null)[]; onAsk: (t: string) => void; disabled?: boolean }) {
-  const [got, setGot] = useState<{ item: HighlightItem | null; disclosure: string } | null>(null);
+function HighlightCard({ h, onAsk, disabled }: { h: RankHighlight; onAsk: (t: string) => void; disabled?: boolean }) {
+  const [got, setGot] = useState<{ items: HighlightItem[]; disclosure: string } | null>(null);
   useEffect(() => {
     const ctl = new AbortController();
     setGot(null);
     fetchHighlight(h.keyword, ctl.signal).then(setGot).catch(() => {});
     return () => ctl.abort();
   }, [h.keyword]);
-  const item = got?.item;
   const change = h.change_kind === "entered" ? "이번 주 상위 500위에 새로 들었어요" : h.change_7d ? `7일 새 ${h.change_7d}계단 올랐어요` : "";
   return (
-    <section aria-label="이번 주 주목" className="mb-3 grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 sm:grid-cols-[1fr_200px]">
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-semibold text-accent">이번 주 주목</span>
-        <span className="text-2xl font-bold tracking-tight">{h.keyword}</span>
-        <span className="text-sm text-ink2">{change}{change && " · "}식품 검색어 {h.rank}위</span>
-        <Spark data={spark} className="mt-1 h-10 w-full max-w-[320px]" />
-        <button type="button" disabled={disabled} onClick={() => onAsk(h.ask)}
-          className="mt-1 w-fit rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-60">{h.keyword} 추천 받기</button>
-      </div>
-      {item && (
-        <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] leading-4 text-stone-500"><b className="font-semibold text-ink">광고</b> 쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.</p>
-          <a href={item.go_url} target="_blank" rel="sponsored nofollow noopener" aria-label={`${item.title} — 쿠팡에서 보기 (새 창)`}
-            onClick={() => rememberViewed({ key: `hl:${item.go_url}`, title: item.title, image: item.image, href: item.go_url })}
-            className="flex overflow-hidden rounded-xl border border-stone-200 sm:flex-col">
-            <span className="block aspect-square w-24 shrink-0 bg-chip sm:w-full">{item.image && <img src={item.image} alt="" loading="lazy" className="h-full w-full object-cover" />}</span>
-            <span className="min-w-0 self-center p-2 sm:self-auto">
-              <span className="line-clamp-2 text-xs font-medium leading-snug break-keep">{item.title}</span>
-              {item.price_krw != null && <span className="mt-0.5 block text-sm"><b>{item.price_krw.toLocaleString()}원</b> <span className="text-[11px] text-stone-500">{hm(item.fetched_at)} 확인</span></span>}
-            </span>
-          </a>
+    <section aria-label="이번 주 주목" className="mb-3 rounded-2xl border border-stone-200 bg-white p-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-semibold text-accent">이번 주 주목</span>
+          <span className="text-2xl font-bold tracking-tight">{h.keyword}</span>
+          <span className="text-sm text-ink2">{change}{change && " · "}식품 검색어 {h.rank}위</span>
         </div>
-      )}
+        <button type="button" disabled={disabled} onClick={() => onAsk(h.ask)}
+          className="w-fit rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-60">{h.keyword} 추천 받기</button>
+      </div>
+      {!!got?.items.length && <p className="mt-3 text-[11px] leading-4 text-stone-500"><b className="font-semibold text-ink">광고</b> 쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.</p>}
+      <ProductStrip items={got?.items ?? []} resetKey={h.keyword} />
     </section>
   );
 }
@@ -299,7 +321,7 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
             : <ol className="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white px-2">
                 {data.surge.items.map((it) => (
                   <li key={it.keyword}>
-                    <button type="button" disabled={busy} onClick={() => ask(it.ask)} aria-label={`${it.keyword} 대화로 묻기`}
+                    <button type="button" disabled={busy} onClick={() => ask(it.ask)} aria-label={`${it.keyword} 대화로 묻기 · 식품 검색어 ${it.rank}위`}
                       className="flex w-full items-center gap-3 px-2 py-2.5 text-left hover:bg-chip disabled:opacity-60">
                       <span className="w-6 shrink-0 text-right text-sm font-semibold tabular-nums text-ink2">{it.n}</span>
                       <span className="min-w-0 flex-1 truncate font-medium">{it.keyword}</span>
@@ -347,15 +369,18 @@ export function HomeRankings({ view, onAsk, busy, surgeFull }: {
                 )}
                 {view === "home" && tab?.highlight && (
                   <div className="mt-3">
-                    <HighlightCard h={tab.highlight} spark={tab.items.find((i) => i.keyword === tab.highlight!.keyword)?.spark}
+                    <HighlightCard h={tab.highlight}
                       onAsk={(t) => { rememberInterest(tab.highlight!.keyword); ask(t); }} disabled={busy} />
                   </div>
                 )}
                 {view === "home" ? (
-                  <ol className="mt-2 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                    {kwFold.shown.map((it) => <KeywordCard key={it.keyword} it={it} onAsk={(t) => { rememberInterest(it.keyword); ask(t); }} disabled={busy} />)}
-                    {shownKeywords.length === 0 && <li className="col-span-full px-3 py-3 text-sm text-ink2">이 보기에 맞는 키워드가 없어요.</li>}
-                  </ol>
+                  <>
+                    {kwFold.shown.length > 0 && <p className="mt-2 text-[11px] leading-4 text-stone-500"><b className="font-semibold text-ink">광고</b> 쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.</p>}
+                    <ol className="mt-2 flex flex-col gap-2.5">
+                      {kwFold.shown.map((it) => <KeywordShelf key={it.keyword} it={it} onAsk={(t) => { rememberInterest(it.keyword); ask(t); }} disabled={busy} />)}
+                      {shownKeywords.length === 0 && <li className="px-3 py-3 text-sm text-ink2">이 보기에 맞는 키워드가 없어요.</li>}
+                    </ol>
+                  </>
                 ) : (
                   <ol className="mt-2 rounded-2xl border border-stone-200 bg-white px-1">
                     {kwFold.shown.map((it) => <KeywordRow key={it.keyword} it={it} onAsk={(t) => { rememberInterest(it.keyword); ask(t); }} disabled={busy} />)}
