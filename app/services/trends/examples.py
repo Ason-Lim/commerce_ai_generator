@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 _NAME = re.compile(r"^trend_examples_(\d{4}-\d{2}-\d{2})\.json$")
-_FIELDS = ("category", "icon", "keyword", "question")
+_FIELDS = ("category", "icon", "keyword", "question", "note")   # note: 2026-11-22 3-C 칸 설명 (없어도 됨)
 
 
 def folder() -> Path:

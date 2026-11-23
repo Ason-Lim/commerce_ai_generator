@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUp, ArrowRight, Plus, Sparkles, ShoppingBag, Utensils, Square, Gift, Cookie, Leaf, type LucideIcon } from 'lucide-react';
+import { ArrowUp, ArrowRight, Plus, Sparkles, ShoppingBag, Utensils, Square, Gift, Cookie, Leaf, TrendingUp, CalendarDays, ChefHat, Lightbulb, Snowflake, Sun, type LucideIcon } from 'lucide-react';
 import { SavedProvider, useSaved } from './state/saved';
 import { PENDING_ASK } from './components/TrendsPage';
 import { BlockRenderer } from './components/BlockRenderer';
@@ -23,10 +23,11 @@ import { BUSY_TIMEOUT_MS, TIMEOUT_MESSAGE, busyKind, type BusyKind } from './lib
 // 파일은 commerce_ai_generator/scripts/update_trend_examples.py가 매일 10시에 만든다.
 // 2026-11-04: 운영 화면은 빌드 때 넣은 파일에 머물지 않도록, 열릴 때 /api/trend-examples 로 그날 파일을 다시 받는다
 // (받지 못하면 빌드 때 넣은 최신 파일 → 기본 예시 순으로 쓴다)
-type TrendExample = { category: string; icon?: string; keyword?: string; question: string };
+type TrendExample = { category: string; icon?: string; keyword?: string; question: string; note?: string };
 type Example = { icon: LucideIcon; label: string; text: string; note: string };
 
-const ICONS: Record<string, LucideIcon> = { Gift, Cookie, Utensils, Leaf, ShoppingBag };
+// 2026-11-22 (3-C): 하루 4칸 — 지금 오르는(TrendingUp)·때·행사(CalendarDays)·오늘의 생활(ChefHat/Snowflake/Sun)·알뜰·발견(Lightbulb)
+const ICONS: Record<string, LucideIcon> = { Gift, Cookie, Utensils, Leaf, ShoppingBag, TrendingUp, CalendarDays, ChefHat, Lightbulb, Snowflake, Sun };
 
 const FALLBACK_EXAMPLES: Example[] = [
     { icon: Gift, label: '선물용', text: '부모님 선물로 좋은 식품 추천해줘', note: '받는 분 취향까지 고려해서' },
@@ -56,7 +57,7 @@ function toExamples(rows: TrendExample[], day: string | null): ExampleSet {
             icon: ICONS[r.icon ?? ''] ?? ShoppingBag,
             label: r.category,
             text: r.question.trim(),
-            note: r.keyword ? `${mmdd} 급상승 키워드 · ${r.keyword}` : `${mmdd} 트렌드`,
+            note: r.note?.trim() ? `${mmdd} ${r.note.trim()}` : r.keyword ? `${mmdd} 급상승 키워드 · ${r.keyword}` : `${mmdd} 트렌드`,
         })),
     };
 }

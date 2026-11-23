@@ -6,8 +6,10 @@
 출력: commerce_ai_generator/frontend/src/data/trend_examples_YYYY-MM-DD.json (실행일 기준)
       (2026-11-04 integrated_system 에서 옮김 — 화면이 11/2 에 frontend/ 로 옮겨 온 뒤 옛 위치에 쌓이던 문제)
 
-카테고리별로 '최근 3일 순위 중앙값'이 '14일 전 무렵 3일 중앙값'보다 많이 오른 키워드를 고르고,
-키워드에 맞는 사용자 질문 문장을 붙입니다.
+2026-11-22 (창 3-C 마지막): 하루 4칸 = ① 지금 오르는 것 ② 때·행사 ③ 오늘의 생활(눈에 띄는 날씨일 때만 날씨,
+아니면 제철 재료 레시피) ④ 알뜰·발견 — 칸 규칙은 app/services/trends/home_cards.py. 칸마다 후보 6개를
+trend_examples_candidates_<오늘>.json 에 쓰고, scripts/verify_trend_examples.py 가 실제로 눌러 보고 고른다.
+아래 카테고리 4개는 이제 '후보를 모으고 질문을 붙이는 틀'이다 (순위가 2주 전보다 오른 키워드 + 직접 적은 질문).
 실행: /usr/bin/python3 scripts/update_trend_examples.py [--dry-run]
 """
 import csv, glob, json, os, re, statistics, sys, tempfile
@@ -330,6 +332,123 @@ def recent_keywords(days=REPEAT_DAYS):
     return seen - {None}
 
 
+from app.services.trends import home_cards as hc  # noqa: E402  (표준 라이브러리만)
+ALCOHOL = _tags.ALCOHOL
+SLOT_MAX = 6        # 칸마다 후보 수 (검증이 떨어뜨리면 다음 후보)
+EVENT_QUESTIONS.update({
+    "크리스마스": ["크리스마스에 {kw} 준비하려는데 몇 명이면 얼마나 사야 해?"],
+    "크리스마스이브": ["크리스마스이브에 {kw} 준비하려는데 몇 명이면 얼마나 사야 해?"],
+    "연말 모임": ["연말 모임에 {kw} 준비하려는데 인원별로 얼마나 사야 해?"],
+})
+
+
+def ordered(cands, shown_before):
+    """고르는 순서: 2주 전보다 오름 · 최근 내려가지 않음 · 최근 3일 예시에 없음 → 차례로 조건을 풀어 가며.
+    2026-11-22 사용자: '매일 바뀌게' — 최근 3일 예시에 나온 키워드는 오르는 후보가 없어도 되도록 피한다."""
+    pools = [[c for c in cands if c[4] > 0 and not c[5] and c[1] not in shown_before],
+             [c for c in cands if c[4] > 0 and c[1] not in shown_before],
+             [c for c in cands if not c[5] and c[1] not in shown_before],
+             [c for c in cands if c[1] not in shown_before],
+             [c for c in cands if c[4] > 0 and not c[5]],
+             cands]
+    out = []
+    for pool in pools:
+        for c in sorted(pool, reverse=True):
+            if c[1] not in out:
+                out.append(c[1])
+    return out
+
+
+def core_name(kw):
+    """'귤10kg' → '귤', '절임배추20kg' → '절임배추' (크기·단위 뗌)."""
+    return re.sub(r"\d+(?:\.\d+)?\s*(?:kg|g|ml|l|개|입|박스|구|포기)?$", "", kw, flags=re.IGNORECASE).strip() or kw
+
+
+def _cat(name):
+    return next(c for c in CATEGORIES if c[0] == name)
+
+
+def _event_question(kw, ev, day):
+    qs = EVENT_QUESTIONS.get(ev) or []
+    stem = ev.split()[0]
+    qs = [q for q in qs if not (stem in kw and stem + "용" in q)] or qs
+    if qs:
+        return qs[day.toordinal() % len(qs)].replace("{kw}로", "{kw}{ro}").format(kw=kw, ro=ro(kw))
+    return EVENT_GENERIC.format(event=ev, kw=kw)
+
+
+def build_slots(by_cat, shown_before, latest, today=None, surge=None, weather=None):
+    """하루 4칸 후보 {칸 이름: [카드 …최대 6]}. 칸 사이 같은 키워드는 검증 단계에서도 다시 거른다."""
+    today = today or date.today()
+    surge = set(hc.surge_top() if surge is None else surge)          # ① 급상승 상위 6과 겹치지 않게 — 모든 칸에 적용
+    events = hc.order_events(_season_on(today))
+    is_event = lambda kw: bool(events) and bool(_tags.season_match(kw, events))  # noqa: E731
+    cat_of = {c[1]: name for name, cands in by_cat.items() for c in cands}
+    ok = lambda kw: kw not in surge and not ALCOHOL.search(kw) and not is_shop_name(kw)  # noqa: E731
+    slots = {}
+
+    # ① 지금 오르는 것 — 모든 카테고리, 오른 것만, 행사 품목은 ②로
+    allc = [c for cands in by_cat.values() for c in cands if c[4] > 0 and ok(c[1]) and not is_event(c[1])]
+    rows = []
+    for kw in ordered(allc, shown_before)[:SLOT_MAX]:
+        lex = _cat(cat_of[kw])[2]
+        # 직접 적은 질문이 없으면 중립 문장 — 칸 기본 틀('제철 ○○로 4인분 저녁 메뉴')은 말린 간식·가공품에 어색하다 (해각포)
+        rows.append({"category": hc.SLOT_RISING, "icon": hc.ICON[hc.SLOT_RISING], "keyword": kw,
+                     "question": lex.get(kw) or hc.rising_question(kw), "note": f"오르는 검색어 · {kw}",
+                     "kind": "product"})
+    slots[hc.SLOT_RISING] = rows
+
+    # ② 때·행사 — 순위에 품목이 올라온 행사(근거 있음)를 먼저, 그 안에서 가까운 순. 달력 품목은 식품 태그가 붙는 말만.
+    rows = []
+    allc = [c for cands in by_cat.values() for c in cands]
+    mine = {ev["event"]: [c for c in allc if _tags.season_match(c[1], [ev]) and ok(c[1])] for ev in events}
+    for ev in sorted(events, key=lambda e: (not mine[e["event"]], max(e.get("d_day", 0), 0))):
+        items = [i for i in ev["items"] if ok(i) and _tags.tags_for(i, events=[])]
+        for kw in ordered(mine[ev["event"]], shown_before) + items:
+            if len(rows) >= SLOT_MAX:
+                break
+            if any(r["keyword"] == kw for r in rows):
+                continue
+            rows.append({"category": hc.SLOT_EVENT, "icon": hc.ICON[hc.SLOT_EVENT], "keyword": kw,
+                         "question": _event_question(kw, ev["event"], today), "note": hc.event_note(ev),
+                         "kind": "product"})
+    if not rows:   # 준비 기간인 행사가 없으면 선물 상황 카드
+        name, _, lex, _, templates = _cat("선물용")
+        rows = [{"category": hc.SLOT_EVENT, "icon": hc.ICON[hc.SLOT_EVENT], "keyword": kw,
+                 "question": question_for(kw, lex, templates, latest), "note": "선물 고르기", "kind": "product"}
+                for kw in ordered([c for c in by_cat.get(name, []) if ok(c[1])], shown_before)[:SLOT_MAX]]
+    slots[hc.SLOT_EVENT] = rows
+
+    # ③ 오늘의 생활 — 눈에 띄는 날씨면 날씨, 아니면 제철 재료 레시피
+    w = hc.load_weather(today) if weather is None else weather
+    rows = hc.weather_cards(w, exclude=surge)[:SLOT_MAX]
+    if not rows:   # 요리 재료 먼저(과일은 레시피가 드묾), 크기 뗀 이름, ① 첫 카드·행사 품목(②)과 다른 재료
+        top1 = {r["keyword"] for r in slots[hc.SLOT_RISING][:1]}
+        ing = []
+        for name in ("제철요리", "제철과일"):
+            for kw in ordered([c for c in by_cat.get(name, []) if ok(c[1]) and not is_event(c[1])], shown_before):
+                k = core_name(kw)
+                if k not in ing and kw not in top1 and k not in top1:
+                    ing.append(k)
+        rows = hc.recipe_cards(ing[:SLOT_MAX], today)
+    slots[hc.SLOT_LIFE] = rows
+
+    # ④ 알뜰·발견 — 제철 과일·간식·요리 재료 고르는 법 (① 앞 3개·③ 첫 카드와 다른 키워드부터, 크기 뗀 이름)
+    taken = {r["keyword"] for r in slots[hc.SLOT_RISING][:3]} | {r["keyword"] for r in slots[hc.SLOT_LIFE][:1]}
+    names = []
+    for name in ("제철과일", "간식/디저트", "제철요리"):
+        for kw in ordered([c for c in by_cat.get(name, []) if ok(c[1]) and not is_event(c[1])], shown_before):
+            k = core_name(kw)
+            if k not in names:
+                names.append(k)
+    names = [k for k in names if k not in taken] + [k for k in names if k in taken]
+    slots[hc.SLOT_FIND] = [{"category": hc.SLOT_FIND, "icon": hc.ICON[hc.SLOT_FIND], "keyword": kw,
+                            "question": hc.find_question(kw, today, n), "note": "고르는 법 · 보관", "kind": "product"}
+                           for n, kw in enumerate(names[:SLOT_MAX])]
+    # 허용 표현표 밖의 말(긴급성·가격 단정·구매 강요)이 든 카드는 뺀다 — 예: 직접 적은 질문 '어디서 사는 게 제일 싸?'
+    return {k: [r for r in rows if hc.copy_ok(r["question"]) and hc.copy_ok(r["note"])] for k, rows in slots.items()}
+
+
 def main(dry=False):
     data = load_naver()
     if len(data) < 4:
@@ -350,12 +469,13 @@ def main(dry=False):
     past_pool = sorted(dates, key=lambda d: abs((d - target).days))[:3]
     gterms = load_google_terms()
 
-    picks = []
-    alternates = {}
+    # 2026-11-22 (창 3-C 마지막): 카테고리 4칸 → 하루 4칸 성격 (app/services/trends/home_cards.py).
+    # 예전 카테고리는 '후보를 모으고 질문을 붙이는 틀'로만 남는다 (키워드 → 카테고리 → 직접 적은 질문/기본 틀).
+    by_cat = {}
     for i, (cat, tag, lex, pat, templates) in enumerate(CATEGORIES):
         cands = []
         for kw in data[latest]:
-            if classify(kw) != i or is_shop_name(kw):
+            if classify(kw) != i or is_shop_name(kw) or ALCOHOL.search(kw):
                 continue
             now = median_rank(data, recent, kw)
             if now > MAX_RANK:
@@ -365,32 +485,17 @@ def main(dry=False):
             falling = now - median_rank(data, prior, kw) > FALL_LIMIT    # 최근 며칠 내려가는 중 (끝난 행사 등)
             score = rise / (now ** 0.5) + (3 if kw in gterms else 0) + (1 if kw in lex else 0)
             cands.append((score, kw, int(now), int(before), rise, falling))
-        if not cands:
-            continue
-        # 고르는 순서: 2주 전보다 오름 · 최근 내려가지 않음 · 최근 3일 예시에 없음 → 차례로 조건을 풀어 가며
-        # 2026-11-22 사용자: '매일 바뀌게' — 최근 3일 예시에 나온 키워드는 오르는 후보가 없어도 되도록 피한다
-        pools = [[c for c in cands if c[4] > 0 and not c[5] and c[1] not in shown_before],
-                 [c for c in cands if c[4] > 0 and c[1] not in shown_before],
-                 [c for c in cands if not c[5] and c[1] not in shown_before],
-                 [c for c in cands if c[1] not in shown_before],
-                 [c for c in cands if c[4] > 0 and not c[5]],
-                 cands]
-        score, kw, now, before, rise, falling = max(next(p for p in pools if p))
-        text = question_for(kw, lex, templates, latest)
-        # 2026-11-22: 검증(scripts/verify_trend_examples.py)이 떨어뜨리면 다음 후보로 — 고른 순서대로 6개까지
-        ordered = []
-        for pool in pools:
-            for c in sorted(pool, reverse=True):
-                if c[1] not in ordered:
-                    ordered.append(c[1])
-        alternates[cat] = [{"category": cat, "icon": ICONS[cat], "keyword": k,
-                            "question": question_for(k, lex, templates, latest)}
-                           for k in ordered[:6]]
-        picks.append({
-            "category": cat, "icon": ICONS[cat], "keyword": kw, "question": text,
-        })
-        print(f"  {cat}: {kw} (순위 {before if before <= 500 else '밖'} → {now}){' +구글' if kw in gterms else ''}"
-              f"{' · 최근 내려가는 중' if falling else ''}{' · 최근 예시와 같음' if kw in shown_before else ''}", file=sys.stderr)
+        by_cat[cat] = cands
+    alternates = build_slots(by_cat, shown_before, latest, today=date.today())
+    picks = []
+    used = set()
+    for slot, items in alternates.items():
+        # 레시피 카드는 실제 요리 이름을 검증 단계가 찾는다 — 검증 전 파일엔 넣지 않음 (검증이 안 돌면 3장)
+        item = next((x for x in items if x["keyword"] not in used and x.get("kind") != "recipe"), None)
+        if item:
+            used.add(item["keyword"])
+            picks.append({k: item[k] for k in ("category", "icon", "keyword", "question", "note")})
+            print(f"  {slot}: {item['keyword']} — {item['note']} (후보 {len(items)})", file=sys.stderr)
 
     out = picks
     txt = json.dumps(out, ensure_ascii=False, indent=2)
