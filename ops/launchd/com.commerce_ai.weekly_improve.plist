@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 매주 일요일 23:30 주간 개선 지표(scripts/weekly_improve.py — 월요일 오전에 봄, 2026-11-23 사용자 결정). 설치: ops/launchd/install_weekly_improve.sh -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.commerce_ai.weekly_improve</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/scripts/run_weekly_improve.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>0</integer>
+    <key>Hour</key>
+    <integer>23</integer>
+    <key>Minute</key>
+    <integer>30</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__REPO__/var/log/weekly_improve.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/var/log/weekly_improve.launchd.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>Nice</key>
+  <integer>10</integer>
+</dict>
+</plist>
