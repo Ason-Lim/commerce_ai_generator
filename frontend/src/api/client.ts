@@ -216,11 +216,19 @@ export async function fetchTogether(seeds: string[], view: "home" | "full", sign
   if (!r.ok) throw new Error(`together ${r.status}`);
   return (await r.json()) as Together;
 }
-export async function fetchHighlight(kw: string, signal?: AbortSignal): Promise<{ item: HighlightItem | null; disclosure: string } | null> {
+export async function fetchHighlight(kw: string, signal?: AbortSignal): Promise<{ items: HighlightItem[]; disclosure: string } | null> {
   if (API_MODE === "mock") return null;
   const r = await fetch(`/api/home/highlight?kw=${encodeURIComponent(kw)}`, { signal });
   if (!r.ok) return null;
-  return (await r.json()) as { item: HighlightItem | null; disclosure: string };
+  const d = (await r.json()) as { items?: HighlightItem[]; item?: HighlightItem | null; disclosure: string };
+  return { items: d.items ?? (d.item ? [d.item] : []), disclosure: d.disclosure };
+}
+/** 홈 카테고리 키워드별 쿠팡 상품 (2026-11-23) — 지금 홈에 보이는 키워드만, 저장 없음. */
+export async function fetchKeywordProducts(kw: string, signal?: AbortSignal): Promise<HighlightItem[]> {
+  if (API_MODE === "mock") return [];
+  const r = await fetch(`/api/home/kw-products?kw=${encodeURIComponent(kw)}`, { signal });
+  if (!r.ok) return [];
+  return ((await r.json()) as { items?: HighlightItem[] }).items ?? [];
 }
 export async function fetchHomeRankings(view: "home" | "full", signal?: AbortSignal): Promise<HomeRankings | null> {
   if (API_MODE === "mock") return null;
