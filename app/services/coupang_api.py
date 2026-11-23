@@ -156,6 +156,9 @@ def search_coupang_products(keyword: str, limit: int = 10):
     key = (" ".join((keyword or "").split()), int(limit), coupang_sub_id() or "")
     hit = _SEARCH_CACHE.get(key) if minutes else None
     if hit and _time.time() - hit[0] < minutes * 60:
+        from app.services.chat import turn_metrics       # 2026-11-23 3-D ②: 차례별 쿠팡 캐시 사용 수
+
+        turn_metrics.bump("coupang_cache_hits")
         return [dict(x) for x in hit[1]]
     items = _search_coupang_products(keyword, limit)
     if minutes and items:
@@ -172,6 +175,9 @@ def _search_coupang_products(keyword: str, limit: int = 10):
     if not coupang_rate.acquire():          # 1분 한도(문서: 50번) 직전 — 넘기면 24시간 사용 제한
         print("[Coupang API] 1분 호출 한도에 가까워 이번 검색은 건너뜀")
         return []
+    from app.services.chat import turn_metrics           # 2026-11-23 3-D ②: 차례별 실제 쿠팡 호출 수
+
+    turn_metrics.bump("coupang_calls")
 
     method = "GET"
     path = "/v2/providers/affiliate_open_api/apis/openapi/products/search"

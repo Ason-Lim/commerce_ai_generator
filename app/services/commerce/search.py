@@ -151,11 +151,15 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         if not usable(cards, query):
             coupang_gaps.record(query, "zero" if not cards else "filtered")
             gap_logged = True
+            from app.services.chat import turn_metrics   # 2026-11-23 3-D ②: 자동 다시 찾기 시도·성공
+
             for alt in retry_queries(query):
+                turn_metrics.flag("refetch_tried")
                 alt_cards = fetch(alt)
                 if usable(alt_cards, alt):
                     cards, searched_as = alt_cards, alt
                     coupang_gaps.record(query, "retry_found", alt)
+                    turn_metrics.flag("refetch_found")
                     break
     except Exception as e:  # noqa: BLE001 — 같은 상황에서 웹은 '불러오지 못했어요' 안내
         log.exception("shopping provider failed")
@@ -207,6 +211,9 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
                            if a not in (query, searched_as)],
             fetch, {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list},
             text=text, searched_as=searched_as, tried=more_tried)
+        from app.services.chat import turn_metrics       # 2026-11-23 3-D ②: 후보 적을 때 더 찾기 시도·성공
+        turn_metrics.flag("more_tried", bool(more_tried))
+        turn_metrics.flag("more_found", bool(more_list))
 
     partner_terms = terms or _content_tokens(label)
     partner_cards = [ChatService._partner_card(it, query) for it in
