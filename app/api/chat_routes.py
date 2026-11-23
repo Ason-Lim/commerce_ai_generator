@@ -388,9 +388,10 @@ def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | No
         # 2026-11-10 (R0): 상품명이 없으면 같은 트랜잭션의 user_product_preference(상품명 NOT NULL)가 실패해
         # 클릭 기록까지 되돌려졌다 — 채팅 /go 클릭이 하나도 남지 않은 원인. 보여 준 상품의 이름·판매처를 넘기고,
         # 모르면 URL 을 이름 자리에 둔다.
+        # 2026-11-23 쿠팡 약관 제5조 ③: 클릭 기록에 상품명·가격을 남기지 않는다 — 이름 자리에는 링크(상품번호가 들어 있음)
         shown = shown if shown and shown.get("url") == url else {}
         log_product_click(session_id=sid, query=_click_query(request), product={
-            "product_url": url, "product_name": shown.get("title") or url, "mall_name": shown.get("mall"),
+            "product_url": url, "product_name": url, "mall_name": shown.get("mall"),
             "rank": shown.get("rank"), "selected_section": section, "recommendation_mode": "ranking"})
     except Exception:  # noqa: BLE001 — logging must not block the redirect
         log.warning("click log failed")

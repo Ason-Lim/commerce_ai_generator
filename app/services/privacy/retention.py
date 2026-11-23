@@ -130,6 +130,7 @@ class Retention:
             self.rollup(conn, have)
             self.pseudonymize(conn, have)
             self.delete_chat(conn, have)
+            self.strip_cards(conn, have)
             self.delete_pseudo(conn, have)
         self.signals()
         return self.report
@@ -207,6 +208,34 @@ class Retention:
             else:
                 n = conn.execute(text("DELETE " + sql).bindparams(_ts("c")), {"c": cut}).rowcount or 0
             self._log(conn, "delete", f"{table} ({label})", n, cut)
+
+    # ── ③-2 대화 상태 안 쿠팡 상품 카드 줄이기 (2026-11-23 — 쿠팡 오픈 API 약관 제5조 ③) ──
+    def strip_cards(self, conn, have: set[str]) -> None:
+        """마지막 활동 24시간 지난 대화의 상품 카드는 키·순위·링크만 남긴다 (app/services/chat/card_expiry.py).
+        관심 상품 보관함(saved:…)은 그대로 (사용자 결정 11-23). updated_at 은 바꾸지 않는다(대화 90일 기준 유지)."""
+        if "recipe_chat_session" not in have:
+            return
+        import json as _json
+
+        from app.services.chat import card_expiry
+
+        cut = self.now - timedelta(hours=card_expiry.hours())
+        rows = conn.execute(text("SELECT session_id, state_json FROM recipe_chat_session "
+                                 "WHERE session_id NOT LIKE 'saved:%' AND updated_at < :c").bindparams(_ts("c")),
+                            {"c": cut}).mappings().all()
+        n = 0
+        for row in rows:
+            try:
+                state = _json.loads(row["state_json"])
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(state, dict) or not card_expiry.has_cards(state):
+                continue
+            n += 1
+            if not self.dry_run:
+                conn.execute(text("UPDATE recipe_chat_session SET state_json=:j WHERE session_id=:s"),
+                             {"j": _json.dumps(card_expiry.strip(state), ensure_ascii=False), "s": row["session_id"]})
+        self._log(conn, "strip_cards", "recipe_chat_session (쿠팡 상품 카드)", n, cut)
 
     # ── ⑤ 가명 흐름 최종 삭제 (2026-11-22) ──
     def delete_pseudo(self, conn, have: set[str]) -> None:

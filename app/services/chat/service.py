@@ -574,6 +574,9 @@ class ChatService:
                 return {"ok": False, "error": "invalid", **self.saved_view(owner, None)}
             state, _rev, _ = self._load(session_id)
             found = saved_mod.find_seen(state, key)
+            if found is not None and not found[1].get("title"):
+                # 2026-11-23: 24시간 지나 내용을 뺀 카드는 담지 않는다 — 다시 검색해서 담기
+                return {"ok": False, "error": "expired_item", **self.saved_view(owner, session_id)}
             if found is None:
                 return {"ok": False, "error": "unknown_item", **self.saved_view(owner, session_id)}
         for _attempt in range(2):
@@ -850,7 +853,13 @@ class ChatService:
             return new_state(), 0, False
         try:
             with self.db.read() as conn:
-                state, revision = ChatStateStore(conn, self.db.sql).load(sid)
+                store = ChatStateStore(conn, self.db.sql)
+                state, revision = store.load(sid)
+            # 2026-11-23 쿠팡 약관 제5조 ③: 마지막 활동 24시간 지난 대화의 상품 카드는 키·순위·링크만 (card_expiry)
+            from app.services.chat import card_expiry
+
+            if card_expiry.is_old(getattr(store, "updated_at", None)) and card_expiry.has_cards(state):
+                state = card_expiry.strip(state)
             return state, revision, True
         except Exception:  # noqa: BLE001
             log.warning("chat state unavailable; continuing without persistence")
