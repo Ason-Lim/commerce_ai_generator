@@ -64,3 +64,4 @@ var/weather/
 var/coupang_best/
 var/patches/
 var/_*
+var/improve/
