@@ -5,6 +5,7 @@
 * 건강 안내는 '안전하다'·효능 단정을 하지 않는다.
 * 식품 안전·위급은 사람이 반드시 맡는 일 — 접수·운영자 알림은 ③ (cs/tickets-human) 에서 붙인다.
   **그 전까지 '운영팀이 확인한다'는 말을 쓰지 않는다** (GPT 검토 2026-11-23 — 실제 기능보다 앞선 안내 금지, 테스트로 고정).
+  ③(11-23): 접수가 실제로 된 차례에만 ticket_notice 로 접수 번호와 함께 말한다. 기본 문구(_blocks)에는 여전히 없음.
 문구를 바꿀 때는 tests/services/chat/test_domain_2026_11_23.py 의 금지 표현 검사가 함께 돈다.
 """
 from __future__ import annotations
@@ -62,8 +63,33 @@ NOT_FOOD = "저는 **식품만** 도와드려요. 식품 상품 추천이나 레
 CHITCHAT = "안녕하세요! 식품 추천이나 레시피를 도와드려요. 이렇게 물어보세요."
 
 
-def blocks_for(domain: str, cue: str = "", last_query: str | None = None) -> list[dict]:
-    """분야별 답 블록. 상품·제휴 블록은 만들지 않는다."""
+def ticket_notice(domain: str, ticket: dict) -> str:
+    """실제로 접수된 티켓이 있을 때만 쓰는 문구 (③ 전에는 '운영팀이 확인' 말을 쓰지 않음 — GPT 검토 11-23)."""
+    tid = ticket.get("id")
+    due = ticket.get("due_at") or ""
+    when = f"{int(due[5:7])}월 {int(due[8:10])}일" if len(due) >= 10 else ""
+    if domain == "emergency":
+        return f"운영팀에 바로 알렸어요. (접수 번호 {tid})"
+    if domain == "food_safety":
+        return (f"신고를 접수했어요. (접수 번호 {tid}) 운영팀이 확인하고 결과를 **내 보관함 → 문의**에 남겨요. "
+                "사진·포장은 판매처 문의에도 쓰이니 보관해 주세요.")
+    if domain == "privacy":
+        return f"요청을 접수했어요. (접수 번호 {tid}) {when}까지 처리 결과를 **내 보관함 → 문의**에 남겨요."
+    if domain == "dispute":
+        return (f"내용을 접수했어요. (접수 번호 {tid}) 판매처 처리와 별도로 저희 쪽 확인 결과를 {when}까지 "
+                "**내 보관함 → 문의**에 남겨요.")
+    return f"접수 번호 {tid}"
+
+
+def blocks_for(domain: str, cue: str = "", last_query: str | None = None, ticket: dict | None = None) -> list[dict]:
+    """분야별 답 블록. 상품·제휴 블록은 만들지 않는다. ticket 이 있으면(실제 접수됨) 접수 안내를 덧붙인다."""
+    out = _blocks(domain, cue, last_query)
+    if ticket and ticket.get("id"):
+        out.append(B.notice(ticket_notice(domain, ticket), "info"))
+    return out
+
+
+def _blocks(domain: str, cue: str = "", last_query: str | None = None) -> list[dict]:
     if domain == "emergency":
         return [B.notice(EMERGENCY, "warn")]
     if domain == "food_safety":
@@ -92,4 +118,4 @@ def blocks_for(domain: str, cue: str = "", last_query: str | None = None) -> lis
     return []
 
 
-__all__ = ["blocks_for", "EXAMPLES"]
+__all__ = ["blocks_for", "ticket_notice", "EXAMPLES"]

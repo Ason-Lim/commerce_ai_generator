@@ -517,4 +517,16 @@ export interface SavedView {
   error?: string;
   saved: ApiCard[];
   recent: { query: string; at: string; budget?: string | null; cards: ApiCard[]; session_id?: string }[];
+  /** 2026-11-23 창 4 ③: 자동 접수된 문의 (식품 안전 신고·개인정보 요청 등) */
+  tickets?: ShelfTicket[];
+}
+
+export interface ShelfTicket {
+  id: string;
+  label: string;
+  status: "open" | "answered" | "closed";
+  created_at: string;
+  due_at: string;
+  summary: string;
+  messages: { at: string; kind: "auto" | "reply"; text: string }[];
 }

@@ -30,12 +30,12 @@ def test_recent_across_sessions_and_forget(sqlite_db):
     out = s.forget(owner, [a, b])
     assert out["ok"] and out["saved"] and out["sessions"] >= 2
     after = s.shelf_view(owner, [a, b])
-    assert after == {"saved": [], "recent": []}
+    assert after == {"saved": [], "recent": [], "tickets": []}   # 11-23 창 4 ③: 문의 칸
 
 
 def test_bad_ids_are_ignored(sqlite_db):
     s = svc(sqlite_db)
-    assert s.shelf_view("x", ["../etc", "nope"]) == {"saved": [], "recent": []}
+    assert s.shelf_view("x", ["../etc", "nope"]) == {"saved": [], "recent": [], "tickets": []}
     assert s.forget("x", ["nope"])["ok"]
 
 

@@ -223,7 +223,7 @@ class ChatService:
         started = time.monotonic()
         try:
             response = self._handle_turn(session_id, message, answers, chip, owner, fresh)
-            response = self._domain_after_zero(response, message, answers)   # 2026-11-23 창 4 ②
+            response = self._domain_after_zero(response, message, answers, owner)   # 2026-11-23 창 4 ②
         finally:
             _dataset.PII_SEEN.reset(pii_token)
             turn_metrics.stop(metrics_token)
@@ -275,7 +275,7 @@ class ChatService:
             turn_metrics.note("domain", decision.domain if decision else "food")
             turn_metrics.note("domain_by", decision.by if decision else "default")
             if decision is not None and decision.domain != "food":
-                return self._domain_turn(sid, decision, state)
+                return self._domain_turn(sid, decision, state, text=text, owner=owner)
 
         # 2026-11-01: 관심 상품 비교 · 예산 답변 ('3만원 이하요') — 새 검색 없이 저장된 후보로 답한다
         if text and not answers and COMPARE_SAVED_RE.search(text):
@@ -533,7 +533,10 @@ class ChatService:
                 continue
             seen_q.add(r["query"])
             out.append(r)
-        return {"saved": saved, "recent": out[:self.SHELF_RECENT]}
+        from app.services.cs import tickets as cs_tickets      # 2026-11-23 창 4 ③: 내 보관함 '문의'
+
+        tickets = cs_tickets.for_owner(owner) if owner and SESSION_RE.fullmatch(owner) else []
+        return {"saved": saved, "recent": out[:self.SHELF_RECENT], "tickets": tickets}
 
     def forget(self, owner: str | None, sessions: list[str]) -> dict:
         """'기록 지우기' — 관심 상품(서버 보관함)과 이 브라우저 대화 세션의 기록(최근 검색·대화 상태)을 지운다.
@@ -542,8 +545,12 @@ class ChatService:
             return {"ok": False, "error": "storage"}
         from app.services.chat.state_store import new_state
 
-        done = {"saved": False, "sessions": 0}
+        done = {"saved": False, "sessions": 0, "tickets": 0}
         try:
+            if owner and SESSION_RE.fullmatch(owner):      # 2026-11-23 창 4 ③: 문의 티켓의 손님 연결·요약도 지움
+                from app.services.cs import tickets as cs_tickets
+
+                done["tickets"] = cs_tickets.forget_owner(owner)
             with self.db.write() as conn:
                 if owner and SESSION_RE.fullmatch(owner):
                     store = saved_mod.SavedStore(conn, self.db.sql)
@@ -1457,7 +1464,8 @@ class ChatService:
         self._try_commit(sid, state, revision, persist)
         return self._response(sid, "shopping_followup", blocks, meta=_turn_meta(state, calls))
 
-    def _domain_after_zero(self, response: dict, message: str | None, answers: dict | None) -> dict:
+    def _domain_after_zero(self, response: dict, message: str | None, answers: dict | None,
+                           owner: str | None = None) -> dict:
         """② 규칙이 모른 문장을 AI 로 분야를 다시 본다 (식품이면 그대로). 두 경우만:
 
         * 식품 흐름이 상품을 하나도 못 보여 준 차례 (쿠팡 장애 제외) — 0건 안내를 맞는 분야 안내로 바꾼다.
@@ -1496,16 +1504,29 @@ class ChatService:
             return response
         sid = response.get("session_id") or ""
         state, _rev, _ = self._load(sid) if sid else ({}, 0, False)
-        return self._domain_turn(sid, decision, state)
+        return self._domain_turn(sid, decision, state, text=message, owner=owner)
 
-    def _domain_turn(self, sid: str, decision, state: dict) -> dict:
-        """식품이 아닌 분야 — 고정 안내만 (상품·제휴 링크 없음, 대화 상태는 바꾸지 않음)."""
+    def _domain_turn(self, sid: str, decision, state: dict, *, text: str | None = None, owner: str | None = None) -> dict:
+        """식품이 아닌 분야 — 고정 안내만 (상품·제휴 링크 없음, 대화 상태는 바꾸지 않음).
+        2026-11-23 창 4 ③: 사람이 맡아야 하는 분야(위급·식품 안전·개인정보 요청·분쟁)는 티켓으로 자동 접수 + 운영자 알림."""
         from app.services.chat import domain_answers
+
+        ticket = None
+        from app.services.chat import domain as domain_mod
+        from app.services.cs import tickets as cs_tickets
+
+        if cs_tickets.creates_ticket(decision.domain) and domain_mod.needs_ticket(decision.domain, text):
+            try:
+                ticket = cs_tickets.create(decision.domain, sid=sid, owner=owner if owner and SESSION_RE.fullmatch(owner) else None,
+                                           summary=text, by=decision.by)
+            except Exception:  # noqa: BLE001 — 접수가 안 되면 접수했다고 말하지 않는다
+                log.exception("ticket create failed")
+                ticket = None
 
         seen = state.get("seen") or []
         last_query = (seen[-1] or {}).get("query") if seen else None
         return self._response(sid, "domain_" + decision.domain,
-                              domain_answers.blocks_for(decision.domain, decision.cue, last_query))
+                              domain_answers.blocks_for(decision.domain, decision.cue, last_query, ticket=ticket))
 
     @staticmethod
     def _response(sid, stage, blocks, meta: dict | None = None):
