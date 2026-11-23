@@ -364,7 +364,8 @@ export default function ChatWindow() {
                         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
                         <span className="hidden min-[380px]:inline">AI 식품 추천</span>
                     </a>
-                    <div className="flex min-w-0 flex-1 justify-center">
+                    {/* 2026-11-23: 가운데 칸이 좁으면 진행 표시가 칸 밖으로 넘쳐 로고('AI 식품 추…')·메뉴를 덮었다 — 칸 안에서만 줄인다 */}
+                    <div className="flex min-w-0 flex-1 justify-center overflow-hidden">
                         {messages.length > 0 && <FlowStepper step={step} compact />}
                     </div>
                     <div className="flex shrink-0 items-center gap-2">

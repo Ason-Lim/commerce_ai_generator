@@ -15,14 +15,15 @@ export function FlowStepper({ step, compact = false }: { step: FlowStep; compact
   if (compact) {
     const cur = STEPS.find(s => s.n === step) ?? STEPS[0];
     return (
-      <span className="flex items-center gap-2 whitespace-nowrap rounded-full bg-chip px-3 py-1 text-xs"
+      <span className="flex min-w-0 max-w-full items-center gap-2 whitespace-nowrap rounded-full bg-chip px-3 py-1 text-xs"
         aria-label={`진행 단계 ${step}/5 ${cur.label}`} title={STEPS.map(s => `${s.n} ${s.label}`).join(" › ")}>
-        <span className="hidden items-center gap-1 sm:flex" aria-hidden>
+        {/* 2026-11-23: 점 5개는 넓은 화면에서만, 좁으면 '3/5 후보…'처럼 글자를 줄임 (머리줄 겹침 방지) */}
+        <span className="hidden shrink-0 items-center gap-1 lg:flex" aria-hidden>
           {STEPS.map(s => (
             <span key={s.n} className={cx("h-1.5 rounded-full", s.n === step ? "w-4 bg-ink" : s.n < step ? "w-1.5 bg-accent" : "w-1.5 bg-line")} />
           ))}
         </span>
-        <span className="font-bold tabular-nums">{step}/5</span><span>{cur.label}</span>
+        <span className="shrink-0 font-bold tabular-nums">{step}/5</span><span className="min-w-0 truncate">{cur.label}</span>
       </span>
     );
   }
