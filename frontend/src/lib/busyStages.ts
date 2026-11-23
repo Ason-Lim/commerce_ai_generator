@@ -10,11 +10,15 @@ export interface BusyStage { after: number; text: string }
 const RECIPE_RE = /만드는\s*법|만드는\s*방법|레시피|만들기|만들어|요리\s*방법|요리법|조리법|조리\s*방법|끓이는\s*법|볶는\s*법/;
 const QUICK_RECIPE_RE = /레시피\s*후보\s*비교|다른\s*레시피|공공\s*레시피\s*보기/;   // 저장된 결과만 보여 줘 빠르다
 const MENU_RE = /메뉴|식단|한\s*상|뭐\s*(?:해|만들어)\s*먹|뭘\s*(?:해|만들)/;
+// 2026-11-23: "가을 능이버섯으로 닭백숙 하려면 재료 뭐 사야 해?" — 장보기 말투지만 서버는 레시피를 새로 만든다(30초 넘게 걸림).
+// 쇼핑(30초)으로 기다리다 '응답 시간이 초과됐어요'가 나왔다 → 요리 이름 + '하려면·만들려면…'은 레시피 기다리기로.
+const DISH_SHOP_RE = /(?:하|만들|끓이|담그|볶|굽|부치|무치|쑤|삶|찌|해\s*먹으)려면/;
 
 export function busyKind(text: string | undefined | null): BusyKind {
   const t = text ?? "";
   if (MENU_RE.test(t)) return "menu";
   if (RECIPE_RE.test(t) && !QUICK_RECIPE_RE.test(t)) return "recipe";
+  if (DISH_SHOP_RE.test(t)) return "recipe";
   return "shopping";
 }
 
