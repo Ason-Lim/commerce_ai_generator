@@ -41,6 +41,13 @@ def test_baeksuk_asks_chicken_or_duck_first(make_ai):
     assert chips == ["가을 능이버섯으로 닭백숙 하려면 재료 뭐 사야 해?", "가을 능이버섯으로 오리백숙 하려면 재료 뭐 사야 해?"]
     assert "어떤 **백숙**으로" in json.dumps(turn.blocks, ensure_ascii=False)
     assert not any(isinstance(c, str) for c in calls)                     # 레시피를 만들지 않았다(AI 생성 호출 없음)
+    # 2026-11-23 사용자 확인: 능이버섯은 닭·오리 어느 쪽이든 필요 → 묻는 자리에서 상품부터
+    assert turn.shopping == ["능이버섯"] and "**능이버섯**은 어느 쪽이든" in json.dumps(turn.blocks, ensure_ascii=False)
+    assert SF.eun("능이버섯") == "은" and SF.eun("오리") == "는"
+    p = "백숙 하려면 재료 뭐 사야 해?"
+    SENT.setdefault(p, {"dish": "백숙", "wants_recipe": True, "wants_products": True})
+    plain = svc.recipe.handle(p, None, {}, "y", None, force_recipe=True)
+    assert plain.stage == "recipe_which_dish" and not plain.shopping
 
 
 def test_shopping_question_puts_ingredients_first_and_named_ingredient_products_first(make_ai):
