@@ -97,7 +97,8 @@ def test_my_shelf_scenario(shelf_site, browser):
     page.get_by_role("button", name="질문 보내기").click()
     page.get_by_role("button", name="관심 상품에 담기").first.click()
     page.get_by_role("button", name="관심 상품에서 빼기").first.wait_for()
-    assert page.get_by_role("region", name="부족한 재료 장보기").get_by_text("대파", exact=True).is_visible()   # 대화 칸
+    # 2026-11-23: 레시피 이야기가 아닌 차례(사과 검색)에서는 담아 둔 재료를 이름 한 줄로만 (상품은 보관함)
+    assert page.get_by_role("note", name="담아 둔 부족한 재료").get_by_text("대파").is_visible()   # 대화 칸
 
     # 2) 새 대화 → 보관함: 관심·장보기·최근 검색이 남아 있음
     page.get_by_role("button", name="새 대화").click()
@@ -187,17 +188,48 @@ def test_basket_drop_vs_have_same_in_both_places(shelf_site, browser):
     ctx.close()
 
 
-def test_basket_from_another_conversation_is_one_line(shelf_site, browser):
-    """2026-11-23 운영: 닭백숙 대화에서 담은 '닭' 상품이 배추속댓국·절임배추 대화 아래에 펼쳐져 보였다 → 안내 한 줄만."""
+def test_basket_opens_only_during_its_recipe_talk(shelf_site, browser):
+    """2026-11-23 운영: 닭백숙에서 담은 '닭' 상품이 같은 대화의 절임배추 질문·다른 대화 아래에도 펼쳐졌다 →
+    이 대화에서 담았고 지금 레시피 이야기 중일 때만 펼치고, 그 밖에는 재료 이름 + 보관함 링크 한 줄."""
+    import json as _json
+
     ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
     page = ctx.new_page()
+    turns = iter([{"session_id": "s-recipe-1", "stage": "recipe_card", "blocks": [{"type": "text", "data": {"md": "닭백숙 레시피예요."}}]},
+                  {"session_id": "s-recipe-1", "stage": "shopping", "blocks": [{"type": "text", "data": {"md": "절임배추 후보예요."}}]}])
+    page.route("**/api/chat", lambda route: route.fulfill(status=200, content_type="application/json",
+                                                         body=_json.dumps(next(turns), ensure_ascii=False)))
+    page.goto(shelf_site + "/")
+    mine = [dict(BASKET[0], ingredient="닭", sessionId="s-recipe-1")]
+    page.evaluate("b => localStorage.setItem('ai-food-basket', JSON.stringify(b))", mine)
+    page.reload()
+    page.get_by_label("쇼핑 질문").fill("닭백숙 레시피")
+    page.get_by_role("button", name="질문 보내기").click()
+    page.get_by_role("region", name="부족한 재료 장보기").get_by_text("닭", exact=True).wait_for()      # 레시피 이야기 중 — 펼침
+    page.get_by_label("쇼핑 질문").fill("김장용 절임배추10kg 추천")
+    page.get_by_role("button", name="질문 보내기").click()
+    page.get_by_text("절임배추 후보예요.").wait_for()
+    assert page.get_by_role("region", name="부족한 재료 장보기").count() == 0                            # 다른 이야기 — 접음
+    note = page.get_by_role("note", name="담아 둔 부족한 재료")
+    assert note.get_by_text("닭").is_visible() and note.get_by_role("link", name="내 보관함에서 보기").is_visible()
+    ctx.close()
+
+
+def test_basket_from_another_conversation_is_one_line(shelf_site, browser):
+    """다른 대화에서 담은 재료는 레시피 대화 중이어도 펼치지 않는다."""
+    import json as _json
+
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+    page = ctx.new_page()
+    page.route("**/api/chat", lambda route: route.fulfill(status=200, content_type="application/json", body=_json.dumps(
+        {"session_id": "s-new-2", "stage": "recipe_card", "blocks": [{"type": "text", "data": {"md": "배추속댓국 레시피예요."}}]},
+        ensure_ascii=False)))
     page.goto(shelf_site + "/")
     other = [dict(BASKET[0], ingredient="닭", sessionId="old-session-1234")]
     page.evaluate("b => localStorage.setItem('ai-food-basket', JSON.stringify(b))", other)
     page.reload()
-    page.get_by_label("쇼핑 질문").fill("사과")
+    page.get_by_label("쇼핑 질문").fill("배추속댓국 레시피 알려줘")
     page.get_by_role("button", name="질문 보내기").click()
-    page.get_by_text("다른 대화에서 담은 부족한 재료 1개가 있어요.").wait_for()
+    page.get_by_role("note", name="담아 둔 부족한 재료").get_by_text("닭").wait_for()
     assert page.get_by_role("region", name="부족한 재료 장보기").count() == 0
-    assert page.get_by_role("link", name="내 보관함에서 보기").count() >= 1
     ctx.close()
