@@ -98,6 +98,10 @@ table{width:100%;border-collapse:collapse;background:var(--panel);border:1px sol
 th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .lede{color:var(--ink2);margin:0 0 10px}.note{color:var(--ink3);font-size:12.5px}.err{background:var(--ex-s);color:var(--ex);padding:10px;border-radius:10px}
 main{padding:22px 26px;max-width:1200px}h2{font-size:18px;margin:18px 0 6px}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ctl{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:6px 0 12px}.ctl input,.ctl select{padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.qb,.go{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;cursor:pointer}.qb[aria-pressed=true]{background:var(--acc-s);border-color:var(--acc);color:var(--acc);font-weight:650}
+.go{background:var(--ink);color:#fff;border-color:var(--ink)}.sep{width:10px}
+.tw{overflow-x:auto;border-radius:12px}.tw table{min-width:900px}td.p{white-space:nowrap}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}.card b{font-size:20px}
 .railnote{font-size:12.5px;color:#9fb1c3;margin-top:14px;line-height:1.7}.logout{margin-top:16px;background:none;border:1px solid #2b3f53;color:#c3d1de;border-radius:10px;padding:6px 12px;cursor:pointer}
 @media(max-width:900px){.app{grid-template-columns:1fr}aside{position:static;height:auto}}
@@ -114,9 +118,19 @@ main{padding:22px 26px;max-width:1200px}h2{font-size:18px;margin:18px 0 6px}.car
 </aside>
 <main>
   <div id="err" class="err" hidden></div>
-  <h2>주간 보고 <small class="note" id="fetched"></small></h2>
-  <p class="lede">노출(대화) → 클릭(우리 /go) → 쿠팡 클릭 → 주문(추정) → 취소. 주는 월~일.</p>
-  <div class="row"><label for="weeks" class="note">기간</label> <select id="weeks"><option value="4">최근 4주</option><option value="8">8주</option><option value="13">13주</option></select></div>
+  <h2>기간 보고 <small class="note" id="fetched"></small></h2>
+  <p class="lede">노출(대화) → 클릭(우리 /go) → 쿠팡 클릭 → 주문(추정) → 취소. 주는 월~일, 달은 1일~말일(기간 양 끝은 고른 날짜에 맞춰 잘림).</p>
+  <div class="ctl">
+    <span class="note">빠른 선택</span>
+    <button type="button" class="qb" data-w="4">최근 4주</button><button type="button" class="qb" data-w="8">8주</button><button type="button" class="qb" data-w="13">13주</button>
+    <span class="sep"></span>
+    <label class="note" for="ps">시작</label><input type="date" id="ps">
+    <label class="note" for="pe">끝</label><input type="date" id="pe">
+    <label class="note" for="unit">단위</label>
+    <select id="unit"><option value="day">일</option><option value="week" selected>주</option><option value="month">월</option><option value="total">기간 합계</option></select>
+    <button type="button" id="go" class="go">보기</button>
+  </div>
+  <p class="note" id="rangeNote"></p>
   <div id="out"></div>
   <ul class="note" id="notes"></ul>
 </main>
@@ -131,26 +145,37 @@ const CP={site:"사이트",blog:"블로그",test:"시험"};
 async function api(url){const r=await fetch(url);if(r.status===401){location.href="/admin/login?next=/admin/measure";throw new Error("auth")}
   if(!r.ok)throw new Error(r.statusText);return r.json()}
 function showErr(e){if(e.message==="auth")return;const b=$("#err");b.hidden=false;b.textContent="문제가 생겼어요: "+e.message}
+const fmt=d=>d.toISOString().slice(0,10);
+function label(p,unit){const a=p.start,b=p.end;if(unit==="day")return a.slice(5);
+  if(unit==="month"){const last=new Date(+a.slice(0,4),+a.slice(5,7),0).getDate();const full=a.slice(8)==="01"&&+b.slice(8)===last;return a.slice(0,7)+(full?"":` (${a.slice(8)}~${b.slice(8)}일)`)}
+  return a===b?a.slice(5):`${a.slice(5)} ~ ${b.slice(5)}`}
+function quick(w){const t=new Date();const mon=new Date(t);mon.setDate(t.getDate()-((t.getDay()+6)%7)-(w-1)*7);
+  $("#ps").value=fmt(mon);$("#pe").value=fmt(t);$("#unit").value="week";
+  document.querySelectorAll(".qb").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.w==String(w))));load()}
 async function load(){try{
-  const d=await api(`/admin/api/measure/weekly?weeks=${$("#weeks").value}`);
+  const unit=$("#unit").value;
+  const d=await api(`/admin/api/measure/report?start=${$("#ps").value}&end=${$("#pe").value}&unit=${unit}`);
   $("#fetched").textContent=d.last_fetch.at?`쿠팡 리포트 마지막 받음 ${d.last_fetch.at.replace("T"," ").slice(0,16)} (${d.last_fetch.status})`:"쿠팡 리포트를 아직 받지 않았어요";
-  const ws=d.weeks.slice().reverse();
+  $("#rangeNote").textContent=`${d.range[0]} ~ ${d.range[1]} · ${({day:"일",week:"주",month:"월",total:"기간 합계"})[unit]} 단위 · 행 ${d.periods.length}개`+(d.coupang_first_day?` · 쿠팡 리포트는 ${d.coupang_first_day} 부터 저장돼 있어요`:"");
+  const ws=d.periods.slice().reverse();
   const cps=[...new Set(ws.flatMap(w=>Object.keys(w.coupang)))];
-  let h=`<table><thead><tr><th>주</th><th class="n">노출(손님)</th><th class="n">대화 클릭</th><th class="n">클릭률</th><th class="n">모든 클릭</th><th class="n">시험·관리자 클릭</th>`
+  let h=`<div class="tw"><table><thead><tr><th>${unit==="total"?"기간":"구간"}</th><th class="n">노출(손님)</th><th class="n">대화 클릭</th><th class="n">클릭률</th><th class="n">모든 클릭</th><th class="n">시험·관리자 클릭</th>`
     +cps.map(c=>`<th class="n">쿠팡 ${esc(CP[c]||c)} 클릭</th><th class="n">주문(건)</th><th class="n">취소</th>`).join("")
     +`<th class="n">추천 클릭 상품 구매(추정)</th><th class="n">다른 상품 구매</th><th>클릭 맞춤(상품)</th></tr></thead><tbody>`;
   for(const w of ws){const s=w.ours.site,m=w.match;
-    h+=`<tr><td>${w.start.slice(5)} ~ ${w.end.slice(5)}</td><td class="n">${num(s.impressions)}</td><td class="n">${num(s.chat_clicks)}</td><td class="n">${pct(s.chat_ctr)}</td><td class="n">${num(s.clicks)}</td><td class="n">${num(w.ours.test.clicks)} · ${num(w.ours.internal.clicks)}</td>`
+    h+=`<tr><td class="p">${esc(label(w,unit))}</td><td class="n">${num(s.impressions)}</td><td class="n">${num(s.chat_clicks)}</td><td class="n">${pct(s.chat_ctr)}</td><td class="n">${num(s.clicks)}</td><td class="n">${num(w.ours.test.clicks)} · ${num(w.ours.internal.clicks)}</td>`
       +cps.map(c=>{const x=w.coupang[c]||{};return `<td class="n">${num(x.clicks)}</td><td class="n">${num(x.orders)}</td><td class="n">${num(x.cancels)}</td>`}).join("")
-      +(m?`<td class="n">${num(m.orders_from_reco_clicks)}</td><td class="n">${num(m.orders_other)}</td><td>둘 다 ${m.products_both} · 우리만 ${m.products_ours_only} · 쿠팡만 ${m.products_coupang_only}</td>`:`<td colspan="3" class="note">사이트 채널 아이디 없음</td>`)+`</tr>`}
-  h+=`</tbody></table>`;
-  const money=ws.map(w=>Object.entries(w.coupang).map(([c,x])=>x.order_amount!=null?`${w.start.slice(5)} ${esc(CP[c]||c)} 주문 ${num(x.order_amount)}원 · 수수료 ${num(x.commission)}원`:"").filter(Boolean).join(" / ")).filter(Boolean);
+      +(m?`<td class="n">${num(m.orders_from_reco_clicks)}</td><td class="n">${num(m.orders_other)}</td><td class="p">둘 다 ${m.products_both} · 우리만 ${m.products_ours_only} · 쿠팡만 ${m.products_coupang_only}</td>`:`<td colspan="3" class="note">사이트 채널 아이디 없음</td>`)+`</tr>`}
+  h+=`</tbody></table></div>`;
+  const money=ws.map(w=>Object.entries(w.coupang).map(([c,x])=>x.order_amount!=null&&(x.order_amount||x.commission)?`${esc(label(w,unit))} ${esc(CP[c]||c)} 주문 ${num(x.order_amount)}원 · 수수료 ${num(x.commission)}원`:"").filter(Boolean).join(" / ")).filter(Boolean);
   h+=`<details style="margin-top:10px"><summary class="note">금액 보기 (이 화면에만)</summary><p class="note">${money.join("<br>")||"없음"}</p></details>`;
-  const sur=ws[0]?ws[0].ours.site.by_surface:{};
-  h+=`<h2>이번 주 클릭 자리 (손님)</h2><p class="note">${Object.entries(sur).map(([k,v])=>`${esc(k)} ${num(v)}`).join(" · ")||"없음"}</p>`;
+  const sur={};for(const w of ws)for(const [k,v] of Object.entries(w.ours.site.by_surface))sur[k]=(sur[k]||0)+v;
+  h+=`<h2>이 기간 클릭 자리 (손님)</h2><p class="note">${Object.entries(sur).map(([k,v])=>`${esc(k)} ${num(v)}`).join(" · ")||"없음"}</p>`;
   $("#out").innerHTML=h;$("#notes").innerHTML=d.notes.map(n=>`<li>${esc(n)}</li>`).join("");
 }catch(e){showErr(e)}}
-$("#weeks").onchange=load;load();
+document.querySelectorAll(".qb").forEach(b=>b.onclick=()=>quick(Number(b.dataset.w)));
+$("#go").onclick=()=>{document.querySelectorAll(".qb").forEach(b=>b.setAttribute("aria-pressed","false"));load()};
+quick(4);
 </script>
 </body>
 </html>
