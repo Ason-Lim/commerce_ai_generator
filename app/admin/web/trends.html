@@ -80,7 +80,7 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b">B2B</a></nav>
   <nav aria-label="트렌드 메뉴">
-    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#backtest">예측 백테스트</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
+    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#next4w">다음 4주 예보</a><a href="#backtest">예측 백테스트</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
     <div class="grp" id="grp-naver">네이버 <small>블로그</small></div><a href="#blog" id="nav-blog">블로그 초안</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a>
     <div class="grp">쿠팡 <small>사이트 글</small></div><a href="/admin/trend-posts">글 검토 대기열</a></nav>
   <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
@@ -225,6 +225,15 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <div class="kpis" id="ev-kpis"></div>
     <div class="scroll"><table><thead><tr><th>키워드</th><th>등급</th><th>상대일 곡선 (−35…+14, 해마다 한 줄)</th><th>진입 선행일</th><th>최고 순위 구간</th><th>최고</th><th>해별 판정</th><th>다음 행사 예보 재료</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead>
     <tbody id="ev-rows"><tr><td colspan="10" class="note">행사를 골라 '보기'를 눌러 주세요.</td></tr></tbody></table></div>
+  </section>
+  <section id="next4w" aria-labelledby="next4w-h">
+    <h2 id="next4w-h">다음 4주 예보 <small class="note" style="font-weight:400">후보 목록 — 기준선 2종(전년 같은 주 · 행사 상대일), 탐색기 미사용</small></h2>
+    <p class="lede">기준일에 <b>100위 밖</b>이고, <b>작년 같은 주</b> 또는 <b>작년 같은 행사 시점</b>에 100위 안이던 키워드예요. 작년 최고 순위가 높은 순. <b>예보 확정이 아니라 고를 후보</b>예요 — 백테스트(2025년 1~4월)에서 28일·상위 20 중 7일 이상 앞서 맞힌 비율이 약 11%였어요. 매주 월요일 여기서 5~8개를 골라 링크·글을 준비하는 데 써요. 고객 화면·추천 순위에는 쓰지 않아요.</p>
+    <div class="row">
+      <span class="note">기준일</span><input type="date" id="nw-asof" aria-label="예보 기준일">
+      <button class="btn primary" id="nw-go">보기</button><span class="note" id="nw-cov"></span>
+    </div>
+    <div id="nw-box"><p class="note">불러오는 중…</p></div>
   </section>
   <section id="backtest" aria-labelledby="backtest-h">
     <h2 id="backtest-h">예측 백테스트 <small class="note" style="font-weight:400">기준선 3종 + 선행 곡선 탐색기 — 같은 조건 비교</small></h2>
@@ -880,6 +889,22 @@ async function loadBacktest(){const q=new URLSearchParams({start:$("#bt-start").
     $("#bt-notes").textContent=(d.notes||[]).join(" · ")+" · 합집합으로도 놓친 주요 상승: "+Object.entries(d.union).map(([h,u])=>`${h}일 ${pc(u.major_missed_all)}(처음 등장 ${u.major_first_seen}건)`).join(", ")+" · *선행 일수는 그 방법이 맞힌 사례만 — 방법끼리 견주는 값 아님";
   }catch(e){$("#bt-rows").innerHTML=`<tr><td colspan="14" class="note">${esc(e.message)}</td></tr>`}}
 if($("#bt-go"))$("#bt-go").onclick=loadBacktest;
+// ── 다음 4주 예보 (2026-11-24) ─────────────────────────
+async function loadNext4w(){const box=$("#nw-box");if(!box)return;const q=new URLSearchParams();if($("#nw-asof").value)q.set("as_of",$("#nw-asof").value);
+  box.innerHTML=`<p class="note">계산 중…</p>`;
+  try{const d=await api("/admin/api/trends/forecast/next4w?"+q.toString());
+    if(!$("#nw-asof").value)$("#nw-asof").value=d.as_of;
+    if(d.status!=="ok"){box.innerHTML=`<p class="note">${esc(d.note||"자료 없음")}</p>`;$("#nw-cov").textContent="";return}
+    $("#nw-cov").textContent=`기준일 ${d.as_of} · 지금 100위 안 ${d.excluded_top_now}개 제외`;
+    const lk=v=>v===true?"있음":v===false?"없음":"—";
+    box.innerHTML=d.weeks.map((w,i)=>{
+      const ev=w.events.length?w.events.map(e=>`${esc(e.event)} ${e.date.slice(5)} (D-${e.d_day}${e.last_year?"":", 작년 날짜 없음"})`).join(" · "):"행사 없음";
+      const rows=w.items.map(it=>`<tr><td>${esc(it.keyword)}</td><td>${it.last_year_best}위</td><td>${esc(it.last_year_date)}</td><td>${it.sources.map(esc).join(", ")}</td><td>${lk(it.has_link)}</td></tr>`).join("")||`<tr><td colspan="5" class="note">후보 없음</td></tr>`;
+      return `<h3>${i+1}주 뒤 · ${w.start.slice(5)} ~ ${w.end.slice(5)} <small class="note">후보 ${w.candidates}개${w.candidates>w.items.length?` 중 상위 ${w.items.length}`:""} · 작년 자료 ${Math.round(w.last_year_coverage*100)}%</small></h3>
+        <p class="note">행사: ${ev}</p>${w.warning?`<p class="note" style="color:#b45309">⚠ ${esc(w.warning)}</p>`:""}
+        <div class="scroll"><table><thead><tr><th>키워드</th><th>작년 최고</th><th>작년 그날</th><th>근거</th><th>네이버 링크</th></tr></thead><tbody>${rows}</tbody></table></div>`}).join("")+`<p class="note">${esc(d.note)}</p>`;
+  }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
+if($("#nw-go")){$("#nw-go").onclick=loadNext4w;loadNext4w().catch(()=>{})}
 </script>
 </body>
 </html>
