@@ -99,6 +99,16 @@ t_order = Table(
     Column("tracking", String(40)),  # 송장 번호 (2026-11-24 답변 매뉴얼) — 개인정보 아님. 송장 등록 ≠ 출고
     Column("shipped_at", DateTime(timezone=True)),  # 출고 확인(발송함) 시각 — 배송 지연 판단 기준
 )
+t_manager = Table(
+    "corpmall_manager",
+    meta,  # 발주처 담당자 링크 (2026-11-24) — 토큰 해시만, 이름 대신 운영자가 붙인 표시(예: 총무팀)
+    Column("manager_id", String(12), primary_key=True),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("token_hash", String(64), unique=True, nullable=False),
+    Column("label", String(40)),
+    Column("created_at", DateTime(timezone=True)),
+    Column("revoked_at", DateTime(timezone=True)),
+)
 t_event = Table(
     "corpmall_event",
     meta,  # 운영 기록 (개인정보 없음)
@@ -262,6 +272,28 @@ def set_status(eng, mall_id: str, status: str) -> None:
     with eng.begin() as c:
         c.execute(update(t_mall).where(t_mall.c.mall_id == mall_id).values(status=status))
         _event(c, mall_id, "status", {"to": status})
+
+
+def extend_close(eng, mall_id: str, closes_at: str) -> str:
+    """선택 마감 늦추기 (발주처 요청을 운영자가 처리). 마감된 몰은 다시 열지 않는다 — 새로 늦추는 것만."""
+    m = get_mall(eng, mall_id=mall_id)
+    if m is None:
+        raise MallError("없는 몰")
+    if m["status"] == "closed":
+        raise MallError("이미 마감 처리된 몰은 늦출 수 없어요")
+    try:
+        d = datetime.fromisoformat(closes_at)
+    except ValueError as e:
+        raise MallError("마감 시각을 ISO 형식으로 넣어 주세요") from e
+    d = d if d.tzinfo else d.replace(tzinfo=KST)
+    if d <= datetime.fromisoformat(m["closes_at"]):
+        raise MallError("지금 마감보다 뒤로만 늦출 수 있어요")
+    new = d.isoformat(timespec="minutes")
+    with eng.begin() as c:
+        r = c.execute(select(t_mall.c.payload).where(t_mall.c.mall_id == mall_id)).scalar()
+        c.execute(update(t_mall).where(t_mall.c.mall_id == mall_id).values(payload={**r, "closes_at": new}))
+        _event(c, mall_id, "close_extended", {"from": m["closes_at"], "to": new})
+    return new
 
 
 def issue_codes(eng, mall_id: str, n: int) -> list[tuple[int, str, str]]:

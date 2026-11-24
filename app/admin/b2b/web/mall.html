@@ -160,6 +160,15 @@ tbody tr{cursor:default}
         <div id="codeOut"></div>
         <div id="noAddr" class="code-out" hidden></div>
       </section>
+      <section class="panel" aria-labelledby="mgr-h">
+        <h3 id="mgr-h">발주처 담당자 화면</h3>
+        <p class="basis">회사 담당자가 선택률·안 고른 번호·배송 단계를 보고 재발급·마감 연장·코드 추가를 요청하는 화면이에요(배송 정보·코드 원문은 안 보임).
+          링크는 만들 때 한 번만 보여요. 요청은 CS 탭 '폐쇄몰 문의'로 들어와요.</p>
+        <div class="bar"><input type="text" id="mgrLabel" maxlength="40" placeholder="표시 (예: 총무팀)" aria-label="담당자 표시"><button class="btn primary" type="button" id="mgrBtn">담당자 링크 만들기</button></div>
+        <div id="mgrOut"></div>
+        <ul id="mgrList" class="basis"></ul>
+        <div class="bar" style="margin-top:8px"><label for="extendAt">마감 늦추기</label><input type="datetime-local" id="extendAt"><button class="btn" type="button" id="extendBtn">늦추기</button></div>
+      </section>
       <section class="panel" aria-labelledby="man-h">
         <h3 id="man-h">답변 매뉴얼 (직원 질문 자동 답)</h3>
         <p class="basis">직원이 '언제 와요?'·'교환돼요?' 하고 물으면 이 칸과 주문 상태로만 답해요. 답변 기한·현금 전환 칸이 비어 있으면 기한·가능 여부를 약속하지 않아요. 비어 있으면 날짜·조건을 지어내지 않고 "정해지면 안내"·"담당자 확인"으로 답해요.
@@ -227,6 +236,7 @@ async function loadMall(id){
     <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(o.tracking||"")}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
     :'<tr><td colspan="6" class="empty">아직 고른 사람이 없어요</td></tr>';
   drawManual(m.manual||{});
+  $("#mgrOut").innerHTML="";loadMgrs();
   const na=(s.ship||{}).no_address||0;$("#noAddr").hidden=!na;
   if(na){$("#noAddr").innerHTML=`마감 때 고르지 않아 기본 상품이 됐지만 <b>배송지가 없는 코드 ${na}개</b>가 있어요. 임의로 보내지 말고, 번호 목록을 발주처에 넘겨 계약에 정한 방법(회사 일괄 수령 등)으로 처리해 주세요. <button class="btn" type="button" id="naBtn">번호 목록 내려받기</button>`;
     $("#naBtn").onclick=async()=>{const r=await api(`/admin/api/corpmall/${m.mall_id}/no-address`);csv(r.labels.map(l=>({번호:l})),`${m.slug}_no_address.csv`)}}
@@ -254,6 +264,13 @@ $("#exportBtn").onclick=async()=>{if(!confirm("발송 요청 주문의 배송 �
 $("#allChk").onchange=e=>document.querySelectorAll("#orders input[type=checkbox]").forEach(c=>c.checked=e.target.checked);
 document.querySelectorAll("[data-mark]").forEach(b=>b.onclick=async()=>{const ids=[...document.querySelectorAll("#orders input:checked")].map(c=>c.value);if(!ids.length)return;
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/mark`,{order_ids:ids,status:b.dataset.mark});await loadMall(CUR.mall_id)}catch(e){err(e)}});
+async function loadMgrs(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/managers`);
+  $("#mgrList").innerHTML=d.managers.map(g=>`<li>${esc(g.label)} · ${esc(when(g.created_at))} ${g.revoked?"· 끊음":`<button class="btn" type="button" data-rv="${esc(g.manager_id)}">끊기</button>`}</li>`).join("")||"<li>아직 없어요</li>";
+  document.querySelectorAll("[data-rv]").forEach(b=>b.onclick=async()=>{if(!confirm("이 담당자 링크를 끊을까요? 다시 쓰려면 새로 만들어야 해요."))return;try{await post(`/admin/api/corpmall/${CUR.mall_id}/managers/${b.dataset.rv}/revoke`);loadMgrs()}catch(e){err(e)}})}catch(e){err(e)}}
+$("#mgrBtn").onclick=async()=>{try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/managers`,{label:$("#mgrLabel").value.trim()||"담당자"});
+  $("#mgrOut").innerHTML=`<div class="code-out">${esc(d.label)} 링크: <code>${esc(location.origin+d.link)}</code><br><b>지금만 보여요</b> — 복사해서 발주처 담당자에게 안전하게 전달해 주세요.</div>`;$("#mgrLabel").value="";loadMgrs()}catch(e){err(e)}};
+$("#extendBtn").onclick=async()=>{const v=$("#extendAt").value;if(!v)return;if(!confirm(v.replace("T"," ")+" 로 마감을 늦출까요?"))return;
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/extend`,{closes_at:v});await loadMall(CUR.mall_id)}catch(e){err(e)}};
 let MANF=[];
 async function manFields(){try{MANF=(await api("/admin/api/corpmall-manual")).fields}catch(e){err(e)}}
 function drawManual(v){$("#manFields").innerHTML=MANF.map(f=>`<div class="bar" style="margin:4px 0"><label for="man_${f.key}" style="min-width:230px">${esc(f.label)}</label>`

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>선물 진행 현황 (담당자)</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--warn:#9a5b00;--warn-s:#fff4dc;--err:#b3261e;--err-s:#fde9e7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+header h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}header p{margin:0;color:var(--ink2);font-size:13.5px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
+.note{color:var(--ink2);font-size:12.5px}
+label{font-weight:600;font-size:14px}
+input,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+input.code{font-family:ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;max-width:220px}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 20px;background:var(--ink);color:#fff;cursor:pointer}
+button[disabled]{opacity:.5;cursor:default}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
+.item{position:relative;display:flex;flex-direction:column;border:2px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;cursor:pointer}
+.item input{position:absolute;opacity:0}
+.item:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s)}
+.item:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.item img,.item .ph{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eeede7}
+.item .t{padding:10px 12px}.item b{display:block;font-size:15px}.item small{display:block;color:var(--ink2);font-size:12.5px;margin-top:2px}
+.tier{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-s);border-radius:999px;padding:1px 8px;margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.field{display:grid;gap:4px;margin-top:10px}
+.consent{background:#f4f6f3;border-radius:12px;padding:12px;font-size:13px;margin-top:12px}
+.consent table{border-collapse:collapse;width:100%;margin:6px 0}.consent td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.consent td:first-child{color:var(--ink2);width:28%;white-space:nowrap}
+.msg{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
+.msg.ok{background:var(--accent-s)}.msg.err{background:var(--err-s);color:var(--err)}.msg.info{background:var(--warn-s);color:var(--warn)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
+table.t{width:100%;border-collapse:collapse;font-size:14px}table.t th,table.t td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.t td.num,table.t th.num{text-align:right}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}.kpi span{display:block;font-size:12.5px;color:var(--ink2)}.kpi b{font-size:22px}
+select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<main>
+  <header><h1 id="title">선물 진행 현황</h1><p id="sub">회사 담당자 전용 화면이에요. 이 링크는 다른 사람과 나누지 마세요.</p></header>
+  <div id="gate" class="box"><p class="note" id="gateMsg">담당자 링크로 들어와 주세요.</p></div>
+
+  <div id="body" hidden>
+    <section class="box" aria-labelledby="sum-h">
+      <h2 id="sum-h" style="font-size:17px;margin:0">요약</h2>
+      <p class="note" id="period"></p>
+      <div class="kpis">
+        <div class="kpi"><span>코드 발급</span><b id="k_issued">0</b></div>
+        <div class="kpi"><span>직원이 고름</span><b id="k_chosen">0</b></div>
+        <div class="kpi"><span>선택률</span><b id="k_rate">—</b></div>
+        <div class="kpi"><span>기본 선물</span><b id="k_default">0</b></div>
+      </div>
+      <table class="t" style="margin-top:12px"><thead><tr><th>선물</th><th class="num">고른 수</th></tr></thead><tbody id="byItem"></tbody></table>
+    </section>
+
+    <section class="box" aria-labelledby="codes-h">
+      <h2 id="codes-h" style="font-size:17px;margin:0">코드 번호별 진행</h2>
+      <p class="note" id="codesNote">번호와 직원 대응표는 회사에서 갖고 계신 것으로 확인해 주세요. 받는 분 이름·연락처·주소는 이 화면에 보이지 않아요.</p>
+      <div class="row" style="flex-wrap:wrap;gap:8px">
+        <label for="flt" class="note" style="margin:0">보기</label>
+        <select id="flt"><option value="all">전체</option><option value="todo">아직 안 고름</option></select>
+        <button type="button" id="dlTodo">안 고른 번호 내려받기</button>
+        <button type="button" id="dlItems" hidden>번호별 선물 내려받기</button>
+      </div>
+      <div style="max-height:420px;overflow:auto;margin-top:8px"><table class="t"><thead><tr><th>번호</th><th>선택</th><th id="thItem" hidden>선물</th><th>배송</th></tr></thead><tbody id="codes"></tbody></table></div>
+    </section>
+
+    <section class="box" aria-labelledby="req-h">
+      <h2 id="req-h" style="font-size:17px;margin:0">운영사에 요청하기</h2>
+      <p class="note">요청은 운영사 담당자가 확인한 뒤 처리하고 이 화면에 답을 남겨요. 여기서 바로 바뀌지는 않아요. 직원 개인정보는 적지 마세요.</p>
+      <form id="reqForm">
+        <div class="field"><label for="kind">요청 종류</label><select id="kind"></select></div>
+        <div class="field" id="f_label"><label for="r_label">분실한 코드 번호</label><input id="r_label" inputmode="numeric" maxlength="6"></div>
+        <div class="field" id="f_date" hidden><label for="r_date">늦출 마감일</label><input id="r_date" type="date"></div>
+        <div class="field" id="f_n" hidden><label for="r_n">추가할 코드 수</label><input id="r_n" inputmode="numeric" maxlength="4"></div>
+        <div class="field"><label for="r_text">메모</label><textarea id="r_text" rows="2" maxlength="300"></textarea></div>
+        <div class="row"><button type="submit" id="reqBtn">요청 보내기</button></div>
+        <div id="reqMsg" role="status" aria-live="polite"></div>
+      </form>
+      <h3 style="font-size:14px;margin:16px 0 0">보낸 요청</h3>
+      <ul id="reqs" class="note" style="padding-left:18px"></ul>
+    </section>
+  </div>
+  <footer>이 화면은 진행 상황 확인과 요청만 할 수 있어요. 배송 정보는 운영사가 암호화해 보관하고 배송이 끝나면 지워요.</footer>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const slug = location.pathname.split("/")[2];
+const fmt = (iso) => new Date(iso).toLocaleString("ko-KR", {month:"long", day:"numeric", weekday:"short", hour:"2-digit", minute:"2-digit"});
+const WIN = {open:"선택 중", not_open:"시작 전", closed:"마감"};
+let KEY = "", V = null;
+function msg(el, text, kind) { el.innerHTML = `<div class="msg ${kind}">${esc(text)}</div>`; }
+async function post(path, body) {
+  const r = await fetch(`/corp/api/${encodeURIComponent(slug)}/manager/${path}`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  if (!d.ok) throw new Error(d.error || "잠시 후 다시 해 주세요");
+  return d;
+}
+function csv(rows, name) {
+  const keys = Object.keys(rows[0] || {"번호": ""});
+  const body = "\ufeff" + [keys.join(","), ...rows.map((r) => keys.map((k) => `"${String(r[k] ?? "").replace(/"/g, '""')}"`).join(","))].join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([body], {type:"text/csv"})); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function drawReqs(list) {
+  $("#reqs").innerHTML = list.length ? list.map((t) => `<li><b>${esc(t.created_at.slice(5,16).replace("T"," "))}</b> ${esc(t.summary.replace(/^\[[^\]]*\]\s*/, ""))} · ${t.status === "open" ? "확인 중" : "답 있음"}
+    ${(t.messages || []).filter((m) => m.kind === "reply").map((m) => `<div style="margin:4px 0 8px;color:var(--ink)">↳ ${esc(m.text)}</div>`).join("")}</li>`).join("") : "<li>아직 없어요</li>";
+}
+function drawCodes() {
+  const todo = $("#flt").value === "todo";
+  const rows = V.codes.filter((c) => !todo || c.state === "아직 안 고름");
+  $("#codes").innerHTML = rows.map((c) => `<tr><td>${c.label}</td><td>${esc(c.state)}</td>${V.shows_items ? `<td>${esc(c.item || "")}</td>` : ""}<td>${esc(c.ship || "")}</td></tr>`).join("")
+    || `<tr><td colspan="4">해당하는 번호가 없어요</td></tr>`;
+}
+function draw(d) {
+  V = d; const m = d.mall, s = d.stats;
+  $("#gate").hidden = true; $("#body").hidden = false;
+  $("#title").textContent = `${m.client || ""} · ${m.title || "선물"} 진행 현황`;
+  $("#sub").textContent = `${d.manager} 전용 화면이에요. 이 링크는 다른 사람과 나누지 마세요.`;
+  $("#period").textContent = `선택 기간 ${fmt(m.opens_at)} ~ ${fmt(m.closes_at)} · 지금 ${WIN[m.window] || m.window}`
+    + (m.delivery_mode === "individual" ? " · 직원 집으로 배송" : " · 회사로 한꺼번에 배송");
+  $("#k_issued").textContent = s.issued; $("#k_chosen").textContent = s.chosen;
+  $("#k_rate").textContent = s.rate == null ? "—" : (s.rate * 100).toFixed(1) + "%"; $("#k_default").textContent = s.defaulted;
+  $("#byItem").innerHTML = s.by_item.map((i) => `<tr><td>${esc(i.name)}</td><td class="num">${i.n}</td></tr>`).join("");
+  $("#thItem").hidden = !d.shows_items; $("#dlItems").hidden = !d.shows_items;
+  if (!d.shows_items) $("#codesNote").textContent += " 직원 집으로 보내는 행사라 직원이 무엇을 골랐는지는 보여 드리지 않아요.";
+  if (!$("#kind").options.length) for (const [k, v] of Object.entries(d.kinds)) $("#kind").add(new Option(v, k));
+  drawCodes(); drawReqs(d.requests);
+}
+function kindFields() {
+  const k = $("#kind").value;
+  $("#f_label").hidden = k !== "reissue"; $("#f_date").hidden = k !== "extend"; $("#f_n").hidden = k !== "add_codes";
+}
+$("#kind").addEventListener("change", kindFields);
+$("#flt").addEventListener("change", drawCodes);
+$("#dlTodo").addEventListener("click", () => csv(V.codes.filter((c) => c.state === "아직 안 고름").map((c) => ({"번호": c.label})), `${slug}_not_chosen.csv`));
+$("#dlItems").addEventListener("click", () => csv(V.codes.filter((c) => c.item).map((c) => ({"번호": c.label, "선물": c.item})), `${slug}_items.csv`));
+$("#reqForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const k = $("#kind").value, body = {key: KEY, kind: k, text: $("#r_text").value.trim()};
+  if (k === "reissue") body.label = parseInt($("#r_label").value, 10) || null;
+  if (k === "extend") body.date = $("#r_date").value || null;
+  if (k === "add_codes") body.n = parseInt($("#r_n").value, 10) || null;
+  $("#reqBtn").disabled = true;
+  try {
+    const d = await post("request", body);
+    drawReqs(d.requests); $("#r_text").value = "";
+    msg($("#reqMsg"), `요청을 접수했어요 (번호 ${d.ticket_id}). 처리되면 이 화면에 답이 보여요.`, "ok");
+  } catch (err) { msg($("#reqMsg"), err.message, "err"); }
+  finally { $("#reqBtn").disabled = false; }
+});
+// 담당자 링크 /corp/{slug}/manager#k=토큰 — # 뒤는 서버·접속 기록에 가지 않는다. 읽은 뒤 주소창에서 지움
+const h = new URLSearchParams(location.hash.slice(1));
+KEY = h.get("k") || "";
+try { if (KEY) sessionStorage.setItem("mgr:" + slug, KEY); else KEY = sessionStorage.getItem("mgr:" + slug) || ""; } catch {}  // 이 탭 안에서만 (닫으면 사라짐)
+history.replaceState(null, "", location.pathname);
+if (KEY) post("view", {key: KEY}).then(draw).catch((err) => msg($("#gateMsg"), err.message, "err"));
+kindFields();
+</script>
+</body>
+</html>

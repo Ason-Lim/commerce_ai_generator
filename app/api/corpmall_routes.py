@@ -3,6 +3,9 @@
   GET  /corp/{slug}                 직원 선물 페이지 (검색 노출 막음)
   POST /corp/api/{slug}/enter       {code} → 몰·상품·지금 고른 것 (code = 짧은 코드 또는 초대 링크 토큰, 소진 없음)
   POST /corp/api/{slug}/ask         {code, text, handoff?} → 매뉴얼로 바로 답, 매뉴얼 밖·사람 필수·handoff 면 CS 티켓
+  GET  /corp/{slug}/manager         발주처 담당자 화면 (#k=담당자 토큰, 배송 정보 없음)
+  POST /corp/api/{slug}/manager/view     {key} → 진행 상황
+  POST /corp/api/{slug}/manager/request  {key, kind, label?, date?, n?, text?} → 운영자에게 요청 (CS 티켓)
   POST /corp/api/{slug}/choose      {code, item_id, shipping?, consent, verify?} → 선택 저장(마감 전 변경 가능)
 
 운영자 API 는 app/admin/routes.py (/admin/api/corpmall/...).
@@ -20,6 +23,7 @@ from app.services.corpmall import store
 
 router = APIRouter(tags=["corpmall"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "corpmall" / "web" / "mall.html"
+MANAGER_PAGE = PAGE.with_name("manager.html")
 NOINDEX = {"X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer"}
 
 
@@ -144,6 +148,58 @@ def corp_ask(slug: str, body: AskIn, request: Request):
             _client(request),
             handoff=body.handoff,
             reader=None if body.handoff else _reader(),
+        )
+        return JSONResponse({"ok": True, **got}, headers=NOINDEX)
+    except store.MallError as e:
+        return _err(e)
+
+
+# ── 발주처 담당자 화면 (2026-11-24) ──
+class MgrViewIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+
+
+class MgrRequestIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    kind: str = Field(..., max_length=12)
+    label: int | None = Field(None, ge=1, le=100000)
+    date: str | None = Field(None, max_length=10)
+    n: int | None = Field(None, ge=1, le=5000)
+    text: str = Field("", max_length=300)
+
+
+@router.get("/corp/{slug}/manager")
+def corp_manager_page(slug: str):
+    return FileResponse(MANAGER_PAGE, headers=NOINDEX)
+
+
+@router.post("/corp/api/{slug}/manager/view")
+def corp_manager_view(slug: str, body: MgrViewIn, request: Request):
+    from app.services.corpmall import manager
+
+    try:
+        return JSONResponse({"ok": True, **manager.view(_eng(), slug, body.key, _client(request))}, headers=NOINDEX)
+    except store.MallError as e:
+        return _err(e)
+
+
+@router.post("/corp/api/{slug}/manager/request")
+def corp_manager_request(slug: str, body: MgrRequestIn, request: Request):
+    from app.services.corpmall import manager
+
+    try:
+        got = manager.request(
+            _eng(),
+            slug,
+            body.key,
+            _client(request),
+            body.kind,
+            label=body.label,
+            date=body.date,
+            n=body.n,
+            text=body.text,
         )
         return JSONResponse({"ok": True, **got}, headers=NOINDEX)
     except store.MallError as e:

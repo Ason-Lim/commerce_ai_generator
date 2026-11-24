@@ -1620,6 +1620,57 @@ def corpmall_tracking(mall_id: str, body: _MallTrackingIn):
     return {"ok": True, **store.set_tracking(eng, mall_id, body.rows, shipped=body.shipped)}
 
 
+class _MgrIssueIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    label: str = Field("담당자", max_length=40)
+
+
+class _ExtendIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    closes_at: str = Field(..., max_length=25)
+
+
+@router.post("/admin/api/corpmall/{mall_id}/extend", dependencies=[api])
+def corpmall_extend(mall_id: str, body: _ExtendIn):
+    store, eng = _corp()
+    try:
+        return {"ok": True, "closes_at": store.extend_close(eng, mall_id, body.closes_at)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/corpmall/{mall_id}/managers", dependencies=[api])
+def corpmall_managers(mall_id: str):
+    from app.services.corpmall import manager
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"managers": manager.list_managers(eng, mall_id)}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/managers", dependencies=[api])
+def corpmall_manager_issue(mall_id: str, body: _MgrIssueIn):
+    """발주처 담당자 링크 — 원문 링크는 이 응답에만 (서버는 해시만)."""
+    from app.services.corpmall import manager
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, **manager.issue(eng, mall_id, body.label)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/managers/{manager_id}/revoke", dependencies=[api])
+def corpmall_manager_revoke(mall_id: str, manager_id: str):
+    from app.services.corpmall import manager
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    if not manager.revoke(eng, mall_id, manager_id):
+        raise HTTPException(404, "manager not found or already revoked")
+    return {"ok": True}
+
+
 @router.get("/admin/api/corpmall-manual", dependencies=[api])
 def corpmall_manual_fields():
     from app.services.corpmall import manual
