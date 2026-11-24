@@ -144,3 +144,28 @@ def test_main_event_is_closest_to_last_year_peak(tmp_path):
     assert {"어린이날 D-4", "어버이날 D-7"} <= set(w1["카네이션떡"]["sources"])
     assert w1["카네이션떡"]["main_event"] == "어버이날 D-7"  # 작년 5-07 ↔ 어버이날 5-08
     assert w1["어린이과자"]["main_event"] == "어린이날 D-4"  # 작년 5-04 ↔ 어린이날 5-05
+
+
+def test_main_event_tie_puts_solar_term_last(tmp_path):
+    """작년 날짜 거리가 같으면 절기(입하)보다 쇼핑 행사·공휴일(어린이날)이 main_event — 달력에서 절기가 먼저 와도."""
+    rank = tmp_path / "r"
+    rank.mkdir()
+    d = dt.date(2025, 4, 20)
+    while d <= dt.date(2025, 5, 20):
+        _write(rank, d, {"어린이선물": 4} if d == dt.date(2025, 5, 5) else {})
+        d += dt.timedelta(days=1)
+    as_of = dt.date(2026, 5, 1)
+    d = as_of - dt.timedelta(days=6)
+    while d <= as_of:
+        _write(rank, d, {})
+        d += dt.timedelta(days=1)
+    rows = [
+        {"event": "입하", "date": "2025-05-05", "type": "solar_term"},
+        {"event": "입하", "date": "2026-05-05", "type": "solar_term"},
+        {"event": "어린이날", "date": "2025-05-05", "type": "fixed"},
+        {"event": "어린이날", "date": "2026-05-05", "type": "fixed"},
+    ]  # fmt: skip
+    out = nw.next_weeks(rank, as_of, weeks=1, top_n=50, rows=rows)
+    it = _kw(out["weeks"][0])["어린이선물"]
+    assert {"입하 D-4", "어린이날 D-4"} <= set(it["sources"])
+    assert it["main_event"] == "어린이날 D-4"
