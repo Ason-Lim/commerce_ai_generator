@@ -96,7 +96,8 @@ t_order = Table(
     Column("updated_at", DateTime(timezone=True)),
     Column("delivered_at", DateTime(timezone=True)),
     Column("purged_at", DateTime(timezone=True)),
-    Column("tracking", String(40)),  # 송장 번호 (2026-11-24 답변 매뉴얼) — 개인정보 아님
+    Column("tracking", String(40)),  # 송장 번호 (2026-11-24 답변 매뉴얼) — 개인정보 아님. 송장 등록 ≠ 출고
+    Column("shipped_at", DateTime(timezone=True)),  # 출고 확인(발송함) 시각 — 배송 지연 판단 기준
 )
 t_event = Table(
     "corpmall_event",
@@ -130,9 +131,14 @@ def engine(url: str | None = None):
 def _migrate(eng) -> None:
     """#104 로 이미 만들어진 표에 나중 칸을 붙인다 (create_all 은 있는 표를 바꾸지 않음)."""
     cols = {c["name"] for c in sqlalchemy.inspect(eng).get_columns("corpmall_order")}
-    if "tracking" not in cols:
-        with eng.begin() as c:
-            c.execute(sqlalchemy.text("ALTER TABLE corpmall_order ADD COLUMN tracking VARCHAR(40)"))
+    add = {
+        "tracking": "VARCHAR(40)",
+        "shipped_at": "TIMESTAMP WITH TIME ZONE" if eng.dialect.name == "postgresql" else "DATETIME",
+    }
+    for name, typ in add.items():
+        if name not in cols:
+            with eng.begin() as c:
+                c.execute(sqlalchemy.text(f"ALTER TABLE corpmall_order ADD COLUMN {name} {typ}"))
 
 
 # ── 암호화 (배송 정보) ─────────────────────────────────────────────────────
@@ -456,23 +462,43 @@ def ask(
     owner = asker(m["mall_id"], row["label"])
     masked, kinds = pii.mask(body)
     got = enter(eng, slug, code, client, at=at)
+    man = m.get("manual") or {}
     if handoff:
-        rep = assist.Reply("handoff", "customer", manual_text("handoff"), ticket="corpmall", offer_handoff=False)
+        rep = assist.Reply("handoff", "customer", "", ticket="corpmall", offer_handoff=False)
     else:
         rep = assist.respond(m, got["order"], got["window"], masked, reader=reader, today=(at or now()).date())
-    ticket_id = None
+    ticket_id, answer, offer = None, rep.answer, rep.offer_handoff
     if rep.ticket:
-        if rep.ticket == "corpmall" and tickets.open_count(owner) >= MAX_OPEN_ASKS:
-            raise MallError("답을 기다리는 문의가 많아요. 답을 받은 뒤 다시 남겨 주세요")
         label = assist.INTENTS.get(rep.intent, "직접 요청")
-        t = tickets.create(
-            rep.ticket,
-            sid=secrets.token_hex(4),
-            owner=owner,
-            by="customer",
-            summary=f"[{m['slug']} #{row['label']} {label}] {masked}",
-        )
-        ticket_id = t["id"] if t else None
+        if rep.ticket == "corpmall" and tickets.open_count(owner) >= MAX_OPEN_ASKS:
+            answer = (
+                answer + " " if answer else ""
+            ) + "답을 기다리는 문의가 이미 많아 새로 접수하지 않았어요. 아래 답을 확인한 뒤 다시 남겨 주세요."
+        else:
+            # 같은 코드·같은 내용을 1시간 안에 다시 보내면(두 번 클릭 등) 같은 티켓을 돌려준다 — tickets.create 의 sid 중복 검사
+            sid = hashlib.sha256(f"{owner}|{rep.ticket}|{masked}".encode()).hexdigest()[:8]
+            try:
+                t = tickets.create(
+                    rep.ticket,
+                    sid=sid,
+                    owner=owner,
+                    by="customer",
+                    summary=f"[{m['slug']} #{row['label']} {label}] {masked}",
+                )
+                ticket_id = t["id"] if t else None
+            except Exception:  # noqa: BLE001 — 저장 실패면 '접수했어요'라고 하지 않는다
+                ticket_id = None
+            if ticket_id:
+                when = (
+                    "식품 안전 문의는 오늘 안에 확인해요."
+                    if rep.ticket == "food_safety"
+                    else manual_text("reply_time", man)
+                )
+                answer = " ".join(x for x in (answer, manual_text("handed", ticket=ticket_id), when) if x)
+                offer = False
+            else:
+                answer = " ".join(x for x in (answer, manual_text("hand_failed")) if x)
+                offer = True
     with eng.begin() as c:
         _event(c, m["mall_id"], "asked", {"intent": rep.intent, "by": rep.by, "ticket": bool(ticket_id)})
     if not handoff:
@@ -481,19 +507,19 @@ def ask(
         "intent": rep.intent,
         "intent_label": assist.INTENTS.get(rep.intent, "직접 요청"),
         "by": rep.by,
-        "answer": rep.answer,
+        "answer": answer,
         "action": rep.action,
-        "offer_handoff": rep.offer_handoff and not ticket_id,
+        "offer_handoff": offer,
         "ticket_id": ticket_id,
         "masked": kinds,
         "asks": tickets.for_owner(owner),
     }
 
 
-def manual_text(key: str, **kw) -> str:
+def manual_text(key: str, man: dict | None = None, **kw) -> str:
     from app.services.corpmall import manual
 
-    return manual.text(key, **kw)
+    return manual.text(key, man, **kw)
 
 
 def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None) -> dict:
@@ -507,6 +533,7 @@ def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None)
             "ship_status": order["ship_status"],
             "shipping": _mask(_dec(order["ship_enc"])) if order["ship_enc"] else None,
             "tracking": order.get("tracking"),
+            "shipped_on": order["shipped_at"].date().isoformat() if order.get("shipped_at") else None,
             "chosen_at": order["chosen_at"].isoformat() if order["chosen_at"] else None,
         }
     return {
@@ -528,6 +555,25 @@ def _check_ship(ship: dict | None) -> dict:
     if not re.fullmatch(r"01[016789]\d{7,8}", re.sub(r"\D", "", s["phone"])):
         raise MallError("받는 분 휴대폰 번호를 확인해 주세요 (배송 연락용)")
     return s
+
+
+VERIFY_MAX = 5
+
+
+def _verify_fails(eng, mall_id: str, label: int, at: datetime | None = None) -> int:
+    since = now() - timedelta(hours=24)  # 기록 시각(실제 시각) 기준
+    with eng.connect() as c:
+        rows = c.execute(
+            select(t_event.c.detail, t_event.c.at).where(
+                and_(t_event.c.mall_id == mall_id, t_event.c.kind == "verify_failed")
+            )
+        ).mappings()
+        return sum(
+            1
+            for r in rows
+            if (r["detail"] or {}).get("label") == label
+            and (r["at"] if r["at"].tzinfo else r["at"].replace(tzinfo=KST)) >= since
+        )
 
 
 def _last4(ship: dict | None) -> str:
@@ -555,6 +601,7 @@ def choose(
     window = _window(m, at or now())
     if window != "open":
         raise MallError("선택 기간이 아니에요" if window == "not_open" else "선택이 마감됐어요")
+    # 바꿀 수 있는 조건은 하나 (manual.EDIT_RULE): 선택 기간 안 + 발송 준비 전 — 아래 검사
     if item_id not in {i["id"] for i in m["items"]}:
         raise MallError("이 페이지에 없는 상품이에요")
     if order and order["ship_status"] in ("exported", "shipped", "delivered"):
@@ -568,14 +615,22 @@ def choose(
             if not consent:
                 raise MallError("배송 정보 수집·이용에 동의해야 보낼 수 있어요")
             new = _check_ship(shipping)
-            if (
-                old_ship
-                and new != old_ship
-                and not (verify and secrets.compare_digest(re.sub(r"\D", "", verify), _last4(old_ship)))
-            ):
-                _fail(client, slug)
-                raise MallError("배송지를 바꾸려면 처음 넣은 휴대폰 번호 끝 4자리를 확인해 주세요")
+            changing = bool(old_ship) and new != old_ship
+            if changing:
+                # 배송지 바꾸기 = 이 코드(주문 접근 권한) + 처음 휴대폰 끝 4자리. 코드마다 24시간 5번 틀리면 막고 기록.
+                if _verify_fails(eng, m["mall_id"], row["label"], at) >= VERIFY_MAX:
+                    raise MallError(
+                        "본인 확인을 여러 번 틀려 배송지 바꾸기를 잠시 막았어요. 아래 '궁금한 점 묻기'로 담당자에게 남겨 주세요"
+                    )
+                if not (verify and secrets.compare_digest(re.sub(r"\D", "", verify), _last4(old_ship))):
+                    _fail(client, slug)
+                    with eng.begin() as c:
+                        _event(c, m["mall_id"], "verify_failed", {"label": row["label"]})
+                    raise MallError("배송지를 바꾸려면 처음 넣은 휴대폰 번호 끝 4자리를 확인해 주세요")
             vals.update(ship_enc=_enc(new), ship_status="requested")
+            if changing:
+                vals["_changed"] = True
+    ship_changed = vals.pop("_changed", False)
     h = row["code_hash"]
     t = at or now()
     vals["updated_at"] = t
@@ -596,9 +651,22 @@ def choose(
             except sqlalchemy.exc.IntegrityError:  # 같은 코드로 동시에 두 번 — 주문은 하나만
                 exists = c.execute(select(t_order.c.order_id).where(t_order.c.code_hash == h)).scalar()
         if exists:
-            c.execute(update(t_order).where(t_order.c.order_id == exists).values(**vals))
+            # 발송 준비가 동시에 시작됐으면 바꾸지 않는다 (확인과 저장 사이 경쟁 — 조건을 저장 문장에 함께)
+            n = c.execute(
+                update(t_order)
+                .where(
+                    and_(
+                        t_order.c.order_id == exists, t_order.c.ship_status.not_in(("exported", "shipped", "delivered"))
+                    )
+                )
+                .values(**vals)
+            ).rowcount
+            if not n:
+                raise MallError("이미 발송 준비가 시작돼 바꿀 수 없어요")
         c.execute(update(t_code).where(t_code.c.code_hash == h).values(status="used", used_at=t))
         _event(c, m["mall_id"], "chosen", {"item_id": item_id, "changed": bool(exists)})  # 누가 골랐는지는 남기지 않음
+        if ship_changed:
+            _event(c, m["mall_id"], "ship_changed", {"label": row["label"]})  # 변경 이력 (값은 남기지 않음)
     return enter(eng, slug, code, client, at=at)
 
 
@@ -733,30 +801,43 @@ def update_manual(eng, mall_id: str, raw: dict) -> dict:
     return man
 
 
-def set_tracking(eng, mall_id: str, rows: list[dict]) -> int:
-    """송장 번호 넣기 [{order_id, tracking}] → 그 주문은 '발송함'. 배송 완료된 주문은 건드리지 않는다."""
-    n = 0
+def set_tracking(eng, mall_id: str, rows: list[dict], *, shipped: bool = False) -> dict:
+    """송장 번호 넣기 [{order_id, tracking}].
+
+    송장 발급 ≠ 출고(2026-11-24 검토). 기본은 송장만 넣고 상태는 그대로 — 직원 답은 "송장이 발급됐어요(출고되면 조회돼요)".
+    shipped=True(택배사 인수·출고 확인된 주문만 올릴 때)면 '발송함' + 출고 시각. 이 몰의 주문이 아니거나 배송 완료면 건너뛴다.
+    """
+    n, skipped = 0, 0
+    t = now()
     with eng.begin() as c:
         for r in rows[:5000]:
             oid = str(r.get("order_id") or "").strip()
             tr = re.sub(r"[^0-9A-Za-z-]", "", str(r.get("tracking") or ""))[:40]
             if not oid or not tr:
+                skipped += 1
                 continue
-            n += c.execute(
+            vals = {"tracking": tr, "updated_at": t}
+            if shipped:
+                vals.update(ship_status="shipped", shipped_at=t)
+            got = c.execute(
                 update(t_order)
                 .where(
                     and_(t_order.c.mall_id == mall_id, t_order.c.order_id == oid, t_order.c.ship_status != "delivered")
                 )
-                .values(tracking=tr, ship_status="shipped", updated_at=now())
+                .values(**vals)
             ).rowcount
-        _event(c, mall_id, "tracking", {"n": n})
-    return n
+            n += got
+            skipped += 0 if got else 1
+        _event(c, mall_id, "tracking", {"n": n, "skipped": skipped, "shipped": shipped})
+    return {"n": n, "skipped": skipped}
 
 
 def mark(eng, mall_id: str, order_ids: list[str], status: str) -> int:
     if status not in ("shipped", "delivered"):
         raise MallError("shipped · delivered 만")
     vals = {"ship_status": status, "updated_at": now()}
+    if status == "shipped":
+        vals["shipped_at"] = now()
     if status == "delivered":
         vals["delivered_at"] = now()
     with eng.begin() as c:

@@ -182,5 +182,5 @@ def test_corpmall_employee_handoff_flows_to_cs(eng):
     assert corp.enter(eng, "t-ask", new_code, "ip")["asks"][0]["id"] == q[0]["id"]
     for i in range(corp.MAX_OPEN_ASKS):
         corp.ask(eng, "t-ask", new_code, f"질문 {i}", "ip", handoff=True)
-    with pytest.raises(corp.MallError, match="기다리는"):
-        corp.ask(eng, "t-ask", new_code, "또 질문", "ip", handoff=True)
+    r = corp.ask(eng, "t-ask", new_code, "또 질문", "ip", handoff=True)
+    assert r["ticket_id"] is None and "새로 접수하지 않았어요" in r["answer"]

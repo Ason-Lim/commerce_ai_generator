@@ -22,24 +22,33 @@ MALL_FIELDS = (
     ("courier", "택배사", 30),
     ("exchange", "교환·반품 조건 (계약 기준)", 400),
     ("item_change", "마감 뒤 상품 변경 안내", 200),
+    ("cash_policy", "현금·포인트 전환 안내 (계약 기준)", 200),
+    ("reply_days", "직원 문의 답변 기한 (영업일 수, 숫자)", 2),
     ("contact", "회사 담당자 안내 (예: 총무팀 사내 메신저)", 120),
 )
 
+# 바꿀 수 있는 조건 — 모든 화면·답에 같은 문장을 쓴다 (2026-11-24 검토: 마감 전이어도 발송 준비가 시작되면 못 바꿈)
+EDIT_RULE = "선택 마감 전이고 발송 준비가 시작되기 전까지만 바꿀 수 있어요."
+
+# 공통 문장. {reply} 는 몰 매뉴얼에 답변 기한이 있으면 "영업일 N일 안에", 없으면 기한을 약속하지 않는다.
+# '담당자에게 넘겼어요'류 문장은 여기 두지 않는다 — 티켓 저장이 성공한 뒤에만 store.ask 가 handed 를 붙인다.
 COMMON = {
-    "reply_time": "담당자가 영업일 1일 안에 이 페이지에 답을 남겨요. 같은 코드로 들어오면 볼 수 있어요.",
-    "how_to": "선물 카드 하나를 누르고 '이 선물로 할게요'를 누르면 저장돼요. 마감 전까지는 같은 코드로 들어와 몇 번이든 바꿀 수 있어요.",
-    "deadline_open": "{closes}까지 고를 수 있어요. 마감 전까지는 바꿀 수 있어요.",
+    "reply_time": "담당자가 확인해 {reply}이 페이지에 답을 남겨요. 같은 코드로 들어오면 볼 수 있어요.",
+    "handed": "담당자에게 접수했어요(문의 번호 {ticket}).",
+    "hand_failed": "담당자 접수가 지금 되지 않았어요. 잠시 뒤 '담당자에게 남기기'를 다시 눌러 주세요.",
+    "how_to": "선물 카드 하나를 누르고 '이 선물로 할게요'를 누르면 저장돼요. " + EDIT_RULE,
+    "deadline_open": "{closes}까지 고를 수 있어요. " + EDIT_RULE,
     "deadline_closed": "선택은 {closes}에 마감됐어요.",
     "default_item": "마감까지 고르지 않으면 회사가 정한 기본 선물로 정해져요.",
     "privacy": "받는 분 이름·휴대폰·주소는 선물을 보내는 데만 쓰고, 회사 담당자에게도 보이지 않아요. 배송이 끝나고 {keep}일 뒤 지워요.",
-    "privacy_request": "개인정보 삭제·열람 요청으로 담당자에게 넘겼어요. 법에서 정한 기한 안에 처리하고 이 페이지에 결과를 남길게요.",
+    "privacy_request": "개인정보 삭제·열람 요청은 법에서 정한 기한 안에 처리하고 이 페이지에 결과를 남길게요.",
     "exchange_default": "교환·반품 조건은 회사와 맺은 계약에 따라 달라요. 담당자에게 남기시면 확인해서 알려 드릴게요.",
-    "refund": "이 선물은 회사가 마련한 것이라 현금·포인트로 바꿔 드릴 수 없어요. 꼭 필요한 사정이 있으면 담당자에게 남겨 주세요.",
-    "defect": "불편을 드려 죄송해요. 담당자에게 바로 넘겼어요. 상품과 상자는 버리지 마시고, 가능하면 사진을 찍어 두세요. 영업일 1일 안에 이 페이지에 교환 방법을 남길게요.",
-    "food_safety": "드시지 마시고 상품을 그대로 보관해 주세요. 담당자에게 바로 넘겼어요(오늘 안에 확인). 몸이 불편하시면 먼저 병원 진료를 받으세요. 식품 안전 신고는 1399(식품의약품안전처)에서도 받아요.",
+    "refund_default": "현금·포인트로 바꾸는 것은 회사와 정한 기준에 따라요. 담당자에게 남기시면 확인해서 알려 드릴게요.",
+    "defect": "불편을 드려 죄송해요. 상품과 상자는 버리지 마시고, 가능하면 사진을 찍어 두세요. 교환 방법을 이 페이지에 남길게요.",
+    "food_safety": "드시지 마시고 상품을 그대로 보관해 주세요. 몸이 불편하시면 먼저 병원 진료를 받으세요. "
+    "식품 안전 신고는 1399(식품의약품안전처)에서도 받아요.",
     "contact_default": "선물·배송 문의는 여기에 남겨 주세요. 행사 자체(대상자·지급 기준)는 회사 담당자에게 물어봐 주세요.",
-    "handoff": "담당자에게 넘겼어요. " + "{reply_time}",
-    "unknown": "질문을 정확히 이해하지 못해 담당자에게 넘겼어요. {reply_time}",
+    "unknown": "질문을 정확히 이해하지 못했어요.",
 }
 
 # 기업·기관 담당자(구매자) 자주 묻는 질문 — /biz/inquiry 에 그대로 보인다. 가격·견적·납기 확정은 사람이 답한다.
@@ -73,8 +82,12 @@ BUYER_FAQ = (
     ),
 )
 
-# 매뉴얼에 쓰면 안 되는 표현 (테스트로 검사) — 근거 없는 보장·확정
-FORBIDDEN = re.compile(r"반드시\s*(도착|배송)|100\s*%|무조건|보장|틀림없이|환불(해|해\s*드릴|됩니다|돼요)")
+# 매뉴얼에 쓰면 안 되는 확정 표현 — **보조 검사**다(부정문 "보장하지 않아요"는 통과). 핵심은 날짜·조건을
+# 이 칸(운영자가 계약·출고 계획에서 옮겨 적은 값)에서만 가져오는 것.
+FORBIDDEN = re.compile(
+    r"반드시\s*(도착|배송|받)|100\s*%|무조건|틀림없이|보장(?!\s*(하지|되지|할\s*수\s*없|못|이\s*없))"
+    r"|환불(해\s*드려요|해\s*드립니다|됩니다|돼요)"
+)
 
 
 def check_manual(raw: dict | None) -> dict:
@@ -85,6 +98,9 @@ def check_manual(raw: dict | None) -> dict:
         v = " ".join(str(raw.get(key) or "").split())[:n]
         if not v:
             continue
+        if key == "reply_days":
+            if not v.isdigit() or not 1 <= int(v) <= 10:
+                raise ValueError(f"{label}은 1~10 사이 숫자로 적어 주세요")
         if key == "ship_plan":
             try:
                 v = date.fromisoformat(v).isoformat()
@@ -103,9 +119,24 @@ def fmt_day(iso: str | None) -> str:
     return f"{d.month}월 {d.day}일({'월화수목금토일'[d.weekday()]})"
 
 
-def text(key: str, **kw) -> str:
-    kw.setdefault("reply_time", COMMON["reply_time"])
+def reply_phrase(man: dict | None) -> str:
+    d = (man or {}).get("reply_days")
+    return f"영업일 {d}일 안에 " if d else ""
+
+
+def text(key: str, man: dict | None = None, **kw) -> str:
+    kw.setdefault("reply", reply_phrase(man))
     return COMMON[key].format(**kw)
 
 
-__all__ = ["MALL_FIELDS", "COMMON", "BUYER_FAQ", "FORBIDDEN", "check_manual", "fmt_day", "text"]
+__all__ = [
+    "EDIT_RULE",
+    "reply_phrase",
+    "MALL_FIELDS",
+    "COMMON",
+    "BUYER_FAQ",
+    "FORBIDDEN",
+    "check_manual",
+    "fmt_day",
+    "text",
+]

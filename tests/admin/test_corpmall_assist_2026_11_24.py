@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from cryptography.fernet import Fernet
@@ -20,6 +20,7 @@ SHIP = {"name": "홍길동", "phone": "010-1234-5678", "zipcode": "04524", "addr
 MAN = {
     "ship_plan": "2026-12-15",
     "courier": "가나택배",
+    "arrive_note": "출고 뒤 보통 1~3일 걸려요.",
     "exchange": "받은 날부터 7일 안에 상품 이상이 있으면 교환해 드려요.",
     "contact": "총무팀 사내 메신저",
 }
@@ -90,24 +91,118 @@ def test_eta_answers_from_manual_and_order_state(eng):
     m, codes = _mall(eng, "a-eta")
     code = codes[0][1]
     r = corp.ask(eng, "a-eta", code, "언제 와요?", "ip", at=IN)
-    assert (
-        r["intent"] == "eta"
-        and "아직 고르신 선물이 없어요" in r["answer"]
-        and "12월 15일" in r["answer"]
-        and not r["ticket_id"]
-    )
+    assert r["intent"] == "eta" and "아직 고르신 선물이 없어요" in r["answer"] and "12월 15일" in r["answer"]
+    assert not r["ticket_id"]
     corp.choose(eng, "a-eta", code, "A", "ip", shipping=SHIP, consent=True, at=IN)
     r = corp.ask(eng, "a-eta", code, "언제 도착해요", "ip", at=IN)
     assert "12월 15일(화) 출고 예정" in r["answer"] and "1~3일" in r["answer"] and r["offer_handoff"]
     oid = corp.orders(eng, m["mall_id"])[0]["order_id"]
-    assert corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "1234-5678-9012"}]) == 1
+    # 송장 발급 ≠ 출고: 기본은 송장만 — 상태 그대로, 답은 '발급됐어요'
+    got = corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "1234-5678-9012"}])
+    assert got == {"n": 1, "skipped": 0} and corp.orders(eng, m["mall_id"])[0]["ship_status"] == "requested"
     r = corp.ask(eng, "a-eta", code, "배송 조회", "ip", at=IN)
-    assert "가나택배 송장 번호 1234-5678-9012" in r["answer"]
-    late = datetime(2026, 12, 25, 10, tzinfo=KST)
-    r = corp.ask(eng, "a-eta", code, "아직 안 왔어요", "ip", at=late)
-    assert r["ticket_id"] and "늦어지고" in r["answer"]
+    assert "송장 번호 1234-5678-9012 가 발급됐어요" in r["answer"] and "출고됐어요" not in r["answer"]
+    corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "1234-5678-9012"}], shipped=True)
+    r = corp.ask(eng, "a-eta", code, "배송 조회", "ip", at=IN)
+    assert "출고됐어요. 가나택배 송장 번호 1234-5678-9012" in r["answer"]
+    shipped_on = datetime.fromisoformat(corp.enter(eng, "a-eta", code, "ip")["order"]["shipped_on"]).replace(tzinfo=KST)
+    assert not corp.ask(eng, "a-eta", code, "아직 안 왔어요", "ip", at=shipped_on + timedelta(days=3))["ticket_id"]
+    r = corp.ask(eng, "a-eta", code, "아직 안 왔어요", "ip", at=shipped_on + timedelta(days=12))
+    assert r["ticket_id"] and "택배사와 확인" in r["answer"] and "접수했어요" in r["answer"]
     corp.mark(eng, m["mall_id"], [oid], "delivered")
-    assert "배송 완료" in corp.ask(eng, "a-eta", code, "언제 와요", "ip", at=late)["answer"]
+    assert "배송 완료" in corp.ask(eng, "a-eta", code, "언제 와요", "ip", at=IN)["answer"]
+
+
+def test_ship_late_uses_business_days_from_ship_plan(eng):
+    _, codes = _mall(eng, "a-late")
+    code = codes[0][1]
+    corp.choose(eng, "a-late", code, "A", "ip", shipping=SHIP, consent=True, at=IN)
+    # 출고 예정 15일(화) → 16·17일은 영업일 2일까지, 18일(금)은 3영업일째라 '출고 지연'
+    assert (
+        corp.ask(eng, "a-late", code, "언제 와요", "ip", at=datetime(2026, 12, 17, 10, tzinfo=KST))["ticket_id"] is None
+    )
+    r = corp.ask(eng, "a-late", code, "언제 와요", "ip", at=datetime(2026, 12, 18, 10, tzinfo=KST))
+    assert r["ticket_id"] and "출고 확인이 안 됐어요" in r["answer"]
+
+
+def test_mall_reply_days_and_cash_policy_come_from_manual(eng):
+    man = dict(MAN, reply_days="2", cash_policy="이 행사는 현금·포인트로 바꿀 수 없어요.")
+    _, codes = _mall(eng, "a-policy", man=man)
+    code = codes[0][1]
+    assert "영업일 2일 안에" in corp.ask(eng, "a-policy", code, "상자가 파손됐어요", "ip", at=IN)["answer"]
+    assert corp.ask(eng, "a-policy", code, "현금으로 주세요", "ip", at=IN)["answer"].startswith("이 행사는 현금")
+
+
+def test_ticket_only_claimed_after_save_and_double_click_is_one_ticket(eng, monkeypatch):
+    from app.services.cs import tickets
+
+    _, codes = _mall(eng, "a-save")
+    code = codes[0][1]
+    a = corp.ask(eng, "a-save", code, "담당자와 직접 얘기하고 싶어요", "ip", handoff=True, at=IN)
+    b = corp.ask(eng, "a-save", code, "담당자와 직접 얘기하고 싶어요", "ip", handoff=True, at=IN)
+    assert a["ticket_id"] and a["ticket_id"] == b["ticket_id"] and "접수했어요" in a["answer"]
+    assert len(corp.enter(eng, "a-save", code, "ip")["asks"]) == 1
+
+    def boom(*_a, **_k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(tickets, "create", boom)
+    r = corp.ask(eng, "a-save", code, "상자가 깨져서 왔어요", "ip", at=IN)
+    assert r["ticket_id"] is None and r["offer_handoff"]
+    assert "접수했어요" not in r["answer"] and "다시 눌러" in r["answer"]
+
+
+def test_shipping_change_verify_limit_and_history(eng):
+    m, codes = _mall(eng, "a-verify")
+    code = codes[0][1]
+    corp.choose(eng, "a-verify", code, "A", "ip", shipping=SHIP, consent=True, at=IN)
+    other = dict(SHIP, address="부산 어딘가 1")
+    for i in range(corp.VERIFY_MAX):
+        with pytest.raises(corp.MallError, match="끝 4자리"):
+            corp.choose(eng, "a-verify", code, "A", f"ip{i}", shipping=other, consent=True, verify="0000", at=IN)
+    with pytest.raises(corp.MallError, match="여러 번 틀려"):  # 접속 주소를 바꿔도 코드 단위로 막힘
+        corp.choose(eng, "a-verify", code, "A", "ip-new", shipping=other, consent=True, verify="5678", at=IN)
+    ev = corp.events(eng, m["mall_id"])
+    assert [e["kind"] for e in ev].count("verify_failed") == corp.VERIFY_MAX and "5678" not in repr(ev)
+    code2 = codes[1][1]
+    corp.choose(eng, "a-verify", code2, "A", "ip", shipping=SHIP, consent=True, at=IN)
+    corp.choose(eng, "a-verify", code2, "A", "ip", shipping=other, consent=True, verify="5678", at=IN)
+    assert "ship_changed" in [e["kind"] for e in corp.events(eng, m["mall_id"])]
+
+
+def test_no_change_after_shipping_prep_even_before_deadline(eng):
+    m, codes = _mall(eng, "a-prep")
+    code = codes[0][1]
+    corp.choose(eng, "a-prep", code, "A", "ip", shipping=SHIP, consent=True, at=IN)
+    corp.export_orders(eng, m["mall_id"], by="t")
+    assert corp.enter(eng, "a-prep", code, "ip", at=IN)["window"] == "open"  # 아직 마감 전
+    with pytest.raises(corp.MallError, match="발송 준비"):
+        corp.choose(eng, "a-prep", code, "B", "ip", at=IN)
+    with pytest.raises(corp.MallError, match="발송 준비"):
+        corp.choose(
+            eng, "a-prep", code, "A", "ip", shipping=dict(SHIP, address="다른 곳"), consent=True, verify="5678", at=IN
+        )
+    for q in ("선물 바꿀래요", "주소 바꾸고 싶어요", "어떻게 고르는 거예요"):
+        assert corp.ask(eng, "a-prep", code, q, "ip", at=IN)["action"] is None, q
+    assert manual.EDIT_RULE in manual.COMMON["how_to"] and manual.EDIT_RULE in manual.COMMON["deadline_open"]
+
+
+def test_other_mall_codes_orders_and_asks_are_isolated(eng):
+    ma, ca = _mall(eng, "a-iso-a")
+    mb, cb = _mall(eng, "a-iso-b")
+    corp.choose(eng, "a-iso-a", ca[0][1], "A", "ip", shipping=SHIP, consent=True, at=IN)
+    corp.ask(eng, "a-iso-a", ca[0][1], "상자가 깨졌어요", "ip", at=IN)
+    for cred in (ca[0][1], ca[0][2]):
+        with pytest.raises(corp.MallError, match="맞지"):
+            corp.enter(eng, "a-iso-b", cred, "ip2")
+        with pytest.raises(corp.MallError, match="맞지"):
+            corp.ask(eng, "a-iso-b", cred, "언제 와요", "ip2")
+    assert corp.enter(eng, "a-iso-b", cb[0][1], "ip3")["asks"] == []  # 같은 번호(#1)여도 다른 몰 문의 안 보임
+    oid_a = corp.orders(eng, ma["mall_id"])[0]["order_id"]
+    got = corp.set_tracking(eng, mb["mall_id"], [{"order_id": oid_a, "tracking": "999"}], shipped=True)
+    assert got == {"n": 0, "skipped": 1}
+    assert corp.mark(eng, mb["mall_id"], [oid_a], "delivered") == 0
+    assert corp.orders(eng, ma["mall_id"])[0]["tracking"] is None
 
 
 def test_eta_without_ship_plan_does_not_invent_dates(eng):
@@ -115,7 +210,9 @@ def test_eta_without_ship_plan_does_not_invent_dates(eng):
     code = codes[0][1]
     corp.choose(eng, "a-noplan", code, "A", "ip", shipping=SHIP, consent=True, at=IN)
     r = corp.ask(eng, "a-noplan", code, "언제 도착해요", "ip", at=IN)
-    assert "정해지면" in r["answer"] and not any(ch.isdigit() for ch in r["answer"].split("출고일")[0])
+    assert "정해지면" in r["answer"] and not any(ch.isdigit() for ch in r["answer"])
+    late = corp.ask(eng, "a-noplan", code, "아직 안 왔어요", "ip", at=datetime(2027, 3, 2, tzinfo=KST))
+    assert late["ticket_id"] is None and late["offer_handoff"]  # 기준일이 없으면 자동 지연 판단 안 함
     assert "계약에 따라" in corp.ask(eng, "a-noplan", code, "교환 되나요", "ip", at=IN)["answer"]
 
 
@@ -157,7 +254,8 @@ def test_human_required_kinds_open_tickets(eng):
         assert t["domain"] == dom and t["owner"].startswith("corp:")
     assert "1399" in corp.ask(eng, "a-human", code, "먹고 배가 아파요", "ip", at=IN)["answer"]
     r = corp.ask(eng, "a-human", code, "현금으로 받을 수 있나요", "ip", at=IN)
-    assert not r["ticket_id"] and r["offer_handoff"] and "현금" in r["answer"]
+    assert not r["ticket_id"] and r["offer_handoff"] and "회사와 정한 기준" in r["answer"]  # 미설정이면 약속 안 함
+    assert "영업일" not in corp.ask(eng, "a-human", code, "상자가 파손됐어요 2", "ip", at=IN)["answer"]
 
 
 def test_auto_answers_are_sampled_for_weekly_review(eng, tmp_path):
@@ -174,6 +272,9 @@ def test_manual_validation_and_common_text_has_no_promises(eng):
         _mall(eng, "a-bad1", man={"ship_plan": "다음주"})
     with pytest.raises(corp.MallError, match="확정"):
         _mall(eng, "a-bad2", man={"arrive_note": "반드시 도착해요"})
+    with pytest.raises(corp.MallError, match="숫자"):
+        _mall(eng, "a-bad3", man={"reply_days": "하루"})
+    assert manual.check_manual({"arrive_note": "도착일은 택배사 사정이라 보장하지 않아요."})  # 부정문은 통과
     for k, v in manual.COMMON.items():
         assert not manual.FORBIDDEN.search(v), k
     for q, a in manual.BUYER_FAQ:
@@ -205,14 +306,11 @@ def test_routes(eng):
         ).status_code
         == 400
     )
-    assert (
-        cl.post(
-            f"/admin/api/corpmall/{m['mall_id']}/tracking",
-            json={"rows": [{"order_id": "Onope", "tracking": "1"}]},
-            headers=H,
-        ).json()["n"]
-        == 0
-    )
+    assert cl.post(
+        f"/admin/api/corpmall/{m['mall_id']}/tracking",
+        json={"rows": [{"order_id": "Onope", "tracking": "1"}]},
+        headers=H,
+    ).json() == {"ok": True, "n": 0, "skipped": 1}
     assert len(cl.get("/admin/api/corpmall-manual", headers=H).json()["fields"]) == len(manual.MALL_FIELDS)
     faq = cl.get("/biz/api/faq").json()["faq"]
     assert faq and all(f["q"] and f["a"] for f in faq)
@@ -231,4 +329,4 @@ def test_migrate_adds_tracking_column(tmp_path):
             )
         )
     corp.engine(url)
-    assert "tracking" in {c["name"] for c in sqlalchemy.inspect(e).get_columns("corpmall_order")}
+    assert {"tracking", "shipped_at"} <= {c["name"] for c in sqlalchemy.inspect(e).get_columns("corpmall_order")}

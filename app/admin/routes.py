@@ -1599,6 +1599,7 @@ class _MallManualIn(BaseModel):
 class _MallTrackingIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     rows: list[dict] = Field(..., max_length=5000)
+    shipped: bool = False  # 택배사 인수·출고 확인된 주문만 올릴 때 True → '발송함'
 
 
 @router.post("/admin/api/corpmall/{mall_id}/manual", dependencies=[api])
@@ -1613,10 +1614,10 @@ def corpmall_manual(mall_id: str, body: _MallManualIn):
 
 @router.post("/admin/api/corpmall/{mall_id}/tracking", dependencies=[api])
 def corpmall_tracking(mall_id: str, body: _MallTrackingIn):
-    """송장 번호 [{order_id, tracking}] → 그 주문 '발송함'. 직원이 '언제 와요?' 하면 송장으로 답한다."""
+    """송장 번호 [{order_id, tracking}]. 송장 발급 ≠ 출고 — shipped=True 일 때만 '발송함'. 이 몰의 주문만 바뀐다."""
     store, eng = _corp()
     _mall_or_404(store, eng, mall_id)
-    return {"ok": True, "n": store.set_tracking(eng, mall_id, body.rows)}
+    return {"ok": True, **store.set_tracking(eng, mall_id, body.rows, shipped=body.shipped)}
 
 
 @router.get("/admin/api/corpmall-manual", dependencies=[api])

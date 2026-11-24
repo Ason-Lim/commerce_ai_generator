@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from app.services.corpmall import manual
 
@@ -31,7 +31,12 @@ INTENTS = {
     "contact": "담당자 연락",
     "unknown": "모름",
 }
-LATE_DAYS = 5  # 출고 예정일 + 5일이 지나도 배송 완료가 아니면 사람 확인
+# 지연 기준 (2026-11-24 검토: 날짜 종류·영업일을 분명히)
+#   출고 지연: '출고 예정일'(몰 매뉴얼) 다음 영업일부터 SHIP_LATE_BIZDAYS 영업일이 지나도 출고 확인(발송함)이 아님
+#   배송 지연: 출고 확인일(shipped_at)부터 ARRIVE_LATE_BIZDAYS 영업일이 지나도 배송 완료가 아님
+#   기준일이 없으면(출고 예정일 미입력) 자동 지연 판단을 하지 않는다 — 답에 '담당자에게 남기기' 버튼만.
+SHIP_LATE_BIZDAYS = 2
+ARRIVE_LATE_BIZDAYS = 5
 
 _R = re.compile
 RULES: tuple[tuple[str, re.Pattern], ...] = (
@@ -135,8 +140,20 @@ def _closes(m: dict) -> str:
     return f"{manual.fmt_day(d.date().isoformat())} {d:%H:%M}"
 
 
+def _bizdays_after(start: date, today: date) -> int:
+    """start 다음 날부터 today 까지 영업일 수 (주말·공휴일 빼고 — cs.bizdays)."""
+    from app.services.cs import bizdays
+
+    return bizdays.bizdays_between(
+        datetime(start.year, start.month, start.day), datetime(today.year, today.month, today.day)
+    )
+
+
 def respond(m: dict, order: dict | None, window: str, text: str, *, reader=None, today: date | None = None) -> Reply:
-    """m = 몰(get_mall), order = enter()['order'] 모양, window = open·not_open·closed."""
+    """m = 몰(get_mall), order = enter()['order'] 모양, window = open·not_open·closed.
+
+    ticket 이 있는 답의 answer 에는 '접수했어요'를 넣지 않는다 — 저장이 성공한 뒤 store.ask 가 붙인다.
+    """
     today = today or date.today()
     intent, by = by_rules(text), "rule"
     if intent is None:
@@ -146,32 +163,29 @@ def respond(m: dict, order: dict | None, window: str, text: str, *, reader=None,
     man = m.get("manual") or {}
     individual = m["delivery_mode"] == "individual"
     status = (order or {}).get("ship_status")
-    can_edit = window == "open" and status not in ("exported", "shipped", "delivered")
+    # 바꿀 수 있는 조건 — 하나의 규칙 (manual.EDIT_RULE): 선택 기간 안 + 발송 준비 전
+    can_edit = window == "open" and status not in ("exported", "shipped", "delivered", "no_address")
 
     if intent == "food_safety":
         return Reply(intent, by, manual.text("food_safety"), ticket="food_safety", offer_handoff=False)
     if intent == "defect":
         return Reply(intent, by, manual.text("defect"), ticket="corpmall", offer_handoff=False)
     if intent == "refund":
-        return Reply(intent, by, manual.text("refund"))
+        return Reply(intent, by, man.get("cash_policy") or manual.text("refund_default"))
     if intent == "privacy":
         if _PRIVACY_REQUEST.search(text):
             return Reply(intent, by, manual.text("privacy_request"), ticket="privacy", offer_handoff=False)
         return Reply(intent, by, manual.text("privacy", keep=m.get("retention_days", 30)))
     if intent == "contact":
-        return Reply(
-            intent,
-            by,
-            man.get("contact")
-            and f"{manual.text('contact_default')} 회사 담당자: {man['contact']}"
-            or manual.text("contact_default"),
-        )
+        base = manual.text("contact_default")
+        return Reply(intent, by, f"{base} 회사 담당자: {man['contact']}" if man.get("contact") else base)
     if intent == "how_to":
         return Reply(intent, by, manual.text("how_to"), action="change_item" if can_edit else None)
     if intent == "deadline":
-        key = "deadline_open" if window != "closed" else "deadline_closed"
-        extra = " " + manual.text("default_item") if m.get("default_item_id") and window != "closed" else ""
-        return Reply(intent, by, manual.text(key, closes=_closes(m)) + extra)
+        if window == "closed":
+            return Reply(intent, by, manual.text("deadline_closed", closes=_closes(m)))
+        extra = " " + manual.text("default_item") if m.get("default_item_id") else ""
+        return Reply(intent, by, manual.text("deadline_open", closes=_closes(m)) + extra)
     if intent == "exchange":
         return Reply(
             intent,
@@ -192,16 +206,16 @@ def respond(m: dict, order: dict | None, window: str, text: str, *, reader=None,
             return Reply(
                 intent,
                 by,
-                f"{_closes(m)} 마감 전까지는 다른 선물을 다시 고르면 바로 바뀌어요. 아래에서 다시 골라 주세요.",
+                f"지금은 바꿀 수 있어요. 아래에서 다른 선물을 다시 고르면 바로 바뀌어요. {manual.EDIT_RULE}",
                 action="change_item",
                 offer_handoff=False,
             )
+        why = "발송 준비가 시작돼" if status in ("exported", "shipped", "delivered") else "선택이 마감돼"
         return Reply(
             intent,
             by,
-            man.get("item_change")
-            or "마감 뒤나 발송 준비가 시작된 뒤에는 화면에서 바꿀 수 없어요. "
-            "꼭 필요하면 담당자에게 남겨 주세요 — 회사와 정한 기준에 따라 확인해요.",
+            f"{why} 화면에서는 바꿀 수 없어요. "
+            + (man.get("item_change") or "꼭 필요하면 담당자에게 남겨 주세요 — 회사와 정한 기준에 따라 확인해요."),
         )
     if intent == "address_change":
         if not individual:
@@ -218,93 +232,95 @@ def respond(m: dict, order: dict | None, window: str, text: str, *, reader=None,
             return Reply(
                 intent,
                 by,
-                "아래 '배송지를 바꿀래요'를 누르면 바꿀 수 있어요. 처음 넣은 휴대폰 번호 끝 4자리로 본인 확인을 해요.",
+                "아래 '배송지를 바꿀래요'에서 바꿀 수 있어요. 처음 넣은 휴대폰 번호 끝 4자리를 함께 넣어 주세요. "
+                + manual.EDIT_RULE,
                 action="change_address",
                 offer_handoff=False,
             )
-        return Reply(
-            intent,
-            by,
-            "이미 발송 준비가 시작돼 화면에서는 바꿀 수 없어요. 담당자에게 넘겼어요 — 공급사와 확인해 "
-            + manual.COMMON["reply_time"],
-            ticket="corpmall",
-            offer_handoff=False,
-        )
-    # eta
+        if status in ("exported", "shipped", "delivered"):
+            return Reply(
+                intent,
+                by,
+                "이미 발송 준비가 시작돼 화면에서는 바꿀 수 없어요. 공급사와 확인이 필요해요.",
+                ticket="corpmall",
+                offer_handoff=False,
+            )
+        return Reply(intent, by, "선택이 마감돼 화면에서는 바꿀 수 없어요. 꼭 필요하면 담당자에게 남겨 주세요.")
     return _eta(m, order, window, man, today, by)
 
 
 def _eta(m, order, window, man, today: date, by: str) -> Reply:
     plan = man.get("ship_plan")
-    arrive = man.get("arrive_note") or "출고 뒤 보통 1~3일 걸려요(택배사 사정에 따라 달라질 수 있어요)."
-    courier = man.get("courier")
-    facts = {"ship_plan": plan, "status": (order or {}).get("ship_status")}
+    arrive = man.get("arrive_note") or "출고 뒤 도착까지는 택배사 사정에 따라 달라요."
+    courier = man.get("courier") or "택배사"
+    st = (order or {}).get("ship_status")
+    facts = {"ship_plan": plan, "status": st}
     if not order:
-        msg = (
-            (
-                f"아직 고르신 선물이 없어요. {_closes(m)}까지 골라 주시면 "
-                + (f"{manual.fmt_day(plan)} 출고 예정이에요." if plan else "출고일이 정해지면 이 페이지에 안내할게요.")
-            )
-            if window != "closed"
-            else "선택이 마감됐어요. 받는 방법은 회사 담당자에게 물어봐 주세요."
-        )
-        return Reply("eta", by, msg, facts=facts)
-    st = order.get("ship_status")
-    if st == "delivered":
+        if window == "closed":
+            return Reply("eta", by, "선택이 마감됐어요. 받는 방법은 회사 담당자에게 물어봐 주세요.", facts=facts)
         return Reply(
             "eta",
             by,
-            "배송 완료로 표시돼 있어요. 받지 못하셨으면 '그래도 담당자에게 남기기'를 눌러 주세요.",
+            f"아직 고르신 선물이 없어요. {_closes(m)}까지 골라 주시면 "
+            + (f"{manual.fmt_day(plan)} 출고 예정이에요." if plan else "출고일이 정해지면 이 페이지에 안내할게요."),
             facts=facts,
         )
-    if st == "shipped":
-        tr = order.get("tracking")
-        msg = (
-            "보냈어요. "
-            + (f"{courier or '택배사'} 송장 번호 {tr} 로 택배사 앱·사이트에서 조회할 수 있어요. " if tr else "")
-            + arrive
+    if st == "delivered":
+        return Reply(
+            "eta", by, "배송 완료로 표시돼 있어요. 받지 못하셨으면 '담당자에게 남기기'를 눌러 주세요.", facts=facts
         )
-        late = plan and today > date.fromisoformat(plan) + timedelta(days=LATE_DAYS)
-        if late:
+    tr = order.get("tracking")
+    if st == "shipped":
+        msg = f"출고됐어요. {courier} 송장 번호 {tr} 로 택배사에서 조회할 수 있어요. " if tr else "출고됐어요. "
+        shipped_on = order.get("shipped_on")
+        if shipped_on and _bizdays_after(date.fromisoformat(shipped_on), today) > ARRIVE_LATE_BIZDAYS:
             return Reply(
                 "eta",
                 by,
-                msg + " 예정보다 늦어지고 있어 담당자에게 확인을 요청했어요.",
+                msg + "출고 뒤 시간이 꽤 지나 담당자가 택배사와 확인할게요.",
                 ticket="corpmall",
                 offer_handoff=False,
                 facts=facts,
             )
-        return Reply("eta", by, msg, facts=facts)
-    if not m["delivery_mode"] == "individual" and st in (None, "none"):
-        base = "회사로 한꺼번에 보내는 선물이에요. " + (
-            f"{manual.fmt_day(plan)} 출고 예정이고, 받는 날은 회사 담당자 안내를 따라 주세요."
-            if plan
-            else "받는 날은 회사 담당자 안내를 따라 주세요."
-        )
-        return Reply("eta", by, base, facts=facts)
+        return Reply("eta", by, msg + arrive, facts=facts)
     if st == "no_address":
         return Reply(
             "eta", by, "받는 곳이 없어 아직 보내지 못했어요. 회사 담당자와 받는 방법을 정하고 있어요.", facts=facts
         )
+    if m["delivery_mode"] != "individual" and st in (None, "none"):
+        return Reply(
+            "eta",
+            by,
+            "회사로 한꺼번에 보내는 선물이에요. "
+            + (f"{manual.fmt_day(plan)} 출고 예정이고, " if plan else "")
+            + "받는 날은 회사 담당자 안내를 따라 주세요.",
+            facts=facts,
+        )
+    head = ("발송 준비 중이에요. " if st == "exported" else "") + (
+        f"송장 번호 {tr} 가 발급됐어요(출고되면 택배사에서 조회돼요). " if tr else ""
+    )
     if plan:
-        late = today > date.fromisoformat(plan) + timedelta(days=LATE_DAYS)
-        msg = f"{manual.fmt_day(plan)} 출고 예정이에요. {arrive}"
-        if late:
+        if _bizdays_after(date.fromisoformat(plan), today) > SHIP_LATE_BIZDAYS:
             return Reply(
                 "eta",
                 by,
-                msg + " 예정일이 지나 담당자에게 확인을 요청했어요.",
+                head + f"{manual.fmt_day(plan)} 출고 예정이었는데 아직 출고 확인이 안 됐어요. 담당자가 확인할게요.",
                 ticket="corpmall",
                 offer_handoff=False,
                 facts=facts,
             )
-        return Reply("eta", by, ("발송 준비 중이에요. " if st == "exported" else "") + msg, facts=facts)
-    return Reply(
-        "eta",
-        by,
-        ("발송 준비 중이에요. " if st == "exported" else "") + "출고일이 정해지면 이 페이지에 안내할게요.",
-        facts=facts,
-    )
+        return Reply("eta", by, head + f"{manual.fmt_day(plan)} 출고 예정이에요. {arrive}", facts=facts)
+    return Reply("eta", by, head + "출고일이 정해지면 이 페이지에 안내할게요.", facts=facts)
 
 
-__all__ = ["INTENTS", "RULES", "AI_PROMPT", "Reply", "by_rules", "read_ai", "respond"]
+__all__ = [
+    "INTENTS",
+    "RULES",
+    "AI_PROMPT",
+    "Reply",
+    "by_rules",
+    "read_ai",
+    "respond",
+    "SHIP_LATE_BIZDAYS",
+    "ARRIVE_LATE_BIZDAYS",
+]

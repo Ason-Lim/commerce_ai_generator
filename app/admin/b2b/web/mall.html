@@ -162,7 +162,7 @@ tbody tr{cursor:default}
       </section>
       <section class="panel" aria-labelledby="man-h">
         <h3 id="man-h">답변 매뉴얼 (직원 질문 자동 답)</h3>
-        <p class="basis">직원이 '언제 와요?'·'교환돼요?' 하고 물으면 이 칸과 주문 상태로만 답해요. 비어 있으면 날짜·조건을 지어내지 않고 "정해지면 안내"·"담당자 확인"으로 답해요.
+        <p class="basis">직원이 '언제 와요?'·'교환돼요?' 하고 물으면 이 칸과 주문 상태로만 답해요. 답변 기한·현금 전환 칸이 비어 있으면 기한·가능 여부를 약속하지 않아요. 비어 있으면 날짜·조건을 지어내지 않고 "정해지면 안내"·"담당자 확인"으로 답해요.
           '반드시 도착'·'무조건'·'보장' 같은 확정 표현은 저장되지 않아요.</p>
         <div id="manFields"></div>
         <div class="actions"><button class="btn primary" type="button" id="manBtn">매뉴얼 저장</button><span id="manMsg" class="basis"></span></div>
@@ -173,7 +173,7 @@ tbody tr{cursor:default}
       <section class="panel" aria-labelledby="orders-h">
         <h3 id="orders-h">주문 · 배송</h3>
         <p class="basis">이 표에는 배송 정보가 없어요. 공급사에 보낼 때만 '배송 정보 내보내기'(발송 요청 상태인 주문만, 한 번 내보내면 '발송 준비'로 바뀜).</p>
-        <div class="bar"><label class="btn" for="trkFile" style="cursor:pointer">송장 CSV 올리기 (주문,송장)</label><input type="file" id="trkFile" accept=".csv,text/csv" hidden><span id="trkMsg" class="basis"></span></div>
+        <div class="bar"><label class="btn" for="trkFile" style="cursor:pointer">송장 CSV 올리기 (주문,송장)</label><input type="file" id="trkFile" accept=".csv,text/csv" hidden><label style="font-size:13px"><input type="checkbox" id="trkShipped" style="width:auto"> 이 파일의 주문은 출고 확인됨(택배사 인수) → '발송함'</label><span id="trkMsg" class="basis"></span></div>
         <div class="bar"><button class="btn primary" type="button" id="exportBtn">배송 정보 내보내기 (CSV)</button>
           <span class="spacer"></span><button class="btn" type="button" data-mark="shipped">고른 주문 발송함</button><button class="btn" type="button" data-mark="delivered">고른 주문 배송 완료</button></div>
         <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>송장</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
@@ -263,7 +263,8 @@ $("#manBtn").onclick=async()=>{const manual=Object.fromEntries(MANF.map(f=>[f.ke
 $("#trkFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;const txt=(await f.text()).replace(/^\ufeff/,"");
   const rows=txt.split(/\r?\n/).map(l=>l.split(",").map(x=>x.replace(/^"|"$/g,"").trim())).filter(r=>r.length>=2&&/^O[0-9A-F]+$/.test(r[0])).map(r=>({order_id:r[0],tracking:r[1]}));
   e.target.value="";if(!rows.length){$("#trkMsg").textContent="주문 번호(O…)·송장 두 칸이 있는 줄이 없어요";return}
-  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/tracking`,{rows});$("#trkMsg").textContent=`${d.n}건에 송장을 넣고 '발송함'으로 바꿨어요`;loadMall(CUR.mall_id)}catch(er){err(er)}};
+  const shipped=$("#trkShipped").checked;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/tracking`,{rows,shipped});$("#trkMsg").textContent=`${d.n}건에 송장을 넣었어요`+(shipped?" ('발송함')":" (상태는 그대로 — 출고 확인 뒤 '발송함' 표시)")+(d.skipped?` · ${d.skipped}건은 이 몰 주문이 아니거나 배송 완료라 건너뜀`:"");loadMall(CUR.mall_id)}catch(er){err(er)}};
 manFields().then(loadList);
 </script>
 </body>
