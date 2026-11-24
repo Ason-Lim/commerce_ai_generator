@@ -112,7 +112,7 @@ tbody tr{cursor:default}
 <div class="app">
 <aside>
   <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries" aria-current="page">문의</a><a href="/admin/b2b/suppliers">공급 거래처</a><a href="/admin/b2b/mall">폐쇄몰</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries" aria-current="page">문의</a><a href="/admin/b2b/suppliers">공급 거래처</a><a href="/admin/b2b/mall">폐쇄몰</a><a href="/admin/b2b/settle">정산</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
   <div class="railnote"><b>문의 창구 1차.</b> 기업·기관이 <code>/biz/inquiry</code> 에서 남긴 문의예요.<br><br>
   ① 새 문의 확인 → ② <b>콘솔로 분석</b>(연락처 빼고 조건만 공고로 등록) → 견적 요청서·제안서 초안 → ③ <b>사람이 확인하고 직접 회신</b> → ④ 상태 표시.<br><br>
   이 서비스는 메일·메시지를 보내지 않아요. '견적·제안 보냄'은 사람이 보낸 문서를 확인했다고 표시해야 바뀌어요.<br><br>
@@ -140,6 +140,17 @@ tbody tr{cursor:default}
       </div>
       <div class="bar" style="margin-top:8px"><input type="text" id="noteTxt" maxlength="500" placeholder="처리 메모 (연락처는 적지 마세요 — 가려져요)" aria-label="처리 메모" style="flex:1">
         <button class="btn" type="button" id="noteBtn">메모 남기기</button></div>
+      <div id="draftBox" hidden style="margin-top:14px">
+        <h3>폐쇄몰 초안 만들기 (수주)</h3>
+        <p class="basis">문의 조건으로 폐쇄몰 초안을 만들어요(직원은 못 들어옴). 상품은 공급사 근거 후보에서 고르고, 매입 단가는 <b>견적 단가만</b> 옮겨요(공개 판매가는 매입 단가가 아님). 사진은 사용 허락 확인 전이라 옮기지 않아요.</p>
+        <div class="bar"><label for="d_slug">주소 이름</label><input id="d_slug" maxlength="40" placeholder="예: sample-corp-2027" style="width:180px">
+          <label for="d_title">제목</label><input id="d_title" maxlength="80" style="flex:1"></div>
+        <div class="bar"><label for="d_open">선택 시작</label><input id="d_open" type="datetime-local"><label for="d_close">마감</label><input id="d_close" type="datetime-local">
+          <select id="d_mode" aria-label="배송 방식"><option value="">문의대로</option><option value="individual">직원 집 배송</option><option value="bulk">회사 일괄 배송</option></select></div>
+        <div class="bar"><input id="d_q" maxlength="60" placeholder="후보 찾기 (상품·공급사 이름)" style="flex:1"><button class="btn" type="button" id="d_search">찾기</button></div>
+        <div class="tblwrap" style="max-height:300px;overflow:auto"><table><thead><tr><th>넣기</th><th>기본</th><th>상품</th><th>공급사</th><th class="num">견적 단가</th><th>관측가</th></tr></thead><tbody id="d_rows"></tbody></table></div>
+        <div class="actions"><button class="btn primary" type="button" id="d_make">초안 만들기</button><span id="d_msg" class="basis"></span></div>
+      </div>
       <h3 style="margin-top:14px">기록</h3><ul id="ev" class="basis"></ul>
     </section>
   </div>
@@ -178,6 +189,10 @@ async function open_(id){
     ["담당자",c?[c.name,c.email,c.phone].filter(Boolean).join(" · "):(d.purged?"보존 기간이 지나 지웠어요":"—")],
     ["콘솔 공고",d.bid_id?`<a href="/admin/b2b?q=${encodeURIComponent(d.bid_id+" 분석해줘")}">${esc(d.bid_id)} 분석 열기</a>`:"아직 없음",true]];
   $("#kv").innerHTML=kv.map(([k,v,raw])=>`<dt>${k}</dt><dd>${raw?v:esc(v)}</dd>`).join("");
+  $("#draftBox").hidden=d.status!=="won";$("#d_msg").innerHTML="";
+  const drafts=(d.events||[]).filter(e=>e.kind==="mall_draft");
+  if(drafts.length)$("#d_msg").innerHTML="만든 초안: "+drafts.map(e=>`<a href="/admin/b2b/mall?mall=${encodeURIComponent(e.mall_id)}">${esc(e.slug)}</a>`).join(", ");
+  if(d.status==="won"&&!$("#d_title").value)$("#d_title").value=`${d.occasion} 임직원 선물`;
   $("#nextSt").value=d.status;$("#human").checked=false;$("#stNote").value="";
   $("#ev").innerHTML=(d.events||[]).slice().reverse().map(e=>`<li>${esc(when(e.at))} · ${esc(e.kind)}${e.to?" → "+esc(LABELS[e.to]||e.to):""}${e.bid_id?" "+esc(e.bid_id):""}${e.text?" · "+esc(e.text):""}${e.note?" · "+esc(e.note):""}${e.human_checked?" · 사람 확인":""} (${esc(e.by)})</li>`).join("");
 }
@@ -185,6 +200,14 @@ $("#stSel").onchange=()=>load();
 $("#bidBtn").onclick=async()=>{try{const r=await post(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/to-bid`);location.href=r.console}catch(e){err(e)}};
 $("#stBtn").onclick=async()=>{try{await post(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/status`,{status:$("#nextSt").value,note:$("#stNote").value,human_checked:$("#human").checked});load(CUR.inquiry_id)}catch(e){err(e)}};
 $("#noteBtn").onclick=async()=>{const t=$("#noteTxt").value.trim();if(!t)return;try{await post(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/note`,{text:t});$("#noteTxt").value="";open_(CUR.inquiry_id)}catch(e){err(e)}};
+const won2=v=>v==null?"—":Number(v).toLocaleString()+"원";
+$("#d_search").onclick=async()=>{try{const r=await api(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/candidates?q=${encodeURIComponent($("#d_q").value.trim())}`);
+  $("#d_rows").innerHTML=r.candidates.length?r.candidates.map(c=>`<tr><td><input type="checkbox" data-cand="${esc(c.candidate_id)}" aria-label="${esc(c.name)} 넣기"></td><td><input type="radio" name="d_def" value="${esc(c.candidate_id)}" aria-label="${esc(c.name)} 기본 선물"></td>
+    <td>${esc(c.name)}${c.option?` <small>${esc(c.option)}</small>`:""}</td><td>${esc(c.supplier)}</td><td class="num">${won2(c.quote)}</td><td>${c.observed_price?won2(c.observed_price)+" · "+esc(c.price_label):"—"}</td></tr>`).join(""):'<tr><td colspan="6" class="empty">후보가 없어요</td></tr>'}catch(e){err(e)}};
+$("#d_make").onclick=async()=>{const ids=[...document.querySelectorAll("[data-cand]:checked")].map(x=>x.dataset.cand);const def=document.querySelector('input[name="d_def"]:checked')?.value||null;
+  try{const r=await post(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/mall-draft`,{slug:$("#d_slug").value.trim(),title:$("#d_title").value.trim()||null,opens_at:$("#d_open").value,closes_at:$("#d_close").value,
+    delivery_mode:$("#d_mode").value||null,candidate_ids:ids,default_item:def});
+    $("#d_msg").innerHTML=`초안을 만들었어요 → <a href="/admin/b2b/mall?mall=${encodeURIComponent(r.mall.mall_id)}">폐쇄몰 화면에서 확인·열기</a>`;open_(CUR.inquiry_id)}catch(e){err(e)}};
 load();
 </script>
 </body>

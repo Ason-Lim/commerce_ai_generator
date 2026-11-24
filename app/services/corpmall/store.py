@@ -151,6 +151,8 @@ t_po = Table(
     Column("ack_ship_date", String(10)),
     Column("ack_memo", String(300)),
     Column("ack_via", String(10)),  # link · operator
+    Column("invoice_received_at", DateTime(timezone=True)),  # 매입 세금계산서 받음 (정산)
+    Column("invoice_memo", String(200)),
 )
 t_event = Table(
     "corpmall_event",
@@ -282,8 +284,28 @@ def _check_spec(spec: dict) -> dict:
     except ValueError as e:
         raise MallError(str(e)) from e
     s["items"] = [
-        {k: i.get(k) for k in ("id", "name", "desc", "image", "tier", "supplier_candidate_id")} for i in items
+        {
+            k: i.get(k)
+            for k in (
+                "id",
+                "name",
+                "desc",
+                "image",
+                "tier",
+                "supplier_candidate_id",
+                "supplier",
+                "supplier_id",
+                "supplier_sku",
+                "unit_cost",
+            )
+        }
+        for i in items
     ]
+    for i in s["items"]:
+        if i["unit_cost"] is not None and (
+            not isinstance(i["unit_cost"], int) or not 0 <= i["unit_cost"] <= 10_000_000
+        ):
+            raise MallError("매입 단가(unit_cost)는 0 이상 원 단위 숫자예요")
     return s
 
 

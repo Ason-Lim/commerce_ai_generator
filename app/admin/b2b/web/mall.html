@@ -112,7 +112,7 @@ tbody tr{cursor:default}
 <div class="app">
 <aside>
   <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries">문의</a><a href="/admin/b2b/suppliers">공급 거래처</a><a href="/admin/b2b/mall" aria-current="page">폐쇄몰</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries">문의</a><a href="/admin/b2b/suppliers">공급 거래처</a><a href="/admin/b2b/mall" aria-current="page">폐쇄몰</a><a href="/admin/b2b/settle">정산</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
   <div class="railnote"><b>폐쇄몰 1차 — 기업 일괄 구매형.</b> 직원 확인은 발주처가 해요: 여기서 인원 수만큼 코드를 만들어 발주처 담당자에게 넘기면, 발주처가 직원에게 나눠 줘요. 우리는 명단을 받지 않아요.<br><br>
   우리가 보장하는 건 <b>코드 하나에 주문 하나</b>까지예요. 직원 한 명에 코드 하나 배포, 공유·대리 사용은 발주처 몫(계약서·안내문에 적기).<br><br>
   코드마다 <b>초대 링크(긴 토큰)</b>와 <b>직접 입력 코드(8자)</b>가 같이 나와요. 링크를 여는 것만으로는 소진되지 않아요.<br><br>
@@ -159,6 +159,17 @@ tbody tr{cursor:default}
           <button class="btn" type="button" id="reissueBtn">막고 새로 만들기</button></div>
         <div id="codeOut"></div>
         <div id="noAddr" class="code-out" hidden></div>
+      </section>
+      <section class="panel" aria-labelledby="set-h">
+        <h3 id="set-h">정산 (매출 · 매입)</h3>
+        <p class="basis">매출 = 계약값(1인 금액 × 청구 기준 수). 매입 = 정식 발주서 합계 + 아직 안 묶인 주문은 매입 단가로 <b>추정</b>. 마진은 부가세를 뺀 공급가액끼리 비교해요. 단가가 없는 것은 0원으로 치지 않고 '확인 필요'.</p>
+        <div class="bar"><label for="c_price">1인 금액</label><input id="c_price" inputmode="numeric" maxlength="9" style="width:100px">
+          <select id="c_vat" aria-label="1인 금액 부가세 기준"><option value="included">부가세 포함</option><option value="excluded">부가세 별도</option></select>
+          <label for="c_head">계약 인원</label><input id="c_head" inputmode="numeric" maxlength="7" style="width:80px">
+          <select id="c_basis" aria-label="청구 기준"><option value="headcount">계약 인원으로 청구</option><option value="orders">실제 주문 수로 청구</option></select></div>
+        <div class="bar"><label for="c_inv">매출 세금계산서 발행일</label><input id="c_inv" type="date"><input id="c_invmemo" maxlength="200" placeholder="메모" style="flex:1">
+          <button class="btn primary" type="button" id="contractBtn">계약값 저장</button></div>
+        <div id="settleOut" class="basis"></div>
       </section>
       <section class="panel" aria-labelledby="mgr-h">
         <h3 id="mgr-h">발주처 담당자 화면</h3>
@@ -224,6 +235,7 @@ let MALLS=[],CUR=null;
 async function loadList(sel){
   let d;try{d=await api("/admin/api/corpmall")}catch(e){return err(e)}
   MALLS=d.malls;const s=$("#mallSel");s.innerHTML=MALLS.length?MALLS.map(m=>`<option value="${esc(m.mall_id)}">${esc(m.client||"")} · ${esc(m.title||m.slug)} (${ST[m.status]||m.status})</option>`).join(""):'<option value="">폐쇄몰이 없어요</option>';
+  if(!sel){const qp=new URLSearchParams(location.search).get("mall");if(qp)sel=qp}
   if(sel)s.value=sel;if(s.value)loadMall(s.value);else{$("#detail").hidden=true}
 }
 async function loadMall(id){
@@ -246,7 +258,7 @@ async function loadMall(id){
     <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(o.tracking||"")}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
     :'<tr><td colspan="6" class="empty">아직 고른 사람이 없어요</td></tr>';
   drawManual(m.manual||{});
-  $("#mgrOut").innerHTML="";$("#poLink").innerHTML="";loadMgrs();loadPo();loadPos();
+  $("#mgrOut").innerHTML="";$("#poLink").innerHTML="";loadMgrs();loadPo();loadPos();loadSettle();
   const na=(s.ship||{}).no_address||0;$("#noAddr").hidden=!na;
   if(na){$("#noAddr").innerHTML=`마감 때 고르지 않아 기본 상품이 됐지만 <b>배송지가 없는 코드 ${na}개</b>가 있어요. 임의로 보내지 말고, 번호 목록을 발주처에 넘겨 계약에 정한 방법(회사 일괄 수령 등)으로 처리해 주세요. <button class="btn" type="button" id="naBtn">번호 목록 내려받기</button>`;
     $("#naBtn").onclick=async()=>{const r=await api(`/admin/api/corpmall/${m.mall_id}/no-address`);csv(r.labels.map(l=>({번호:l})),`${m.slug}_no_address.csv`)}}
@@ -281,6 +293,22 @@ $("#mgrBtn").onclick=async()=>{try{const d=await post(`/admin/api/corpmall/${CUR
   $("#mgrOut").innerHTML=`<div class="code-out">${esc(d.label)} 링크: <code>${esc(location.origin+d.link)}</code><br><b>지금만 보여요</b> — 복사해서 발주처 담당자에게 안전하게 전달해 주세요.</div>`;$("#mgrLabel").value="";loadMgrs()}catch(e){err(e)}};
 $("#extendBtn").onclick=async()=>{const v=$("#extendAt").value;if(!v)return;if(!confirm(v.replace("T"," ")+" 로 마감을 늦출까요?"))return;
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/extend`,{closes_at:v});await loadMall(CUR.mall_id)}catch(e){err(e)}};
+async function loadSettle(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/settle`);const ct=d.contract||{};
+  $("#c_price").value=ct.unit_price??"";$("#c_vat").value=ct.vat_mode||"included";$("#c_head").value=ct.headcount??"";$("#c_basis").value=ct.basis||"headcount";
+  $("#c_inv").value=ct.invoice_issued_on||"";$("#c_invmemo").value=ct.invoice_memo||"";
+  const r=d.revenue,c=d.cost,g=d.margin;
+  $("#settleOut").innerHTML=`<div>계약값 출처: ${esc(ct.source||"없음")} · 청구 기준: ${esc(d.basis_label||"")} · 실제 주문 ${d.orders}건 / 코드 ${d.issued}개</div>
+    <table style="margin-top:6px"><tbody>
+    <tr><th>매출</th><td>${r?`${r.count}명 · 공급가액 ${wonf(r.supply)} · 부가세 ${wonf(r.vat)} · 합계 <b>${wonf(r.total)}</b>`:"계약값(1인 금액·인원)을 넣어 주세요"}</td></tr>
+    <tr><th>매입(발주서)</th><td>공급가액 ${wonf(c.po_supply)} · 합계 ${wonf(c.po_total)}${c.po_unknown?` · <b>단가 확인 필요 발주서 ${c.po_unknown}건</b>`:""}</td></tr>
+    <tr><th>매입(추정)</th><td>${c.estimate.length?c.estimate.map(e=>`${esc(e.item)} ${e.qty}개 ${e.supply==null?"<b>단가 없음</b>":wonf(e.supply)}`).join(" · "):"없음 (모두 발주서로 묶임)"}</td></tr>
+    <tr><th>마진</th><td>${g?`<b>${wonf(g.amount)}</b>${g.rate!=null?` (${(g.rate*100).toFixed(1)}%)`:""} ${g.final?"· 확정":"· <b>확정 아님</b>(추정·확인 필요 포함)"}`:"—"}</td></tr>
+    <tr><th>세금계산서</th><td>매출 ${d.invoices.sales_issued_on?`발행 ${esc(d.invoices.sales_issued_on)}`:"<b>발행 전</b>"} · 매입 수취 ${d.invoices.purchase_received}/${d.invoices.purchase_total}</td></tr></tbody></table>
+    ${c.po.length?`<div style="margin-top:6px">${c.po.map(p=>`<div><code>${esc(p.po_no)}</code> ${esc(p.supplier)} ${wonf(p.total)} · 매입 세금계산서 <input type="date" data-inv="${esc(p.po_no)}" value="${esc(p.invoice_received_on||"")}" aria-label="${esc(p.po_no)} 세금계산서 받은 날"></div>`).join("")}</div>`:""}`;
+  document.querySelectorAll("[data-inv]").forEach(x=>x.onchange=async()=>{try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${x.dataset.inv}/invoice`,{received_on:x.value||null});loadSettle()}catch(e){err(e)}})}catch(e){err(e)}}
+$("#contractBtn").onclick=async()=>{const num=v=>v.trim()===""?null:parseInt(v.replace(/,/g,""),10);
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/contract`,{unit_price:num($("#c_price").value),headcount:num($("#c_head").value),vat_mode:$("#c_vat").value,basis:$("#c_basis").value,
+    invoice_issued_on:$("#c_inv").value||null,invoice_memo:$("#c_invmemo").value.trim()});loadSettle()}catch(e){err(e)}};
 let SUPS=[];
 async function loadSups(){try{SUPS=(await api("/admin/api/b2b-suppliers")).suppliers.filter(x=>x.active)}catch(e){err(e)}}
 const wonf=v=>v==null?"단가 확인 필요":Number(v).toLocaleString()+"원";

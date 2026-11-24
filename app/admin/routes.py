@@ -1424,6 +1424,11 @@ def admin_b2b_suppliers(request: Request):
     return _page(request, B2B_WEB / "suppliers.html")
 
 
+@router.get("/admin/b2b/settle")
+def admin_b2b_settle(request: Request):
+    return _page(request, B2B_WEB / "settle.html")
+
+
 @router.get("/admin/b2b/inquiries")
 def admin_b2b_inquiries(request: Request):
     return _page(request, B2B_WEB / "inquiries.html")
@@ -1785,6 +1790,98 @@ def corpmall_po_cancel(mall_id: str, po_no: str, body: _PoCancelIn):
         return {"ok": True, "po": podoc.cancel(eng, mall_id, po_no, by="operator", reason=body.reason)}
     except store.MallError as e:
         raise HTTPException(400, str(e)) from e
+
+
+# ── 2단계: 수주 문의 → 폐쇄몰 초안 · 매출·매입 정산 (2026-11-24) — 설계 claude/b2b_stage2_settle_2026-11-24.md ──
+class _MallDraftIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    slug: str = Field(..., max_length=40)
+    opens_at: str = Field(..., max_length=25)
+    closes_at: str = Field(..., max_length=25)
+    candidate_ids: list[str] = Field(..., min_length=1, max_length=40)
+    title: str | None = Field(None, max_length=80)
+    delivery_mode: str | None = Field(None, max_length=12)
+    default_item: str | None = Field(None, max_length=80)
+
+
+class _ContractIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    unit_price: int | None = Field(None, ge=0, le=10_000_000)
+    headcount: int | None = Field(None, ge=1, le=1_000_000)
+    vat_mode: str = Field("included", max_length=10)
+    basis: str = Field("headcount", max_length=10)
+    invoice_issued_on: str | None = Field(None, max_length=10)
+    invoice_memo: str = Field("", max_length=200)
+
+
+class _PoInvoiceIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    received_on: str | None = Field(None, max_length=10)
+    memo: str = Field("", max_length=200)
+
+
+@router.get("/admin/api/b2b-inquiry/{iid}/candidates", dependencies=[api])
+def b2b_inquiry_candidates(iid: str, q: str = Query("", max_length=60)):
+    from app.services.corpmall import draft
+
+    return {"candidates": draft.candidates(q)}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/mall-draft", dependencies=[api])
+def b2b_inquiry_mall_draft(iid: str, body: _MallDraftIn):
+    """수주 문의 → 폐쇄몰 초안(직원은 못 들어옴). 상품은 공급사 근거 후보에서, 매입 단가는 견적 단가만."""
+    from app.services.corpmall import draft
+
+    store, eng = _corp()
+    try:
+        m = draft.from_inquiry(eng, iid, slug=body.slug, opens_at=body.opens_at, closes_at=body.closes_at,
+                               candidate_ids=body.candidate_ids, title=body.title, delivery_mode=body.delivery_mode,
+                               default_item=body.default_item)
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"ok": True, "mall": m}
+
+
+@router.get("/admin/api/corpmall/{mall_id}/settle", dependencies=[api])
+def corpmall_settle(mall_id: str):
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    try:
+        return settle.summary(eng, mall_id)
+    except store.MallError as e:
+        raise HTTPException(404, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/contract", dependencies=[api])
+def corpmall_contract(mall_id: str, body: _ContractIn):
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "contract": settle.set_contract(eng, mall_id, body.model_dump())}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/invoice", dependencies=[api])
+def corpmall_po_invoice(mall_id: str, po_no: str, body: _PoInvoiceIn):
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    try:
+        settle.set_po_invoice(eng, mall_id, po_no, received_on=body.received_on, memo=body.memo)
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"ok": True}
+
+
+@router.get("/admin/api/b2b-settle", dependencies=[api])
+def b2b_settle_overview():
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    return {"malls": settle.overview(eng)}
 
 
 class _MallManualIn(BaseModel):
