@@ -31,10 +31,16 @@ INTENTS = {
     "contact": "담당자 연락",
     "unknown": "모름",
 }
-# 지연 기준 (2026-11-24 검토: 날짜 종류·영업일을 분명히)
-#   출고 지연: '출고 예정일'(몰 매뉴얼) 다음 영업일부터 SHIP_LATE_BIZDAYS 영업일이 지나도 출고 확인(발송함)이 아님
-#   배송 지연: 출고 확인일(shipped_at)부터 ARRIVE_LATE_BIZDAYS 영업일이 지나도 배송 완료가 아님
-#   기준일이 없으면(출고 예정일 미입력) 자동 지연 판단을 하지 않는다 — 답에 '담당자에게 남기기' 버튼만.
+# 경과일 기준 '상태 확인 필요' (2026-11-24 검토: 날짜 종류·영업일을 분명히)
+#   배송 상태를 자동 조회하지 않으므로(택배사·3PL API 연결 전) 이것은 **지연 확정이 아니라 '확인 필요'** 다.
+#   출고 상태 확인 필요: '출고 예정일'(몰 매뉴얼) 다음 영업일부터 SHIP_LATE_BIZDAYS 영업일이 지나도 출고 확인(발송함)이 아님
+#   배송 상태 확인 필요: 출고 확인일(shipped_at)부터 ARRIVE_LATE_BIZDAYS 영업일이 지나도 배송 완료 표시가 아님
+#   기준일이 없으면(출고 예정일 미입력) 자동 판단을 하지 않는다 — 답에 '담당자에게 남기기' 버튼만.
+#   API 연결 뒤에는 실제 배송 단계로 판단하고, 이 경과일 기준은 API 응답이 없을 때만 쓴다.
+CHECK_LABEL = {
+    "ship_check": "출고 상태 확인 필요(경과일 기준 — 지연 확정 아님)",
+    "arrive_check": "배송 상태 확인 필요(경과일 기준 — 지연 확정 아님)",
+}
 SHIP_LATE_BIZDAYS = 2
 ARRIVE_LATE_BIZDAYS = 5
 
@@ -279,10 +285,10 @@ def _eta(m, order, window, man, today: date, by: str) -> Reply:
             return Reply(
                 "eta",
                 by,
-                msg + "출고 뒤 시간이 꽤 지나 담당자가 택배사와 확인할게요.",
+                msg + "출고 뒤 시간이 꽤 지나 담당자가 택배사에 배송 상태를 확인할게요.",
                 ticket="corpmall",
                 offer_handoff=False,
-                facts=facts,
+                facts=facts | {"check": "arrive_check"},
             )
         return Reply("eta", by, msg + arrive, facts=facts)
     if st == "no_address":
@@ -307,10 +313,11 @@ def _eta(m, order, window, man, today: date, by: str) -> Reply:
             return Reply(
                 "eta",
                 by,
-                head + f"{manual.fmt_day(plan)} 출고 예정이었는데 아직 출고 확인이 안 됐어요. 담당자가 확인할게요.",
+                head
+                + f"{manual.fmt_day(plan)} 출고 예정이었는데 아직 출고 확인이 안 됐어요. 담당자가 출고 상태를 확인할게요.",
                 ticket="corpmall",
                 offer_handoff=False,
-                facts=facts,
+                facts=facts | {"check": "ship_check"},
             )
         return Reply("eta", by, head + f"{manual.fmt_day(plan)} 출고 예정이에요. {arrive}{tgt}", facts=facts)
     return Reply("eta", by, head + "출고일이 정해지면 이 페이지에 안내할게요.", facts=facts)

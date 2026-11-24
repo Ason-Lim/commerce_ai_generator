@@ -97,7 +97,7 @@ t_order = Table(
     Column("delivered_at", DateTime(timezone=True)),
     Column("purged_at", DateTime(timezone=True)),
     Column("tracking", String(40)),  # 송장 번호 (2026-11-24 답변 매뉴얼) — 개인정보 아님. 송장 등록 ≠ 출고
-    Column("shipped_at", DateTime(timezone=True)),  # 출고 확인(발송함) 시각 — 배송 지연 판단 기준
+    Column("shipped_at", DateTime(timezone=True)),  # 출고 확인(발송함) 시각 — 배송 상태 확인 필요 판단 기준
 )
 t_manager = Table(
     "corpmall_manager",
@@ -618,6 +618,8 @@ def ask(
     ticket_id, answer, offer = None, rep.answer, rep.offer_handoff
     if rep.ticket:
         label = assist.INTENTS.get(rep.intent, "직접 요청")
+        if rep.facts.get("check") in assist.CHECK_LABEL:  # 경과일 기준 — 지연 확정이 아니라 확인 필요
+            label = assist.CHECK_LABEL[rep.facts["check"]]
         if rep.ticket == "corpmall" and tickets.open_count(owner) >= MAX_OPEN_ASKS:
             answer = (
                 answer + " " if answer else ""
