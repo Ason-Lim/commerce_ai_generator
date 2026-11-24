@@ -22,6 +22,16 @@ export function shipText(status: string | null | undefined, fee: number | null |
   return null;
 }
 
+/** 2026-11-24: 확인 시각 — ISO 시각(쿠팡 검색 시각)은 '11/24 14:20' 처럼, 이미 글자로 된 값('11/24 14:20'·날짜)은 그대로 */
+export function seenLabel(v?: string | null): string | null {
+  if (!v) return null;
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(v)) return v;
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 export function cardToCandidate(c: ApiCard): Candidate {
   // 2026-11-16 정책: 판매처(쿠팡) 링크는 모두 /go 를 거친다 — 클릭 기록이 빠지지 않게 (쿠팡 리포트 11-13: 쿠팡 클릭 3 · 우리 기록 1).
   // 상세 패널 '원문 ↗'도 서버가 준 /go 경로로. 쇼핑커넥트 발급 링크(direct)만 받은 그대로 연다 (운영정책: 링크 조작 금지).
@@ -84,7 +94,7 @@ export function cardToCandidate(c: ApiCard): Candidate {
     why: c.why ?? [],
     sellerClaims: c.seller_claims ?? [],
     saved: c.saved,
-    seenAt: c.seen_at ?? null,
+    seenAt: seenLabel(c.seen_at),
     detail: c.detail ?? {
       sellerFacts: [
         ...(c.spec ? [{ label: "규격", value: c.spec, source: { label: c.source ?? "판매처", url: srcUrl } }] : []),

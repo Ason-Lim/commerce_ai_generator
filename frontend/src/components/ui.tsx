@@ -16,13 +16,15 @@ export function Thumb({ c, size = "md" }: { c: Pick<Candidate, "image" | "title"
   );
 }
 
-/** 2026-11-13: 배송비 상태별 한 줄 — 무료 '표시'·적힌 금액은 조건부라 총액으로 합치지 않는다 */
-export function shippingLine(c: Candidate) {
+/** 2026-11-13: 배송비 상태별 한 줄 — 무료 '표시'·적힌 금액은 조건부라 총액으로 합치지 않는다.
+ *  2026-11-24: 큰 글씨가 이미 '상품가'이면(omitPrice) 상품가를 다시 적지 않는다 ('상품가 12,900원' 줄이 두 번 보였다) */
+export function shippingLine(c: Candidate, omitPrice = false) {
+  const price = omitPrice ? null : <>상품가 {won(c.price)} + </>;
   switch (c.shippingStatus) {
     case "confirmed": return <>상품가 {won(c.price)} + 배송비 {c.shippingFee ? won(c.shippingFee) : "0원"} (판매처 결제 단계에서 계산)</>;
     case "free_label": return <>{c.rocket ? "로켓배송 · " : ""}무료배송 <span className="text-ink3">(판매처 표시)</span></>;
-    case "fee_label": return <>{c.rocket ? "로켓배송 · " : ""}상품가 {won(c.price)} + 배송비 {won(c.shippingFee ?? 0)} <span className="text-ink3">(판매처 표시)</span></>;
-    case "unknown": return <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>;
+    case "fee_label": return <>{c.rocket ? "로켓배송 · " : ""}{price}배송비 {won(c.shippingFee ?? 0)} <span className="text-ink3">(판매처 표시)</span></>;
+    case "unknown": return <>{price}<b className="font-semibold text-warn">배송비 미확인</b></>;
     default: return null;
   }
 }
@@ -39,8 +41,8 @@ export function TotalPrice({ c, best, size = "md" }: { c: Candidate; best?: bool
         {best && <span className="tag bg-accentSoft text-accent">최저</span>}
       </div>
       <div className="text-xs text-ink2">
-        {shippingLine(c) ?? (c.shippingFee == null
-          ? <>상품가 {won(c.price)} + <b className="font-semibold text-warn">배송비 미확인</b></>
+        {shippingLine(c, c.total == null) ?? (c.shippingFee == null
+          ? <>{c.total == null ? null : <>상품가 {won(c.price)} + </>}<b className="font-semibold text-warn">배송비 미확인</b></>
           : c.shippingFee === 0 ? <>무료배송 포함</> : <>상품가 {won(c.price)} + 배송비 {won(c.shippingFee)}</>)}
       </div>
     </div>
@@ -94,10 +96,13 @@ export function UnverifiedTags({ items, compact }: { items: string[]; compact?: 
 
 /** 판매처 API가 평점·후기·도착일을 주지 않을 때의 안내 (경고 아님) */
 export function MallCheckNote({ c }: { c: Candidate }) {
-  if (!c.checkAtMall && !c.deliveryHint) return null;
+  // 2026-11-24: 근거 줄에 이미 '로켓배송 표시'가 있으면 태그를 또 달지 않는다 (같은 말이 두 번 보였다)
+  const hintWord = c.deliveryHint?.replace(/\s*표시$/, "");
+  const hint = c.deliveryHint && !(hintWord && (c.why ?? []).some((w) => w.text.includes(hintWord))) ? c.deliveryHint : null;
+  if (!c.checkAtMall && !hint) return null;
   return (
     <p className="flex flex-wrap items-center gap-1.5 text-xs text-ink3">
-      {c.deliveryHint && <span className="tag bg-chip text-ink2">{c.deliveryHint}</span>}
+      {hint && <span className="tag bg-chip text-ink2">{hint}</span>}
       {c.checkAtMall && <span>평점·후기·도착일은 {c.source} 상품 페이지에서 확인할 수 있어요</span>}
     </p>
   );

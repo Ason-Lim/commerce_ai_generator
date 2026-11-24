@@ -6,6 +6,7 @@
 |---|---|---|
 | 싼 순으로 · 가격 낮은 순 · 더 싼 거 | sort(price) — 보여 준 후보를 가격 낮은 순 보기 ('추천순 아님') | 아니오 |
 | 100g당 싼 순 | sort(per100g) | 아니오 |
+| 함량 낮은 순 · 함량 높은 순 | sort(cacao_low / cacao_high) — 카카오 함량 조건으로 찾은 후보 (2026-11-24) | 아니오 |
 | 로켓배송만 · 무료배송만 | filter — 보여 준 후보 중 표시가 있는 것만 (추천 순서 그대로) | 아니오 |
 | ○○ 빼고 · ○○ 말고 | exclude — 상품명에 ○○가 없는 것만 | 아니오 |
 | 2kg으로 · 1L짜리 · 10개짜리 | size/count — 검색어의 양을 바꿔 새로 찾음 | 예 |
@@ -37,6 +38,7 @@ _END = r"\s*(?:(?:으로|로)?\s*(?:보여\s*(?:줘|주세요|줄래요?)|찾아
 _SORT_PRICE = re.compile(r"^(?:(?:가격\s*)?(?:싼|저렴한|낮은|가격\s*낮은|가격)\s*순(?:서)?|더\s*(?:싼|저렴한)\s*(?:거|것|상품)?|"
                          r"싼\s*(?:거|것)\s*(?:부터|먼저)|가격\s*순)" + _END)
 _SORT_PER100G = re.compile(r"^(?:100\s*g\s*당|그램\s*당|백\s*그램\s*당)\s*(?:가격\s*)?(?:싼|저렴한|낮은)?\s*순(?:서)?" + _END)
+_SORT_CACAO = re.compile(r"^(?:카카오\s*|코코아\s*)?(?:함량|비율|%)\s*(?:이|가)?\s*(?P<dir>낮은|높은)\s*(?:순(?:서)?|거|것)?(?:부터|으로|로)?" + _END)
 _ROCKET = re.compile(r"^로켓\s*(?:배송|프레시|와우)?\s*(?:만|으로|상품만)" + _END)
 _FREE_SHIP = re.compile(r"^무료\s*배송\s*(?:만|상품만|으로)" + _END)
 _EXCLUDE = re.compile(r"^(?P<word>[가-힣A-Za-z0-9]{1,15}?)\s*(?:은|는|이|가)?\s*(?:빼고|말고|제외(?:하고)?|없이|빼\s*줘)" + _END)
@@ -91,6 +93,8 @@ def parse(text: str) -> dict | None:
         return None
     if _SORT_PER100G.match(t):
         return {"kind": "sort", "by": "per100g"}
+    if m := _SORT_CACAO.match(t):
+        return {"kind": "sort", "by": "cacao_low" if m["dir"] == "낮은" else "cacao_high"}
     if _SORT_PRICE.match(t):
         return {"kind": "sort", "by": "price"}
     if _ROCKET.match(t):
@@ -132,10 +136,21 @@ def _price(c: dict) -> float | None:
 
 def sort_view(cards: list[dict], by: str) -> tuple[list[dict], int]:
     """(가격 낮은 순 후보, 값이 없어 뒤로 둔 수)."""
-    key = _price if by == "price" else (lambda c: c.get("per100g") if isinstance(c.get("per100g"), (int, float)) else None)
+    if by in ("cacao_low", "cacao_high"):
+        sign = 1 if by == "cacao_low" else -1
+        key = lambda c: sign * p if (p := _cacao(c)) is not None else None  # noqa: E731
+    else:
+        key = _price if by == "price" else (lambda c: c.get("per100g") if isinstance(c.get("per100g"), (int, float)) else None)
     known = sorted([c for c in cards if key(c) is not None], key=key)
     unknown = [c for c in cards if key(c) is None]
     return known + unknown, len(unknown)
+
+
+def _cacao(c: dict) -> float | None:
+    from app.services.commerce.cacao import title_percent
+
+    v = c.get("cacao_pct")
+    return float(v) if isinstance(v, (int, float)) else title_percent(c.get("title") or "")
 
 
 def filter_view(cards: list[dict], field: str) -> list[dict]:
@@ -162,7 +177,8 @@ def research_text(kind: str, query: str, value: str | None = None) -> str:
 def describe(intent: dict) -> str:
     kind = intent["kind"]
     if kind == "sort":
-        return "100g당 가격 낮은 순" if intent["by"] == "per100g" else "가격 낮은 순"
+        return {"per100g": "100g당 가격 낮은 순", "cacao_low": "카카오 함량 낮은 순",
+                "cacao_high": "카카오 함량 높은 순"}.get(intent["by"], "가격 낮은 순")
     if kind == "filter":
         return f"{_DELIVERY_LABEL[intent['field']]} 표시 상품만"
     if kind == "exclude":
@@ -215,6 +231,8 @@ def chips_after(cards: list[dict], *, more_left: bool, changed: bool) -> list[st
     out = []
     if changed:
         out.append("처음 조건으로")
+    if sum(1 for c in base if c.get("cacao_pct") is not None) >= 2:
+        out.append("함량 낮은 순으로")      # 2026-11-24 사용자 결정: 기본은 함량 높은 순, 낮은 순으로 다시 볼 수 있게
     if len(base) >= 3:
         out.append("가격 낮은 순으로")
     if any(c.get("rocket") for c in base) and not all(c.get("rocket") for c in base):

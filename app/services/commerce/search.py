@@ -104,6 +104,12 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     priority = req.priority or _priority(text, nlu_parse)
     budget = parse_budget(text)
     search_text = strip_budget(text) if budget and not budget.get("none") else text
+    # 2026-11-24: '카카오 70% 이상' 은 상품어가 아니라 거르는 조건 — 검색어에서 떼고 아래에서 상품명 표기 함량으로 거른다
+    from app.services.commerce import cacao
+
+    cacao_cond = cacao.parse_condition(search_text)
+    if cacao_cond:
+        search_text = cacao.strip_condition(search_text, cacao_cond)
     query, terms = shopping_terms(search_text, keyword_extractor)
     fresh_item = fresh_request(search_text, query)
     if fresh_item and not re.search(r"(?:^|\s)생\s*" + re.escape(fresh_item), query):
@@ -175,7 +181,9 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         # 다시 찾았으면 그 말도 관련성 기준에 넣는다 — '올리브유'로 받은 상품이 '엑스트라버진 올리브유' 묶음과
         # 글자 겹침이 모자라 빠지지 않게 (등급은 grade_filter 가 거름)
         keep_terms = list(terms) + ([searched_as] if searched_as else [])
-        cards = [c for c in cards if relevant(c["title"], keep_terms)]
+        # 2026-11-24: 함량 조건이 있으면 '드림카카오 82%'처럼 상품명에 '다크초콜릿'이 없어도 함량 표기 초콜릿은 관련 상품
+        cards = [c for c in cards if relevant(c["title"], keep_terms)
+                 or (cacao_cond and cacao.is_cacao_product(c["title"]))]
         # 2026-11-12: Jev 관련성 보조 — 기본 꺼짐(RELEVANCE_ASSIST=off). 실패·지연이면 카드 그대로 (규칙이 기본)
         from app.services.commerce import relevance_assist
 
@@ -188,6 +196,9 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         cards = [c for c in cards if not is_non_food_category(c.get("category"))]
     grade_unknown = [c for c in grade_unknown if not is_non_food_category(c.get("category"))
                      and (explain.wants_frozen(text) or not explain.is_frozen(c["title"]))]
+    cacao_info = None
+    if cacao_cond:
+        cards, cacao_info = cacao.filter_cards(cards, cacao_cond)
     if received and not cards and error is None and not gap_logged:
         coupang_gaps.record(query, "filtered")     # 2026-11-22: 받았지만 관련성·비식품·등급으로 모두 빠짐
     fresh_miss = bool(fresh_item and cards and not any(_says_fresh(c["title"], fresh_item) for c in cards))
@@ -212,6 +223,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
             fetch, {c["key"] for c in cards} | {_title_key(c["title"]) for c in cards + frozen_list},
             text=text, searched_as=searched_as, tried=more_tried)
         from app.services.chat import turn_metrics       # 2026-11-23 3-D ②: 후보 적을 때 더 찾기 시도·성공
+        if cacao_cond:                          # 더 찾은 상품도 같은 함량 조건으로
+            more_list, _ = cacao.filter_cards(more_list, cacao_cond)
         turn_metrics.flag("more_tried", bool(more_tried))
         turn_metrics.flag("more_found", bool(more_list))
 
@@ -231,6 +244,8 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     picked = None
     if cards:
         picked = explain.choose(cards, budget=budget, ask=text)
+        if cacao_cond:                          # 2026-11-24 사용자 결정: 함량 높은 순이 기본 ('함량 낮은 순으로' 칩)
+            picked = cacao.order_picked(picked, high_first=True)
         # 2026-11-10: 오래된·확인 시각 없는 가격으로는 가격 우위 문구를 내지 않는다 (선택·순서는 그대로)
         from app.services.commerce import price_claims
 
@@ -268,8 +283,13 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
                 connect=connect, raw=raw, error=error, preview=preview, found=found,
                 recommendation_path=recommendation_path, non_food=non_food,
                 fresh_miss=fresh_note(fresh_item) if fresh_miss else None,
-                search_note=search_note(query, searched_as, grade_info) if (picked or grade_unknown) else None,
-                searched_as=searched_as)
+                search_note=_join_notes(search_note(query, searched_as, grade_info) if (picked or grade_unknown) else None,
+                                        cacao.note(cacao_info) if cacao_info else None),
+                searched_as=searched_as, cacao=cacao_info)
+
+
+def _join_notes(*notes: str | None) -> str | None:
+    return " · ".join(n for n in notes if n) or None
 
 
 # ── 2026-11-22 후보가 적을 때 더 보여 주기 ─────────────────
