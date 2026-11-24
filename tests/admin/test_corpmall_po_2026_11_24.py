@@ -65,7 +65,14 @@ def test_suppliers_are_internal_only(eng):
     got = po.set_suppliers(
         eng, m["mall_id"], {"A": {"supplier": "가나식품", "sku": "HG-18"}, "B": {"supplier": "제주농원"}}
     )
-    assert got[0] == {"id": "A", "name": "한과", "supplier": "가나식품", "sku": "HG-18"}
+    assert got[0] == {
+        "id": "A",
+        "name": "한과",
+        "supplier_id": None,
+        "supplier": "가나식품",
+        "sku": "HG-18",
+        "unit_cost": None,
+    }
     pub = corp.enter(eng, "p-sup", codes[0][1], "ip", at=IN)["mall"]
     assert "가나식품" not in repr(pub) and "HG-18" not in repr(pub)
 
@@ -94,7 +101,7 @@ def test_individual_batch_excludes_unassigned_and_splits_files(eng):
     assert st == {"A": "exported", "B": "exported", "C": "requested"}  # 미지정은 그대로 남음
     # 공급사 전달용 파일에는 그 공급사 것만
     one = _sheets(po.render(eng, m["mall_id"], b["batch_id"], supplier="제주농원")[0])
-    assert list(one) == ["제주농원"] and "한과" not in repr(one) and len(one["제주농원"]) == 2
+    assert list(one) == ["발주서", "제주농원"] and "한과" not in repr(one) and len(one["제주농원"]) == 2
     with pytest.raises(corp.MallError, match="이 묶음에 없어요"):
         po.render(eng, m["mall_id"], b["batch_id"], supplier="다른공급사")
     # 다시 받기 — 같은 내용

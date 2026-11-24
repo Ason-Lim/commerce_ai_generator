@@ -128,6 +128,30 @@ t_po_line = Table(
     Column("sku", String(40)),
     Column("qty", Integer),
 )
+t_po = Table(
+    "corpmall_po",
+    meta,  # 정식 발주서 (2026-11-24) — 발주 묶음 × 공급사 하나. 금액·조건은 만들 때 값으로 고정(스냅숏)
+    Column("po_no", String(24), primary_key=True),
+    Column("batch_id", String(16), index=True, nullable=False),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("supplier_id", String(12)),
+    Column("supplier_name", String(40), nullable=False),
+    Column("issued_at", DateTime(timezone=True)),
+    Column("due_date", String(10)),
+    Column("payment_terms", String(120)),
+    Column("vat_mode", String(10)),
+    Column("lines", JSON),  # [{item_id, name, sku, qty, unit_cost, amount}]
+    Column("supply_amount", Integer),
+    Column("vat", Integer),
+    Column("total", Integer),
+    Column("status", String(14), nullable=False, default="issued"),  # issued · acknowledged · cancelled
+    Column("ack_token_hash", String(64)),
+    Column("ack_at", DateTime(timezone=True)),
+    Column("ack_by", String(30)),
+    Column("ack_ship_date", String(10)),
+    Column("ack_memo", String(300)),
+    Column("ack_via", String(10)),  # link · operator
+)
 t_event = Table(
     "corpmall_event",
     meta,  # 운영 기록 (개인정보 없음)
@@ -152,6 +176,8 @@ def now() -> datetime:
 
 def engine(url: str | None = None):
     eng = sqlalchemy.create_engine(url or get_settings().b2b_db_url, future=True)
+    from app.services.corpmall import suppliers  # noqa: F401 — 거래처 표도 같은 meta 에 (create_all 전에 등록)
+
     meta.create_all(eng)
     _migrate(eng)
     return eng

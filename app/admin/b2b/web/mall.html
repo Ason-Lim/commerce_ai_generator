@@ -112,7 +112,7 @@ tbody tr{cursor:default}
 <div class="app">
 <aside>
   <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries">문의</a><a href="/admin/b2b/mall" aria-current="page">폐쇄몰</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries">문의</a><a href="/admin/b2b/suppliers">공급 거래처</a><a href="/admin/b2b/mall" aria-current="page">폐쇄몰</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
   <div class="railnote"><b>폐쇄몰 1차 — 기업 일괄 구매형.</b> 직원 확인은 발주처가 해요: 여기서 인원 수만큼 코드를 만들어 발주처 담당자에게 넘기면, 발주처가 직원에게 나눠 줘요. 우리는 명단을 받지 않아요.<br><br>
   우리가 보장하는 건 <b>코드 하나에 주문 하나</b>까지예요. 직원 한 명에 코드 하나 배포, 공유·대리 사용은 발주처 몫(계약서·안내문에 적기).<br><br>
   코드마다 <b>초대 링크(긴 토큰)</b>와 <b>직접 입력 코드(8자)</b>가 같이 나와요. 링크를 여는 것만으로는 소진되지 않아요.<br><br>
@@ -177,8 +177,8 @@ tbody tr{cursor:default}
         <div class="actions"><button class="btn primary" type="button" id="manBtn">매뉴얼 저장</button><span id="manMsg" class="basis"></span></div>
       </section>
       <section class="panel" aria-labelledby="items-h">
-        <h3 id="items-h">상품별 선택 · 공급사</h3><p class="basis">공급사·품번은 발주서를 나누는 데만 써요(직원·발주처 화면에는 안 보임).</p>
-        <div class="tblwrap"><table><thead><tr><th>상품</th><th class="num">고른 수</th><th>공급사</th><th>공급사 품번</th></tr></thead><tbody id="byItem"></tbody></table></div>
+        <h3 id="items-h">상품별 선택 · 공급사</h3><p class="basis">거래처·품번·매입 단가(그 거래처의 단가 기준대로)는 발주서에만 써요(직원·발주처 화면에는 안 보임). 거래처는 <a href="/admin/b2b/suppliers">공급 거래처</a>에서 먼저 만들어요.</p>
+        <div class="tblwrap"><table><thead><tr><th>상품</th><th class="num">고른 수</th><th>공급 거래처</th><th>공급사 품번</th><th class="num">매입 단가</th></tr></thead><tbody id="byItem"></tbody></table></div>
         <div class="actions"><button class="btn" type="button" id="supBtn">공급사 저장</button><span id="supMsg" class="basis"></span></div>
       </section>
       <section class="panel" aria-labelledby="orders-h">
@@ -188,6 +188,7 @@ tbody tr{cursor:default}
         <div class="bar"><button class="btn primary" type="button" id="poBtn">발주 묶음 만들기</button><button class="btn" type="button" id="exportBtn">배송 정보 내보내기 (CSV 한 파일)</button>
           <span class="spacer"></span><button class="btn" type="button" data-mark="shipped">고른 주문 발송함</button><button class="btn" type="button" data-mark="delivered">고른 주문 배송 완료</button></div>
         <div id="poList" class="basis" style="margin:6px 0"></div>
+        <div id="poDocs" class="basis" style="margin:6px 0"></div><div id="poLink"></div>
         <div id="trkOut" class="basis"></div>
         <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>송장</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
       </section>
@@ -236,14 +237,16 @@ async function loadMall(id){
   $("#k_issued").textContent=s.issued;$("#k_chosen").textContent=s.chosen;$("#k_rate").textContent=s.rate==null?"—":(s.rate*100).toFixed(1)+"%";$("#k_default").textContent=s.defaulted;
   const itemOf=Object.fromEntries(m.items.map(i=>[i.id,i]));
   $("#byItem").innerHTML=s.by_item.map(i=>`<tr><td>${esc(i.name)} <small class="dday">${esc(i.id)}</small></td><td class="num">${i.n}</td>
-    <td><input type="text" data-sup="${esc(i.id)}" maxlength="40" value="${esc(itemOf[i.id]?.supplier||"")}" aria-label="${esc(i.name)} 공급사" style="width:130px"></td>
-    <td><input type="text" data-sku="${esc(i.id)}" maxlength="40" value="${esc(itemOf[i.id]?.supplier_sku||"")}" aria-label="${esc(i.name)} 공급사 품번" style="width:110px"></td></tr>`).join("");
+    <td><select data-sup="${esc(i.id)}" aria-label="${esc(i.name)} 공급 거래처"><option value="">(없음)</option>${SUPS.map(x=>`<option value="${esc(x.supplier_id)}"${itemOf[i.id]?.supplier_id===x.supplier_id?" selected":""}>${esc(x.name)}</option>`).join("")}</select>
+      ${itemOf[i.id]?.supplier&&!itemOf[i.id]?.supplier_id?`<small class="dday">이름만: ${esc(itemOf[i.id].supplier)}</small>`:""}</td>
+    <td><input type="text" data-sku="${esc(i.id)}" maxlength="40" value="${esc(itemOf[i.id]?.supplier_sku||"")}" aria-label="${esc(i.name)} 공급사 품번" style="width:110px"></td>
+    <td><input type="text" data-cost="${esc(i.id)}" inputmode="numeric" maxlength="9" value="${itemOf[i.id]?.unit_cost??""}" aria-label="${esc(i.name)} 매입 단가" style="width:90px"></td></tr>`).join("");
   const names=Object.fromEntries(m.items.map(i=>[i.id,i.name]));
   $("#orders").innerHTML=d.orders.length?d.orders.map(o=>`<tr><td><input type="checkbox" value="${esc(o.order_id)}" aria-label="${esc(o.order_id)} 고르기"></td><td><code>${esc(o.order_id)}</code></td>
     <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(o.tracking||"")}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
     :'<tr><td colspan="6" class="empty">아직 고른 사람이 없어요</td></tr>';
   drawManual(m.manual||{});
-  $("#mgrOut").innerHTML="";loadMgrs();loadPo();
+  $("#mgrOut").innerHTML="";$("#poLink").innerHTML="";loadMgrs();loadPo();loadPos();
   const na=(s.ship||{}).no_address||0;$("#noAddr").hidden=!na;
   if(na){$("#noAddr").innerHTML=`마감 때 고르지 않아 기본 상품이 됐지만 <b>배송지가 없는 코드 ${na}개</b>가 있어요. 임의로 보내지 말고, 번호 목록을 발주처에 넘겨 계약에 정한 방법(회사 일괄 수령 등)으로 처리해 주세요. <button class="btn" type="button" id="naBtn">번호 목록 내려받기</button>`;
     $("#naBtn").onclick=async()=>{const r=await api(`/admin/api/corpmall/${m.mall_id}/no-address`);csv(r.labels.map(l=>({번호:l})),`${m.slug}_no_address.csv`)}}
@@ -278,6 +281,21 @@ $("#mgrBtn").onclick=async()=>{try{const d=await post(`/admin/api/corpmall/${CUR
   $("#mgrOut").innerHTML=`<div class="code-out">${esc(d.label)} 링크: <code>${esc(location.origin+d.link)}</code><br><b>지금만 보여요</b> — 복사해서 발주처 담당자에게 안전하게 전달해 주세요.</div>`;$("#mgrLabel").value="";loadMgrs()}catch(e){err(e)}};
 $("#extendBtn").onclick=async()=>{const v=$("#extendAt").value;if(!v)return;if(!confirm(v.replace("T"," ")+" 로 마감을 늦출까요?"))return;
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/extend`,{closes_at:v});await loadMall(CUR.mall_id)}catch(e){err(e)}};
+let SUPS=[];
+async function loadSups(){try{SUPS=(await api("/admin/api/b2b-suppliers")).suppliers.filter(x=>x.active)}catch(e){err(e)}}
+const wonf=v=>v==null?"단가 확인 필요":Number(v).toLocaleString()+"원";
+async function loadPos(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/pos`);
+  $("#poDocs").innerHTML=d.pos.length?"<b>발주서</b>"+d.pos.map(p=>`<div style="margin:4px 0"><code>${esc(p.po_no)}</code> · ${esc(p.supplier)} · 합계 ${esc(wonf(p.total))} · 납기 ${esc(p.due_date||"협의")} · <b>${esc(p.status_label)}</b>
+    ${p.status==="acknowledged"?` (${esc(p.ack_by||"")}${p.ack_ship_date?` · 출고 예정 ${esc(p.ack_ship_date)}`:""}${p.ack_memo?` · ${esc(p.ack_memo)}`:""})`:""}
+    ${p.status!=="cancelled"?`<button class="btn" type="button" data-ackl="${esc(p.po_no)}">확인 링크</button>`:""}
+    ${p.status==="issued"?`<button class="btn" type="button" data-ackm="${esc(p.po_no)}">확인 받음 표시</button>`:""}
+    ${p.status!=="cancelled"?`<button class="btn" type="button" data-cx="${esc(p.po_no)}">취소</button>`:""}</div>`).join(""):"";
+  document.querySelectorAll("[data-ackl]").forEach(b=>b.onclick=async()=>{try{const r=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackl}/ack-link`);
+    $("#poLink").innerHTML=`<div class="code-out">${esc(b.dataset.ackl)} 확인 링크: <code>${esc(location.origin+r.link)}</code><br><b>지금만 보여요</b> — 발주서와 함께 공급사에 보내 주세요(새로 만들면 옛 링크는 막혀요).</div>`}catch(e){err(e)}});
+  document.querySelectorAll("[data-ackm]").forEach(b=>b.onclick=async()=>{const note=prompt("무엇을 보고 확인했나요? (예: 11/25 메일 회신)");if(note===null)return;
+    try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackm}/ack`,{note});loadPos()}catch(e){err(e)}});
+  document.querySelectorAll("[data-cx]").forEach(b=>b.onclick=async()=>{const reason=prompt("취소 이유 (주문은 '발송 요청'으로 돌아가 다시 묶을 수 있어요)");if(!reason)return;
+    try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.cx}/cancel`,{reason});loadMall(CUR.mall_id)}catch(e){err(e)}})}catch(e){err(e)}}
 let MANF=[];
 async function manFields(){try{MANF=(await api("/admin/api/corpmall-manual")).fields}catch(e){err(e)}}
 function drawManual(v){$("#manFields").innerHTML=MANF.map(f=>`<div class="bar" style="margin:4px 0"><label for="man_${f.key}" style="min-width:230px">${esc(f.label)}</label>`
@@ -304,13 +322,14 @@ async function loadPo(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id
     <button class="btn" type="button" data-po="${esc(b.batch_id)}">운영자 통합본</button>
     ${Object.entries(b.suppliers||{}).map(([sup,g])=>`<button class="btn" type="button" data-po="${esc(b.batch_id)}" data-sup="${esc(sup)}">${esc(sup)} 전달용 (${g.orders}건)</button>`).join("")}</div>`).join(""):"";
   document.querySelectorAll("[data-po]").forEach(x=>x.onclick=()=>dl(`/admin/api/corpmall/${CUR.mall_id}/po/${encodeURIComponent(x.dataset.po)}/file`+(x.dataset.sup?`?supplier=${encodeURIComponent(x.dataset.sup)}`:"")).catch(err))}catch(e){err(e)}}
-$("#supBtn").onclick=async()=>{const suppliers={};document.querySelectorAll("[data-sup]").forEach(x=>{suppliers[x.dataset.sup]={supplier:x.value.trim(),sku:document.querySelector(`[data-sku="${x.dataset.sup}"]`).value.trim()}});
+$("#supBtn").onclick=async()=>{const suppliers={};document.querySelectorAll("select[data-sup]").forEach(x=>{const id=x.dataset.sup;const cur=(CUR.items.find(i=>i.id===id)||{});
+    suppliers[id]={supplier_id:x.value||null,supplier:x.value?"":(cur.supplier_id?"":(cur.supplier||"")),sku:document.querySelector(`[data-sku="${id}"]`).value.trim(),unit_cost:document.querySelector(`[data-cost="${id}"]`).value.trim()||null}});
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/suppliers`,{suppliers});await loadMall(CUR.mall_id);$("#supMsg").textContent="저장했어요"}catch(e){err(e)}};
 $("#poBtn").onclick=async()=>{if(!confirm("발주 묶음을 만들까요? 넣은 주문은 '발송 준비'로 바뀌고, 파일은 아래 묶음에서 공급사별로 받아요(몇 번이든 다시 받을 수 있어요). 공급사 미지정·받는 곳 없는 주문은 빠져요."))return;
   try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/po`);
     $("#trkMsg").textContent=`발주 묶음 ${d.batch_id}: 주문 ${d.orders}건 · 공급사 ${Object.keys(d.suppliers).length}곳`+(Object.keys(d.excluded).length?` · 제외 ${Object.entries(d.excluded).map(([k,v])=>k+" "+v+"건").join(", ")}`:"")+" — 공급사에는 그 공급사 '전달용' 파일만 보내 주세요.";
     loadMall(CUR.mall_id)}catch(e){err(e)}};
-manFields().then(loadList);
+Promise.all([manFields(),loadSups()]).then(loadList);
 </script>
 </body>
 </html>

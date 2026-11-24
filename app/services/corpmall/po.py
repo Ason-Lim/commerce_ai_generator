@@ -36,7 +36,13 @@ def _safe(v) -> str | int:
 
 
 def set_suppliers(eng, mall_id: str, mapping: dict) -> list[dict]:
-    """{item_id: {supplier, sku}} → 몰 상품에 공급사·품번. 모르는 상품 id 는 거부."""
+    """{item_id: {supplier_id | supplier, sku, unit_cost}} → 몰 상품에 공급 거래처·품번·매입 단가.
+
+    supplier_id 를 주면 거래처 목록의 이름을 쓴다(정식 발주서·결제 조건·단가 기준이 따라옴). 이름만 주면 거래처 없이 묶음만 나눔.
+    매입 단가는 그 거래처의 단가 기준(부가세 별도/포함)으로 적는다. 직원·발주처 화면에는 안 보인다.
+    """
+    from app.services.corpmall import suppliers as sup
+
     m = store.get_mall(eng, mall_id=mall_id)
     if m is None:
         raise store.MallError("없는 몰")
@@ -44,14 +50,32 @@ def set_suppliers(eng, mall_id: str, mapping: dict) -> list[dict]:
     unknown = set(mapping) - ids
     if unknown:
         raise store.MallError("몰에 없는 상품이에요: " + ", ".join(sorted(unknown)))
+    masters = sup.by_ids(eng, [str(v.get("supplier_id")) for v in mapping.values() if v and v.get("supplier_id")])
     items = []
     for i in m["items"]:
         v = mapping.get(i["id"])
         if v is not None:
+            sid = v.get("supplier_id") or None
+            if sid and sid not in masters:
+                raise store.MallError(f"없는 거래처예요: {sid}")
+            cost = v.get("unit_cost")
+            if cost in (None, ""):
+                cost = None
+            else:
+                try:
+                    cost = int(str(cost).replace(",", ""))
+                except ValueError as e:
+                    raise store.MallError("매입 단가는 숫자(원)로 적어 주세요") from e
+                if not 0 <= cost <= 10_000_000:
+                    raise store.MallError("매입 단가가 너무 커요")
             i = {
                 **i,
-                "supplier": " ".join(str(v.get("supplier") or "").split())[:40] or None,
+                "supplier_id": sid,
+                "supplier": masters[sid]["name"]
+                if sid
+                else (" ".join(str(v.get("supplier") or "").split())[:40] or None),
                 "supplier_sku": " ".join(str(v.get("sku") or "").split())[:40] or None,
+                "unit_cost": cost,
             }
         items.append(i)
     with eng.begin() as c:
@@ -59,7 +83,14 @@ def set_suppliers(eng, mall_id: str, mapping: dict) -> list[dict]:
         c.execute(update(store.t_mall).where(store.t_mall.c.mall_id == mall_id).values(payload={**r, "items": items}))
         store._event(c, mall_id, "suppliers", {"n": sum(1 for i in items if i.get("supplier"))})
     return [
-        {"id": i["id"], "name": i.get("name"), "supplier": i.get("supplier"), "sku": i.get("supplier_sku")}
+        {
+            "id": i["id"],
+            "name": i.get("name"),
+            "supplier_id": i.get("supplier_id"),
+            "supplier": i.get("supplier"),
+            "sku": i.get("supplier_sku"),
+            "unit_cost": i.get("unit_cost"),
+        }
         for i in items
     ]
 
@@ -179,6 +210,11 @@ def create_batch(eng, mall_id: str, *, by: str) -> dict:
                 batch_id=batch_id, mall_id=mall_id, created_at=store.now(), created_by=by, summary=summary
             )
         )
+        from app.services.corpmall import podoc
+
+        pos = podoc.issue_for_batch(c, m, batch_id, take)
+        summary["pos"] = [p["po_no"] for p in pos]
+        c.execute(update(store.t_po_batch).where(store.t_po_batch.c.batch_id == batch_id).values(summary=summary))
         store._event(
             c,
             mall_id,
@@ -214,6 +250,56 @@ def list_batches(eng, mall_id: str) -> list[dict]:
         }
         for r in rows
     ]
+
+
+def _po_sheet(ws, p: dict) -> None:
+    """공급사 전달용 파일 첫 시트 — 정식 발주서(발주사·공급사·품목·단가·금액·납기·조건). 배송 목록은 다음 시트."""
+    from app.admin.b2b.proposal import load_profile
+
+    pf = load_profile()
+    ws.title = "발주서"
+    ws["A1"] = "발 주 서"
+    ws["A1"].font = Font(bold=True, size=16)
+    info = [
+        ("발주 번호", p["po_no"]),
+        ("발주일", (p["issued_at"] or "")[:10]),
+        ("공급사", p["supplier"]),
+        ("발주사", pf.get("company_name") or "[확인 필요: 회사명]"),
+        ("사업자등록번호", pf.get("business_no") or "[확인 필요: 사업자등록번호]"),
+        ("주소", pf.get("address") or "[확인 필요: 주소]"),
+        ("납기(출고)", p["due_date"] or "협의"),
+        ("결제 조건", p["payment_terms"] or "협의"),
+        ("단가 기준", "부가세 포함" if p["vat_mode"] == "included" else "부가세 별도"),
+    ]
+    for k, (a, b) in enumerate(info, start=3):
+        ws.cell(row=k, column=1, value=a).font = Font(bold=True)
+        c = ws.cell(row=k, column=2, value=_safe(b))
+        c.number_format = "@"
+    r0 = 3 + len(info) + 1
+    for j, h in enumerate(["상품", "공급사 품번", "수량", "단가", "금액"], start=1):
+        cell = ws.cell(row=r0, column=j, value=h)
+        cell.font = Font(bold=True)
+        cell.fill = HEAD_FILL
+    for k, ln in enumerate(p["lines"], start=r0 + 1):
+        ws.cell(row=k, column=1, value=_safe(ln.get("name") or ln.get("item_id")))
+        sku = ws.cell(row=k, column=2, value=_safe(ln.get("sku")))
+        sku.number_format = "@"
+        ws.cell(row=k, column=3, value=ln["qty"])
+        ws.cell(row=k, column=4, value=ln["unit_cost"] if ln.get("unit_cost") is not None else "단가 확인 필요")
+        ws.cell(row=k, column=5, value=ln["amount"] if ln.get("amount") is not None else "")
+    k = r0 + len(p["lines"]) + 2
+    for a, v in (("공급가액", p["supply_amount"]), ("부가세", p["vat"]), ("합계", p["total"])):
+        ws.cell(row=k, column=4, value=a).font = Font(bold=True)
+        ws.cell(row=k, column=5, value=v if v is not None else "단가 확인 필요")
+        k += 1
+    ws.cell(
+        row=k + 1,
+        column=1,
+        value="받으신 뒤 확인 링크로 '발주 확인'을 눌러 주시거나 이 메일에 회신해 주세요. "
+        "다음 시트의 배송 정보는 이 발주의 배송에만 쓰고 배송 뒤 파기해 주세요.",
+    )
+    for col, w in zip("ABCDE", (18, 34, 8, 14, 16), strict=False):
+        ws.column_dimensions[col].width = w
 
 
 def render(eng, mall_id: str, batch_id: str, *, supplier: str | None = None, by: str = "operator") -> tuple[bytes, str]:
@@ -255,14 +341,29 @@ def render(eng, mall_id: str, batch_id: str, *, supplier: str | None = None, by:
     used: set = set()
     if supplier is None:
         first.title = "요약"
-        _head(first, ["발주 묶음", "공급사", "상품", "공급사 품번", "수량"])
+        from app.services.corpmall import podoc as _pd
+
+        pmap = {p["supplier"]: p for p in _pd.list_pos(eng, mall_id, batch_id) if p["status"] != "cancelled"}
+        _head(first, ["발주 묶음", "발주 번호", "공급사", "상품", "공급사 품번", "수량", "발주서 합계"])
         for sup, ls in groups.items():
+            p = pmap.get(sup) or {}
             for (iid, sku), n in _qty(ls).items():
-                _row(first, [batch_id, sup, names.get(iid, iid), sku, n], {0, 3})
+                _row(
+                    first,
+                    [batch_id, p.get("po_no"), sup, names.get(iid, iid), sku, n, _pd.won(p.get("total")) if p else ""],
+                    {0, 1, 4},
+                )
         first.column_dimensions["B"].width = 18
         first.column_dimensions["C"].width = 26
+    from app.services.corpmall import podoc
+
+    pos = {p["supplier"]: p for p in podoc.list_pos(eng, mall_id, batch_id) if p["status"] != "cancelled"}
+    if supplier is not None and supplier in pos:
+        _po_sheet(first, pos[supplier])
+        used.add(first.title)
+        first = None
     for k, (sup, ls) in enumerate(groups.items()):
-        ws = first if (supplier is not None and k == 0) else wb.create_sheet()
+        ws = first if (first is not None and supplier is not None and k == 0) else wb.create_sheet()
         ws.title = _sheet_name(sup, used)
         if bulk:
             _head(ws, BULK_COLS)

@@ -6,6 +6,9 @@
   GET  /corp/{slug}/manager         발주처 담당자 화면 (#k=담당자 토큰, 배송 정보 없음)
   POST /corp/api/{slug}/manager/view     {key} → 진행 상황
   POST /corp/api/{slug}/manager/request  {key, kind, label?, date?, n?, text?} → 운영자에게 요청 (CS 티켓)
+  GET  /corp/po/{po_no}             공급사 발주 확인 화면 (#k=확인 토큰, 배송 정보 없음)
+  POST /corp/api/po/{po_no}/view    {key} → 발주서 내용
+  POST /corp/api/po/{po_no}/ack     {key, name, ship_date?, memo?} → 수신 확인
   POST /corp/api/{slug}/choose      {code, item_id, shipping?, consent, verify?} → 선택 저장(마감 전 변경 가능)
 
 운영자 API 는 app/admin/routes.py (/admin/api/corpmall/...).
@@ -24,6 +27,7 @@ from app.services.corpmall import store
 router = APIRouter(tags=["corpmall"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "corpmall" / "web" / "mall.html"
 MANAGER_PAGE = PAGE.with_name("manager.html")
+PO_ACK_PAGE = PAGE.with_name("po_ack.html")
 NOINDEX = {"X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer"}
 # 직원 페이지: 우편번호 찾기(카카오)가 사이트 도메인만 알 수 있게 — 경로(몰 이름)·# 뒤 코드는 보내지 않는다
 PAGE_HEADERS = {**NOINDEX, "Referrer-Policy": "strict-origin"}
@@ -204,5 +208,50 @@ def corp_manager_request(slug: str, body: MgrRequestIn, request: Request):
             text=body.text,
         )
         return JSONResponse({"ok": True, **got}, headers=NOINDEX)
+    except store.MallError as e:
+        return _err(e)
+
+
+# ── 공급사 발주 확인 (2026-11-24) ──
+class PoViewIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+
+
+class PoAckIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    name: str = Field(..., max_length=30)
+    ship_date: str | None = Field(None, max_length=10)
+    memo: str = Field("", max_length=300)
+
+
+@router.get("/corp/po/{po_no}")
+def corp_po_page(po_no: str):
+    return FileResponse(PO_ACK_PAGE, headers=NOINDEX)
+
+
+@router.post("/corp/api/po/{po_no}/view")
+def corp_po_view(po_no: str, body: PoViewIn, request: Request):
+    from app.services.corpmall import podoc
+
+    try:
+        return JSONResponse(
+            {"ok": True, **podoc.public_view(_eng(), po_no, body.key, _client(request))}, headers=NOINDEX
+        )
+    except store.MallError as e:
+        return _err(e)
+
+
+@router.post("/corp/api/po/{po_no}/ack")
+def corp_po_ack(po_no: str, body: PoAckIn, request: Request):
+    from app.services.corpmall import podoc
+
+    try:
+        eng = _eng()
+        podoc.acknowledge(
+            eng, po_no, body.key, _client(request), name=body.name, ship_date=body.ship_date, memo=body.memo
+        )
+        return JSONResponse({"ok": True, **podoc.public_view(eng, po_no, body.key, _client(request))}, headers=NOINDEX)
     except store.MallError as e:
         return _err(e)
