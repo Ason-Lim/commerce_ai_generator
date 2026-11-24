@@ -1,6 +1,6 @@
 {
  "label": "d9_main",
- "run_at": "2026-11-18T08:13:01+00:00",
+ "run_at": "2026-11-24T06:51:21+00:00",
  "queries": {
   "감귤": {
    "path": "db_fallback",
@@ -386,7 +386,7 @@
     "count": 10,
     "price_missing": 0,
     "price_stale": 10,
-    "per100g_not_comparable": 3,
+    "per100g_not_comparable": 1,
     "check_warnings": 0,
     "behavior_applied": 0,
     "score_mismatch": 0,
@@ -398,8 +398,8 @@
     {
      "rank": 1,
      "section": "picks",
-     "role": "가정용 양",
-     "role_key": "house",
+     "role": "과거 확인 가격",
+     "role_key": "value",
      "url": "http://with.gsshop.com/alia/aliaGate.gs?media=OB&ecpid=1016989747&vodFlag=N&prdseqnum=1016989747&utm_source=price&utm_medium=affiliate&utm_campaign=naver",
      "title": "25년수확 나주 고당도 햇 배 가정용 신고배 3kg(4-7과내외)",
      "checks": [],
@@ -409,7 +409,7 @@
      "rank": 2,
      "section": "picks",
      "role": "과거 확인 가격",
-     "role_key": "value",
+     "role_key": "ample",
      "url": "https://link.auction.co.kr/gate/pcs?item-no=D575644812&sub-id=1&service-code=10000003",
      "title": "나주배대장 가정용 5kg 6-8과 고당도 가정용 알뜰배 5-8과",
      "checks": [],
@@ -834,7 +834,7 @@
     "count": 10,
     "price_missing": 0,
     "price_stale": 10,
-    "per100g_not_comparable": 3,
+    "per100g_not_comparable": 1,
     "check_warnings": 0,
     "behavior_applied": 0,
     "score_mismatch": 0,
