@@ -8,7 +8,9 @@
   - **배송 정보(이름·휴대폰·주소)는 절대 보이지 않는다.** 직원이 무엇을 골랐는지는 회사 일괄 배송 몰에서만
     (회사가 나눠 줘야 하니까) 보인다. 개별 배송 몰에서는 '골랐는지'와 배송 단계만.
   - 코드 원문·링크도 보이지 않는다(번호만). 회사는 번호 ↔ 직원 대응표를 자기 쪽에서 갖고 있다.
-* 요청(운영자가 처리 — 이 화면이 바로 바꾸지 않음): 코드 분실 재발급, 마감 연장, 코드 추가, 그 밖의 요청.
+* 정산(매출 쪽만 — 매입·마진·공급사·단가 없음): 계약 조건, 실적, 청구 인원·금액, 세금계산서 발행 여부.
+  마감 전에는 '예상', 마감 뒤 담당자가 '확인'(이름·명시 동의). 확인 뒤 금액이 바뀌면 '다시 확인 필요'.
+* 요청(운영자가 처리 — 이 화면이 바로 바꾸지 않음): 코드 분실 재발급, 마감 연장, 코드 추가, 정산 문의, 그 밖의 요청.
   CS 티켓(분야 corpmall, 주인 ``corpmgr:{몰}``)으로 들어가고, 답은 이 화면에 보인다.
 """
 
@@ -22,7 +24,13 @@ from sqlalchemy import and_, select, update
 
 from app.services.corpmall import store
 
-REQUEST_KINDS = {"reissue": "코드 재발급", "extend": "마감 연장", "add_codes": "코드 추가", "other": "기타 요청"}
+REQUEST_KINDS = {
+    "reissue": "코드 재발급",
+    "extend": "마감 연장",
+    "add_codes": "코드 추가",
+    "settle": "정산 문의·수정 요청",
+    "other": "기타 요청",
+}
 SHIP_STEP = {
     None: "",
     "none": "",
@@ -179,7 +187,31 @@ def view(eng, slug: str, token: str, client: str, *, at: datetime | None = None)
         "codes": codes,
         "requests": tickets.for_owner(owner(m["mall_id"])),
         "kinds": REQUEST_KINDS,
+        "settle": _settle_view(eng, m["mall_id"]),
     }
+
+
+def _settle_view(eng, mall_id: str) -> dict:
+    from app.services.corpmall import settle
+
+    st = settle.client_statement(eng, mall_id)
+    return settle.public_statement(st) | {"sig": st["_sig"]}  # 지문은 '확인' 때 그대로 돌려받아 비교
+
+
+def confirm_settle(eng, slug: str, token: str, client: str, *, name: str, agree: bool, sig: str) -> dict:
+    """담당자가 마감 뒤 청구 인원·금액을 확인 — 이름(부서)과 명시 동의. 매입·마진은 보이지 않는다."""
+    from app.services.corpmall import settle
+
+    m, mgr = _resolve(eng, slug, token, client)
+    who = " ".join((name or "").split())[:30]
+    if not who:
+        raise store.MallError("확인하시는 분 이름(또는 부서)을 적어 주세요")
+    if not agree:
+        raise store.MallError("청구 인원·금액을 확인했다는 표시를 해 주세요")
+    settle.confirm_by_client(
+        eng, m["mall_id"], by=f"{mgr['label']} · {who}", manager_id=mgr["manager_id"], sig=sig or ""
+    )
+    return _settle_view(eng, m["mall_id"])
 
 
 def request(
@@ -228,6 +260,10 @@ def request(
         if not n or not 1 <= int(n) <= 5000:
             raise store.MallError("추가할 코드 수를 1~5000 사이로 적어 주세요")
         what = f"코드 {int(n)}개 추가"
+    elif kind == "settle":
+        if len(note) < 2:
+            raise store.MallError("정산에서 확인이 필요한 내용(인원·금액·세금계산서 등)을 적어 주세요")
+        what = "정산 문의"
     else:
         if len(note) < 2:
             raise store.MallError("요청 내용을 적어 주세요")
@@ -243,4 +279,4 @@ def request(
     return {"ticket_id": t["id"], "requests": tickets.for_owner(owner(m["mall_id"]))}
 
 
-__all__ = ["REQUEST_KINDS", "issue", "list_managers", "revoke", "view", "request", "owner"]
+__all__ = ["REQUEST_KINDS", "issue", "list_managers", "revoke", "view", "request", "confirm_settle", "owner"]

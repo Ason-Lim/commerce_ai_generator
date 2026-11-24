@@ -6,6 +6,7 @@
   GET  /corp/{slug}/manager         발주처 담당자 화면 (#k=담당자 토큰, 배송 정보 없음)
   POST /corp/api/{slug}/manager/view     {key} → 진행 상황
   POST /corp/api/{slug}/manager/request  {key, kind, label?, date?, n?, text?} → 운영자에게 요청 (CS 티켓)
+  POST /corp/api/{slug}/manager/settle-confirm  {key, name, agree, sig} → 마감 뒤 청구 인원·금액 확인
   GET  /corp/po/{po_no}             공급사 발주 확인 화면 (#k=확인 토큰, 배송 정보 없음)
   POST /corp/api/po/{po_no}/view    {key} → 발주서 내용
   POST /corp/api/po/{po_no}/file    {key} → 그 공급사 전달용 파일(발주서 + 배송 목록 — 정식 발주이고 배송 정보가 남아 있는 동안)
@@ -179,6 +180,14 @@ class MgrRequestIn(BaseModel):
     text: str = Field("", max_length=300)
 
 
+class MgrSettleIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    name: str = Field(..., max_length=30)
+    agree: bool = False
+    sig: str = Field(..., max_length=16)
+
+
 @router.get("/corp/{slug}/manager")
 def corp_manager_page(slug: str):
     return FileResponse(MANAGER_PAGE, headers=NOINDEX)
@@ -190,6 +199,19 @@ def corp_manager_view(slug: str, body: MgrViewIn, request: Request):
 
     try:
         return JSONResponse({"ok": True, **manager.view(_eng(), slug, body.key, _client(request))}, headers=NOINDEX)
+    except store.MallError as e:
+        return _err(e)
+
+
+@router.post("/corp/api/{slug}/manager/settle-confirm")
+def corp_manager_settle_confirm(slug: str, body: MgrSettleIn, request: Request):
+    from app.services.corpmall import manager
+
+    try:
+        got = manager.confirm_settle(
+            _eng(), slug, body.key, _client(request), name=body.name, agree=body.agree, sig=body.sig
+        )
+        return JSONResponse({"ok": True, "settle": got}, headers=NOINDEX)
     except store.MallError as e:
         return _err(e)
 

@@ -40,6 +40,7 @@ table.t td.num,table.t th.num{text-align:right}.kpis{display:grid;grid-template-
 .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}.kpi span{display:block;font-size:12.5px;color:var(--ink2)}.kpi b{font-size:22px}
 select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
 @media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{header p,#gate,section:not(#settleBox),#stForm,#stAsk,#stPrint,footer{display:none!important}body{background:#fff}.box{border:0}}
 </style>
 </head>
 <body>
@@ -70,6 +71,22 @@ select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius
         <button type="button" id="dlItems" hidden>번호별 선물 내려받기</button>
       </div>
       <div style="max-height:420px;overflow:auto;margin-top:8px"><table class="t"><thead><tr><th>번호</th><th>선택</th><th id="thItem" hidden>선물</th><th>배송</th></tr></thead><tbody id="codes"></tbody></table></div>
+    </section>
+
+    <section class="box" aria-labelledby="st-h" id="settleBox">
+      <h2 id="st-h" style="font-size:17px;margin:0">정산</h2>
+      <p class="msg info" id="stStage"></p>
+      <table class="t"><tbody id="stTable"></tbody></table>
+      <p class="note">청구 금액은 계약한 1인 금액과 청구 기준으로 계산해요. 과세·면세 구분과 세금계산서 내용은 계약서를 따라요.</p>
+      <div id="stConfirmed"></div>
+      <form id="stForm" hidden>
+        <div class="field"><label for="st_name">확인하시는 분 (이름 또는 부서)</label><input id="st_name" maxlength="30"></div>
+        <div class="field"><label style="font-weight:400"><input type="checkbox" id="st_agree" style="width:auto"> 위 청구 인원·금액을 확인했어요 (세금계산서는 이 금액으로 발행돼요)</label></div>
+        <div class="row"><button type="submit" id="stBtn">정산 금액 확인</button></div>
+      </form>
+      <div class="row"><button type="button" id="stAsk" style="background:#fff;color:var(--ink);border:1px solid var(--line)">정산 문의·수정 요청</button>
+        <button type="button" id="stPrint" style="background:#fff;color:var(--ink);border:1px solid var(--line)">인쇄</button></div>
+      <div id="stMsg" role="status" aria-live="polite"></div>
     </section>
 
     <section class="box" aria-labelledby="req-h">
@@ -133,8 +150,48 @@ function draw(d) {
   $("#thItem").hidden = !d.shows_items; $("#dlItems").hidden = !d.shows_items;
   if (!d.shows_items) $("#codesNote").textContent += " 직원 집으로 보내는 행사라 직원이 무엇을 골랐는지는 보여 드리지 않아요.";
   if (!$("#kind").options.length) for (const [k, v] of Object.entries(d.kinds)) $("#kind").add(new Option(v, k));
-  drawCodes(); drawReqs(d.requests);
+  drawCodes(); drawReqs(d.requests); drawSettle(d.settle);
 }
+const won = (v) => v == null ? "—" : Number(v).toLocaleString() + "원";
+function drawSettle(st) {
+  V.settle = st;
+  if (!st.ready) {
+    $("#stStage").textContent = "운영사가 정산 금액을 아직 넣지 않았어요. 준비되면 여기에 보여요.";
+    $("#stTable").innerHTML = ""; $("#stForm").hidden = true; $("#stConfirmed").innerHTML = ""; return;
+  }
+  const c = st.contract, a = st.actual, b = st.bill;
+  $("#stStage").textContent = st.stage === "closed" ? "선택이 마감돼 청구 인원이 정해졌어요. 아래 금액을 확인해 주세요."
+    : "선택이 아직 진행 중이라 예상 금액이에요. 마감 뒤에 확정돼요.";
+  const rows = [
+    ["계약 1인 금액", `${won(c.unit_price)} (${c.vat_mode === "included" ? "부가세 포함" : "부가세 별도"} · ${c.tax_label})`],
+    ["계약 인원", c.headcount == null ? "—" : `${c.headcount}명`],
+    ["청구 기준", c.basis_label],
+    ["코드 발급 · 재발급으로 막힘", `${a.issued}개 · ${a.void}개`],
+    ["직원이 고름 · 기본 선물", `${a.chosen}명 · ${a.defaulted}명`],
+    ["실제 주문", `${a.orders}건`],
+    ["<b>청구 인원</b>", `<b>${b.count}명</b>`],
+    ["공급가액", won(b.supply)], ["부가세", won(b.vat)], ["<b>합계</b>", `<b>${won(b.total)}</b>`],
+    ["세금계산서", st.invoice_issued_on ? `${esc(st.invoice_issued_on)} 발행` : "발행 전"],
+  ];
+  if (c.basis === "headcount" && c.headcount != null && a.orders !== c.headcount)
+    rows.splice(6, 0, ["", `<span class="note">계약 인원 기준이라 실제 주문(${a.orders}건)과 달라도 ${c.headcount}명으로 청구해요.</span>`]);
+  $("#stTable").innerHTML = rows.map(([k, v]) => `<tr><th style="width:44%">${k}</th><td class="num">${v}</td></tr>`).join("");
+  const cf = st.confirm;
+  $("#stConfirmed").innerHTML = cf ? (cf.valid
+      ? `<div class="msg ok">${esc(cf.at.slice(0, 16).replace("T", " "))}에 ${esc(cf.by)}님이 확인했어요 (${won(cf.total)}).</div>`
+      : `<div class="msg info">${esc(cf.at.slice(0, 16).replace("T", " "))}에 ${won(cf.total)}으로 확인하셨는데 그 뒤 금액이 바뀌었어요. 다시 확인해 주세요.</div>`) : "";
+  $("#stForm").hidden = !st.can_confirm;
+}
+$("#stForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); $("#stBtn").disabled = true;
+  try {
+    const d = await post("settle-confirm", {key: KEY, name: $("#st_name").value.trim(), agree: $("#st_agree").checked, sig: V.settle.sig});
+    drawSettle(d.settle); msg($("#stMsg"), "확인했어요. 이 금액으로 세금계산서를 발행할게요.", "ok");
+  } catch (err) { msg($("#stMsg"), err.message, "err"); }
+  finally { $("#stBtn").disabled = false; }
+});
+$("#stAsk").addEventListener("click", () => { $("#kind").value = "settle"; kindFields(); $("#r_text").focus(); $("#r_text").scrollIntoView({behavior: "smooth", block: "center"}); });
+$("#stPrint").addEventListener("click", () => window.print());
 function kindFields() {
   const k = $("#kind").value;
   $("#f_label").hidden = k !== "reissue"; $("#f_date").hidden = k !== "extend"; $("#f_n").hidden = k !== "add_codes";

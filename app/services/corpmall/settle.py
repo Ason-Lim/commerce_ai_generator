@@ -108,6 +108,32 @@ def set_po_invoice(
         store._event(c, mall_id, "po_invoice", {"po_no": po_no, "received": bool(at), "by": by})
 
 
+def _confirm_state(m: dict, revenue: dict | None, ct: dict) -> dict | None:
+    cf = m.get("client_confirm")
+    if not cf:
+        return None
+    bill = (
+        {
+            "basis": ct.get("basis", "headcount"),
+            "unit_price": ct.get("unit_price"),
+            "vat_mode": ct.get("vat_mode") or "included",
+            "tax_type": ct.get("tax_type") or "taxable",
+            "count": revenue["count"],
+            "supply": revenue["supply"],
+            "vat": revenue["vat"],
+            "total": revenue["total"],
+        }
+        if revenue
+        else None
+    )
+    return {
+        "at": cf["at"],
+        "by": cf["by"],
+        "total": cf.get("total"),
+        "valid": bool(bill) and cf.get("sig") == _sig(bill),
+    }
+
+
 def summary(eng, mall_id: str) -> dict:
     m = store.get_mall(eng, mall_id=mall_id)
     if m is None:
@@ -227,12 +253,133 @@ def summary(eng, mall_id: str) -> dict:
             "complete": cost_complete,
         },
         "margin": margin,
+        "client_confirm": _confirm_state(m, revenue, ct),
         "invoices": {
             "sales_issued_on": ct.get("invoice_issued_on"),
             "purchase_received": sum(1 for p in po_rows if p["invoice_received_on"]),
             "purchase_total": len(po_rows),
         },
     }
+
+
+# ── 발주처에 보이는 정산서 (2026-11-24) — 매출 쪽만. 매입·마진·공급사·단가는 절대 넣지 않는다 ──
+TAX_LABEL = {"taxable": "과세", "exempt": "면세"}
+
+
+def _sig(bill: dict) -> str:
+    """발주처가 확인한 금액의 지문 — 계약값·인원·금액이 하나라도 바뀌면 달라져 '다시 확인'이 된다."""
+    import hashlib
+    import json
+
+    return hashlib.sha256(json.dumps(bill, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+
+
+def client_statement(eng, mall_id: str) -> dict:
+    """발주처 담당자 화면의 정산 — 계약 조건 · 실적(발급·고름·기본 선물·주문) · 청구 인원·금액 · 세금계산서 · 확인 상태.
+
+    * 마감 전에는 '예상'(주문 수가 아직 바뀜), 마감 뒤에야 담당자가 '확인'할 수 있다.
+    * 담당자가 확인한 뒤 계약값·인원이 바뀌면 지문이 달라져 '다시 확인 필요'.
+    """
+    m = store.get_mall(eng, mall_id=mall_id)
+    if m is None:
+        raise store.MallError("없는 몰")
+    s = summary(eng, mall_id)
+    st = store.stats(eng, mall_id)
+    ct = s["contract"] or {}
+    rev = s["revenue"]
+    basis = ct.get("basis", "headcount")
+    bill = (
+        {
+            "basis": basis,
+            "unit_price": ct.get("unit_price"),
+            "vat_mode": ct.get("vat_mode") or "included",
+            "tax_type": ct.get("tax_type") or "taxable",
+            "count": rev["count"],
+            "supply": rev["supply"],
+            "vat": rev["vat"],
+            "total": rev["total"],
+        }
+        if rev
+        else None
+    )
+    sig = _sig(bill) if bill else None
+    cf = m.get("client_confirm") or None
+    closed = m["status"] == "closed"
+    return {
+        "ready": bill is not None,
+        "stage": "closed" if closed else "estimate",
+        "contract": {
+            "unit_price": ct.get("unit_price"),
+            "headcount": ct.get("headcount"),
+            "vat_mode": ct.get("vat_mode") or "included",
+            "tax_type": ct.get("tax_type") or "taxable",
+            "tax_label": TAX_LABEL.get(ct.get("tax_type") or "taxable"),
+            "basis": basis,
+            "basis_label": BASES.get(basis),
+        },
+        "actual": {
+            "issued": st["issued"],
+            "void": st["void"],
+            "chosen": st["chosen"],
+            "defaulted": st["defaulted"],
+            "orders": s["orders"],
+        },
+        "bill": bill,
+        "invoice_issued_on": ct.get("invoice_issued_on"),
+        "confirm": (
+            {
+                "at": cf["at"],
+                "by": cf["by"],
+                "total": cf.get("total"),
+                "count": cf.get("count"),
+                "valid": cf.get("sig") == sig,
+            }
+            if cf
+            else None
+        ),
+        "can_confirm": closed and bill is not None and not (cf and cf.get("sig") == sig),
+        "_sig": sig,
+    }
+
+
+def confirm_by_client(eng, mall_id: str, *, by: str, manager_id: str, sig: str) -> dict:
+    """담당자가 화면에서 본 금액(지문)을 확인 — 그사이 금액이 바뀌었으면 거부."""
+    cur = client_statement(eng, mall_id)
+    if cur["stage"] != "closed":
+        raise store.MallError("선택이 마감된 뒤에 확인할 수 있어요 — 그 전에는 주문 수가 바뀔 수 있어요")
+    if not cur["ready"]:
+        raise store.MallError("운영사가 아직 정산 금액을 넣지 않았어요")
+    if sig != cur["_sig"]:
+        raise store.MallError("그사이 금액이 바뀌었어요. 화면을 새로 고쳐 다시 확인해 주세요")
+    if cur["confirm"] and cur["confirm"]["valid"]:
+        raise store.MallError("이미 확인한 금액이에요")
+    rec = {
+        "at": store.now().isoformat(timespec="seconds"),
+        "by": by,
+        "manager_id": manager_id,
+        "sig": sig,
+        "count": cur["bill"]["count"],
+        "total": cur["bill"]["total"],
+    }
+    with eng.begin() as c:
+        r = c.execute(select(store.t_mall.c.payload).where(store.t_mall.c.mall_id == mall_id)).scalar()
+        hist = [*(r.get("client_confirm_history") or []), rec]
+        c.execute(
+            update(store.t_mall)
+            .where(store.t_mall.c.mall_id == mall_id)
+            .values(payload={**r, "client_confirm": rec, "client_confirm_history": hist})
+        )
+        store._event(
+            c,
+            mall_id,
+            "client_settle_confirm",
+            {"manager_id": manager_id, "count": rec["count"], "total": rec["total"]},
+        )
+    return client_statement(eng, mall_id)
+
+
+def public_statement(st: dict) -> dict:
+    return {k: v for k, v in st.items() if not k.startswith("_")}
 
 
 def overview(eng) -> list[dict]:
@@ -243,7 +390,18 @@ def overview(eng) -> list[dict]:
         out.append(
             {
                 k: s[k]
-                for k in ("mall_id", "slug", "client", "title", "status", "orders", "revenue", "margin", "invoices")
+                for k in (
+                    "mall_id",
+                    "slug",
+                    "client",
+                    "title",
+                    "status",
+                    "orders",
+                    "revenue",
+                    "margin",
+                    "invoices",
+                    "client_confirm",
+                )  # fmt: skip
             }
             | {
                 "cost_complete": s["cost"]["complete"],
@@ -253,4 +411,13 @@ def overview(eng) -> list[dict]:
     return out
 
 
-__all__ = ["BASES", "set_contract", "set_po_invoice", "summary", "overview"]
+__all__ = [
+    "BASES",
+    "set_contract",
+    "set_po_invoice",
+    "summary",
+    "overview",
+    "client_statement",
+    "confirm_by_client",
+    "public_statement",
+]
