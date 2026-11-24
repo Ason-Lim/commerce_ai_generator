@@ -11,6 +11,8 @@
 * **예보가 아니라 후보 목록**이다: 백테스트(2025 1~4월)에서 28일 상위 20 중 7일 이상 앞서 맞힌 비율이 약 11%.
   사람이 골라 링크·글을 준비하는 데 쓴다(연구 §5-1 운영 리듬: 월요일 제안 → 5~8개 확정).
 * 고객 화면·추천 순위에는 쓰지 않는다.
+* (2026-11-24 밤) 한 주에 행사가 여럿이면 근거에 행사가 다 붙어 구별이 안 된다 → `main_event` = 작년 같은 행사 날짜가
+  그 키워드의 작년 최고 순위 날짜와 가장 가까운 행사 태그(같으면 D-day 가 작은 것). `sources` 는 그대로 전부 낸다.
 """
 
 from __future__ import annotations
@@ -84,8 +86,13 @@ def next_weeks(rank_dir: str | Path, as_of: dt.date, *, weeks: int = 4, top_n: i
                                          "last_year_date": when.isoformat(), "sources": []})  # fmt: skip
                 if tag not in c["sources"]:
                     c["sources"].append(tag)
+                    c.setdefault("_ev", []).append((tag, prev, (d - as_of).days))
                 if r < c["score"]:
                     c.update(score=r, last_year_best=r, last_year_date=when.isoformat())
+        for c in cand.values():
+            evs = c.pop("_ev", [])
+            best_day = dt.date.fromisoformat(c["last_year_date"])
+            c["main_event"] = min(evs, key=lambda e: (abs((e[1] - best_day).days), e[2]))[0] if evs else None
         items = sorted(cand.values(), key=lambda c: (c["score"], -len(c["sources"]), c["keyword"]))
         cov = seen / 7
         out_weeks.append({
