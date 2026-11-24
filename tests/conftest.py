@@ -67,6 +67,8 @@ def _isolated_ai_cache(monkeypatch, tmp_path):
 import os as _os  # noqa: E402
 
 _os.environ.setdefault("MISS_SIGNALS", "off")
+# 2026-11-24: 클릭·구매 측정 기록(var/measure)도 같은 이유로 끔 — 측정 테스트는 스스로 켠다
+_os.environ.setdefault("MEASURE", "off")
 
 
 # 2026-11-16 (2단계): 트렌드 글 저장소도 테스트마다 임시 폴더 — 실제 var/trends/posts 의 게시 글이 대화 테스트에 섞이지 않게

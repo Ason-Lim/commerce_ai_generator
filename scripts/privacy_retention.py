@@ -5,6 +5,7 @@
 
 규칙은 app/services/privacy/retention.py. 결과는 한 줄씩 출력하고 DB privacy_job_log 에도 남긴다.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,8 +32,20 @@ def main(argv: list[str] | None = None) -> int:
     report = Retention(engine, dry_run=args.dry_run).run()
     for r in report:
         note = f" — {r['note']}" if r.get("note") else ""
-        print(f"[{'시험' if args.dry_run else '실행'}] {r['step']:<12} {r['target']:<40} {r['rows']:>7}건"
-              f"  기준 {r['cutoff'] or '-'}{note}")
+        print(
+            f"[{'시험' if args.dry_run else '실행'}] {r['step']:<12} {r['target']:<40} {r['rows']:>7}건"
+            f"  기준 {r['cutoff'] or '-'}{note}"
+        )
+    # 2026-11-24 클릭·구매 연결 측정 기록: 어제까지 접고(일별 숫자), 1년 지난 원본 줄 지우기
+    if not args.dry_run:
+        from app.services import measure
+
+        try:
+            folded = measure.fold()
+            gone = measure.purge()
+            print(f"[실행] measure      측정 기록 접기 {folded}일 · 1년 지난 원본 {gone}건 지움")
+        except Exception as e:  # noqa: BLE001
+            print(f"[실패] measure      {type(e).__name__}: {e}")
     return 0
 
 

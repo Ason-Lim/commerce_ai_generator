@@ -2741,6 +2741,19 @@ def cs_ticket_close(ticket_id: str):
     return {"ok": True, "ticket": t}
 
 
+# ── 클릭·구매 연결 (2026-11-24, 병행 창): 노출 → 클릭 → 쿠팡 클릭·주문 주간 보고 — 측정용, 순위에 안 씀 ──
+@router.get("/admin/measure")
+def admin_measure(request: Request):
+    return _page(request, WEB / "measure.html")
+
+
+@router.get("/admin/api/measure/weekly", dependencies=[api])
+def admin_measure_weekly(weeks: int = Query(4, ge=1, le=26)):
+    from app.services.measure import coupang_report
+
+    return coupang_report.weekly(weeks=weeks, with_money=True)
+
+
 # ── CS 탭 (2026-11-23 창 4 ④): 사람 필수 대기열 · 노출 중지 상품 · 분야 판단 검수 ──
 @router.get("/admin/cs")
 def admin_cs(request: Request):
