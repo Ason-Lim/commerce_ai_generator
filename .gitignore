@@ -65,3 +65,6 @@ var/coupang_best/
 var/patches/
 var/_*
 var/improve/
+
+# 2026-11-24: CS 분야 판단 검수 기록·티켓(운영 데이터) — 저장소에 넣지 않음 (#106 에 실수로 들어갔던 것 제거)
+var/cs/
