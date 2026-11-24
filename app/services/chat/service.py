@@ -855,7 +855,7 @@ class ChatService:
         picks, others = picked["picks"], picked["others"]
         go = lambda c: f"/go/{sid}/k/{c['key']}"  # noqa: E731
         head = (f"예산 **{budget['label']}** 에 맞춰 앞서 찾은 '{query}' 후보 {found}개를 다시 견줬어요."
-                if rechecked else f"'{query}' 후보 {found}개를 같은 기준으로 견줘서 {len(picks)}개를 골랐어요.")
+                if rechecked else _head_line(query, found, len(picks), picked))
         blocks = [B.text(head)]
         if picked.get("bulk_held"):
             # 2026-11-12: 대용량은 요청할 때만 — 뒤로 둔 것을 숨기지 않고 알린다
@@ -1365,9 +1365,13 @@ class ChatService:
                                  "'처음 조건으로'·'더 찾아보기'를 말씀해 주세요."))
             return blocks
         if sort:
-            what = "100g당 가격" if sort["by"] == "per100g" else "가격(배송비 포함 확인된 값)"
-            note = (f"추천 순서가 아니에요. 조건에 맞는 후보를 {what}이 낮은 순으로 늘어놓았어요. "
-                    "가격은 처음 확인한 시각 기준이라 판매처에서 바뀌었을 수 있어요.")
+            if sort["by"] in ("cacao_low", "cacao_high"):
+                way = "낮은" if sort["by"] == "cacao_low" else "높은"
+                note = f"추천 순서가 아니에요. 상품명에 표기된 카카오 함량이 {way} 순으로 늘어놓았어요."
+            else:
+                what = "100g당 가격" if sort["by"] == "per100g" else "가격(배송비 포함 확인된 값)"
+                note = (f"추천 순서가 아니에요. 조건에 맞는 후보를 {what}이 낮은 순으로 늘어놓았어요. "
+                        "가격은 처음 확인한 시각 기준이라 판매처에서 바뀌었을 수 있어요.")
             if unknown:
                 note += f" 값을 계산하지 못한 {unknown}개는 맨 뒤에 두었어요."
             title = f"{now} · {len(view)}개 · 추천순 아님"
@@ -1423,6 +1427,8 @@ class ChatService:
         blocks.append(B.notice(CHECK_AT_MALL))
         chips = ["처음 조건으로"] + [c for c in self._followup_chips(base.get("cards") or [], info, state, changed=False)
                                     if fu.parse(c) not in info["conds"]]       # 이미 적용한 조건 칩은 빼고
+        if {"kind": "sort", "by": "cacao_low"} in info["conds"]:   # 2026-11-24: 낮은 순으로 본 뒤 다시 높은 순으로
+            chips.insert(1, "함량 높은 순으로")
         blocks.append(B.chips(list(dict.fromkeys(chips))))
         return self._followup_done(sid, text, dict(state, followup=info), revision, persist, blocks)
 
@@ -1625,6 +1631,15 @@ class ChatService:
         if meta:                    # 2026-11-22 외부 검토 1: 쿠팡 호출 수 (이 차례 · 세션 누적 · 다시 찾기 요청 수)
             out["meta"] = meta
         return out
+
+
+def _head_line(query: str, found: int, n_picks: int, picked: dict) -> str:
+    """2026-11-24: 후보가 1개면 '1개를 견줘서 1개를 골랐어요' 대신 사실만. 함량 순이면 그렇게 말한다."""
+    if found <= 1:
+        return f"'{query}' 조건에 맞는 후보가 1개뿐이에요."
+    if picked.get("cacao_sort") == "high":
+        return f"'{query}' 후보 {found}개를 카카오 함량이 높은 순으로 보여 드려요. 낮은 순으로 다시 보여 드릴까요?"
+    return f"'{query}' 후보 {found}개를 같은 기준으로 견줘서 {n_picks}개를 골랐어요."
 
 
 class _NoDb:
