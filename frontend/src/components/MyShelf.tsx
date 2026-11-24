@@ -5,12 +5,12 @@
  * - 장보기 목록·설정: 브라우저 안에만. 설정은 서버로 보내지 않는다(화면 표시·숨기기에만, 순위 불변).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, Heart, History, MessageSquare, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeftRight, Eye, Heart, History, MessageSquare, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
 import type { ApiCard, SavedView, ShelfTicket } from "../types/blocks";
 import { cardToCandidate } from "../api/adapt";
-import { fetchShelf, forgetShelf, goHref, logDirectClick, resetSavedOwner, sendChat } from "../api/client";
+import { claimTransferCode, fetchShelf, forgetShelf, goHref, issueTransferCode, logDirectClick, resetSavedOwner, sendChat } from "../api/client";
 import { cx, won } from "../lib/format";
-import { clearLocalShelf, knownSessions, useBasket, usePrefs, type Prefs } from "../state/shelf";
+import { clearLocalShelf, knownSessions, useBasket, usePrefs, type BasketEntry, type Prefs } from "../state/shelf";
 import { BlockRenderer } from "./BlockRenderer";
 import { RecentViewed } from "./RecentViewed";
 import { BasketControls } from "./ShoppingPanel";
@@ -150,6 +150,69 @@ function PrefsForm() {
   );
 }
 
+/** 2026-11-24 다른 기기로 옮기기 — 로그인 없이 한 번 쓰고 버리는 코드 (10분). 관심 상품·장보기 목록만, 문의·설정은 옮기지 않음. */
+const TRANSFER_ERR: Record<string, string> = {
+  bad_code: "코드가 맞지 않거나 10분이 지났어요. 원래 기기에서 코드를 다시 만들어 주세요.",
+  same_device: "이 기기에서 만든 코드예요. 옮겨 갈 다른 기기에서 입력해 주세요.",
+  too_many: "잘못 입력한 횟수가 많아 잠시 막았어요. 10분 뒤에 다시 해 주세요.",
+};
+function TransferBox({ basket, onClaimed }: { basket: BasketEntry[]; onClaimed: (moved: number, incoming: BasketEntry[]) => void }) {
+  const [code, setCode] = useState<{ code: string; until: number } | null>(null);
+  const [input, setInput] = useState("");
+  const [msg, setMsg] = useState("");
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!code) return;
+    const t = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, [code]);
+  const left = code ? Math.max(0, Math.round((code.until - now) / 1000)) : 0;
+  async function make() {
+    setMsg("");
+    try {
+      const r = await issueTransferCode(basket);
+      if (r.ok && r.code) setCode({ code: r.code, until: Date.now() + (r.expires_in ?? 600) * 1000 });
+      else setMsg("코드를 만들지 못했어요. 잠시 후 다시 해 주세요.");
+    } catch { setMsg("코드를 만들지 못했어요. 잠시 후 다시 해 주세요."); }
+  }
+  async function claim() {
+    if (input.replace(/[^0-9a-z]/gi, "").length < 8) { setMsg("코드 8글자를 입력해 주세요."); return; }
+    try {
+      const r = await claimTransferCode(input);
+      if (!r.ok) { setMsg(TRANSFER_ERR[r.error ?? ""] ?? "불러오지 못했어요. 잠시 후 다시 해 주세요."); return; }
+      const incoming = (r.basket ?? []) as BasketEntry[];
+      onClaimed(r.saved_moved ?? 0, incoming);
+      setInput("");
+      setMsg(`관심 상품 ${r.saved_moved ?? 0}개, 장보기 ${incoming.length}개를 불러왔어요. 원래 기기의 보관함은 그대로예요.`);
+    } catch { setMsg("불러오지 못했어요. 잠시 후 다시 해 주세요."); }
+  }
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div>
+        <p className="text-sm font-semibold">이 기기에서 보내기</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink3">코드를 만들어 다른 기기의 '내 보관함 → 코드로 불러오기'에 넣으세요. 10분 동안 한 번만 쓸 수 있어요.</p>
+        {code && left > 0 ? (
+          <p className="mt-2 flex items-baseline gap-2"><b aria-label="옮기기 코드" className="font-mono text-2xl tracking-widest">{code.code}</b>
+            <span className="text-xs text-ink3">{Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")} 남음</span></p>
+        ) : null}
+        <button type="button" onClick={() => void make()} className="mt-2 rounded-full border border-line px-4 py-1.5 text-sm font-semibold">
+          {code ? "코드 다시 만들기" : "옮기기 코드 만들기"}</button>
+      </div>
+      <div>
+        <label htmlFor="transfer-code" className="text-sm font-semibold">코드로 불러오기</label>
+        <p className="mt-1 text-xs leading-relaxed text-ink3">다른 기기에서 만든 코드를 넣으면 관심 상품과 장보기 목록을 이 기기에 합쳐요.</p>
+        <div className="mt-2 flex gap-2">
+          <input id="transfer-code" value={input} onChange={(e) => setInput(e.target.value)} placeholder="ABCD-EFGH" maxLength={12}
+            autoComplete="off" spellCheck={false} className="w-36 rounded-xl border border-line px-3 py-1.5 font-mono uppercase tracking-widest" />
+          <button type="button" onClick={() => void claim()} className="rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-white">불러오기</button>
+        </div>
+      </div>
+      {msg && <p role="status" className="text-sm sm:col-span-2">{msg}</p>}
+      <p className="text-[11px] leading-relaxed text-ink3 sm:col-span-2">로그인·전화번호 없이 쓰는 방식이에요. 문의 내역과 설정(피하고 싶은 재료 등)은 옮기지 않아요.</p>
+    </div>
+  );
+}
+
 export function MyShelf() {
   const [view, setView] = useState<SavedView>({ saved: [], recent: [] });
   const [loaded, setLoaded] = useState(false);
@@ -219,7 +282,7 @@ export function MyShelf() {
         </header>
         <main className="mx-auto w-full max-w-[900px] space-y-4 px-4 pt-8 sm:px-8 sm:!pb-12" style={{ paddingBottom: MOBILE_TAB_H + 32 }}>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">내 보관함</h1>
-          <p className="text-sm leading-7 text-stone-600">이 브라우저에만 모아 두는 곳이에요. 로그인 없이 쓰고, 다른 기기와는 아직 같이 쓰지 않아요.</p>
+          <p className="text-sm leading-7 text-stone-600">이 브라우저에만 모아 두는 곳이에요. 로그인 없이 쓰고, 다른 기기로는 아래 '다른 기기로 옮기기' 코드로 옮겨요.</p>
           {cleared && <p role="status" className="rounded-xl bg-chip px-4 py-3 text-sm">{cleared}</p>}
 
           {view.tickets && view.tickets.length > 0 && (
@@ -292,6 +355,13 @@ export function MyShelf() {
                 ))}
               </div>
             ) : <p className="py-3 text-sm text-ink3">레시피 대화에서 부족한 재료를 고르면 여기에 모여요.</p>}
+          </Section>
+
+          <Section id="shelf-transfer" icon={ArrowLeftRight} title="다른 기기로 옮기기">
+            <TransferBox basket={basket} onClaimed={(_moved, incoming) => {
+              setBasket((prev) => [...prev, ...incoming.filter((x) => x && x.ingredient && !prev.some((p) => p.ingredient === x.ingredient))]);
+              void load();
+            }} />
           </Section>
 
           <Section id="shelf-prefs" icon={Settings2} title="설정">

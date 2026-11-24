@@ -237,6 +237,36 @@ def shelf_forget(body: ShelfIn, service: ChatService = Depends(get_chat_service)
     return service.forget(body.owner, body.sessions)
 
 
+class TransferIssueIn(BaseModel):
+    """2026-11-24 보관함 옮기기 코드 — 이 기기 보관함 id 와 장보기 목록(화면이 가진 것, 10분만 메모리에)."""
+    model_config = ConfigDict(extra="forbid")
+    owner: str = Field(..., max_length=64)
+    basket: list[dict] = Field(default_factory=list, max_length=20)
+
+
+class TransferClaimIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    owner: str = Field(..., max_length=64)
+    code: str = Field(..., max_length=20)
+
+
+@router.post("/api/me/transfer")
+def shelf_transfer_issue(body: TransferIssueIn, service: ChatService = Depends(get_chat_service)):
+    import json as _json
+
+    if len(_json.dumps(body.basket, ensure_ascii=False)) > 200_000:
+        return {"ok": False, "error": "too_big"}
+    return service.transfer_issue(body.owner, body.basket)
+
+
+@router.post("/api/me/transfer/claim")
+def shelf_transfer_claim(body: TransferClaimIn, request: Request, service: ChatService = Depends(get_chat_service)):
+    # 운영은 cloudflared 뒤 — 접속 주소는 Cloudflare 가 붙인 값을 먼저 (틀린 코드 횟수 세기에만 씀, 저장 안 함)
+    client = (request.headers.get("cf-connecting-ip") or (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+              or (request.client.host if request.client else "") or "-")
+    return service.transfer_claim(body.owner, body.code, client)
+
+
 class AnswerSignalIn(BaseModel):
     """2026-11-21 대화 답 피드백 — 화면이 판매처 이동·♡ 저장 뒤 보낸다 (그 밖의 키 거부)."""
     model_config = ConfigDict(extra="forbid")
