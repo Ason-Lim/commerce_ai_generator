@@ -233,10 +233,12 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
       <span class="note">예측일 범위</span><input type="date" id="bt-start" aria-label="예측일 시작"><input type="date" id="bt-end" aria-label="예측일 끝">
       <select id="bt-step" aria-label="간격"><option value="7">매주</option><option value="14">2주마다</option></select>
       <label class="note"><input type="checkbox" id="bt-ex" checked> 탐색기 포함(느림)</label>
+      <select id="bt-q" aria-label="질문"><option value="q1">Q1 (모두)</option><option value="q1p">Q1′ (최근 28일 100위 밖만)</option></select>
+      <select id="bt-ms" aria-label="미래 관측률 기준"><option value="0.6">관측률 60%+</option><option value="0.8">80%+</option><option value="0.9">90%+</option></select>
       <button class="btn primary" id="bt-go">계산</button><span class="note" id="bt-cov"></span>
     </div>
-    <div class="scroll"><table><thead><tr><th>방법</th><th>기간</th><th>정답 수</th><th>예측 수</th><th>적중</th><th>적중률(정밀도)</th><th>재현율</th><th>상위 20 적중률</th><th>선행 일수(중앙값)</th><th>놓친 주요 상승(50위 안)</th><th>불필요한 준비</th><th>추가 적중</th></tr></thead>
-    <tbody id="bt-rows"><tr><td colspan="12" class="note">범위를 고르고 '계산'을 눌러 주세요. 1년치 매주는 몇십 초 걸릴 수 있어요.</td></tr></tbody></table></div>
+    <div class="scroll"><table><thead><tr><th>방법</th><th>기간</th><th>정답 수</th><th>예측 수</th><th>적중</th><th>적중률(정밀도)</th><th>재현율</th><th>재현율(과거 본 키워드)</th><th>상위 20 적중률</th><th>상위 20 · 7일+ 앞서</th><th>선행 일수*(맞힌 것만)</th><th>놓친 주요 상승(50위 안)</th><th>불필요한 준비</th><th>추가 적중</th></tr></thead>
+    <tbody id="bt-rows"><tr><td colspan="14" class="note">범위를 고르고 '계산'을 눌러 주세요. 1년치 매주는 몇십 초 걸릴 수 있어요.</td></tr></tbody></table></div>
     <p class="note" id="bt-notes"></p>
   </section>
   <section id="pricefc" aria-labelledby="pricefc-h">
@@ -864,19 +866,19 @@ loadPeriod({preset:"1m"}).catch(()=>{});
 load().catch(e=>{$("#rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`});
 
 // ── 예측 백테스트 (2026-11-24) ─────────────────────────
-const BTN={recent:"최근 유지",last_year:"전년 같은 주",event_rel:"행사 상대일",explorer:"탐색기"};
+const BTN={recent:"최근 유지",last_year:"전년 같은 주",event_rel:"행사 상대일",explorer:"탐색기",explorer_repeat:"탐색기(반복만)"};
 (function(){const t=new Date();const e=new Date(t);e.setDate(e.getDate()-35);const s=new Date(e);s.setFullYear(s.getFullYear()-1);
   const f=d=>d.toISOString().slice(0,10);if($("#bt-start")){$("#bt-start").value=f(s);$("#bt-end").value=f(e)}})();
-async function loadBacktest(){const q=new URLSearchParams({start:$("#bt-start").value,end:$("#bt-end").value,step:$("#bt-step").value,explorer:$("#bt-ex").checked?1:0});
-  $("#bt-rows").innerHTML=`<tr><td colspan="12" class="note">계산 중…</td></tr>`;
+async function loadBacktest(){const q=new URLSearchParams({start:$("#bt-start").value,end:$("#bt-end").value,step:$("#bt-step").value,explorer:$("#bt-ex").checked?1:0,question:$("#bt-q").value,min_share:$("#bt-ms").value});
+  $("#bt-rows").innerHTML=`<tr><td colspan="14" class="note">계산 중…</td></tr>`;
   try{const d=await api("/admin/api/trends/forecast/backtest?"+q.toString());
-    $("#bt-cov").textContent=`예측일 ${d.dates}개`+(d.skipped.length?` · 건너뜀 ${d.skipped.length}`:"");
+    $("#bt-cov").textContent=`예측일 ${d.dates}개`+(d.skipped.length?` · 건너뜀 ${d.skipped.length} (${Object.entries(d.skipped_by_month).map(([m,n])=>m.slice(2)+":"+n).join(" ")})`:"");
     const pc=v=>v==null?"—":(v*100).toFixed(1)+"%";const rows=[];
     for(const [m,byh] of Object.entries(d.metrics))for(const [h,x] of Object.entries(byh))
-      rows.push(`<tr><td>${esc(BTN[m]||m)}</td><td>${h}일</td><td>${x.n_true}</td><td>${x.n_pred}</td><td>${x.hits}</td><td>${pc(x.precision)}</td><td>${pc(x.recall)}</td><td>${pc(x.top20_precision)}</td><td>${x.lead_median??"—"}</td><td>${pc(x.major_missed)}</td><td>${x.false_pos}</td><td>${x.extra_hits??""}</td></tr>`);
-    $("#bt-rows").innerHTML=rows.join("")||`<tr><td colspan="12" class="note">결과 없음</td></tr>`;
-    $("#bt-notes").textContent=(d.notes||[]).join(" · ");
-  }catch(e){$("#bt-rows").innerHTML=`<tr><td colspan="12" class="note">${esc(e.message)}</td></tr>`}}
+      rows.push(`<tr><td>${esc(BTN[m]||m)}</td><td>${h}일</td><td>${x.n_true}</td><td>${x.n_pred}</td><td>${x.hits}</td><td>${pc(x.precision)}</td><td>${pc(x.recall)}</td><td>${pc(x.recall_known)}</td><td>${pc(x.top20_precision)}</td><td>${pc(x.top20_lead7)}</td><td>${x.lead_median??"—"}</td><td>${pc(x.major_missed)}</td><td>${x.false_pos}</td><td>${x.extra_hits??""}</td></tr>`);
+    $("#bt-rows").innerHTML=rows.join("")||`<tr><td colspan="14" class="note">결과 없음</td></tr>`;
+    $("#bt-notes").textContent=(d.notes||[]).join(" · ")+" · 합집합으로도 놓친 주요 상승: "+Object.entries(d.union).map(([h,u])=>`${h}일 ${pc(u.major_missed_all)}(처음 등장 ${u.major_first_seen}건)`).join(", ")+" · *선행 일수는 그 방법이 맞힌 사례만 — 방법끼리 견주는 값 아님";
+  }catch(e){$("#bt-rows").innerHTML=`<tr><td colspan="14" class="note">${esc(e.message)}</td></tr>`}}
 if($("#bt-go"))$("#bt-go").onclick=loadBacktest;
 </script>
 </body>
