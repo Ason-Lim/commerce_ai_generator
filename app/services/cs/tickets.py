@@ -28,6 +28,8 @@ SPEC: dict[str, dict] = {
     "food_safety": {"label": "식품 안전 신고", "human": True, "due": ("today", 0), "alert": True, "follow": False},
     "privacy":     {"label": "개인정보 요청", "human": True, "due": ("days", 10), "alert": True, "follow": True},
     "dispute":     {"label": "분쟁·보상 문의", "human": True, "due": ("bizdays", 10), "alert": True, "follow": True},
+    # 2026-11-24 B2B 폐쇄몰 임직원 문의 (배송·교환·하자·기타) — 1차는 모두 운영자가 답한다. 직원 화면에서 답을 본다.
+    "corpmall":    {"label": "폐쇄몰 문의", "human": True, "due": ("bizdays", 1), "alert": True, "follow": True},
 }
 FOLLOW_BIZDAYS = 3
 STATUSES = ("open", "answered", "closed")
@@ -148,6 +150,25 @@ def forget_owner(owner: str | None) -> int:
         if n:
             _save(items)
     return n
+
+
+def rename_owner(old: str, new: str) -> int:
+    """폐쇄몰 코드 재발급 — 그 코드로 남긴 문의를 새 코드에 잇는다."""
+    n = 0
+    with _LOCK:
+        items = _load()
+        for t in items:
+            if t.get("owner") == old:
+                t["owner"] = new
+                n += 1
+        if n:
+            _save(items)
+    return n
+
+
+def open_count(owner: str) -> int:
+    with _LOCK:
+        return sum(1 for t in _load() if t.get("owner") == owner and t.get("status") == "open")
 
 
 # ── 관리자만 (app/admin/routes.py — 토큰 필요) ──

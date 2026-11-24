@@ -2,6 +2,7 @@
 
   GET  /corp/{slug}                 직원 선물 페이지 (검색 노출 막음)
   POST /corp/api/{slug}/enter       {code} → 몰·상품·지금 고른 것 (code = 짧은 코드 또는 초대 링크 토큰, 소진 없음)
+  POST /corp/api/{slug}/ask         {code, topic, text} → 임직원 문의 (CS 티켓, 답은 같은 코드로 들어오면 보임)
   POST /corp/api/{slug}/choose      {code, item_id, shipping?, consent, verify?} → 선택 저장(마감 전 변경 가능)
 
 운영자 API 는 app/admin/routes.py (/admin/api/corpmall/...).
@@ -58,6 +59,13 @@ class ChooseIn(BaseModel):
     verify: str | None = Field(None, max_length=8)  # 배송지 바꿀 때 — 처음 넣은 휴대폰 끝 4자리
 
 
+class AskIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(..., max_length=40)
+    topic: str = Field(..., max_length=12)
+    text: str = Field(..., max_length=400)
+
+
 @router.get("/corp/{slug}")
 def corp_page(slug: str):
     if not store.SLUG_RE.fullmatch(slug):
@@ -90,6 +98,15 @@ def corp_choose(slug: str, body: ChooseIn, request: Request):
             consent=body.consent,
             verify=body.verify,
         )
+        return JSONResponse({"ok": True, **got}, headers=NOINDEX)
+    except store.MallError as e:
+        return _err(e)
+
+
+@router.post("/corp/api/{slug}/ask")
+def corp_ask(slug: str, body: AskIn, request: Request):
+    try:
+        got = store.ask(_eng(), slug, body.code, body.topic, body.text, _client(request))
         return JSONResponse({"ok": True, **got}, headers=NOINDEX)
     except store.MallError as e:
         return _err(e)

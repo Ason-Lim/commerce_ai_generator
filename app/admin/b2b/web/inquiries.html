@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2B 문의 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb;--mut-s:#eef1f4}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 14px;position:sticky;top:0;height:100vh}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:9px 12px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650}
+nav a:hover{background:#15222f}
+.railnote{font-size:12px;color:#7f93a8;margin-top:22px;line-height:1.6}
+main{padding:22px 28px 60px;min-width:0}
+.top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.top h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--mut-s);border-radius:12px;padding:4px}
+.tabs button{border:0;background:transparent;border-radius:9px;padding:6px 14px;cursor:pointer;font-weight:600;color:var(--ink2)}
+.tabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.banner{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin:0 0 14px}
+.banner b{font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi span{display:block;font-size:12px;color:var(--ink3)} .kpi b{font-size:22px;font-variant-numeric:tabular-nums}
+.kpi.k-open b{color:var(--ok)} .kpi.k-closing b{color:var(--hold)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+select,input[type=search],input[type=text],input[type=date],textarea{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;font-size:13.5px}
+input[type=search]{min-width:200px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:13.5px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;align-items:start}
+.grid.nodetail{grid-template-columns:minmax(0,1fr)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.panel h3{margin:0 0 10px;font-size:15px}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+thead th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap}
+tbody tr{cursor:pointer} tbody tr:hover td{background:#f8fafc} tbody tr[aria-selected=true] td{background:var(--acc-s)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;display:inline-block}
+.s-입찰중{background:var(--ok-s);color:var(--ok)} .s-마감임박{background:var(--hold-s);color:var(--hold)}
+.s-입찰마감{background:var(--mut-s);color:var(--ink3)} .s-마감일{background:var(--mut-s);color:var(--ink2)}
+.v{font-size:11px;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.v-verified{background:var(--ok-s);color:var(--ok)} .v-document_provided{background:var(--acc-s);color:var(--acc)}
+.v-unverified{background:var(--hold-s);color:var(--hold)} .v-legacy_unverified{background:var(--ex-s);color:var(--ex)}
+.t{font-weight:600} .t small{display:block;color:var(--ink3);font-weight:400;font-size:12px}
+.dday{font-size:11.5px;color:var(--ink3)}
+.empty{color:var(--ink3);padding:24px 6px;text-align:center}
+/* 상세 */
+.detail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.detail h3{font-size:16px;line-height:1.4}
+dl.kv{display:grid;grid-template-columns:86px 1fr;gap:4px 10px;margin:0 0 12px;font-size:13px}
+dl.kv dt{color:var(--ink3)} dl.kv dd{margin:0;word-break:break-all}
+.sec{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.sec h4{margin:0 0 6px;font-size:13.5px}
+.sec ul{margin:0;padding-left:18px;font-size:13px}
+.basis{font-size:12px;color:var(--ink3);margin-top:6px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.up{display:inline-block}
+.log{background:#0f1a24;color:#cfe0f0;border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto;margin-bottom:12px}
+/* 트렌드 */
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.hb{display:grid;grid-template-columns:160px 1fr 92px;gap:10px;align-items:center;font-size:13px;margin:5px 0}
+.hb .track{height:12px;background:var(--mut-s);border-radius:6px;overflow:hidden}
+.hb .track i{display:block;height:100%;background:var(--acc);border-radius:6px}
+.hb .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.months{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px;border-bottom:1px solid var(--line)}
+.months div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.months i{display:block;width:70%;background:var(--acc);border-radius:4px 4px 0 0}
+.months b{font-size:11.5px;font-weight:600;color:var(--ink2)}
+.mlabels{display:flex;gap:6px} .mlabels span{flex:1;text-align:center;font-size:11px;color:var(--ink3);min-width:0;overflow:hidden}
+.report li{margin:4px 0}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px}
+/* 점검 */
+.evrow{display:grid;grid-template-columns:70px 1fr 70px 220px;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:13.5px}
+.evrow input{width:60px}
+.evres{font-size:28px;font-weight:800} .evres small{font-size:14px;color:var(--ink3);font-weight:500}
+dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog form{padding:20px;display:grid;gap:10px}
+dialog label{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
+dialog textarea{min-height:120px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.detail{position:static;max-height:none}.kpis{grid-template-columns:repeat(3,1fr)}.tgrid{grid-template-columns:1fr}}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}.kpis{grid-template-columns:repeat(2,1fr)}
+ .hb{grid-template-columns:110px 1fr 56px}.evrow{grid-template-columns:1fr 1fr}.tabs{margin-left:0}}
+.tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.code-out{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:8px}
+textarea.spec{width:100%;min-height:260px;font-family:ui-monospace,monospace;font-size:12.5px}
+.st{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px}
+.st-draft{background:var(--mut-s);color:var(--ink2)} .st-open{background:var(--ok-s);color:var(--ok)} .st-closed,.st-ended{background:var(--hold-s);color:var(--hold)}
+tbody tr{cursor:default}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries" aria-current="page">문의</a><a href="/admin/b2b/mall">폐쇄몰</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <div class="railnote"><b>문의 창구 1차.</b> 기업·기관이 <code>/biz/inquiry</code> 에서 남긴 문의예요.<br><br>
+  ① 새 문의 확인 → ② <b>콘솔로 분석</b>(연락처 빼고 조건만 공고로 등록) → 견적 요청서·제안서 초안 → ③ <b>사람이 확인하고 직접 회신</b> → ④ 상태 표시.<br><br>
+  이 서비스는 메일·메시지를 보내지 않아요. '견적·제안 보냄'은 사람이 보낸 문서를 확인했다고 표시해야 바뀌어요.<br><br>
+  연락처는 상세에서만 보이고, 수주 못 함·종결 뒤 180일이 지나면 지워요.</div>
+</aside>
+<main>
+  <div class="top"><h2>B2B 문의</h2><span class="spacer"></span>
+    <select id="stSel" aria-label="상태로 거르기"><option value="">전체</option></select></div>
+  <div id="err" class="banner" hidden></div>
+  <div class="kpis" style="margin-top:14px" id="kpis"></div>
+  <div class="grid nodetail">
+    <section class="panel" aria-labelledby="list-h">
+      <h3 id="list-h">문의 목록</h3>
+      <div class="tblwrap"><table><thead><tr><th>접수</th><th>회사·기관</th><th>시기</th><th class="num">인원</th><th class="num">1인 예산</th><th>희망일</th><th>상태</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </section>
+    <section class="panel" id="detail" hidden aria-labelledby="d-h">
+      <h3 id="d-h"></h3>
+      <dl class="kv" id="kv"></dl>
+      <div class="actions">
+        <button class="btn primary" type="button" id="bidBtn">콘솔로 분석 (조건만 공고로 등록)</button>
+        <select id="nextSt" aria-label="바꿀 상태"></select>
+        <label style="font-size:13px"><input type="checkbox" id="human" style="width:auto"> 보낸 견적·제안서를 사람이 확인했어요</label>
+        <input type="text" id="stNote" maxlength="200" placeholder="메모 (선택)" aria-label="상태 메모" style="min-width:200px">
+        <button class="btn" type="button" id="stBtn">상태 바꾸기</button>
+      </div>
+      <div class="bar" style="margin-top:8px"><input type="text" id="noteTxt" maxlength="500" placeholder="처리 메모 (연락처는 적지 마세요 — 가려져요)" aria-label="처리 메모" style="flex:1">
+        <button class="btn" type="button" id="noteBtn">메모 남기기</button></div>
+      <h3 style="margin-top:14px">기록</h3><ul id="ev" class="basis"></ul>
+    </section>
+  </div>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const when=v=>String(v||"").replace("T"," ").slice(0,16);
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/b2b/inquiries";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{const j=await r.json();m=typeof j.detail==="string"?j.detail:JSON.stringify(j.detail)}catch{}throw new Error(m)}return r.json()}
+const post=(u,b)=>api(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})});
+function err(e){if(e.message==="auth")return;const b=$("#err");b.hidden=false;b.textContent="문제가 생겼어요: "+e.message}
+const DLV={individual:"직원 개별 배송",bulk:"회사 일괄 배송",coupon:"모바일 쿠폰",undecided:"미정"};
+const KIND={company:"기업 자체 구매",public_bid:"공공기관 입찰 공고"};
+let LABELS={},CUR=null;
+async function load(sel){
+  let d;try{d=await api("/admin/api/b2b-inquiry"+($("#stSel").value?"?status="+$("#stSel").value:""))}catch(e){return err(e)}
+  LABELS=d.labels;
+  if($("#stSel").options.length<2){for(const[k,v]of Object.entries(LABELS)){$("#stSel").add(new Option(v,k));$("#nextSt").add(new Option(v,k))}}
+  $("#kpis").innerHTML=["new","reviewing","quoted","won"].map(k=>`<div class="kpi"><span>${esc(LABELS[k])}</span><b>${d.counts[k]||0}</b></div>`).join("");
+  $("#rows").innerHTML=d.inquiries.length?d.inquiries.map(q=>`<tr data-id="${esc(q.inquiry_id)}" style="cursor:pointer" tabindex="0"><td><code>${esc(q.inquiry_id)}</code><br><small>${esc(when(q.created_at))}</small></td>
+    <td>${esc(q.company)}</td><td>${esc(q.occasion)}</td><td class="num">${q.headcount??"—"}</td><td class="num">${q.budget_per_person?q.budget_per_person.toLocaleString()+"원":"—"}</td>
+    <td>${esc(q.due_date||"—")}</td><td>${esc(q.status_label)}</td></tr>`).join(""):'<tr><td colspan="7" class="empty">문의가 없어요</td></tr>';
+  document.querySelectorAll("#rows tr[data-id]").forEach(tr=>{tr.onclick=()=>open_(tr.dataset.id);tr.onkeydown=e=>{if(e.key==="Enter")open_(tr.dataset.id)}});
+  if(sel)open_(sel);
+}
+async function open_(id){
+  let d;try{d=(await api("/admin/api/b2b-inquiry/"+id)).inquiry}catch(e){return err(e)}
+  CUR=d;$("#detail").hidden=false;$("#d-h").textContent=`${d.company} · ${d.inquiry_id}`;
+  const c=d.contact;
+  const kv=[["상태",d.status_label],["구매 방식",KIND[d.kind]],["시기",d.occasion],["인원",d.headcount?d.headcount+"명":"—"],
+    ["1인 예산",d.budget_per_person?d.budget_per_person.toLocaleString()+"원":"—"],["희망일",d.due_date||"—"],["받는 방법",DLV[d.delivery]],
+    ["공고 주소",d.notice_url?`<a href="${esc(d.notice_url)}" target="_blank" rel="noopener noreferrer">${esc(d.notice_url)}</a>`:"—",true],
+    ["요청 내용",d.message||"—"],["가린 개인정보",(d.masked||[]).join(", ")||"없음"],
+    ["담당자",c?[c.name,c.email,c.phone].filter(Boolean).join(" · "):(d.purged?"보존 기간이 지나 지웠어요":"—")],
+    ["콘솔 공고",d.bid_id?`<a href="/admin/b2b?q=${encodeURIComponent(d.bid_id+" 분석해줘")}">${esc(d.bid_id)} 분석 열기</a>`:"아직 없음",true]];
+  $("#kv").innerHTML=kv.map(([k,v,raw])=>`<dt>${k}</dt><dd>${raw?v:esc(v)}</dd>`).join("");
+  $("#nextSt").value=d.status;$("#human").checked=false;$("#stNote").value="";
+  $("#ev").innerHTML=(d.events||[]).slice().reverse().map(e=>`<li>${esc(when(e.at))} · ${esc(e.kind)}${e.to?" → "+esc(LABELS[e.to]||e.to):""}${e.bid_id?" "+esc(e.bid_id):""}${e.text?" · "+esc(e.text):""}${e.note?" · "+esc(e.note):""}${e.human_checked?" · 사람 확인":""} (${esc(e.by)})</li>`).join("");
+}
+$("#stSel").onchange=()=>load();
+$("#bidBtn").onclick=async()=>{try{const r=await post(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/to-bid`);location.href=r.console}catch(e){err(e)}};
+$("#stBtn").onclick=async()=>{try{await post(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/status`,{status:$("#nextSt").value,note:$("#stNote").value,human_checked:$("#human").checked});load(CUR.inquiry_id)}catch(e){err(e)}};
+$("#noteBtn").onclick=async()=>{const t=$("#noteTxt").value.trim();if(!t)return;try{await post(`/admin/api/b2b-inquiry/${CUR.inquiry_id}/note`,{text:t});$("#noteTxt").value="";open_(CUR.inquiry_id)}catch(e){err(e)}};
+load();
+</script>
+</body>
+</html>

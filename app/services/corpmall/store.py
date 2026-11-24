@@ -293,6 +293,12 @@ def void_and_reissue(eng, mall_id: str, label: int) -> tuple[int, str, str]:
         )
         c.execute(update(t_order).where(t_order.c.code_hash == row["code_hash"]).values(code_hash=h))
         _event(c, mall_id, "code_reissued", {"old": label, "new": new_label})
+    try:
+        from app.services.cs import tickets
+
+        tickets.rename_owner(asker(mall_id, label), asker(mall_id, new_label))
+    except Exception:  # noqa: BLE001 — 문의 잇기 실패가 재발급을 막지 않게
+        pass
     return new_label, pretty(code), token
 
 
@@ -397,6 +403,51 @@ def _resolve(eng, slug: str, code: str, client: str):
     return m, row, order
 
 
+def _asks(mall_id: str, label: int) -> list[dict]:
+    try:
+        from app.services.cs import tickets
+
+        return tickets.for_owner(asker(mall_id, label))
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def asker(mall_id: str, label: int) -> str:
+    """폐쇄몰 문의 티켓의 주인 — 코드 번호만 (이름 없음)."""
+    return f"corp:{mall_id}:{label}"
+
+
+ASK_TOPICS = {"delivery": "배송", "exchange": "교환·반품", "defect": "상품 이상", "other": "기타"}
+MAX_OPEN_ASKS = 5
+
+
+def ask(eng, slug: str, code: str, topic: str, text: str, client: str) -> dict:
+    """임직원 문의 → CS 티켓(분야 corpmall). 문장은 개인정보 모양을 가린 뒤 저장. 답은 같은 코드로 들어오면 보인다."""
+    from app.services.cs import tickets
+    from app.services.privacy import pii
+
+    m, row, _ = _resolve(eng, slug, code, client)
+    if topic not in ASK_TOPICS:
+        raise MallError("문의 종류를 골라 주세요")
+    body = " ".join((text or "").split())[:400]
+    if len(body) < 2:
+        raise MallError("문의 내용을 적어 주세요")
+    owner = asker(m["mall_id"], row["label"])
+    if tickets.open_count(owner) >= MAX_OPEN_ASKS:
+        raise MallError("답을 기다리는 문의가 많아요. 답을 받은 뒤 다시 남겨 주세요")
+    masked, kinds = pii.mask(body)
+    t = tickets.create(
+        "corpmall",
+        sid=secrets.token_hex(4),
+        owner=owner,
+        summary=f"[{m['slug']} #{row['label']} {ASK_TOPICS[topic]}] {masked}",
+        by="customer",
+    )
+    with eng.begin() as c:
+        _event(c, m["mall_id"], "asked", {"topic": topic})
+    return {"ticket_id": t["id"], "masked": kinds, "asks": tickets.for_owner(owner)}
+
+
 def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None) -> dict:
     """코드(또는 초대 링크 토큰) 확인 → 몰·상품·지금 고른 것. 아무것도 소진하지 않는다."""
     m, row, order = _resolve(eng, slug, code, client)
@@ -409,7 +460,13 @@ def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None)
             "shipping": _mask(_dec(order["ship_enc"])) if order["ship_enc"] else None,
             "chosen_at": order["chosen_at"].isoformat() if order["chosen_at"] else None,
         }
-    return {"mall": public_mall(m), "window": _window(m, at or now()), "order": mine, "label": row["label"]}
+    return {
+        "mall": public_mall(m),
+        "window": _window(m, at or now()),
+        "order": mine,
+        "label": row["label"],
+        "asks": _asks(m["mall_id"], row["label"]),
+    }
 
 
 SHIP_FIELDS = {"name": 30, "phone": 20, "zipcode": 10, "address": 200, "memo": 100}
@@ -691,6 +748,8 @@ def events(eng, mall_id: str, limit: int = 50) -> list[dict]:
 
 
 __all__ = [
+    "ask",
+    "asker",
     "orders",
     "MallError",
     "engine",

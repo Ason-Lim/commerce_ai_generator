@@ -27,7 +27,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.admin.auth import COOKIE, guest_trends_on, request_ok, require_admin, token_ok
 
@@ -1416,6 +1416,78 @@ def b2b_console_page(request: Request):
 @router.get("/admin/b2b/mall")
 def admin_b2b_mall(request: Request):
     return _page(request, B2B_WEB / "mall.html")
+
+
+@router.get("/admin/b2b/inquiries")
+def admin_b2b_inquiries(request: Request):
+    return _page(request, B2B_WEB / "inquiries.html")
+
+
+# ── B2B 문의 창구 (2026-11-24) — 설계 claude/b2b_inquiry_desk_2026-11-24.md ──
+class _InqStatusIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: str = Field(..., max_length=12)
+    note: str = Field("", max_length=200)
+    human_checked: bool = False
+
+
+class _InqNoteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(..., min_length=1, max_length=500)
+
+
+def _inq():
+    from app.services.b2b_inquiry import store
+
+    return store, store.engine()
+
+
+def _inq_call(fn):
+    from app.services.b2b_inquiry import store
+
+    try:
+        return fn()
+    except store.InquiryError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/b2b-inquiry", dependencies=[api])
+def b2b_inquiry_list(status: str | None = None):
+    """목록 — 연락처 없음."""
+    store, eng = _inq()
+    return {"inquiries": store.list_inquiries(eng, status), "counts": store.counts(eng),
+            "labels": store.STATUS_LABEL}
+
+
+@router.get("/admin/api/b2b-inquiry/{iid}", dependencies=[api])
+def b2b_inquiry_detail(iid: str):
+    """상세 — 회신하려면 연락처가 필요하므로 여기서만 복호화해 보여 준다."""
+    store, eng = _inq()
+    d = store.get(eng, iid, with_contact=True)
+    if d is None:
+        raise HTTPException(404, "inquiry not found")
+    return {"inquiry": d}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/status", dependencies=[api])
+def b2b_inquiry_status(iid: str, body: _InqStatusIn):
+    store, eng = _inq()
+    return {"ok": True, "inquiry": _inq_call(lambda: store.set_status(eng, iid, body.status, by="operator", note=body.note,
+                                                                       human_checked=body.human_checked))}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/note", dependencies=[api])
+def b2b_inquiry_note(iid: str, body: _InqNoteIn):
+    store, eng = _inq()
+    return {"ok": True, "inquiry": _inq_call(lambda: store.note(eng, iid, body.text, by="operator"))}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/to-bid", dependencies=[api])
+def b2b_inquiry_to_bid(iid: str):
+    """조건만(연락처 없이) 콘솔 공고로 등록 → 콘솔에서 바로 분석하도록 주소를 돌려준다."""
+    store, eng = _inq()
+    bid_id = _inq_call(lambda: store.to_bid(eng, iid, by="operator"))
+    return {"ok": True, "bid_id": bid_id, "console": "/admin/b2b?q=" + quote(f"{bid_id} 분석해줘")}
 
 
 class _MallIn(BaseModel):
