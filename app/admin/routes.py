@@ -230,9 +230,12 @@ _BACKTEST_CACHE: dict = {}
 
 @router.get("/admin/api/trends/forecast/next4w")
 def trends_forecast_next4w(request: Request, as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
-                           weeks: int = Query(4, ge=1, le=6), top_n: int = Query(20, ge=5, le=50)):
+                           weeks: int = Query(4, ge=1, le=6), top_n: int = Query(20, ge=5, le=50),
+                           coupang: int = Query(0, ge=0, le=1)):
     """다음 4주 예보 (2026-11-24, 예측 창 ⑤ 1차) — 백테스트에서 나았던 기준선 2종(전년 같은 주·행사 상대일)의 후보 목록.
-    탐색기는 쓰지 않는다. 관리자 전용 — 고객 화면·추천 순위에 쓰지 않는다."""
+    탐색기는 쓰지 않는다. 관리자 전용 — 고객 화면·추천 순위에 쓰지 않는다.
+    coupang=1 이면 후보 키워드(주끼리 겹치면 한 번만)의 쿠팡 파트너스 상품 후보 수를 함께 (쿠팡 호출 — 느림).
+    기본(0)은 쿠팡을 부르지 않고 coupang=None(미확인)."""
     from app.services.trends import period
     from app.services.trends.forecast import next_weeks as nw
 
@@ -244,9 +247,13 @@ def trends_forecast_next4w(request: Request, as_of: str | None = Query(None, pat
     day = date.fromisoformat(as_of) if as_of else date.today()
     out = nw.next_weeks(rank_dir, day, weeks=weeks, top_n=top_n)
     has = _period_has_link()
+    kws = list(dict.fromkeys(it["keyword"] for w in out["weeks"] for it in w["items"]))
+    cp = _coupang_links(kws) if coupang and kws else None
     for w in out["weeks"]:
         for it in w["items"]:
             it["has_link"] = has(it["keyword"]) if has else None
+            it["coupang"] = None if cp is None else len(cp.get(it["keyword"]) or [])   # 쿠팡 파트너스 상품 후보 수
+    out["coupang_checked"] = cp is not None
     out["source"] = {"kind": kind, "note": period.source_note(kind, rank_dir)}
     return out
 
