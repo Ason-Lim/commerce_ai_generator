@@ -254,7 +254,9 @@ def _eta(m, order, window, man, today: date, by: str) -> Reply:
     arrive = man.get("arrive_note") or "출고 뒤 도착까지는 택배사 사정에 따라 달라요."
     courier = man.get("courier") or "택배사"
     st = (order or {}).get("ship_status")
-    facts = {"ship_plan": plan, "status": st}
+    target = man.get("arrive_by")  # 도착 요청일 — 출고 예정일과 다른 날(목표일이지 약속 아님)
+    tgt = f" 도착은 {manual.fmt_day(target)}까지를 목표로 해요(출고일과 달라요)." if target else ""
+    facts = {"ship_plan": plan, "arrive_by": target, "status": st}
     if not order:
         if window == "closed":
             return Reply("eta", by, "선택이 마감됐어요. 받는 방법은 회사 담당자에게 물어봐 주세요.", facts=facts)
@@ -293,6 +295,7 @@ def _eta(m, order, window, man, today: date, by: str) -> Reply:
             by,
             "회사로 한꺼번에 보내는 선물이에요. "
             + (f"{manual.fmt_day(plan)} 출고 예정이고, " if plan else "")
+            + (f"{manual.fmt_day(target)}까지 지정 장소 도착을 목표로 해요. " if target else "")
             + "받는 날은 회사 담당자 안내를 따라 주세요.",
             facts=facts,
         )
@@ -309,7 +312,7 @@ def _eta(m, order, window, man, today: date, by: str) -> Reply:
                 offer_handoff=False,
                 facts=facts,
             )
-        return Reply("eta", by, head + f"{manual.fmt_day(plan)} 출고 예정이에요. {arrive}", facts=facts)
+        return Reply("eta", by, head + f"{manual.fmt_day(plan)} 출고 예정이에요. {arrive}{tgt}", facts=facts)
     return Reply("eta", by, head + "출고일이 정해지면 이 페이지에 안내할게요.", facts=facts)
 
 

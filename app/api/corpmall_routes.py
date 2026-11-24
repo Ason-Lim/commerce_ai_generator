@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
@@ -223,6 +225,8 @@ class PoAckIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     key: str = Field(..., max_length=40)
     name: str = Field(..., max_length=30)
+    action: Literal["accept", "change", "cancel_ok"] = "accept"
+    agree: bool = False  # '수량·단가·금액·출고 기한을 확인하고 수락합니다' 체크
     ship_date: str | None = Field(None, max_length=10)
     memo: str = Field("", max_length=300)
 
@@ -250,9 +254,15 @@ def corp_po_ack(po_no: str, body: PoAckIn, request: Request):
 
     try:
         eng = _eng()
-        podoc.acknowledge(
-            eng, po_no, body.key, _client(request), name=body.name, ship_date=body.ship_date, memo=body.memo
-        )
+        p = podoc.respond(
+            eng, po_no, body.key, _client(request), action=body.action, name=body.name, agree=body.agree,
+            ship_date=body.ship_date, memo=body.memo,
+        )  # fmt: skip
+        if p["status"] == "cancelled":  # 취소 확인 뒤에는 링크가 닫힌다
+            return JSONResponse(
+                {"ok": True, "po": {"po_no": po_no, "status": "cancelled", "status_label": p["status_label"]}},
+                headers=NOINDEX,
+            )
         return JSONResponse({"ok": True, **podoc.public_view(eng, po_no, body.key, _client(request))}, headers=NOINDEX)
     except store.MallError as e:
         return _err(e)

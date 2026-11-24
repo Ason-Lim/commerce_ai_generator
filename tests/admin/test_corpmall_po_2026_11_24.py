@@ -28,6 +28,17 @@ SHIP = {
 H = {"X-Access-Token": "test-token"}
 
 
+PROFILE = {"company_name": "커머스에이아이", "business_no": "000-00-00000", "address": "서울"}
+
+
+@pytest.fixture(autouse=True)
+def _profile(monkeypatch):
+    """발주사 정보가 있어야 정식 발주(없으면 미확정) — 검토 반영 2026-11-24."""
+    from app.admin.b2b import proposal
+
+    monkeypatch.setattr(proposal, "load_profile", lambda path=None: dict(PROFILE))
+
+
 @pytest.fixture
 def eng(tmp_path, monkeypatch):
     monkeypatch.setenv("CS_DIR", str(tmp_path / "cs"))
@@ -72,6 +83,7 @@ def test_suppliers_are_internal_only(eng):
         "supplier": "가나식품",
         "sku": "HG-18",
         "unit_cost": None,
+        "tax_type": "taxable",
     }
     pub = corp.enter(eng, "p-sup", codes[0][1], "ip", at=IN)["mall"]
     assert "가나식품" not in repr(pub) and "HG-18" not in repr(pub)
@@ -184,6 +196,8 @@ def test_routes(eng):
     assert b["ok"] and b["orders"] == 1
     assert cl.get(f"{base}/po", headers=H).json()["batches"][0]["batch_id"] == b["batch_id"]
     f = cl.get(f"{base}/po/{b['batch_id']}/file", params={"supplier": "가나식품"}, headers=H)
+    assert f.status_code == 400 and "미확정" in f.json()["detail"]  # 이름만 → 미확정, 공급사 전달용 파일 안 됨
+    f = cl.get(f"{base}/po/{b['batch_id']}/file", headers=H)  # 운영자 통합본은 됨
     assert (
         f.status_code == 200
         and f.headers["cache-control"] == "no-store"

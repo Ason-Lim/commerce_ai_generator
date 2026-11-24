@@ -52,6 +52,17 @@ CANDS = [
 ]
 
 
+PROFILE = {"company_name": "커머스에이아이", "business_no": "000-00-00000", "address": "서울"}
+
+
+@pytest.fixture(autouse=True)
+def _profile(monkeypatch):
+    """발주사 정보가 있어야 정식 발주(없으면 미확정) — 검토 반영 2026-11-24."""
+    from app.admin.b2b import proposal
+
+    monkeypatch.setattr(proposal, "load_profile", lambda path=None: dict(PROFILE))
+
+
 @pytest.fixture
 def eng(tmp_path, monkeypatch):
     monkeypatch.setenv("CS_DIR", str(tmp_path / "cs"))
@@ -155,8 +166,11 @@ def test_settlement_revenue_cost_margin(eng):
     s2 = settle.summary(eng, mid)
     assert s2["cost"]["po_supply"] == 90000 and s2["cost"]["po_unknown"] == 1 and s2["cost"]["estimate"] == []
     assert not s2["margin"]["final"]  # B 발주서 단가 확인 필요
-    pos = {p["supplier"]: p["po_no"] for p in s2["cost"]["po"]}
-    settle.set_po_invoice(eng, mid, next(iter(pos.values())), received_on="2026-12-20")
+    assert s2["cost"]["po_open"] == 1  # B 는 이름만 → 미확정 발주서
+    pos = {p["status"]: p["po_no"] for p in s2["cost"]["po"]}
+    with pytest.raises(corp.MallError, match="미확정"):  # 미확정 발주서엔 매입 세금계산서 표시 안 됨
+        settle.set_po_invoice(eng, mid, pos["draft"], received_on="2026-12-20")
+    settle.set_po_invoice(eng, mid, pos["issued"], received_on="2026-12-20")
     s3 = settle.summary(eng, mid)
     assert s3["invoices"]["purchase_received"] == 1 and s3["invoices"]["purchase_total"] == 2
     settle.set_contract(eng, mid, {"basis": "orders", "invoice_issued_on": "2026-12-21"})
@@ -214,3 +228,15 @@ def test_routes(eng):
         == 400
     )
     assert cl.get("/admin/b2b/settle", headers=H).status_code in (200, 302, 303, 307)
+
+
+def test_settlement_tax_exempt_revenue(eng):
+    """매출 과세·면세 구분 (검토 반영 — 세무 검토 뒤 확정)."""
+    m, codes = _settle_mall(eng, f"st2x-{os.urandom(2).hex()}")
+    corp.choose(eng, m["slug"], codes[0][1], "A", "ip", shipping=SHIP, consent=True, at=IN)
+    settle.set_contract(
+        eng, m["mall_id"], {"unit_price": 33000, "headcount": 2, "vat_mode": "included", "tax_type": "exempt"}
+    )
+    assert settle.summary(eng, m["mall_id"])["revenue"] == {"count": 2, "supply": 66000, "vat": 0, "total": 66000}
+    with pytest.raises(corp.MallError, match="과세 구분"):
+        settle.set_contract(eng, m["mall_id"], {"tax_type": "zero"})

@@ -2,7 +2,8 @@
 
 흐름: 발주서마다 '메일 준비' → 운영자가 받는 사람·제목·본문을 확인(고칠 수 있음) → '보내기'.
 * 받는 사람: 공급 거래처의 발주 담당 메일(거래처 목록, 암호화 보관). 거래처가 '이름만'이면 준비할 수 없다.
-* 본문: 발주 번호·발주일·납기·결제 조건·품목·수량·합계 + **확인 링크**. 링크는 보낼 때마다 새로 만들어 넣고(옛 링크 막힘)
+* 정식 발주서(미확정 아님, 취소·취소 요청 아님)만 준비·보내기·.eml 이 된다. 처음 링크를 넣는 순간 발주서는 '전달됨'.
+* 본문: 발주 번호·발주일·출고 기한·도착 요청일·결제 조건·품목·수량·합계(면세 따로) + **확인 링크**. 링크는 보낼 때마다 새로 만들어 넣고(옛 링크 막힘)
   원문은 저장하지 않는다(본문에는 `{ACK_LINK}` 자리 표시만).
 * **배송 정보는 기본적으로 메일에 넣지 않는다.** 공급사는 확인 링크 화면에서 배송 목록 파일을 받는다(발주 뒤 30일까지, 받을 때마다 기록).
   운영자가 '첨부도 넣기'를 고르면 공급사 전달용 엑셀을 첨부한다(그 공급사 것만).
@@ -62,16 +63,21 @@ def compose(p: dict, orderer: str | None) -> tuple[str, str]:
             "",
             f"발주 번호: {p['po_no']}",
             f"발주일: {(p['issued_at'] or '')[:10]}",
-            f"납기(출고): {p['due_date'] or '협의'}",
+            f"출고 기한: {p.get('ship_by') or p['due_date'] or '협의'}",
+            f"도착 요청일: {p.get('arrive_by') or '따로 없음'}",
             f"결제 조건: {p['payment_terms'] or '협의'}",
             "단가 기준: " + ("부가세 포함" if p["vat_mode"] == "included" else "부가세 별도"),
             "",
             "품목:",
             *lines,
             "",
-            f"공급가액 {_won(p['supply_amount'])} · 부가세 {_won(p['vat'])} · 합계 {_won(p['total'])}",
+            f"공급가액 {_won(p['supply_amount'])}"
+            + (f"(그중 면세 {_won(p['exempt_amount'])})" if p.get("exempt_amount") else "")
+            + f" · 부가세 {_won(p['vat'])} · 합계 {_won(p['total'])}",
             "",
-            "아래 링크에서 발주서를 확인하고 '발주 확인'을 눌러 주세요. 배송 목록 파일도 이 링크에서 받으실 수 있어요(발주일부터 30일).",
+            "아래 링크에서 수량·단가·금액·출고 기한을 확인하시고 '발주 수락'을 눌러 주세요.",
+            "일부 품목이 안 되거나 기한을 바꿔야 하면 수락하지 마시고 '변경 요청'으로 알려 주세요.",
+            "배송 목록 파일도 이 링크에서 받으실 수 있어요(발주일부터 30일).",
             ACK,
             "",
             "배송 정보는 이 발주의 배송에만 쓰시고, 배송이 끝나면 파기해 주세요. 링크는 다른 분과 나누지 말아 주세요.",
@@ -89,8 +95,13 @@ def prepare(eng, mall_id: str, po_no: str, *, by: str = "operator") -> dict:
     from app.services.corpmall import podoc, suppliers
 
     p = podoc.get(eng, po_no)
-    if p is None or p["mall_id"] != mall_id or p["status"] == "cancelled":
-        raise store.MallError("없거나 취소된 발주서예요")
+    if p is None or p["mall_id"] != mall_id:
+        raise store.MallError("없는 발주서예요")
+    if p["status"] not in podoc.LIVE:
+        raise store.MallError(
+            "미확정·취소(요청)된 발주서는 메일을 준비할 수 없어요"
+            + (" — 빈 곳: " + ", ".join(p["gaps"]) + " → 채운 뒤 '확정'" if p["status"] == "draft" else "")
+        )
     if not p["supplier_id"]:
         raise store.MallError(
             "거래처 목록에 없는 공급사('이름만')라 받는 메일을 몰라요 — 공급 거래처를 먼저 연결해 주세요"
@@ -197,6 +208,9 @@ def _build(eng, d: dict, *, sender: str, sender_name: str = "", base_url: str = 
     """보낼 메일 — 확인 링크를 새로 만들어 넣고, 고른 경우에만 그 공급사 전달용 엑셀을 첨부."""
     from app.services.corpmall import po, podoc
 
+    p = podoc.get(eng, d["po_no"])
+    if p is None or p["status"] not in podoc.LIVE:
+        raise store.MallError("정식 발주서가 아니게 됐어요(미확정·취소·취소 요청) — 이 메일은 보낼 수 없어요")
     link = base_url.rstrip("/") + podoc.ack_link(eng, d["mall_id"], d["po_no"], by="mail")
     msg = EmailMessage()
     msg["Subject"] = d["subject"]
@@ -205,7 +219,6 @@ def _build(eng, d: dict, *, sender: str, sender_name: str = "", base_url: str = 
     msg["Message-ID"] = make_msgid(domain=sender.split("@")[-1] if "@" in sender else None)
     msg.set_content(d["body"].replace(ACK, link))
     if d["attach"]:
-        p = podoc.get(eng, d["po_no"])
         data, name = po.render(eng, d["mall_id"], p["batch_id"], supplier=p["supplier"], by="mail")
         msg.add_attachment(
             data, maintype="application", subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename=name

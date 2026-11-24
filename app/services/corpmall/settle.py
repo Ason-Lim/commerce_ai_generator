@@ -22,8 +22,10 @@ from app.services.corpmall import store
 BASES = {"headcount": "계약 인원", "orders": "실제 주문 수(고른 사람 + 기본 선물)"}
 
 
-def _split(amount: int, vat_mode: str) -> tuple[int, int, int]:
-    """(공급가액, 부가세, 합계)."""
+def _split(amount: int, vat_mode: str, tax_type: str = "taxable") -> tuple[int, int, int]:
+    """(공급가액, 부가세, 합계). 면세면 부가세 없음 — 과세·면세 구분은 세무 검토 뒤 확정."""
+    if tax_type == "exempt":
+        return amount, 0, amount
     if vat_mode == "included":
         supply = round(amount / 1.1)
         return supply, amount - supply, amount
@@ -55,10 +57,13 @@ def set_contract(eng, mall_id: str, raw: dict, *, by: str = "operator") -> dict:
         "headcount": _int("headcount", 1, 1_000_000, "계약 인원"),
         "vat_mode": raw.get("vat_mode", cur.get("vat_mode") or "included"),
         "basis": raw.get("basis", cur.get("basis") or "headcount"),
+        "tax_type": raw.get("tax_type", cur.get("tax_type") or "taxable"),  # 매출 과세·면세 (세무 검토 뒤 확정)
         "source": "계약값(운영자 입력)",
         "invoice_issued_on": raw.get("invoice_issued_on", cur.get("invoice_issued_on")) or None,
         "invoice_memo": " ".join(str(raw.get("invoice_memo", cur.get("invoice_memo")) or "").split())[:200] or None,
     }
+    if out["tax_type"] not in ("taxable", "exempt"):
+        raise store.MallError("매출 과세 구분을 과세·면세 중에서 골라 주세요")
     if out["vat_mode"] not in ("included", "excluded") or out["basis"] not in BASES:
         raise store.MallError("부가세 기준·청구 기준을 다시 골라 주세요")
     if out["invoice_issued_on"]:
@@ -90,12 +95,16 @@ def set_po_invoice(
         n = c.execute(
             update(store.t_po)
             .where(
-                and_(store.t_po.c.po_no == po_no, store.t_po.c.mall_id == mall_id, store.t_po.c.status != "cancelled")
+                and_(
+                    store.t_po.c.po_no == po_no,
+                    store.t_po.c.mall_id == mall_id,
+                    store.t_po.c.status.not_in(("cancelled", "draft")),
+                )
             )
             .values(invoice_received_at=at, invoice_memo=" ".join((memo or "").split())[:200] or None)
         ).rowcount
         if not n:
-            raise store.MallError("없거나 취소된 발주서예요")
+            raise store.MallError("없거나 미확정·취소된 발주서예요")
         store._event(c, mall_id, "po_invoice", {"po_no": po_no, "received": bool(at), "by": by})
 
 
@@ -135,11 +144,15 @@ def summary(eng, mall_id: str) -> dict:
     revenue = None
     count = ct.get("headcount") if ct.get("basis", "headcount") == "headcount" else n_orders
     if ct.get("unit_price") is not None and count:
-        s, v, t = _split(ct["unit_price"] * count, ct.get("vat_mode") or "included")
+        s, v, t = _split(ct["unit_price"] * count, ct.get("vat_mode") or "included", ct.get("tax_type") or "taxable")
         revenue = {"count": count, "supply": s, "vat": v, "total": t}
     # 매입: 발주서 + 아직 안 묶인 주문 추정
-    po_rows, po_supply, po_total, po_unknown = [], 0, 0, 0
+    from app.services.corpmall import podoc
+
+    po_rows, po_supply, po_total, po_unknown, po_open = [], 0, 0, 0, 0
     for p in pos:
+        if p["status"] in ("draft", "cancel_requested", "change_requested"):
+            po_open += 1  # 미확정·취소 요청·변경 요청 — 금액이 바뀔 수 있어 확정 정산 아님
         po_rows.append(
             {
                 "po_no": p["po_no"],
@@ -147,7 +160,9 @@ def summary(eng, mall_id: str) -> dict:
                 "supply": p["supply_amount"],
                 "vat": p["vat"],
                 "total": p["total"],
+                "exempt": p["exempt_amount"],
                 "status": p["status"],
+                "status_label": podoc.STATUS_LABEL.get(p["status"], p["status"]),
                 "invoice_received_on": p["invoice_received_at"].date().isoformat()
                 if p["invoice_received_at"]
                 else None,
@@ -176,10 +191,10 @@ def summary(eng, mall_id: str) -> dict:
         if it.get("supplier_id"):
             ms = sup.get(eng, it["supplier_id"])
             vat_mode = (ms or {}).get("vat_mode", "excluded")
-        s, _, _ = _split(cost * left, vat_mode)
+        s, _, _ = _split(cost * left, vat_mode, it.get("tax_type") or "taxable")
         est_supply += s
         est_lines.append({"item": it.get("name") or iid, "qty": left, "supply": s})
-    cost_complete = po_unknown == 0 and est_unknown == 0
+    cost_complete = po_unknown == 0 and est_unknown == 0 and po_open == 0
     margin = None
     if revenue is not None:
         margin = {
@@ -205,6 +220,7 @@ def summary(eng, mall_id: str) -> dict:
             "po_supply": po_supply,
             "po_total": po_total,
             "po_unknown": po_unknown,
+            "po_open": po_open,
             "estimate": est_lines,
             "estimate_supply": est_supply,
             "estimate_unknown_qty": est_unknown,

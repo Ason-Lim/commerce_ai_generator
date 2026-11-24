@@ -24,6 +24,17 @@ H = {"X-Access-Token": "test-token"}
 BASE = "https://app.example.kr"
 
 
+PROFILE = {"company_name": "커머스에이아이", "business_no": "000-00-00000", "address": "서울"}
+
+
+@pytest.fixture(autouse=True)
+def _profile(monkeypatch):
+    """발주사 정보가 있어야 정식 발주(없으면 미확정) — 검토 반영 2026-11-24."""
+    from app.admin.b2b import proposal
+
+    monkeypatch.setattr(proposal, "load_profile", lambda path=None: dict(PROFILE))
+
+
 @pytest.fixture
 def eng(tmp_path, monkeypatch):
     monkeypatch.setenv("CS_DIR", str(tmp_path / "cs"))

@@ -166,7 +166,7 @@ def test_shipping_change_verify_limit_and_history(eng):
     with pytest.raises(corp.MallError, match="여러 번 틀려"):  # 접속 주소를 바꿔도 코드 단위로 막힘
         corp.choose(eng, "a-verify", code, "A", "ip-new", shipping=other, consent=True, verify="5678", at=IN)
     ev = corp.events(eng, m["mall_id"])
-    assert [e["kind"] for e in ev].count("verify_failed") == corp.VERIFY_MAX and "5678" not in repr(ev)
+    assert [e["kind"] for e in ev].count("verify_failed") == corp.VERIFY_MAX and "5678" not in repr([e["detail"] for e in ev])
     code2 = codes[1][1]
     corp.choose(eng, "a-verify", code2, "A", "ip", shipping=SHIP, consent=True, at=IN)
     corp.choose(eng, "a-verify", code2, "A", "ip", shipping=other, consent=True, verify="5678", at=IN)

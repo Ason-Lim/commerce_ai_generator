@@ -20,7 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import date, timedelta
+from datetime import date
 from typing import Annotated
 from functools import lru_cache
 from pathlib import Path
@@ -1650,10 +1650,19 @@ def corpmall_po_file(mall_id: str, batch_id: str, supplier: str | None = Query(N
 
     store, eng = _corp()
     _mall_or_404(store, eng, mall_id)
+    from app.services.corpmall import podoc
+
     try:
-        data, name = po.render(eng, mall_id, batch_id, supplier=supplier, by="operator")
+        target = next(
+            (p for p in podoc.list_pos(eng, mall_id, batch_id) if p["supplier"] == supplier and p["status"] != "cancelled"),
+            None,
+        ) if supplier else None  # fmt: skip
+        if target is not None:  # 공급사 전달용 — 정식 발주서만, 받으면 '전달됨'
+            data, name = podoc.operator_supplier_file(eng, mall_id, target["po_no"], by="operator")
+        else:
+            data, name = po.render(eng, mall_id, batch_id, supplier=supplier, by="operator")
     except store.MallError as e:
-        raise HTTPException(404, str(e)) from e
+        raise HTTPException(400 if supplier else 404, str(e)) from e
     return Response(
         data,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -1740,7 +1749,7 @@ def b2b_supplier_update(supplier_id: str, body: _SupplierIn):
 
 class _PoAckIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    note: str = Field("", max_length=300)
+    note: str = Field(..., min_length=1, max_length=300)
     ship_date: str | None = Field(None, max_length=10)
 
 
@@ -1783,11 +1792,52 @@ def corpmall_po_mark_ack(mall_id: str, po_no: str, body: _PoAckIn):
 
 @router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/cancel", dependencies=[api])
 def corpmall_po_cancel(mall_id: str, po_no: str, body: _PoCancelIn):
+    """취소 — 공급사에 전달 전이면 바로, 전달 뒤면 '취소 요청'(공급사 취소 확인 뒤 취소)."""
     from app.services.corpmall import podoc
 
     store, eng = _corp()
     try:
         return {"ok": True, "po": podoc.cancel(eng, mall_id, po_no, by="operator", reason=body.reason)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+class _PoNoteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    note: str = Field(..., min_length=1, max_length=200)
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/cancel-confirm", dependencies=[api])
+def corpmall_po_cancel_confirm(mall_id: str, po_no: str, body: _PoNoteIn):
+    """공급사가 메일·전화로 취소를 확인했을 때 운영자 표시 — 근거 메모 필수. 그때 주문이 되돌아간다."""
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.confirm_cancel(eng, mall_id, po_no, by="operator", note=body.note)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/cancel-withdraw", dependencies=[api])
+def corpmall_po_cancel_withdraw(mall_id: str, po_no: str):
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.withdraw_cancel(eng, mall_id, po_no, by="operator")}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/finalize", dependencies=[api])
+def corpmall_po_finalize(mall_id: str, po_no: str):
+    """미확정 발주서 확정 — 거래처·단가·발주사 정보를 채운 뒤 다시 계산해 정식 발주로."""
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.finalize(eng, mall_id, po_no, by="operator")}
     except store.MallError as e:
         raise HTTPException(400, str(e)) from e
 
@@ -1809,6 +1859,7 @@ class _ContractIn(BaseModel):
     unit_price: int | None = Field(None, ge=0, le=10_000_000)
     headcount: int | None = Field(None, ge=1, le=1_000_000)
     vat_mode: str = Field("included", max_length=10)
+    tax_type: str = Field("taxable", max_length=10)  # 매출 과세·면세 (세무 검토 뒤 확정)
     basis: str = Field("headcount", max_length=10)
     invoice_issued_on: str | None = Field(None, max_length=10)
     invoice_memo: str = Field("", max_length=200)

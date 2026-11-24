@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import re
 import secrets
@@ -36,7 +37,7 @@ def _safe(v) -> str | int:
 
 
 def set_suppliers(eng, mall_id: str, mapping: dict) -> list[dict]:
-    """{item_id: {supplier_id | supplier, sku, unit_cost}} → 몰 상품에 공급 거래처·품번·매입 단가.
+    """{item_id: {supplier_id | supplier, sku, unit_cost, tax_type}} → 몰 상품에 공급 거래처·품번·매입 단가·과세 구분.
 
     supplier_id 를 주면 거래처 목록의 이름을 쓴다(정식 발주서·결제 조건·단가 기준이 따라옴). 이름만 주면 거래처 없이 묶음만 나눔.
     매입 단가는 그 거래처의 단가 기준(부가세 별도/포함)으로 적는다. 직원·발주처 화면에는 안 보인다.
@@ -68,6 +69,9 @@ def set_suppliers(eng, mall_id: str, mapping: dict) -> list[dict]:
                     raise store.MallError("매입 단가는 숫자(원)로 적어 주세요") from e
                 if not 0 <= cost <= 10_000_000:
                     raise store.MallError("매입 단가가 너무 커요")
+            tax = v.get("tax_type") or i.get("tax_type") or "taxable"  # 세무 검토 뒤 확정
+            if tax not in ("taxable", "exempt"):
+                raise store.MallError("과세 구분은 과세(taxable)·면세(exempt) 중 하나예요")
             i = {
                 **i,
                 "supplier_id": sid,
@@ -76,6 +80,7 @@ def set_suppliers(eng, mall_id: str, mapping: dict) -> list[dict]:
                 else (" ".join(str(v.get("supplier") or "").split())[:40] or None),
                 "supplier_sku": " ".join(str(v.get("sku") or "").split())[:40] or None,
                 "unit_cost": cost,
+                "tax_type": tax,
             }
         items.append(i)
     with eng.begin() as c:
@@ -90,6 +95,7 @@ def set_suppliers(eng, mall_id: str, mapping: dict) -> list[dict]:
             "supplier": i.get("supplier"),
             "sku": i.get("supplier_sku"),
             "unit_cost": i.get("unit_cost"),
+            "tax_type": i.get("tax_type") or "taxable",
         }
         for i in items
     ]
@@ -258,8 +264,10 @@ def _po_sheet(ws, p: dict) -> None:
 
     pf = load_profile()
     ws.title = "발주서"
-    ws["A1"] = "발 주 서"
+    draft = p.get("status") == "draft"
+    ws["A1"] = "발 주 서 (미확정 — 정식 발주 아님, 공급사에 보내지 마세요)" if draft else "발 주 서"
     ws["A1"].font = Font(bold=True, size=16)
+    ws["D1"] = f"판 {p.get('version') or 1}"
     info = [
         ("발주 번호", p["po_no"]),
         ("발주일", (p["issued_at"] or "")[:10]),
@@ -267,7 +275,8 @@ def _po_sheet(ws, p: dict) -> None:
         ("발주사", pf.get("company_name") or "[확인 필요: 회사명]"),
         ("사업자등록번호", pf.get("business_no") or "[확인 필요: 사업자등록번호]"),
         ("주소", pf.get("address") or "[확인 필요: 주소]"),
-        ("납기(출고)", p["due_date"] or "협의"),
+        ("출고 기한", p.get("ship_by") or p["due_date"] or "협의"),
+        ("도착 요청일", p.get("arrive_by") or "따로 없음"),
         ("결제 조건", p["payment_terms"] or "협의"),
         ("단가 기준", "부가세 포함" if p["vat_mode"] == "included" else "부가세 별도"),
     ]
@@ -276,7 +285,7 @@ def _po_sheet(ws, p: dict) -> None:
         c = ws.cell(row=k, column=2, value=_safe(b))
         c.number_format = "@"
     r0 = 3 + len(info) + 1
-    for j, h in enumerate(["상품", "공급사 품번", "수량", "단가", "금액"], start=1):
+    for j, h in enumerate(["상품", "공급사 품번", "수량", "단가", "금액", "과세 구분"], start=1):
         cell = ws.cell(row=r0, column=j, value=h)
         cell.font = Font(bold=True)
         cell.fill = HEAD_FILL
@@ -287,15 +296,21 @@ def _po_sheet(ws, p: dict) -> None:
         ws.cell(row=k, column=3, value=ln["qty"])
         ws.cell(row=k, column=4, value=ln["unit_cost"] if ln.get("unit_cost") is not None else "단가 확인 필요")
         ws.cell(row=k, column=5, value=ln["amount"] if ln.get("amount") is not None else "")
+        ws.cell(row=k, column=6, value="면세" if ln.get("tax_type") == "exempt" else "과세")
     k = r0 + len(p["lines"]) + 2
-    for a, v in (("공급가액", p["supply_amount"]), ("부가세", p["vat"]), ("합계", p["total"])):
+    money = [("공급가액", p["supply_amount"])]
+    if p.get("exempt_amount"):
+        money.append(("(그중 면세)", p["exempt_amount"]))
+    money += [("부가세", p["vat"]), ("합계", p["total"])]
+    for a, v in money:
         ws.cell(row=k, column=4, value=a).font = Font(bold=True)
         ws.cell(row=k, column=5, value=v if v is not None else "단가 확인 필요")
         k += 1
     ws.cell(
         row=k + 1,
         column=1,
-        value="받으신 뒤 확인 링크로 '발주 확인'을 눌러 주시거나 이 메일에 회신해 주세요. "
+        value="받으신 뒤 확인 링크에서 수량·단가·금액·출고 기한을 보고 '발주 수락' 또는 '변경 요청'을 눌러 주세요"
+        "(메일 회신도 됩니다). 일부 불가·기한 변경은 수락하지 말고 변경 요청으로 알려 주세요. "
         "다음 시트의 배송 정보는 이 발주의 배송에만 쓰고 배송 뒤 파기해 주세요.",
     )
     for col, w in zip("ABCDE", (18, 34, 8, 14, 16), strict=False):
@@ -391,10 +406,26 @@ def render(eng, mall_id: str, batch_id: str, *, supplier: str | None = None, by:
                 )
         for col, w in zip("ABCDEFGHIJ", (14, 24, 14, 6, 10, 15, 9, 40, 20, 18), strict=False):
             ws.column_dimensions[col].width = w
-    with eng.begin() as c:  # 누가 어떤 파일을 받았는지 (배송 정보 없음)
-        store._event(c, mall_id, "po_download", {"batch_id": batch_id, "supplier": supplier or "(통합본)", "by": by})
     buf = io.BytesIO()
     wb.save(buf)
+    p1 = pos.get(supplier) if supplier is not None else None
+    with (
+        eng.begin() as c
+    ):  # 누가 어떤 판의 파일을 받았는지 + 내용 지문(배송 정보 없음) — 파일은 남기지 않고 생성 이력만
+        store._event(
+            c,
+            mall_id,
+            "po_download",
+            {
+                "batch_id": batch_id,
+                "supplier": supplier or "(통합본)",
+                "by": by,
+                "po_no": p1["po_no"] if p1 else None,
+                "version": p1["version"] if p1 else None,
+                "po_total": p1["total"] if p1 else None,
+                "sha256": hashlib.sha256(buf.getvalue()).hexdigest()[:16],
+            },
+        )
     tag = "통합본" if supplier is None else _BAD_SHEET.sub(" ", supplier)
     return buf.getvalue(), f"{m['slug']}_{batch_id}_{tag}.xlsx"
 

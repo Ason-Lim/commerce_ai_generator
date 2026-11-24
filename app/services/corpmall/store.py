@@ -144,7 +144,17 @@ t_po = Table(
     Column("supply_amount", Integer),
     Column("vat", Integer),
     Column("total", Integer),
-    Column("status", String(14), nullable=False, default="issued"),  # issued · acknowledged · cancelled
+    # draft(미확정 — 정식 발주 아님) · issued(정식 발주) · accepted(공급사 수락) · change_requested(공급사 변경 요청 — 운영자 검토)
+    # · cancel_requested(전달된 발주 취소 요청 — 공급사 취소 확인 기다림) · cancelled
+    Column("status", String(18), nullable=False, default="issued"),
+    Column("exempt_amount", Integer),  # 면세 품목 금액 (공급가액에 포함, 부가세 없음)
+    Column("ship_by", String(10)),  # 출고 기한 (due_date 와 같은 값 — 뜻을 분명히)
+    Column("arrive_by", String(10)),  # 도착 요청일 (몰 매뉴얼) — 출고 기한과 따로
+    Column("delivered_at", DateTime(timezone=True)),  # 공급사에 처음 전달된 때(메일·.eml·확인 링크·전달용 파일)
+    Column("viewed_at", DateTime(timezone=True)),  # 공급사가 확인 화면을 처음 연 때
+    Column("version", Integer),
+    Column("history", JSON),  # [{at, by, what, before, after}] — 상태·확정·공급사 응답 변경 이력
+    Column("cancel_reason", String(200)),
     Column("ack_token_hash", String(64)),
     Column("ack_at", DateTime(timezone=True)),
     Column("ack_by", String(30)),
@@ -212,6 +222,19 @@ def _migrate(eng) -> None:
         if name not in cols:
             with eng.begin() as c:
                 c.execute(sqlalchemy.text(f"ALTER TABLE corpmall_order ADD COLUMN {name} {typ}"))
+    # 발주서 검토 반영(2026-11-24) — 개발 중 먼저 만들어진 corpmall_po 에 새 칸
+    insp = sqlalchemy.inspect(eng)
+    if insp.has_table("corpmall_po"):
+        have = {c["name"] for c in insp.get_columns("corpmall_po")}
+        ts = "TIMESTAMP WITH TIME ZONE" if eng.dialect.name == "postgresql" else "DATETIME"
+        js = "JSON"
+        for name, typ in {
+            "exempt_amount": "INTEGER", "ship_by": "VARCHAR(10)", "arrive_by": "VARCHAR(10)", "delivered_at": ts,
+            "viewed_at": ts, "version": "INTEGER", "history": js, "cancel_reason": "VARCHAR(200)",
+        }.items():  # fmt: skip
+            if name not in have:
+                with eng.begin() as c:
+                    c.execute(sqlalchemy.text(f"ALTER TABLE corpmall_po ADD COLUMN {name} {typ}"))
 
 
 # ── 암호화 (배송 정보) ─────────────────────────────────────────────────────
@@ -313,11 +336,15 @@ def _check_spec(spec: dict) -> dict:
                 "supplier_id",
                 "supplier_sku",
                 "unit_cost",
+                "tax_type",  # 매입 과세 구분 taxable(기본)·exempt — 세무 검토 뒤 확정
             )
         }
         for i in items
     ]
     for i in s["items"]:
+        i["tax_type"] = i.get("tax_type") or "taxable"
+        if i["tax_type"] not in ("taxable", "exempt"):
+            raise MallError("과세 구분(tax_type)은 taxable(과세)·exempt(면세) 중 하나예요")
         if i["unit_cost"] is not None and (
             not isinstance(i["unit_cost"], int) or not 0 <= i["unit_cost"] <= 10_000_000
         ):

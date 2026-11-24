@@ -18,6 +18,7 @@ from datetime import date
 # 몰 매뉴얼 칸 (키, 화면 이름, 최대 길이)
 MALL_FIELDS = (
     ("ship_plan", "출고 예정일 (YYYY-MM-DD)", 10),
+    ("arrive_by", "도착 요청일 (YYYY-MM-DD — 지정 장소 도착, 출고일과 다름)", 10),
     ("arrive_note", "도착 안내 (예: 출고 뒤 1~3일, 도서산간 2일 더)", 120),
     ("courier", "택배사", 30),
     ("exchange", "교환·반품 조건 (계약 기준)", 400),
@@ -101,7 +102,7 @@ def check_manual(raw: dict | None) -> dict:
         if key == "reply_days":
             if not v.isdigit() or not 1 <= int(v) <= 10:
                 raise ValueError(f"{label}은 1~10 사이 숫자로 적어 주세요")
-        if key == "ship_plan":
+        if key in ("ship_plan", "arrive_by"):
             try:
                 v = date.fromisoformat(v).isoformat()
             except ValueError as e:
