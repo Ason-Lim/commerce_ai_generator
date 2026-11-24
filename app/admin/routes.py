@@ -1412,6 +1412,120 @@ def b2b_console_page(request: Request):
     return _page(request, B2B_WEB / "console.html")
 
 
+# ── B2B 입찰 폐쇄몰 운영 (2026-11-24) — 설계 claude/b2b_closed_mall_auth_2026-11-24.md ──
+@router.get("/admin/b2b/mall")
+def admin_b2b_mall(request: Request):
+    return _page(request, B2B_WEB / "mall.html")
+
+
+class _MallIn(BaseModel):
+    spec: dict
+
+
+class _MallCodesIn(BaseModel):
+    n: int = Field(..., ge=1, le=5000)
+
+
+class _MallMarkIn(BaseModel):
+    order_ids: list[str] = Field(..., max_length=5000)
+    status: str = Field(..., pattern="^(shipped|delivered)$")
+
+
+def _corp():
+    from app.services.corpmall import store
+
+    return store, store.engine()
+
+
+def _mall_or_404(store, eng, mall_id):
+    m = store.get_mall(eng, mall_id=mall_id)
+    if m is None:
+        raise HTTPException(404, "mall not found")
+    return m
+
+
+@router.get("/admin/api/corpmall", dependencies=[api])
+def corpmall_list():
+    store, eng = _corp()
+    return {"malls": [dict(m, stats=store.stats(eng, m["mall_id"])) for m in store.list_malls(eng)]}
+
+
+@router.post("/admin/api/corpmall", dependencies=[api])
+def corpmall_create(body: _MallIn):
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mall": store.create_mall(eng, body.spec)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/corpmall/{mall_id}", dependencies=[api])
+def corpmall_detail(mall_id: str):
+    store, eng = _corp()
+    m = _mall_or_404(store, eng, mall_id)
+    return {"mall": m, "stats": store.stats(eng, mall_id), "orders": store.orders(eng, mall_id),
+            "events": store.events(eng, mall_id)}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/status/{status}", dependencies=[api])
+def corpmall_status(mall_id: str, status: str):
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    try:
+        if status == "closed":
+            return {"ok": True, **store.close_mall(eng, mall_id)}
+        store.set_status(eng, mall_id, status)
+        return {"ok": True}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/codes", dependencies=[api])
+def corpmall_codes(mall_id: str, body: _MallCodesIn):
+    """코드 원문은 이 응답에만 — 화면이 바로 CSV 로 내려받게 한다 (서버에는 해시만)."""
+    store, eng = _corp()
+    m = _mall_or_404(store, eng, mall_id)
+    try:
+        got = store.issue_codes(eng, mall_id, body.n)
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"ok": True, "codes": [{"label": n, "code": c, "link": f"/corp/{m['slug']}#t={t}"} for n, c, t in got]}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/codes/{label}/reissue", dependencies=[api])
+def corpmall_reissue(mall_id: str, label: int):
+    store, eng = _corp()
+    m = _mall_or_404(store, eng, mall_id)
+    try:
+        n, c, t = store.void_and_reissue(eng, mall_id, label)
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"ok": True, "label": n, "code": c, "link": f"/corp/{m['slug']}#t={t}"}
+
+
+@router.get("/admin/api/corpmall/{mall_id}/no-address", dependencies=[api])
+def corpmall_no_address(mall_id: str):
+    """마감 뒤 주소 없이 기본 상품이 된 코드 번호 — 발주처에 넘겨 일괄 수령 등으로 처리."""
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"labels": store.no_address_labels(eng, mall_id)}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/export", dependencies=[api])
+def corpmall_export(mall_id: str):
+    """발송 요청 주문(배송 정보 포함)을 공급사 전달용으로 — 한 번 내보낸 것은 '발송 준비'로 바뀌고 다시 나오지 않는다."""
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"ok": True, "orders": store.export_orders(eng, mall_id, by="operator")}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mark", dependencies=[api])
+def corpmall_mark(mall_id: str, body: _MallMarkIn):
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"ok": True, "n": store.mark(eng, mall_id, body.order_ids, body.status)}
+
+
 @router.get("/admin/b2b/monitor")
 def b2b_monitor_page(request: Request):
     return _page(request, B2B_WEB / "monitor.html")

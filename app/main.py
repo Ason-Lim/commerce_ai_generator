@@ -822,6 +822,10 @@ app.include_router(admin_router)
 from app.api.trend_routes import router as trend_router
 app.include_router(trend_router)
 
+# B2B 입찰 폐쇄몰 직원 화면 (2026-11-24) — /corp/{발주처}, 1인 1코드 입장, 검색 노출 막음
+from app.api.corpmall_routes import router as corpmall_router
+app.include_router(corpmall_router)
+
 # Conversation API (shopping + recipe) for the React front end
 from app.api.chat_routes import router as chat_router
 app.include_router(chat_router)
