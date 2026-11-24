@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<meta name="referrer" content="no-referrer">
+<meta name="referrer" content="strict-origin">
 <title>임직원 선물 선택</title>
 <style>
 :root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--warn:#9a5b00;--warn-s:#fff4dc;--err:#b3261e;--err-s:#fde9e7}
@@ -69,11 +69,18 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
           <div class="field"><label for="s_name">받는 분 이름</label><input id="s_name" maxlength="30" autocomplete="name"></div>
           <div class="field"><label for="s_phone">휴대폰 번호 (배송 연락)</label><input id="s_phone" maxlength="20" inputmode="tel" autocomplete="tel"></div>
         </div>
-        <div class="grid2">
-          <div class="field"><label for="s_zip">우편번호</label><input id="s_zip" maxlength="10" inputmode="numeric" autocomplete="postal-code"></div>
-          <div class="field"><label for="s_memo">배송 메모 (선택)</label><input id="s_memo" maxlength="100"></div>
+        <div class="field"><label for="s_zip">우편번호</label>
+          <div class="row" style="margin:0;gap:8px"><input id="s_zip" maxlength="10" inputmode="numeric" autocomplete="postal-code" style="max-width:140px">
+            <button type="button" id="zipBtn" style="background:#fff;color:var(--ink);border:1px solid var(--line)">우편번호 찾기</button></div></div>
+        <div id="zipWrap" hidden style="position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:6px 0 10px">
+          <button type="button" id="zipClose" aria-label="우편번호 찾기 닫기" style="position:absolute;right:6px;top:6px;z-index:2;padding:4px 10px;background:#fff;color:var(--ink);border:1px solid var(--line)">닫기</button>
+          <div id="zipLayer" style="height:420px"></div>
         </div>
-        <div class="field"><label for="s_addr">주소</label><input id="s_addr" maxlength="200" autocomplete="street-address"></div>
+        <p class="note" style="margin:0 0 6px">우편번호 찾기는 카카오 우편번호 서비스를 써요. 검색어는 카카오로 바로 가고, 고른 주소만 이 칸에 채워져요.</p>
+        <p id="zipMsg" class="note" role="status" hidden></p>
+        <div class="field"><label for="s_addr">주소</label><input id="s_addr" maxlength="150" autocomplete="street-address" placeholder="우편번호 찾기로 고르면 자동으로 채워져요"></div>
+        <div class="field"><label for="s_addr2">상세 주소 (동·호수 등)</label><input id="s_addr2" maxlength="49" autocomplete="address-line2"></div>
+        <div class="field"><label for="s_memo">배송 메모 (선택)</label><input id="s_memo" maxlength="100"></div>
         <div class="consent">
           <b>배송 정보 수집·이용 동의 (필수)</b>
           <table><tbody>
@@ -178,6 +185,39 @@ async function enter(code) {
   catch (e) { msg($("#enterMsg"), e.message, "err"); $("#code").focus(); }
 }
 
+// 우편번호 찾기 — 카카오 우편번호 서비스(키 없음·무료). 버튼을 누를 때만 스크립트를 불러온다(그 전에는 카카오로 아무것도 안 감).
+// 검색어는 직원 브라우저에서 카카오로 바로 가고 우리 서버를 거치지 않는다. 결과(우편번호·도로명 주소)만 아래 칸에 채운다.
+const POSTCODE_JS = "https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+let postcodeLoading = null;
+function loadPostcode() {
+  if (window.kakao?.Postcode || window.daum?.Postcode) return Promise.resolve();
+  if (!postcodeLoading) postcodeLoading = new Promise((ok, fail) => {
+    const sc = document.createElement("script"); sc.src = POSTCODE_JS; sc.async = true;
+    sc.onload = ok; sc.onerror = () => { postcodeLoading = null; fail(new Error("load")); };
+    document.head.appendChild(sc);
+  });
+  return postcodeLoading;
+}
+async function openPostcode() {
+  $("#zipMsg").hidden = true;
+  try { await loadPostcode(); } catch {
+    $("#zipMsg").hidden = false; $("#zipMsg").textContent = "우편번호 찾기를 불러오지 못했어요. 우편번호와 주소를 직접 적어 주세요."; return;
+  }
+  const P = (window.kakao && window.kakao.Postcode) || (window.daum && window.daum.Postcode);
+  $("#zipWrap").hidden = false;
+  new P({
+    oncomplete: (d) => {
+      let addr = d.userSelectedType === "J" ? d.jibunAddress : (d.roadAddress || d.address);
+      if (d.userSelectedType !== "J" && d.buildingName && d.apartment === "Y") addr += ` (${d.buildingName})`;
+      $("#s_zip").value = d.zonecode || ""; $("#s_addr").value = addr || "";
+      $("#zipWrap").hidden = true; $("#s_addr2").focus();
+    },
+    width: "100%", height: "100%",
+  }).embed($("#zipLayer"), {autoClose: true});
+  $("#zipWrap").scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+$("#zipBtn").addEventListener("click", openPostcode);
+$("#zipClose").addEventListener("click", () => { $("#zipWrap").hidden = true; $("#zipBtn").focus(); });
 $("#changeShip").addEventListener("change", (e) => { $("#shipBox").hidden = !e.target.checked; });
 let LAST_Q = "";
 async function ask(text, handoff) {
@@ -216,12 +256,12 @@ $("#pickForm").addEventListener("submit", async (e) => {
   if (VIEW.mall.delivery_mode === "individual" && !keep) {
     body.consent = $("#consent").checked;
     if (VIEW.order?.shipping) body.verify = $("#s_verify").value;
-    body.shipping = {name: $("#s_name").value, phone: $("#s_phone").value, zipcode: $("#s_zip").value, address: $("#s_addr").value, memo: $("#s_memo").value};
+    body.shipping = {name: $("#s_name").value, phone: $("#s_phone").value, zipcode: $("#s_zip").value, address: [$("#s_addr").value.trim(), $("#s_addr2").value.trim()].filter(Boolean).join(" "), memo: $("#s_memo").value};
   }
   $("#pickBtn").disabled = true;
   try {
     const d = await post("choose", body); draw(d);
-    for (const id of ["#s_name","#s_phone","#s_zip","#s_addr","#s_memo","#s_verify"]) $(id).value = "";
+    for (const id of ["#s_name","#s_phone","#s_zip","#s_addr","#s_addr2","#s_memo","#s_verify"]) $(id).value = "";
     $("#consent").checked = false;
     msg($("#pickMsg"), `선택했어요. ${fmt(d.mall.closes_at)} 마감 전이고 발송 준비가 시작되기 전까지는 같은 코드로 들어와 바꿀 수 있어요.`, "ok");
   } catch (err) { msg($("#pickMsg"), err.message, "err"); }

@@ -25,6 +25,8 @@ router = APIRouter(tags=["corpmall"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "corpmall" / "web" / "mall.html"
 MANAGER_PAGE = PAGE.with_name("manager.html")
 NOINDEX = {"X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer"}
+# 직원 페이지: 우편번호 찾기(카카오)가 사이트 도메인만 알 수 있게 — 경로(몰 이름)·# 뒤 코드는 보내지 않는다
+PAGE_HEADERS = {**NOINDEX, "Referrer-Policy": "strict-origin"}
 
 
 def _client(request: Request) -> str:
@@ -104,7 +106,7 @@ def _reader():
 def corp_page(slug: str):
     if not store.SLUG_RE.fullmatch(slug):
         raise HTTPException(404)
-    return FileResponse(PAGE, headers=NOINDEX)
+    return FileResponse(PAGE, headers=PAGE_HEADERS)
 
 
 def _err(e: store.MallError) -> JSONResponse:

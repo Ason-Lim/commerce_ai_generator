@@ -21,6 +21,7 @@ import hashlib
 import json
 import re
 from datetime import date, timedelta
+from typing import Annotated
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote
@@ -1589,6 +1590,65 @@ def corpmall_export(mall_id: str):
     store, eng = _corp()
     _mall_or_404(store, eng, mall_id)
     return {"ok": True, "orders": store.export_orders(eng, mall_id, by="operator")}
+
+
+class _SuppliersIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    suppliers: dict[str, dict] = Field(..., max_length=200)
+
+
+@router.post("/admin/api/corpmall/{mall_id}/suppliers", dependencies=[api])
+def corpmall_suppliers(mall_id: str, body: _SuppliersIn):
+    """몰 상품마다 공급사·품번 (직원·발주처 화면에는 안 보임)."""
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "items": po.set_suppliers(eng, mall_id, body.suppliers)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/po", dependencies=[api])
+def corpmall_po(mall_id: str):
+    """공급사별 발주서 엑셀 — 넣은 주문은 '발송 준비'. 파일은 서버에 남기지 않는다(배송 정보 포함)."""
+    from urllib.parse import quote as _q
+
+    from fastapi.responses import Response
+
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    m = _mall_or_404(store, eng, mall_id)
+    try:
+        data, summary = po.build(eng, mall_id, by="operator")
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    name = f"{m['slug']}_발주서_{store.now():%Y%m%d_%H%M}.xlsx"
+    return Response(data, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{_q(name)}", "Cache-Control": "no-store",
+                             "X-PO-Summary": f"{summary['orders']},{summary['suppliers']},{summary['unassigned']}"})
+
+
+@router.post("/admin/api/corpmall/{mall_id}/tracking-file", dependencies=[api])
+async def corpmall_tracking_file(
+    mall_id: str, file: Annotated[UploadFile, File()], shipped: Annotated[bool, Form()] = False
+):
+    """공급사가 송장을 채워 돌려준 발주서(엑셀·CSV) → 주문 번호로 송장 넣기. 파일은 읽고 버린다."""
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    data = await file.read(5 * 1024 * 1024 + 1)
+    if len(data) > 5 * 1024 * 1024:
+        raise HTTPException(413, "파일이 너무 커요 (5MB 까지)")
+    try:
+        rows = po.read_tracking(file.filename or "", data)
+    except Exception as e:  # noqa: BLE001 — 깨진 파일
+        raise HTTPException(400, "엑셀·CSV 파일을 읽지 못했어요") from e
+    if not rows:
+        raise HTTPException(400, "'주문 번호'와 '송장' 칸이 있는 줄을 찾지 못했어요")
+    return {"ok": True, "read": len(rows), **store.set_tracking(eng, mall_id, rows, shipped=shipped)}
 
 
 class _MallManualIn(BaseModel):
