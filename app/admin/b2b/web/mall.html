@@ -185,8 +185,10 @@ tbody tr{cursor:default}
         <h3 id="orders-h">주문 · 배송</h3>
         <p class="basis">이 표에는 배송 정보가 없어요. 공급사에 보낼 때만 '배송 정보 내보내기'(발송 요청 상태인 주문만, 한 번 내보내면 '발송 준비'로 바뀜).</p>
         <div class="bar"><label class="btn" for="trkFile" style="cursor:pointer">송장 파일 올리기 (발주서 엑셀·CSV)</label><input type="file" id="trkFile" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><label style="font-size:13px"><input type="checkbox" id="trkShipped" style="width:auto"> 이 파일의 주문은 출고 확인됨(택배사 인수) → '발송함'</label><span id="trkMsg" class="basis"></span></div>
-        <div class="bar"><button class="btn primary" type="button" id="poBtn">공급사별 발주서 (엑셀)</button><button class="btn" type="button" id="exportBtn">배송 정보 내보내기 (CSV 한 파일)</button>
+        <div class="bar"><button class="btn primary" type="button" id="poBtn">발주 묶음 만들기</button><button class="btn" type="button" id="exportBtn">배송 정보 내보내기 (CSV 한 파일)</button>
           <span class="spacer"></span><button class="btn" type="button" data-mark="shipped">고른 주문 발송함</button><button class="btn" type="button" data-mark="delivered">고른 주문 배송 완료</button></div>
+        <div id="poList" class="basis" style="margin:6px 0"></div>
+        <div id="trkOut" class="basis"></div>
         <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>송장</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
       </section>
       <section class="panel" aria-labelledby="ev-h"><h3 id="ev-h">기록</h3><ul id="events" class="basis"></ul></section>
@@ -241,7 +243,7 @@ async function loadMall(id){
     <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(o.tracking||"")}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
     :'<tr><td colspan="6" class="empty">아직 고른 사람이 없어요</td></tr>';
   drawManual(m.manual||{});
-  $("#mgrOut").innerHTML="";loadMgrs();
+  $("#mgrOut").innerHTML="";loadMgrs();loadPo();
   const na=(s.ship||{}).no_address||0;$("#noAddr").hidden=!na;
   if(na){$("#noAddr").innerHTML=`마감 때 고르지 않아 기본 상품이 됐지만 <b>배송지가 없는 코드 ${na}개</b>가 있어요. 임의로 보내지 말고, 번호 목록을 발주처에 넘겨 계약에 정한 방법(회사 일괄 수령 등)으로 처리해 주세요. <button class="btn" type="button" id="naBtn">번호 목록 내려받기</button>`;
     $("#naBtn").onclick=async()=>{const r=await api(`/admin/api/corpmall/${m.mall_id}/no-address`);csv(r.labels.map(l=>({번호:l})),`${m.slug}_no_address.csv`)}}
@@ -287,17 +289,27 @@ $("#trkFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target
   try{const r=await fetch(`/admin/api/corpmall/${CUR.mall_id}/tracking-file`,{method:"POST",body:fd});
     if(r.status===401){location.href="/admin/login?next=/admin/b2b/mall";return}
     const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:"올리지 못했어요");
-    $("#trkMsg").textContent=`${d.read}줄을 읽어 ${d.n}건에 송장을 넣었어요`+($("#trkShipped").checked?" ('발송함')":" (상태는 그대로 — 출고 확인 뒤 '발송함' 표시)")+(d.skipped?` · ${d.skipped}건은 이 몰 주문이 아니거나 배송 완료라 건너뜀`:"");loadMall(CUR.mall_id)}catch(er){err(er)}};
+    $("#trkMsg").textContent=`${d.read}건을 읽어 ${d.n}건에 송장을 넣었어요`+($("#trkShipped").checked?" ('발송함')":" (상태는 그대로)")
+      +(d.same?` · 이미 같은 송장 ${d.same}건`:"")+(d.skipped?` · 이 몰 주문이 아니거나 배송 완료라 건너뜀 ${d.skipped}건`:"");
+    const issues=[...d.conflicts.map(c=>`${c.order_id}: 이미 다른 송장(${c.now})이 있어 바꾸지 않았어요 — 파일 ${c.file}`),...d.problems.map(p=>`${p.order_id}: ${p.why}`)];
+    $("#trkOut").innerHTML=issues.length?`<div class="code-out"><b>확인이 필요한 줄 ${issues.length}개</b><ul>${issues.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
+    loadMall(CUR.mall_id)}catch(er){err(er)}};
+async function dl(url){const r=await fetch(url);if(r.status===401){location.href="/admin/login?next=/admin/b2b/mall";return}
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(typeof d.detail==="string"?d.detail:r.statusText)}
+  const cd=r.headers.get("Content-Disposition")||"";const name=decodeURIComponent((cd.match(/filename\*=UTF-8''([^;]+)/)||[])[1]||"po.xlsx");
+  const a=document.createElement("a");a.href=URL.createObjectURL(await r.blob());a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+async function loadPo(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/po`);
+  $("#poList").innerHTML=d.batches.length?"<b>발주 묶음</b> (다운로드가 안 됐으면 다시 받기 — 주문은 이미 묶음에 들어 있어요)"+d.batches.map(b=>`<div style="margin:4px 0">${esc(b.batch_id)} · ${esc(when(b.created_at))} · 주문 ${b.orders}건
+    ${Object.keys(b.excluded||{}).length?` · 제외 ${Object.entries(b.excluded).map(([k,v])=>esc(k)+" "+v+"건").join(", ")}`:""}
+    <button class="btn" type="button" data-po="${esc(b.batch_id)}">운영자 통합본</button>
+    ${Object.entries(b.suppliers||{}).map(([sup,g])=>`<button class="btn" type="button" data-po="${esc(b.batch_id)}" data-sup="${esc(sup)}">${esc(sup)} 전달용 (${g.orders}건)</button>`).join("")}</div>`).join(""):"";
+  document.querySelectorAll("[data-po]").forEach(x=>x.onclick=()=>dl(`/admin/api/corpmall/${CUR.mall_id}/po/${encodeURIComponent(x.dataset.po)}/file`+(x.dataset.sup?`?supplier=${encodeURIComponent(x.dataset.sup)}`:"")).catch(err))}catch(e){err(e)}}
 $("#supBtn").onclick=async()=>{const suppliers={};document.querySelectorAll("[data-sup]").forEach(x=>{suppliers[x.dataset.sup]={supplier:x.value.trim(),sku:document.querySelector(`[data-sku="${x.dataset.sup}"]`).value.trim()}});
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/suppliers`,{suppliers});await loadMall(CUR.mall_id);$("#supMsg").textContent="저장했어요"}catch(e){err(e)}};
-$("#poBtn").onclick=async()=>{if(!confirm("공급사별 발주서를 만들까요? 넣은 주문은 '발송 준비'로 바뀌어 다시 나오지 않아요. 파일에는 배송 정보가 들어 있으니 공급사에 보낸 뒤 지워 주세요."))return;
-  try{const r=await fetch(`/admin/api/corpmall/${CUR.mall_id}/po`,{method:"POST"});
-    if(r.status===401){location.href="/admin/login?next=/admin/b2b/mall";return}
-    if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(typeof d.detail==="string"?d.detail:r.statusText)}
-    const [n,ns,un]=(r.headers.get("X-PO-Summary")||"0,0,0").split(",").map(Number);
-    const cd=r.headers.get("Content-Disposition")||"";const name=decodeURIComponent((cd.match(/filename\*=UTF-8''([^;]+)/)||[])[1]||"po.xlsx");
-    const a=document.createElement("a");a.href=URL.createObjectURL(await r.blob());a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    $("#trkMsg").textContent=`발주서: 주문 ${n}건 · 공급사 ${ns}곳`+(un?` · 공급사 미지정 ${un}건 — 상품 공급사를 먼저 넣어 주세요`:"");loadMall(CUR.mall_id)}catch(e){err(e)}};
+$("#poBtn").onclick=async()=>{if(!confirm("발주 묶음을 만들까요? 넣은 주문은 '발송 준비'로 바뀌고, 파일은 아래 묶음에서 공급사별로 받아요(몇 번이든 다시 받을 수 있어요). 공급사 미지정·받는 곳 없는 주문은 빠져요."))return;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/po`);
+    $("#trkMsg").textContent=`발주 묶음 ${d.batch_id}: 주문 ${d.orders}건 · 공급사 ${Object.keys(d.suppliers).length}곳`+(Object.keys(d.excluded).length?` · 제외 ${Object.entries(d.excluded).map(([k,v])=>k+" "+v+"건").join(", ")}`:"")+" — 공급사에는 그 공급사 '전달용' 파일만 보내 주세요.";
+    loadMall(CUR.mall_id)}catch(e){err(e)}};
 manFields().then(loadList);
 </script>
 </body>

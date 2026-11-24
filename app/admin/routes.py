@@ -1610,24 +1610,45 @@ def corpmall_suppliers(mall_id: str, body: _SuppliersIn):
 
 
 @router.post("/admin/api/corpmall/{mall_id}/po", dependencies=[api])
-def corpmall_po(mall_id: str):
-    """공급사별 발주서 엑셀 — 넣은 주문은 '발송 준비'. 파일은 서버에 남기지 않는다(배송 정보 포함)."""
-    from urllib.parse import quote as _q
+def corpmall_po_create(mall_id: str):
+    """발주 묶음 만들기 — 넣은 주문은 '발송 준비'. 파일은 묶음에서 따로 받는다(실패해도 다시 받기)."""
+    from app.services.corpmall import po
 
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    try:
+        return {"ok": True, **po.create_batch(eng, mall_id, by="operator")}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/corpmall/{mall_id}/po", dependencies=[api])
+def corpmall_po_list(mall_id: str):
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"batches": po.list_batches(eng, mall_id)}
+
+
+@router.get("/admin/api/corpmall/{mall_id}/po/{batch_id}/file", dependencies=[api])
+def corpmall_po_file(mall_id: str, batch_id: str, supplier: str | None = Query(None, max_length=40)):
+    """발주 묶음 파일 — supplier 없으면 운영자용 통합본, 있으면 그 공급사 전달용(다른 공급사 정보 없음). 서버에 남기지 않는다."""
     from fastapi.responses import Response
 
     from app.services.corpmall import po
 
     store, eng = _corp()
-    m = _mall_or_404(store, eng, mall_id)
+    _mall_or_404(store, eng, mall_id)
     try:
-        data, summary = po.build(eng, mall_id, by="operator")
+        data, name = po.render(eng, mall_id, batch_id, supplier=supplier, by="operator")
     except store.MallError as e:
-        raise HTTPException(400, str(e)) from e
-    name = f"{m['slug']}_발주서_{store.now():%Y%m%d_%H%M}.xlsx"
-    return Response(data, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{_q(name)}", "Cache-Control": "no-store",
-                             "X-PO-Summary": f"{summary['orders']},{summary['suppliers']},{summary['unassigned']}"})
+        raise HTTPException(404, str(e)) from e
+    return Response(
+        data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}", "Cache-Control": "no-store"},
+    )
 
 
 @router.post("/admin/api/corpmall/{mall_id}/tracking-file", dependencies=[api])
@@ -1643,12 +1664,13 @@ async def corpmall_tracking_file(
     if len(data) > 5 * 1024 * 1024:
         raise HTTPException(413, "파일이 너무 커요 (5MB 까지)")
     try:
-        rows = po.read_tracking(file.filename or "", data)
+        rows, problems = po.read_tracking(file.filename or "", data)
     except Exception as e:  # noqa: BLE001 — 깨진 파일
         raise HTTPException(400, "엑셀·CSV 파일을 읽지 못했어요") from e
-    if not rows:
+    if not rows and not problems:
         raise HTTPException(400, "'주문 번호'와 '송장' 칸이 있는 줄을 찾지 못했어요")
-    return {"ok": True, "read": len(rows), **store.set_tracking(eng, mall_id, rows, shipped=shipped)}
+    got = store.set_tracking(eng, mall_id, rows, shipped=shipped) if rows else {"n": 0, "skipped": 0, "same": 0, "conflicts": []}
+    return {"ok": True, "read": len(rows), "problems": problems, **got}
 
 
 class _MallManualIn(BaseModel):

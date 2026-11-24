@@ -109,6 +109,25 @@ t_manager = Table(
     Column("created_at", DateTime(timezone=True)),
     Column("revoked_at", DateTime(timezone=True)),
 )
+t_po_batch = Table(
+    "corpmall_po_batch",
+    meta,  # 발주 묶음 (2026-11-24 검토) — 다운로드가 실패해도 같은 묶음을 다시 받을 수 있게
+    Column("batch_id", String(16), primary_key=True),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("created_at", DateTime(timezone=True)),
+    Column("created_by", String(40)),
+    Column("summary", JSON),  # 공급사별 주문·수량, 제외 사유별 건수 (배송 정보 없음)
+)
+t_po_line = Table(
+    "corpmall_po_line",
+    meta,  # 발주 묶음에 넣은 주문 한 줄 (배송 정보 없음 — 파일을 다시 만들 때 주문에서 복호화)
+    Column("batch_id", String(16), index=True, nullable=False),
+    Column("order_id", String(20), nullable=False),
+    Column("supplier", String(40)),
+    Column("item_id", String(40)),
+    Column("sku", String(40)),
+    Column("qty", Integer),
+)
 t_event = Table(
     "corpmall_event",
     meta,  # 운영 기록 (개인정보 없음)
@@ -837,31 +856,45 @@ def set_tracking(eng, mall_id: str, rows: list[dict], *, shipped: bool = False) 
     """송장 번호 넣기 [{order_id, tracking}].
 
     송장 발급 ≠ 출고(2026-11-24 검토). 기본은 송장만 넣고 상태는 그대로 — 직원 답은 "송장이 발급됐어요(출고되면 조회돼요)".
-    shipped=True(택배사 인수·출고 확인된 주문만 올릴 때)면 '발송함' + 출고 시각. 이 몰의 주문이 아니거나 배송 완료면 건너뛴다.
+    shipped=True(택배사 인수·출고 확인된 주문만 올릴 때)면 '발송함' + 출고 시각.
+    - 이 몰의 주문이 아니면 skipped. 배송 완료는 건드리지 않음(상태가 되돌아가지 않게).
+    - 같은 송장을 다시 올리면 same(처리 안 함, 출고 시각도 그대로). 이미 다른 송장이 있으면 **덮어쓰지 않고** conflicts 로 돌려준다(사람 확인).
     """
-    n, skipped = 0, 0
+    n, skipped, same, conflicts = 0, 0, 0, []
     t = now()
     with eng.begin() as c:
         for r in rows[:5000]:
             oid = str(r.get("order_id") or "").strip()
             tr = re.sub(r"[^0-9A-Za-z-]", "", str(r.get("tracking") or ""))[:40]
-            if not oid or not tr:
+            cur = (
+                c.execute(
+                    select(t_order.c.tracking, t_order.c.ship_status).where(
+                        and_(t_order.c.mall_id == mall_id, t_order.c.order_id == oid)
+                    )
+                ).first()
+                if oid
+                else None
+            )
+            if not oid or not tr or cur is None or cur.ship_status == "delivered":
                 skipped += 1
                 continue
+            if cur.tracking and cur.tracking != tr:
+                conflicts.append({"order_id": oid, "now": cur.tracking, "file": tr})
+                continue
+            if cur.tracking == tr and (not shipped or cur.ship_status == "shipped"):
+                same += 1
+                continue
             vals = {"tracking": tr, "updated_at": t}
-            if shipped:
+            if shipped and cur.ship_status != "shipped":
                 vals.update(ship_status="shipped", shipped_at=t)
-            got = c.execute(
-                update(t_order)
-                .where(
-                    and_(t_order.c.mall_id == mall_id, t_order.c.order_id == oid, t_order.c.ship_status != "delivered")
-                )
-                .values(**vals)
-            ).rowcount
-            n += got
-            skipped += 0 if got else 1
-        _event(c, mall_id, "tracking", {"n": n, "skipped": skipped, "shipped": shipped})
-    return {"n": n, "skipped": skipped}
+            n += c.execute(update(t_order).where(t_order.c.order_id == oid).values(**vals)).rowcount
+        _event(
+            c,
+            mall_id,
+            "tracking",
+            {"n": n, "skipped": skipped, "same": same, "conflicts": len(conflicts), "shipped": shipped},
+        )
+    return {"n": n, "skipped": skipped, "same": same, "conflicts": conflicts}
 
 
 def mark(eng, mall_id: str, order_ids: list[str], status: str) -> int:

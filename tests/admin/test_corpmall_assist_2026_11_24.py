@@ -99,7 +99,10 @@ def test_eta_answers_from_manual_and_order_state(eng):
     oid = corp.orders(eng, m["mall_id"])[0]["order_id"]
     # 송장 발급 ≠ 출고: 기본은 송장만 — 상태 그대로, 답은 '발급됐어요'
     got = corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "1234-5678-9012"}])
-    assert got == {"n": 1, "skipped": 0} and corp.orders(eng, m["mall_id"])[0]["ship_status"] == "requested"
+    assert (
+        got == {"n": 1, "skipped": 0, "same": 0, "conflicts": []}
+        and corp.orders(eng, m["mall_id"])[0]["ship_status"] == "requested"
+    )
     r = corp.ask(eng, "a-eta", code, "배송 조회", "ip", at=IN)
     assert "송장 번호 1234-5678-9012 가 발급됐어요" in r["answer"] and "출고됐어요" not in r["answer"]
     corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "1234-5678-9012"}], shipped=True)
@@ -200,7 +203,7 @@ def test_other_mall_codes_orders_and_asks_are_isolated(eng):
     assert corp.enter(eng, "a-iso-b", cb[0][1], "ip3")["asks"] == []  # 같은 번호(#1)여도 다른 몰 문의 안 보임
     oid_a = corp.orders(eng, ma["mall_id"])[0]["order_id"]
     got = corp.set_tracking(eng, mb["mall_id"], [{"order_id": oid_a, "tracking": "999"}], shipped=True)
-    assert got == {"n": 0, "skipped": 1}
+    assert got == {"n": 0, "skipped": 1, "same": 0, "conflicts": []}
     assert corp.mark(eng, mb["mall_id"], [oid_a], "delivered") == 0
     assert corp.orders(eng, ma["mall_id"])[0]["tracking"] is None
 
@@ -310,7 +313,7 @@ def test_routes(eng):
         f"/admin/api/corpmall/{m['mall_id']}/tracking",
         json={"rows": [{"order_id": "Onope", "tracking": "1"}]},
         headers=H,
-    ).json() == {"ok": True, "n": 0, "skipped": 1}
+    ).json() == {"ok": True, "n": 0, "skipped": 1, "same": 0, "conflicts": []}
     assert len(cl.get("/admin/api/corpmall-manual", headers=H).json()["fields"]) == len(manual.MALL_FIELDS)
     faq = cl.get("/biz/api/faq").json()["faq"]
     assert faq and all(f["q"] and f["a"] for f in faq)

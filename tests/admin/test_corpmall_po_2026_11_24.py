@@ -70,59 +70,97 @@ def test_suppliers_are_internal_only(eng):
     assert "가나식품" not in repr(pub) and "HG-18" not in repr(pub)
 
 
-def test_individual_po_splits_by_supplier_and_marks_exported(eng):
+def _batch(eng, mall_id):
+    b = po.create_batch(eng, mall_id, by="t")
+    return b, _sheets(po.render(eng, mall_id, b["batch_id"])[0])
+
+
+def test_individual_batch_excludes_unassigned_and_splits_files(eng):
     m, codes = _mall(eng, "p-ind")
-    po.set_suppliers(eng, m["mall_id"], {"A": {"supplier": "가나식품", "sku": "HG-18"}, "B": {"supplier": "제주농원"}})
+    po.set_suppliers(eng, m["mall_id"], {"A": {"supplier": "가나식품", "sku": "0012"}, "B": {"supplier": "제주농원"}})
     for (_, code, _), item in zip(codes, "ABC", strict=True):
         corp.choose(eng, "p-ind", code, item, "ip", shipping=SHIP, consent=True, at=IN)
-    data, summary = po.build(eng, m["mall_id"], by="t")
-    assert summary == {"orders": 3, "suppliers": 3, "unassigned": 1}
-    sh = _sheets(data)
-    assert list(sh) == ["요약", "가나식품", "제주농원", po.UNASSIGNED]
+    b, sh = _batch(eng, m["mall_id"])
+    assert (
+        b["orders"] == 2 and set(b["suppliers"]) == {"가나식품", "제주농원"} and b["excluded"] == {"공급사 미지정": 1}
+    )
+    assert list(sh) == ["요약", "가나식품", "제주농원"]
     row = sh["가나식품"][1]
-    assert row[1] == "한과" and row[2] == "HG-18" and row[4] == "홍길동" and row[7] == "서울 중구 세종대로 110 3층"
-    assert row[8] == "'=HYPERLINK(\"x\")"  # 수식으로 들어가지 않음
-    assert sh["가나식품"][0][-1] == "송장" and row[-1] in (None, "")
-    assert {o["ship_status"] for o in corp.orders(eng, m["mall_id"])} == {"exported"}
-    with pytest.raises(corp.MallError, match="넣을 주문이 없어요"):
-        po.build(eng, m["mall_id"], by="t")
+    assert row[1] == "한과" and row[2] == "0012" and row[4] == "홍길동" and row[5] == "010-1234-5678"
+    assert row[6] == "04524" and row[8] == "'=HYPERLINK(\"x\")"  # 텍스트 셀(앞자리 0 유지), 수식 막기
+    wb = load_workbook(io.BytesIO(po.render(eng, m["mall_id"], b["batch_id"])[0]))
+    assert wb["가나식품"].cell(row=2, column=7).number_format == "@"
+    st = {o["item_id"]: o["ship_status"] for o in corp.orders(eng, m["mall_id"])}
+    assert st == {"A": "exported", "B": "exported", "C": "requested"}  # 미지정은 그대로 남음
+    # 공급사 전달용 파일에는 그 공급사 것만
+    one = _sheets(po.render(eng, m["mall_id"], b["batch_id"], supplier="제주농원")[0])
+    assert list(one) == ["제주농원"] and "한과" not in repr(one) and len(one["제주농원"]) == 2
+    with pytest.raises(corp.MallError, match="이 묶음에 없어요"):
+        po.render(eng, m["mall_id"], b["batch_id"], supplier="다른공급사")
+    # 다시 받기 — 같은 내용
+    assert _sheets(po.render(eng, m["mall_id"], b["batch_id"])[0]) == sh
+    with pytest.raises(corp.MallError, match="공급사 미지정 1건"):
+        po.create_batch(eng, m["mall_id"], by="t")
+    po.set_suppliers(eng, m["mall_id"], {"C": {"supplier": "바다김"}})
+    b2 = po.create_batch(eng, m["mall_id"], by="t")
+    assert b2["orders"] == 1 and [x["batch_id"] for x in po.list_batches(eng, m["mall_id"])][0] == b2["batch_id"]
     ev = corp.events(eng, m["mall_id"])
-    assert any(e["kind"] == "po_exported" for e in ev) and "홍길동" not in repr(ev)
+    assert {"po_batch", "po_download"} <= {e["kind"] for e in ev} and "홍길동" not in repr(ev)
 
 
-def test_bulk_po_only_after_close_with_quantities(eng):
+def test_bulk_batch_only_after_close_with_quantities(eng):
     m, codes = _mall(eng, "p-bulk", mode="bulk")
     po.set_suppliers(eng, m["mall_id"], {i: {"supplier": "가나식품"} for i in "ABC"})
     corp.choose(eng, "p-bulk", codes[0][1], "B", "ip", at=IN)
     with pytest.raises(corp.MallError, match="마감한 뒤"):
-        po.build(eng, m["mall_id"], by="t")
+        po.create_batch(eng, m["mall_id"], by="t")
     corp.close_mall(eng, m["mall_id"])  # 나머지 2개는 기본 선물(A)
-    data, summary = po.build(eng, m["mall_id"], by="t")
-    sh = _sheets(data)
-    rows = {r[0]: r[2] for r in sh["가나식품"][1:]}
-    assert rows == {"감귤": 1, "한과": 2} and summary["orders"] == 3
+    b, sh = _batch(eng, m["mall_id"])
+    assert {r[0]: r[2] for r in sh["가나식품"][1:]} == {"감귤": 1, "한과": 2} and b["orders"] == 3
     assert "수령지" in sh["가나식품"][0][3]
 
 
-def test_tracking_file_round_trip(eng):
+def test_tracking_file_round_trip_and_problems(eng):
     m, codes = _mall(eng, "p-trk")
-    po.set_suppliers(eng, m["mall_id"], {"A": {"supplier": "가나식품"}})
+    po.set_suppliers(eng, m["mall_id"], {"A": {"supplier": "가나식품"}, "B": {"supplier": "가나식품"}})
     corp.choose(eng, "p-trk", codes[0][1], "A", "ip", shipping=SHIP, consent=True, at=IN)
-    data, _ = po.build(eng, m["mall_id"], by="t")
-    wb = load_workbook(io.BytesIO(data))
+    corp.choose(eng, "p-trk", codes[1][1], "B", "ip", shipping=SHIP, consent=True, at=IN)
+    b = po.create_batch(eng, m["mall_id"], by="t")
+    wb = load_workbook(io.BytesIO(po.render(eng, m["mall_id"], b["batch_id"], supplier="가나식품")[0]))
     ws = wb["가나식품"]
-    ws.cell(row=2, column=10, value=123456789012)  # 공급사가 숫자로 채움
+    ws.cell(row=2, column=10, value="012345678901")  # 텍스트로 채움 — 앞자리 0 유지
+    ws.cell(row=3, column=10, value=123456789012)  # 숫자로 바뀜 — 자동 복원하지 않음
     buf = io.BytesIO()
     wb.save(buf)
-    rows = po.read_tracking("발주서_회신.xlsx", buf.getvalue())
-    assert rows == [{"order_id": corp.orders(eng, m["mall_id"])[0]["order_id"], "tracking": "123456789012"}]
-    csv_rows = po.read_tracking("x.csv", f"주문번호,송장번호\n{rows[0]['order_id']},9999-1\nOBAD,1\n".encode())
-    assert csv_rows == [{"order_id": rows[0]["order_id"], "tracking": "9999-1"}]
+    rows, problems = po.read_tracking("발주서_회신.xlsx", buf.getvalue())
+    oid1, oid2 = ws.cell(row=2, column=1).value, ws.cell(row=3, column=1).value
+    assert rows == [{"order_id": oid1, "tracking": "012345678901"}]
+    assert problems[0]["order_id"] == oid2 and "숫자" in problems[0]["why"]
+    csv_rows, csv_problems = po.read_tracking(
+        "x.csv", f"주문번호,송장번호\n{oid1},9999-1\n{oid1},8888\n{oid2},1.23457E+11\nOBAD,1\n".encode()
+    )
+    assert csv_rows == [] and {p["order_id"] for p in csv_problems} == {oid1, oid2}
     wb2 = Workbook()
     wb2.active.append(["아무", "칸"])
     b2 = io.BytesIO()
     wb2.save(b2)
-    assert po.read_tracking("x.xlsx", b2.getvalue()) == []
+    assert po.read_tracking("x.xlsx", b2.getvalue()) == ([], [])
+
+
+def test_set_tracking_same_conflict_and_no_regress(eng):
+    m, codes = _mall(eng, "p-conf")
+    po.set_suppliers(eng, m["mall_id"], {"A": {"supplier": "가나식품"}})
+    corp.choose(eng, "p-conf", codes[0][1], "A", "ip", shipping=SHIP, consent=True, at=IN)
+    oid = corp.orders(eng, m["mall_id"])[0]["order_id"]
+    assert corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "111"}], shipped=True)["n"] == 1
+    again = corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "111"}], shipped=True)
+    assert again == {"n": 0, "skipped": 0, "same": 1, "conflicts": []}  # 같은 파일 다시 올림 — 처리 안 함
+    diff = corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "222"}])
+    assert diff["conflicts"] == [{"order_id": oid, "now": "111", "file": "222"}]
+    assert corp.orders(eng, m["mall_id"])[0]["tracking"] == "111"  # 덮어쓰지 않음
+    corp.mark(eng, m["mall_id"], [oid], "delivered")
+    assert corp.set_tracking(eng, m["mall_id"], [{"order_id": oid, "tracking": "111"}], shipped=True)["skipped"] == 1
+    assert corp.orders(eng, m["mall_id"])[0]["ship_status"] == "delivered"  # 되돌아가지 않음
 
 
 def test_routes(eng):
@@ -130,29 +168,31 @@ def test_routes(eng):
 
     cl = TestClient(app)
     m, codes = _mall(eng, "p-route")
-    assert cl.post(f"/admin/api/corpmall/{m['mall_id']}/po").status_code == 401
-    assert cl.post(
-        f"/admin/api/corpmall/{m['mall_id']}/suppliers", json={"suppliers": {"A": {"supplier": "가나식품"}}}, headers=H
-    ).json()["ok"]
-    assert cl.post(f"/admin/api/corpmall/{m['mall_id']}/po", headers=H).status_code == 400  # 주문 없음
+    base = f"/admin/api/corpmall/{m['mall_id']}"
+    assert cl.post(f"{base}/po").status_code == 401
+    assert cl.post(f"{base}/suppliers", json={"suppliers": {"A": {"supplier": "가나식품"}}}, headers=H).json()["ok"]
+    assert cl.post(f"{base}/po", headers=H).status_code == 400  # 주문 없음
     corp.choose(eng, "p-route", codes[0][1], "A", "ip", shipping=SHIP, consent=True, at=IN)
-    r = cl.post(f"/admin/api/corpmall/{m['mall_id']}/po", headers=H)
-    assert r.status_code == 200 and r.headers["x-po-summary"] == "1,1,0" and r.headers["cache-control"] == "no-store"
-    assert "attachment" in r.headers["content-disposition"]
+    b = cl.post(f"{base}/po", headers=H).json()
+    assert b["ok"] and b["orders"] == 1
+    assert cl.get(f"{base}/po", headers=H).json()["batches"][0]["batch_id"] == b["batch_id"]
+    f = cl.get(f"{base}/po/{b['batch_id']}/file", params={"supplier": "가나식품"}, headers=H)
+    assert (
+        f.status_code == 200
+        and f.headers["cache-control"] == "no-store"
+        and "attachment" in f.headers["content-disposition"]
+    )
+    assert cl.get(f"{base}/po/NOPE/file", headers=H).status_code == 404
     oid = corp.orders(eng, m["mall_id"])[0]["order_id"]
     up = cl.post(
-        f"/admin/api/corpmall/{m['mall_id']}/tracking-file",
+        f"{base}/tracking-file",
         headers=H,
         files={"file": ("회신.csv", f"주문 번호,송장\n{oid},5555\n".encode(), "text/csv")},
         data={"shipped": "true"},
     )
-    assert up.json() == {"ok": True, "read": 1, "n": 1, "skipped": 0}
+    assert up.json() == {"ok": True, "read": 1, "problems": [], "n": 1, "skipped": 0, "same": 0, "conflicts": []}
     assert corp.orders(eng, m["mall_id"])[0]["ship_status"] == "shipped"
-    bad = cl.post(
-        f"/admin/api/corpmall/{m['mall_id']}/tracking-file",
-        headers=H,
-        files={"file": ("x.csv", b"a,b\n1,2\n", "text/csv")},
-    )
+    bad = cl.post(f"{base}/tracking-file", headers=H, files={"file": ("x.csv", b"a,b\n1,2\n", "text/csv")})
     assert bad.status_code == 400
 
 
