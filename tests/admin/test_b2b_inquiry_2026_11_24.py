@@ -154,7 +154,7 @@ def test_routes(eng):
     )
 
 
-def test_corpmall_employee_ask_flows_to_cs(eng):
+def test_corpmall_employee_handoff_flows_to_cs(eng):
     from app.services.corpmall import store as corp
     from app.services.cs import tickets
 
@@ -165,24 +165,22 @@ def test_corpmall_employee_ask_flows_to_cs(eng):
             "slug": "t-ask",
             "client": "샘플공사",
             "opens_at": "2026-12-01T09:00",
-            "closes_at": "2026-12-10T18:00",
+            "closes_at": "2099-12-10T18:00",
             "delivery_mode": "bulk",
             "items": [{"id": "A", "name": "한과"}],
         },
     )
     corp.set_status(eng, m["mall_id"], "open")
     ((label, code, token),) = corp.issue_codes(eng, m["mall_id"], 1)
-    with pytest.raises(corp.MallError, match="종류"):
-        corp.ask(eng, "t-ask", code, "refund_now", "환불", "ip")
-    got = corp.ask(eng, "t-ask", code, "delivery", "언제 와요? 제 번호 010-2222-3333", "ip")
-    assert got["masked"] == ["전화번호"] and got["asks"][0]["status"] == "open"
+    got = corp.ask(eng, "t-ask", code, "행사 관련 질문이 있어요. 제 번호 010-2222-3333", "ip", handoff=True)
+    assert got["masked"] == ["전화번호"] and got["ticket_id"] and got["asks"][0]["status"] == "open"
     q = [t for t in tickets.queue() if t["domain"] == "corpmall"]
-    assert len(q) == 1 and "3333" not in q[0]["summary"] and "#1 배송" in q[0]["summary"] and q[0]["human"]
+    assert len(q) == 1 and "3333" not in q[0]["summary"] and "#1 직접 요청" in q[0]["summary"] and q[0]["human"]
     tickets.answer(q[0]["id"], "12월 15일 출고 예정이에요.", by="operator")
     assert corp.enter(eng, "t-ask", token, "ip")["asks"][0]["messages"][-1]["text"].startswith("12월 15일")
     new_label, new_code, _ = corp.void_and_reissue(eng, m["mall_id"], label)  # 재발급해도 문의가 따라감
     assert corp.enter(eng, "t-ask", new_code, "ip")["asks"][0]["id"] == q[0]["id"]
     for i in range(corp.MAX_OPEN_ASKS):
-        corp.ask(eng, "t-ask", new_code, "other", f"질문 {i}", "ip")
+        corp.ask(eng, "t-ask", new_code, f"질문 {i}", "ip", handoff=True)
     with pytest.raises(corp.MallError, match="기다리는"):
-        corp.ask(eng, "t-ask", new_code, "other", "또 질문", "ip")
+        corp.ask(eng, "t-ask", new_code, "또 질문", "ip", handoff=True)

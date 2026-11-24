@@ -96,6 +96,7 @@ t_order = Table(
     Column("updated_at", DateTime(timezone=True)),
     Column("delivered_at", DateTime(timezone=True)),
     Column("purged_at", DateTime(timezone=True)),
+    Column("tracking", String(40)),  # 송장 번호 (2026-11-24 답변 매뉴얼) — 개인정보 아님
 )
 t_event = Table(
     "corpmall_event",
@@ -122,7 +123,16 @@ def now() -> datetime:
 def engine(url: str | None = None):
     eng = sqlalchemy.create_engine(url or get_settings().b2b_db_url, future=True)
     meta.create_all(eng)
+    _migrate(eng)
     return eng
+
+
+def _migrate(eng) -> None:
+    """#104 로 이미 만들어진 표에 나중 칸을 붙인다 (create_all 은 있는 표를 바꾸지 않음)."""
+    cols = {c["name"] for c in sqlalchemy.inspect(eng).get_columns("corpmall_order")}
+    if "tracking" not in cols:
+        with eng.begin() as c:
+            c.execute(sqlalchemy.text("ALTER TABLE corpmall_order ADD COLUMN tracking VARCHAR(40)"))
 
 
 # ── 암호화 (배송 정보) ─────────────────────────────────────────────────────
@@ -204,6 +214,12 @@ def _check_spec(spec: dict) -> dict:
     if datetime.fromisoformat(s["closes_at"]) <= datetime.fromisoformat(s["opens_at"]):
         raise MallError("마감이 시작보다 뒤여야 해요")
     s["retention_days"] = int(s.get("retention_days") or 30)
+    from app.services.corpmall import manual
+
+    try:
+        s["manual"] = manual.check_manual(s.get("manual"))
+    except ValueError as e:
+        raise MallError(str(e)) from e
     s["items"] = [
         {k: i.get(k) for k in ("id", "name", "desc", "image", "tier", "supplier_candidate_id")} for i in items
     ]
@@ -358,6 +374,8 @@ def public_mall(m: dict) -> dict:
         "delivery_mode": m["delivery_mode"],
         "items": [{k: i.get(k) for k in ("id", "name", "desc", "image", "tier")} for i in m["items"]],
         "retention_days": m.get("retention_days", 30),
+        "ship_plan": (m.get("manual") or {}).get("ship_plan"),
+        "courier": (m.get("manual") or {}).get("courier"),
     }
 
 
@@ -417,35 +435,65 @@ def asker(mall_id: str, label: int) -> str:
     return f"corp:{mall_id}:{label}"
 
 
-ASK_TOPICS = {"delivery": "배송", "exchange": "교환·반품", "defect": "상품 이상", "other": "기타"}
 MAX_OPEN_ASKS = 5
 
 
-def ask(eng, slug: str, code: str, topic: str, text: str, client: str) -> dict:
-    """임직원 문의 → CS 티켓(분야 corpmall). 문장은 개인정보 모양을 가린 뒤 저장. 답은 같은 코드로 들어오면 보인다."""
-    from app.services.cs import tickets
+def ask(
+    eng, slug: str, code: str, text: str, client: str, *, handoff: bool = False, reader=None, at: datetime | None = None
+) -> dict:
+    """임직원 문의 — 먼저 매뉴얼로 바로 답하고(assist), 매뉴얼 밖·사람 필수·'담당자에게 남기기'면 CS 티켓.
+
+    문장은 개인정보 모양을 가린 뒤에만 쓰인다(AI 로 보내는 것도 가린 뒤, 종류 고르기에만). 답은 같은 코드로 들어오면 보인다.
+    """
+    from app.services.corpmall import assist
+    from app.services.cs import review, tickets
     from app.services.privacy import pii
 
-    m, row, _ = _resolve(eng, slug, code, client)
-    if topic not in ASK_TOPICS:
-        raise MallError("문의 종류를 골라 주세요")
+    m, row, order_row = _resolve(eng, slug, code, client)
     body = " ".join((text or "").split())[:400]
     if len(body) < 2:
         raise MallError("문의 내용을 적어 주세요")
     owner = asker(m["mall_id"], row["label"])
-    if tickets.open_count(owner) >= MAX_OPEN_ASKS:
-        raise MallError("답을 기다리는 문의가 많아요. 답을 받은 뒤 다시 남겨 주세요")
     masked, kinds = pii.mask(body)
-    t = tickets.create(
-        "corpmall",
-        sid=secrets.token_hex(4),
-        owner=owner,
-        summary=f"[{m['slug']} #{row['label']} {ASK_TOPICS[topic]}] {masked}",
-        by="customer",
-    )
+    got = enter(eng, slug, code, client, at=at)
+    if handoff:
+        rep = assist.Reply("handoff", "customer", manual_text("handoff"), ticket="corpmall", offer_handoff=False)
+    else:
+        rep = assist.respond(m, got["order"], got["window"], masked, reader=reader, today=(at or now()).date())
+    ticket_id = None
+    if rep.ticket:
+        if rep.ticket == "corpmall" and tickets.open_count(owner) >= MAX_OPEN_ASKS:
+            raise MallError("답을 기다리는 문의가 많아요. 답을 받은 뒤 다시 남겨 주세요")
+        label = assist.INTENTS.get(rep.intent, "직접 요청")
+        t = tickets.create(
+            rep.ticket,
+            sid=secrets.token_hex(4),
+            owner=owner,
+            by="customer",
+            summary=f"[{m['slug']} #{row['label']} {label}] {masked}",
+        )
+        ticket_id = t["id"] if t else None
     with eng.begin() as c:
-        _event(c, m["mall_id"], "asked", {"topic": topic})
-    return {"ticket_id": t["id"], "masked": kinds, "asks": tickets.for_owner(owner)}
+        _event(c, m["mall_id"], "asked", {"intent": rep.intent, "by": rep.by, "ticket": bool(ticket_id)})
+    if not handoff:
+        review.record(owner, masked, f"corp_{rep.intent}", rep.by)
+    return {
+        "intent": rep.intent,
+        "intent_label": assist.INTENTS.get(rep.intent, "직접 요청"),
+        "by": rep.by,
+        "answer": rep.answer,
+        "action": rep.action,
+        "offer_handoff": rep.offer_handoff and not ticket_id,
+        "ticket_id": ticket_id,
+        "masked": kinds,
+        "asks": tickets.for_owner(owner),
+    }
+
+
+def manual_text(key: str, **kw) -> str:
+    from app.services.corpmall import manual
+
+    return manual.text(key, **kw)
 
 
 def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None) -> dict:
@@ -458,6 +506,7 @@ def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None)
             "defaulted": bool(order["defaulted"]),
             "ship_status": order["ship_status"],
             "shipping": _mask(_dec(order["ship_enc"])) if order["ship_enc"] else None,
+            "tracking": order.get("tracking"),
             "chosen_at": order["chosen_at"].isoformat() if order["chosen_at"] else None,
         }
     return {
@@ -666,6 +715,44 @@ def no_address_labels(eng, mall_id: str) -> list[int]:
         )
 
 
+def update_manual(eng, mall_id: str, raw: dict) -> dict:
+    """몰 매뉴얼만 고친다 (출고 예정일·택배사·교환 조건 등)."""
+    from app.services.corpmall import manual
+
+    m = get_mall(eng, mall_id=mall_id)
+    if m is None:
+        raise MallError("없는 몰")
+    try:
+        man = manual.check_manual(raw)
+    except ValueError as e:
+        raise MallError(str(e)) from e
+    with eng.begin() as c:
+        r = c.execute(select(t_mall.c.payload).where(t_mall.c.mall_id == mall_id)).scalar()
+        c.execute(update(t_mall).where(t_mall.c.mall_id == mall_id).values(payload={**r, "manual": man}))
+        _event(c, mall_id, "manual", {"keys": sorted(man)})
+    return man
+
+
+def set_tracking(eng, mall_id: str, rows: list[dict]) -> int:
+    """송장 번호 넣기 [{order_id, tracking}] → 그 주문은 '발송함'. 배송 완료된 주문은 건드리지 않는다."""
+    n = 0
+    with eng.begin() as c:
+        for r in rows[:5000]:
+            oid = str(r.get("order_id") or "").strip()
+            tr = re.sub(r"[^0-9A-Za-z-]", "", str(r.get("tracking") or ""))[:40]
+            if not oid or not tr:
+                continue
+            n += c.execute(
+                update(t_order)
+                .where(
+                    and_(t_order.c.mall_id == mall_id, t_order.c.order_id == oid, t_order.c.ship_status != "delivered")
+                )
+                .values(tracking=tr, ship_status="shipped", updated_at=now())
+            ).rowcount
+        _event(c, mall_id, "tracking", {"n": n})
+    return n
+
+
 def mark(eng, mall_id: str, order_ids: list[str], status: str) -> int:
     if status not in ("shipped", "delivered"):
         raise MallError("shipped · delivered 만")
@@ -715,6 +802,7 @@ def orders(eng, mall_id: str) -> list[dict]:
                     t_order.c.ship_status,
                     t_order.c.chosen_at,
                     t_order.c.purged_at,
+                    t_order.c.tracking,
                     t_order.c.ship_enc.is_not(None).label("has_ship"),
                 )
                 .where(t_order.c.mall_id == mall_id)
@@ -731,6 +819,7 @@ def orders(eng, mall_id: str) -> list[dict]:
             "ship_status": r["ship_status"],
             "has_shipping": bool(r["has_ship"]),
             "purged": r["purged_at"] is not None,
+            "tracking": r["tracking"],
             "chosen_at": r["chosen_at"].isoformat() if r["chosen_at"] else None,
         }
         for r in rows
@@ -748,6 +837,8 @@ def events(eng, mall_id: str, limit: int = 50) -> list[dict]:
 
 
 __all__ = [
+    "update_manual",
+    "set_tracking",
     "ask",
     "asker",
     "orders",

@@ -94,15 +94,15 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   </section>
 
   <section class="box" id="askBox" hidden aria-labelledby="ask-h">
-    <h2 id="ask-h" style="font-size:17px;margin:0">문의하기</h2>
-    <p class="note">배송·교환·상품 이상을 남기면 담당자가 영업일 1일 안에 답해요. 답은 같은 코드로 들어오면 여기에 보여요. 연락처·주소는 적지 마세요.</p>
+    <h2 id="ask-h" style="font-size:17px;margin:0">궁금한 점 묻기</h2>
+    <p class="note">도착일·배송지 변경·선물 변경·교환 같은 질문은 바로 답해요. 답으로 해결되지 않거나 상품에 이상이 있으면 담당자가 영업일 1일 안에 답해요.
+      연락처·주소는 적지 마세요.</p>
     <form id="askForm">
-      <div class="field"><label for="a_topic">종류</label><select id="a_topic" style="max-width:220px;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px">
-        <option value="delivery">배송</option><option value="exchange">교환·반품</option><option value="defect">상품 이상</option><option value="other">기타</option></select></div>
-      <div class="field"><label for="a_text">내용</label><textarea id="a_text" rows="3" maxlength="400"></textarea></div>
-      <div class="row"><button type="submit" id="askBtn">문의 남기기</button></div>
-      <div id="askMsg" role="status"></div>
+      <div class="field"><label for="a_text">질문</label><textarea id="a_text" rows="2" maxlength="400" placeholder="예: 언제 도착해요? / 받는 주소를 바꾸고 싶어요"></textarea></div>
+      <div class="row"><button type="submit" id="askBtn">묻기</button></div>
     </form>
+    <div id="askMsg" role="status" aria-live="polite"></div>
+    <h3 style="font-size:14px;margin:16px 0 0" id="asksH" hidden>담당자에게 남긴 문의</h3>
     <ul id="asks" class="note" style="padding-left:18px"></ul>
   </section>
 
@@ -152,6 +152,8 @@ function draw(d) {
   let note = "";
   if (chosen) note = d.order.defaulted ? `마감까지 고르지 않아 기본 선물(${chosen.name})로 정해졌어요.` : `지금 고른 선물: ${chosen.name}`;
   if (d.order?.shipping) note += ` · 받는 분 ${d.order.shipping.name}`;
+  if (d.order?.tracking) note += ` · ${m.courier || "택배"} 송장 ${d.order.tracking}`;
+  else if (chosen && m.ship_plan) note += ` · ${new Date(m.ship_plan + "T00:00").toLocaleDateString("ko-KR", {month:"long", day:"numeric", weekday:"short"})} 출고 예정`;
   $("#mineNote").textContent = note;
   if (d.window === "not_open") msg($("#pickMsg"), `아직 선택 기간이 아니에요. ${fmt(m.opens_at)}부터 고를 수 있어요.`, "info");
   else if (d.window === "closed") msg($("#pickMsg"), chosen ? "선택이 마감됐어요. 고른 선물을 준비하고 있어요." : "선택이 마감됐어요. 회사 담당자에게 문의해 주세요.", "info");
@@ -165,6 +167,7 @@ function draw(d) {
 
 function drawAsks(list) {
   $("#askBox").hidden = false;
+  $("#asksH").hidden = !list.length;
   $("#asks").innerHTML = list.map((t) => `<li><b>${esc(t.created_at.slice(5,16).replace("T"," "))}</b> ${esc(t.summary.replace(/^\[[^\]]*\]\s*/, ""))}
     ${(t.messages || []).map((m) => `<div style="margin:4px 0 8px;color:var(--ink)">↳ ${m.kind === "reply" ? "답" : "안내"}: ${esc(m.text)}</div>`).join("") || '<div>답을 기다리고 있어요.</div>'}</li>`).join("");
 }
@@ -176,15 +179,32 @@ async function enter(code) {
 }
 
 $("#changeShip").addEventListener("change", (e) => { $("#shipBox").hidden = !e.target.checked; });
-$("#askForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+let LAST_Q = "";
+async function ask(text, handoff) {
   $("#askBtn").disabled = true;
   try {
-    const d = await post("ask", {code: CODE, topic: $("#a_topic").value, text: $("#a_text").value});
-    $("#a_text").value = ""; drawAsks(d.asks);
-    msg($("#askMsg"), `문의를 남겼어요 (번호 ${d.ticket_id}).` + (d.masked.length ? ` 적힌 ${d.masked.join("·")}는 가려서 저장했어요.` : ""), "ok");
+    const d = await post("ask", {code: CODE, text, handoff});
+    drawAsks(d.asks);
+    const box = $("#askMsg");
+    box.innerHTML = `<div class="msg ${d.ticket_id ? "info" : "ok"}"><b>${esc(d.intent_label)}</b> · ${esc(d.answer)}`
+      + (d.ticket_id ? `<br><small>문의 번호 ${esc(d.ticket_id)}</small>` : "")
+      + (d.masked.length ? `<br><small>적힌 ${esc(d.masked.join("·"))}는 가려서 저장했어요.</small>` : "")
+      + `<div class="row" style="margin-top:6px">`
+      + (d.action === "change_address" ? `<button type="button" data-act="addr">배송지 바꾸러 가기</button>` : "")
+      + (d.action === "change_item" ? `<button type="button" data-act="item">선물 다시 고르기</button>` : "")
+      + (d.offer_handoff ? `<button type="button" data-act="human" style="background:#fff;color:var(--ink);border:1px solid var(--line)">그래도 담당자에게 남기기</button>` : "")
+      + `</div></div>`;
+    box.querySelector('[data-act="addr"]')?.addEventListener("click", () => {
+      $("#changeShip").checked = true; $("#shipBox").hidden = false; $("#keepBox").scrollIntoView({behavior: "smooth"}); $("#s_verify").focus(); });
+    box.querySelector('[data-act="item"]')?.addEventListener("click", () => { $("#pickBox").scrollIntoView({behavior: "smooth"}); document.querySelector('input[name="item"]')?.focus(); });
+    box.querySelector('[data-act="human"]')?.addEventListener("click", () => ask(LAST_Q, true));
   } catch (err) { msg($("#askMsg"), err.message, "err"); }
   finally { $("#askBtn").disabled = false; }
+}
+$("#askForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const t = $("#a_text").value.trim(); if (!t) return;
+  LAST_Q = t; $("#a_text").value = ""; ask(t, false);
 });
 $("#enterForm").addEventListener("submit", (e) => { e.preventDefault(); enter($("#code").value.trim()); });
 $("#pickForm").addEventListener("submit", async (e) => {

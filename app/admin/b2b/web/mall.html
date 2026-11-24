@@ -160,15 +160,23 @@ tbody tr{cursor:default}
         <div id="codeOut"></div>
         <div id="noAddr" class="code-out" hidden></div>
       </section>
+      <section class="panel" aria-labelledby="man-h">
+        <h3 id="man-h">답변 매뉴얼 (직원 질문 자동 답)</h3>
+        <p class="basis">직원이 '언제 와요?'·'교환돼요?' 하고 물으면 이 칸과 주문 상태로만 답해요. 비어 있으면 날짜·조건을 지어내지 않고 "정해지면 안내"·"담당자 확인"으로 답해요.
+          '반드시 도착'·'무조건'·'보장' 같은 확정 표현은 저장되지 않아요.</p>
+        <div id="manFields"></div>
+        <div class="actions"><button class="btn primary" type="button" id="manBtn">매뉴얼 저장</button><span id="manMsg" class="basis"></span></div>
+      </section>
       <section class="panel" aria-labelledby="items-h">
         <h3 id="items-h">상품별 선택</h3><div class="tblwrap"><table><thead><tr><th>상품</th><th class="num">고른 수</th></tr></thead><tbody id="byItem"></tbody></table></div>
       </section>
       <section class="panel" aria-labelledby="orders-h">
         <h3 id="orders-h">주문 · 배송</h3>
         <p class="basis">이 표에는 배송 정보가 없어요. 공급사에 보낼 때만 '배송 정보 내보내기'(발송 요청 상태인 주문만, 한 번 내보내면 '발송 준비'로 바뀜).</p>
+        <div class="bar"><label class="btn" for="trkFile" style="cursor:pointer">송장 CSV 올리기 (주문,송장)</label><input type="file" id="trkFile" accept=".csv,text/csv" hidden><span id="trkMsg" class="basis"></span></div>
         <div class="bar"><button class="btn primary" type="button" id="exportBtn">배송 정보 내보내기 (CSV)</button>
           <span class="spacer"></span><button class="btn" type="button" data-mark="shipped">고른 주문 발송함</button><button class="btn" type="button" data-mark="delivered">고른 주문 배송 완료</button></div>
-        <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
+        <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>송장</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
       </section>
       <section class="panel" aria-labelledby="ev-h"><h3 id="ev-h">기록</h3><ul id="events" class="basis"></ul></section>
     </div>
@@ -192,6 +200,9 @@ const SHIP={none:"—",no_address:"주소 없음 (발주처 처리)",requested:"
 const EXAMPLE={slug:"sample-corp-2026",client:"(예시) 샘플공사",title:"2027 설 명절 임직원 선물",bid_id:"",
   opens_at:"2026-12-01T09:00",closes_at:"2026-12-10T18:00",delivery_mode:"individual",retention_days:30,default_item_id:"A",
   notice:"한 분당 하나씩 고를 수 있어요. 마감까지 고르지 않으면 기본 선물(A)로 보내 드려요.",
+  manual:{ship_plan:"2026-12-15",arrive_note:"출고 뒤 보통 1~3일 걸려요(도서산간은 1~2일 더).",courier:"(예시) 택배사",
+    exchange:"(예시) 받은 날부터 7일 안에 상품 이상이 있으면 교환해 드려요. 단순 변심 교환은 회사와 정한 기준에 따라요.",
+    item_change:"",contact:"(예시) 총무팀 사내 메신저"},
   items:[{id:"A",name:"(예시) 프리미엄 한과 세트",desc:"전통 유과·약과 18입",tier:"5만원대",image:""},
          {id:"B",name:"(예시) 제주 감귤 5kg",desc:"산지 직송",tier:"5만원대",image:""}]};
 let MALLS=[],CUR=null;
@@ -213,8 +224,9 @@ async function loadMall(id){
   $("#byItem").innerHTML=s.by_item.map(i=>`<tr><td>${esc(i.name)} <small class="dday">${esc(i.id)}</small></td><td class="num">${i.n}</td></tr>`).join("");
   const names=Object.fromEntries(m.items.map(i=>[i.id,i.name]));
   $("#orders").innerHTML=d.orders.length?d.orders.map(o=>`<tr><td><input type="checkbox" value="${esc(o.order_id)}" aria-label="${esc(o.order_id)} 고르기"></td><td><code>${esc(o.order_id)}</code></td>
-    <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
-    :'<tr><td colspan="5" class="empty">아직 고른 사람이 없어요</td></tr>';
+    <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(o.tracking||"")}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
+    :'<tr><td colspan="6" class="empty">아직 고른 사람이 없어요</td></tr>';
+  drawManual(m.manual||{});
   const na=(s.ship||{}).no_address||0;$("#noAddr").hidden=!na;
   if(na){$("#noAddr").innerHTML=`마감 때 고르지 않아 기본 상품이 됐지만 <b>배송지가 없는 코드 ${na}개</b>가 있어요. 임의로 보내지 말고, 번호 목록을 발주처에 넘겨 계약에 정한 방법(회사 일괄 수령 등)으로 처리해 주세요. <button class="btn" type="button" id="naBtn">번호 목록 내려받기</button>`;
     $("#naBtn").onclick=async()=>{const r=await api(`/admin/api/corpmall/${m.mall_id}/no-address`);csv(r.labels.map(l=>({번호:l})),`${m.slug}_no_address.csv`)}}
@@ -242,7 +254,17 @@ $("#exportBtn").onclick=async()=>{if(!confirm("발송 요청 주문의 배송 �
 $("#allChk").onchange=e=>document.querySelectorAll("#orders input[type=checkbox]").forEach(c=>c.checked=e.target.checked);
 document.querySelectorAll("[data-mark]").forEach(b=>b.onclick=async()=>{const ids=[...document.querySelectorAll("#orders input:checked")].map(c=>c.value);if(!ids.length)return;
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/mark`,{order_ids:ids,status:b.dataset.mark});await loadMall(CUR.mall_id)}catch(e){err(e)}});
-loadList();
+let MANF=[];
+async function manFields(){try{MANF=(await api("/admin/api/corpmall-manual")).fields}catch(e){err(e)}}
+function drawManual(v){$("#manFields").innerHTML=MANF.map(f=>`<div class="bar" style="margin:4px 0"><label for="man_${f.key}" style="min-width:230px">${esc(f.label)}</label>`
+  +(f.max>150?`<textarea id="man_${f.key}" maxlength="${f.max}" rows="2" style="flex:1">${esc(v[f.key]||"")}</textarea>`:`<input type="${f.key==="ship_plan"?"date":"text"}" id="man_${f.key}" maxlength="${f.max}" value="${esc(v[f.key]||"")}" style="flex:1">`)+`</div>`).join("");$("#manMsg").textContent=""}
+$("#manBtn").onclick=async()=>{const manual=Object.fromEntries(MANF.map(f=>[f.key,$("#man_"+f.key).value.trim()]));
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/manual`,{manual});$("#manMsg").textContent="저장했어요";await loadMall(CUR.mall_id);$("#manMsg").textContent="저장했어요"}catch(e){err(e)}};
+$("#trkFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;const txt=(await f.text()).replace(/^\ufeff/,"");
+  const rows=txt.split(/\r?\n/).map(l=>l.split(",").map(x=>x.replace(/^"|"$/g,"").trim())).filter(r=>r.length>=2&&/^O[0-9A-F]+$/.test(r[0])).map(r=>({order_id:r[0],tracking:r[1]}));
+  e.target.value="";if(!rows.length){$("#trkMsg").textContent="주문 번호(O…)·송장 두 칸이 있는 줄이 없어요";return}
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/tracking`,{rows});$("#trkMsg").textContent=`${d.n}건에 송장을 넣고 '발송함'으로 바꿨어요`;loadMall(CUR.mall_id)}catch(er){err(er)}};
+manFields().then(loadList);
 </script>
 </body>
 </html>

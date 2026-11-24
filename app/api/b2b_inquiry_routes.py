@@ -1,5 +1,6 @@
 """B2B 문의 창구 — 공개 문의 페이지와 접수 API (2026-11-24). 설계 claude/b2b_inquiry_desk_2026-11-24.md.
 
+  GET  /biz/api/faq          자주 묻는 질문 (공통 B2B 매뉴얼)
   GET  /biz/inquiry          임직원 선물 문의 페이지 (사업자등록·공개 결정 전까지 검색 노출 막음)
   POST /biz/api/inquiry      접수 → 접수 번호
 
@@ -42,6 +43,14 @@ class InquiryIn(BaseModel):
 @router.get("/biz/inquiry")
 def inquiry_page():
     return FileResponse(PAGE, headers=NOINDEX)
+
+
+@router.get("/biz/api/faq")
+def inquiry_faq():
+    """자주 묻는 질문 — 공통 B2B 매뉴얼(app/services/corpmall/manual.py)에서. 가격·견적은 사람이 답한다."""
+    from app.services.corpmall import manual
+
+    return JSONResponse({"faq": [{"q": q, "a": a} for q, a in manual.BUYER_FAQ]}, headers=NOINDEX)
 
 
 @router.post("/biz/api/inquiry")

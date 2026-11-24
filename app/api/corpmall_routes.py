@@ -2,7 +2,7 @@
 
   GET  /corp/{slug}                 직원 선물 페이지 (검색 노출 막음)
   POST /corp/api/{slug}/enter       {code} → 몰·상품·지금 고른 것 (code = 짧은 코드 또는 초대 링크 토큰, 소진 없음)
-  POST /corp/api/{slug}/ask         {code, topic, text} → 임직원 문의 (CS 티켓, 답은 같은 코드로 들어오면 보임)
+  POST /corp/api/{slug}/ask         {code, text, handoff?} → 매뉴얼로 바로 답, 매뉴얼 밖·사람 필수·handoff 면 CS 티켓
   POST /corp/api/{slug}/choose      {code, item_id, shipping?, consent, verify?} → 선택 저장(마감 전 변경 가능)
 
 운영자 API 는 app/admin/routes.py (/admin/api/corpmall/...).
@@ -62,8 +62,38 @@ class ChooseIn(BaseModel):
 class AskIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     code: str = Field(..., max_length=40)
-    topic: str = Field(..., max_length=12)
     text: str = Field(..., max_length=400)
+    handoff: bool = False  # '그래도 담당자에게 남기기'
+
+
+_READER: list = []
+
+
+def _reader():
+    """규칙이 모르는 문의의 '종류'만 고르는 AI (corp_cs — 고객 문장 작업이라 OpenAI·장애 시 Claude). 키가 없으면 None → 사람."""
+    if not _READER:
+        fn = None
+        try:
+            from app.api.chat_routes import _deepseek_ready
+
+            if _deepseek_ready():
+                from app.services.corpmall import assist
+                from app.services.nlu.llm_client import LLMClient
+
+                client = LLMClient(
+                    assist.AI_PROMPT,
+                    provider="deepseek",
+                    timeout=15.0,
+                    cache="corp_cs",
+                    cache_days=30,
+                    task="corp_cs",
+                    thinking=False,
+                )
+                fn = lambda text: client.chat_json(text, temperature=0)  # noqa: E731
+        except Exception:  # noqa: BLE001
+            fn = None
+        _READER.append(fn)
+    return _READER[0]
 
 
 @router.get("/corp/{slug}")
@@ -106,7 +136,15 @@ def corp_choose(slug: str, body: ChooseIn, request: Request):
 @router.post("/corp/api/{slug}/ask")
 def corp_ask(slug: str, body: AskIn, request: Request):
     try:
-        got = store.ask(_eng(), slug, body.code, body.topic, body.text, _client(request))
+        got = store.ask(
+            _eng(),
+            slug,
+            body.code,
+            body.text,
+            _client(request),
+            handoff=body.handoff,
+            reader=None if body.handoff else _reader(),
+        )
         return JSONResponse({"ok": True, **got}, headers=NOINDEX)
     except store.MallError as e:
         return _err(e)

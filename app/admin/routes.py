@@ -1591,6 +1591,41 @@ def corpmall_export(mall_id: str):
     return {"ok": True, "orders": store.export_orders(eng, mall_id, by="operator")}
 
 
+class _MallManualIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    manual: dict
+
+
+class _MallTrackingIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    rows: list[dict] = Field(..., max_length=5000)
+
+
+@router.post("/admin/api/corpmall/{mall_id}/manual", dependencies=[api])
+def corpmall_manual(mall_id: str, body: _MallManualIn):
+    """몰 답변 매뉴얼(출고 예정일·택배사·교환 조건 등) — 직원 질문 자동 답이 이 값만 쓴다."""
+    store, eng = _corp()
+    try:
+        return {"ok": True, "manual": store.update_manual(eng, mall_id, body.manual)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/tracking", dependencies=[api])
+def corpmall_tracking(mall_id: str, body: _MallTrackingIn):
+    """송장 번호 [{order_id, tracking}] → 그 주문 '발송함'. 직원이 '언제 와요?' 하면 송장으로 답한다."""
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"ok": True, "n": store.set_tracking(eng, mall_id, body.rows)}
+
+
+@router.get("/admin/api/corpmall-manual", dependencies=[api])
+def corpmall_manual_fields():
+    from app.services.corpmall import manual
+
+    return {"fields": [{"key": k, "label": lb, "max": n} for k, lb, n in manual.MALL_FIELDS], "common": manual.COMMON}
+
+
 @router.post("/admin/api/corpmall/{mall_id}/mark", dependencies=[api])
 def corpmall_mark(mall_id: str, body: _MallMarkIn):
     store, eng = _corp()
