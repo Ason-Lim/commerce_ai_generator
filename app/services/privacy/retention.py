@@ -148,6 +148,13 @@ class Retention:
             return
         self.report.append({"step": "cs_tickets", "target": "var/cs/tickets.json", "rows": got["cleared"] + got["removed"],
                             "cutoff": None})
+        try:                                     # 2026-11-24 B2B 폐쇄몰: 배송 완료 뒤 보존 기간 지난 배송 정보
+            from app.services.corpmall import store as corpmall
+
+            m = corpmall.purge(corpmall.engine(), self.now.replace(tzinfo=corpmall.KST))
+            self.report.append({"step": "corpmall_shipping", "target": "corpmall_order.ship_enc", "rows": m, "cutoff": None})
+        except Exception:  # noqa: BLE001
+            pass
         try:                                     # 2026-11-23 창 4 ④: 분야 검수 샘플 문장 90일
             from app.services.cs import review as cs_review
 

@@ -41,6 +41,8 @@ dependencies = [
     "referencing>=0.37.0",            # schema 참조($ref) 해석
     # 레거시 화면 (app/ui/streamlit_app.py)
     "streamlit>=1.57.0",
+    # B2B 폐쇄몰 배송 정보 암호화 저장 (2026-11-24)
+    "cryptography>=50.0.2",
 ]
 
 [dependency-groups]

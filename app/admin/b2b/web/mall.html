@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2B 폐쇄몰 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb;--mut-s:#eef1f4}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 14px;position:sticky;top:0;height:100vh}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:9px 12px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650}
+nav a:hover{background:#15222f}
+.railnote{font-size:12px;color:#7f93a8;margin-top:22px;line-height:1.6}
+main{padding:22px 28px 60px;min-width:0}
+.top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.top h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--mut-s);border-radius:12px;padding:4px}
+.tabs button{border:0;background:transparent;border-radius:9px;padding:6px 14px;cursor:pointer;font-weight:600;color:var(--ink2)}
+.tabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.banner{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin:0 0 14px}
+.banner b{font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi span{display:block;font-size:12px;color:var(--ink3)} .kpi b{font-size:22px;font-variant-numeric:tabular-nums}
+.kpi.k-open b{color:var(--ok)} .kpi.k-closing b{color:var(--hold)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+select,input[type=search],input[type=text],input[type=date],textarea{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;font-size:13.5px}
+input[type=search]{min-width:200px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:13.5px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;align-items:start}
+.grid.nodetail{grid-template-columns:minmax(0,1fr)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.panel h3{margin:0 0 10px;font-size:15px}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+thead th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap}
+tbody tr{cursor:pointer} tbody tr:hover td{background:#f8fafc} tbody tr[aria-selected=true] td{background:var(--acc-s)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;display:inline-block}
+.s-입찰중{background:var(--ok-s);color:var(--ok)} .s-마감임박{background:var(--hold-s);color:var(--hold)}
+.s-입찰마감{background:var(--mut-s);color:var(--ink3)} .s-마감일{background:var(--mut-s);color:var(--ink2)}
+.v{font-size:11px;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.v-verified{background:var(--ok-s);color:var(--ok)} .v-document_provided{background:var(--acc-s);color:var(--acc)}
+.v-unverified{background:var(--hold-s);color:var(--hold)} .v-legacy_unverified{background:var(--ex-s);color:var(--ex)}
+.t{font-weight:600} .t small{display:block;color:var(--ink3);font-weight:400;font-size:12px}
+.dday{font-size:11.5px;color:var(--ink3)}
+.empty{color:var(--ink3);padding:24px 6px;text-align:center}
+/* 상세 */
+.detail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.detail h3{font-size:16px;line-height:1.4}
+dl.kv{display:grid;grid-template-columns:86px 1fr;gap:4px 10px;margin:0 0 12px;font-size:13px}
+dl.kv dt{color:var(--ink3)} dl.kv dd{margin:0;word-break:break-all}
+.sec{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.sec h4{margin:0 0 6px;font-size:13.5px}
+.sec ul{margin:0;padding-left:18px;font-size:13px}
+.basis{font-size:12px;color:var(--ink3);margin-top:6px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.up{display:inline-block}
+.log{background:#0f1a24;color:#cfe0f0;border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto;margin-bottom:12px}
+/* 트렌드 */
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.hb{display:grid;grid-template-columns:160px 1fr 92px;gap:10px;align-items:center;font-size:13px;margin:5px 0}
+.hb .track{height:12px;background:var(--mut-s);border-radius:6px;overflow:hidden}
+.hb .track i{display:block;height:100%;background:var(--acc);border-radius:6px}
+.hb .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.months{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px;border-bottom:1px solid var(--line)}
+.months div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.months i{display:block;width:70%;background:var(--acc);border-radius:4px 4px 0 0}
+.months b{font-size:11.5px;font-weight:600;color:var(--ink2)}
+.mlabels{display:flex;gap:6px} .mlabels span{flex:1;text-align:center;font-size:11px;color:var(--ink3);min-width:0;overflow:hidden}
+.report li{margin:4px 0}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px}
+/* 점검 */
+.evrow{display:grid;grid-template-columns:70px 1fr 70px 220px;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:13.5px}
+.evrow input{width:60px}
+.evres{font-size:28px;font-weight:800} .evres small{font-size:14px;color:var(--ink3);font-weight:500}
+dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog form{padding:20px;display:grid;gap:10px}
+dialog label{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
+dialog textarea{min-height:120px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.detail{position:static;max-height:none}.kpis{grid-template-columns:repeat(3,1fr)}.tgrid{grid-template-columns:1fr}}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}.kpis{grid-template-columns:repeat(2,1fr)}
+ .hb{grid-template-columns:110px 1fr 56px}.evrow{grid-template-columns:1fr 1fr}.tabs{margin-left:0}}
+.tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.code-out{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:8px}
+textarea.spec{width:100%;min-height:260px;font-family:ui-monospace,monospace;font-size:12.5px}
+.st{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px}
+.st-draft{background:var(--mut-s);color:var(--ink2)} .st-open{background:var(--ok-s);color:var(--ok)} .st-closed,.st-ended{background:var(--hold-s);color:var(--hold)}
+tbody tr{cursor:default}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/mall" aria-current="page">폐쇄몰</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <div class="railnote"><b>폐쇄몰 1차 — 기업 일괄 구매형.</b> 직원 확인은 발주처가 해요: 여기서 인원 수만큼 코드를 만들어 발주처 담당자에게 넘기면, 발주처가 직원에게 나눠 줘요. 우리는 명단을 받지 않아요.<br><br>
+  우리가 보장하는 건 <b>코드 하나에 주문 하나</b>까지예요. 직원 한 명에 코드 하나 배포, 공유·대리 사용은 발주처 몫(계약서·안내문에 적기).<br><br>
+  코드마다 <b>초대 링크(긴 토큰)</b>와 <b>직접 입력 코드(8자)</b>가 같이 나와요. 링크를 여는 것만으로는 소진되지 않아요.<br><br>
+  코드 원문은 <b>만들 때 한 번만</b> 보여요 — 바로 내려받으세요(서버에는 해시만).<br><br>
+  배송 정보는 직원이 고를 때만, 암호화해 보관하고 배송 완료 뒤 보존 기간이 지나면 지워요. 내보내기 파일은 공급사 전달 뒤 지워 주세요.</div>
+</aside>
+<main>
+  <div class="top"><h2>B2B 폐쇄몰</h2><span class="spacer"></span>
+    <select id="mallSel" aria-label="폐쇄몰 고르기"></select>
+    <button class="btn" type="button" id="newBtn">새 폐쇄몰</button></div>
+  <div id="err" class="banner" hidden></div>
+
+  <section class="panel" id="newPanel" hidden aria-labelledby="new-h">
+    <h3 id="new-h">새 폐쇄몰 만들기</h3>
+    <p class="basis">낙찰 제안서의 상품만 넣어요. 직원 화면에는 상품 이름·설명·사진·금액대 이름만 보여요(가격·공급사는 안 보임).
+      delivery_mode: individual(직원 집으로 — 배송 정보 받음) · bulk(회사로 일괄 — 받지 않음). 처음엔 '초안' 상태라 직원이 못 들어와요.</p>
+    <textarea class="spec" id="spec" aria-label="폐쇄몰 설정 JSON"></textarea>
+    <div class="actions"><button class="btn primary" type="button" id="createBtn">만들기</button><button class="btn" type="button" id="cancelBtn">닫기</button></div>
+  </section>
+
+  <div id="detail" hidden>
+    <div class="kpis" style="margin-top:14px">
+      <div class="kpi"><span>코드 발급</span><b id="k_issued">0</b></div>
+      <div class="kpi k-open"><span>직원이 고름</span><b id="k_chosen">0</b></div>
+      <div class="kpi"><span>선택률</span><b id="k_rate">—</b></div>
+      <div class="kpi k-closing"><span>기본 상품 처리</span><b id="k_default">0</b></div>
+    </div>
+    <div class="grid nodetail">
+      <section class="panel" aria-labelledby="info-h">
+        <h3 id="info-h"><span id="m_title"></span> <span id="m_status" class="st"></span></h3>
+        <dl class="kv"><dt>발주처</dt><dd id="m_client"></dd><dt>직원 주소</dt><dd><code id="m_url"></code></dd>
+          <dt>선택 기간</dt><dd id="m_period"></dd><dt>배송</dt><dd id="m_mode"></dd><dt>기본 상품</dt><dd id="m_default"></dd>
+          <dt>보존 기간</dt><dd id="m_keep"></dd><dt>입찰</dt><dd id="m_bid"></dd></dl>
+        <div class="actions">
+          <button class="btn primary" type="button" data-st="open">열기 (직원 입장 가능)</button>
+          <button class="btn" type="button" data-st="draft">초안으로</button>
+          <button class="btn" type="button" data-st="closed">마감 (안 고른 코드 → 기본 상품)</button></div>
+      </section>
+      <section class="panel" aria-labelledby="codes-h">
+        <h3 id="codes-h">코드</h3>
+        <div class="bar"><label for="nCodes">몇 개</label><input type="text" inputmode="numeric" id="nCodes" value="10" style="width:90px">
+          <button class="btn primary" type="button" id="issueBtn">코드 만들고 내려받기</button>
+          <span class="spacer"></span><label for="lostLabel">분실 코드 번호</label><input type="text" inputmode="numeric" id="lostLabel" style="width:80px">
+          <button class="btn" type="button" id="reissueBtn">막고 새로 만들기</button></div>
+        <div id="codeOut"></div>
+        <div id="noAddr" class="code-out" hidden></div>
+      </section>
+      <section class="panel" aria-labelledby="items-h">
+        <h3 id="items-h">상품별 선택</h3><div class="tblwrap"><table><thead><tr><th>상품</th><th class="num">고른 수</th></tr></thead><tbody id="byItem"></tbody></table></div>
+      </section>
+      <section class="panel" aria-labelledby="orders-h">
+        <h3 id="orders-h">주문 · 배송</h3>
+        <p class="basis">이 표에는 배송 정보가 없어요. 공급사에 보낼 때만 '배송 정보 내보내기'(발송 요청 상태인 주문만, 한 번 내보내면 '발송 준비'로 바뀜).</p>
+        <div class="bar"><button class="btn primary" type="button" id="exportBtn">배송 정보 내보내기 (CSV)</button>
+          <span class="spacer"></span><button class="btn" type="button" data-mark="shipped">고른 주문 발송함</button><button class="btn" type="button" data-mark="delivered">고른 주문 배송 완료</button></div>
+        <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
+      </section>
+      <section class="panel" aria-labelledby="ev-h"><h3 id="ev-h">기록</h3><ul id="events" class="basis"></ul></section>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const when=v=>String(v||"").replace("T"," ").slice(0,16);
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/b2b/mall";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{const j=await r.json();m=typeof j.detail==="string"?j.detail:JSON.stringify(j.detail)}catch{}throw new Error(m)}return r.json()}
+const post=(u,b)=>api(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})});
+function err(e){if(e.message==="auth")return;const b=$("#err");b.hidden=false;b.textContent="문제가 생겼어요: "+e.message}
+function csv(rows,name){const keys=Object.keys(rows[0]||{});const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const body="\ufeff"+[keys.join(","),...rows.map(r=>keys.map(k=>q(r[k])).join(","))].join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([body],{type:"text/csv"}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+const MODE={individual:"직원 집으로 (배송 정보 받음)",bulk:"회사로 일괄 (배송 정보 받지 않음)",coupon:"모바일 쿠폰 (2차)"};
+const ST={draft:"초안",open:"열림",closed:"마감",ended:"종료"};
+const SHIP={none:"—",no_address:"주소 없음 (발주처 처리)",requested:"발송 요청",exported:"발송 준비",shipped:"발송함",delivered:"배송 완료"};
+const EXAMPLE={slug:"sample-corp-2026",client:"(예시) 샘플공사",title:"2027 설 명절 임직원 선물",bid_id:"",
+  opens_at:"2026-12-01T09:00",closes_at:"2026-12-10T18:00",delivery_mode:"individual",retention_days:30,default_item_id:"A",
+  notice:"한 분당 하나씩 고를 수 있어요. 마감까지 고르지 않으면 기본 선물(A)로 보내 드려요.",
+  items:[{id:"A",name:"(예시) 프리미엄 한과 세트",desc:"전통 유과·약과 18입",tier:"5만원대",image:""},
+         {id:"B",name:"(예시) 제주 감귤 5kg",desc:"산지 직송",tier:"5만원대",image:""}]};
+let MALLS=[],CUR=null;
+
+async function loadList(sel){
+  let d;try{d=await api("/admin/api/corpmall")}catch(e){return err(e)}
+  MALLS=d.malls;const s=$("#mallSel");s.innerHTML=MALLS.length?MALLS.map(m=>`<option value="${esc(m.mall_id)}">${esc(m.client||"")} · ${esc(m.title||m.slug)} (${ST[m.status]||m.status})</option>`).join(""):'<option value="">폐쇄몰이 없어요</option>';
+  if(sel)s.value=sel;if(s.value)loadMall(s.value);else{$("#detail").hidden=true}
+}
+async function loadMall(id){
+  let d;try{d=await api("/admin/api/corpmall/"+id)}catch(e){return err(e)}
+  CUR=d.mall;const m=d.mall,s=d.stats;$("#detail").hidden=false;
+  $("#m_title").textContent=m.title||m.slug;$("#m_status").textContent=ST[m.status]||m.status;$("#m_status").className="st st-"+m.status;
+  $("#m_client").textContent=m.client||"";$("#m_url").textContent=location.origin+"/corp/"+m.slug;
+  $("#m_period").textContent=when(m.opens_at)+" ~ "+when(m.closes_at);$("#m_mode").textContent=MODE[m.delivery_mode]||m.delivery_mode;
+  $("#m_default").textContent=(m.items.find(i=>i.id===m.default_item_id)||{}).name||"없음 (마감 때 안 고른 코드는 그대로)";
+  $("#m_keep").textContent="배송 완료 뒤 "+m.retention_days+"일";$("#m_bid").textContent=m.bid_id||"—";
+  $("#k_issued").textContent=s.issued;$("#k_chosen").textContent=s.chosen;$("#k_rate").textContent=s.rate==null?"—":(s.rate*100).toFixed(1)+"%";$("#k_default").textContent=s.defaulted;
+  $("#byItem").innerHTML=s.by_item.map(i=>`<tr><td>${esc(i.name)} <small class="dday">${esc(i.id)}</small></td><td class="num">${i.n}</td></tr>`).join("");
+  const names=Object.fromEntries(m.items.map(i=>[i.id,i.name]));
+  $("#orders").innerHTML=d.orders.length?d.orders.map(o=>`<tr><td><input type="checkbox" value="${esc(o.order_id)}" aria-label="${esc(o.order_id)} 고르기"></td><td><code>${esc(o.order_id)}</code></td>
+    <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
+    :'<tr><td colspan="5" class="empty">아직 고른 사람이 없어요</td></tr>';
+  const na=(s.ship||{}).no_address||0;$("#noAddr").hidden=!na;
+  if(na){$("#noAddr").innerHTML=`마감 때 고르지 않아 기본 상품이 됐지만 <b>배송지가 없는 코드 ${na}개</b>가 있어요. 임의로 보내지 말고, 번호 목록을 발주처에 넘겨 계약에 정한 방법(회사 일괄 수령 등)으로 처리해 주세요. <button class="btn" type="button" id="naBtn">번호 목록 내려받기</button>`;
+    $("#naBtn").onclick=async()=>{const r=await api(`/admin/api/corpmall/${m.mall_id}/no-address`);csv(r.labels.map(l=>({번호:l})),`${m.slug}_no_address.csv`)}}
+  $("#events").innerHTML=d.events.map(e=>`<li>${esc(when(e.at))} · ${esc(e.kind)} ${esc(JSON.stringify(e.detail))}</li>`).join("");
+}
+$("#mallSel").addEventListener("change",e=>loadMall(e.target.value));
+$("#newBtn").onclick=()=>{$("#newPanel").hidden=false;if(!$("#spec").value)$("#spec").value=JSON.stringify(EXAMPLE,null,2)};
+$("#cancelBtn").onclick=()=>{$("#newPanel").hidden=true};
+$("#createBtn").onclick=async()=>{let spec;try{spec=JSON.parse($("#spec").value)}catch{return err(new Error("JSON 형식이 맞지 않아요"))}
+  try{const d=await post("/admin/api/corpmall",{spec});$("#newPanel").hidden=true;await loadList(d.mall.mall_id)}catch(e){err(e)}};
+document.querySelectorAll("[data-st]").forEach(b=>b.onclick=async()=>{const st=b.dataset.st;
+  if(st==="closed"&&!confirm("마감할까요? 직원이 더 고를 수 없고, 안 고른 코드는 기본 상품으로 정해져요."))return;
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/status/${st}`);await loadList(CUR.mall_id)}catch(e){err(e)}});
+$("#issueBtn").onclick=async()=>{const n=parseInt($("#nCodes").value,10);if(!n)return;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/codes`,{n});
+    const rows=d.codes.map(c=>({번호:c.label,"직접 입력 코드":c.code,"초대 링크":location.origin+c.link}));csv(rows,`${CUR.slug}_codes_${rows[0].번호}-${rows.at(-1).번호}.csv`);
+    $("#codeOut").innerHTML=`<div class="code-out">코드 ${d.codes.length}개를 만들어 내려받았어요 (${d.codes[0].label}~${d.codes.at(-1).label}번). <b>원문은 다시 볼 수 없어요</b> — 파일을 발주처 담당자에게 안전하게 넘기고, 넘긴 뒤 이 컴퓨터의 파일은 지워 주세요.</div>`;
+    await loadMall(CUR.mall_id)}catch(e){err(e)}};
+$("#reissueBtn").onclick=async()=>{const l=parseInt($("#lostLabel").value,10);if(!l)return;if(!confirm(l+"번 코드를 막고 새 코드를 만들까요? 이미 고른 선물은 새 코드로 옮겨져요."))return;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/codes/${l}/reissue`);
+    $("#codeOut").innerHTML=`<div class="code-out">${l}번을 막고 새 코드 <b>${esc(d.code)}</b> (${d.label}번)를 만들었어요. 링크: <code>${esc(location.origin+d.link)}</code> — 원문은 다시 볼 수 없어요.</div>`;await loadMall(CUR.mall_id)}catch(e){err(e)}};
+$("#exportBtn").onclick=async()=>{if(!confirm("발송 요청 주문의 배송 정보를 내려받을까요? 내려받은 주문은 '발송 준비'로 바뀌어 다시 나오지 않아요."))return;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/export`);if(!d.orders.length){alert("발송 요청 주문이 없어요");return}
+    csv(d.orders.map(o=>({주문:o.order_id,상품:o.item,받는분:o.name,휴대폰:o.phone,우편번호:o.zipcode,주소:o.address,메모:o.memo})),`${CUR.slug}_ship_${new Date().toISOString().slice(0,10)}.csv`);await loadMall(CUR.mall_id)}catch(e){err(e)}};
+$("#allChk").onchange=e=>document.querySelectorAll("#orders input[type=checkbox]").forEach(c=>c.checked=e.target.checked);
+document.querySelectorAll("[data-mark]").forEach(b=>b.onclick=async()=>{const ids=[...document.querySelectorAll("#orders input:checked")].map(c=>c.value);if(!ids.length)return;
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/mark`,{order_ids:ids,status:b.dataset.mark});await loadMall(CUR.mall_id)}catch(e){err(e)}});
+loadList();
+</script>
+</body>
+</html>
