@@ -55,6 +55,20 @@ export function resetSavedOwner(): void {
   try { window.localStorage.removeItem(OWNER_KEY); } catch { /* 없음 */ }
 }
 
+/** 2026-11-24 보관함 옮기기 코드 — 로그인 없이 다른 기기로 (관심 상품·장보기 목록). */
+export async function issueTransferCode(basket: unknown[]): Promise<{ ok: boolean; code?: string; expires_in?: number; error?: string }> {
+  if (API_MODE === "mock") return { ok: true, code: "ABCD-EFGH", expires_in: 600 };
+  const r = await fetch("/api/me/transfer", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ owner: savedOwner(), basket }) });
+  return r.ok ? r.json() : { ok: false, error: "server" };
+}
+export async function claimTransferCode(code: string): Promise<{ ok: boolean; saved_moved?: number; basket?: unknown[]; error?: string }> {
+  if (API_MODE === "mock") return { ok: false, error: "bad_code" };
+  const r = await fetch("/api/me/transfer/claim", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ owner: savedOwner(), code }) });
+  return r.ok ? r.json() : { ok: false, error: "server" };
+}
+
 export function savedOwner(): string {
   if (ownerMemo) return ownerMemo;
   try { ownerMemo = window.localStorage.getItem(OWNER_KEY); } catch { /* 저장소 막힘 */ }

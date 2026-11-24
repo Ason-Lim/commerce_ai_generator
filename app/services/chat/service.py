@@ -610,6 +610,47 @@ class ChatService:
                 return {"ok": False, "error": "storage", **self.saved_view(owner, session_id)}
         return {"ok": True, **self.saved_view(owner, session_id)}
 
+    # ── 2026-11-24 보관함 옮기기 코드 (로그인 없이 다른 기기로) ──
+    def transfer_issue(self, owner: str | None, basket: list | None) -> dict:
+        from app.services.chat import transfer
+
+        if not (owner and SESSION_RE.fullmatch(owner)):
+            return {"ok": False, "error": "invalid"}
+        return {"ok": True, **transfer.issue(owner, basket)}
+
+    def transfer_claim(self, owner: str | None, code: str | None, client: str) -> dict:
+        """원래 기기의 관심 상품을 이 기기 보관함에 복사(같은 상품은 한 번, 최근 담은 순, 최대 30) + 장보기 목록을 돌려준다."""
+        from app.services.chat import transfer
+
+        if not (owner and SESSION_RE.fullmatch(owner)):
+            return {"ok": False, "error": "invalid"}
+        if transfer.blocked(client):
+            return {"ok": False, "error": "too_many"}
+        got = transfer.claim(code, client)
+        if got is None:
+            return {"ok": False, "error": "bad_code"}
+        if got["owner"] == owner:
+            return {"ok": False, "error": "same_device"}
+        moved = 0
+        if self.db is not None:
+            src, _ = self._saved(got["owner"])
+            for _attempt in range(2):
+                mine, rev = self._saved(owner)
+                have = {c.get("key") for c in mine}
+                extra = [c for c in src if c.get("key") not in have]
+                merged = sorted(mine + extra, key=lambda c: str(c.get("saved_at") or ""), reverse=True)[:saved_mod.MAX_SAVED]
+                try:
+                    with self.db.write() as conn:
+                        saved_mod.SavedStore(conn, self.db.sql).save(owner, merged, rev)
+                    moved = len([c for c in merged if c.get("key") not in have])
+                    break
+                except RevisionConflict:
+                    continue
+                except Exception:  # noqa: BLE001
+                    log.exception("transfer write failed")
+                    return {"ok": False, "error": "storage"}
+        return {"ok": True, "saved_moved": moved, "basket": got["basket"]}
+
     def _saved(self, owner: str) -> tuple[list[dict], int]:
         if self.db is None:
             return [], 0

@@ -233,3 +233,30 @@ def test_basket_from_another_conversation_is_one_line(shelf_site, browser):
     page.get_by_role("note", name="담아 둔 부족한 재료").get_by_text("닭").wait_for()
     assert page.get_by_role("region", name="부족한 재료 장보기").count() == 0
     ctx.close()
+
+
+def test_transfer_code_moves_basket_to_another_device(shelf_site, browser):
+    """2026-11-24: 로그인 없이 '다른 기기로 옮기기' 코드 — 한 기기에서 만들고 다른 기기(다른 브라우저 저장소)에서 불러온다."""
+    a = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+    pa = a.new_page()
+    pa.goto(shelf_site + "/")
+    pa.evaluate("b => localStorage.setItem('ai-food-basket', JSON.stringify(b))", [dict(BASKET[0], ingredient="닭")])
+    pa.goto(shelf_site + "/#/me")
+    box = pa.get_by_role("region", name="다른 기기로 옮기기")
+    box.get_by_role("button", name="옮기기 코드 만들기").click()
+    code = box.get_by_label("옮기기 코드").inner_text()
+    assert len(code) == 9 and code[4] == "-"
+
+    b = browser.new_context(viewport={"width": 390, "height": 900}, locale="ko-KR")
+    pb = b.new_page()
+    pb.goto(shelf_site + "/#/me")
+    nb = pb.get_by_role("region", name="다른 기기로 옮기기")
+    nb.get_by_label("코드로 불러오기").fill(code.lower())
+    nb.get_by_role("button", name="불러오기").click()
+    nb.get_by_text("장보기 1개를 불러왔어요", exact=False).wait_for()
+    assert pb.get_by_role("region", name="장보기 목록").get_by_text("닭", exact=True).count() >= 1
+    nb.get_by_label("코드로 불러오기").fill(code)                      # 한 번만
+    nb.get_by_role("button", name="불러오기").click()
+    nb.get_by_text("코드가 맞지 않거나 10분이 지났어요", exact=False).wait_for()
+    a.close()
+    b.close()
