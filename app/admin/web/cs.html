@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.6}
+button,select,input,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
+.tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
+.logout{margin-top:18px;background:transparent;border:1px solid #23364a;color:#c3d1de;border-radius:10px;padding:7px 11px;cursor:pointer;width:100%}
+main{padding:22px 26px;min-width:0;display:grid;gap:22px;align-content:start}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-width:0}
+h2{font-size:17px;margin:0 0 2px} .lede{color:var(--ink2);margin:0 0 12px;font-size:13.5px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12.5px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px} th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap;background:#fafbfc;position:sticky;top:0}
+td small{display:block;color:var(--ink3);font-size:12px}
+tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{background:var(--acc-s)}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p-ok{background:var(--ok-s);color:var(--ok)} .p-off{background:#eef1f4;color:var(--ink3)} .p-err{background:var(--ex-s);color:var(--ex)} .p-hold{background:var(--hold-s);color:var(--hold)}
+.detail{margin-top:14px;display:grid;gap:12px}
+.turns{display:grid;gap:6px;font-size:13.5px} .turn{display:flex;gap:10px} .turn span{color:var(--ink3);font-size:12px;min-width:120px}
+.k{font-size:12px;color:var(--ink3);font-weight:600;margin:0 0 4px}
+.err{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:10px 12px}
+.note{font-size:12.5px;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}}
+
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.sum span{border:1px solid var(--line);border-radius:10px;padding:4px 10px;font-size:12.5px;background:#fafbfc}
+.sum b{font-variant-numeric:tabular-nums}
+.cards{display:grid;gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
+.card h3{font-size:14.5px;margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h3 .rk{font-variant-numeric:tabular-nums;color:var(--ink3);font-weight:600;min-width:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.box{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;min-width:0}
+.box .k{margin:0 0 2px}
+.box ul{margin:4px 0 0;padding-left:16px}
+.warn{background:var(--hold-s);color:var(--hold);border-radius:10px;padding:8px 10px;font-size:13px}
+.bad{background:var(--ex-s);color:var(--ex);border-radius:10px;padding:8px 10px;font-size:13px}
+.mono{font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--ink2);font-size:12.5px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:6px 0 4px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafbfc}
+.kpi .k{margin:0} .kpi b{font-size:20px;font-variant-numeric:tabular-nums;display:block}
+.kpi small{color:var(--ink3);font-size:12px}
+.kpi.save b{color:var(--ok)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} th.n{text-align:right}
+.bars{display:grid;gap:4px;font-size:12.5px}
+.bar{display:grid;grid-template-columns:86px 1fr 92px;gap:8px;align-items:center}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--acc);min-width:2px}
+.bar span{font-variant-numeric:tabular-nums;color:var(--ink2)} .bar span:last-child{text-align:right}
+a{color:var(--acc)}
+
+.tabs2{display:flex;gap:6px;margin:0 0 12px}.tabs2 button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;cursor:pointer}
+.tabs2 button[aria-selected=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} th.n{text-align:right}
+.obs{color:var(--hold);font-size:11.5px;font-weight:700;margin-left:4px}
+.cand-text{font-weight:600}
+.ex{font-size:12px;color:var(--ink3)}
+.verdict{display:flex;gap:4px;flex-wrap:wrap}
+.verdict button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:3px 9px;cursor:pointer;font-size:12.5px}
+.verdict button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.verdict input{width:100%;font-size:12.5px;padding:4px 8px;margin-top:4px}
+.fixform{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+.fixform label{display:grid;gap:2px;font-size:12px;color:var(--ink3);min-width:0}.fixform input{width:100%}
+.due td{background:var(--hold-s)}
+a{color:var(--acc)}
+
+.due td{background:var(--hold-s)} .over td{background:var(--ex-s)}
+.reply{display:grid;gap:6px;margin-top:6px} .reply textarea{min-height:60px;font-family:inherit;font-size:13px}
+.prods{display:grid;gap:4px;margin-top:6px} .prods div{display:flex;gap:8px;align-items:center;font-size:12.5px}
+.prods .blk{color:var(--ex);font-weight:700;font-size:11.5px}
+.grp{margin-top:14px} .grp h3{font-size:14px;margin:0 0 6px}
+.verdict select{font-size:12.5px;padding:3px 6px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs" aria-current="page">CS</a><a href="/admin/b2b">B2B</a></nav>
+  <nav aria-label="CS 메뉴"><a href="#queue">사람 필수 대기열</a><a href="#blocked">노출 중지 상품</a><a href="#review">분야 판단 검수</a></nav>
+  <div class="railnote">대기열은 손님 대화에서 <b>자동 접수</b>된 것이에요(위급·식품 안전·개인정보 요청·분쟁). 회신과 종결은 <b>여기서만</b> 해요 — AI 는 접수만 해요.<br><br>회신은 손님 '내 보관함 → 문의'에 보여요. 손님 문장을 그대로 옮기지 말고 결과만 적어 주세요.<br><br>식품 안전 신고 상품은 확인이 끝날 때까지 화면에서만 빠져요(순위는 그대로). 판매처 확인이 끝나면 <b>풀기</b>.<br><br>검수는 월요일 개선 순환 때 분야마다 10~20개씩. 30개 미만은 '관찰'.</div>
+  <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
+</aside>
+<main>
+  <div id="err" class="err" hidden></div>
+  <section id="queue" aria-labelledby="queue-h">
+    <h2 id="queue-h">사람 필수 대기열 <small class="note" id="qcount"></small></h2>
+    <p class="lede">기한이 지난 것은 빨갛게, 오늘이 기한인 것은 노랗게 보여요. 요약은 입구에서 개인정보를 가린 뒤 문장이고 90일 뒤 지워져요.</p>
+    <div class="row"><label for="qstatus" class="note">상태</label>
+      <select id="qstatus"><option value="open" selected>열림</option><option value="answered">회신함</option><option value="closed">종결</option><option value="">전체</option></select></div>
+    <div class="scroll" style="max-height:640px"><table><thead><tr><th>번호 · 분야</th><th>기한</th><th style="min-width:260px">요약 · 후보 상품</th><th style="min-width:280px">회신 · 종결</th></tr></thead><tbody id="qrows"></tbody></table></div>
+  </section>
+  <section id="blocked" aria-labelledby="blk-h">
+    <h2 id="blk-h">노출 중지 상품</h2>
+    <p class="lede">대화 검색·홈·트렌드 글에서 빠진 상품이에요. 풀면 바로 다시 보여요.</p>
+    <div class="scroll"><table><thead><tr><th>상품</th><th>상태</th><th>사유 · 티켓</th><th>막은 때</th><th></th></tr></thead><tbody id="brows"></tbody></table></div>
+  </section>
+  <section id="review" aria-labelledby="rev-h">
+    <h2 id="rev-h">분야 판단 검수</h2>
+    <p class="lede">손님이 직접 쓴 문장의 분야 판단 샘플이에요 — 식품 아닌 분야는 모두, 식품은 10개 중 1개. 문장은 90일 뒤 지워지고 판정은 문장 없이 남아요. 오분류율 = 틀림 ÷ (맞음 + 틀림).</p>
+    <div class="row"><label for="rdays" class="note">기간</label>
+      <select id="rdays"><option value="7" selected>최근 7일</option><option value="14">14일</option><option value="28">28일</option><option value="90">90일</option></select></div>
+    <div class="scroll"><table><thead><tr><th>분야</th><th class="n">맞음</th><th class="n">틀림</th><th class="n">모름</th><th class="n">오분류율</th><th class="n">다른 분야로 간 것</th></tr></thead><tbody id="srows"></tbody></table></div>
+    <div id="groups"></div>
+  </section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>Number(v||0).toLocaleString("ko-KR");
+const when=v=>String(v||"").replace("T"," ").slice(5,16);
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/cs";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{const j=await r.json();m=typeof j.detail==="string"?j.detail:JSON.stringify(j.detail)}catch{}throw new Error(m)}return r.json()}
+const post=(url,body)=>api(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})});
+function showErr(e){if(e.message==="auth")return;const b=$("#err");b.hidden=false;b.textContent="문제가 생겼어요: "+e.message}
+
+// 1. 대기열
+let BLOCKED=new Set();
+async function loadQueue(){
+  let d;try{d=await api("/admin/api/cs/tickets"+($("#qstatus").value?"?status="+$("#qstatus").value:""))}catch(e){return showErr(e)}
+  const today=new Date().toISOString().slice(0,10);
+  $("#qcount").textContent=`${num(d.tickets.length)}건`;
+  const tb=$("#qrows");tb.innerHTML=d.tickets.length?"":'<tr><td colspan="4" class="note">없어요</td></tr>';
+  for(const t of d.tickets){const tr=document.createElement("tr");
+    if(t.overdue)tr.className="over";else if(t.status==="open"&&String(t.due_at).slice(0,10)===today)tr.className="due";
+    const st={open:'<span class="pill p-hold">열림</span>',answered:'<span class="pill p-ok">회신함</span>',closed:'<span class="pill p-off">종결</span>'}[t.status]||esc(t.status);
+    const prods=(t.products||[]).map(p=>`<div><span>${esc(p.title)||esc(p.product_id)}</span>${BLOCKED.has(p.product_id)?'<span class="blk">노출 중지</span>':`<button class="btn" type="button" data-block="${esc(p.product_id)}" data-ticket="${esc(t.id)}" aria-label="${esc(p.title)} 노출 중지">노출 중지</button>`}</div>`).join("");
+    tr.innerHTML=`<td><code>${esc(t.id)}</code><small>${esc(t.label)}</small>${st}</td>
+      <td><small>접수 ${esc(when(t.created_at))}</small><small>기한 ${esc(when(t.due_at))}</small>${t.overdue?'<span class="pill p-err">기한 지남</span>':""}</td>
+      <td>${esc(t.summary)||'<span class="note">(요약 없음 — 지웠거나 90일 지남)</span>'}${prods?'<div class="k" style="margin-top:6px">대화에서 보여 준 후보 상품</div><div class="prods">'+prods+'</div>':""}</td>
+      <td><div class="reply"><textarea maxlength="1000" aria-label="${esc(t.id)} 회신" placeholder="손님에게 보일 회신 (결과만)">${esc(t.reply?.text||"")}</textarea>
+        <div class="row" style="margin:0"><button class="btn primary" type="button" data-act="answer">회신 저장</button>${t.status!=="closed"?'<button class="btn" type="button" data-act="close">종결</button>':""}</div></div></td>`;
+    tr.querySelector("[data-act=answer]").onclick=async()=>{const text=tr.querySelector("textarea").value.trim();if(!text)return;
+      try{await post(`/admin/api/cs/tickets/${t.id}/answer`,{text});await loadQueue()}catch(e){showErr(e)}};
+    const c=tr.querySelector("[data-act=close]");if(c)c.onclick=async()=>{if(!confirm(t.id+" 을 종결할까요?"))return;
+      try{await post(`/admin/api/cs/tickets/${t.id}/close`);await loadQueue()}catch(e){showErr(e)}};
+    tb.append(tr)}
+}
+$("#qstatus").addEventListener("change",loadQueue);
+$("#qrows").addEventListener("click",async e=>{const b=e.target.closest("button[data-block]");if(!b)return;
+  try{await post("/admin/api/cs/blocked",{product_id:b.dataset.block,ticket_id:b.dataset.ticket});await loadBlocked();await loadQueue()}catch(err){showErr(err)}});
+
+// 2. 노출 중지 상품
+async function loadBlocked(){
+  let d;try{d=await api("/admin/api/cs/blocked")}catch(e){return showErr(e)}
+  BLOCKED=new Set(d.products.filter(p=>p.active).map(p=>p.product_id));
+  const tb=$("#brows");tb.innerHTML=d.products.length?"":'<tr><td colspan="5" class="note">없어요</td></tr>';
+  for(const p of d.products){const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${esc(p.title)||"-"}<small>상품 번호 ${esc(p.product_id)}</small></td><td>${p.active?'<span class="pill p-err">중지 중</span>':'<span class="pill p-off">풀림</span>'}</td>
+      <td>${esc(p.reason)}<small>${esc(p.ticket||"")}</small></td><td><small>${esc(when(p.at))} · ${esc(p.by)}</small></td>
+      <td>${p.active?`<button class="btn" type="button" aria-label="${esc(p.title||p.product_id)} 노출 중지 풀기">풀기</button>`:""}</td>`;
+    const b=tr.querySelector("button");if(b)b.onclick=async()=>{if(!confirm("다시 보이게 할까요? 판매처 확인이 끝났을 때만 풀어 주세요."))return;
+      try{await post(`/admin/api/cs/blocked/${p.product_id}/unblock`);await loadBlocked();await loadQueue()}catch(e){showErr(e)}};
+    tb.append(tr)}
+}
+
+// 3. 분야 판단 검수
+let RV=null;
+async function loadReview(){
+  try{RV=await api("/admin/api/cs/review?days="+$("#rdays").value)}catch(e){return showErr(e)}
+  $("#srows").innerHTML=RV.summary.length?RV.summary.map(s=>`<tr><td>${esc(s.label)}</td><td class="n">${num(s.right)}</td><td class="n">${num(s.wrong)}</td><td class="n">${num(s.unsure)}</td>
+    <td class="n">${s.error_rate==null?"—":(s.error_rate*100).toFixed(1)+"%"}${s.error_rate!=null&&s.observe?'<span class="obs">관찰</span>':""}</td><td class="n">${num(s.missed)}</td></tr>`).join("")
+    :'<tr><td colspan="6" class="note">아직 판정한 것이 없어요</td></tr>';
+  const box=$("#groups");box.innerHTML=RV.groups.length?"":'<p class="note">이 기간 샘플이 없어요</p>';
+  for(const g of RV.groups){const sec=document.createElement("div");sec.className="grp";
+    sec.innerHTML=`<h3>${esc(g.label)} <small class="note">샘플 ${num(g.total)}개 중 ${num(g.items.length)}개</small></h3><div class="scroll" style="max-height:360px"><table><thead><tr><th>때</th><th>손님 말 (가린 뒤)</th><th>판단</th><th style="min-width:260px">검수</th></tr></thead><tbody></tbody></table></div>`;
+    const tb=sec.querySelector("tbody");
+    for(const it of g.items){const tr=document.createElement("tr");
+      tr.innerHTML=`<td><small>${esc(when(it.at))}</small></td><td>${esc(it.text)}</td><td><small>${esc(it.by)}</small></td><td><div class="verdict"></div></td>`;
+      const v=tr.querySelector(".verdict");const should=document.createElement("select");should.setAttribute("aria-label","맞는 분야");
+      should.add(new Option("맞는 분야…",""));for(const [k,l] of Object.entries(RV.labels))if(k!==g.domain)should.add(new Option(l,k,false,it.verdict?.should===k));
+      for(const [k,l] of Object.entries(RV.verdicts)){const b=document.createElement("button");b.type="button";b.textContent=l;if(it.verdict?.verdict===k)b.className="on";
+        b.onclick=async()=>{if(k==="wrong"&&!should.value){should.focus();return}
+          try{await post(`/admin/api/cs/review/${it.id}`,{verdict:k,should:k==="wrong"?should.value:null});await loadReview()}catch(e){showErr(e)}};v.append(b)}
+      v.append(should);tb.append(tr)}
+    box.append(sec)}
+}
+$("#rdays").addEventListener("change",loadReview);
+
+loadBlocked().then(loadQueue);loadReview();
+</script>
+</body>
+</html>

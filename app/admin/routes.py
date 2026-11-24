@@ -2010,6 +2010,40 @@ def cs_ticket_close(ticket_id: str):
     return {"ok": True, "ticket": t}
 
 
+# ── CS 탭 (2026-11-23 창 4 ④): 사람 필수 대기열 · 노출 중지 상품 · 분야 판단 검수 ──
+@router.get("/admin/cs")
+def admin_cs(request: Request):
+    return _page(request, WEB / "cs.html")
+
+
+class _CsJudgeIn(BaseModel):
+    verdict: str = Field(..., pattern="^(right|wrong|unsure)$")
+    should: str | None = Field(None, max_length=20)
+
+
+@router.get("/admin/api/cs/review", dependencies=[api])
+def cs_review_samples(days: int = Query(7, ge=1, le=90)):
+    from app.services.cs import review
+
+    return review.samples(days)
+
+
+@router.post("/admin/api/cs/review/{sample_id}", dependencies=[api])
+def cs_review_judge(sample_id: str, body: _CsJudgeIn):
+    """판정만 남는다 (문장 없음). 샘플 번호는 최근 90일 샘플에 있어야 한다."""
+    from app.services.cs import review
+
+    if not re.fullmatch(r"[0-9a-f]{12}", sample_id or ""):
+        raise HTTPException(404, "sample not found")
+    hit = next((it for g in review.samples(90, per_domain=10**6)["groups"] for it in g["items"] if it["id"] == sample_id), None)
+    if hit is None:
+        raise HTTPException(404, "sample not found")
+    try:
+        return {"ok": True, "verdict": review.judge(sample_id, body.verdict, body.should, domain=hit["domain"])}
+    except ValueError as e:
+        raise HTTPException(400, f"bad {e}") from e
+
+
 # ── 식품 안전 신고 상품 노출 임시 중지 — 2026-11-23 창 4 ③-2. 풀기는 여기(관리자 토큰)에서만 ──
 class _CsBlockIn(BaseModel):
     product_id: str = Field(..., pattern=r"^\d{1,20}$")

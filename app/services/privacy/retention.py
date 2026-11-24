@@ -148,6 +148,13 @@ class Retention:
             return
         self.report.append({"step": "cs_tickets", "target": "var/cs/tickets.json", "rows": got["cleared"] + got["removed"],
                             "cutoff": None})
+        try:                                     # 2026-11-23 창 4 ④: 분야 검수 샘플 문장 90일
+            from app.services.cs import review as cs_review
+
+            n = cs_review.prune(self.now.replace(tzinfo=cs_review.KST))
+        except Exception:  # noqa: BLE001
+            return
+        self.report.append({"step": "cs_review", "target": "var/cs/review/*.jsonl", "rows": n, "cutoff": None})
 
     # ── ① 일별 집계로 접기 ──
     def rollup(self, conn, have: set[str]) -> None:

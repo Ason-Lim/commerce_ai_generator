@@ -130,7 +130,7 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 @media (max-width:900px){.tplbox label,.sw{display:none}.app{grid-template-columns:1fr}aside{position:static;height:auto}.composer{left:0;padding:10px 12px}main{padding:16px 12px 220px}
  .res{margin-left:0}.covrow{grid-template-columns:1fr}.wfrow{grid-template-columns:120px 1fr 80px}.outline{columns:1}}
-.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
 .tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
 </style>
 </head>
@@ -138,7 +138,7 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
 <div class="app">
 <aside>
   <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b" aria-current="page">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b" aria-current="page">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
   <h2>현재 작업</h2><div class="ws" id="ws"><b>선택된 공고 없음</b>프롬프트로 시작하세요</div>
   <h2>공고</h2><div id="bids"></div>
   <label class="up">공고 파일 올리기 (CSV·JSON)<input type="file" id="file" accept=".csv,.json" hidden></label>

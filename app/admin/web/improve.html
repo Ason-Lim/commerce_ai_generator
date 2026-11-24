@@ -16,7 +16,7 @@ aside{background:var(--rail);color:#d6e0ea;padding:18px 16px;position:sticky;top
 aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
 nav a{display:block;color:#c3d1de;text-decoration:none;padding:8px 11px;border-radius:10px;margin:2px 0}
 nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650} nav a:hover{background:#15222f}
-.tabs-top{display:flex;gap:6px;margin:0 0 14px}.tabs-top a{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
 .tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
 .railnote{font-size:12.5px;color:#a9bccf;margin-top:18px;line-height:1.55}
 .logout{margin-top:18px;background:transparent;border:1px solid #23364a;color:#c3d1de;border-radius:10px;padding:7px 11px;cursor:pointer;width:100%}
@@ -92,7 +92,7 @@ a{color:var(--acc)}
 <div class="app">
 <aside>
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve" aria-current="page">개선</a><a href="/admin/b2b">B2B</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve" aria-current="page">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b">B2B</a></nav>
   <nav aria-label="개선 메뉴"><a href="#weekly">주간 지표</a><a href="#cands">점검 후보</a><a href="#reviewed">확인 결과</a><a href="#cases">재현 사례</a><a href="#fixes">고침 기록</a></nav>
   <div class="railnote">월요일 오전에 봐요. 순서: 지표로 눈에 띄는 칸 보기 → 점검 후보에 <b>오류 확인 / 오류 아님 / 판단 보류</b> → 오류 확인만 고침(5개 이하, 영향 큰 것 먼저) → 고침 기록에 PR·영향 질의·확인 예정일.<br><br>점검 후보는 오류의 <b>신호</b>예요 — 손님이 그냥 둘러봤을 수도 있어요. 자동으로 고치지 않아요.<br><br>분모 30 미만은 '관찰' — 비율로 판단하지 않아요.<br><br>메모·영향 질의에는 손님 문장을 그대로 옮기지 말고 <b>유형</b>으로 적어 주세요.</div>
   <form method="post" action="/admin/logout"><button class="logout">로그아웃</button></form>
@@ -106,6 +106,7 @@ a{color:var(--acc)}
       <button class="btn" id="run" type="button">지금 다시 계산</button><span class="note" id="gen"></span></div>
     <div class="tabs2" role="tablist" id="ptabs"></div>
     <div class="scroll"><table><thead><tr><th>지표</th><th class="n">비율</th><th class="n">분자 / 분모</th></tr></thead><tbody id="mrows"></tbody></table></div>
+    <p class="note" id="domains" style="margin:8px 0 0"></p>
     <div class="scroll" style="margin-top:10px"><table><thead><tr><th>비용·속도 (상품 차례)</th><th class="n">평균</th><th class="n">95번째</th><th class="n">n</th></tr></thead><tbody id="crows"></tbody></table></div>
   </section>
   <section id="cands" aria-labelledby="cands-h">
@@ -163,6 +164,9 @@ function drawWeekly(){
   $("#mrows").innerHTML=Object.entries(per.metrics).map(([k,v])=>`<tr><td>${esc(k)}</td>
     <td class="n">${v.den?(v.rate*100).toFixed(1)+"%":"—"}${v.den&&v.observe?'<span class="obs">관찰</span>':""}</td>
     <td class="n">${v.den?num(v.num)+" / "+num(v.den):"—"}</td></tr>`).join("");
+  const DL={food:"식품",emergency:"위급",food_safety:"식품 안전",health:"건강·알레르기",privacy:"개인정보",dispute:"분쟁·보상",affiliate:"제휴·주문",stock:"품절·재고",account:"계정",site_help:"사이트 이용",not_food:"식품 아님",chitchat:"잡담"};
+  const doms=Object.entries(per.domains||{});
+  $("#domains").innerHTML=doms.length?'분야별 차례 (창 4): '+doms.map(([k,n])=>esc(DL[k]||k)+" <b>"+num(n)+"</b>").join(" · ")+' — 오분류는 <a href="/admin/cs#review">CS 탭 검수</a>':"";
   const L={coupang_calls:"쿠팡 호출 수",ai_calls:"AI 호출 수",ms:"응답 시간 ms"};
   $("#crows").innerHTML=Object.entries(per.cost).map(([k,c])=>`<tr><td>${esc(L[k]||k)}</td><td class="n">${c.n?c.mean:"—"}</td><td class="n">${c.n?c.p95:"—"}</td><td class="n">${num(c.n)}</td></tr>`).join("");
 }
