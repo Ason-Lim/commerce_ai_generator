@@ -231,7 +231,8 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <p class="lede">기준일에 <b>100위 밖</b>이고, <b>작년 같은 주</b> 또는 <b>작년 같은 행사 시점</b>에 100위 안이던 키워드예요. 작년 최고 순위가 높은 순. <b>예보 확정이 아니라 고를 후보</b>예요 — 백테스트(2025년 1~4월)에서 28일·상위 20 중 7일 이상 앞서 맞힌 비율이 약 11%였어요. 매주 월요일 여기서 5~8개를 골라 링크·글을 준비하는 데 써요. 고객 화면·추천 순위에는 쓰지 않아요.</p>
     <div class="row">
       <span class="note">기준일</span><input type="date" id="nw-asof" aria-label="예보 기준일">
-      <button class="btn primary" id="nw-go">보기</button><span class="note" id="nw-cov"></span>
+      <button class="btn primary" id="nw-go">보기</button>
+      <button class="btn" id="nw-cp" title="후보 키워드의 쿠팡 파트너스 상품 후보 수를 가져와요 (쿠팡 호출, 키워드가 많으면 수십 초)">쿠팡 상품 확인</button><span class="note" id="nw-cov"></span>
     </div>
     <div id="nw-box"><p class="note">불러오는 중…</p></div>
   </section>
@@ -890,21 +891,22 @@ async function loadBacktest(){const q=new URLSearchParams({start:$("#bt-start").
   }catch(e){$("#bt-rows").innerHTML=`<tr><td colspan="14" class="note">${esc(e.message)}</td></tr>`}}
 if($("#bt-go"))$("#bt-go").onclick=loadBacktest;
 // ── 다음 4주 예보 (2026-11-24) ─────────────────────────
-async function loadNext4w(){const box=$("#nw-box");if(!box)return;const q=new URLSearchParams();if($("#nw-asof").value)q.set("as_of",$("#nw-asof").value);
-  box.innerHTML=`<p class="note">계산 중…</p>`;
+async function loadNext4w(withCoupang){const box=$("#nw-box");if(!box)return;const q=new URLSearchParams();if($("#nw-asof").value)q.set("as_of",$("#nw-asof").value);if(withCoupang)q.set("coupang","1");
+  box.innerHTML=`<p class="note">계산 중…${withCoupang?" (쿠팡 상품 확인 중)":""}</p>`;
   try{const d=await api("/admin/api/trends/forecast/next4w?"+q.toString());
     if(!$("#nw-asof").value)$("#nw-asof").value=d.as_of;
     if(d.status!=="ok"){box.innerHTML=`<p class="note">${esc(d.note||"자료 없음")}</p>`;$("#nw-cov").textContent="";return}
     $("#nw-cov").textContent=`기준일 ${d.as_of} · 지금 100위 안 ${d.excluded_top_now}개 제외`;
     const lk=v=>v===true?"있음":v===false?"없음":"—";
+    const cpc=v=>v==null?'<span class="note">미확인</span>':v?`<span class="pill p-ok">${v}개</span>`:'<span class="pill p-err">없음</span>';
     box.innerHTML=d.weeks.map((w,i)=>{
       const ev=w.events.length?w.events.map(e=>`${esc(e.event)} ${e.date.slice(5)} (D-${e.d_day}${e.last_year?"":", 작년 날짜 없음"})`).join(" · "):"행사 없음";
-      const rows=w.items.map(it=>`<tr><td>${esc(it.keyword)}</td><td>${it.last_year_best}위</td><td>${esc(it.last_year_date)}</td><td>${it.sources.map(esc).join(", ")}</td><td>${lk(it.has_link)}</td></tr>`).join("")||`<tr><td colspan="5" class="note">후보 없음</td></tr>`;
+      const rows=w.items.map(it=>`<tr><td>${esc(it.keyword)}</td><td>${it.last_year_best}위</td><td>${esc(it.last_year_date)}</td><td>${it.sources.map(esc).join(", ")}</td><td>${lk(it.has_link)}</td><td>${cpc(it.coupang)}</td></tr>`).join("")||`<tr><td colspan="6" class="note">후보 없음</td></tr>`;
       return `<h3>${i+1}주 뒤 · ${w.start.slice(5)} ~ ${w.end.slice(5)} <small class="note">후보 ${w.candidates}개${w.candidates>w.items.length?` 중 상위 ${w.items.length}`:""} · 작년 자료 ${Math.round(w.last_year_coverage*100)}%</small></h3>
         <p class="note">행사: ${ev}</p>${w.warning?`<p class="note" style="color:#b45309">⚠ ${esc(w.warning)}</p>`:""}
-        <div class="scroll"><table><thead><tr><th>키워드</th><th>작년 최고</th><th>작년 그날</th><th>근거</th><th>네이버 링크</th></tr></thead><tbody>${rows}</tbody></table></div>`}).join("")+`<p class="note">${esc(d.note)}</p>`;
+        <div class="scroll"><table><thead><tr><th>키워드</th><th>작년 최고</th><th>작년 그날</th><th>근거</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead><tbody>${rows}</tbody></table></div>`}).join("")+`<p class="note">${esc(d.note)}</p>`;
   }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
-if($("#nw-go")){$("#nw-go").onclick=loadNext4w;loadNext4w().catch(()=>{})}
+if($("#nw-go")){$("#nw-go").onclick=()=>loadNext4w(false);$("#nw-cp").onclick=()=>loadNext4w(true);loadNext4w(false).catch(()=>{})}
 </script>
 </body>
 </html>

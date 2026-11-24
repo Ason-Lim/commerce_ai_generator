@@ -92,3 +92,27 @@ def test_api_needs_admin_and_returns(admin_client, rank_dir):
 def test_trends_page_has_section(admin_client):
     html = admin_client.get("/admin/trends", headers=H).text
     assert 'id="next4w"' in html and "/admin/api/trends/forecast/next4w" in html
+
+
+def test_api_coupang_counts_only_when_asked(admin_client, rank_dir, monkeypatch):
+    calls = []
+
+    def fake(kws, **kw):
+        calls.append(list(kws))
+        return {k: ([{"url": "u1"}, {"url": "u2"}] if k == "빼빼로" else []) for k in kws}
+
+    monkeypatch.setattr("app.admin.routes._coupang_links", fake)
+    # 기본: 쿠팡을 부르지 않고 미확인(None)
+    d = admin_client.get("/admin/api/trends/forecast/next4w?as_of=2026-11-01", headers=H).json()
+    assert calls == [] and d["coupang_checked"] is False
+    assert all(it["coupang"] is None for w in d["weeks"] for it in w["items"])
+    # coupang=1: 한 번만, 주끼리 겹친 키워드는 한 번씩
+    d = admin_client.get("/admin/api/trends/forecast/next4w?as_of=2026-11-01&coupang=1", headers=H).json()
+    assert len(calls) == 1 and len(calls[0]) == len(set(calls[0])) and "빼빼로" in calls[0]
+    assert d["coupang_checked"] is True
+    assert _kw(d["weeks"][0])["빼빼로"]["coupang"] == 2 and _kw(d["weeks"][3])["절임배추"]["coupang"] == 0
+
+
+def test_trends_page_has_coupang_button(admin_client):
+    html = admin_client.get("/admin/trends", headers=H).text
+    assert 'id="nw-cp"' in html and "<th>쿠팡 상품</th></tr></thead><tbody>${rows}" in html
