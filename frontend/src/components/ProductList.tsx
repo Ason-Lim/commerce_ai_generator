@@ -127,8 +127,10 @@ function uniqueByTitle<T extends { title: string }>(items: T[]): T[] {
 function ProductCard({ c, sponsored, prefHit }: { c: Candidate; sponsored?: boolean; prefHit?: string[] }) {
   const { openDetail } = useChatActions();
   const { tags, name } = splitTitle(c.title);
-  // 미확인 태그는 실제 데이터(c.unverified)에서만, 중복 없이 표시
-  const unverified = [...new Set(c.unverified)];
+  // 미확인 태그는 실제 데이터(c.unverified)에서만, 중복 없이 표시.
+  // 2026-11-24: 가격 줄에 이미 '배송비 미확인'이 보이면 '? 배송비' 태그는 뺀다 (같은 말이 두 번 보였다)
+  const shipShown = c.shippingStatus === "unknown" || (!c.shippingStatus && c.shippingFee == null);
+  const unverified = [...new Set(c.unverified)].filter((x) => !(shipShown && x === "배송비"));
   return (
     <article
       className={cx(

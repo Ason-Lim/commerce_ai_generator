@@ -135,6 +135,8 @@ def item_to_card(item: dict, rank: int) -> dict:
         card["same_name_options"] = dict(opts)
     if item.get("seen_at"):                     # 저장해 둔 결과의 수집 시각 (화면: '○○ 확인 가격 · 지금은 다를 수 있어요')
         card["seen_at"] = str(item["seen_at"])
+    elif item.get("fetched_at"):                # 2026-11-24: 쿠팡 검색으로 받은 시각 (캐시 최대 10분 — 처음 받은 시각)
+        card["seen_at"] = str(item["fetched_at"])
     return card
 
 

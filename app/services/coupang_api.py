@@ -173,6 +173,11 @@ def _search_coupang_products_cached(keyword: str, limit: int = 10):
         turn_metrics.bump("coupang_cache_hits")
         return [dict(x) for x in hit[1]]
     items = _search_coupang_products(keyword, limit)
+    # 2026-11-24: 가격은 확인 시각과 함께 — 쿠팡에서 받은 시각을 붙인다 (캐시로 다시 줄 때도 처음 받은 시각 그대로)
+    from datetime import datetime, timezone
+
+    got_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    items = [dict(x, fetched_at=x.get("fetched_at") or got_at) if isinstance(x, dict) else x for x in (items or [])]
     if minutes and items:
         if len(_SEARCH_CACHE) >= _SEARCH_CACHE_MAX:
             for old_key in sorted(_SEARCH_CACHE, key=lambda k: _SEARCH_CACHE[k][0])[:_SEARCH_CACHE_MAX // 5]:

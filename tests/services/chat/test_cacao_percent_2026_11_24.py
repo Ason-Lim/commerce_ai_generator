@@ -115,3 +115,26 @@ def test_single_candidate_head_line(sqlite_db):
     text = md(res)
     assert "조건에 맞는 후보가 1개뿐이에요" in text and "견줘서 1개를 골랐어요" not in text
     assert "최저가" not in text
+
+
+def test_coupang_fetch_time_becomes_card_seen_at(monkeypatch):
+    """2026-11-24: 쿠팡 검색 시각을 상품에 붙이고(캐시로 다시 줘도 처음 시각), 카드의 확인 시각으로 쓴다."""
+    from app.services import coupang_api
+    from app.services.chat.service import item_to_card
+
+    monkeypatch.setattr(coupang_api, "is_coupang_available", lambda: True)
+    monkeypatch.setattr(coupang_api, "_SEARCH_CACHE", {})
+    monkeypatch.setattr(
+        coupang_api,
+        "_search_coupang_products",
+        lambda k, n: [{"title": "부샤드 나폴리탄 다크초콜릿 72%", "price": 9340}],
+    )
+    first = coupang_api._search_coupang_products_cached("다크초콜릿", 10)
+    again = coupang_api._search_coupang_products_cached("다크초콜릿", 10)
+    assert first[0]["fetched_at"] and again[0]["fetched_at"] == first[0]["fetched_at"]
+    card = item_to_card(dict(first[0], product_name="부샤드 나폴리탄 다크초콜릿 72%"), 1)
+    assert card["seen_at"] == first[0]["fetched_at"]
+    saved = item_to_card(
+        {"title": "x", "price": 1, "seen_at": "11/20 10:00", "fetched_at": "2026-11-24T05:00:00+00:00"}, 1
+    )
+    assert saved["seen_at"] == "11/20 10:00"  # 저장해 둔 결과의 시각이 먼저
