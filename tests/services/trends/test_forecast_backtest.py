@@ -84,7 +84,34 @@ def test_run_aggregates_metrics(rank_dir):
     assert m28["explorer"][28]["extra_hits"] == 0  # 기준선이 이미 맞힌 것은 '추가 적중' 아님
     assert ly["major_missed"] is not None and ly["major_missed"] > 0  # '깜짝'은 아무도 못 맞힘
     assert ly["lead_median"] is not None
+    assert res["evaluated"] == ["2025-10-18", "2025-10-25"]
+    assert m28["last_year"][28]["top20_lead7"] == 1.0  # 빼빼로 첫 진입이 7일 이상 뒤 (제출 1개 중 1개)
+    assert m28["recent"][28]["top20_lead7"] == 0.0
+    assert (
+        m28["last_year"][28]["first_seen_true"] >= 1 and m28["last_year"][28]["recall_known"] is not None
+    )  # '깜짝'은 처음 등장
+    u = res["union"][28]
+    assert u["major_first_seen"] >= 2 and u["major_missed_all"] is not None  # 합집합으로도 놓친 비율
+    assert "explorer_repeat" in m28 and m28["explorer_repeat"][28]["n_pred"] == 0  # 판정 해가 하나뿐이라 '반복' 없음
     early = bt.run(rank_dir, dt.date(2024, 9, 1), dt.date(2024, 9, 1), rows=ROWS, horizons=(7,))
     assert early["dates"] == 1  # 자료 시작일 — 모집단은 그날 하루로
     none = bt.run(rank_dir, dt.date(2023, 1, 2), dt.date(2023, 1, 2), rows=ROWS, horizons=(7,))
     assert none["dates"] == 0 and none["skipped"][0]["why"].startswith("최근 7일")
+
+
+def test_common_dates_and_q1p_and_min_share(rank_dir):
+    # 2025-12-01 → 28일 기간 관측일 14일(자료 끝 12-15) < 17 → 판정 불가 → 그 예측일은 모든 기간에서 빠진다
+    res = bt.run(rank_dir, dt.date(2025, 12, 1), dt.date(2025, 12, 1), rows=ROWS)
+    assert res["dates"] == 0 and "28일" in res["skipped"][0]["why"]
+    q = bt.run(rank_dir, dt.date(2025, 10, 25), dt.date(2025, 10, 25), rows=ROWS, horizons=(28,), question="q1p")
+    assert (
+        q["question"] == "q1p" and q["metrics"]["recent"][28]["n_pred"] == 0
+    )  # 최근 100위 안이던 '잠깐'은 Q1′ 대상 아님
+    strict = bt.run(rank_dir, dt.date(2025, 10, 25), dt.date(2025, 10, 25), rows=ROWS, horizons=(28,), min_share=1.0)
+    assert strict["dates"] == 0  # 11-07 하루 누락 → 관측률 100% 기준이면 판정하지 않음
+    for m in ("recent", "last_year"):  # 같은 예측일이면 기간이 달라도 기준선의 예측 수가 같다(최근 유지)
+        r = bt.run(
+            rank_dir, dt.date(2025, 10, 25), dt.date(2025, 10, 25), rows=ROWS, horizons=(7, 14, 28), methods=(m,)
+        )
+        if m == "recent":
+            assert len({r["metrics"][m][h]["n_pred"] for h in (7, 14, 28)}) == 1
