@@ -197,7 +197,8 @@ def test_ack_link_flow(eng):
     last = again["history"][-1]  # 고친 사람·전후 값은 기록에
     assert last["by"] == "공급사(물류팀 박)" and last["before"]["ack_ship_date"] == "2026-12-14"
     assert last["after"]["ack_ship_date"] == "2026-12-13" and last["at"]
-    new_key = podoc.ack_link(eng, m["mall_id"], no).split("#k=")[1]  # 새로 만들면 옛 링크 막힘
+    assert podoc.ack_link(eng, m["mall_id"], no) == link  # 같은 판은 같은 링크
+    new_key = podoc.ack_link(eng, m["mall_id"], no, reissue=True).split("#k=")[1]  # 재발급만 옛 링크 막음
     with pytest.raises(corp.MallError, match="맞지 않거나"):
         podoc.public_view(eng, no, key, "ip2")
     assert podoc.public_view(eng, no, new_key, "ip3")["po"]["status"] == "accepted"

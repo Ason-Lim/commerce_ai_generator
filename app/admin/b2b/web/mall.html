@@ -212,6 +212,7 @@ tbody tr{cursor:default}
             <button class="btn primary" type="button" id="mailSend">보내기</button>
             <button class="btn" type="button" id="mailEml">.eml 내려받기 (직접 보내기)</button>
             <button class="btn" type="button" id="mailMark">직접 보냄 표시</button>
+            <button class="btn" type="button" id="mailNot" hidden>안 감 확인 (다시 보낼 수 있게)</button>
             <button class="btn" type="button" id="mailClose">닫기</button></div>
           <p class="basis" id="mailNote"></p>
         </div>
@@ -328,12 +329,15 @@ $("#contractBtn").onclick=async()=>{const num=v=>v.trim()===""?null:parseInt(v.r
 let SUPS=[];
 async function loadSups(){try{SUPS=(await api("/admin/api/b2b-suppliers")).suppliers.filter(x=>x.active)}catch(e){err(e)}}
 const wonf=v=>v==null?"단가 확인 필요":Number(v).toLocaleString()+"원";
-let MAILS={},SMTP=false,MAIL=null;const MAILST={draft:"준비",sent:"보냄",manual:"직접 보냄",failed:"실패"};
+let MAILS={},SMTP=false,MAIL=null;const SENDW={link_issued:"링크 발급",link_reissued:"링크 재발급",smtp_accepted:"메일 서버 접수 완료",smtp_unknown:"메일 결과 불명",manual_sent:"직접 발송 확인",eml_downloaded:".eml 내려받음",file_downloaded_by_operator:"운영자 파일 받음",file_downloaded_by_supplier:"공급사 파일 받음"};const MAILST={draft:"준비",sending:"보내는 중",sent:"메일 서버 접수 완료",manual:"직접 발송 확인",failed:"실패 (안 감)",unknown:"결과 불명"};
 function showMail(m){MAIL=m;$("#mailBox").hidden=false;$("#mailTo").textContent=m.to;$("#mailSubj").value=m.subject;$("#mailBody").value=m.body;$("#mailAttach").checked=m.attach;
   $("#mailState").textContent=`· ${m.po_no} · ${MAILST[m.status]||m.status}${m.sent_at?" "+when(m.sent_at):""}${m.error?" · "+m.error:""}`;
-  const open=m.status==="draft"||m.status==="failed";["#mailSave","#mailEml","#mailMark"].forEach(x=>$(x).disabled=!open);$("#mailSend").disabled=!open||!SMTP;
-  $("#mailNote").textContent=(SMTP?"":"발신 메일이 아직 연결되지 않았어요(사업자등록 뒤 연결) — '.eml 내려받기'로 메일 프로그램에서 열어 직접 보낸 뒤 '직접 보냄 표시'를 눌러 주세요. ")
-    +"{ACK_LINK} 자리에는 보낼 때(.eml 을 받을 때) 새 확인 링크가 들어가요 — 다시 받으면 옛 링크는 막혀요."}
+  const open=m.status==="draft"||m.status==="failed",stuck=m.status==="unknown"||m.status==="sending";
+  ["#mailSave","#mailEml"].forEach(x=>$(x).disabled=!open);$("#mailSend").disabled=!open||!SMTP;$("#mailMark").disabled=!(open||stuck);$("#mailNot").hidden=!stuck;
+  $("#mailMark").textContent=stuck?"공급사가 받음 — 보냄으로 확인":"직접 보냄 표시";
+  $("#mailNote").textContent=(stuck?"보낸 결과를 몰라요(연결이 끊김 등). 다시 보내지 말고 공급사에 받았는지 먼저 확인해 주세요. ":"")
+    +(SMTP?"":"발신 메일이 아직 연결되지 않았어요(사업자등록 뒤 연결) — '.eml 내려받기'로 메일 프로그램에서 열어 직접 보낸 뒤 '직접 보냄 표시'를 눌러 주세요. ")
+    +"{ACK_LINK} 자리에는 이 발주서의 확인 링크가 그대로 들어가요(다시 보내도 공급사가 받은 링크는 그대로). 새 링크는 '링크 재발급'으로만."}
 async function saveMail(){const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}`,{subject:$("#mailSubj").value,body:$("#mailBody").value,attach:$("#mailAttach").checked});showMail(d.mail)}
 $("#mailSave").onclick=()=>saveMail().catch(err);
 $("#mailSend").onclick=async()=>{if(!confirm(`${MAIL.to} 로 보낼까요? 받는 사람·제목·본문·첨부를 확인하셨나요?`))return;
@@ -341,23 +345,30 @@ $("#mailSend").onclick=async()=>{if(!confirm(`${MAIL.to} 로 보낼까요? 받�
 $("#mailEml").onclick=async()=>{try{await saveMail();await dl(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/eml`)}catch(e){err(e)}};
 $("#mailMark").onclick=async()=>{if(!confirm("메일 프로그램에서 직접 보내셨나요? '직접 보냄'으로 표시해요."))return;try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/mark-sent`);showMail(d.mail);loadPos()}catch(e){err(e)}};
 $("#mailClose").onclick=()=>{$("#mailBox").hidden=true};
+$("#mailNot").onclick=async()=>{const note=prompt("공급사가 못 받았다는 걸 어떻게 확인했나요? (예: 11/25 전화 — 메일 없음)");if(!note)return;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/mark-not-sent`,{note});showMail(d.mail);loadPos()}catch(e){err(e)}};
 async function loadPos(){try{const md=await api(`/admin/api/corpmall/${CUR.mall_id}/mails`);SMTP=md.smtp;MAILS={};md.mails.slice().reverse().forEach(m=>{MAILS[m.po_no]=m});
   const d=await api(`/admin/api/corpmall/${CUR.mall_id}/pos`);
-  const LIVE=["issued","accepted","change_requested","acknowledged"];
+  const LIVE=["issued","accepted","change_requested","acknowledged"],MAILABLE=["issued","accepted","acknowledged"];
   const btn=(k,po,t)=>`<button class="btn" type="button" data-${k}="${esc(po)}">${t}</button>`;
-  $("#poDocs").innerHTML=d.pos.length?"<b>발주서</b> <span class=\"muted\">수락 = 공급사가 수량·단가·금액·출고 기한 동의 · 전달된 발주의 취소는 공급사 취소 확인 뒤</span>"+d.pos.map(p=>{const live=LIVE.includes(p.status);return `<div style="margin:6px 0"><code>${esc(p.po_no)}</code>${p.version>1?` 판${p.version}`:""} · ${esc(p.supplier)} · 합계 ${esc(wonf(p.total))}${p.exempt_amount?` (면세 ${esc(wonf(p.exempt_amount))})`:""} · 출고 기한 ${esc(p.ship_by||"협의")}${p.arrive_by?` · 도착 요청 ${esc(p.arrive_by)}`:""} · <b>${esc(p.status_label)}</b>${p.delivered_at?` · 전달 ${esc(when(p.delivered_at))}`:""}${p.viewed_at?` · 열람 ${esc(when(p.viewed_at))}`:""}
+  $("#poDocs").innerHTML=d.pos.length?"<b>발주서</b> <span class=\"muted\">수락 = 공급사가 수량·단가·금액·출고 기한 동의 · 전달된 발주의 취소는 공급사 취소 확인 뒤</span>"+d.pos.map(p=>{const live=LIVE.includes(p.status);return `<div style="margin:6px 0"><code>${esc(p.po_no)}</code>${p.version>1?` 판${p.version}`:""} · ${esc(p.supplier)} · 합계 ${esc(wonf(p.total))}${p.exempt_amount?` (면세 ${esc(wonf(p.exempt_amount))})`:""} · 출고 기한 ${esc(p.ship_by||"협의")}${p.arrive_by?` · 도착 요청 ${esc(p.arrive_by)}`:""} · <b>${esc(p.status_label)}</b>${p.delivered_at?` · 취소 잠금 ${esc(when(p.delivered_at))}`:""}${p.viewed_at?` · 열람 ${esc(when(p.viewed_at))}`:""}
     ${p.status==="draft"?`<div class="muted">빈 곳: ${esc((p.gaps||[]).join(", "))} — 공급사에 보낼 수 없어요. 채운 뒤 '확정'.</div>`:""}
     ${p.ack_by&&p.status!=="cancelled"?`<div class="muted">공급사 응답: ${esc(p.ack_by)}${p.ack_ship_date?` · 출고 예정 ${esc(p.ack_ship_date)}`:""}${p.ack_memo?` · ${esc(p.ack_memo)}`:""}</div>`:""}
     ${p.status==="cancel_requested"?`<div class="muted">취소 이유: ${esc(p.cancel_reason||"")} — 공급사가 확인 화면에서 '취소 확인'을 누르거나, 메일·전화로 확인받은 뒤 '공급사 취소 확인 표시'</div>`:""}
     ${p.status==="draft"?btn("fin",p.po_no,"확정"):""}
+    ${(p.sends||[]).length?`<div class="muted">보낸 기록: ${p.sends.map(h=>`${esc(when(h.at))} ${esc(SENDW[h.what]||h.what)}`).join(" · ")}</div>`:""}
     ${live||p.status==="cancel_requested"?btn("ackl",p.po_no,"확인 링크"):""}
+    ${(live||p.status==="cancel_requested")&&p.ack_link_at?btn("ackr",p.po_no,"링크 재발급"):""}
     ${p.status==="issued"||p.status==="change_requested"?btn("ackm",p.po_no,p.status==="change_requested"?"검토 끝 · 수락 표시":"수락 받음 표시"):""}
-    ${live?btn("mail",p.po_no,`메일${MAILS[p.po_no]?` (${esc(MAILST[MAILS[p.po_no].status]||MAILS[p.po_no].status)})`:""}`):""}
+    ${MAILABLE.includes(p.status)?btn("mail",p.po_no,`메일${MAILS[p.po_no]?` (${esc(MAILST[MAILS[p.po_no].status]||MAILS[p.po_no].status)})`:""}`):""}
     ${p.status==="cancel_requested"?btn("cxok",p.po_no,"공급사 취소 확인 표시")+btn("cxwd",p.po_no,"취소 요청 철회"):""}
     ${p.status!=="cancelled"&&p.status!=="cancel_requested"?btn("cx",p.po_no,p.delivered_at?"취소 요청":"취소"):""}
     ${(p.history||[]).length?`<details><summary class="muted">기록 ${p.history.length}건</summary><ul>${p.history.map(h=>`<li>${esc(when(h.at))} · ${esc(h.by)} · ${esc(h.what)}${h.after?` → ${esc(JSON.stringify(h.after))}`:""}${h.before?` <span class="muted">(전 ${esc(JSON.stringify(h.before))})</span>`:""}</li>`).join("")}</ul></details>`:""}</div>`}).join(""):"";
   document.querySelectorAll("[data-ackl]").forEach(b=>b.onclick=async()=>{try{const r=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackl}/ack-link`);
-    $("#poLink").innerHTML=`<div class="code-out">${esc(b.dataset.ackl)} 확인 링크: <code>${esc(location.origin+r.link)}</code><br><b>지금만 보여요</b> — 발주서와 함께 공급사에 보내 주세요(새로 만들면 옛 링크는 막혀요). 링크를 만들면 '공급사에 전달됨'으로 보고, 이후 취소는 공급사 확인이 필요해요.</div>`;loadPos()}catch(e){err(e)}});
+    $("#poLink").innerHTML=`<div class="code-out">${esc(b.dataset.ackl)} 확인 링크: <code>${esc(location.origin+r.link)}</code><br>같은 판에서는 다시 눌러도 같은 링크예요. 처음 만든 때부터 취소는 공급사 확인이 필요해요(취소 잠금).</div>`;loadPos()}catch(e){err(e)}});
+  document.querySelectorAll("[data-ackr]").forEach(b=>b.onclick=async()=>{if(!confirm("새 링크를 만들면 공급사가 가진 옛 링크는 바로 막혀요. 링크가 새어 나갔을 때만 재발급하세요. 진행할까요?"))return;
+    try{const r=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackr}/ack-link?reissue=true`);
+    $("#poLink").innerHTML=`<div class="code-out">${esc(b.dataset.ackr)} <b>새</b> 확인 링크: <code>${esc(location.origin+r.link)}</code><br>옛 링크는 막혔어요 — 공급사에 새 링크를 보내 주세요.</div>`;loadPos()}catch(e){err(e)}});
   document.querySelectorAll("[data-mail]").forEach(b=>b.onclick=async()=>{try{const m=MAILS[b.dataset.mail];
     if(m)showMail(m);else{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.mail}/mail`);showMail(d.mail);loadPos()}}catch(e){err(e)}});
   document.querySelectorAll("[data-fin]").forEach(b=>b.onclick=async()=>{if(!confirm("지금 거래처·단가·발주사 정보로 다시 계산해 정식 발주서로 확정할까요?"))return;

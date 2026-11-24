@@ -1,15 +1,20 @@
-"""발주서 메일 (2026-11-24) — 설계 claude/b2b_po_mail_2026-11-24.md.
+"""발주서 메일 (2026-11-24, 검토 반영) — 설계 claude/b2b_po_mail_2026-11-24.md.
 
-흐름: 발주서마다 '메일 준비' → 운영자가 받는 사람·제목·본문을 확인(고칠 수 있음) → '보내기'.
-* 받는 사람: 공급 거래처의 발주 담당 메일(거래처 목록, 암호화 보관). 거래처가 '이름만'이면 준비할 수 없다.
-* 정식 발주서(미확정 아님, 취소·취소 요청 아님)만 준비·보내기·.eml 이 된다. 처음 링크를 넣는 순간 발주서는 '전달됨'.
-* 본문: 발주 번호·발주일·출고 기한·도착 요청일·결제 조건·품목·수량·합계(면세 따로) + **확인 링크**. 링크는 보낼 때마다 새로 만들어 넣고(옛 링크 막힘)
-  원문은 저장하지 않는다(본문에는 `{ACK_LINK}` 자리 표시만).
-* **배송 정보는 기본적으로 메일에 넣지 않는다.** 공급사는 확인 링크 화면에서 배송 목록 파일을 받는다(발주 뒤 30일까지, 받을 때마다 기록).
-  운영자가 '첨부도 넣기'를 고르면 공급사 전달용 엑셀을 첨부한다(그 공급사 것만).
-* 보내기: SMTP 설정(`MAIL_SMTP_HOST`·`MAIL_SMTP_PORT`·`MAIL_SMTP_USER`·`MAIL_SMTP_PASSWORD`·`MAIL_FROM`)이 있을 때만.
-  사업자등록 뒤 회사 발신 메일을 연결하기 전에는 **.eml 파일**로 내려받아 메일 프로그램에서 열어 직접 보낸 뒤 '보냄 표시'.
-* 기록: 준비·보냄·실패·.eml 내려받기(받는 사람 주소는 기록에 남기지 않음).
+흐름: 발주서마다 '메일 준비' → 운영자가 받는 사람·제목·본문을 확인(고칠 수 있음) → '보내기'(SMTP) 또는 '.eml'.
+* 받는 사람: 공급 거래처의 발주 담당 메일(암호화 보관). 거래처가 '이름만'이면 준비할 수 없다.
+* **정식 발주·수락 상태만**(미확정·변경 요청·취소 요청·취소는 안 됨 — 변경 요청 중 기존 조건을 다시 보내면 확정된 발주로 오해).
+* 본문의 `{ACK_LINK}` 에는 그 판의 **같은 확인 링크**를 넣는다. 재발송·.eml 재다운로드로 공급사가 받은 링크가 끊기지 않는다.
+  새 링크는 운영자가 '링크 재발급'을 따로 눌렀을 때만.
+* 상태: draft → sending → sent(SMTP 접수 완료) / failed(안 간 게 확실) / unknown(결과 불명) · manual(직접 발송 확인).
+  - 연결·로그인 단계 실패, 서버가 받는 사람·보내는 사람·본문을 명시적으로 거부 → failed(다시 보낼 수 있음).
+  - 본문을 넘기는 중 연결이 끊김·시간 초과 → **unknown**: 실제로 갔을 수 있어 **자동·버튼 재발송을 막는다**.
+    운영자가 공급사에 확인하고 '보냄으로 확인' 또는 '안 감 확인(다시 보낼 수 있게)'으로 정리.
+  - 'sending' 이 남아 있으면(처리 중 서버 중단 등) 역시 재발송 막음 — 같은 정리 절차.
+* 발주서 기록에는 '전달 가능(취소 잠금)'과 따로 실제 사건(SMTP 접수 완료·결과 불명·직접 발송 확인·.eml 내려받기)을 남긴다.
+* **배송 정보는 기본적으로 메일에 넣지 않는다.** 공급사는 확인 링크 화면에서 그 공급사 배송 목록만 받는다(정식 발주이고 배송 정보가
+  남아 있는 동안). 운영자가 '첨부도 넣기'를 고르면 그 공급사 전달용 엑셀을 첨부한다.
+* SMTP 설정(`MAIL_SMTP_HOST`·`MAIL_SMTP_PORT`·`MAIL_SMTP_USER`·`MAIL_SMTP_PASSWORD`·`MAIL_FROM`)이 없으면 .eml 로 직접.
+* 기록: 받는 사람 주소는 남기지 않는다.
 """
 
 from __future__ import annotations
@@ -77,7 +82,7 @@ def compose(p: dict, orderer: str | None) -> tuple[str, str]:
             "",
             "아래 링크에서 수량·단가·금액·출고 기한을 확인하시고 '발주 수락'을 눌러 주세요.",
             "일부 품목이 안 되거나 기한을 바꿔야 하면 수락하지 마시고 '변경 요청'으로 알려 주세요.",
-            "배송 목록 파일도 이 링크에서 받으실 수 있어요(발주일부터 30일).",
+            "배송 목록 파일도 이 링크에서 받으실 수 있어요(배송 정보는 이 발주의 배송에만 쓰고 끝나면 파기해 주세요).",
             ACK,
             "",
             "배송 정보는 이 발주의 배송에만 쓰시고, 배송이 끝나면 파기해 주세요. 링크는 다른 분과 나누지 말아 주세요.",
@@ -89,19 +94,32 @@ def compose(p: dict, orderer: str | None) -> tuple[str, str]:
     return subject, body
 
 
+def _check_po(p: dict | None) -> None:
+    from app.services.corpmall import podoc
+
+    if p is None:
+        raise store.MallError("없는 발주서예요")
+    if p["status"] == "change_requested":
+        raise store.MallError(
+            "공급사 변경 요청을 먼저 처리해 주세요 — 검토 끝 수락 표시, 또는 취소 후 바뀐 조건으로 다시 발주"
+        )
+    if p["status"] not in podoc.MAILABLE:
+        raise store.MallError(
+            "미확정·취소(요청)된 발주서는 메일을 보낼 수 없어요"
+            + (" — 빈 곳: " + ", ".join(p["gaps"]) + " → 채운 뒤 '확정'" if p["status"] == "draft" else "")
+        )
+
+
 def prepare(eng, mall_id: str, po_no: str, *, by: str = "operator") -> dict:
-    """발주서 메일 준비(초안). 같은 발주서에 보내지 않은 초안이 있으면 새로 만들지 않고 그것을 돌려준다."""
+    """발주서 메일 준비(초안). 같은 발주서에 아직 안 보냈거나 결과를 모르는 메일이 있으면 새로 만들지 않고 그것을 돌려준다
+    (결과 불명 메일을 두고 새 메일로 다시 보내는 것을 막음)."""
     from app.admin.b2b.proposal import load_profile
     from app.services.corpmall import podoc, suppliers
 
     p = podoc.get(eng, po_no)
     if p is None or p["mall_id"] != mall_id:
         raise store.MallError("없는 발주서예요")
-    if p["status"] not in podoc.LIVE:
-        raise store.MallError(
-            "미확정·취소(요청)된 발주서는 메일을 준비할 수 없어요"
-            + (" — 빈 곳: " + ", ".join(p["gaps"]) + " → 채운 뒤 '확정'" if p["status"] == "draft" else "")
-        )
+    _check_po(p)
     if not p["supplier_id"]:
         raise store.MallError(
             "거래처 목록에 없는 공급사('이름만')라 받는 메일을 몰라요 — 공급 거래처를 먼저 연결해 주세요"
@@ -114,7 +132,10 @@ def prepare(eng, mall_id: str, po_no: str, *, by: str = "operator") -> dict:
         ex = (
             c.execute(
                 select(store.t_po_mail).where(
-                    and_(store.t_po_mail.c.po_no == po_no, store.t_po_mail.c.status == "draft")
+                    and_(
+                        store.t_po_mail.c.po_no == po_no,
+                        store.t_po_mail.c.status.in_(("draft", "failed", "sending", "unknown")),
+                    )
                 )
             )
             .mappings()
@@ -194,7 +215,7 @@ def edit(eng, mall_id: str, mail_id: str, *, subject: str, body: str, attach: bo
                 and_(
                     store.t_po_mail.c.mail_id == mail_id,
                     store.t_po_mail.c.mall_id == mall_id,
-                    store.t_po_mail.c.status == "draft",
+                    store.t_po_mail.c.status.in_(OPEN),
                 )
             )
             .values(subject=subject, body=body, attach=bool(attach))
@@ -209,9 +230,8 @@ def _build(eng, d: dict, *, sender: str, sender_name: str = "", base_url: str = 
     from app.services.corpmall import po, podoc
 
     p = podoc.get(eng, d["po_no"])
-    if p is None or p["status"] not in podoc.LIVE:
-        raise store.MallError("정식 발주서가 아니게 됐어요(미확정·취소·취소 요청) — 이 메일은 보낼 수 없어요")
-    link = base_url.rstrip("/") + podoc.ack_link(eng, d["mall_id"], d["po_no"], by="mail")
+    _check_po(p)
+    link = base_url.rstrip("/") + podoc.ack_link(eng, d["mall_id"], d["po_no"], by="mail")  # 같은 판이면 같은 링크
     msg = EmailMessage()
     msg["Subject"] = d["subject"]
     msg["From"] = formataddr((sender_name, sender)) if sender_name else sender
@@ -226,7 +246,13 @@ def _build(eng, d: dict, *, sender: str, sender_name: str = "", base_url: str = 
     return msg
 
 
-def _mark(eng, d: dict, status: str, *, by: str, error: str | None = None) -> None:
+OPEN = ("draft", "failed")  # 보낼 수 있는 상태
+STUCK = ("sending", "unknown")  # 결과를 모름 — 운영자가 정리하기 전엔 재발송 금지
+
+
+def _mark(eng, d: dict, status: str, *, by: str, error: str | None = None, po_what: str | None = None) -> None:
+    from app.services.corpmall import podoc
+
     with eng.begin() as c:
         c.execute(
             update(store.t_po_mail)
@@ -239,41 +265,79 @@ def _mark(eng, d: dict, status: str, *, by: str, error: str | None = None) -> No
             f"po_mail_{status}",
             {"po_no": d["po_no"], "mail_id": d["mail_id"], "by": by, "attach": d["attach"]},
         )
+    if po_what:
+        podoc.record_send(eng, d["mall_id"], d["po_no"], po_what, by=by)
 
 
-def send(eng, mall_id: str, mail_id: str, *, base_url: str, by: str = "operator") -> dict:
-    """SMTP 로 보내기 — 설정이 없으면 거부(.eml 로 직접 보내기). 실패하면 'failed' + 이유, 다시 보낼 수 있다."""
+def _claim(eng, d: dict) -> None:
+    """draft·failed → sending (한 번에 하나만 — 두 번 눌러도 한 통)."""
+    with eng.begin() as c:
+        n = c.execute(
+            update(store.t_po_mail)
+            .where(and_(store.t_po_mail.c.mail_id == d["mail_id"], store.t_po_mail.c.status.in_(OPEN)))
+            .values(status="sending", error=None)
+        ).rowcount
+    if not n:
+        raise store.MallError("이미 보내는 중이거나 보낸 메일이에요")
+
+
+def _load_open(eng, mall_id: str, mail_id: str) -> dict:
     d = get(eng, mail_id)
     if d is None or d["mall_id"] != mall_id:
         raise store.MallError("없는 메일이에요")
-    if d["status"] not in ("draft", "failed"):
+    if d["status"] in STUCK:
+        raise store.MallError(
+            "보낸 결과를 모르는 메일이에요 — 공급사에 받았는지 확인한 뒤 '보냄으로 확인' 또는 '안 감 확인'을 눌러 주세요"
+        )
+    if d["status"] not in OPEN:
         raise store.MallError("이미 보낸 메일이에요")
+    return d
+
+
+def send(eng, mall_id: str, mail_id: str, *, base_url: str, by: str = "operator") -> dict:
+    """SMTP 로 보내기. 실패가 확실하면 failed(다시 보낼 수 있음), 갔을 수도 있으면 unknown(재발송 막음)."""
+    d = _load_open(eng, mall_id, mail_id)
     cfg = smtp_config()
     if cfg is None:
         raise store.MallError(
             "발신 메일이 아직 연결되지 않았어요 — '.eml 내려받기'로 메일 프로그램에서 직접 보내 주세요"
         )
     msg = _build(eng, d, sender=cfg["sender"], sender_name=cfg["name"], base_url=base_url)
+    _claim(eng, d)
+    stage = "connect"
     try:
-        with smtplib.SMTP(cfg["host"], cfg["port"], timeout=20) as s:
+        s = smtplib.SMTP(cfg["host"], cfg["port"], timeout=20)
+        try:
             s.starttls(context=ssl.create_default_context())
             if cfg["user"]:
                 s.login(cfg["user"], cfg["password"])
+            stage = "data"
             s.send_message(msg)
+            stage = "done"
+        finally:
+            try:
+                s.quit()
+            except smtplib.SMTPException, OSError:
+                pass  # 접수 뒤 종료 오류는 결과와 무관
+    except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, smtplib.SMTPDataError) as e:
+        _mark(eng, d, "failed", by=by, error=type(e).__name__ + ": " + str(e)[:200])  # 서버가 명시적으로 거부
+        raise store.MallError("메일 서버가 받지 않았어요(주소·내용 거부) — 확인 뒤 다시 보내 주세요") from e
     except (smtplib.SMTPException, OSError) as e:
-        _mark(eng, d, "failed", by=by, error=type(e).__name__ + ": " + str(e)[:200])
-        raise store.MallError("메일을 보내지 못했어요 — 잠시 뒤 다시 보내거나 .eml 로 직접 보내 주세요") from e
-    _mark(eng, d, "sent", by=by)
+        why = type(e).__name__ + ": " + str(e)[:200]
+        if stage == "data":
+            _mark(eng, d, "unknown", by=by, error=why, po_what="smtp_unknown")
+            raise store.MallError(
+                "보내는 중 연결이 끊겨 실제로 갔는지 몰라요 — 다시 보내지 말고 공급사에 받았는지 확인해 주세요"
+            ) from e
+        _mark(eng, d, "failed", by=by, error=why)
+        raise store.MallError("메일 서버에 연결하지 못했어요 — 잠시 뒤 다시 보내거나 .eml 로 직접 보내 주세요") from e
+    _mark(eng, d, "sent", by=by, po_what="smtp_accepted")
     return get(eng, mail_id)
 
 
 def eml(eng, mall_id: str, mail_id: str, *, base_url: str, by: str = "operator") -> tuple[bytes, str]:
-    """발신 메일 연결 전: .eml 파일(확인 링크 포함)로 내려받아 메일 프로그램에서 직접 보낸다. 받을 때마다 확인 링크가 새로 바뀐다."""
-    d = get(eng, mail_id)
-    if d is None or d["mall_id"] != mall_id:
-        raise store.MallError("없는 메일이에요")
-    if d["status"] not in ("draft", "failed"):
-        raise store.MallError("이미 보낸 메일이에요")
+    """발신 메일 연결 전: .eml 파일로 내려받아 메일 프로그램에서 직접 보낸다. 같은 판이면 확인 링크도 같다(다시 받아도 안 끊김)."""
+    d = _load_open(eng, mall_id, mail_id)
     cfg = smtp_config() or {}
     msg = _build(eng, d, sender=cfg.get("sender") or "", sender_name=cfg.get("name") or "", base_url=base_url)
     if not cfg.get("sender"):
@@ -281,16 +345,45 @@ def eml(eng, mall_id: str, mail_id: str, *, base_url: str, by: str = "operator")
     msg["X-Unsent"] = "1"  # 메일 프로그램이 '보낼 메일'로 연다
     with eng.begin() as c:
         store._event(c, mall_id, "po_mail_eml", {"po_no": d["po_no"], "mail_id": mail_id, "by": by})
+    from app.services.corpmall import podoc
+
+    podoc.record_send(eng, mall_id, d["po_no"], "eml_downloaded", by=by)
     return bytes(msg), f"{d['po_no']}.eml"
 
 
 def mark_sent(eng, mall_id: str, mail_id: str, *, by: str = "operator") -> dict:
-    """.eml 로 직접 보낸 뒤 '보냄' 표시."""
+    """.eml 로 직접 보낸 뒤, 또는 결과 불명 메일을 공급사가 받았다고 확인한 뒤 '직접 발송 확인'."""
     d = get(eng, mail_id)
-    if d is None or d["mall_id"] != mall_id or d["status"] not in ("draft", "failed"):
-        raise store.MallError("보내지 않은 메일만 '보냄'으로 표시할 수 있어요")
-    _mark(eng, d, "manual", by=by)
+    if d is None or d["mall_id"] != mall_id or d["status"] not in (*OPEN, *STUCK):
+        raise store.MallError("보내지 않았거나 결과를 모르는 메일만 '보냄'으로 표시할 수 있어요")
+    _mark(eng, d, "manual", by=by, po_what="manual_sent")
     return get(eng, mail_id)
 
 
-__all__ = ["ACK", "smtp_config", "compose", "prepare", "get", "list_mails", "edit", "send", "eml", "mark_sent"]
+def mark_not_sent(eng, mall_id: str, mail_id: str, *, by: str, note: str) -> dict:
+    """결과 불명·보내는 중으로 남은 메일을 '안 감'으로 정리(공급사가 못 받았다고 확인) — 근거 메모 필수, 다시 보낼 수 있게."""
+    note = " ".join((note or "").split())[:200]
+    if not note:
+        raise store.MallError("공급사가 못 받았다는 걸 어떻게 확인했는지 적어 주세요")
+    d = get(eng, mail_id)
+    if d is None or d["mall_id"] != mall_id or d["status"] not in STUCK:
+        raise store.MallError("결과를 모르는 메일만 정리할 수 있어요")
+    _mark(eng, d, "failed", by=by, error=f"안 감 확인: {note}")
+    return get(eng, mail_id)
+
+
+__all__ = [
+    "ACK",
+    "OPEN",
+    "STUCK",
+    "smtp_config",
+    "compose",
+    "prepare",
+    "get",
+    "list_mails",
+    "edit",
+    "send",
+    "eml",
+    "mark_sent",
+    "mark_not_sent",
+]

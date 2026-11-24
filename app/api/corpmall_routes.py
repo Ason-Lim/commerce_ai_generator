@@ -8,7 +8,7 @@
   POST /corp/api/{slug}/manager/request  {key, kind, label?, date?, n?, text?} → 운영자에게 요청 (CS 티켓)
   GET  /corp/po/{po_no}             공급사 발주 확인 화면 (#k=확인 토큰, 배송 정보 없음)
   POST /corp/api/po/{po_no}/view    {key} → 발주서 내용
-  POST /corp/api/po/{po_no}/file    {key} → 공급사 전달용 파일(발주서 + 배송 목록, 발주일부터 30일)
+  POST /corp/api/po/{po_no}/file    {key} → 그 공급사 전달용 파일(발주서 + 배송 목록 — 정식 발주이고 배송 정보가 남아 있는 동안)
   POST /corp/api/po/{po_no}/ack     {key, name, ship_date?, memo?} → 수신 확인
   POST /corp/api/{slug}/choose      {code, item_id, shipping?, consent, verify?} → 선택 저장(마감 전 변경 가능)
 

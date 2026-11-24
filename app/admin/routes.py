@@ -1768,13 +1768,13 @@ def corpmall_pos(mall_id: str):
 
 
 @router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/ack-link", dependencies=[api])
-def corpmall_po_ack_link(mall_id: str, po_no: str):
-    """공급사 수신 확인 링크 — 원문은 이 응답에만, 새로 만들면 옛 링크는 막힘."""
+def corpmall_po_ack_link(mall_id: str, po_no: str, reissue: bool = Query(False)):
+    """공급사 확인 링크 — 같은 판이면 같은 링크. reissue=true('링크 재발급')일 때만 새로 만들고 옛 링크를 막는다."""
     from app.services.corpmall import podoc
 
     store, eng = _corp()
     try:
-        return {"ok": True, "link": podoc.ack_link(eng, mall_id, po_no)}
+        return {"ok": True, "link": podoc.ack_link(eng, mall_id, po_no, reissue=reissue)}
     except store.MallError as e:
         raise HTTPException(400, str(e)) from e
 
@@ -1994,7 +1994,7 @@ def corpmall_mail_send(mall_id: str, mail_id: str):
 
 @router.get("/admin/api/corpmall/{mall_id}/mails/{mail_id}/eml", dependencies=[api])
 def corpmall_mail_eml(mall_id: str, mail_id: str):
-    """발신 메일 연결 전: .eml 로 내려받아 메일 프로그램에서 직접 보내기(확인 링크는 받을 때마다 새로)."""
+    """발신 메일 연결 전: .eml 로 내려받아 메일 프로그램에서 직접 보내기(같은 판이면 확인 링크도 같음)."""
     from fastapi.responses import Response
 
     from app.services.corpmall import mailer
@@ -2015,6 +2015,18 @@ def corpmall_mail_mark(mall_id: str, mail_id: str):
     store, eng = _corp()
     try:
         return {"ok": True, "mail": mailer.mark_sent(eng, mall_id, mail_id)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}/mark-not-sent", dependencies=[api])
+def corpmall_mail_mark_not_sent(mall_id: str, mail_id: str, body: _PoNoteIn):
+    """결과 불명 메일을 '안 감'으로 정리(공급사 확인 근거 메모) — 그 뒤 다시 보낼 수 있다."""
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.mark_not_sent(eng, mall_id, mail_id, by="operator", note=body.note)}
     except store.MallError as e:
         raise HTTPException(400, str(e)) from e
 

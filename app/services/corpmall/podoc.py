@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from sqlalchemy import and_, select, update
 
@@ -41,7 +41,17 @@ STATUS_LABEL = {
 LIVE = ("issued", "accepted", "change_requested", "acknowledged")  # 공급사에 보낼 수 있는 상태
 SENDABLE = (*LIVE, "cancel_requested")  # 확인 링크로 열 수 있는 상태(취소 요청은 '취소 확인'용)
 TAX_TYPES = {"taxable": "과세", "exempt": "면세"}
-FILE_DAYS = 30
+MAILABLE = ("issued", "accepted", "acknowledged")  # 메일 발송 — 변경 요청 중엔 안 됨(기존 조건이 확정된 것처럼 보임)
+SEND_WHATS = {
+    "link_issued": "확인 링크 발급(전달 가능)",
+    "link_reissued": "확인 링크 재발급(옛 링크 막힘)",
+    "smtp_accepted": "메일 서버 접수 완료",
+    "smtp_unknown": "메일 결과 불명",
+    "manual_sent": "직접 발송 확인",
+    "eml_downloaded": ".eml 내려받음(아직 보낸 것 아님)",
+    "file_downloaded_by_operator": "운영자가 전달용 파일 받음",
+    "file_downloaded_by_supplier": "공급사가 파일 받음",
+}
 
 
 def _money(lines: list[dict], vat_mode: str) -> dict:
@@ -194,7 +204,9 @@ def _row(r) -> dict:
         "status": r["status"],
         "status_label": STATUS_LABEL.get(r["status"], r["status"]),
         "gaps": _gaps(bool(r["supplier_id"]), lines) if r["status"] == "draft" else [],
-        "delivered_at": _iso(r["delivered_at"]),
+        "delivered_at": _iso(r["delivered_at"]),  # '전달 가능'(취소 잠금) 시각 — 실제 발송과 다름
+        "ack_link_at": _iso(r["ack_link_at"]),
+        "sends": [h for h in (r["history"] or []) if h.get("what") in SEND_WHATS],
         "viewed_at": _iso(r["viewed_at"]),
         "version": r["version"] or 1,
         "history": r["history"] or [],
@@ -247,9 +259,10 @@ def require_sendable(r, what: str = "공급사에 보낼") -> None:
 
 
 def mark_delivered(c, r, via: str) -> None:
-    """공급사에 전달됨(메일·.eml·확인 링크·전달용 파일) — 처음 한 번만. 이후 취소는 공급사 확인이 필요."""
+    """'전달 가능' 잠금 — 확인 링크를 처음 만들거나 운영자가 전달용 파일을 받은 때(처음 한 번). 공급사가 실제로 받았는지와
+    별개로 이때부터 취소는 공급사 확인이 필요하다(보수적). 실제 발송은 record_send 로 따로 기록."""
     if r["delivered_at"] is None:
-        _set(c, r, via, "delivered", None, None, delivered_at=store.now())
+        _set(c, r, via, "cancel_locked", None, None, delivered_at=store.now())
 
 
 def operator_supplier_file(eng, mall_id: str, po_no: str, *, by: str = "operator") -> tuple[bytes, str]:
@@ -260,6 +273,7 @@ def operator_supplier_file(eng, mall_id: str, po_no: str, *, by: str = "operator
         r = _load(c, mall_id, po_no)
         require_sendable(r, "전달용 파일로 받을")
         mark_delivered(c, r, by)
+        _set(c, _load(c, mall_id, po_no), by, "file_downloaded_by_operator")
     return po.render(eng, mall_id, r["batch_id"], supplier=r["supplier_name"], by=by)
 
 
@@ -306,17 +320,38 @@ def _hash(po_no: str, token: str) -> str:
     return hashlib.sha256(f"{po_no}|ack|{token}".encode()).hexdigest()
 
 
-def ack_link(eng, mall_id: str, po_no: str, *, by: str = "operator") -> str:
-    """확인 링크 — 원문은 이 반환값에만(해시만 저장). 새로 만들면 옛 링크는 막힌다. 정식 발주서 또는 취소 요청(취소 확인용)만."""
-    token = secrets.token_urlsafe(18)
+def ack_link(eng, mall_id: str, po_no: str, *, by: str = "operator", reissue: bool = False) -> str:
+    """확인 링크. 같은 판에 이미 링크가 있으면 **그 링크를 그대로** 돌려준다(메일 재발송·.eml 재다운로드로 공급사가 받은
+    링크가 끊기지 않게). 새 링크는 reissue=True(운영자 '링크 재발급')일 때만 — 그때 옛 링크는 막힌다.
+    원문은 암호화해 두고 찾을 때는 해시로. 정식 발주서 또는 취소 요청(취소 확인용)만."""
     with eng.begin() as c:
         r = _load(c, mall_id, po_no)
         if r["status"] not in SENDABLE:
             raise store.MallError("미확정·취소된 발주서는 공급사에 보낼 수 없어요 — 정식 발주서만 돼요")
-        c.execute(update(store.t_po).where(store.t_po.c.po_no == po_no).values(ack_token_hash=_hash(po_no, token)))
-        mark_delivered(c, r, by)
-        store._event(c, mall_id, "po_ack_link", {"po_no": po_no, "by": by})
+        old = (store._dec(r["ack_token_enc"]) or {}) if r["ack_token_enc"] else {}
+        if not reissue and old.get("t") and old.get("v") == (r["version"] or 1) and r["ack_token_hash"]:
+            return f"/corp/po/{po_no}#k={old['t']}"
+        token = secrets.token_urlsafe(18)
+        c.execute(
+            update(store.t_po)
+            .where(store.t_po.c.po_no == po_no)
+            .values(
+                ack_token_hash=_hash(po_no, token),
+                ack_token_enc=store._enc({"t": token, "v": r["version"] or 1}),
+                ack_link_at=store.now(),
+            )
+        )
+        r = _load(c, mall_id, po_no)
+        _set(c, r, by, "link_reissued" if old.get("t") else "link_issued")
+        mark_delivered(c, _load(c, mall_id, po_no), by)
+        store._event(c, mall_id, "po_ack_link", {"po_no": po_no, "by": by, "reissue": bool(old.get("t"))})
     return f"/corp/po/{po_no}#k={token}"
+
+
+def record_send(eng, mall_id: str, po_no: str, what: str, *, by: str) -> None:
+    """실제 발송 사건(SMTP 접수 완료·결과 불명·직접 발송 확인·.eml 내려받기)을 발주서 기록에 따로 남긴다 — '전달 가능'과 구분."""
+    with eng.begin() as c:
+        _set(c, _load(c, mall_id, po_no), by, what)
 
 
 def _resolve(eng, po_no: str, token: str, client: str):
@@ -359,16 +394,43 @@ def public_view(eng, po_no: str, token: str, client: str) -> dict:
     }
 
 
+def file_block_reason(eng, r) -> str | None:
+    """공급사 전달용 파일(배송 목록)을 줄 수 없는 이유 — 없으면 None.
+
+    기간을 발주일로 고정하지 않고 발주 상태·배송 정보 보존과 연결한다: 정식 발주(수락·변경 요청 포함)일 때만,
+    그 발주의 주문이 모두 배송 완료됐거나 배송 정보가 파기됐으면(보존 기간 경과) 막는다."""
+    if r["status"] not in LIVE:
+        return {
+            "cancel_requested": "취소 요청 중인 발주서예요 — 파일을 받지 말고 '취소 확인'을 눌러 주세요",
+            "draft": "미확정 발주서예요",
+        }.get(r["status"], "취소된 발주서예요")
+    with eng.connect() as c:
+        oids = _po_orders(c, r)
+        rows = c.execute(
+            select(store.t_order.c.ship_status, store.t_order.c.ship_enc, store.t_order.c.purged_at).where(
+                store.t_order.c.order_id.in_(oids)
+            )
+        ).all()
+    if not rows:
+        return "이 발주서에 남은 주문이 없어요"
+    if all(st == "delivered" for st, _, _ in rows):
+        return "모든 주문이 배송 완료돼 배송 목록을 더 받을 수 없어요. 재배송이 필요하면 발주 담당자에게 요청해 주세요"
+    if any(pg is not None for _, _, pg in rows):
+        return "배송 정보 보존 기간이 지나 파기됐어요. 발주 담당자에게 요청해 주세요"
+    return None
+
+
 def supplier_file(eng, po_no: str, token: str, client: str) -> tuple[bytes, str]:
-    """확인 링크로 공급사 전달용 파일(발주서 + 그 공급사 배송 목록) 받기 — 발주일부터 30일까지, 받을 때마다 기록."""
+    """확인 링크로 공급사 전달용 파일 받기 — **그 발주서의 공급사 것만**(같은 묶음의 다른 공급사 없음), 현재 판.
+    정식 발주이고 배송 정보가 남아 있는 동안만. 받을 때마다 기록."""
     from app.services.corpmall import po
 
     r = _resolve(eng, po_no, token, client)
-    if r["status"] == "cancel_requested":
-        raise store.MallError("취소 요청 중인 발주서예요 — 파일을 받지 말고 '취소 확인'을 눌러 주세요")
-    issued = r["issued_at"] if r["issued_at"].tzinfo else r["issued_at"].replace(tzinfo=store.KST)
-    if store.now() > issued + timedelta(days=FILE_DAYS):
-        raise store.MallError(f"발주일부터 {FILE_DAYS}일이 지나 파일을 받을 수 없어요. 발주 담당자에게 요청해 주세요")
+    why = file_block_reason(eng, r)
+    if why:
+        raise store.MallError(why)
+    with eng.begin() as c:
+        _set(c, _load(c, r["mall_id"], po_no), "supplier_link", "file_downloaded_by_supplier")
     return po.render(eng, r["mall_id"], r["batch_id"], supplier=r["supplier_name"], by="supplier_link")
 
 
@@ -518,7 +580,17 @@ def _do_cancel(eng, r, *, by: str, what: str) -> None:
                 and_(store.t_po_line.c.batch_id == r["batch_id"], store.t_po_line.c.supplier == r["supplier_name"])
             )
         )
-        _set(c, r, by, what, {"status": r["status"]}, {"status": "cancelled"}, status="cancelled", ack_token_hash=None)
+        _set(
+            c,
+            r,
+            by,
+            what,
+            {"status": r["status"]},
+            {"status": "cancelled"},
+            status="cancelled",
+            ack_token_hash=None,
+            ack_token_enc=None,
+        )
         store._event(c, r["mall_id"], "po_cancel", {"po_no": r["po_no"], "orders": len(oids), "by": by, "how": what})
 
 
@@ -591,8 +663,11 @@ __all__ = [
     "STATUS_LABEL",
     "LIVE",
     "SENDABLE",
+    "MAILABLE",
+    "SEND_WHATS",
     "TAX_TYPES",
-    "FILE_DAYS",
+    "file_block_reason",
+    "record_send",
     "issue_for_batch",
     "list_pos",
     "get",

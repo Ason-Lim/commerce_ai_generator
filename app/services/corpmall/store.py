@@ -156,6 +156,10 @@ t_po = Table(
     Column("history", JSON),  # [{at, by, what, before, after}] — 상태·확정·공급사 응답 변경 이력
     Column("cancel_reason", String(200)),
     Column("ack_token_hash", String(64)),
+    Column(
+        "ack_token_enc", Text
+    ),  # 확인 링크 원문(암호화) — 같은 판에서 재발송할 때 같은 링크를 쓰려고. 재발급은 명시적으로만
+    Column("ack_link_at", DateTime(timezone=True)),  # 지금 링크를 만든 때
     Column("ack_at", DateTime(timezone=True)),
     Column("ack_by", String(30)),
     Column("ack_ship_date", String(10)),
@@ -166,14 +170,15 @@ t_po = Table(
 )
 t_po_mail = Table(
     "corpmall_po_mail",
-    meta,  # 발주서 메일 (2026-11-24) — 준비 → 운영자 확인 → 보냄. 확인 링크 원문은 저장하지 않음(보낼 때 새로 만들어 넣음)
+    meta,  # 발주서 메일 (2026-11-24) — 준비 → 운영자 확인 → 보냄. 본문엔 {ACK_LINK} 자리만(링크는 발주서 쪽에 암호화)
     Column("mail_id", String(12), primary_key=True),
     Column("po_no", String(24), index=True, nullable=False),
     Column("mall_id", String(20), index=True, nullable=False),
     Column("to_enc", Text),  # 받는 사람(거래처 발주 담당 메일) — 암호화
     Column("subject", String(200)),
     Column("body", Text),  # {ACK_LINK} 자리 표시 포함
-    Column("status", String(10), nullable=False, default="draft"),  # draft · sent · manual · failed
+    # draft · sending(보내는 중) · sent(SMTP 접수 완료) · manual(직접 발송 확인) · failed(안 감이 확실) · unknown(결과 불명 — 자동 재발송 안 함)
+    Column("status", String(10), nullable=False, default="draft"),
     Column("attach", Boolean),
     Column("created_at", DateTime(timezone=True)),
     Column("sent_at", DateTime(timezone=True)),
@@ -231,6 +236,7 @@ def _migrate(eng) -> None:
         for name, typ in {
             "exempt_amount": "INTEGER", "ship_by": "VARCHAR(10)", "arrive_by": "VARCHAR(10)", "delivered_at": ts,
             "viewed_at": ts, "version": "INTEGER", "history": js, "cancel_reason": "VARCHAR(200)",
+            "ack_token_enc": "TEXT", "ack_link_at": ts,
         }.items():  # fmt: skip
             if name not in have:
                 with eng.begin() as c:
