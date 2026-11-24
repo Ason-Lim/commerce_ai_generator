@@ -228,6 +228,29 @@ def trends_forecast_events(request: Request, days: int = Query(35, ge=7, le=120)
 _BACKTEST_CACHE: dict = {}
 
 
+@router.get("/admin/api/trends/forecast/next4w")
+def trends_forecast_next4w(request: Request, as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                           weeks: int = Query(4, ge=1, le=6), top_n: int = Query(20, ge=5, le=50)):
+    """다음 4주 예보 (2026-11-24, 예측 창 ⑤ 1차) — 백테스트에서 나았던 기준선 2종(전년 같은 주·행사 상대일)의 후보 목록.
+    탐색기는 쓰지 않는다. 관리자 전용 — 고객 화면·추천 순위에 쓰지 않는다."""
+    from app.services.trends import period
+    from app.services.trends.forecast import next_weeks as nw
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    day = date.fromisoformat(as_of) if as_of else date.today()
+    out = nw.next_weeks(rank_dir, day, weeks=weeks, top_n=top_n)
+    has = _period_has_link()
+    for w in out["weeks"]:
+        for it in w["items"]:
+            it["has_link"] = has(it["keyword"]) if has else None
+    out["source"] = {"kind": kind, "note": period.source_note(kind, rank_dir)}
+    return out
+
+
 @router.get("/admin/api/trends/forecast/backtest")
 def trends_forecast_backtest(request: Request, start: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
                              end: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"), step: int = Query(7, ge=1, le=28),
