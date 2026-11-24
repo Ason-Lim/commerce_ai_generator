@@ -177,7 +177,7 @@ tbody tr{cursor:default}
         <h3 id="mgr-h">발주처 담당자 화면</h3>
         <p class="basis">회사 담당자가 선택률·안 고른 번호·배송 단계를 보고 재발급·마감 연장·코드 추가를 요청하는 화면이에요(배송 정보·코드 원문은 안 보임).
           링크는 만들 때 한 번만 보여요. 요청은 CS 탭 '폐쇄몰 문의'로 들어와요.</p>
-        <div class="bar"><input type="text" id="mgrLabel" maxlength="40" placeholder="표시 (예: 총무팀)" aria-label="담당자 표시"><button class="btn primary" type="button" id="mgrBtn">담당자 링크 만들기</button></div>
+        <div class="bar"><input type="text" id="mgrLabel" maxlength="40" placeholder="표시 (예: 총무팀)" aria-label="담당자 표시"><select id="mgrRole" aria-label="담당자 권한"><option value="view">보기만</option><option value="request" selected>보기 + 요청</option><option value="settle">보기 + 요청 + 정산 금액 확인</option></select><button class="btn primary" type="button" id="mgrBtn">담당자 링크 만들기</button></div>
         <div id="mgrOut"></div>
         <ul id="mgrList" class="basis"></ul>
         <div class="bar" style="margin-top:8px"><label for="extendAt">마감 늦추기</label><input type="datetime-local" id="extendAt"><button class="btn" type="button" id="extendBtn">늦추기</button></div>
@@ -304,9 +304,10 @@ $("#allChk").onchange=e=>document.querySelectorAll("#orders input[type=checkbox]
 document.querySelectorAll("[data-mark]").forEach(b=>b.onclick=async()=>{const ids=[...document.querySelectorAll("#orders input:checked")].map(c=>c.value);if(!ids.length)return;
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/mark`,{order_ids:ids,status:b.dataset.mark});await loadMall(CUR.mall_id)}catch(e){err(e)}});
 async function loadMgrs(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/managers`);
-  $("#mgrList").innerHTML=d.managers.map(g=>`<li>${esc(g.label)} · ${esc(when(g.created_at))} ${g.revoked?"· 끊음":`<button class="btn" type="button" data-rv="${esc(g.manager_id)}">끊기</button>`}</li>`).join("")||"<li>아직 없어요</li>";
+  $("#mgrList").innerHTML=d.managers.map(g=>`<li>${esc(g.label)} · ${esc(when(g.created_at))} · ${g.revoked?`${esc(g.role_label)} · 끊음`:`<select data-role="${esc(g.manager_id)}" aria-label="${esc(g.label)} 권한">${[["view","보기만"],["request","보기 + 요청"],["settle","보기 + 요청 + 정산 금액 확인"]].map(([k,v])=>`<option value="${k}"${g.role===k?" selected":""}>${v}</option>`).join("")}</select> <button class="btn" type="button" data-rv="${esc(g.manager_id)}">끊기</button>`}</li>`).join("")||"<li>아직 없어요</li>";
+  document.querySelectorAll("[data-role]").forEach(x=>x.onchange=async()=>{try{await post(`/admin/api/corpmall/${CUR.mall_id}/managers/${x.dataset.role}/role`,{role:x.value});loadMgrs()}catch(e){err(e);loadMgrs()}});
   document.querySelectorAll("[data-rv]").forEach(b=>b.onclick=async()=>{if(!confirm("이 담당자 링크를 끊을까요? 다시 쓰려면 새로 만들어야 해요."))return;try{await post(`/admin/api/corpmall/${CUR.mall_id}/managers/${b.dataset.rv}/revoke`);loadMgrs()}catch(e){err(e)}})}catch(e){err(e)}}
-$("#mgrBtn").onclick=async()=>{try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/managers`,{label:$("#mgrLabel").value.trim()||"담당자"});
+$("#mgrBtn").onclick=async()=>{try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/managers`,{label:$("#mgrLabel").value.trim()||"담당자",role:$("#mgrRole").value});
   $("#mgrOut").innerHTML=`<div class="code-out">${esc(d.label)} 링크: <code>${esc(location.origin+d.link)}</code><br><b>지금만 보여요</b> — 복사해서 발주처 담당자에게 안전하게 전달해 주세요.</div>`;$("#mgrLabel").value="";loadMgrs()}catch(e){err(e)}};
 $("#extendBtn").onclick=async()=>{const v=$("#extendAt").value;if(!v)return;if(!confirm(v.replace("T"," ")+" 로 마감을 늦출까요?"))return;
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/extend`,{closes_at:v});await loadMall(CUR.mall_id)}catch(e){err(e)}};

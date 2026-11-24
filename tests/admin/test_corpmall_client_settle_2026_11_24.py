@@ -48,7 +48,7 @@ def _setup(eng, slug, n=4, chosen=3):
         corp.choose(eng, slug, code, "B", "ip", at=IN)
     s = suppliers.save(eng, {"name": f"비밀공급-{slug}", "contact": {"email": "s@x.example"}})
     po.set_suppliers(eng, m["mall_id"], {"B": {"supplier_id": s["supplier_id"], "unit_cost": 12345}})
-    key = manager.issue(eng, m["mall_id"], "총무팀")["link"].split("#k=")[1]
+    key = manager.issue(eng, m["mall_id"], "총무팀", "settle")["link"].split("#k=")[1]
     return m, key
 
 
@@ -143,3 +143,70 @@ def test_routes(eng):
     assert ok.json()["ok"] and ok.json()["settle"]["confirm"]["valid"]
     adm = cl.get(f"/admin/api/corpmall/{m['mall_id']}/settle", headers=H).json()
     assert adm["client_confirm"]["valid"]
+
+
+# ── 담당자 권한 나누기 (2026-11-24) ──
+def test_roles_are_enforced_on_server(eng):
+    slug = f"cs-role-{os.urandom(2).hex()}"
+    m, _ = _setup(eng, slug)
+    settle.set_contract(eng, m["mall_id"], {"unit_price": 10000, "headcount": 4})
+    corp.close_mall(eng, m["mall_id"])
+    keys = {
+        r: manager.issue(eng, m["mall_id"], f"담당-{r}", r)["link"].split("#k=")[1]
+        for r in ("view", "request", "settle")
+    }
+    default = manager.issue(eng, m["mall_id"], "기본")
+    assert default["role"] == "request"  # 새 링크 기본값은 정산 확인 없음
+    with pytest.raises(corp.MallError, match="권한"):
+        manager.issue(eng, m["mall_id"], "x", "admin")
+    v = {r: manager.view(eng, slug, k, "ip") for r, k in keys.items()}
+    assert v["view"]["can"] == [] and v["request"]["can"] == ["request"] and v["settle"]["can"] == ["request", "settle"]
+    assert v["view"]["settle"]["bill"]["total"] == v["settle"]["settle"]["bill"]["total"]  # 보기는 모두 같음
+    assert not v["view"]["settle"]["can_confirm"] and not v["request"]["settle"]["can_confirm"]
+    assert v["settle"]["settle"]["can_confirm"]
+    sig = v["settle"]["settle"]["sig"]
+    with pytest.raises(corp.MallError, match="보기 전용"):
+        manager.request(eng, slug, keys["view"], "ip", "other", text="문의합니다")
+    for r in ("view", "request"):  # 화면에서 숨기는 것만이 아니라 서버가 거부
+        with pytest.raises(corp.MallError, match="정산 금액을 확인할 수 없어요"):
+            manager.confirm_settle(eng, slug, keys[r], "ip", name="김", agree=True, sig=sig)
+    assert manager.request(eng, slug, keys["request"], "ip", "other", text="문의합니다")["ticket_id"]
+    assert manager.confirm_settle(eng, slug, keys["settle"], "ip", name="김", agree=True, sig=sig)["confirm"]["valid"]
+    # 권한 바꾸기 — 링크는 그대로
+    vid = next(g["manager_id"] for g in manager.list_managers(eng, m["mall_id"]) if g["label"] == "담당-view")
+    assert manager.set_role(eng, m["mall_id"], vid, "request")["role"] == "request"
+    assert manager.view(eng, slug, keys["view"], "ip")["can"] == ["request"]
+    assert any(e["kind"] == "mgr_role" for e in corp.events(eng, m["mall_id"]))
+    manager.revoke(eng, m["mall_id"], vid)
+    with pytest.raises(corp.MallError, match="끊은"):
+        manager.set_role(eng, m["mall_id"], vid, "settle")
+
+
+def test_old_links_without_role_keep_full_access(eng):
+    """#107 때 만든 링크(권한 칸 비어 있음)는 그때처럼 모든 권한."""
+    slug = f"cs-old-{os.urandom(2).hex()}"
+    m, _ = _setup(eng, slug)
+    got = manager.issue(eng, m["mall_id"], "옛 링크", "view")
+    with eng.begin() as c:
+        c.execute(corp.t_manager.update().where(corp.t_manager.c.manager_id == got["manager_id"]).values(role=None))
+    v = manager.view(eng, slug, got["link"].split("#k=")[1], "ip")
+    assert v["role"] == "settle" and v["can"] == ["request", "settle"]
+
+
+def test_role_routes(eng):
+    from app.main import app
+
+    cl = TestClient(app)
+    slug = f"cs-rr-{os.urandom(2).hex()}"
+    m, _ = _setup(eng, slug)
+    base = f"/admin/api/corpmall/{m['mall_id']}/managers"
+    r = cl.post(base, headers=H, json={"label": "회계팀", "role": "view"}).json()
+    assert r["role"] == "view"
+    assert cl.post(base, headers=H, json={"label": "x", "role": "boss"}).status_code == 422
+    key = r["link"].split("#k=")[1]
+    req = cl.post(f"/corp/api/{slug}/manager/request", json={"key": key, "kind": "other", "text": "문의"})
+    assert req.status_code == 400 and "보기 전용" in req.json()["error"]
+    assert cl.post(f"{base}/{r['manager_id']}/role", headers=H, json={"role": "request"}).json()["role"] == "request"
+    assert cl.post(f"/corp/api/{slug}/manager/request", json={"key": key, "kind": "other", "text": "문의"}).json()["ok"]
+    lst = cl.get(base, headers=H).json()["managers"]
+    assert any(g["role_label"] == "보기 + 요청" for g in lst)

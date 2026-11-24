@@ -111,13 +111,13 @@ def test_eta_answers_from_manual_and_order_state(eng):
     shipped_on = datetime.fromisoformat(corp.enter(eng, "a-eta", code, "ip")["order"]["shipped_on"]).replace(tzinfo=KST)
     assert not corp.ask(eng, "a-eta", code, "아직 안 왔어요", "ip", at=shipped_on + timedelta(days=3))["ticket_id"]
     r = corp.ask(eng, "a-eta", code, "아직 안 왔어요", "ip", at=shipped_on + timedelta(days=12))
-    assert r["ticket_id"] and "택배사와 확인" in r["answer"] and "접수했어요" in r["answer"]
+    assert r["ticket_id"] and "배송 상태를 확인" in r["answer"] and "접수했어요" in r["answer"]
     corp.mark(eng, m["mall_id"], [oid], "delivered")
     assert "배송 완료" in corp.ask(eng, "a-eta", code, "언제 와요", "ip", at=IN)["answer"]
 
 
 def test_ship_late_uses_business_days_from_ship_plan(eng):
-    _, codes = _mall(eng, "a-late")
+    m, codes = _mall(eng, "a-late")
     code = codes[0][1]
     corp.choose(eng, "a-late", code, "A", "ip", shipping=SHIP, consent=True, at=IN)
     # 출고 예정 15일(화) → 16·17일은 영업일 2일까지, 18일(금)은 3영업일째라 '출고 지연'
@@ -125,7 +125,13 @@ def test_ship_late_uses_business_days_from_ship_plan(eng):
         corp.ask(eng, "a-late", code, "언제 와요", "ip", at=datetime(2026, 12, 17, 10, tzinfo=KST))["ticket_id"] is None
     )
     r = corp.ask(eng, "a-late", code, "언제 와요", "ip", at=datetime(2026, 12, 18, 10, tzinfo=KST))
-    assert r["ticket_id"] and "출고 확인이 안 됐어요" in r["answer"]
+    assert r["ticket_id"] and "출고 확인이 안 됐어요" in r["answer"] and "지연" not in r["answer"]
+    from app.services.cs import tickets
+
+    summ = next(
+        t["summary"] for t in tickets.for_owner(corp.asker(m["mall_id"], codes[0][0])) if t["id"] == r["ticket_id"]
+    )
+    assert "출고 상태 확인 필요" in summ and "지연 확정 아님" in summ  # 자동 조회가 없으니 '지연'으로 단정하지 않음
 
 
 def test_mall_reply_days_and_cash_policy_come_from_manual(eng):
@@ -166,7 +172,9 @@ def test_shipping_change_verify_limit_and_history(eng):
     with pytest.raises(corp.MallError, match="여러 번 틀려"):  # 접속 주소를 바꿔도 코드 단위로 막힘
         corp.choose(eng, "a-verify", code, "A", "ip-new", shipping=other, consent=True, verify="5678", at=IN)
     ev = corp.events(eng, m["mall_id"])
-    assert [e["kind"] for e in ev].count("verify_failed") == corp.VERIFY_MAX and "5678" not in repr([e["detail"] for e in ev])
+    assert [e["kind"] for e in ev].count("verify_failed") == corp.VERIFY_MAX and "5678" not in repr(
+        [e["detail"] for e in ev]
+    )
     code2 = codes[1][1]
     corp.choose(eng, "a-verify", code2, "A", "ip", shipping=SHIP, consent=True, at=IN)
     corp.choose(eng, "a-verify", code2, "A", "ip", shipping=other, consent=True, verify="5678", at=IN)

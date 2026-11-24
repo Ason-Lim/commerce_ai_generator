@@ -97,7 +97,7 @@ t_order = Table(
     Column("delivered_at", DateTime(timezone=True)),
     Column("purged_at", DateTime(timezone=True)),
     Column("tracking", String(40)),  # 송장 번호 (2026-11-24 답변 매뉴얼) — 개인정보 아님. 송장 등록 ≠ 출고
-    Column("shipped_at", DateTime(timezone=True)),  # 출고 확인(발송함) 시각 — 배송 지연 판단 기준
+    Column("shipped_at", DateTime(timezone=True)),  # 출고 확인(발송함) 시각 — 배송 상태 확인 필요 판단 기준
 )
 t_manager = Table(
     "corpmall_manager",
@@ -108,6 +108,8 @@ t_manager = Table(
     Column("label", String(40)),
     Column("created_at", DateTime(timezone=True)),
     Column("revoked_at", DateTime(timezone=True)),
+    # 권한 (2026-11-24): view(보기만) · request(+ 요청) · settle(+ 정산 금액 확인). 비어 있으면(#107 때 만든 링크) settle
+    Column("role", String(8)),
 )
 t_po_batch = Table(
     "corpmall_po_batch",
@@ -229,6 +231,9 @@ def _migrate(eng) -> None:
                 c.execute(sqlalchemy.text(f"ALTER TABLE corpmall_order ADD COLUMN {name} {typ}"))
     # 발주서 검토 반영(2026-11-24) — 개발 중 먼저 만들어진 corpmall_po 에 새 칸
     insp = sqlalchemy.inspect(eng)
+    if insp.has_table("corpmall_manager") and "role" not in {c["name"] for c in insp.get_columns("corpmall_manager")}:
+        with eng.begin() as c:
+            c.execute(sqlalchemy.text("ALTER TABLE corpmall_manager ADD COLUMN role VARCHAR(8)"))
     if insp.has_table("corpmall_po"):
         have = {c["name"] for c in insp.get_columns("corpmall_po")}
         ts = "TIMESTAMP WITH TIME ZONE" if eng.dialect.name == "postgresql" else "DATETIME"
@@ -618,6 +623,8 @@ def ask(
     ticket_id, answer, offer = None, rep.answer, rep.offer_handoff
     if rep.ticket:
         label = assist.INTENTS.get(rep.intent, "직접 요청")
+        if rep.facts.get("check") in assist.CHECK_LABEL:  # 경과일 기준 — 지연 확정이 아니라 확인 필요
+            label = assist.CHECK_LABEL[rep.facts["check"]]
         if rep.ticket == "corpmall" and tickets.open_count(owner) >= MAX_OPEN_ASKS:
             answer = (
                 answer + " " if answer else ""
