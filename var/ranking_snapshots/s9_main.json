@@ -1,9 +1,9 @@
 {
  "meta": {
   "label": "s9_main",
-  "run_at": "2026-11-18T08:12:55+00:00",
-  "head": "6818a5e",
-  "app_uncommitted": false,
+  "run_at": "2026-11-24T06:51:14+00:00",
+  "head": "8bb6d6c",
+  "app_uncommitted": true,
   "queries": [
    "감귤",
    "딸기",
