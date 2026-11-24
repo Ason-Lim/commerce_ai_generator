@@ -225,6 +225,38 @@ def trends_forecast_events(request: Request, days: int = Query(35, ge=7, le=120)
             "data_years": years, "coverage": cov, "source": {"kind": kind, "note": period.source_note(kind, rank_dir)}}
 
 
+_BACKTEST_CACHE: dict = {}
+
+
+@router.get("/admin/api/trends/forecast/backtest")
+def trends_forecast_backtest(request: Request, start: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                             end: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"), step: int = Query(7, ge=1, le=28),
+                             explorer: int = Query(1, ge=0, le=1)):
+    """예측 백테스트 (2026-11-24) — Q1(지금 100위 밖 → 7·14·28일 안 100위 진입) 기준선 3종 + 선행 곡선 탐색기.
+    예측은 예측일까지의 파일만 읽는다. 결과는 같은 조건이면 메모리에 둔다(순위 파일이 늘면 다시 계산)."""
+    from app.services.trends import period
+    from app.services.trends.forecast import backtest as bt
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    a, b = date.fromisoformat(start), date.fromisoformat(end)
+    if b < a or (b - a).days > 400:
+        raise HTTPException(400, "기간은 400일 안으로 골라 주세요")
+    files = period.rank_files(rank_dir)
+    key = (str(rank_dir), start, end, step, explorer, len(files), max(files) if files else "")
+    if key not in _BACKTEST_CACHE:
+        methods = bt.METHODS if explorer else bt.BASELINES
+        _BACKTEST_CACHE.clear()
+        _BACKTEST_CACHE[key] = bt.run(rank_dir, a, b, step=step, methods=methods) | {
+            "source": {"kind": kind, "note": period.source_note(kind, rank_dir)}}
+    out = dict(_BACKTEST_CACHE[key])
+    out.pop("per_date", None) if len(out.get("per_date") or []) > 60 else None
+    return out
+
+
 @router.get("/admin/api/trends/forecast/event")
 def trends_forecast_event(request: Request, event: str = Query(..., min_length=1, max_length=40),
                           years: str | None = Query(None, pattern=r"^\d{4}(,\d{4})*$"),

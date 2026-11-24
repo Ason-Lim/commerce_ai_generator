@@ -80,7 +80,7 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b">B2B</a></nav>
   <nav aria-label="트렌드 메뉴">
-    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
+    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#backtest">예측 백테스트</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
     <div class="grp" id="grp-naver">네이버 <small>블로그</small></div><a href="#blog" id="nav-blog">블로그 초안</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a>
     <div class="grp">쿠팡 <small>사이트 글</small></div><a href="/admin/trend-posts">글 검토 대기열</a></nav>
   <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
@@ -225,6 +225,19 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <div class="kpis" id="ev-kpis"></div>
     <div class="scroll"><table><thead><tr><th>키워드</th><th>등급</th><th>상대일 곡선 (−35…+14, 해마다 한 줄)</th><th>진입 선행일</th><th>최고 순위 구간</th><th>최고</th><th>해별 판정</th><th>다음 행사 예보 재료</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead>
     <tbody id="ev-rows"><tr><td colspan="10" class="note">행사를 골라 '보기'를 눌러 주세요.</td></tr></tbody></table></div>
+  </section>
+  <section id="backtest" aria-labelledby="backtest-h">
+    <h2 id="backtest-h">예측 백테스트 <small class="note" style="font-weight:400">기준선 3종 + 선행 곡선 탐색기 — 같은 조건 비교</small></h2>
+    <p class="lede">질문(Q1): <b>예측일에 100위 밖인 키워드가 7·14·28일 안에 한 번이라도 100위 안에 들어오는가.</b> 예측은 예측일까지의 파일만 읽어요. 기준선: <b>최근 유지</b>(최근 7일 100위 안이던 것) · <b>전년 같은 주</b>(52주 전 같은 기간) · <b>행사 상대일</b>(작년 같은 행사까지 남은 일수가 같은 기간). <b>탐색기</b> = 행사 선행 곡선의 반복/후보 키워드 중 예상 진입일이 기간 안인 것. 2024·2025 는 규칙을 보고 만든 자료라 <b>규칙 비교용</b>이고, 최종 성적은 앞으로 쌓이는 실제 예보로 내요. 목표 초안: 28일 기간 적중률 기준선 대비 +15%p(첫 결과 보고 다시 정함).</p>
+    <div class="row">
+      <span class="note">예측일 범위</span><input type="date" id="bt-start" aria-label="예측일 시작"><input type="date" id="bt-end" aria-label="예측일 끝">
+      <select id="bt-step" aria-label="간격"><option value="7">매주</option><option value="14">2주마다</option></select>
+      <label class="note"><input type="checkbox" id="bt-ex" checked> 탐색기 포함(느림)</label>
+      <button class="btn primary" id="bt-go">계산</button><span class="note" id="bt-cov"></span>
+    </div>
+    <div class="scroll"><table><thead><tr><th>방법</th><th>기간</th><th>정답 수</th><th>예측 수</th><th>적중</th><th>적중률(정밀도)</th><th>재현율</th><th>상위 20 적중률</th><th>선행 일수(중앙값)</th><th>놓친 주요 상승(50위 안)</th><th>불필요한 준비</th><th>추가 적중</th></tr></thead>
+    <tbody id="bt-rows"><tr><td colspan="12" class="note">범위를 고르고 '계산'을 눌러 주세요. 1년치 매주는 몇십 초 걸릴 수 있어요.</td></tr></tbody></table></div>
+    <p class="note" id="bt-notes"></p>
   </section>
   <section id="pricefc" aria-labelledby="pricefc-h">
     <h2 id="pricefc-h">가격 전망·매수 시점 <small class="note" style="font-weight:400">예측 모델 — 가격 레이어 (공공 시세 KAMIS · 동인은 가설 · 임계값은 첫 값)</small></h2>
@@ -849,6 +862,22 @@ loadPrices().catch(()=>{});
 loadEvents().catch(()=>{});
 loadPeriod({preset:"1m"}).catch(()=>{});
 load().catch(e=>{$("#rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`});
+
+// ── 예측 백테스트 (2026-11-24) ─────────────────────────
+const BTN={recent:"최근 유지",last_year:"전년 같은 주",event_rel:"행사 상대일",explorer:"탐색기"};
+(function(){const t=new Date();const e=new Date(t);e.setDate(e.getDate()-35);const s=new Date(e);s.setFullYear(s.getFullYear()-1);
+  const f=d=>d.toISOString().slice(0,10);if($("#bt-start")){$("#bt-start").value=f(s);$("#bt-end").value=f(e)}})();
+async function loadBacktest(){const q=new URLSearchParams({start:$("#bt-start").value,end:$("#bt-end").value,step:$("#bt-step").value,explorer:$("#bt-ex").checked?1:0});
+  $("#bt-rows").innerHTML=`<tr><td colspan="12" class="note">계산 중…</td></tr>`;
+  try{const d=await api("/admin/api/trends/forecast/backtest?"+q.toString());
+    $("#bt-cov").textContent=`예측일 ${d.dates}개`+(d.skipped.length?` · 건너뜀 ${d.skipped.length}`:"");
+    const pc=v=>v==null?"—":(v*100).toFixed(1)+"%";const rows=[];
+    for(const [m,byh] of Object.entries(d.metrics))for(const [h,x] of Object.entries(byh))
+      rows.push(`<tr><td>${esc(BTN[m]||m)}</td><td>${h}일</td><td>${x.n_true}</td><td>${x.n_pred}</td><td>${x.hits}</td><td>${pc(x.precision)}</td><td>${pc(x.recall)}</td><td>${pc(x.top20_precision)}</td><td>${x.lead_median??"—"}</td><td>${pc(x.major_missed)}</td><td>${x.false_pos}</td><td>${x.extra_hits??""}</td></tr>`);
+    $("#bt-rows").innerHTML=rows.join("")||`<tr><td colspan="12" class="note">결과 없음</td></tr>`;
+    $("#bt-notes").textContent=(d.notes||[]).join(" · ");
+  }catch(e){$("#bt-rows").innerHTML=`<tr><td colspan="12" class="note">${esc(e.message)}</td></tr>`}}
+if($("#bt-go"))$("#bt-go").onclick=loadBacktest;
 </script>
 </body>
 </html>
