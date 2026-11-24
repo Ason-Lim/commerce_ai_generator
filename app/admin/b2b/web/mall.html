@@ -106,13 +106,14 @@ textarea.spec{width:100%;min-height:260px;font-family:ui-monospace,monospace;fon
 .st{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px}
 .st-draft{background:var(--mut-s);color:var(--ink2)} .st-open{background:var(--ok-s);color:var(--ok)} .st-closed,.st-ended{background:var(--hold-s);color:var(--hold)}
 tbody tr{cursor:default}
+.muted{color:#6b6f69;font-size:12.5px}
 </style>
 </head>
 <body>
 <div class="app">
 <aside>
   <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
-  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/mall" aria-current="page">폐쇄몰</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries">문의</a><a href="/admin/b2b/suppliers">공급 거래처</a><a href="/admin/b2b/mall" aria-current="page">폐쇄몰</a><a href="/admin/b2b/settle">정산</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
   <div class="railnote"><b>폐쇄몰 1차 — 기업 일괄 구매형.</b> 직원 확인은 발주처가 해요: 여기서 인원 수만큼 코드를 만들어 발주처 담당자에게 넘기면, 발주처가 직원에게 나눠 줘요. 우리는 명단을 받지 않아요.<br><br>
   우리가 보장하는 건 <b>코드 하나에 주문 하나</b>까지예요. 직원 한 명에 코드 하나 배포, 공유·대리 사용은 발주처 몫(계약서·안내문에 적기).<br><br>
   코드마다 <b>초대 링크(긴 토큰)</b>와 <b>직접 입력 코드(8자)</b>가 같이 나와요. 링크를 여는 것만으로는 소진되지 않아요.<br><br>
@@ -160,15 +161,63 @@ tbody tr{cursor:default}
         <div id="codeOut"></div>
         <div id="noAddr" class="code-out" hidden></div>
       </section>
+      <section class="panel" aria-labelledby="set-h">
+        <h3 id="set-h">정산 (매출 · 매입)</h3>
+        <p class="basis">매출 = 계약값(1인 금액 × 청구 기준 수). 매입 = 정식 발주서 합계 + 아직 안 묶인 주문은 매입 단가로 <b>추정</b>. 마진은 부가세를 뺀 공급가액끼리 비교해요. 단가가 없는 것은 0원으로 치지 않고 '확인 필요'.</p>
+        <div class="bar"><label for="c_price">1인 금액</label><input id="c_price" inputmode="numeric" maxlength="9" style="width:100px">
+          <select id="c_vat" aria-label="1인 금액 부가세 기준"><option value="included">부가세 포함</option><option value="excluded">부가세 별도</option></select>
+          <select id="c_tax" aria-label="매출 과세 구분" title="세무 검토 뒤 확정"><option value="taxable">과세</option><option value="exempt">면세</option></select>
+          <label for="c_head">계약 인원</label><input id="c_head" inputmode="numeric" maxlength="7" style="width:80px">
+          <select id="c_basis" aria-label="청구 기준"><option value="headcount">계약 인원으로 청구</option><option value="orders">실제 주문 수로 청구</option></select></div>
+        <div class="bar"><label for="c_inv">매출 세금계산서 발행일</label><input id="c_inv" type="date"><input id="c_invmemo" maxlength="200" placeholder="메모" style="flex:1">
+          <button class="btn primary" type="button" id="contractBtn">계약값 저장</button></div>
+        <div id="settleOut" class="basis"></div>
+      </section>
+      <section class="panel" aria-labelledby="mgr-h">
+        <h3 id="mgr-h">발주처 담당자 화면</h3>
+        <p class="basis">회사 담당자가 선택률·안 고른 번호·배송 단계를 보고 재발급·마감 연장·코드 추가를 요청하는 화면이에요(배송 정보·코드 원문은 안 보임).
+          링크는 만들 때 한 번만 보여요. 요청은 CS 탭 '폐쇄몰 문의'로 들어와요.</p>
+        <div class="bar"><input type="text" id="mgrLabel" maxlength="40" placeholder="표시 (예: 총무팀)" aria-label="담당자 표시"><button class="btn primary" type="button" id="mgrBtn">담당자 링크 만들기</button></div>
+        <div id="mgrOut"></div>
+        <ul id="mgrList" class="basis"></ul>
+        <div class="bar" style="margin-top:8px"><label for="extendAt">마감 늦추기</label><input type="datetime-local" id="extendAt"><button class="btn" type="button" id="extendBtn">늦추기</button></div>
+      </section>
+      <section class="panel" aria-labelledby="man-h">
+        <h3 id="man-h">답변 매뉴얼 (직원 질문 자동 답)</h3>
+        <p class="basis">직원이 '언제 와요?'·'교환돼요?' 하고 물으면 이 칸과 주문 상태로만 답해요. 답변 기한·현금 전환 칸이 비어 있으면 기한·가능 여부를 약속하지 않아요. 비어 있으면 날짜·조건을 지어내지 않고 "정해지면 안내"·"담당자 확인"으로 답해요.
+          '반드시 도착'·'무조건'·'보장' 같은 확정 표현은 저장되지 않아요.</p>
+        <div id="manFields"></div>
+        <div class="actions"><button class="btn primary" type="button" id="manBtn">매뉴얼 저장</button><span id="manMsg" class="basis"></span></div>
+      </section>
       <section class="panel" aria-labelledby="items-h">
-        <h3 id="items-h">상품별 선택</h3><div class="tblwrap"><table><thead><tr><th>상품</th><th class="num">고른 수</th></tr></thead><tbody id="byItem"></tbody></table></div>
+        <h3 id="items-h">상품별 선택 · 공급사</h3><p class="basis">거래처·품번·매입 단가(그 거래처의 단가 기준대로)는 발주서에만 써요(직원·발주처 화면에는 안 보임). 거래처는 <a href="/admin/b2b/suppliers">공급 거래처</a>에서 먼저 만들어요.</p>
+        <div class="tblwrap"><table><thead><tr><th>상품</th><th class="num">고른 수</th><th>공급 거래처</th><th>공급사 품번</th><th class="num">매입 단가</th><th title="세무 검토 뒤 확정">과세</th></tr></thead><tbody id="byItem"></tbody></table></div>
+        <div class="actions"><button class="btn" type="button" id="supBtn">공급사 저장</button><span id="supMsg" class="basis"></span></div>
       </section>
       <section class="panel" aria-labelledby="orders-h">
         <h3 id="orders-h">주문 · 배송</h3>
         <p class="basis">이 표에는 배송 정보가 없어요. 공급사에 보낼 때만 '배송 정보 내보내기'(발송 요청 상태인 주문만, 한 번 내보내면 '발송 준비'로 바뀜).</p>
-        <div class="bar"><button class="btn primary" type="button" id="exportBtn">배송 정보 내보내기 (CSV)</button>
+        <div class="bar"><label class="btn" for="trkFile" style="cursor:pointer">송장 파일 올리기 (발주서 엑셀·CSV)</label><input type="file" id="trkFile" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><label style="font-size:13px"><input type="checkbox" id="trkShipped" style="width:auto"> 이 파일의 주문은 출고 확인됨(택배사 인수) → '발송함'</label><span id="trkMsg" class="basis"></span></div>
+        <div class="bar"><button class="btn primary" type="button" id="poBtn">발주 묶음 만들기</button><button class="btn" type="button" id="exportBtn">배송 정보 내보내기 (CSV 한 파일)</button>
           <span class="spacer"></span><button class="btn" type="button" data-mark="shipped">고른 주문 발송함</button><button class="btn" type="button" data-mark="delivered">고른 주문 배송 완료</button></div>
-        <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
+        <div id="poList" class="basis" style="margin:6px 0"></div>
+        <div id="poDocs" class="basis" style="margin:6px 0"></div><div id="poLink"></div>
+        <div id="mailBox" class="code-out" hidden>
+          <b>발주서 메일</b> <span id="mailState"></span>
+          <div class="bar" style="margin-top:6px"><label>받는 사람</label><code id="mailTo"></code></div>
+          <div class="bar"><label for="mailSubj">제목</label><input id="mailSubj" maxlength="200" style="flex:1"></div>
+          <textarea id="mailBody" rows="12" style="width:100%;font-size:13px" aria-label="메일 본문"></textarea>
+          <div class="bar"><label><input type="checkbox" id="mailAttach" style="width:auto"> 공급사 전달용 엑셀도 첨부(배송 정보 포함 — 기본은 링크에서 받게)</label></div>
+          <div class="actions"><button class="btn" type="button" id="mailSave">고친 내용 저장</button>
+            <button class="btn primary" type="button" id="mailSend">보내기</button>
+            <button class="btn" type="button" id="mailEml">.eml 내려받기 (직접 보내기)</button>
+            <button class="btn" type="button" id="mailMark">직접 보냄 표시</button>
+            <button class="btn" type="button" id="mailNot" hidden>안 감 확인 (다시 보낼 수 있게)</button>
+            <button class="btn" type="button" id="mailClose">닫기</button></div>
+          <p class="basis" id="mailNote"></p>
+        </div>
+        <div id="trkOut" class="basis"></div>
+        <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>송장</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
       </section>
       <section class="panel" aria-labelledby="ev-h"><h3 id="ev-h">기록</h3><ul id="events" class="basis"></ul></section>
     </div>
@@ -192,6 +241,9 @@ const SHIP={none:"—",no_address:"주소 없음 (발주처 처리)",requested:"
 const EXAMPLE={slug:"sample-corp-2026",client:"(예시) 샘플공사",title:"2027 설 명절 임직원 선물",bid_id:"",
   opens_at:"2026-12-01T09:00",closes_at:"2026-12-10T18:00",delivery_mode:"individual",retention_days:30,default_item_id:"A",
   notice:"한 분당 하나씩 고를 수 있어요. 마감까지 고르지 않으면 기본 선물(A)로 보내 드려요.",
+  manual:{ship_plan:"2026-12-15",arrive_note:"출고 뒤 보통 1~3일 걸려요(도서산간은 1~2일 더).",courier:"(예시) 택배사",
+    exchange:"(예시) 받은 날부터 7일 안에 상품 이상이 있으면 교환해 드려요. 단순 변심 교환은 회사와 정한 기준에 따라요.",
+    item_change:"",contact:"(예시) 총무팀 사내 메신저"},
   items:[{id:"A",name:"(예시) 프리미엄 한과 세트",desc:"전통 유과·약과 18입",tier:"5만원대",image:""},
          {id:"B",name:"(예시) 제주 감귤 5kg",desc:"산지 직송",tier:"5만원대",image:""}]};
 let MALLS=[],CUR=null;
@@ -199,6 +251,7 @@ let MALLS=[],CUR=null;
 async function loadList(sel){
   let d;try{d=await api("/admin/api/corpmall")}catch(e){return err(e)}
   MALLS=d.malls;const s=$("#mallSel");s.innerHTML=MALLS.length?MALLS.map(m=>`<option value="${esc(m.mall_id)}">${esc(m.client||"")} · ${esc(m.title||m.slug)} (${ST[m.status]||m.status})</option>`).join(""):'<option value="">폐쇄몰이 없어요</option>';
+  if(!sel){const qp=new URLSearchParams(location.search).get("mall");if(qp)sel=qp}
   if(sel)s.value=sel;if(s.value)loadMall(s.value);else{$("#detail").hidden=true}
 }
 async function loadMall(id){
@@ -210,11 +263,19 @@ async function loadMall(id){
   $("#m_default").textContent=(m.items.find(i=>i.id===m.default_item_id)||{}).name||"없음 (마감 때 안 고른 코드는 그대로)";
   $("#m_keep").textContent="배송 완료 뒤 "+m.retention_days+"일";$("#m_bid").textContent=m.bid_id||"—";
   $("#k_issued").textContent=s.issued;$("#k_chosen").textContent=s.chosen;$("#k_rate").textContent=s.rate==null?"—":(s.rate*100).toFixed(1)+"%";$("#k_default").textContent=s.defaulted;
-  $("#byItem").innerHTML=s.by_item.map(i=>`<tr><td>${esc(i.name)} <small class="dday">${esc(i.id)}</small></td><td class="num">${i.n}</td></tr>`).join("");
+  const itemOf=Object.fromEntries(m.items.map(i=>[i.id,i]));
+  $("#byItem").innerHTML=s.by_item.map(i=>`<tr><td>${esc(i.name)} <small class="dday">${esc(i.id)}</small></td><td class="num">${i.n}</td>
+    <td><select data-sup="${esc(i.id)}" aria-label="${esc(i.name)} 공급 거래처"><option value="">(없음)</option>${SUPS.map(x=>`<option value="${esc(x.supplier_id)}"${itemOf[i.id]?.supplier_id===x.supplier_id?" selected":""}>${esc(x.name)}</option>`).join("")}</select>
+      ${itemOf[i.id]?.supplier&&!itemOf[i.id]?.supplier_id?`<small class="dday">이름만: ${esc(itemOf[i.id].supplier)}</small>`:""}</td>
+    <td><input type="text" data-sku="${esc(i.id)}" maxlength="40" value="${esc(itemOf[i.id]?.supplier_sku||"")}" aria-label="${esc(i.name)} 공급사 품번" style="width:110px"></td>
+    <td><input type="text" data-cost="${esc(i.id)}" inputmode="numeric" maxlength="9" value="${itemOf[i.id]?.unit_cost??""}" aria-label="${esc(i.name)} 매입 단가" style="width:90px"></td>
+    <td><select data-tax="${esc(i.id)}" aria-label="${esc(i.name)} 과세 구분"><option value="taxable">과세</option><option value="exempt"${itemOf[i.id]?.tax_type==="exempt"?" selected":""}>면세</option></select></td></tr>`).join("");
   const names=Object.fromEntries(m.items.map(i=>[i.id,i.name]));
   $("#orders").innerHTML=d.orders.length?d.orders.map(o=>`<tr><td><input type="checkbox" value="${esc(o.order_id)}" aria-label="${esc(o.order_id)} 고르기"></td><td><code>${esc(o.order_id)}</code></td>
-    <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
-    :'<tr><td colspan="5" class="empty">아직 고른 사람이 없어요</td></tr>';
+    <td>${esc(names[o.item_id]||o.item_id)}${o.defaulted?' <span class="st st-closed">기본 상품</span>':""}</td><td>${SHIP[o.ship_status]||o.ship_status}${o.purged?' · 배송 정보 지움':""}</td><td>${esc(o.tracking||"")}</td><td>${esc(when(o.chosen_at))}</td></tr>`).join("")
+    :'<tr><td colspan="6" class="empty">아직 고른 사람이 없어요</td></tr>';
+  drawManual(m.manual||{});
+  $("#mgrOut").innerHTML="";$("#poLink").innerHTML="";loadMgrs();loadPo();loadPos();loadSettle();
   const na=(s.ship||{}).no_address||0;$("#noAddr").hidden=!na;
   if(na){$("#noAddr").innerHTML=`마감 때 고르지 않아 기본 상품이 됐지만 <b>배송지가 없는 코드 ${na}개</b>가 있어요. 임의로 보내지 말고, 번호 목록을 발주처에 넘겨 계약에 정한 방법(회사 일괄 수령 등)으로 처리해 주세요. <button class="btn" type="button" id="naBtn">번호 목록 내려받기</button>`;
     $("#naBtn").onclick=async()=>{const r=await api(`/admin/api/corpmall/${m.mall_id}/no-address`);csv(r.labels.map(l=>({번호:l})),`${m.slug}_no_address.csv`)}}
@@ -242,7 +303,120 @@ $("#exportBtn").onclick=async()=>{if(!confirm("발송 요청 주문의 배송 �
 $("#allChk").onchange=e=>document.querySelectorAll("#orders input[type=checkbox]").forEach(c=>c.checked=e.target.checked);
 document.querySelectorAll("[data-mark]").forEach(b=>b.onclick=async()=>{const ids=[...document.querySelectorAll("#orders input:checked")].map(c=>c.value);if(!ids.length)return;
   try{await post(`/admin/api/corpmall/${CUR.mall_id}/mark`,{order_ids:ids,status:b.dataset.mark});await loadMall(CUR.mall_id)}catch(e){err(e)}});
-loadList();
+async function loadMgrs(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/managers`);
+  $("#mgrList").innerHTML=d.managers.map(g=>`<li>${esc(g.label)} · ${esc(when(g.created_at))} ${g.revoked?"· 끊음":`<button class="btn" type="button" data-rv="${esc(g.manager_id)}">끊기</button>`}</li>`).join("")||"<li>아직 없어요</li>";
+  document.querySelectorAll("[data-rv]").forEach(b=>b.onclick=async()=>{if(!confirm("이 담당자 링크를 끊을까요? 다시 쓰려면 새로 만들어야 해요."))return;try{await post(`/admin/api/corpmall/${CUR.mall_id}/managers/${b.dataset.rv}/revoke`);loadMgrs()}catch(e){err(e)}})}catch(e){err(e)}}
+$("#mgrBtn").onclick=async()=>{try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/managers`,{label:$("#mgrLabel").value.trim()||"담당자"});
+  $("#mgrOut").innerHTML=`<div class="code-out">${esc(d.label)} 링크: <code>${esc(location.origin+d.link)}</code><br><b>지금만 보여요</b> — 복사해서 발주처 담당자에게 안전하게 전달해 주세요.</div>`;$("#mgrLabel").value="";loadMgrs()}catch(e){err(e)}};
+$("#extendBtn").onclick=async()=>{const v=$("#extendAt").value;if(!v)return;if(!confirm(v.replace("T"," ")+" 로 마감을 늦출까요?"))return;
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/extend`,{closes_at:v});await loadMall(CUR.mall_id)}catch(e){err(e)}};
+async function loadSettle(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/settle`);const ct=d.contract||{};
+  $("#c_price").value=ct.unit_price??"";$("#c_vat").value=ct.vat_mode||"included";if($("#c_tax"))$("#c_tax").value=ct.tax_type||"taxable";$("#c_head").value=ct.headcount??"";$("#c_basis").value=ct.basis||"headcount";
+  $("#c_inv").value=ct.invoice_issued_on||"";$("#c_invmemo").value=ct.invoice_memo||"";
+  const r=d.revenue,c=d.cost,g=d.margin;
+  $("#settleOut").innerHTML=`<div>계약값 출처: ${esc(ct.source||"없음")} · 청구 기준: ${esc(d.basis_label||"")} · 실제 주문 ${d.orders}건 / 코드 ${d.issued}개</div>
+    <table style="margin-top:6px"><tbody>
+    <tr><th>매출</th><td>${r?`${r.count}명 · 공급가액 ${wonf(r.supply)} · 부가세 ${wonf(r.vat)} · 합계 <b>${wonf(r.total)}</b>`:"계약값(1인 금액·인원)을 넣어 주세요"}</td></tr>
+    <tr><th>매입(발주서)</th><td>공급가액 ${wonf(c.po_supply)} · 합계 ${wonf(c.po_total)}${c.po_unknown?` · <b>단가 확인 필요 발주서 ${c.po_unknown}건</b>`:""}${c.po_open?` · <b>미확정·변경·취소 요청 ${c.po_open}건</b>`:""}</td></tr>
+    <tr><th>매입(추정)</th><td>${c.estimate.length?c.estimate.map(e=>`${esc(e.item)} ${e.qty}개 ${e.supply==null?"<b>단가 없음</b>":wonf(e.supply)}`).join(" · "):"없음 (모두 발주서로 묶임)"}</td></tr>
+    <tr><th>마진</th><td>${g?`<b>${wonf(g.amount)}</b>${g.rate!=null?` (${(g.rate*100).toFixed(1)}%)`:""} ${g.final?"· 확정":"· <b>확정 아님</b>(추정·확인 필요 포함)"}`:"—"}</td></tr>
+    <tr><th>발주처 확인</th><td>${d.client_confirm?(d.client_confirm.valid?`${esc(when(d.client_confirm.at))} ${esc(d.client_confirm.by)} · ${wonf(d.client_confirm.total)}`:`<b>다시 확인 필요</b> — ${esc(when(d.client_confirm.at))}에 ${wonf(d.client_confirm.total)}으로 확인한 뒤 금액이 바뀜`):(d.status==="closed"?"<b>확인 전</b> — 담당자 화면에서 확인을 받은 뒤 세금계산서를 발행하세요":"마감 뒤 담당자 화면에서 확인")}</td></tr>
+    <tr><th>세금계산서</th><td>매출 ${d.invoices.sales_issued_on?`발행 ${esc(d.invoices.sales_issued_on)}`:"<b>발행 전</b>"} · 매입 수취 ${d.invoices.purchase_received}/${d.invoices.purchase_total}</td></tr></tbody></table>
+    ${c.po.length?`<div style="margin-top:6px">${c.po.map(p=>`<div><code>${esc(p.po_no)}</code> ${esc(p.supplier)} ${wonf(p.total)}${p.exempt?` (면세 ${wonf(p.exempt)})`:""} · ${esc(p.status_label||"")} · 매입 세금계산서 <input type="date" data-inv="${esc(p.po_no)}" value="${esc(p.invoice_received_on||"")}" aria-label="${esc(p.po_no)} 세금계산서 받은 날"></div>`).join("")}</div>`:""}`;
+  document.querySelectorAll("[data-inv]").forEach(x=>x.onchange=async()=>{try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${x.dataset.inv}/invoice`,{received_on:x.value||null});loadSettle()}catch(e){err(e)}})}catch(e){err(e)}}
+$("#contractBtn").onclick=async()=>{const num=v=>v.trim()===""?null:parseInt(v.replace(/,/g,""),10);
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/contract`,{unit_price:num($("#c_price").value),headcount:num($("#c_head").value),vat_mode:$("#c_vat").value,tax_type:$("#c_tax").value,basis:$("#c_basis").value,
+    invoice_issued_on:$("#c_inv").value||null,invoice_memo:$("#c_invmemo").value.trim()});loadSettle()}catch(e){err(e)}};
+let SUPS=[];
+async function loadSups(){try{SUPS=(await api("/admin/api/b2b-suppliers")).suppliers.filter(x=>x.active)}catch(e){err(e)}}
+const wonf=v=>v==null?"단가 확인 필요":Number(v).toLocaleString()+"원";
+let MAILS={},SMTP=false,MAIL=null;const SENDW={link_issued:"링크 발급",link_reissued:"링크 재발급",smtp_accepted:"메일 서버 접수 완료",smtp_unknown:"메일 결과 불명",manual_sent:"직접 발송 확인",eml_downloaded:".eml 내려받음",file_downloaded_by_operator:"운영자 파일 받음",file_downloaded_by_supplier:"공급사 파일 받음"};const MAILST={draft:"준비",sending:"보내는 중",sent:"메일 서버 접수 완료",manual:"직접 발송 확인",failed:"실패 (안 감)",unknown:"결과 불명"};
+function showMail(m){MAIL=m;$("#mailBox").hidden=false;$("#mailTo").textContent=m.to;$("#mailSubj").value=m.subject;$("#mailBody").value=m.body;$("#mailAttach").checked=m.attach;
+  $("#mailState").textContent=`· ${m.po_no} · ${MAILST[m.status]||m.status}${m.sent_at?" "+when(m.sent_at):""}${m.error?" · "+m.error:""}`;
+  const open=m.status==="draft"||m.status==="failed",stuck=m.status==="unknown"||m.status==="sending";
+  ["#mailSave","#mailEml"].forEach(x=>$(x).disabled=!open);$("#mailSend").disabled=!open||!SMTP;$("#mailMark").disabled=!(open||stuck);$("#mailNot").hidden=!stuck;
+  $("#mailMark").textContent=stuck?"공급사가 받음 — 보냄으로 확인":"직접 보냄 표시";
+  $("#mailNote").textContent=(stuck?"보낸 결과를 몰라요(연결이 끊김 등). 다시 보내지 말고 공급사에 받았는지 먼저 확인해 주세요. ":"")
+    +(SMTP?"":"발신 메일이 아직 연결되지 않았어요(사업자등록 뒤 연결) — '.eml 내려받기'로 메일 프로그램에서 열어 직접 보낸 뒤 '직접 보냄 표시'를 눌러 주세요. ")
+    +"{ACK_LINK} 자리에는 이 발주서의 확인 링크가 그대로 들어가요(다시 보내도 공급사가 받은 링크는 그대로). 새 링크는 '링크 재발급'으로만."}
+async function saveMail(){const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}`,{subject:$("#mailSubj").value,body:$("#mailBody").value,attach:$("#mailAttach").checked});showMail(d.mail)}
+$("#mailSave").onclick=()=>saveMail().catch(err);
+$("#mailSend").onclick=async()=>{if(!confirm(`${MAIL.to} 로 보낼까요? 받는 사람·제목·본문·첨부를 확인하셨나요?`))return;
+  try{await saveMail();const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/send`);showMail(d.mail);loadPos()}catch(e){err(e);loadPos()}};
+$("#mailEml").onclick=async()=>{try{await saveMail();await dl(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/eml`)}catch(e){err(e)}};
+$("#mailMark").onclick=async()=>{if(!confirm("메일 프로그램에서 직접 보내셨나요? '직접 보냄'으로 표시해요."))return;try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/mark-sent`);showMail(d.mail);loadPos()}catch(e){err(e)}};
+$("#mailClose").onclick=()=>{$("#mailBox").hidden=true};
+$("#mailNot").onclick=async()=>{const note=prompt("공급사가 못 받았다는 걸 어떻게 확인했나요? (예: 11/25 전화 — 메일 없음)");if(!note)return;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/mark-not-sent`,{note});showMail(d.mail);loadPos()}catch(e){err(e)}};
+async function loadPos(){try{const md=await api(`/admin/api/corpmall/${CUR.mall_id}/mails`);SMTP=md.smtp;MAILS={};md.mails.slice().reverse().forEach(m=>{MAILS[m.po_no]=m});
+  const d=await api(`/admin/api/corpmall/${CUR.mall_id}/pos`);
+  const LIVE=["issued","accepted","change_requested","acknowledged"],MAILABLE=["issued","accepted","acknowledged"];
+  const btn=(k,po,t)=>`<button class="btn" type="button" data-${k}="${esc(po)}">${t}</button>`;
+  $("#poDocs").innerHTML=d.pos.length?"<b>발주서</b> <span class=\"muted\">수락 = 공급사가 수량·단가·금액·출고 기한 동의 · 전달된 발주의 취소는 공급사 취소 확인 뒤</span>"+d.pos.map(p=>{const live=LIVE.includes(p.status);return `<div style="margin:6px 0"><code>${esc(p.po_no)}</code>${p.version>1?` 판${p.version}`:""} · ${esc(p.supplier)} · 합계 ${esc(wonf(p.total))}${p.exempt_amount?` (면세 ${esc(wonf(p.exempt_amount))})`:""} · 출고 기한 ${esc(p.ship_by||"협의")}${p.arrive_by?` · 도착 요청 ${esc(p.arrive_by)}`:""} · <b>${esc(p.status_label)}</b>${p.delivered_at?` · 취소 잠금 ${esc(when(p.delivered_at))}`:""}${p.viewed_at?` · 열람 ${esc(when(p.viewed_at))}`:""}
+    ${p.status==="draft"?`<div class="muted">빈 곳: ${esc((p.gaps||[]).join(", "))} — 공급사에 보낼 수 없어요. 채운 뒤 '확정'.</div>`:""}
+    ${p.ack_by&&p.status!=="cancelled"?`<div class="muted">공급사 응답: ${esc(p.ack_by)}${p.ack_ship_date?` · 출고 예정 ${esc(p.ack_ship_date)}`:""}${p.ack_memo?` · ${esc(p.ack_memo)}`:""}</div>`:""}
+    ${p.status==="cancel_requested"?`<div class="muted">취소 이유: ${esc(p.cancel_reason||"")} — 공급사가 확인 화면에서 '취소 확인'을 누르거나, 메일·전화로 확인받은 뒤 '공급사 취소 확인 표시'</div>`:""}
+    ${p.status==="draft"?btn("fin",p.po_no,"확정"):""}
+    ${(p.sends||[]).length?`<div class="muted">보낸 기록: ${p.sends.map(h=>`${esc(when(h.at))} ${esc(SENDW[h.what]||h.what)}`).join(" · ")}</div>`:""}
+    ${live||p.status==="cancel_requested"?btn("ackl",p.po_no,"확인 링크"):""}
+    ${(live||p.status==="cancel_requested")&&p.ack_link_at?btn("ackr",p.po_no,"링크 재발급"):""}
+    ${p.status==="issued"||p.status==="change_requested"?btn("ackm",p.po_no,p.status==="change_requested"?"검토 끝 · 수락 표시":"수락 받음 표시"):""}
+    ${MAILABLE.includes(p.status)?btn("mail",p.po_no,`메일${MAILS[p.po_no]?` (${esc(MAILST[MAILS[p.po_no].status]||MAILS[p.po_no].status)})`:""}`):""}
+    ${p.status==="cancel_requested"?btn("cxok",p.po_no,"공급사 취소 확인 표시")+btn("cxwd",p.po_no,"취소 요청 철회"):""}
+    ${p.status!=="cancelled"&&p.status!=="cancel_requested"?btn("cx",p.po_no,p.delivered_at?"취소 요청":"취소"):""}
+    ${(p.history||[]).length?`<details><summary class="muted">기록 ${p.history.length}건</summary><ul>${p.history.map(h=>`<li>${esc(when(h.at))} · ${esc(h.by)} · ${esc(h.what)}${h.after?` → ${esc(JSON.stringify(h.after))}`:""}${h.before?` <span class="muted">(전 ${esc(JSON.stringify(h.before))})</span>`:""}</li>`).join("")}</ul></details>`:""}</div>`}).join(""):"";
+  document.querySelectorAll("[data-ackl]").forEach(b=>b.onclick=async()=>{try{const r=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackl}/ack-link`);
+    $("#poLink").innerHTML=`<div class="code-out">${esc(b.dataset.ackl)} 확인 링크: <code>${esc(location.origin+r.link)}</code><br>같은 판에서는 다시 눌러도 같은 링크예요. 처음 만든 때부터 취소는 공급사 확인이 필요해요(취소 잠금).</div>`;loadPos()}catch(e){err(e)}});
+  document.querySelectorAll("[data-ackr]").forEach(b=>b.onclick=async()=>{if(!confirm("새 링크를 만들면 공급사가 가진 옛 링크는 바로 막혀요. 링크가 새어 나갔을 때만 재발급하세요. 진행할까요?"))return;
+    try{const r=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackr}/ack-link?reissue=true`);
+    $("#poLink").innerHTML=`<div class="code-out">${esc(b.dataset.ackr)} <b>새</b> 확인 링크: <code>${esc(location.origin+r.link)}</code><br>옛 링크는 막혔어요 — 공급사에 새 링크를 보내 주세요.</div>`;loadPos()}catch(e){err(e)}});
+  document.querySelectorAll("[data-mail]").forEach(b=>b.onclick=async()=>{try{const m=MAILS[b.dataset.mail];
+    if(m)showMail(m);else{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.mail}/mail`);showMail(d.mail);loadPos()}}catch(e){err(e)}});
+  document.querySelectorAll("[data-fin]").forEach(b=>b.onclick=async()=>{if(!confirm("지금 거래처·단가·발주사 정보로 다시 계산해 정식 발주서로 확정할까요?"))return;
+    try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.fin}/finalize`);loadPos()}catch(e){err(e)}});
+  document.querySelectorAll("[data-ackm]").forEach(b=>b.onclick=async()=>{const note=prompt("공급사가 어떻게 수락했나요? (예: 11/25 메일 회신 — 수량·단가·출고 기한 동의)");if(!note)return;
+    try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackm}/ack`,{note});loadPos()}catch(e){err(e)}});
+  document.querySelectorAll("[data-cxok]").forEach(b=>b.onclick=async()=>{const note=prompt("공급사가 어떻게 취소를 확인했나요? (예: 11/25 전화 — 출고 전 확인) 확인하면 주문이 돌아가 다시 발주할 수 있어요");if(!note)return;
+    try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.cxok}/cancel-confirm`,{note});loadMall(CUR.mall_id)}catch(e){err(e)}});
+  document.querySelectorAll("[data-cxwd]").forEach(b=>b.onclick=async()=>{if(!confirm("취소 요청을 철회하고 발주를 이어갈까요?"))return;
+    try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.cxwd}/cancel-withdraw`);loadPos()}catch(e){err(e)}});
+  document.querySelectorAll("[data-cx]").forEach(b=>b.onclick=async()=>{const p=d.pos.find(x=>x.po_no===b.dataset.cx);
+    const reason=prompt(p&&p.delivered_at?"취소 이유 — 이미 공급사에 전달된 발주라 '취소 요청'으로 두고, 공급사 취소 확인 뒤에 주문이 돌아가요":"취소 이유 (아직 공급사에 전달 전 — 바로 취소하고 주문은 다시 묶을 수 있어요)");if(!reason)return;
+    try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.cx}/cancel`,{reason});loadMall(CUR.mall_id)}catch(e){err(e)}})}catch(e){err(e)}}
+let MANF=[];
+async function manFields(){try{MANF=(await api("/admin/api/corpmall-manual")).fields}catch(e){err(e)}}
+function drawManual(v){$("#manFields").innerHTML=MANF.map(f=>`<div class="bar" style="margin:4px 0"><label for="man_${f.key}" style="min-width:230px">${esc(f.label)}</label>`
+  +(f.max>150?`<textarea id="man_${f.key}" maxlength="${f.max}" rows="2" style="flex:1">${esc(v[f.key]||"")}</textarea>`:`<input type="${f.key==="ship_plan"||f.key==="arrive_by"?"date":"text"}" id="man_${f.key}" maxlength="${f.max}" value="${esc(v[f.key]||"")}" style="flex:1">`)+`</div>`).join("");$("#manMsg").textContent=""}
+$("#manBtn").onclick=async()=>{const manual=Object.fromEntries(MANF.map(f=>[f.key,$("#man_"+f.key).value.trim()]));
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/manual`,{manual});$("#manMsg").textContent="저장했어요";await loadMall(CUR.mall_id);$("#manMsg").textContent="저장했어요"}catch(e){err(e)}};
+$("#trkFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.value="";
+  const fd=new FormData();fd.append("file",f);fd.append("shipped",$("#trkShipped").checked?"true":"false");
+  try{const r=await fetch(`/admin/api/corpmall/${CUR.mall_id}/tracking-file`,{method:"POST",body:fd});
+    if(r.status===401){location.href="/admin/login?next=/admin/b2b/mall";return}
+    const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:"올리지 못했어요");
+    $("#trkMsg").textContent=`${d.read}건을 읽어 ${d.n}건에 송장을 넣었어요`+($("#trkShipped").checked?" ('발송함')":" (상태는 그대로)")
+      +(d.same?` · 이미 같은 송장 ${d.same}건`:"")+(d.skipped?` · 이 몰 주문이 아니거나 배송 완료라 건너뜀 ${d.skipped}건`:"");
+    const issues=[...d.conflicts.map(c=>`${c.order_id}: 이미 다른 송장(${c.now})이 있어 바꾸지 않았어요 — 파일 ${c.file}`),...d.problems.map(p=>`${p.order_id}: ${p.why}`)];
+    $("#trkOut").innerHTML=issues.length?`<div class="code-out"><b>확인이 필요한 줄 ${issues.length}개</b><ul>${issues.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
+    loadMall(CUR.mall_id)}catch(er){err(er)}};
+async function dl(url){const r=await fetch(url);if(r.status===401){location.href="/admin/login?next=/admin/b2b/mall";return}
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(typeof d.detail==="string"?d.detail:r.statusText)}
+  const cd=r.headers.get("Content-Disposition")||"";const name=decodeURIComponent((cd.match(/filename\*=UTF-8''([^;]+)/)||[])[1]||"po.xlsx");
+  const a=document.createElement("a");a.href=URL.createObjectURL(await r.blob());a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+async function loadPo(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/po`);
+  $("#poList").innerHTML=d.batches.length?"<b>발주 묶음</b> (다운로드가 안 됐으면 다시 받기 — 주문은 이미 묶음에 들어 있어요)"+d.batches.map(b=>`<div style="margin:4px 0">${esc(b.batch_id)} · ${esc(when(b.created_at))} · 주문 ${b.orders}건
+    ${Object.keys(b.excluded||{}).length?` · 제외 ${Object.entries(b.excluded).map(([k,v])=>esc(k)+" "+v+"건").join(", ")}`:""}
+    <button class="btn" type="button" data-po="${esc(b.batch_id)}">운영자 통합본</button>
+    ${Object.entries(b.suppliers||{}).map(([sup,g])=>`<button class="btn" type="button" data-po="${esc(b.batch_id)}" data-sup="${esc(sup)}">${esc(sup)} 전달용 (${g.orders}건)</button>`).join("")}</div>`).join(""):"";
+  document.querySelectorAll("[data-po]").forEach(x=>x.onclick=()=>dl(`/admin/api/corpmall/${CUR.mall_id}/po/${encodeURIComponent(x.dataset.po)}/file`+(x.dataset.sup?`?supplier=${encodeURIComponent(x.dataset.sup)}`:"")).catch(err))}catch(e){err(e)}}
+$("#supBtn").onclick=async()=>{const suppliers={};document.querySelectorAll("select[data-sup]").forEach(x=>{const id=x.dataset.sup;const cur=(CUR.items.find(i=>i.id===id)||{});
+    suppliers[id]={supplier_id:x.value||null,supplier:x.value?"":(cur.supplier_id?"":(cur.supplier||"")),sku:document.querySelector(`[data-sku="${id}"]`).value.trim(),unit_cost:document.querySelector(`[data-cost="${id}"]`).value.trim()||null,tax_type:document.querySelector(`[data-tax="${id}"]`).value}});
+  try{await post(`/admin/api/corpmall/${CUR.mall_id}/suppliers`,{suppliers});await loadMall(CUR.mall_id);$("#supMsg").textContent="저장했어요"}catch(e){err(e)}};
+$("#poBtn").onclick=async()=>{if(!confirm("발주 묶음을 만들까요? 넣은 주문은 '발송 준비'로 바뀌고, 파일은 아래 묶음에서 공급사별로 받아요(몇 번이든 다시 받을 수 있어요). 공급사 미지정·받는 곳 없는 주문은 빠져요."))return;
+  try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/po`);
+    $("#trkMsg").textContent=`발주 묶음 ${d.batch_id}: 주문 ${d.orders}건 · 공급사 ${Object.keys(d.suppliers).length}곳`+(Object.keys(d.excluded).length?` · 제외 ${Object.entries(d.excluded).map(([k,v])=>k+" "+v+"건").join(", ")}`:"")+" — 공급사에는 그 공급사 '전달용' 파일만 보내 주세요.";
+    loadMall(CUR.mall_id)}catch(e){err(e)}};
+Promise.all([manFields(),loadSups()]).then(loadList);
 </script>
 </body>
 </html>

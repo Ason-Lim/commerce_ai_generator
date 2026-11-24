@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<meta name="referrer" content="no-referrer">
+<meta name="referrer" content="strict-origin">
 <title>임직원 선물 선택</title>
 <style>
 :root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--warn:#9a5b00;--warn-s:#fff4dc;--err:#b3261e;--err-s:#fde9e7}
@@ -43,7 +43,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
 
   <section class="box" id="enterBox" aria-labelledby="enter-h">
     <h2 id="enter-h" style="font-size:17px;margin:0">코드 넣기</h2>
-    <p class="note">회사에서 받은 8글자 코드를 넣어 주세요. 코드 하나로 한 사람이 한 번 고를 수 있어요(마감 전에는 바꿀 수 있어요).</p>
+    <p class="note">회사에서 받은 8글자 코드를 넣어 주세요. 코드 하나로 선물 하나를 고를 수 있어요. 선택 마감 전이고 발송 준비가 시작되기 전까지만 바꿀 수 있어요.</p>
     <form id="enterForm" class="row">
       <input id="code" class="code" aria-label="선물 코드" placeholder="ABCD-EFGH" maxlength="12" autocomplete="off" spellcheck="false" required>
       <button type="submit">들어가기</button>
@@ -69,11 +69,18 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
           <div class="field"><label for="s_name">받는 분 이름</label><input id="s_name" maxlength="30" autocomplete="name"></div>
           <div class="field"><label for="s_phone">휴대폰 번호 (배송 연락)</label><input id="s_phone" maxlength="20" inputmode="tel" autocomplete="tel"></div>
         </div>
-        <div class="grid2">
-          <div class="field"><label for="s_zip">우편번호</label><input id="s_zip" maxlength="10" inputmode="numeric" autocomplete="postal-code"></div>
-          <div class="field"><label for="s_memo">배송 메모 (선택)</label><input id="s_memo" maxlength="100"></div>
+        <div class="field"><label for="s_zip">우편번호</label>
+          <div class="row" style="margin:0;gap:8px"><input id="s_zip" maxlength="10" inputmode="numeric" autocomplete="postal-code" style="max-width:140px">
+            <button type="button" id="zipBtn" style="background:#fff;color:var(--ink);border:1px solid var(--line)">우편번호 찾기</button></div></div>
+        <div id="zipWrap" hidden style="position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:6px 0 10px">
+          <button type="button" id="zipClose" aria-label="우편번호 찾기 닫기" style="position:absolute;right:6px;top:6px;z-index:2;padding:4px 10px;background:#fff;color:var(--ink);border:1px solid var(--line)">닫기</button>
+          <div id="zipLayer" style="height:420px"></div>
         </div>
-        <div class="field"><label for="s_addr">주소</label><input id="s_addr" maxlength="200" autocomplete="street-address"></div>
+        <p class="note" style="margin:0 0 6px">우편번호 찾기는 카카오 우편번호 서비스를 써요. 검색어는 카카오로 바로 가고, 고른 주소만 이 칸에 채워져요.</p>
+        <p id="zipMsg" class="note" role="status" hidden></p>
+        <div class="field"><label for="s_addr">주소</label><input id="s_addr" maxlength="150" autocomplete="street-address" placeholder="우편번호 찾기로 고르면 자동으로 채워져요"></div>
+        <div class="field"><label for="s_addr2">상세 주소 (동·호수 등)</label><input id="s_addr2" maxlength="49" autocomplete="address-line2"></div>
+        <div class="field"><label for="s_memo">배송 메모 (선택)</label><input id="s_memo" maxlength="100"></div>
         <div class="consent">
           <b>배송 정보 수집·이용 동의 (필수)</b>
           <table><tbody>
@@ -91,6 +98,19 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <div class="row"><button type="submit" id="pickBtn">이 선물로 할게요</button><span class="note" id="mineNote"></span></div>
       <div id="pickMsg" role="status"></div>
     </form>
+  </section>
+
+  <section class="box" id="askBox" hidden aria-labelledby="ask-h">
+    <h2 id="ask-h" style="font-size:17px;margin:0">궁금한 점 묻기</h2>
+    <p class="note">도착일·배송지 변경·선물 변경·교환 같은 질문은 바로 답해요. 답으로 해결되지 않거나 상품에 이상이 있으면 담당자에게 접수돼요.
+      연락처·주소는 적지 마세요.</p>
+    <form id="askForm">
+      <div class="field"><label for="a_text">질문</label><textarea id="a_text" rows="2" maxlength="400" placeholder="예: 언제 도착해요? / 받는 주소를 바꾸고 싶어요"></textarea></div>
+      <div class="row"><button type="submit" id="askBtn">묻기</button></div>
+    </form>
+    <div id="askMsg" role="status" aria-live="polite"></div>
+    <h3 style="font-size:14px;margin:16px 0 0" id="asksH" hidden>담당자에게 남긴 문의</h3>
+    <ul id="asks" class="note" style="padding-left:18px"></ul>
   </section>
 
   <footer>이 페이지는 회사와 계약한 임직원 선물 전용이에요. 검색에 나오지 않고, 코드를 가진 사람만 들어올 수 있어요.
@@ -139,6 +159,8 @@ function draw(d) {
   let note = "";
   if (chosen) note = d.order.defaulted ? `마감까지 고르지 않아 기본 선물(${chosen.name})로 정해졌어요.` : `지금 고른 선물: ${chosen.name}`;
   if (d.order?.shipping) note += ` · 받는 분 ${d.order.shipping.name}`;
+  if (d.order?.tracking) note += ` · ${m.courier || "택배"} 송장 ${d.order.tracking}`;
+  else if (chosen && m.ship_plan) note += ` · ${new Date(m.ship_plan + "T00:00").toLocaleDateString("ko-KR", {month:"long", day:"numeric", weekday:"short"})} 출고 예정`;
   $("#mineNote").textContent = note;
   if (d.window === "not_open") msg($("#pickMsg"), `아직 선택 기간이 아니에요. ${fmt(m.opens_at)}부터 고를 수 있어요.`, "info");
   else if (d.window === "closed") msg($("#pickMsg"), chosen ? "선택이 마감됐어요. 고른 선물을 준비하고 있어요." : "선택이 마감됐어요. 회사 담당자에게 문의해 주세요.", "info");
@@ -147,6 +169,14 @@ function draw(d) {
     msg($("#pickMsg"), {exported:"발송 준비 중이에요.", shipped:"발송했어요.", delivered:"배송이 끝났어요."}[d.order.ship_status], "ok");
   }
   $("#enterBox").hidden = true; $("#pickBox").hidden = false;
+  drawAsks(d.asks || []);
+}
+
+function drawAsks(list) {
+  $("#askBox").hidden = false;
+  $("#asksH").hidden = !list.length;
+  $("#asks").innerHTML = list.map((t) => `<li><b>${esc(t.created_at.slice(5,16).replace("T"," "))}</b> ${esc(t.summary.replace(/^\[[^\]]*\]\s*/, ""))}
+    ${(t.messages || []).map((m) => `<div style="margin:4px 0 8px;color:var(--ink)">↳ ${m.kind === "reply" ? "답" : "안내"}: ${esc(m.text)}</div>`).join("") || '<div>답을 기다리고 있어요.</div>'}</li>`).join("");
 }
 
 async function enter(code) {
@@ -155,7 +185,67 @@ async function enter(code) {
   catch (e) { msg($("#enterMsg"), e.message, "err"); $("#code").focus(); }
 }
 
+// 우편번호 찾기 — 카카오 우편번호 서비스(키 없음·무료). 버튼을 누를 때만 스크립트를 불러온다(그 전에는 카카오로 아무것도 안 감).
+// 검색어는 직원 브라우저에서 카카오로 바로 가고 우리 서버를 거치지 않는다. 결과(우편번호·도로명 주소)만 아래 칸에 채운다.
+const POSTCODE_JS = "https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+let postcodeLoading = null;
+function loadPostcode() {
+  if (window.kakao?.Postcode || window.daum?.Postcode) return Promise.resolve();
+  if (!postcodeLoading) postcodeLoading = new Promise((ok, fail) => {
+    const sc = document.createElement("script"); sc.src = POSTCODE_JS; sc.async = true;
+    sc.onload = ok; sc.onerror = () => { postcodeLoading = null; fail(new Error("load")); };
+    document.head.appendChild(sc);
+  });
+  return postcodeLoading;
+}
+async function openPostcode() {
+  $("#zipMsg").hidden = true;
+  try { await loadPostcode(); } catch {
+    $("#zipMsg").hidden = false; $("#zipMsg").textContent = "우편번호 찾기를 불러오지 못했어요. 우편번호와 주소를 직접 적어 주세요."; return;
+  }
+  const P = (window.kakao && window.kakao.Postcode) || (window.daum && window.daum.Postcode);
+  $("#zipWrap").hidden = false;
+  new P({
+    oncomplete: (d) => {
+      let addr = d.userSelectedType === "J" ? d.jibunAddress : (d.roadAddress || d.address);
+      if (d.userSelectedType !== "J" && d.buildingName && d.apartment === "Y") addr += ` (${d.buildingName})`;
+      $("#s_zip").value = d.zonecode || ""; $("#s_addr").value = addr || "";
+      $("#zipWrap").hidden = true; $("#s_addr2").focus();
+    },
+    width: "100%", height: "100%",
+  }).embed($("#zipLayer"), {autoClose: true});
+  $("#zipWrap").scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+$("#zipBtn").addEventListener("click", openPostcode);
+$("#zipClose").addEventListener("click", () => { $("#zipWrap").hidden = true; $("#zipBtn").focus(); });
 $("#changeShip").addEventListener("change", (e) => { $("#shipBox").hidden = !e.target.checked; });
+let LAST_Q = "";
+async function ask(text, handoff) {
+  $("#askBtn").disabled = true;
+  try {
+    const d = await post("ask", {code: CODE, text, handoff});
+    drawAsks(d.asks);
+    const box = $("#askMsg");
+    box.innerHTML = `<div class="msg ${d.ticket_id ? "info" : "ok"}"><b>${esc(d.intent_label)}</b> · ${esc(d.answer)}`
+      + (d.ticket_id ? `<br><small>문의 번호 ${esc(d.ticket_id)}</small>` : "")
+      + (d.masked.length ? `<br><small>적힌 ${esc(d.masked.join("·"))}는 가려서 저장했어요.</small>` : "")
+      + `<div class="row" style="margin-top:6px">`
+      + (d.action === "change_address" ? `<button type="button" data-act="addr">배송지 바꾸러 가기</button>` : "")
+      + (d.action === "change_item" ? `<button type="button" data-act="item">선물 다시 고르기</button>` : "")
+      + (d.offer_handoff ? `<button type="button" data-act="human" style="background:#fff;color:var(--ink);border:1px solid var(--line)">그래도 담당자에게 남기기</button>` : "")
+      + `</div></div>`;
+    box.querySelector('[data-act="addr"]')?.addEventListener("click", () => {
+      $("#changeShip").checked = true; $("#shipBox").hidden = false; $("#keepBox").scrollIntoView({behavior: "smooth"}); $("#s_verify").focus(); });
+    box.querySelector('[data-act="item"]')?.addEventListener("click", () => { $("#pickBox").scrollIntoView({behavior: "smooth"}); document.querySelector('input[name="item"]')?.focus(); });
+    box.querySelector('[data-act="human"]')?.addEventListener("click", () => ask(LAST_Q, true));
+  } catch (err) { msg($("#askMsg"), err.message, "err"); }
+  finally { $("#askBtn").disabled = false; }
+}
+$("#askForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const t = $("#a_text").value.trim(); if (!t) return;
+  LAST_Q = t; $("#a_text").value = ""; ask(t, false);
+});
 $("#enterForm").addEventListener("submit", (e) => { e.preventDefault(); enter($("#code").value.trim()); });
 $("#pickForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -166,14 +256,14 @@ $("#pickForm").addEventListener("submit", async (e) => {
   if (VIEW.mall.delivery_mode === "individual" && !keep) {
     body.consent = $("#consent").checked;
     if (VIEW.order?.shipping) body.verify = $("#s_verify").value;
-    body.shipping = {name: $("#s_name").value, phone: $("#s_phone").value, zipcode: $("#s_zip").value, address: $("#s_addr").value, memo: $("#s_memo").value};
+    body.shipping = {name: $("#s_name").value, phone: $("#s_phone").value, zipcode: $("#s_zip").value, address: [$("#s_addr").value.trim(), $("#s_addr2").value.trim()].filter(Boolean).join(" "), memo: $("#s_memo").value};
   }
   $("#pickBtn").disabled = true;
   try {
     const d = await post("choose", body); draw(d);
-    for (const id of ["#s_name","#s_phone","#s_zip","#s_addr","#s_memo","#s_verify"]) $(id).value = "";
+    for (const id of ["#s_name","#s_phone","#s_zip","#s_addr","#s_addr2","#s_memo","#s_verify"]) $(id).value = "";
     $("#consent").checked = false;
-    msg($("#pickMsg"), `선택했어요. ${fmt(d.mall.closes_at)} 마감 전까지는 같은 코드로 들어와 바꿀 수 있어요.`, "ok");
+    msg($("#pickMsg"), `선택했어요. ${fmt(d.mall.closes_at)} 마감 전이고 발송 준비가 시작되기 전까지는 같은 코드로 들어와 바꿀 수 있어요.`, "ok");
   } catch (err) { msg($("#pickMsg"), err.message, "err"); }
   finally { $("#pickBtn").disabled = false; }
 });

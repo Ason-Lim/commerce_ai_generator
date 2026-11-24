@@ -48,6 +48,7 @@ THINKING_BY_TASK: dict[str, bool] = {
     # 2026-11-12 레시피 창: 메뉴 조합은 저장해 다시 쓰는 생성(켬) · 문장 뜻 읽기·상품 검색어는 정리만 하는 일(끔)
     "menu_plan": True, "chat_intent": False, "shop_terms": False,
     "cs_domain": False,   # 2026-11-23 창 4 ② 분야 판단 — 정리만 하는 일
+    "corp_cs": False,     # 2026-11-24 폐쇄몰 임직원 문의 종류 고르기 — 정리만 하는 일
     # DeepSeek 가 아닌 작업(표에만 둔다): B2B 제안서 본문 작성(Claude) · 검증(GPT)
     "b2b_proposal_write": True, "b2b_proposal_verify": True,
     "ai_recipe_review": True,   # 레시피 교차 검토(GPT) — 2026-11-12
@@ -66,6 +67,8 @@ CUSTOMER_FAST_TASKS = frozenset({
     "recipe_dish_name",
     # 2026-11-23 창 4 ②: 분야 판단 — 0건일 때만 손님 문장을 보낸다 (개인정보·위급·식품 안전 문장은 규칙에서 끝나 오지 않음)
     "cs_domain",
+    # 2026-11-24 폐쇄몰 임직원 문의 — 규칙이 모를 때만 문의 '종류'를 고른다 (개인정보 가린 뒤 문장, 답 문장은 만들지 않음)
+    "corp_cs",
 })
 CUSTOMER_WRITE_TASKS = frozenset({"food_knowledge", "recipe_consult", "menu_plan", "ai_recipe", "ai_recipe_check"})
 CUSTOMER_TASKS = CUSTOMER_FAST_TASKS | CUSTOMER_WRITE_TASKS

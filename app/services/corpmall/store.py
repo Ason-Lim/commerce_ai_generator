@@ -96,6 +96,94 @@ t_order = Table(
     Column("updated_at", DateTime(timezone=True)),
     Column("delivered_at", DateTime(timezone=True)),
     Column("purged_at", DateTime(timezone=True)),
+    Column("tracking", String(40)),  # 송장 번호 (2026-11-24 답변 매뉴얼) — 개인정보 아님. 송장 등록 ≠ 출고
+    Column("shipped_at", DateTime(timezone=True)),  # 출고 확인(발송함) 시각 — 배송 지연 판단 기준
+)
+t_manager = Table(
+    "corpmall_manager",
+    meta,  # 발주처 담당자 링크 (2026-11-24) — 토큰 해시만, 이름 대신 운영자가 붙인 표시(예: 총무팀)
+    Column("manager_id", String(12), primary_key=True),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("token_hash", String(64), unique=True, nullable=False),
+    Column("label", String(40)),
+    Column("created_at", DateTime(timezone=True)),
+    Column("revoked_at", DateTime(timezone=True)),
+)
+t_po_batch = Table(
+    "corpmall_po_batch",
+    meta,  # 발주 묶음 (2026-11-24 검토) — 다운로드가 실패해도 같은 묶음을 다시 받을 수 있게
+    Column("batch_id", String(16), primary_key=True),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("created_at", DateTime(timezone=True)),
+    Column("created_by", String(40)),
+    Column("summary", JSON),  # 공급사별 주문·수량, 제외 사유별 건수 (배송 정보 없음)
+)
+t_po_line = Table(
+    "corpmall_po_line",
+    meta,  # 발주 묶음에 넣은 주문 한 줄 (배송 정보 없음 — 파일을 다시 만들 때 주문에서 복호화)
+    Column("batch_id", String(16), index=True, nullable=False),
+    Column("order_id", String(20), nullable=False),
+    Column("supplier", String(40)),
+    Column("item_id", String(40)),
+    Column("sku", String(40)),
+    Column("qty", Integer),
+)
+t_po = Table(
+    "corpmall_po",
+    meta,  # 정식 발주서 (2026-11-24) — 발주 묶음 × 공급사 하나. 금액·조건은 만들 때 값으로 고정(스냅숏)
+    Column("po_no", String(24), primary_key=True),
+    Column("batch_id", String(16), index=True, nullable=False),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("supplier_id", String(12)),
+    Column("supplier_name", String(40), nullable=False),
+    Column("issued_at", DateTime(timezone=True)),
+    Column("due_date", String(10)),
+    Column("payment_terms", String(120)),
+    Column("vat_mode", String(10)),
+    Column("lines", JSON),  # [{item_id, name, sku, qty, unit_cost, amount}]
+    Column("supply_amount", Integer),
+    Column("vat", Integer),
+    Column("total", Integer),
+    # draft(미확정 — 정식 발주 아님) · issued(정식 발주) · accepted(공급사 수락) · change_requested(공급사 변경 요청 — 운영자 검토)
+    # · cancel_requested(전달된 발주 취소 요청 — 공급사 취소 확인 기다림) · cancelled
+    Column("status", String(18), nullable=False, default="issued"),
+    Column("exempt_amount", Integer),  # 면세 품목 금액 (공급가액에 포함, 부가세 없음)
+    Column("ship_by", String(10)),  # 출고 기한 (due_date 와 같은 값 — 뜻을 분명히)
+    Column("arrive_by", String(10)),  # 도착 요청일 (몰 매뉴얼) — 출고 기한과 따로
+    Column("delivered_at", DateTime(timezone=True)),  # 공급사에 처음 전달된 때(메일·.eml·확인 링크·전달용 파일)
+    Column("viewed_at", DateTime(timezone=True)),  # 공급사가 확인 화면을 처음 연 때
+    Column("version", Integer),
+    Column("history", JSON),  # [{at, by, what, before, after}] — 상태·확정·공급사 응답 변경 이력
+    Column("cancel_reason", String(200)),
+    Column("ack_token_hash", String(64)),
+    Column(
+        "ack_token_enc", Text
+    ),  # 확인 링크 원문(암호화) — 같은 판에서 재발송할 때 같은 링크를 쓰려고. 재발급은 명시적으로만
+    Column("ack_link_at", DateTime(timezone=True)),  # 지금 링크를 만든 때
+    Column("ack_at", DateTime(timezone=True)),
+    Column("ack_by", String(30)),
+    Column("ack_ship_date", String(10)),
+    Column("ack_memo", String(300)),
+    Column("ack_via", String(10)),  # link · operator
+    Column("invoice_received_at", DateTime(timezone=True)),  # 매입 세금계산서 받음 (정산)
+    Column("invoice_memo", String(200)),
+)
+t_po_mail = Table(
+    "corpmall_po_mail",
+    meta,  # 발주서 메일 (2026-11-24) — 준비 → 운영자 확인 → 보냄. 본문엔 {ACK_LINK} 자리만(링크는 발주서 쪽에 암호화)
+    Column("mail_id", String(12), primary_key=True),
+    Column("po_no", String(24), index=True, nullable=False),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("to_enc", Text),  # 받는 사람(거래처 발주 담당 메일) — 암호화
+    Column("subject", String(200)),
+    Column("body", Text),  # {ACK_LINK} 자리 표시 포함
+    # draft · sending(보내는 중) · sent(SMTP 접수 완료) · manual(직접 발송 확인) · failed(안 감이 확실) · unknown(결과 불명 — 자동 재발송 안 함)
+    Column("status", String(10), nullable=False, default="draft"),
+    Column("attach", Boolean),
+    Column("created_at", DateTime(timezone=True)),
+    Column("sent_at", DateTime(timezone=True)),
+    Column("error", String(300)),
+    Column("by", String(40)),
 )
 t_event = Table(
     "corpmall_event",
@@ -121,8 +209,38 @@ def now() -> datetime:
 
 def engine(url: str | None = None):
     eng = sqlalchemy.create_engine(url or get_settings().b2b_db_url, future=True)
+    from app.services.corpmall import suppliers  # noqa: F401 — 거래처 표도 같은 meta 에 (create_all 전에 등록)
+
     meta.create_all(eng)
+    _migrate(eng)
     return eng
+
+
+def _migrate(eng) -> None:
+    """#104 로 이미 만들어진 표에 나중 칸을 붙인다 (create_all 은 있는 표를 바꾸지 않음)."""
+    cols = {c["name"] for c in sqlalchemy.inspect(eng).get_columns("corpmall_order")}
+    add = {
+        "tracking": "VARCHAR(40)",
+        "shipped_at": "TIMESTAMP WITH TIME ZONE" if eng.dialect.name == "postgresql" else "DATETIME",
+    }
+    for name, typ in add.items():
+        if name not in cols:
+            with eng.begin() as c:
+                c.execute(sqlalchemy.text(f"ALTER TABLE corpmall_order ADD COLUMN {name} {typ}"))
+    # 발주서 검토 반영(2026-11-24) — 개발 중 먼저 만들어진 corpmall_po 에 새 칸
+    insp = sqlalchemy.inspect(eng)
+    if insp.has_table("corpmall_po"):
+        have = {c["name"] for c in insp.get_columns("corpmall_po")}
+        ts = "TIMESTAMP WITH TIME ZONE" if eng.dialect.name == "postgresql" else "DATETIME"
+        js = "JSON"
+        for name, typ in {
+            "exempt_amount": "INTEGER", "ship_by": "VARCHAR(10)", "arrive_by": "VARCHAR(10)", "delivered_at": ts,
+            "viewed_at": ts, "version": "INTEGER", "history": js, "cancel_reason": "VARCHAR(200)",
+            "ack_token_enc": "TEXT", "ack_link_at": ts,
+        }.items():  # fmt: skip
+            if name not in have:
+                with eng.begin() as c:
+                    c.execute(sqlalchemy.text(f"ALTER TABLE corpmall_po ADD COLUMN {name} {typ}"))
 
 
 # ── 암호화 (배송 정보) ─────────────────────────────────────────────────────
@@ -204,9 +322,39 @@ def _check_spec(spec: dict) -> dict:
     if datetime.fromisoformat(s["closes_at"]) <= datetime.fromisoformat(s["opens_at"]):
         raise MallError("마감이 시작보다 뒤여야 해요")
     s["retention_days"] = int(s.get("retention_days") or 30)
+    from app.services.corpmall import manual
+
+    try:
+        s["manual"] = manual.check_manual(s.get("manual"))
+    except ValueError as e:
+        raise MallError(str(e)) from e
     s["items"] = [
-        {k: i.get(k) for k in ("id", "name", "desc", "image", "tier", "supplier_candidate_id")} for i in items
+        {
+            k: i.get(k)
+            for k in (
+                "id",
+                "name",
+                "desc",
+                "image",
+                "tier",
+                "supplier_candidate_id",
+                "supplier",
+                "supplier_id",
+                "supplier_sku",
+                "unit_cost",
+                "tax_type",  # 매입 과세 구분 taxable(기본)·exempt — 세무 검토 뒤 확정
+            )
+        }
+        for i in items
     ]
+    for i in s["items"]:
+        i["tax_type"] = i.get("tax_type") or "taxable"
+        if i["tax_type"] not in ("taxable", "exempt"):
+            raise MallError("과세 구분(tax_type)은 taxable(과세)·exempt(면세) 중 하나예요")
+        if i["unit_cost"] is not None and (
+            not isinstance(i["unit_cost"], int) or not 0 <= i["unit_cost"] <= 10_000_000
+        ):
+            raise MallError("매입 단가(unit_cost)는 0 이상 원 단위 숫자예요")
     return s
 
 
@@ -240,6 +388,28 @@ def set_status(eng, mall_id: str, status: str) -> None:
     with eng.begin() as c:
         c.execute(update(t_mall).where(t_mall.c.mall_id == mall_id).values(status=status))
         _event(c, mall_id, "status", {"to": status})
+
+
+def extend_close(eng, mall_id: str, closes_at: str) -> str:
+    """선택 마감 늦추기 (발주처 요청을 운영자가 처리). 마감된 몰은 다시 열지 않는다 — 새로 늦추는 것만."""
+    m = get_mall(eng, mall_id=mall_id)
+    if m is None:
+        raise MallError("없는 몰")
+    if m["status"] == "closed":
+        raise MallError("이미 마감 처리된 몰은 늦출 수 없어요")
+    try:
+        d = datetime.fromisoformat(closes_at)
+    except ValueError as e:
+        raise MallError("마감 시각을 ISO 형식으로 넣어 주세요") from e
+    d = d if d.tzinfo else d.replace(tzinfo=KST)
+    if d <= datetime.fromisoformat(m["closes_at"]):
+        raise MallError("지금 마감보다 뒤로만 늦출 수 있어요")
+    new = d.isoformat(timespec="minutes")
+    with eng.begin() as c:
+        r = c.execute(select(t_mall.c.payload).where(t_mall.c.mall_id == mall_id)).scalar()
+        c.execute(update(t_mall).where(t_mall.c.mall_id == mall_id).values(payload={**r, "closes_at": new}))
+        _event(c, mall_id, "close_extended", {"from": m["closes_at"], "to": new})
+    return new
 
 
 def issue_codes(eng, mall_id: str, n: int) -> list[tuple[int, str, str]]:
@@ -293,6 +463,12 @@ def void_and_reissue(eng, mall_id: str, label: int) -> tuple[int, str, str]:
         )
         c.execute(update(t_order).where(t_order.c.code_hash == row["code_hash"]).values(code_hash=h))
         _event(c, mall_id, "code_reissued", {"old": label, "new": new_label})
+    try:
+        from app.services.cs import tickets
+
+        tickets.rename_owner(asker(mall_id, label), asker(mall_id, new_label))
+    except Exception:  # noqa: BLE001 — 문의 잇기 실패가 재발급을 막지 않게
+        pass
     return new_label, pretty(code), token
 
 
@@ -352,6 +528,8 @@ def public_mall(m: dict) -> dict:
         "delivery_mode": m["delivery_mode"],
         "items": [{k: i.get(k) for k in ("id", "name", "desc", "image", "tier")} for i in m["items"]],
         "retention_days": m.get("retention_days", 30),
+        "ship_plan": (m.get("manual") or {}).get("ship_plan"),
+        "courier": (m.get("manual") or {}).get("courier"),
     }
 
 
@@ -397,6 +575,101 @@ def _resolve(eng, slug: str, code: str, client: str):
     return m, row, order
 
 
+def _asks(mall_id: str, label: int) -> list[dict]:
+    try:
+        from app.services.cs import tickets
+
+        return tickets.for_owner(asker(mall_id, label))
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def asker(mall_id: str, label: int) -> str:
+    """폐쇄몰 문의 티켓의 주인 — 코드 번호만 (이름 없음)."""
+    return f"corp:{mall_id}:{label}"
+
+
+MAX_OPEN_ASKS = 5
+
+
+def ask(
+    eng, slug: str, code: str, text: str, client: str, *, handoff: bool = False, reader=None, at: datetime | None = None
+) -> dict:
+    """임직원 문의 — 먼저 매뉴얼로 바로 답하고(assist), 매뉴얼 밖·사람 필수·'담당자에게 남기기'면 CS 티켓.
+
+    문장은 개인정보 모양을 가린 뒤에만 쓰인다(AI 로 보내는 것도 가린 뒤, 종류 고르기에만). 답은 같은 코드로 들어오면 보인다.
+    """
+    from app.services.corpmall import assist
+    from app.services.cs import review, tickets
+    from app.services.privacy import pii
+
+    m, row, order_row = _resolve(eng, slug, code, client)
+    body = " ".join((text or "").split())[:400]
+    if len(body) < 2:
+        raise MallError("문의 내용을 적어 주세요")
+    owner = asker(m["mall_id"], row["label"])
+    masked, kinds = pii.mask(body)
+    got = enter(eng, slug, code, client, at=at)
+    man = m.get("manual") or {}
+    if handoff:
+        rep = assist.Reply("handoff", "customer", "", ticket="corpmall", offer_handoff=False)
+    else:
+        rep = assist.respond(m, got["order"], got["window"], masked, reader=reader, today=(at or now()).date())
+    ticket_id, answer, offer = None, rep.answer, rep.offer_handoff
+    if rep.ticket:
+        label = assist.INTENTS.get(rep.intent, "직접 요청")
+        if rep.ticket == "corpmall" and tickets.open_count(owner) >= MAX_OPEN_ASKS:
+            answer = (
+                answer + " " if answer else ""
+            ) + "답을 기다리는 문의가 이미 많아 새로 접수하지 않았어요. 아래 답을 확인한 뒤 다시 남겨 주세요."
+        else:
+            # 같은 코드·같은 내용을 1시간 안에 다시 보내면(두 번 클릭 등) 같은 티켓을 돌려준다 — tickets.create 의 sid 중복 검사
+            sid = hashlib.sha256(f"{owner}|{rep.ticket}|{masked}".encode()).hexdigest()[:8]
+            try:
+                t = tickets.create(
+                    rep.ticket,
+                    sid=sid,
+                    owner=owner,
+                    by="customer",
+                    summary=f"[{m['slug']} #{row['label']} {label}] {masked}",
+                )
+                ticket_id = t["id"] if t else None
+            except Exception:  # noqa: BLE001 — 저장 실패면 '접수했어요'라고 하지 않는다
+                ticket_id = None
+            if ticket_id:
+                when = (
+                    "식품 안전 문의는 오늘 안에 확인해요."
+                    if rep.ticket == "food_safety"
+                    else manual_text("reply_time", man)
+                )
+                answer = " ".join(x for x in (answer, manual_text("handed", ticket=ticket_id), when) if x)
+                offer = False
+            else:
+                answer = " ".join(x for x in (answer, manual_text("hand_failed")) if x)
+                offer = True
+    with eng.begin() as c:
+        _event(c, m["mall_id"], "asked", {"intent": rep.intent, "by": rep.by, "ticket": bool(ticket_id)})
+    if not handoff:
+        review.record(owner, masked, f"corp_{rep.intent}", rep.by)
+    return {
+        "intent": rep.intent,
+        "intent_label": assist.INTENTS.get(rep.intent, "직접 요청"),
+        "by": rep.by,
+        "answer": answer,
+        "action": rep.action,
+        "offer_handoff": offer,
+        "ticket_id": ticket_id,
+        "masked": kinds,
+        "asks": tickets.for_owner(owner),
+    }
+
+
+def manual_text(key: str, man: dict | None = None, **kw) -> str:
+    from app.services.corpmall import manual
+
+    return manual.text(key, man, **kw)
+
+
 def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None) -> dict:
     """코드(또는 초대 링크 토큰) 확인 → 몰·상품·지금 고른 것. 아무것도 소진하지 않는다."""
     m, row, order = _resolve(eng, slug, code, client)
@@ -407,9 +680,17 @@ def enter(eng, slug: str, code: str, client: str, *, at: datetime | None = None)
             "defaulted": bool(order["defaulted"]),
             "ship_status": order["ship_status"],
             "shipping": _mask(_dec(order["ship_enc"])) if order["ship_enc"] else None,
+            "tracking": order.get("tracking"),
+            "shipped_on": order["shipped_at"].date().isoformat() if order.get("shipped_at") else None,
             "chosen_at": order["chosen_at"].isoformat() if order["chosen_at"] else None,
         }
-    return {"mall": public_mall(m), "window": _window(m, at or now()), "order": mine, "label": row["label"]}
+    return {
+        "mall": public_mall(m),
+        "window": _window(m, at or now()),
+        "order": mine,
+        "label": row["label"],
+        "asks": _asks(m["mall_id"], row["label"]),
+    }
 
 
 SHIP_FIELDS = {"name": 30, "phone": 20, "zipcode": 10, "address": 200, "memo": 100}
@@ -422,6 +703,25 @@ def _check_ship(ship: dict | None) -> dict:
     if not re.fullmatch(r"01[016789]\d{7,8}", re.sub(r"\D", "", s["phone"])):
         raise MallError("받는 분 휴대폰 번호를 확인해 주세요 (배송 연락용)")
     return s
+
+
+VERIFY_MAX = 5
+
+
+def _verify_fails(eng, mall_id: str, label: int, at: datetime | None = None) -> int:
+    since = now() - timedelta(hours=24)  # 기록 시각(실제 시각) 기준
+    with eng.connect() as c:
+        rows = c.execute(
+            select(t_event.c.detail, t_event.c.at).where(
+                and_(t_event.c.mall_id == mall_id, t_event.c.kind == "verify_failed")
+            )
+        ).mappings()
+        return sum(
+            1
+            for r in rows
+            if (r["detail"] or {}).get("label") == label
+            and (r["at"] if r["at"].tzinfo else r["at"].replace(tzinfo=KST)) >= since
+        )
 
 
 def _last4(ship: dict | None) -> str:
@@ -449,6 +749,7 @@ def choose(
     window = _window(m, at or now())
     if window != "open":
         raise MallError("선택 기간이 아니에요" if window == "not_open" else "선택이 마감됐어요")
+    # 바꿀 수 있는 조건은 하나 (manual.EDIT_RULE): 선택 기간 안 + 발송 준비 전 — 아래 검사
     if item_id not in {i["id"] for i in m["items"]}:
         raise MallError("이 페이지에 없는 상품이에요")
     if order and order["ship_status"] in ("exported", "shipped", "delivered"):
@@ -462,14 +763,22 @@ def choose(
             if not consent:
                 raise MallError("배송 정보 수집·이용에 동의해야 보낼 수 있어요")
             new = _check_ship(shipping)
-            if (
-                old_ship
-                and new != old_ship
-                and not (verify and secrets.compare_digest(re.sub(r"\D", "", verify), _last4(old_ship)))
-            ):
-                _fail(client, slug)
-                raise MallError("배송지를 바꾸려면 처음 넣은 휴대폰 번호 끝 4자리를 확인해 주세요")
+            changing = bool(old_ship) and new != old_ship
+            if changing:
+                # 배송지 바꾸기 = 이 코드(주문 접근 권한) + 처음 휴대폰 끝 4자리. 코드마다 24시간 5번 틀리면 막고 기록.
+                if _verify_fails(eng, m["mall_id"], row["label"], at) >= VERIFY_MAX:
+                    raise MallError(
+                        "본인 확인을 여러 번 틀려 배송지 바꾸기를 잠시 막았어요. 아래 '궁금한 점 묻기'로 담당자에게 남겨 주세요"
+                    )
+                if not (verify and secrets.compare_digest(re.sub(r"\D", "", verify), _last4(old_ship))):
+                    _fail(client, slug)
+                    with eng.begin() as c:
+                        _event(c, m["mall_id"], "verify_failed", {"label": row["label"]})
+                    raise MallError("배송지를 바꾸려면 처음 넣은 휴대폰 번호 끝 4자리를 확인해 주세요")
             vals.update(ship_enc=_enc(new), ship_status="requested")
+            if changing:
+                vals["_changed"] = True
+    ship_changed = vals.pop("_changed", False)
     h = row["code_hash"]
     t = at or now()
     vals["updated_at"] = t
@@ -490,9 +799,22 @@ def choose(
             except sqlalchemy.exc.IntegrityError:  # 같은 코드로 동시에 두 번 — 주문은 하나만
                 exists = c.execute(select(t_order.c.order_id).where(t_order.c.code_hash == h)).scalar()
         if exists:
-            c.execute(update(t_order).where(t_order.c.order_id == exists).values(**vals))
+            # 발송 준비가 동시에 시작됐으면 바꾸지 않는다 (확인과 저장 사이 경쟁 — 조건을 저장 문장에 함께)
+            n = c.execute(
+                update(t_order)
+                .where(
+                    and_(
+                        t_order.c.order_id == exists, t_order.c.ship_status.not_in(("exported", "shipped", "delivered"))
+                    )
+                )
+                .values(**vals)
+            ).rowcount
+            if not n:
+                raise MallError("이미 발송 준비가 시작돼 바꿀 수 없어요")
         c.execute(update(t_code).where(t_code.c.code_hash == h).values(status="used", used_at=t))
         _event(c, m["mall_id"], "chosen", {"item_id": item_id, "changed": bool(exists)})  # 누가 골랐는지는 남기지 않음
+        if ship_changed:
+            _event(c, m["mall_id"], "ship_changed", {"label": row["label"]})  # 변경 이력 (값은 남기지 않음)
     return enter(eng, slug, code, client, at=at)
 
 
@@ -609,10 +931,75 @@ def no_address_labels(eng, mall_id: str) -> list[int]:
         )
 
 
+def update_manual(eng, mall_id: str, raw: dict) -> dict:
+    """몰 매뉴얼만 고친다 (출고 예정일·택배사·교환 조건 등)."""
+    from app.services.corpmall import manual
+
+    m = get_mall(eng, mall_id=mall_id)
+    if m is None:
+        raise MallError("없는 몰")
+    try:
+        man = manual.check_manual(raw)
+    except ValueError as e:
+        raise MallError(str(e)) from e
+    with eng.begin() as c:
+        r = c.execute(select(t_mall.c.payload).where(t_mall.c.mall_id == mall_id)).scalar()
+        c.execute(update(t_mall).where(t_mall.c.mall_id == mall_id).values(payload={**r, "manual": man}))
+        _event(c, mall_id, "manual", {"keys": sorted(man)})
+    return man
+
+
+def set_tracking(eng, mall_id: str, rows: list[dict], *, shipped: bool = False) -> dict:
+    """송장 번호 넣기 [{order_id, tracking}].
+
+    송장 발급 ≠ 출고(2026-11-24 검토). 기본은 송장만 넣고 상태는 그대로 — 직원 답은 "송장이 발급됐어요(출고되면 조회돼요)".
+    shipped=True(택배사 인수·출고 확인된 주문만 올릴 때)면 '발송함' + 출고 시각.
+    - 이 몰의 주문이 아니면 skipped. 배송 완료는 건드리지 않음(상태가 되돌아가지 않게).
+    - 같은 송장을 다시 올리면 same(처리 안 함, 출고 시각도 그대로). 이미 다른 송장이 있으면 **덮어쓰지 않고** conflicts 로 돌려준다(사람 확인).
+    """
+    n, skipped, same, conflicts = 0, 0, 0, []
+    t = now()
+    with eng.begin() as c:
+        for r in rows[:5000]:
+            oid = str(r.get("order_id") or "").strip()
+            tr = re.sub(r"[^0-9A-Za-z-]", "", str(r.get("tracking") or ""))[:40]
+            cur = (
+                c.execute(
+                    select(t_order.c.tracking, t_order.c.ship_status).where(
+                        and_(t_order.c.mall_id == mall_id, t_order.c.order_id == oid)
+                    )
+                ).first()
+                if oid
+                else None
+            )
+            if not oid or not tr or cur is None or cur.ship_status == "delivered":
+                skipped += 1
+                continue
+            if cur.tracking and cur.tracking != tr:
+                conflicts.append({"order_id": oid, "now": cur.tracking, "file": tr})
+                continue
+            if cur.tracking == tr and (not shipped or cur.ship_status == "shipped"):
+                same += 1
+                continue
+            vals = {"tracking": tr, "updated_at": t}
+            if shipped and cur.ship_status != "shipped":
+                vals.update(ship_status="shipped", shipped_at=t)
+            n += c.execute(update(t_order).where(t_order.c.order_id == oid).values(**vals)).rowcount
+        _event(
+            c,
+            mall_id,
+            "tracking",
+            {"n": n, "skipped": skipped, "same": same, "conflicts": len(conflicts), "shipped": shipped},
+        )
+    return {"n": n, "skipped": skipped, "same": same, "conflicts": conflicts}
+
+
 def mark(eng, mall_id: str, order_ids: list[str], status: str) -> int:
     if status not in ("shipped", "delivered"):
         raise MallError("shipped · delivered 만")
     vals = {"ship_status": status, "updated_at": now()}
+    if status == "shipped":
+        vals["shipped_at"] = now()
     if status == "delivered":
         vals["delivered_at"] = now()
     with eng.begin() as c:
@@ -658,6 +1045,7 @@ def orders(eng, mall_id: str) -> list[dict]:
                     t_order.c.ship_status,
                     t_order.c.chosen_at,
                     t_order.c.purged_at,
+                    t_order.c.tracking,
                     t_order.c.ship_enc.is_not(None).label("has_ship"),
                 )
                 .where(t_order.c.mall_id == mall_id)
@@ -674,6 +1062,7 @@ def orders(eng, mall_id: str) -> list[dict]:
             "ship_status": r["ship_status"],
             "has_shipping": bool(r["has_ship"]),
             "purged": r["purged_at"] is not None,
+            "tracking": r["tracking"],
             "chosen_at": r["chosen_at"].isoformat() if r["chosen_at"] else None,
         }
         for r in rows
@@ -691,6 +1080,10 @@ def events(eng, mall_id: str, limit: int = 50) -> list[dict]:
 
 
 __all__ = [
+    "update_manual",
+    "set_tracking",
+    "ask",
+    "asker",
     "orders",
     "MallError",
     "engine",

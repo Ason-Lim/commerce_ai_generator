@@ -155,6 +155,13 @@ class Retention:
             self.report.append({"step": "corpmall_shipping", "target": "corpmall_order.ship_enc", "rows": m, "cutoff": None})
         except Exception:  # noqa: BLE001
             pass
+        try:                                     # 2026-11-24 B2B 문의: 종결 뒤 180일 지난 담당자 연락처
+            from app.services.b2b_inquiry import store as b2b_inquiry
+
+            m = b2b_inquiry.purge(b2b_inquiry.engine(), self.now.replace(tzinfo=b2b_inquiry.KST))
+            self.report.append({"step": "b2b_inquiry_contact", "target": "b2b_inquiry.contact_enc", "rows": m, "cutoff": None})
+        except Exception:  # noqa: BLE001
+            pass
         try:                                     # 2026-11-23 창 4 ④: 분야 검수 샘플 문장 90일
             from app.services.cs import review as cs_review
 

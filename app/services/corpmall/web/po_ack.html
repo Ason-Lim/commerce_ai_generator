@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>발주 확인</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--warn:#9a5b00;--warn-s:#fff4dc;--err:#b3261e;--err-s:#fde9e7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+header h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}header p{margin:0;color:var(--ink2);font-size:13.5px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
+.note{color:var(--ink2);font-size:12.5px}
+label{font-weight:600;font-size:14px}
+input,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+input.code{font-family:ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;max-width:220px}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 20px;background:var(--ink);color:#fff;cursor:pointer}
+button[disabled]{opacity:.5;cursor:default}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
+.item{position:relative;display:flex;flex-direction:column;border:2px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;cursor:pointer}
+.item input{position:absolute;opacity:0}
+.item:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s)}
+.item:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.item img,.item .ph{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eeede7}
+.item .t{padding:10px 12px}.item b{display:block;font-size:15px}.item small{display:block;color:var(--ink2);font-size:12.5px;margin-top:2px}
+.tier{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-s);border-radius:999px;padding:1px 8px;margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.field{display:grid;gap:4px;margin-top:10px}
+.consent{background:#f4f6f3;border-radius:12px;padding:12px;font-size:13px;margin-top:12px}
+.consent table{border-collapse:collapse;width:100%;margin:6px 0}.consent td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.consent td:first-child{color:var(--ink2);width:28%;white-space:nowrap}
+.msg{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
+.msg.ok{background:var(--accent-s)}.msg.err{background:var(--err-s);color:var(--err)}.msg.info{background:var(--warn-s);color:var(--warn)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
+table.t{width:100%;border-collapse:collapse;font-size:14px}table.t th,table.t td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.t td.num,table.t th.num{text-align:right}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}.kpi span{display:block;font-size:12.5px;color:var(--ink2)}.kpi b{font-size:22px}
+select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<main>
+  <header><h1 id="title">발주 확인</h1><p>발주서를 확인하시고 <b>발주 수락</b> 또는 <b>변경 요청</b>을 골라 주세요. 이 링크는 다른 사람과 나누지 마세요.</p></header>
+  <div id="gate" class="box"><p class="note" id="gateMsg">발주 담당자에게 받은 링크로 들어와 주세요.</p></div>
+  <div id="body" hidden>
+    <section class="box" aria-labelledby="po-h">
+      <h2 id="po-h" style="font-size:17px;margin:0">발주서 <span class="note" id="ver"></span></h2>
+      <table class="t" style="margin-top:8px"><tbody id="info"></tbody></table>
+      <table class="t" style="margin-top:12px"><thead><tr><th>상품</th><th>품번</th><th class="num">수량</th><th class="num">단가</th><th class="num">금액</th><th>과세</th></tr></thead><tbody id="lines"></tbody></table>
+      <table class="t" style="margin-top:8px"><tbody id="sum"></tbody></table>
+      <p class="note">배송 정보는 발주서 파일에만 있어요. 이 화면에는 보이지 않아요. 이 발주서의 귀사 배송 목록만 들어 있고, 배송이 모두 끝나거나 보존 기간이 지나면 더 받을 수 없어요. 배송이 끝나면 파기해 주세요.</p>
+      <div class="row" id="fileRow"><button type="button" id="fileBtn">발주서·배송 목록 파일 받기</button></div>
+      <div id="fileMsg" role="status"></div>
+    </section>
+    <section class="box" aria-labelledby="cx-h" id="cancelBox" hidden>
+      <h2 id="cx-h" style="font-size:17px;margin:0">발주 취소 요청</h2>
+      <p id="cxWhy"></p>
+      <p class="note">아직 출고 전이면 작업을 멈추고 '취소 확인'을 눌러 주세요. 이미 출고했거나 취소할 수 없으면 누르지 말고 발주 담당자에게 바로 연락해 주세요.</p>
+      <div class="field"><label for="c_name">확인하시는 분 (이름 또는 부서)</label><input id="c_name" maxlength="30"></div>
+      <div class="row"><button type="button" id="cxBtn">취소 확인</button></div>
+      <div id="cxMsg" role="status" aria-live="polite"></div>
+    </section>
+    <section class="box" aria-labelledby="ack-h" id="ackBox">
+      <h2 id="ack-h" style="font-size:17px;margin:0">발주 수락 · 변경 요청</h2>
+      <p class="note" id="ackState"></p>
+      <form id="ackForm">
+        <div class="field"><label for="a_name">확인하시는 분 (이름 또는 부서)</label><input id="a_name" maxlength="30" autocomplete="organization-title"></div>
+        <fieldset class="field" style="border:0;padding:0;margin-top:12px"><legend style="font-weight:600;font-size:14px">응답</legend>
+          <label style="font-weight:400"><input type="radio" name="act" value="accept" checked style="width:auto"> <b>발주 수락</b> — 위 수량·단가·금액·출고 기한 그대로 출고합니다</label>
+          <label style="font-weight:400"><input type="radio" name="act" value="change" style="width:auto"> <b>변경 요청</b> — 일부 품목 불가·수량·단가·출고 기한 변경이 필요합니다 (발주 담당자가 검토)</label>
+        </fieldset>
+        <div class="field" id="agreeRow"><label style="font-weight:400"><input type="checkbox" id="a_agree" style="width:auto"> 수량·단가·금액·출고 기한을 확인했고 이 조건으로 수락합니다</label></div>
+        <div class="field"><label for="a_date">출고 예정일 (선택 — 출고 기한 안에서)</label><input id="a_date" type="date"></div>
+        <div class="field"><label for="a_memo" id="memoLabel">메모 (선택)</label><textarea id="a_memo" rows="2" maxlength="300"></textarea></div>
+        <p class="note">출고 예정일은 참고로만 남고 발주 조건(출고 기한·도착 요청일)은 바뀌지 않아요. 바꿔야 하면 '변경 요청'을 골라 주세요.</p>
+        <div class="row"><button type="submit" id="ackBtn">발주 수락</button></div>
+        <div id="ackMsg" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+  </div>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won = (v) => v == null ? "단가 확인 필요" : Number(v).toLocaleString() + "원";
+const poNo = decodeURIComponent(location.pathname.split("/")[3] || "");
+let KEY = "";
+function msg(el, text, kind) { el.innerHTML = `<div class="msg ${kind}">${esc(text)}</div>`; }
+async function post(path, body) {
+  const r = await fetch(`/corp/api/po/${encodeURIComponent(poNo)}/${path}`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  if (!d.ok) throw new Error(d.error || "잠시 후 다시 해 주세요");
+  return d;
+}
+function draw(d) {
+  const p = d.po, o = d.orderer || {};
+  $("#gate").hidden = true; $("#body").hidden = false;
+  $("#title").textContent = `발주 확인 · ${p.po_no}`;
+  if (p.status === "cancelled") {
+    $("#body").innerHTML = `<section class="box"><p>이 발주는 <b>취소</b>됐어요. 출고하지 말아 주세요. 고맙습니다.</p></section>`;
+    return;
+  }
+  $("#ver").textContent = p.version > 1 ? `(판 ${p.version})` : "";
+  const rows = [["발주 번호", p.po_no], ["발주일", (p.issued_at || "").slice(0, 10)], ["발주사", o.name || "-"], ["공급사", p.supplier],
+    ["출고 기한", p.ship_by || "협의"], ["도착 요청일", p.arrive_by || "따로 없음"], ["결제 조건", p.payment_terms || "협의"],
+    ["단가 기준", p.vat_mode === "included" ? "부가세 포함" : "부가세 별도"], ["상태", p.status_label]];
+  $("#info").innerHTML = rows.map(([a, b]) => `<tr><th style="width:120px">${esc(a)}</th><td>${esc(b)}</td></tr>`).join("");
+  $("#lines").innerHTML = p.lines.map((l) => `<tr><td>${esc(l.name || l.item_id)}</td><td>${esc(l.sku || "")}</td><td class="num">${l.qty}</td><td class="num">${esc(won(l.unit_cost))}</td><td class="num">${l.amount == null ? "" : esc(won(l.amount))}</td><td>${l.tax_type === "exempt" ? "면세" : "과세"}</td></tr>`).join("");
+  const sums = [["공급가액", p.supply_amount]];
+  if (p.exempt_amount) sums.push(["(그중 면세)", p.exempt_amount]);
+  sums.push(["부가세", p.vat], ["합계", p.total]);
+  $("#sum").innerHTML = sums.map(([a, v]) => `<tr><th>${a}</th><td class="num">${esc(won(v))}</td></tr>`).join("");
+  const cx = p.status === "cancel_requested";
+  $("#cancelBox").hidden = !cx; $("#ackBox").hidden = cx; $("#fileRow").hidden = cx;
+  if (cx) $("#cxWhy").innerHTML = `발주사가 이 발주의 <b>취소</b>를 요청했어요. 이유: ${esc(p.cancel_reason || "-")}`;
+  const when = (p.ack_at || "").slice(0, 16).replace("T", " ");
+  $("#ackState").textContent = p.status === "accepted" || p.status === "acknowledged"
+    ? `${when}에 ${p.ack_by}님이 수락했어요. 다시 보내면 고친 내용이 기록에 남아요.`
+    : p.status === "change_requested" ? `변경 요청을 보냈어요 (${p.ack_memo || ""}). 발주 담당자가 검토해 연락드려요.` : "아직 응답 전이에요.";
+  if (p.ack_ship_date) $("#a_date").value = p.ack_ship_date;
+  $("#a_date").dataset.max = p.ship_by || ""; mode();
+}
+function mode() {
+  const ch = document.querySelector('input[name="act"]:checked').value === "change";
+  $("#agreeRow").hidden = ch;
+  $("#memoLabel").textContent = ch ? "바꿔야 할 내용 (필수 — 품절 품목·가능 수량·단가·가능한 출고일 등)" : "메모 (선택)";
+  $("#a_date").max = ch ? "" : ($("#a_date").dataset.max || "");
+  $("#ackBtn").textContent = ch ? "변경 요청 보내기" : "발주 수락";
+}
+document.querySelectorAll('input[name="act"]').forEach((r) => r.addEventListener("change", mode));
+$("#cxBtn").addEventListener("click", async () => {
+  $("#cxBtn").disabled = true;
+  try { draw(await post("ack", {key: KEY, action: "cancel_ok", name: $("#c_name").value.trim()})); }
+  catch (err) { msg($("#cxMsg"), err.message, "err"); }
+  finally { const b = $("#cxBtn"); if (b) b.disabled = false; }
+});
+$("#fileBtn").addEventListener("click", async () => {
+  $("#fileBtn").disabled = true;
+  try {
+    const r = await fetch(`/corp/api/po/${encodeURIComponent(poNo)}/file`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({key: KEY})});
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || "파일을 받지 못했어요"); }
+    const cd = r.headers.get("Content-Disposition") || "";
+    const name = decodeURIComponent((cd.match(/filename\*=UTF-8''([^;]+)/) || [])[1] || "po.xlsx");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(await r.blob()); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  } catch (err) { msg($("#fileMsg"), err.message, "err"); }
+  finally { $("#fileBtn").disabled = false; }
+});
+$("#ackForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("#ackBtn").disabled = true;
+  try {
+    const action = document.querySelector('input[name="act"]:checked').value;
+    const d = await post("ack", {key: KEY, action, agree: $("#a_agree").checked, name: $("#a_name").value.trim(), ship_date: $("#a_date").value || null, memo: $("#a_memo").value.trim()});
+    draw(d); msg($("#ackMsg"), action === "change" ? "변경 요청을 보냈어요. 발주 담당자가 검토해 연락드려요." : "수락했어요. 고맙습니다.", "ok");
+  } catch (err) { msg($("#ackMsg"), err.message, "err"); }
+  finally { $("#ackBtn").disabled = false; }
+});
+const h = new URLSearchParams(location.hash.slice(1));
+KEY = h.get("k") || "";
+try { if (KEY) sessionStorage.setItem("po:" + poNo, KEY); else KEY = sessionStorage.getItem("po:" + poNo) || ""; } catch {}
+history.replaceState(null, "", location.pathname);
+if (KEY) post("view", {key: KEY}).then(draw).catch((err) => msg($("#gateMsg"), err.message, "err"));
+</script>
+</body>
+</html>

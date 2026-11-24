@@ -20,14 +20,15 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import date, timedelta
+from datetime import date
+from typing import Annotated
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.admin.auth import COOKIE, guest_trends_on, request_ok, require_admin, token_ok
 
@@ -1418,6 +1419,88 @@ def admin_b2b_mall(request: Request):
     return _page(request, B2B_WEB / "mall.html")
 
 
+@router.get("/admin/b2b/suppliers")
+def admin_b2b_suppliers(request: Request):
+    return _page(request, B2B_WEB / "suppliers.html")
+
+
+@router.get("/admin/b2b/settle")
+def admin_b2b_settle(request: Request):
+    return _page(request, B2B_WEB / "settle.html")
+
+
+@router.get("/admin/b2b/inquiries")
+def admin_b2b_inquiries(request: Request):
+    return _page(request, B2B_WEB / "inquiries.html")
+
+
+# ── B2B 문의 창구 (2026-11-24) — 설계 claude/b2b_inquiry_desk_2026-11-24.md ──
+class _InqStatusIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: str = Field(..., max_length=12)
+    note: str = Field("", max_length=200)
+    human_checked: bool = False
+
+
+class _InqNoteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(..., min_length=1, max_length=500)
+
+
+def _inq():
+    from app.services.b2b_inquiry import store
+
+    return store, store.engine()
+
+
+def _inq_call(fn):
+    from app.services.b2b_inquiry import store
+
+    try:
+        return fn()
+    except store.InquiryError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/b2b-inquiry", dependencies=[api])
+def b2b_inquiry_list(status: str | None = None):
+    """목록 — 연락처 없음."""
+    store, eng = _inq()
+    return {"inquiries": store.list_inquiries(eng, status), "counts": store.counts(eng),
+            "labels": store.STATUS_LABEL}
+
+
+@router.get("/admin/api/b2b-inquiry/{iid}", dependencies=[api])
+def b2b_inquiry_detail(iid: str):
+    """상세 — 회신하려면 연락처가 필요하므로 여기서만 복호화해 보여 준다."""
+    store, eng = _inq()
+    d = store.get(eng, iid, with_contact=True)
+    if d is None:
+        raise HTTPException(404, "inquiry not found")
+    return {"inquiry": d}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/status", dependencies=[api])
+def b2b_inquiry_status(iid: str, body: _InqStatusIn):
+    store, eng = _inq()
+    return {"ok": True, "inquiry": _inq_call(lambda: store.set_status(eng, iid, body.status, by="operator", note=body.note,
+                                                                       human_checked=body.human_checked))}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/note", dependencies=[api])
+def b2b_inquiry_note(iid: str, body: _InqNoteIn):
+    store, eng = _inq()
+    return {"ok": True, "inquiry": _inq_call(lambda: store.note(eng, iid, body.text, by="operator"))}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/to-bid", dependencies=[api])
+def b2b_inquiry_to_bid(iid: str):
+    """조건만(연락처 없이) 콘솔 공고로 등록 → 콘솔에서 바로 분석하도록 주소를 돌려준다."""
+    store, eng = _inq()
+    bid_id = _inq_call(lambda: store.to_bid(eng, iid, by="operator"))
+    return {"ok": True, "bid_id": bid_id, "console": "/admin/b2b?q=" + quote(f"{bid_id} 분석해줘")}
+
+
 class _MallIn(BaseModel):
     spec: dict
 
@@ -1517,6 +1600,522 @@ def corpmall_export(mall_id: str):
     store, eng = _corp()
     _mall_or_404(store, eng, mall_id)
     return {"ok": True, "orders": store.export_orders(eng, mall_id, by="operator")}
+
+
+class _SuppliersIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    suppliers: dict[str, dict] = Field(..., max_length=200)
+
+
+@router.post("/admin/api/corpmall/{mall_id}/suppliers", dependencies=[api])
+def corpmall_suppliers(mall_id: str, body: _SuppliersIn):
+    """몰 상품마다 공급사·품번 (직원·발주처 화면에는 안 보임)."""
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "items": po.set_suppliers(eng, mall_id, body.suppliers)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/po", dependencies=[api])
+def corpmall_po_create(mall_id: str):
+    """발주 묶음 만들기 — 넣은 주문은 '발송 준비'. 파일은 묶음에서 따로 받는다(실패해도 다시 받기)."""
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    try:
+        return {"ok": True, **po.create_batch(eng, mall_id, by="operator")}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/corpmall/{mall_id}/po", dependencies=[api])
+def corpmall_po_list(mall_id: str):
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"batches": po.list_batches(eng, mall_id)}
+
+
+@router.get("/admin/api/corpmall/{mall_id}/po/{batch_id}/file", dependencies=[api])
+def corpmall_po_file(mall_id: str, batch_id: str, supplier: str | None = Query(None, max_length=40)):
+    """발주 묶음 파일 — supplier 없으면 운영자용 통합본, 있으면 그 공급사 전달용(다른 공급사 정보 없음). 서버에 남기지 않는다."""
+    from fastapi.responses import Response
+
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    from app.services.corpmall import podoc
+
+    try:
+        target = next(
+            (p for p in podoc.list_pos(eng, mall_id, batch_id) if p["supplier"] == supplier and p["status"] != "cancelled"),
+            None,
+        ) if supplier else None  # fmt: skip
+        if target is not None:  # 공급사 전달용 — 정식 발주서만, 받으면 '전달됨'
+            data, name = podoc.operator_supplier_file(eng, mall_id, target["po_no"], by="operator")
+        else:
+            data, name = po.render(eng, mall_id, batch_id, supplier=supplier, by="operator")
+    except store.MallError as e:
+        raise HTTPException(400 if supplier else 404, str(e)) from e
+    return Response(
+        data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}", "Cache-Control": "no-store"},
+    )
+
+
+@router.post("/admin/api/corpmall/{mall_id}/tracking-file", dependencies=[api])
+async def corpmall_tracking_file(
+    mall_id: str, file: Annotated[UploadFile, File()], shipped: Annotated[bool, Form()] = False
+):
+    """공급사가 송장을 채워 돌려준 발주서(엑셀·CSV) → 주문 번호로 송장 넣기. 파일은 읽고 버린다."""
+    from app.services.corpmall import po
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    data = await file.read(5 * 1024 * 1024 + 1)
+    if len(data) > 5 * 1024 * 1024:
+        raise HTTPException(413, "파일이 너무 커요 (5MB 까지)")
+    try:
+        rows, problems = po.read_tracking(file.filename or "", data)
+    except Exception as e:  # noqa: BLE001 — 깨진 파일
+        raise HTTPException(400, "엑셀·CSV 파일을 읽지 못했어요") from e
+    if not rows and not problems:
+        raise HTTPException(400, "'주문 번호'와 '송장' 칸이 있는 줄을 찾지 못했어요")
+    got = store.set_tracking(eng, mall_id, rows, shipped=shipped) if rows else {"n": 0, "skipped": 0, "same": 0, "conflicts": []}
+    return {"ok": True, "read": len(rows), "problems": problems, **got}
+
+
+# ── 공급 거래처 · 정식 발주서 (2026-11-24) — 설계 claude/b2b_supplier_po_2026-11-24.md ──
+class _SupplierIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(..., max_length=40)
+    biz_no: str = Field("", max_length=14)
+    contact: dict = Field(default_factory=dict)
+    order_method: str = Field("email", max_length=8)
+    payment_terms: str = Field("", max_length=120)
+    lead_days: int | None = Field(None, ge=0, le=60)
+    vat_mode: str = Field("excluded", max_length=10)
+    memo: str = Field("", max_length=300)
+    active: bool = True
+
+
+@router.get("/admin/api/b2b-suppliers", dependencies=[api])
+def b2b_suppliers_list():
+    from app.services.corpmall import store as cstore
+    from app.services.corpmall import suppliers as sup
+
+    return {"suppliers": sup.list_all(cstore.engine()), "methods": sup.ORDER_METHODS, "vat_modes": sup.VAT_MODES}
+
+
+@router.get("/admin/api/b2b-suppliers/{supplier_id}", dependencies=[api])
+def b2b_supplier_get(supplier_id: str):
+    from app.services.corpmall import store as cstore
+    from app.services.corpmall import suppliers as sup
+
+    d = sup.get(cstore.engine(), supplier_id, full=True)
+    if d is None:
+        raise HTTPException(404, "supplier not found")
+    return {"supplier": d}
+
+
+@router.post("/admin/api/b2b-suppliers", dependencies=[api])
+def b2b_supplier_create(body: _SupplierIn):
+    from app.services.corpmall import store as cstore
+    from app.services.corpmall import suppliers as sup
+
+    try:
+        return {"ok": True, "supplier": sup.save(cstore.engine(), body.model_dump())}
+    except cstore.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/b2b-suppliers/{supplier_id}", dependencies=[api])
+def b2b_supplier_update(supplier_id: str, body: _SupplierIn):
+    from app.services.corpmall import store as cstore
+    from app.services.corpmall import suppliers as sup
+
+    try:
+        return {"ok": True, "supplier": sup.save(cstore.engine(), body.model_dump(), supplier_id)}
+    except cstore.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+class _PoAckIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    note: str = Field(..., min_length=1, max_length=300)
+    ship_date: str | None = Field(None, max_length=10)
+
+
+class _PoCancelIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(..., min_length=1, max_length=200)
+
+
+@router.get("/admin/api/corpmall/{mall_id}/pos", dependencies=[api])
+def corpmall_pos(mall_id: str):
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"pos": podoc.list_pos(eng, mall_id)}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/ack-link", dependencies=[api])
+def corpmall_po_ack_link(mall_id: str, po_no: str, reissue: bool = Query(False)):
+    """공급사 확인 링크 — 같은 판이면 같은 링크. reissue=true('링크 재발급')일 때만 새로 만들고 옛 링크를 막는다."""
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "link": podoc.ack_link(eng, mall_id, po_no, reissue=reissue)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/ack", dependencies=[api])
+def corpmall_po_mark_ack(mall_id: str, po_no: str, body: _PoAckIn):
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.mark_ack(eng, mall_id, po_no, by="operator", note=body.note, ship_date=body.ship_date)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/cancel", dependencies=[api])
+def corpmall_po_cancel(mall_id: str, po_no: str, body: _PoCancelIn):
+    """취소 — 공급사에 전달 전이면 바로, 전달 뒤면 '취소 요청'(공급사 취소 확인 뒤 취소)."""
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.cancel(eng, mall_id, po_no, by="operator", reason=body.reason)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+class _PoNoteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    note: str = Field(..., min_length=1, max_length=200)
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/cancel-confirm", dependencies=[api])
+def corpmall_po_cancel_confirm(mall_id: str, po_no: str, body: _PoNoteIn):
+    """공급사가 메일·전화로 취소를 확인했을 때 운영자 표시 — 근거 메모 필수. 그때 주문이 되돌아간다."""
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.confirm_cancel(eng, mall_id, po_no, by="operator", note=body.note)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/cancel-withdraw", dependencies=[api])
+def corpmall_po_cancel_withdraw(mall_id: str, po_no: str):
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.withdraw_cancel(eng, mall_id, po_no, by="operator")}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/finalize", dependencies=[api])
+def corpmall_po_finalize(mall_id: str, po_no: str):
+    """미확정 발주서 확정 — 거래처·단가·발주사 정보를 채운 뒤 다시 계산해 정식 발주로."""
+    from app.services.corpmall import podoc
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "po": podoc.finalize(eng, mall_id, po_no, by="operator")}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+# ── 2단계: 수주 문의 → 폐쇄몰 초안 · 매출·매입 정산 (2026-11-24) — 설계 claude/b2b_stage2_settle_2026-11-24.md ──
+class _MallDraftIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    slug: str = Field(..., max_length=40)
+    opens_at: str = Field(..., max_length=25)
+    closes_at: str = Field(..., max_length=25)
+    candidate_ids: list[str] = Field(..., min_length=1, max_length=40)
+    title: str | None = Field(None, max_length=80)
+    delivery_mode: str | None = Field(None, max_length=12)
+    default_item: str | None = Field(None, max_length=80)
+
+
+class _ContractIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    unit_price: int | None = Field(None, ge=0, le=10_000_000)
+    headcount: int | None = Field(None, ge=1, le=1_000_000)
+    vat_mode: str = Field("included", max_length=10)
+    tax_type: str = Field("taxable", max_length=10)  # 매출 과세·면세 (세무 검토 뒤 확정)
+    basis: str = Field("headcount", max_length=10)
+    invoice_issued_on: str | None = Field(None, max_length=10)
+    invoice_memo: str = Field("", max_length=200)
+
+
+class _PoInvoiceIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    received_on: str | None = Field(None, max_length=10)
+    memo: str = Field("", max_length=200)
+
+
+@router.get("/admin/api/b2b-inquiry/{iid}/candidates", dependencies=[api])
+def b2b_inquiry_candidates(iid: str, q: str = Query("", max_length=60)):
+    from app.services.corpmall import draft
+
+    return {"candidates": draft.candidates(q)}
+
+
+@router.post("/admin/api/b2b-inquiry/{iid}/mall-draft", dependencies=[api])
+def b2b_inquiry_mall_draft(iid: str, body: _MallDraftIn):
+    """수주 문의 → 폐쇄몰 초안(직원은 못 들어옴). 상품은 공급사 근거 후보에서, 매입 단가는 견적 단가만."""
+    from app.services.corpmall import draft
+
+    store, eng = _corp()
+    try:
+        m = draft.from_inquiry(eng, iid, slug=body.slug, opens_at=body.opens_at, closes_at=body.closes_at,
+                               candidate_ids=body.candidate_ids, title=body.title, delivery_mode=body.delivery_mode,
+                               default_item=body.default_item)
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"ok": True, "mall": m}
+
+
+@router.get("/admin/api/corpmall/{mall_id}/settle", dependencies=[api])
+def corpmall_settle(mall_id: str):
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    try:
+        return settle.summary(eng, mall_id)
+    except store.MallError as e:
+        raise HTTPException(404, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/contract", dependencies=[api])
+def corpmall_contract(mall_id: str, body: _ContractIn):
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "contract": settle.set_contract(eng, mall_id, body.model_dump())}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/invoice", dependencies=[api])
+def corpmall_po_invoice(mall_id: str, po_no: str, body: _PoInvoiceIn):
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    try:
+        settle.set_po_invoice(eng, mall_id, po_no, received_on=body.received_on, memo=body.memo)
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"ok": True}
+
+
+@router.get("/admin/api/b2b-settle", dependencies=[api])
+def b2b_settle_overview():
+    from app.services.corpmall import settle
+
+    store, eng = _corp()
+    return {"malls": settle.overview(eng)}
+
+
+# ── 3단계: 발주서 메일 (2026-11-24) — 설계 claude/b2b_po_mail_2026-11-24.md ──
+class _MailEditIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    subject: str = Field(..., max_length=200)
+    body: str = Field(..., max_length=6000)
+    attach: bool = False
+
+
+def _site() -> str:
+    from app.services.trend_posts.render import site_url
+
+    return site_url()
+
+
+@router.get("/admin/api/corpmall/{mall_id}/mails", dependencies=[api])
+def corpmall_mails(mall_id: str):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"mails": mailer.list_mails(eng, mall_id), "smtp": mailer.smtp_config() is not None}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/mail", dependencies=[api])
+def corpmall_mail_prepare(mall_id: str, po_no: str):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.prepare(eng, mall_id, po_no)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}", dependencies=[api])
+def corpmall_mail_edit(mall_id: str, mail_id: str, body: _MailEditIn):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.edit(eng, mall_id, mail_id, subject=body.subject, body=body.body, attach=body.attach)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}/send", dependencies=[api])
+def corpmall_mail_send(mall_id: str, mail_id: str):
+    """운영자가 확인한 메일 보내기 — 발신 메일(SMTP)이 연결됐을 때만."""
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.send(eng, mall_id, mail_id, base_url=_site())}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/corpmall/{mall_id}/mails/{mail_id}/eml", dependencies=[api])
+def corpmall_mail_eml(mall_id: str, mail_id: str):
+    """발신 메일 연결 전: .eml 로 내려받아 메일 프로그램에서 직접 보내기(같은 판이면 확인 링크도 같음)."""
+    from fastapi.responses import Response
+
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        data, name = mailer.eml(eng, mall_id, mail_id, base_url=_site())
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return Response(data, media_type="message/rfc822",
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}", "Cache-Control": "no-store"})
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}/mark-sent", dependencies=[api])
+def corpmall_mail_mark(mall_id: str, mail_id: str):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.mark_sent(eng, mall_id, mail_id)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}/mark-not-sent", dependencies=[api])
+def corpmall_mail_mark_not_sent(mall_id: str, mail_id: str, body: _PoNoteIn):
+    """결과 불명 메일을 '안 감'으로 정리(공급사 확인 근거 메모) — 그 뒤 다시 보낼 수 있다."""
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.mark_not_sent(eng, mall_id, mail_id, by="operator", note=body.note)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+class _MallManualIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    manual: dict
+
+
+class _MallTrackingIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    rows: list[dict] = Field(..., max_length=5000)
+    shipped: bool = False  # 택배사 인수·출고 확인된 주문만 올릴 때 True → '발송함'
+
+
+@router.post("/admin/api/corpmall/{mall_id}/manual", dependencies=[api])
+def corpmall_manual(mall_id: str, body: _MallManualIn):
+    """몰 답변 매뉴얼(출고 예정일·택배사·교환 조건 등) — 직원 질문 자동 답이 이 값만 쓴다."""
+    store, eng = _corp()
+    try:
+        return {"ok": True, "manual": store.update_manual(eng, mall_id, body.manual)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/tracking", dependencies=[api])
+def corpmall_tracking(mall_id: str, body: _MallTrackingIn):
+    """송장 번호 [{order_id, tracking}]. 송장 발급 ≠ 출고 — shipped=True 일 때만 '발송함'. 이 몰의 주문만 바뀐다."""
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"ok": True, **store.set_tracking(eng, mall_id, body.rows, shipped=body.shipped)}
+
+
+class _MgrIssueIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    label: str = Field("담당자", max_length=40)
+
+
+class _ExtendIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    closes_at: str = Field(..., max_length=25)
+
+
+@router.post("/admin/api/corpmall/{mall_id}/extend", dependencies=[api])
+def corpmall_extend(mall_id: str, body: _ExtendIn):
+    store, eng = _corp()
+    try:
+        return {"ok": True, "closes_at": store.extend_close(eng, mall_id, body.closes_at)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/corpmall/{mall_id}/managers", dependencies=[api])
+def corpmall_managers(mall_id: str):
+    from app.services.corpmall import manager
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"managers": manager.list_managers(eng, mall_id)}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/managers", dependencies=[api])
+def corpmall_manager_issue(mall_id: str, body: _MgrIssueIn):
+    """발주처 담당자 링크 — 원문 링크는 이 응답에만 (서버는 해시만)."""
+    from app.services.corpmall import manager
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, **manager.issue(eng, mall_id, body.label)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/managers/{manager_id}/revoke", dependencies=[api])
+def corpmall_manager_revoke(mall_id: str, manager_id: str):
+    from app.services.corpmall import manager
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    if not manager.revoke(eng, mall_id, manager_id):
+        raise HTTPException(404, "manager not found or already revoked")
+    return {"ok": True}
+
+
+@router.get("/admin/api/corpmall-manual", dependencies=[api])
+def corpmall_manual_fields():
+    from app.services.corpmall import manual
+
+    return {"fields": [{"key": k, "label": lb, "max": n} for k, lb, n in manual.MALL_FIELDS], "common": manual.COMMON}
 
 
 @router.post("/admin/api/corpmall/{mall_id}/mark", dependencies=[api])

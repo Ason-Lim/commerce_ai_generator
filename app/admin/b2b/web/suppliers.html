@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공급 거래처 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb;--mut-s:#eef1f4}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 14px;position:sticky;top:0;height:100vh}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:9px 12px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650}
+nav a:hover{background:#15222f}
+.railnote{font-size:12px;color:#7f93a8;margin-top:22px;line-height:1.6}
+main{padding:22px 28px 60px;min-width:0}
+.top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.top h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--mut-s);border-radius:12px;padding:4px}
+.tabs button{border:0;background:transparent;border-radius:9px;padding:6px 14px;cursor:pointer;font-weight:600;color:var(--ink2)}
+.tabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.banner{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin:0 0 14px}
+.banner b{font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi span{display:block;font-size:12px;color:var(--ink3)} .kpi b{font-size:22px;font-variant-numeric:tabular-nums}
+.kpi.k-open b{color:var(--ok)} .kpi.k-closing b{color:var(--hold)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+select,input[type=search],input[type=text],input[type=date],textarea{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;font-size:13.5px}
+input[type=search]{min-width:200px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:13.5px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;align-items:start}
+.grid.nodetail{grid-template-columns:minmax(0,1fr)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.panel h3{margin:0 0 10px;font-size:15px}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+thead th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap}
+tbody tr{cursor:pointer} tbody tr:hover td{background:#f8fafc} tbody tr[aria-selected=true] td{background:var(--acc-s)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;display:inline-block}
+.s-입찰중{background:var(--ok-s);color:var(--ok)} .s-마감임박{background:var(--hold-s);color:var(--hold)}
+.s-입찰마감{background:var(--mut-s);color:var(--ink3)} .s-마감일{background:var(--mut-s);color:var(--ink2)}
+.v{font-size:11px;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.v-verified{background:var(--ok-s);color:var(--ok)} .v-document_provided{background:var(--acc-s);color:var(--acc)}
+.v-unverified{background:var(--hold-s);color:var(--hold)} .v-legacy_unverified{background:var(--ex-s);color:var(--ex)}
+.t{font-weight:600} .t small{display:block;color:var(--ink3);font-weight:400;font-size:12px}
+.dday{font-size:11.5px;color:var(--ink3)}
+.empty{color:var(--ink3);padding:24px 6px;text-align:center}
+/* 상세 */
+.detail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.detail h3{font-size:16px;line-height:1.4}
+dl.kv{display:grid;grid-template-columns:86px 1fr;gap:4px 10px;margin:0 0 12px;font-size:13px}
+dl.kv dt{color:var(--ink3)} dl.kv dd{margin:0;word-break:break-all}
+.sec{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.sec h4{margin:0 0 6px;font-size:13.5px}
+.sec ul{margin:0;padding-left:18px;font-size:13px}
+.basis{font-size:12px;color:var(--ink3);margin-top:6px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.up{display:inline-block}
+.log{background:#0f1a24;color:#cfe0f0;border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto;margin-bottom:12px}
+/* 트렌드 */
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.hb{display:grid;grid-template-columns:160px 1fr 92px;gap:10px;align-items:center;font-size:13px;margin:5px 0}
+.hb .track{height:12px;background:var(--mut-s);border-radius:6px;overflow:hidden}
+.hb .track i{display:block;height:100%;background:var(--acc);border-radius:6px}
+.hb .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.months{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px;border-bottom:1px solid var(--line)}
+.months div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.months i{display:block;width:70%;background:var(--acc);border-radius:4px 4px 0 0}
+.months b{font-size:11.5px;font-weight:600;color:var(--ink2)}
+.mlabels{display:flex;gap:6px} .mlabels span{flex:1;text-align:center;font-size:11px;color:var(--ink3);min-width:0;overflow:hidden}
+.report li{margin:4px 0}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px}
+/* 점검 */
+.evrow{display:grid;grid-template-columns:70px 1fr 70px 220px;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:13.5px}
+.evrow input{width:60px}
+.evres{font-size:28px;font-weight:800} .evres small{font-size:14px;color:var(--ink3);font-weight:500}
+dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog form{padding:20px;display:grid;gap:10px}
+dialog label{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
+dialog textarea{min-height:120px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.detail{position:static;max-height:none}.kpis{grid-template-columns:repeat(3,1fr)}.tgrid{grid-template-columns:1fr}}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}.kpis{grid-template-columns:repeat(2,1fr)}
+ .hb{grid-template-columns:110px 1fr 56px}.evrow{grid-template-columns:1fr 1fr}.tabs{margin-left:0}}
+.tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.code-out{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:8px}
+textarea.spec{width:100%;min-height:260px;font-family:ui-monospace,monospace;font-size:12.5px}
+.st{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px}
+.st-draft{background:var(--mut-s);color:var(--ink2)} .st-open{background:var(--ok-s);color:var(--ok)} .st-closed,.st-ended{background:var(--hold-s);color:var(--hold)}
+tbody tr{cursor:default}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/inquiries">문의</a><a href="/admin/b2b/suppliers" aria-current="page">공급 거래처</a><a href="/admin/b2b/mall">폐쇄몰</a><a href="/admin/b2b/settle">정산</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <div class="railnote"><b>공급 거래처.</b> commerce_ai 가 직접 발주하는 곳이에요(계약 전 후보는 '공급사 근거').<br><br>
+  폐쇄몰 상품에 거래처·매입 단가를 붙이면 발주 묶음을 만들 때 거래처마다 <b>정식 발주서</b>(발주 번호·단가·금액·납기·결제 조건)가 만들어져요.<br><br>
+  담당자 연락처는 암호화해 보관하고 이 상세 화면에서만 보여요. 발주서에 나오는 우리 회사 정보는 <code>company_profile.json</code> 에서 가져와요.</div>
+</aside>
+<main>
+  <div class="top"><h2>공급 거래처</h2><span class="spacer"></span><button class="btn primary" type="button" id="newBtn">새 거래처</button></div>
+  <div id="err" class="banner" hidden></div>
+  <div class="grid nodetail">
+    <section class="panel" aria-labelledby="list-h">
+      <h3 id="list-h">거래처 목록</h3>
+      <div class="tblwrap"><table><thead><tr><th>이름</th><th>사업자번호</th><th>발주 방식</th><th>단가 기준</th><th class="num">기본 납기</th><th>결제 조건</th><th>사용</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </section>
+    <section class="panel" id="form" hidden aria-labelledby="f-h">
+      <h3 id="f-h">거래처</h3>
+      <div class="bar"><label for="f_name" style="min-width:120px">이름 *</label><input id="f_name" maxlength="40" style="flex:1"></div>
+      <div class="bar"><label for="f_biz" style="min-width:120px">사업자등록번호</label><input id="f_biz" maxlength="12" inputmode="numeric" placeholder="숫자 10자리"></div>
+      <div class="bar"><label for="f_method" style="min-width:120px">발주 방식</label><select id="f_method"></select>
+        <label for="f_vat">단가 기준</label><select id="f_vat"></select>
+        <label for="f_lead">기본 납기(영업일)</label><input id="f_lead" inputmode="numeric" maxlength="2" style="width:60px"></div>
+      <div class="bar"><label for="f_pay" style="min-width:120px">결제 조건</label><input id="f_pay" maxlength="120" style="flex:1" placeholder="예: 월말 마감 익월 10일 현금"></div>
+      <div class="bar"><label for="f_cname" style="min-width:120px">발주 담당자</label><input id="f_cname" maxlength="30" placeholder="이름" style="width:110px">
+        <input id="f_cmail" maxlength="120" placeholder="메일 (메일 발주면 필수)" style="flex:1"><input id="f_cphone" maxlength="20" placeholder="전화" style="width:130px"></div>
+      <div class="bar"><label for="f_memo" style="min-width:120px">메모</label><input id="f_memo" maxlength="300" style="flex:1"></div>
+      <div class="bar"><label><input type="checkbox" id="f_active" checked style="width:auto"> 사용</label></div>
+      <div class="actions"><button class="btn primary" type="button" id="saveBtn">저장</button><button class="btn" type="button" id="closeBtn">닫기</button><span id="saveMsg" class="basis"></span></div>
+    </section>
+  </div>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/b2b/suppliers";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{const j=await r.json();m=typeof j.detail==="string"?j.detail:JSON.stringify(j.detail)}catch{}throw new Error(m)}return r.json()}
+const post=(u,b)=>api(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})});
+function err(e){if(e.message==="auth")return;const b=$("#err");b.hidden=false;b.textContent="문제가 생겼어요: "+e.message}
+let CUR=null;
+async function load(){let d;try{d=await api("/admin/api/b2b-suppliers")}catch(e){return err(e)}
+  if(!$("#f_method").options.length){for(const[k,v]of Object.entries(d.methods))$("#f_method").add(new Option(v,k));for(const[k,v]of Object.entries(d.vat_modes))$("#f_vat").add(new Option(v,k))}
+  $("#rows").innerHTML=d.suppliers.length?d.suppliers.map(s=>`<tr data-id="${esc(s.supplier_id)}" tabindex="0" style="cursor:pointer"><td>${esc(s.name)}</td><td>${esc(s.biz_no_masked||"")}</td><td>${esc(s.order_method_label)}</td><td>${esc(s.vat_label)}</td><td class="num">${s.lead_days??""}</td><td>${esc(s.payment_terms||"")}</td><td>${s.active?"사용":"쉼"}</td></tr>`).join(""):'<tr><td colspan="7" class="empty">거래처가 없어요</td></tr>';
+  document.querySelectorAll("#rows tr[data-id]").forEach(tr=>{tr.onclick=()=>open_(tr.dataset.id);tr.onkeydown=e=>{if(e.key==="Enter")open_(tr.dataset.id)}})}
+function fill(s){$("#form").hidden=false;$("#f_name").value=s.name||"";$("#f_biz").value=s.biz_no||"";$("#f_method").value=s.order_method||"email";$("#f_vat").value=s.vat_mode||"excluded";
+  $("#f_lead").value=s.lead_days??"";$("#f_pay").value=s.payment_terms||"";const c=s.contact||{};$("#f_cname").value=c.name||"";$("#f_cmail").value=c.email||"";$("#f_cphone").value=c.phone||"";
+  $("#f_memo").value=s.memo||"";$("#f_active").checked=s.active!==false;$("#saveMsg").textContent=""}
+async function open_(id){try{const d=await api("/admin/api/b2b-suppliers/"+id);CUR=id;fill(d.supplier)}catch(e){err(e)}}
+$("#newBtn").onclick=()=>{CUR=null;fill({})};$("#closeBtn").onclick=()=>{$("#form").hidden=true};
+$("#saveBtn").onclick=async()=>{const lead=$("#f_lead").value.trim();const body={name:$("#f_name").value.trim(),biz_no:$("#f_biz").value.trim(),order_method:$("#f_method").value,vat_mode:$("#f_vat").value,
+  lead_days:lead===""?null:parseInt(lead,10),payment_terms:$("#f_pay").value.trim(),contact:{name:$("#f_cname").value.trim(),email:$("#f_cmail").value.trim(),phone:$("#f_cphone").value.trim()},
+  memo:$("#f_memo").value.trim(),active:$("#f_active").checked};
+  try{const d=await post("/admin/api/b2b-suppliers"+(CUR?"/"+CUR:""),body);CUR=d.supplier.supplier_id;$("#saveMsg").textContent="저장했어요";load()}catch(e){err(e)}};
+load();
+</script>
+</body>
+</html>

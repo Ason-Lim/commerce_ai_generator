@@ -26,6 +26,11 @@ VERDICTS = {"right": "맞음", "wrong": "틀림", "unsure": "모름"}
 LABELS = {"food": "식품", "emergency": "위급", "food_safety": "식품 안전", "health": "건강·알레르기", "privacy": "개인정보",
           "dispute": "분쟁·보상", "affiliate": "제휴·주문", "stock": "품절·재고", "account": "계정", "site_help": "사이트 이용",
           "not_food": "식품 아님", "chitchat": "잡담"}
+# 2026-11-24 폐쇄몰 임직원 문의 자동 답 — 문의 종류 판단도 같은 주간 검수에 (맞는 종류는 같은 'corp_' 묶음 안에서 고른다)
+LABELS.update({f"corp_{k}": f"폐쇄몰·{v}" for k, v in (
+    ("eta", "도착일"), ("address_change", "배송지 변경"), ("item_change", "상품 변경"), ("exchange", "교환·반품"),
+    ("defect", "상품 이상"), ("food_safety", "식품 안전"), ("refund", "환불·현금"), ("deadline", "선택 기한"),
+    ("how_to", "고르는 법"), ("privacy", "개인정보"), ("contact", "담당자 연락"), ("unknown", "모름"))})
 
 
 def _dir() -> Path:

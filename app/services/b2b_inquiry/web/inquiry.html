@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>임직원 선물 문의</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--warn:#9a5b00;--warn-s:#fff4dc;--err:#b3261e;--err-s:#fde9e7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+header h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}header p{margin:0;color:var(--ink2);font-size:13.5px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
+.note{color:var(--ink2);font-size:12.5px}
+label{font-weight:600;font-size:14px}
+input,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+input.code{font-family:ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;max-width:220px}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 20px;background:var(--ink);color:#fff;cursor:pointer}
+button[disabled]{opacity:.5;cursor:default}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
+.item{position:relative;display:flex;flex-direction:column;border:2px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;cursor:pointer}
+.item input{position:absolute;opacity:0}
+.item:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s)}
+.item:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.item img,.item .ph{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eeede7}
+.item .t{padding:10px 12px}.item b{display:block;font-size:15px}.item small{display:block;color:var(--ink2);font-size:12.5px;margin-top:2px}
+.tier{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-s);border-radius:999px;padding:1px 8px;margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.field{display:grid;gap:4px;margin-top:10px}
+.consent{background:#f4f6f3;border-radius:12px;padding:12px;font-size:13px;margin-top:12px}
+.consent table{border-collapse:collapse;width:100%;margin:6px 0}.consent td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.consent td:first-child{color:var(--ink2);width:28%;white-space:nowrap}
+.msg{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
+.msg.ok{background:var(--accent-s)}.msg.err{background:var(--err-s);color:var(--err)}.msg.info{background:var(--warn-s);color:var(--warn)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
+select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+<main>
+  <header><h1>임직원 선물 문의</h1><p>명절·창립기념일·연말 임직원 선물을 상품 구성·견적·선물 선택 페이지까지 함께 준비해 드려요.</p></header>
+
+  <section class="box" aria-labelledby="faq-h" id="faqBox" hidden>
+    <h2 id="faq-h" style="font-size:17px;margin:0">자주 묻는 질문</h2>
+    <div id="faq"></div>
+  </section>
+
+  <section class="box" aria-labelledby="f-h">
+    <h2 id="f-h" style="font-size:17px;margin:0">문의 남기기</h2>
+    <p class="note">담당자가 내용을 보고 <b>영업일 2일 안에</b> 남겨 주신 연락처로 회신해요. 견적·제안서는 사람이 확인한 뒤 보내 드려요.
+      직원 명단이나 직원 개인정보는 적지 마세요 — 선물 선택 단계에서 직원이 직접 넣어요.</p>
+    <form id="f" novalidate>
+      <div class="grid2">
+        <div class="field"><label for="company">회사·기관 이름 *</label><input id="company" maxlength="60" autocomplete="organization" required></div>
+        <div class="field"><label for="kind">구매 방식</label><select id="kind"><option value="company">기업 자체 구매</option><option value="public_bid">공공기관 입찰 공고가 있어요</option></select></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="occasion">시기</label><select id="occasion"><option>설</option><option>추석</option><option>창립기념</option><option>연말</option><option>가정의 달</option><option selected>기타</option></select></div>
+        <div class="field"><label for="due_date">희망 배송·지급일</label><input id="due_date" type="date"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="headcount">인원 (명)</label><input id="headcount" inputmode="numeric" maxlength="7" placeholder="예: 300"></div>
+        <div class="field"><label for="budget_per_person">1인 예산 (원)</label><input id="budget_per_person" inputmode="numeric" maxlength="9" placeholder="예: 50000"></div>
+      </div>
+      <div class="field"><label for="delivery">받는 방법</label><select id="delivery"><option value="undecided">아직 모르겠어요</option><option value="individual">직원 집으로 각각</option><option value="bulk">회사로 한꺼번에</option><option value="coupon">모바일 쿠폰</option></select></div>
+      <div class="field"><label for="notice_url">입찰 공고 주소 (있으면)</label><input id="notice_url" type="url" maxlength="300" placeholder="https://"></div>
+      <div class="field"><label for="message">원하시는 내용</label><textarea id="message" rows="5" maxlength="1500" placeholder="예: 지역 특산물 위주로 3~4가지 중 직원이 고르게 하고 싶어요. 친환경 포장이면 좋겠어요."></textarea></div>
+      <div class="hp" aria-hidden="true"><label for="website">웹사이트</label><input id="website" tabindex="-1" autocomplete="off"></div>
+
+      <h3 style="font-size:15px;margin:18px 0 0">회신받을 연락처</h3>
+      <div class="grid2">
+        <div class="field"><label for="contact_name">담당자 이름 *</label><input id="contact_name" maxlength="30" autocomplete="name" required></div>
+        <div class="field"><label for="email">회사 메일</label><input id="email" type="email" maxlength="120" autocomplete="email"></div>
+      </div>
+      <div class="field"><label for="phone">전화번호</label><input id="phone" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="메일이나 전화 중 하나는 꼭 넣어 주세요"></div>
+      <div class="consent">
+        <b>문의 회신을 위한 개인정보 수집·이용 동의 (필수)</b>
+        <table><tbody>
+          <tr><td>목적</td><td>문의 회신, 견적·제안 안내</td></tr>
+          <tr><td>필수 항목</td><td>담당자 이름, 회사 메일 또는 전화번호(하나 이상)</td></tr>
+          <tr><td>보유 기간</td><td>문의가 끝난 뒤 180일 (계약하면 계약 기간 동안)</td></tr>
+          <tr><td>전달</td><td>다른 곳에 주지 않아요</td></tr>
+        </tbody></table>
+        <p class="note" style="margin:4px 0 8px">동의하지 않을 수 있어요. 그러면 회신할 방법이 없어 문의를 받을 수 없어요.</p>
+        <label><input type="checkbox" id="consent" style="width:auto;margin-right:6px">위 내용에 동의해요</label>
+      </div>
+      <div class="row"><button type="submit" id="send">문의 보내기</button></div>
+      <div id="msg" role="status"></div>
+    </form>
+  </section>
+  <footer>이 페이지는 문의만 받아요. 결제는 없고, 견적·계약은 담당자와 따로 확정해요.</footer>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+fetch("/biz/api/faq").then((r) => r.json()).then((d) => {
+  $("#faq").innerHTML = d.faq.map((f) => `<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:600">${esc(f.q)}</summary><p class="note" style="margin:6px 0 0">${esc(f.a)}</p></details>`).join("");
+  $("#faqBox").hidden = !d.faq.length;
+}).catch(() => {});
+const F = ["company","kind","occasion","due_date","headcount","budget_per_person","delivery","notice_url","message","website","contact_name","email","phone"];
+$("#f").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = Object.fromEntries(F.map((k) => [k, $("#" + k).value.trim()]));
+  body.consent = $("#consent").checked;
+  $("#send").disabled = true;
+  try {
+    const r = await fetch("/biz/api/inquiry", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const d = await r.json().catch(() => ({}));
+    if (!d.ok) throw new Error(d.error || "잠시 후 다시 보내 주세요");
+    $("#f").reset();
+    $("#msg").innerHTML = `<div class="msg ok">문의를 받았어요 (접수 번호 <b>${esc(d.inquiry_id)}</b>). 영업일 2일 안에 회신할게요.${d.masked?.length ? " 내용에 적힌 " + esc(d.masked.join("·")) + "는 가려서 저장했어요." : ""}</div>`;
+  } catch (err) { $("#msg").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+  finally { $("#send").disabled = false; }
+});
+</script>
+</body>
+</html>
