@@ -10,6 +10,8 @@
   - 코드 원문·링크도 보이지 않는다(번호만). 회사는 번호 ↔ 직원 대응표를 자기 쪽에서 갖고 있다.
 * 정산(매출 쪽만 — 매입·마진·공급사·단가 없음): 계약 조건, 실적, 청구 인원·금액, 세금계산서 발행 여부.
   마감 전에는 '예상', 마감 뒤 담당자가 '확인'(이름·명시 동의). 확인 뒤 금액이 바뀌면 '다시 확인 필요'.
+* 권한(링크마다, 운영자가 정하고 바꿀 수 있음): 보기만 / 보기 + 요청 / 보기 + 요청 + 정산 금액 확인.
+  서버에서 막는다(화면에서 숨기는 것만이 아님). 새 링크 기본값은 '보기 + 요청'.
 * 요청(운영자가 처리 — 이 화면이 바로 바꾸지 않음): 코드 분실 재발급, 마감 연장, 코드 추가, 정산 문의, 그 밖의 요청.
   CS 티켓(분야 corpmall, 주인 ``corpmgr:{몰}``)으로 들어가고, 답은 이 화면에 보인다.
 """
@@ -31,6 +33,26 @@ REQUEST_KINDS = {
     "settle": "정산 문의·수정 요청",
     "other": "기타 요청",
 }
+ROLES = {
+    "view": "보기만",
+    "request": "보기 + 요청",
+    "settle": "보기 + 요청 + 정산 금액 확인",
+}
+ROLE_CAN = {"view": set(), "request": {"request"}, "settle": {"request", "settle"}}
+
+
+def role_of(r) -> str:
+    return r["role"] if r["role"] in ROLES else "settle"  # #107 때 만든 링크는 모든 권한(그때와 같게)
+
+
+def _need(mgr, what: str) -> None:
+    if what not in ROLE_CAN[role_of(mgr)]:
+        raise store.MallError(
+            {"request": "이 링크는 보기 전용이라 요청을 보낼 수 없어요. 요청 권한이 있는 담당자에게 부탁해 주세요",
+             "settle": "이 링크로는 정산 금액을 확인할 수 없어요. 정산 확인 권한이 있는 담당자에게 부탁해 주세요"}[what]
+        )  # fmt: skip
+
+
 SHIP_STEP = {
     None: "",
     "none": "",
@@ -51,22 +73,54 @@ def owner(mall_id: str) -> str:
 
 
 # ── 운영자 ──
-def issue(eng, mall_id: str, label: str) -> dict:
-    """담당자 링크 하나 — 토큰 원문은 이 반환값에만."""
+def issue(eng, mall_id: str, label: str, role: str = "request") -> dict:
+    """담당자 링크 하나 — 토큰 원문은 이 반환값에만. 권한 기본값은 '보기 + 요청'(정산 확인은 따로 골라야)."""
     m = store.get_mall(eng, mall_id=mall_id)
     if m is None:
         raise store.MallError("없는 몰")
+    if role not in ROLES:
+        raise store.MallError("권한을 골라 주세요 (보기만 · 보기 + 요청 · 정산 확인까지)")
     label = " ".join((label or "").split())[:40] or "담당자"
     token = secrets.token_urlsafe(18)
     mid = "M" + secrets.token_hex(4).upper()
     with eng.begin() as c:
         c.execute(
             store.t_manager.insert().values(
-                manager_id=mid, mall_id=mall_id, token_hash=_hash(mall_id, token), label=label, created_at=store.now()
+                manager_id=mid,
+                mall_id=mall_id,
+                token_hash=_hash(mall_id, token),
+                label=label,
+                created_at=store.now(),
+                role=role,
             )
         )
-        store._event(c, mall_id, "mgr_issued", {"manager_id": mid})
-    return {"manager_id": mid, "label": label, "link": f"/corp/{m['slug']}/manager#k={token}"}
+        store._event(c, mall_id, "mgr_issued", {"manager_id": mid, "role": role})
+    return {"manager_id": mid, "label": label, "role": role, "link": f"/corp/{m['slug']}/manager#k={token}"}
+
+
+def set_role(eng, mall_id: str, manager_id: str, role: str) -> dict:
+    """권한 바꾸기 — 링크는 그대로. 바꾼 기록을 남긴다."""
+    if role not in ROLES:
+        raise store.MallError("권한을 골라 주세요")
+    with eng.begin() as c:
+        r = (
+            c.execute(
+                select(store.t_manager).where(
+                    and_(
+                        store.t_manager.c.mall_id == mall_id,
+                        store.t_manager.c.manager_id == manager_id,
+                        store.t_manager.c.revoked_at.is_(None),
+                    )
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if r is None:
+            raise store.MallError("없거나 끊은 담당자 링크예요")
+        c.execute(update(store.t_manager).where(store.t_manager.c.manager_id == manager_id).values(role=role))
+        store._event(c, mall_id, "mgr_role", {"manager_id": manager_id, "from": role_of(r), "to": role})
+    return {"manager_id": manager_id, "role": role, "role_label": ROLES[role]}
 
 
 def list_managers(eng, mall_id: str) -> list[dict]:
@@ -86,6 +140,8 @@ def list_managers(eng, mall_id: str) -> list[dict]:
             "label": r["label"],
             "created_at": r["created_at"].isoformat() if r["created_at"] else None,
             "revoked": r["revoked_at"] is not None,
+            "role": role_of(r),
+            "role_label": ROLES[role_of(r)],
         }
         for r in rows
     ]
@@ -182,20 +238,26 @@ def view(eng, slug: str, token: str, client: str, *, at: datetime | None = None)
     return {
         "mall": {**store.public_mall(m), "window": win, "client": m.get("client"), "status": m["status"]},
         "manager": mgr["label"],
+        "role": role_of(mgr),
+        "role_label": ROLES[role_of(mgr)],
+        "can": sorted(ROLE_CAN[role_of(mgr)]),
         "stats": {k: st[k] for k in ("issued", "chosen", "defaulted", "rate", "by_item")} | {"void": st["void"]},
         "shows_items": bulk,
         "codes": codes,
         "requests": tickets.for_owner(owner(m["mall_id"])),
         "kinds": REQUEST_KINDS,
-        "settle": _settle_view(eng, m["mall_id"]),
+        "settle": _settle_view(eng, m["mall_id"], can_settle="settle" in ROLE_CAN[role_of(mgr)]),
     }
 
 
-def _settle_view(eng, mall_id: str) -> dict:
+def _settle_view(eng, mall_id: str, *, can_settle: bool = True) -> dict:
     from app.services.corpmall import settle
 
     st = settle.client_statement(eng, mall_id)
-    return settle.public_statement(st) | {"sig": st["_sig"]}  # 지문은 '확인' 때 그대로 돌려받아 비교
+    out = settle.public_statement(st) | {"sig": st["_sig"]}  # 지문은 '확인' 때 그대로 돌려받아 비교
+    if not can_settle:
+        out["can_confirm"] = False  # 권한 없는 링크엔 확인 버튼 없음(서버도 거부)
+    return out
 
 
 def confirm_settle(eng, slug: str, token: str, client: str, *, name: str, agree: bool, sig: str) -> dict:
@@ -203,6 +265,7 @@ def confirm_settle(eng, slug: str, token: str, client: str, *, name: str, agree:
     from app.services.corpmall import settle
 
     m, mgr = _resolve(eng, slug, token, client)
+    _need(mgr, "settle")
     who = " ".join((name or "").split())[:30]
     if not who:
         raise store.MallError("확인하시는 분 이름(또는 부서)을 적어 주세요")
@@ -231,6 +294,7 @@ def request(
     from app.services.privacy import pii
 
     m, mgr = _resolve(eng, slug, token, client)
+    _need(mgr, "request")
     if kind not in REQUEST_KINDS:
         raise store.MallError("요청 종류를 골라 주세요")
     note, _ = pii.mask(" ".join((text or "").split())[:300])
@@ -279,4 +343,15 @@ def request(
     return {"ticket_id": t["id"], "requests": tickets.for_owner(owner(m["mall_id"]))}
 
 
-__all__ = ["REQUEST_KINDS", "issue", "list_managers", "revoke", "view", "request", "confirm_settle", "owner"]
+__all__ = [
+    "REQUEST_KINDS",
+    "ROLES",
+    "issue",
+    "set_role",
+    "list_managers",
+    "revoke",
+    "view",
+    "request",
+    "confirm_settle",
+    "owner",
+]

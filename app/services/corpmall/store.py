@@ -108,6 +108,8 @@ t_manager = Table(
     Column("label", String(40)),
     Column("created_at", DateTime(timezone=True)),
     Column("revoked_at", DateTime(timezone=True)),
+    # 권한 (2026-11-24): view(보기만) · request(+ 요청) · settle(+ 정산 금액 확인). 비어 있으면(#107 때 만든 링크) settle
+    Column("role", String(8)),
 )
 t_po_batch = Table(
     "corpmall_po_batch",
@@ -229,6 +231,9 @@ def _migrate(eng) -> None:
                 c.execute(sqlalchemy.text(f"ALTER TABLE corpmall_order ADD COLUMN {name} {typ}"))
     # 발주서 검토 반영(2026-11-24) — 개발 중 먼저 만들어진 corpmall_po 에 새 칸
     insp = sqlalchemy.inspect(eng)
+    if insp.has_table("corpmall_manager") and "role" not in {c["name"] for c in insp.get_columns("corpmall_manager")}:
+        with eng.begin() as c:
+            c.execute(sqlalchemy.text("ALTER TABLE corpmall_manager ADD COLUMN role VARCHAR(8)"))
     if insp.has_table("corpmall_po"):
         have = {c["name"] for c in insp.get_columns("corpmall_po")}
         ts = "TIMESTAMP WITH TIME ZONE" if eng.dialect.name == "postgresql" else "DATETIME"

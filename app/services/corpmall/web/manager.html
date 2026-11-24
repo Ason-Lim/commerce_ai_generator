@@ -89,7 +89,7 @@ select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius
       <div id="stMsg" role="status" aria-live="polite"></div>
     </section>
 
-    <section class="box" aria-labelledby="req-h">
+    <section class="box" aria-labelledby="req-h" id="reqBox">
       <h2 id="req-h" style="font-size:17px;margin:0">운영사에 요청하기</h2>
       <p class="note">요청은 운영사 담당자가 확인한 뒤 처리하고 이 화면에 답을 남겨요. 여기서 바로 바뀌지는 않아요. 직원 개인정보는 적지 마세요.</p>
       <form id="reqForm">
@@ -141,7 +141,10 @@ function draw(d) {
   V = d; const m = d.mall, s = d.stats;
   $("#gate").hidden = true; $("#body").hidden = false;
   $("#title").textContent = `${m.client || ""} · ${m.title || "선물"} 진행 현황`;
-  $("#sub").textContent = `${d.manager} 전용 화면이에요. 이 링크는 다른 사람과 나누지 마세요.`;
+  $("#sub").textContent = `${d.manager} 전용 화면이에요 (권한: ${d.role_label}). 이 링크는 다른 사람과 나누지 마세요.`;
+  const canReq = (d.can || []).includes("request");
+  $("#reqForm").hidden = !canReq; $("#stAsk").hidden = !canReq;
+  if (!canReq) $("#reqBox").querySelector("p.note").textContent = "이 링크는 보기 전용이에요. 요청은 요청 권한이 있는 담당자가 보낼 수 있어요. 보낸 요청과 답은 여기서 볼 수 있어요.";
   $("#period").textContent = `선택 기간 ${fmt(m.opens_at)} ~ ${fmt(m.closes_at)} · 지금 ${WIN[m.window] || m.window}`
     + (m.delivery_mode === "individual" ? " · 직원 집으로 배송" : " · 회사로 한꺼번에 배송");
   $("#k_issued").textContent = s.issued; $("#k_chosen").textContent = s.chosen;

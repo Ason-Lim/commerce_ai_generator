@@ -21,7 +21,7 @@ import hashlib
 import json
 import re
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote
@@ -2063,6 +2063,12 @@ def corpmall_tracking(mall_id: str, body: _MallTrackingIn):
 class _MgrIssueIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     label: str = Field("담당자", max_length=40)
+    role: Literal["view", "request", "settle"] = "request"  # 보기만 · 보기+요청 · +정산 금액 확인
+
+
+class _MgrRoleIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    role: Literal["view", "request", "settle"]
 
 
 class _ExtendIn(BaseModel):
@@ -2095,7 +2101,19 @@ def corpmall_manager_issue(mall_id: str, body: _MgrIssueIn):
 
     store, eng = _corp()
     try:
-        return {"ok": True, **manager.issue(eng, mall_id, body.label)}
+        return {"ok": True, **manager.issue(eng, mall_id, body.label, body.role)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/managers/{manager_id}/role", dependencies=[api])
+def corpmall_manager_role(mall_id: str, manager_id: str, body: _MgrRoleIn):
+    """담당자 권한 바꾸기 — 링크는 그대로."""
+    from app.services.corpmall import manager
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, **manager.set_role(eng, mall_id, manager_id, body.role)}
     except store.MallError as e:
         raise HTTPException(400, str(e)) from e
 
