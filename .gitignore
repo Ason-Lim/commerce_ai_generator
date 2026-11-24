@@ -71,3 +71,4 @@ var/cs/
 # 2026-11-24 클릭·구매 연결: 측정 기록·쿠팡 리포트(금액 포함) — 운영 데이터
 var/measure/
 var/coupang_reports/
+var/forecast/
