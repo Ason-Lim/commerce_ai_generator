@@ -186,3 +186,55 @@ def test_channel_rules():
     assert measure.channel(R({})) == "site"
     assert measure.impressions_from_response({"blocks": []}) == []
     assert isinstance(timedelta(days=1), timedelta)
+
+
+def test_buckets():
+    b = cr.buckets(date(2026, 11, 5), date(2026, 12, 3), "week")  # 목요일 시작 → 첫 구간은 일요일까지
+    assert b[0] == (date(2026, 11, 5), date(2026, 11, 8)) and b[1] == (date(2026, 11, 9), date(2026, 11, 15))
+    assert b[-1] == (date(2026, 11, 30), date(2026, 12, 3))
+    m = cr.buckets(date(2026, 11, 20), date(2027, 1, 10), "month")
+    assert m == [(date(2026, 11, 20), date(2026, 11, 30)), (date(2026, 12, 1), date(2026, 12, 31)),
+                 (date(2027, 1, 1), date(2027, 1, 10))]  # fmt: skip
+    assert len(cr.buckets(date(2026, 11, 1), date(2026, 11, 3), "day")) == 3
+    assert cr.buckets(date(2026, 11, 1), date(2026, 11, 3), "total") == [(date(2026, 11, 1), date(2026, 11, 3))]
+
+
+def test_report_units_and_limits(eng):
+    rows = {
+        ("commerce", "clicks"): [
+            {"date": "20261110", "ctag": "1", "click": 2},
+            {"date": "20261123", "ctag": "2", "click": 5},
+        ]
+    }
+    cr.run_daily(eng, today=date(2026, 11, 26), fetcher=_fake(rows))
+    measure.record_impressions(RESP, "site", at=datetime(2026, 11, 23, 9, tzinfo=KST))
+    tot = cr.report(eng, start=date(2026, 11, 1), end=date(2026, 11, 30), unit="total")
+    assert len(tot["periods"]) == 1 and tot["periods"][0]["coupang"]["site"]["clicks"] == 7
+    assert tot["periods"][0]["ours"]["site"]["impressions"] == 3 and tot["coupang_first_day"] == "2026-11-10"
+    day = cr.report(eng, start=date(2026, 11, 22), end=date(2026, 11, 24), unit="day")
+    assert [p["coupang"]["site"]["clicks"] for p in day["periods"]] == [0, 5, 0]
+    mon = cr.report(eng, start=date(2026, 10, 15), end=date(2026, 11, 30), unit="month")
+    assert [p["start"] for p in mon["periods"]] == ["2026-10-15", "2026-11-01"]
+    assert "order_amount" not in tot["periods"][0]["coupang"]["site"]
+    for bad in (
+        dict(start=date(2026, 11, 2), end=date(2026, 11, 1)),
+        dict(start=date(2025, 1, 1), end=date(2026, 11, 1)),
+    ):
+        with pytest.raises(ValueError):
+            cr.report(eng, **bad)
+    with pytest.raises(ValueError):
+        cr.report(eng, start=date(2026, 11, 1), end=date(2026, 11, 2), unit="year")
+    wk = cr.weekly(eng, weeks=2, today=date(2026, 11, 26))
+    assert wk["weeks"] == wk["periods"] and wk["weeks"][-1]["end"] == "2026-11-29"  # 이번 주 끝은 일요일
+
+
+def test_report_route(eng):
+    from app.main import app
+
+    cl = TestClient(app)
+    url = "/admin/api/measure/report?start=2026-11-01&end=2026-11-30&unit=day"
+    assert cl.get(url).status_code == 401
+    d = cl.get(url, headers=H).json()
+    assert d["unit"] == "day" and len(d["periods"]) == 30
+    assert cl.get("/admin/api/measure/report?start=2026-11-30&end=2026-11-01", headers=H).status_code == 400
+    assert cl.get("/admin/api/measure/report?start=2026-11-01&end=2026-11-30&unit=year", headers=H).status_code == 422

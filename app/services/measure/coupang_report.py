@@ -23,7 +23,7 @@ import os
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, delete, func, select
 
 from app.services import measure
 
@@ -178,25 +178,49 @@ def _week_start(d: date) -> date:
     return d - timedelta(days=d.weekday())
 
 
-def weekly(eng=None, *, weeks: int = 4, today: date | None = None, with_money: bool = False) -> dict:
-    """최근 weeks 주(이번 주 포함, 월~일). with_money=True 일 때만 금액 칸(관리자 화면 전용)."""
+UNITS = ("day", "week", "month", "total")
+MAX_DAYS = 400
+
+
+def buckets(start: date, end: date, unit: str) -> list[tuple[date, date]]:
+    """[start, end] 를 보기 단위로 자른 구간들 — 주는 월~일, 달은 1일~말일 (양 끝은 기간에 맞춰 자름)."""
+    out = []
+    if unit == "total":
+        return [(start, end)]
+    d = start
+    while d <= end:
+        if unit == "day":
+            e = d
+        elif unit == "week":
+            e = d + timedelta(days=6 - d.weekday())
+        else:  # month
+            nxt = date(d.year + (d.month == 12), d.month % 12 + 1, 1)
+            e = nxt - timedelta(days=1)
+        e = min(e, end)
+        out.append((d, e))
+        d = e + timedelta(days=1)
+    return out
+
+
+def report(eng=None, *, start: date, end: date, unit: str = "week", with_money: bool = False) -> dict:
+    """[start, end] 기간을 unit(day·week·month·total)으로 나눈 보고. with_money=True 일 때만 금액 칸(관리자 화면 전용)."""
+    if unit not in UNITS:
+        raise ValueError("unit")
+    if end < start or (end - start).days > MAX_DAYS:
+        raise ValueError("range")
     eng = eng or measure.engine()
-    today = today or measure.now().date()
-    first = _week_start(today) - timedelta(weeks=weeks - 1)
-    end = today
-    counts = measure.daily_counts(eng, first, end)
+    counts = measure.daily_counts(eng, start, end)
     t = measure.t_report
     with eng.connect() as c:
-        reps = [dict(r._mapping) for r in c.execute(select(t).where(and_(t.c.day >= first, t.c.day <= end))).all()]
+        reps = [dict(r._mapping) for r in c.execute(select(t).where(and_(t.c.day >= start, t.c.day <= end))).all()]
         last_fetch = c.execute(
             select(measure.t_fetch.c.at, measure.t_fetch.c.status).order_by(measure.t_fetch.c.id.desc()).limit(1)
         ).first()
+        first_day = c.execute(select(func.min(t.c.day))).scalar()
     chs = channels()
     sub_name = {v: k for k, v in chs.items()}
-    out_weeks = []
-    for w in range(weeks):
-        ws = first + timedelta(weeks=w)
-        we = ws + timedelta(days=6)
+    periods = []
+    for ws, we in buckets(start, end, unit):
         wk = {"start": ws.isoformat(), "end": we.isoformat(), "ours": {}, "coupang": {}, "match": None}
         for ch in measure.CHANNELS:
             rows = [r for r in counts if ws <= r["day"] <= we and r["channel"] == ch]
@@ -228,10 +252,13 @@ def weekly(eng=None, *, weeks: int = 4, today: date | None = None, with_money: b
         site_sub = chs.get("site")
         if site_sub:
             wk["match"] = _match(counts, reps, site_sub, ws, we)
-        out_weeks.append(wk)
+        periods.append(wk)
     return {
-        "weeks": out_weeks,
+        "range": [start.isoformat(), end.isoformat()],
+        "unit": unit,
+        "periods": periods,
         "channels": {k: True for k in chs},  # subId 값은 화면에 내지 않는다
+        "coupang_first_day": first_day.isoformat() if first_day else None,
         "last_fetch": {
             "at": last_fetch.at.isoformat() if last_fetch else None,
             "status": last_fetch.status if last_fetch else None,
@@ -241,8 +268,20 @@ def weekly(eng=None, *, weeks: int = 4, today: date | None = None, with_money: b
             "클릭률은 대화 노출 대비 대화 클릭(손님 채널) — 참고 지표",
             "'추천에서 클릭한 상품 구매'는 같은 날·전날 우리가 클릭을 보낸 상품의 주문(추정, 사람 단위 연결 아님)",
             "쿠팡 리포트는 다음 날 오후에 갱신 — 최근 하루 이틀은 비어 있을 수 있음",
+            "우리 쪽 기록은 2026-11-24 배포부터 — 그 전 기간은 쿠팡 숫자만 있음",
         ],
     }
+
+
+def weekly(eng=None, *, weeks: int = 4, today: date | None = None, with_money: bool = False) -> dict:
+    """최근 weeks 주(이번 주 포함, 월~일) — report(unit='week') 의 줄임. 'weeks' 키로도 돌려준다(예전 화면 호환)."""
+    today = today or measure.now().date()
+    first = _week_start(today) - timedelta(weeks=weeks - 1)
+    out = report(eng, start=first, end=today, unit="week", with_money=with_money)
+    # 이번 주 끝은 오늘이 아니라 일요일로 보여 준다(예전과 같게)
+    for p in out["periods"]:
+        p["end"] = (date.fromisoformat(p["start"]) + timedelta(days=6)).isoformat()
+    return out | {"weeks": out["periods"]}
 
 
 def _match(counts, reps, site_sub: str, ws: date, we: date) -> dict:
@@ -279,4 +318,4 @@ def _match(counts, reps, site_sub: str, ws: date, we: date) -> dict:
     }
 
 
-__all__ = ["KINDS", "channels", "http_fetch", "parse", "save", "run_daily", "weekly"]
+__all__ = ["KINDS", "UNITS", "channels", "http_fetch", "parse", "save", "run_daily", "buckets", "report", "weekly"]

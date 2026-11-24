@@ -2781,6 +2781,20 @@ def admin_measure(request: Request):
     return _page(request, WEB / "measure.html")
 
 
+@router.get("/admin/api/measure/report", dependencies=[api])
+def admin_measure_report(start: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                         end: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                         unit: str = Query("week", pattern="^(day|week|month|total)$")):
+    """기간 보고 — 시작일~끝일(400일 안)을 일·주·월·합계로. 금액 포함(관리자 화면 전용)."""
+    from app.services.measure import coupang_report
+
+    try:
+        return coupang_report.report(start=date.fromisoformat(start), end=date.fromisoformat(end), unit=unit,
+                                     with_money=True)  # fmt: skip
+    except ValueError as e:
+        raise HTTPException(400, "기간은 끝일이 시작일 뒤이고 400일 안이어야 해요") from e
+
+
 @router.get("/admin/api/measure/weekly", dependencies=[api])
 def admin_measure_weekly(weeks: int = Query(4, ge=1, le=26)):
     from app.services.measure import coupang_report
