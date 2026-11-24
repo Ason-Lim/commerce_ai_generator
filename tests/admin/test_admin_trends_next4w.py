@@ -116,3 +116,31 @@ def test_api_coupang_counts_only_when_asked(admin_client, rank_dir, monkeypatch)
 def test_trends_page_has_coupang_button(admin_client):
     html = admin_client.get("/admin/trends", headers=H).text
     assert 'id="nw-cp"' in html and "<th>쿠팡 상품</th></tr></thead><tbody>${rows}" in html
+
+
+def test_main_event_is_closest_to_last_year_peak(tmp_path):
+    """한 주에 행사가 여럿이면 작년 최고 순위 날짜에 가장 가까운 행사가 main_event (나머지는 sources 에 그대로)."""
+    rank = tmp_path / "r"
+    rank.mkdir()
+    d = dt.date(2025, 4, 20)
+    while d <= dt.date(2025, 5, 20):
+        _write(
+            rank,
+            d,
+            {"카네이션떡": 5} if d == dt.date(2025, 5, 7) else {"어린이과자": 6} if d == dt.date(2025, 5, 4) else {},
+        )
+        d += dt.timedelta(days=1)
+    as_of = dt.date(2026, 5, 1)
+    d = as_of - dt.timedelta(days=6)
+    while d <= as_of:
+        _write(rank, d, {})
+        d += dt.timedelta(days=1)
+    rows = [
+        {"event": "어린이날", "date": "2025-05-05"}, {"event": "어린이날", "date": "2026-05-05"},
+        {"event": "어버이날", "date": "2025-05-08"}, {"event": "어버이날", "date": "2026-05-08"},
+    ]  # fmt: skip
+    out = nw.next_weeks(rank, as_of, weeks=1, top_n=50, rows=rows)
+    w1 = _kw(out["weeks"][0])
+    assert {"어린이날 D-4", "어버이날 D-7"} <= set(w1["카네이션떡"]["sources"])
+    assert w1["카네이션떡"]["main_event"] == "어버이날 D-7"  # 작년 5-07 ↔ 어버이날 5-08
+    assert w1["어린이과자"]["main_event"] == "어린이날 D-4"  # 작년 5-04 ↔ 어린이날 5-05

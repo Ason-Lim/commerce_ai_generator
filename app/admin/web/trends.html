@@ -898,10 +898,13 @@ async function loadNext4w(withCoupang){const box=$("#nw-box");if(!box)return;con
     if(d.status!=="ok"){box.innerHTML=`<p class="note">${esc(d.note||"자료 없음")}</p>`;$("#nw-cov").textContent="";return}
     $("#nw-cov").textContent=`기준일 ${d.as_of} · 지금 100위 안 ${d.excluded_top_now}개 제외`;
     const lk=v=>v===true?"있음":v===false?"없음":"—";
+    const srcTxt=it=>{const ly=it.sources.includes("전년 같은 주"),evs=it.sources.filter(x=>x!=="전년 같은 주"),main=it.main_event||evs[0],rest=evs.length-(main?1:0);
+      const parts=[ly?"전년 같은 주":null,main?esc(main):null,rest>0?`<span class="note">외 ${rest}개</span>`:null].filter(Boolean);
+      return `<span title="${esc(it.sources.join(", "))}">${parts.join(" · ")}</span>`};
     const cpc=v=>v==null?'<span class="note">미확인</span>':v?`<span class="pill p-ok">${v}개</span>`:'<span class="pill p-err">없음</span>';
     box.innerHTML=d.weeks.map((w,i)=>{
       const ev=w.events.length?w.events.map(e=>`${esc(e.event)} ${e.date.slice(5)} (D-${e.d_day}${e.last_year?"":", 작년 날짜 없음"})`).join(" · "):"행사 없음";
-      const rows=w.items.map(it=>`<tr><td>${esc(it.keyword)}</td><td>${it.last_year_best}위</td><td>${esc(it.last_year_date)}</td><td>${it.sources.map(esc).join(", ")}</td><td>${lk(it.has_link)}</td><td>${cpc(it.coupang)}</td></tr>`).join("")||`<tr><td colspan="6" class="note">후보 없음</td></tr>`;
+      const rows=w.items.map(it=>`<tr><td>${esc(it.keyword)}</td><td>${it.last_year_best}위</td><td>${esc(it.last_year_date)}</td><td>${srcTxt(it)}</td><td>${lk(it.has_link)}</td><td>${cpc(it.coupang)}</td></tr>`).join("")||`<tr><td colspan="6" class="note">후보 없음</td></tr>`;
       return `<h3>${i+1}주 뒤 · ${w.start.slice(5)} ~ ${w.end.slice(5)} <small class="note">후보 ${w.candidates}개${w.candidates>w.items.length?` 중 상위 ${w.items.length}`:""} · 작년 자료 ${Math.round(w.last_year_coverage*100)}%</small></h3>
         <p class="note">행사: ${ev}</p>${w.warning?`<p class="note" style="color:#b45309">⚠ ${esc(w.warning)}</p>`:""}
         <div class="scroll"><table><thead><tr><th>키워드</th><th>작년 최고</th><th>작년 그날</th><th>근거</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead><tbody>${rows}</tbody></table></div>`}).join("")+`<p class="note">${esc(d.note)}</p>`;
