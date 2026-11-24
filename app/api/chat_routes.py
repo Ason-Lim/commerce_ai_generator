@@ -202,10 +202,17 @@ def chat(body: ChatIn, request: Request, service: ChatService = Depends(get_chat
 
     token = turn_metrics.INTERNAL.set(_click_query(request) == "chat_internal")
     try:
-        return public(service.handle(body.session_id, message=body.message, answers=body.answers, chip=body.chip,
-                                     owner=body.owner, fresh=body.fresh))
+        response = service.handle(body.session_id, message=body.message, answers=body.answers, chip=body.chip,
+                                  owner=body.owner, fresh=body.fresh)
     finally:
         turn_metrics.INTERNAL.reset(token)
+    try:  # 2026-11-24 클릭·구매 연결: 노출 기록(상품 번호·자리·채널 — 상품명·가격 없음, 순위에 안 씀)
+        from app.services import measure
+
+        measure.record_impressions(response, measure.channel(request))
+    except Exception:  # noqa: BLE001
+        log.warning("impression record failed")
+    return public(response)
 
 
 @router.get("/api/chat/saved")
@@ -375,7 +382,25 @@ def click(body: ClickIn, request: Request, service: ChatService = Depends(get_ch
                 "rank": body.rank, "selected_section": "chat_direct", "recommendation_mode": "ranking"})
         except Exception:  # noqa: BLE001 — 기록 실패가 화면에 영향을 주지 않는다
             log.warning("direct click log failed")
+        from app.services import measure
+
+        measure.record_click(body.session_id, measure.channel(request), "chat_direct", card=item, url=item["url"],
+                             rank=body.rank)
     return Response(status_code=204)
+
+
+@router.get("/test-mode/{state}")
+def test_mode(state: str):
+    """2026-11-24 시험 세션 표시 — 가족·지인 시험 브라우저에서 /test-mode/on 을 한 번 열면 그 브라우저의 노출·클릭은
+    'test' 채널로 따로 센다(손님 지표에서 빠짐). /test-mode/off 로 끔. 화면에는 아무것도 바뀌지 않는다."""
+    from app.services import measure
+
+    resp = RedirectResponse("/", status_code=303)
+    if state == "on":
+        resp.set_cookie(measure.TEST_COOKIE, "1", max_age=180 * 86400, httponly=True, samesite="lax")
+    else:
+        resp.delete_cookie(measure.TEST_COOKIE)
+    return resp
 
 
 @router.get("/go/q/{sid}/{lid}")
@@ -425,4 +450,7 @@ def _redirect(sid: str, url: str | None, section: str = "chat", shown: dict | No
             "rank": shown.get("rank"), "selected_section": section, "recommendation_mode": "ranking"})
     except Exception:  # noqa: BLE001 — logging must not block the redirect
         log.warning("click log failed")
+    from app.services import measure  # 2026-11-24 클릭·구매 연결 — 상품 번호(쿠팡 리포트 ctag 와 맞출 열쇠)·채널
+
+    measure.record_click(sid, measure.channel(request), section, card=shown or None, url=url)
     return RedirectResponse(url)

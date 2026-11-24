@@ -145,6 +145,9 @@ def go_highlight(key: str, request: Request):
                 "selected_section": "category_highlight", "recommendation_mode": "ranking"})
         except Exception:  # noqa: BLE001
             log.warning("highlight click log failed")
+        from app.services import measure
+
+        measure.record_click("home", measure.channel(request), "home_highlight", url=url, rank=0)
     return RedirectResponse(url, status_code=302 if url.startswith("http") else 303)
 
 
@@ -173,6 +176,10 @@ def go_coupang_best(product_id: str, request: Request):
         log_product_click(session_id="home", query="home_internal" if internal else "home", product={
             "product_url": item["url"], "product_name": item["url"], "mall_name": "쿠팡",   # 11-23: 상품명은 남기지 않음(#82 와 같음)
             "rank": item["rank"], "selected_section": section, "recommendation_mode": "ranking"})
+        from app.services import measure
+
+        measure.record_click("home", measure.channel(request), f"home_{section}", url=item["url"], rank=item["rank"],
+                             card={"pid": product_id, "affiliate": True})
     except Exception:  # noqa: BLE001 — 기록이 이동을 막지 않는다
         log.warning("coupang best click log failed")
     return RedirectResponse(item["url"], status_code=302)
@@ -237,6 +244,9 @@ def trends_go(post_id: str, n: int, request: Request, posts: Posts):
             "rank": n, "selected_section": "trend", "recommendation_mode": "ranking"})
     except Exception:  # noqa: BLE001 — 기록이 이동을 막지 않는다
         log.warning("trend click log failed")
+    from app.services import measure  # 2026-11-24 클릭·구매 연결 — 상품 번호·채널(측정용, 순위에 안 씀)
+
+    measure.record_click(f"trend:{post.id}", measure.channel(request), "trend", url=product.url, rank=n)
     return RedirectResponse(product.url, status_code=302)
 
 
