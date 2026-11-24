@@ -1884,6 +1884,90 @@ def b2b_settle_overview():
     return {"malls": settle.overview(eng)}
 
 
+# ── 3단계: 발주서 메일 (2026-11-24) — 설계 claude/b2b_po_mail_2026-11-24.md ──
+class _MailEditIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    subject: str = Field(..., max_length=200)
+    body: str = Field(..., max_length=6000)
+    attach: bool = False
+
+
+def _site() -> str:
+    from app.services.trend_posts.render import site_url
+
+    return site_url()
+
+
+@router.get("/admin/api/corpmall/{mall_id}/mails", dependencies=[api])
+def corpmall_mails(mall_id: str):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    _mall_or_404(store, eng, mall_id)
+    return {"mails": mailer.list_mails(eng, mall_id), "smtp": mailer.smtp_config() is not None}
+
+
+@router.post("/admin/api/corpmall/{mall_id}/pos/{po_no}/mail", dependencies=[api])
+def corpmall_mail_prepare(mall_id: str, po_no: str):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.prepare(eng, mall_id, po_no)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}", dependencies=[api])
+def corpmall_mail_edit(mall_id: str, mail_id: str, body: _MailEditIn):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.edit(eng, mall_id, mail_id, subject=body.subject, body=body.body, attach=body.attach)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}/send", dependencies=[api])
+def corpmall_mail_send(mall_id: str, mail_id: str):
+    """운영자가 확인한 메일 보내기 — 발신 메일(SMTP)이 연결됐을 때만."""
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.send(eng, mall_id, mail_id, base_url=_site())}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/corpmall/{mall_id}/mails/{mail_id}/eml", dependencies=[api])
+def corpmall_mail_eml(mall_id: str, mail_id: str):
+    """발신 메일 연결 전: .eml 로 내려받아 메일 프로그램에서 직접 보내기(확인 링크는 받을 때마다 새로)."""
+    from fastapi.responses import Response
+
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        data, name = mailer.eml(eng, mall_id, mail_id, base_url=_site())
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+    return Response(data, media_type="message/rfc822",
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}", "Cache-Control": "no-store"})
+
+
+@router.post("/admin/api/corpmall/{mall_id}/mails/{mail_id}/mark-sent", dependencies=[api])
+def corpmall_mail_mark(mall_id: str, mail_id: str):
+    from app.services.corpmall import mailer
+
+    store, eng = _corp()
+    try:
+        return {"ok": True, "mail": mailer.mark_sent(eng, mall_id, mail_id)}
+    except store.MallError as e:
+        raise HTTPException(400, str(e)) from e
+
+
 class _MallManualIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     manual: dict

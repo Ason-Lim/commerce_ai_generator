@@ -52,7 +52,9 @@ select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius
       <table class="t" style="margin-top:8px"><tbody id="info"></tbody></table>
       <table class="t" style="margin-top:12px"><thead><tr><th>상품</th><th>품번</th><th class="num">수량</th><th class="num">단가</th><th class="num">금액</th></tr></thead><tbody id="lines"></tbody></table>
       <table class="t" style="margin-top:8px"><tbody id="sum"></tbody></table>
-      <p class="note">배송 정보는 발주서 파일에만 있어요. 이 화면에는 보이지 않아요.</p>
+      <p class="note">배송 정보는 발주서 파일에만 있어요. 이 화면에는 보이지 않아요. 파일은 발주일부터 30일까지 받을 수 있고, 배송이 끝나면 파기해 주세요.</p>
+      <div class="row"><button type="button" id="fileBtn">발주서·배송 목록 파일 받기</button></div>
+      <div id="fileMsg" role="status"></div>
     </section>
     <section class="box" aria-labelledby="ack-h">
       <h2 id="ack-h" style="font-size:17px;margin:0">발주 확인</h2>
@@ -92,6 +94,18 @@ function draw(d) {
   $("#ackState").textContent = p.status === "acknowledged" ? `${(p.ack_at || "").slice(0, 16).replace("T", " ")}에 ${p.ack_by}님이 확인했어요. 출고 예정일·메모를 고치려면 다시 눌러 주세요.` : "아직 확인 전이에요.";
   if (p.ack_ship_date) $("#a_date").value = p.ack_ship_date;
 }
+$("#fileBtn").addEventListener("click", async () => {
+  $("#fileBtn").disabled = true;
+  try {
+    const r = await fetch(`/corp/api/po/${encodeURIComponent(poNo)}/file`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({key: KEY})});
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || "파일을 받지 못했어요"); }
+    const cd = r.headers.get("Content-Disposition") || "";
+    const name = decodeURIComponent((cd.match(/filename\*=UTF-8''([^;]+)/) || [])[1] || "po.xlsx");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(await r.blob()); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  } catch (err) { msg($("#fileMsg"), err.message, "err"); }
+  finally { $("#fileBtn").disabled = false; }
+});
 $("#ackForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("#ackBtn").disabled = true;

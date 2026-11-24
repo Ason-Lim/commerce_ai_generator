@@ -214,6 +214,23 @@ def public_view(eng, po_no: str, token: str, client: str) -> dict:
     }
 
 
+FILE_DAYS = 30
+
+
+def supplier_file(eng, po_no: str, token: str, client: str) -> tuple[bytes, str]:
+    """확인 링크로 공급사 전달용 파일(발주서 + 그 공급사 배송 목록) 받기 — 발주일부터 30일까지, 받을 때마다 기록."""
+    from datetime import timedelta
+
+    from app.services.corpmall import po
+
+    r = _resolve(eng, po_no, token, client)
+    issued = r["issued_at"] if r["issued_at"].tzinfo else r["issued_at"].replace(tzinfo=store.KST)
+    if store.now() > issued + timedelta(days=FILE_DAYS):
+        raise store.MallError(f"발주일부터 {FILE_DAYS}일이 지나 파일을 받을 수 없어요. 발주 담당자에게 요청해 주세요")
+    data, name = po.render(eng, r["mall_id"], r["batch_id"], supplier=r["supplier_name"], by="supplier_link")
+    return data, name
+
+
 def _ship_date(v: str | None) -> str | None:
     if not v:
         return None

@@ -8,6 +8,7 @@
   POST /corp/api/{slug}/manager/request  {key, kind, label?, date?, n?, text?} → 운영자에게 요청 (CS 티켓)
   GET  /corp/po/{po_no}             공급사 발주 확인 화면 (#k=확인 토큰, 배송 정보 없음)
   POST /corp/api/po/{po_no}/view    {key} → 발주서 내용
+  POST /corp/api/po/{po_no}/file    {key} → 공급사 전달용 파일(발주서 + 배송 목록, 발주일부터 30일)
   POST /corp/api/po/{po_no}/ack     {key, name, ship_date?, memo?} → 수신 확인
   POST /corp/api/{slug}/choose      {code, item_id, shipping?, consent, verify?} → 선택 저장(마감 전 변경 가능)
 
@@ -255,3 +256,22 @@ def corp_po_ack(po_no: str, body: PoAckIn, request: Request):
         return JSONResponse({"ok": True, **podoc.public_view(eng, po_no, body.key, _client(request))}, headers=NOINDEX)
     except store.MallError as e:
         return _err(e)
+
+
+@router.post("/corp/api/po/{po_no}/file")
+def corp_po_file(po_no: str, body: PoViewIn, request: Request):
+    from urllib.parse import quote
+
+    from fastapi.responses import Response
+
+    from app.services.corpmall import podoc
+
+    try:
+        data, name = podoc.supplier_file(_eng(), po_no, body.key, _client(request))
+    except store.MallError as e:
+        return _err(e)
+    return Response(
+        data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={**NOINDEX, "Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"},
+    )

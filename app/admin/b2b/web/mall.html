@@ -200,6 +200,19 @@ tbody tr{cursor:default}
           <span class="spacer"></span><button class="btn" type="button" data-mark="shipped">고른 주문 발송함</button><button class="btn" type="button" data-mark="delivered">고른 주문 배송 완료</button></div>
         <div id="poList" class="basis" style="margin:6px 0"></div>
         <div id="poDocs" class="basis" style="margin:6px 0"></div><div id="poLink"></div>
+        <div id="mailBox" class="code-out" hidden>
+          <b>발주서 메일</b> <span id="mailState"></span>
+          <div class="bar" style="margin-top:6px"><label>받는 사람</label><code id="mailTo"></code></div>
+          <div class="bar"><label for="mailSubj">제목</label><input id="mailSubj" maxlength="200" style="flex:1"></div>
+          <textarea id="mailBody" rows="12" style="width:100%;font-size:13px" aria-label="메일 본문"></textarea>
+          <div class="bar"><label><input type="checkbox" id="mailAttach" style="width:auto"> 공급사 전달용 엑셀도 첨부(배송 정보 포함 — 기본은 링크에서 받게)</label></div>
+          <div class="actions"><button class="btn" type="button" id="mailSave">고친 내용 저장</button>
+            <button class="btn primary" type="button" id="mailSend">보내기</button>
+            <button class="btn" type="button" id="mailEml">.eml 내려받기 (직접 보내기)</button>
+            <button class="btn" type="button" id="mailMark">직접 보냄 표시</button>
+            <button class="btn" type="button" id="mailClose">닫기</button></div>
+          <p class="basis" id="mailNote"></p>
+        </div>
         <div id="trkOut" class="basis"></div>
         <div class="tblwrap" style="max-height:420px;overflow:auto"><table><thead><tr><th><input type="checkbox" id="allChk" aria-label="모두 고르기"></th><th>주문</th><th>상품</th><th>상태</th><th>송장</th><th>고른 때</th></tr></thead><tbody id="orders"></tbody></table></div>
       </section>
@@ -312,14 +325,31 @@ $("#contractBtn").onclick=async()=>{const num=v=>v.trim()===""?null:parseInt(v.r
 let SUPS=[];
 async function loadSups(){try{SUPS=(await api("/admin/api/b2b-suppliers")).suppliers.filter(x=>x.active)}catch(e){err(e)}}
 const wonf=v=>v==null?"단가 확인 필요":Number(v).toLocaleString()+"원";
-async function loadPos(){try{const d=await api(`/admin/api/corpmall/${CUR.mall_id}/pos`);
+let MAILS={},SMTP=false,MAIL=null;const MAILST={draft:"준비",sent:"보냄",manual:"직접 보냄",failed:"실패"};
+function showMail(m){MAIL=m;$("#mailBox").hidden=false;$("#mailTo").textContent=m.to;$("#mailSubj").value=m.subject;$("#mailBody").value=m.body;$("#mailAttach").checked=m.attach;
+  $("#mailState").textContent=`· ${m.po_no} · ${MAILST[m.status]||m.status}${m.sent_at?" "+when(m.sent_at):""}${m.error?" · "+m.error:""}`;
+  const open=m.status==="draft"||m.status==="failed";["#mailSave","#mailEml","#mailMark"].forEach(x=>$(x).disabled=!open);$("#mailSend").disabled=!open||!SMTP;
+  $("#mailNote").textContent=(SMTP?"":"발신 메일이 아직 연결되지 않았어요(사업자등록 뒤 연결) — '.eml 내려받기'로 메일 프로그램에서 열어 직접 보낸 뒤 '직접 보냄 표시'를 눌러 주세요. ")
+    +"{ACK_LINK} 자리에는 보낼 때(.eml 을 받을 때) 새 확인 링크가 들어가요 — 다시 받으면 옛 링크는 막혀요."}
+async function saveMail(){const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}`,{subject:$("#mailSubj").value,body:$("#mailBody").value,attach:$("#mailAttach").checked});showMail(d.mail)}
+$("#mailSave").onclick=()=>saveMail().catch(err);
+$("#mailSend").onclick=async()=>{if(!confirm(`${MAIL.to} 로 보낼까요? 받는 사람·제목·본문·첨부를 확인하셨나요?`))return;
+  try{await saveMail();const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/send`);showMail(d.mail);loadPos()}catch(e){err(e);loadPos()}};
+$("#mailEml").onclick=async()=>{try{await saveMail();await dl(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/eml`)}catch(e){err(e)}};
+$("#mailMark").onclick=async()=>{if(!confirm("메일 프로그램에서 직접 보내셨나요? '직접 보냄'으로 표시해요."))return;try{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/mails/${MAIL.mail_id}/mark-sent`);showMail(d.mail);loadPos()}catch(e){err(e)}};
+$("#mailClose").onclick=()=>{$("#mailBox").hidden=true};
+async function loadPos(){try{const md=await api(`/admin/api/corpmall/${CUR.mall_id}/mails`);SMTP=md.smtp;MAILS={};md.mails.slice().reverse().forEach(m=>{MAILS[m.po_no]=m});
+  const d=await api(`/admin/api/corpmall/${CUR.mall_id}/pos`);
   $("#poDocs").innerHTML=d.pos.length?"<b>발주서</b>"+d.pos.map(p=>`<div style="margin:4px 0"><code>${esc(p.po_no)}</code> · ${esc(p.supplier)} · 합계 ${esc(wonf(p.total))} · 납기 ${esc(p.due_date||"협의")} · <b>${esc(p.status_label)}</b>
     ${p.status==="acknowledged"?` (${esc(p.ack_by||"")}${p.ack_ship_date?` · 출고 예정 ${esc(p.ack_ship_date)}`:""}${p.ack_memo?` · ${esc(p.ack_memo)}`:""})`:""}
     ${p.status!=="cancelled"?`<button class="btn" type="button" data-ackl="${esc(p.po_no)}">확인 링크</button>`:""}
     ${p.status==="issued"?`<button class="btn" type="button" data-ackm="${esc(p.po_no)}">확인 받음 표시</button>`:""}
+    ${p.status!=="cancelled"?`<button class="btn" type="button" data-mail="${esc(p.po_no)}">메일${MAILS[p.po_no]?` (${esc(MAILST[MAILS[p.po_no].status]||MAILS[p.po_no].status)})`:""}</button>`:""}
     ${p.status!=="cancelled"?`<button class="btn" type="button" data-cx="${esc(p.po_no)}">취소</button>`:""}</div>`).join(""):"";
   document.querySelectorAll("[data-ackl]").forEach(b=>b.onclick=async()=>{try{const r=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackl}/ack-link`);
     $("#poLink").innerHTML=`<div class="code-out">${esc(b.dataset.ackl)} 확인 링크: <code>${esc(location.origin+r.link)}</code><br><b>지금만 보여요</b> — 발주서와 함께 공급사에 보내 주세요(새로 만들면 옛 링크는 막혀요).</div>`}catch(e){err(e)}});
+  document.querySelectorAll("[data-mail]").forEach(b=>b.onclick=async()=>{try{const m=MAILS[b.dataset.mail];
+    if(m)showMail(m);else{const d=await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.mail}/mail`);showMail(d.mail);loadPos()}}catch(e){err(e)}});
   document.querySelectorAll("[data-ackm]").forEach(b=>b.onclick=async()=>{const note=prompt("무엇을 보고 확인했나요? (예: 11/25 메일 회신)");if(note===null)return;
     try{await post(`/admin/api/corpmall/${CUR.mall_id}/pos/${b.dataset.ackm}/ack`,{note});loadPos()}catch(e){err(e)}});
   document.querySelectorAll("[data-cx]").forEach(b=>b.onclick=async()=>{const reason=prompt("취소 이유 (주문은 '발송 요청'으로 돌아가 다시 묶을 수 있어요)");if(!reason)return;

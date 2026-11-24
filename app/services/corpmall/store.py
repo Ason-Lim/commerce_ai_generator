@@ -154,6 +154,22 @@ t_po = Table(
     Column("invoice_received_at", DateTime(timezone=True)),  # 매입 세금계산서 받음 (정산)
     Column("invoice_memo", String(200)),
 )
+t_po_mail = Table(
+    "corpmall_po_mail",
+    meta,  # 발주서 메일 (2026-11-24) — 준비 → 운영자 확인 → 보냄. 확인 링크 원문은 저장하지 않음(보낼 때 새로 만들어 넣음)
+    Column("mail_id", String(12), primary_key=True),
+    Column("po_no", String(24), index=True, nullable=False),
+    Column("mall_id", String(20), index=True, nullable=False),
+    Column("to_enc", Text),  # 받는 사람(거래처 발주 담당 메일) — 암호화
+    Column("subject", String(200)),
+    Column("body", Text),  # {ACK_LINK} 자리 표시 포함
+    Column("status", String(10), nullable=False, default="draft"),  # draft · sent · manual · failed
+    Column("attach", Boolean),
+    Column("created_at", DateTime(timezone=True)),
+    Column("sent_at", DateTime(timezone=True)),
+    Column("error", String(300)),
+    Column("by", String(40)),
+)
 t_event = Table(
     "corpmall_event",
     meta,  # 운영 기록 (개인정보 없음)
