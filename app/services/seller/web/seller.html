@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>셀러 센터</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--err:#b3261e;--err-s:#fde9e7;--warn:#9a5b00;--warn-s:#fff4dc}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+header h1{font-size:22px;margin:0 0 4px}header p{margin:0;color:var(--ink2);font-size:13.5px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
+h2{font-size:17px;margin:0 0 8px}
+.note{color:var(--ink2);font-size:12.5px}
+label{font-weight:600;font-size:14px}
+input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+input.code{font-family:ui-monospace,Menlo,monospace}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 20px;background:var(--ink);color:#fff;cursor:pointer}
+.field{display:grid;gap:4px;margin-top:10px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}dt{color:var(--ink2)}dd{margin:0}
+.badge{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:1px 10px;background:var(--warn-s);color:var(--warn)}
+.badge.ok{background:var(--accent-s);color:var(--accent)}
+.msg{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
+.msg.ok{background:var(--accent-s)}.msg.err{background:var(--err-s);color:var(--err)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
+</style>
+</head>
+<body>
+<main>
+  <header><h1>셀러 센터</h1><p>입점 셀러 전용 화면이에요. 초대 코드는 다른 사람과 나누지 마세요.</p></header>
+
+  <section id="gate" class="box" aria-labelledby="gate-h">
+    <h2 id="gate-h">들어가기</h2>
+    <form id="gateForm">
+      <div class="field"><label for="code">초대 코드</label>
+        <input id="code" class="code" autocomplete="off" spellcheck="false" maxlength="40" placeholder="운영팀에서 받은 코드"></div>
+      <div class="row"><button type="submit">들어가기</button></div>
+    </form>
+    <div id="gateMsg" role="status"></div>
+  </section>
+
+  <div id="body" hidden>
+    <section class="box" aria-labelledby="me-h">
+      <h2 id="me-h">업체 정보</h2>
+      <dl>
+        <dt>상호</dt><dd id="s_name"></dd>
+        <dt>종류</dt><dd id="s_kind"></dd>
+        <dt>상태</dt><dd><span id="s_status" class="badge"></span></dd>
+        <dt>담당자</dt><dd id="s_contact"></dd>
+      </dl>
+      <p class="note">입점 승인·정지는 운영팀이 직접 정해요. 상품 등록은 다음 단계에서 열려요.</p>
+    </section>
+
+    <section class="box" aria-labelledby="ct-h">
+      <h2 id="ct-h">담당자 연락처 바꾸기</h2>
+      <form id="ctForm">
+        <div class="field"><label for="ct_name">이름</label><input id="ct_name" maxlength="30" autocomplete="name"></div>
+        <div class="field"><label for="ct_email">메일</label><input id="ct_email" type="email" maxlength="120" autocomplete="email"></div>
+        <div class="field"><label for="ct_phone">전화</label><input id="ct_phone" maxlength="20" inputmode="tel" autocomplete="tel"></div>
+        <p class="note">운영팀이 입점·정산 일로 연락할 때만 써요. 메일이나 전화 중 하나만 넣어도 돼요. 암호화해 저장하고, 계약이 끝나고 1년 뒤 지워요.</p>
+        <div class="row"><button type="submit">저장</button></div>
+      </form>
+      <div id="ctMsg" role="status"></div>
+    </section>
+  </div>
+
+  <footer>이 화면은 검색에 노출되지 않아요. 코드를 잃어버렸으면 운영팀에 새 코드를 요청해 주세요 — 새 코드를 만들면 옛 코드는 바로 막혀요.</footer>
+</main>
+<script>
+(function(){
+  let KEY = "";
+  const $ = (id) => document.getElementById(id);
+  const msg = (el, text, kind) => { el.innerHTML = ""; if (!text) return; const d = document.createElement("div"); d.className = "msg " + kind; d.textContent = text; el.appendChild(d); };
+  async function post(url, body){
+    const r = await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+    return r.json();
+  }
+  function show(s){
+    $("s_name").textContent = s.name;
+    $("s_kind").textContent = s.kind_label;
+    $("s_status").textContent = s.status_label;
+    $("s_status").className = "badge" + (s.status === "active" ? " ok" : "");
+    const c = s.contact || {};
+    $("s_contact").textContent = [c.name, c.email, c.phone].filter(Boolean).join(" · ") || "없음";
+    $("gate").hidden = true; $("body").hidden = false;
+  }
+  async function enter(code){
+    const j = await post("/seller/api/me", {key: code});
+    if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
+    KEY = code; show(j.seller);
+  }
+  // # 뒤 코드는 서버로 가지 않는다 — 읽자마자 주소창에서 지운다
+  const m = location.hash.match(/k=([A-Za-z0-9_-]{24})/);
+  if (m) { history.replaceState(null, "", location.pathname); enter(m[1]); }
+  $("gateForm").addEventListener("submit", (e) => { e.preventDefault(); enter($("code").value.trim()); });
+  $("ctForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const j = await post("/seller/api/contact", {key: KEY, contact: {name: $("ct_name").value, email: $("ct_email").value, phone: $("ct_phone").value}});
+    if (!j.ok) { msg($("ctMsg"), j.error || "저장하지 못했어요", "err"); return; }
+    show(j.seller); msg($("ctMsg"), "저장했어요", "ok");
+    ["ct_name","ct_email","ct_phone"].forEach((id) => $(id).value = "");
+  });
+})();
+</script>
+</body>
+</html>

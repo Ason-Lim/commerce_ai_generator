@@ -174,7 +174,7 @@ def sitemap_xml(posts: list[Post]) -> str:
 
 
 def robots_txt() -> str:
-    return ("User-agent: *\nDisallow: /admin\nDisallow: /b2b\nDisallow: /api/\nDisallow: /corp/\nDisallow: /biz/\nDisallow: /trends/*/go/\n"
+    return ("User-agent: *\nDisallow: /admin\nDisallow: /b2b\nDisallow: /api/\nDisallow: /corp/\nDisallow: /biz/\nDisallow: /seller\nDisallow: /trends/*/go/\n"
             f"Sitemap: {site_url()}/sitemap.xml\n")
 
 

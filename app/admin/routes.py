@@ -3065,3 +3065,81 @@ def cs_unblock(product_id: str):
     if got is None:
         raise HTTPException(404, "not blocked")
     return {"ok": True, "product": got}
+
+
+# ── 셀러 센터 ① (창 5, 2026-11-25) — 셀러 만들기·초대 코드·입점 승인/정지/종료(운영자만). 고객 화면 노출 없음 ──
+class _SellerContactIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field("", max_length=30)
+    email: str = Field("", max_length=120)
+    phone: str = Field("", max_length=20)
+
+
+class _SellerIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(..., max_length=60)
+    kind: Literal["direct", "consign"]
+    contact: _SellerContactIn
+    memo: str = Field("", max_length=200)
+
+
+class _SellerStatusIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: Literal["active", "suspended", "ended"]
+    reason: str = Field(..., min_length=1, max_length=200)
+
+
+def _seller():
+    from app.services.seller import store
+
+    return store, store.engine()
+
+
+def _seller_call(store, fn):
+    try:
+        return fn()
+    except store.SellerError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/admin/api/seller", dependencies=[api])
+def seller_list():
+    store, eng = _seller()
+    return {"sellers": store.list_sellers(eng)}
+
+
+@router.post("/admin/api/seller", dependencies=[api])
+def seller_create(body: _SellerIn):
+    store, eng = _seller()
+    got = _seller_call(store, lambda: store.create_seller(eng, name=body.name, kind=body.kind,
+                                                          contact=body.contact.model_dump(), memo=body.memo, by="operator"))  # fmt: skip
+    return {"ok": True, "seller": got}
+
+
+@router.get("/admin/api/seller/{seller_id}", dependencies=[api])
+def seller_detail(seller_id: str):
+    store, eng = _seller()
+    got = store.detail(eng, seller_id)
+    if got is None:
+        raise HTTPException(404, "seller not found")
+    return {"seller": got}
+
+
+@router.post("/admin/api/seller/{seller_id}/key", dependencies=[api])
+def seller_issue_key(seller_id: str):
+    """초대 코드 — 원문은 이 응답에만. 옛 코드는 막힌다."""
+    store, eng = _seller()
+    return {"ok": True, **_seller_call(store, lambda: store.issue_key(eng, seller_id, by="operator"))}
+
+
+@router.post("/admin/api/seller/{seller_id}/key/revoke", dependencies=[api])
+def seller_revoke_keys(seller_id: str):
+    store, eng = _seller()
+    return {"ok": True, "revoked": _seller_call(store, lambda: store.revoke_keys(eng, seller_id, by="operator"))}
+
+
+@router.post("/admin/api/seller/{seller_id}/status", dependencies=[api])
+def seller_status(seller_id: str, body: _SellerStatusIn):
+    store, eng = _seller()
+    got = _seller_call(store, lambda: store.set_status(eng, seller_id, body.status, by="operator", reason=body.reason))
+    return {"ok": True, "seller": got}
