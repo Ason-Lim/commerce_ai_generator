@@ -131,12 +131,19 @@ tbody tr{cursor:default}
   <div class="top"><h2>셀러</h2><span class="spacer"></span><button class="btn primary" type="button" id="newBtn">새 셀러</button></div>
   <div id="err" class="banner" hidden></div>
 
-  <section class="panel" id="newForm" hidden aria-labelledby="new-h">
+  <section class="panel" aria-labelledby="jn-h" style="margin-top:14px">
+    <h3 id="jn-h">입점 신청 <small style="font-weight:400;color:var(--ink3)">AI 1차 분석 · 문제없으면 체험 코드 자동 · 입점 승인은 여기서</small></h3>
+    <p class="basis" style="margin-top:0">체험 셀러는 셀러센터에서 상품을 올려 볼 수만 있고 손님에게 보이지 않아요. 서류를 열어 사업자등록증·신고증을 대조한 뒤 ‘입점 승인’을 눌러 주세요. 반려 사유는 신청인에게 보여요. 신청 페이지: <a href="/join" target="_blank" rel="noopener">/join</a></p>
+    <div class="tblwrap"><table><thead><tr><th>신청</th><th>상호 · 번호</th><th>상품</th><th>1차 분석</th><th>상태</th><th></th></tr></thead><tbody id="joins"></tbody></table></div>
+    <div id="joinOut" class="basis"></div>
+  </section>
+
+  <section class="panel" id="newForm" hidden aria-labelledby="new-h" style="margin-top:14px">
     <h3 id="new-h">새 셀러</h3>
     <div class="bar"><label for="n_name" style="min-width:90px">상호 *</label><input id="n_name" type="text" maxlength="60" style="flex:1">
       <label for="n_kind">종류</label><select id="n_kind"><option value="direct">직접 재고</option><option value="consign">정식 위탁판매</option></select></div>
-    <div class="bar"><label for="n_cname" style="min-width:90px">담당자 *</label><input id="n_cname" type="text" maxlength="30" placeholder="이름" style="width:110px">
-      <input id="n_cmail" type="text" maxlength="120" placeholder="메일" style="flex:1" aria-label="담당자 메일"><input id="n_cphone" type="text" maxlength="20" placeholder="전화" style="width:130px" aria-label="담당자 전화"></div>
+    <div class="bar"><label for="n_cname" style="min-width:90px">담당자 *</label><input id="n_cname" type="text" maxlength="30" placeholder="이름" style="width:120px">
+      <input id="n_cmail" type="email" maxlength="120" placeholder="메일" style="width:240px" aria-label="담당자 메일"><input id="n_cphone" type="tel" inputmode="tel" data-phone maxlength="14" placeholder="010-0000-0000" style="width:150px" aria-label="담당자 전화"></div>
     <div class="bar"><label for="n_memo" style="min-width:90px">메모</label><input id="n_memo" type="text" maxlength="200" style="flex:1" placeholder="개인정보는 적지 마세요"></div>
     <div class="actions"><button class="btn primary" type="button" id="createBtn">만들기</button><button class="btn" type="button" id="newClose">닫기</button></div>
   </section>
@@ -145,37 +152,6 @@ tbody tr{cursor:default}
     <h3 id="list-h">셀러 목록</h3>
     <div class="tblwrap"><table><thead><tr><th>상호</th><th>종류</th><th>상태</th><th>연락처</th><th>관리</th></tr></thead><tbody id="sellers"></tbody></table></div>
     <div id="codeOut" class="code-out" hidden role="status"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="dd-h" style="margin-top:14px">
-    <h3 id="dd-h">죽은 몰 후보 · 주의</h3>
-    <p class="basis" style="margin-top:0" id="ddRule"></p>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>단계</th><th class="num">변화 없음</th><th class="num">30일 주문</th><th>클릭(30일)</th><th>이유</th></tr></thead><tbody id="dormant"></tbody></table></div>
-    <div id="noEntry" class="basis"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="al-h" style="margin-top:14px">
-    <h3 id="al-h">품절 · 출고 지연 알림</h3>
-    <p class="basis" style="margin-top:0">셀러별 숫자만 보여요(받는 분 정보 없음). 지연 = 주문일 뒤 2영업일 넘게 송장 없음.</p>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>품절(승인 상품)</th><th class="num">출고 지연</th><th class="num">발주 전</th><th class="num">송장 대기</th></tr></thead><tbody id="alerts"></tbody></table></div>
-  </section>
-
-  <section class="panel" aria-labelledby="bl-h" style="margin-top:14px">
-    <h3 id="bl-h">월 이용료 <small style="font-weight:400;color:var(--ink3)">표시·기록만 — 실제 청구·결제 없음</small></h3>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>요금제</th><th class="num">월 합계</th><th>이번 달</th><th class="num">미수(예정+발행)</th><th></th></tr></thead><tbody id="billing"></tbody></table></div>
-    <div id="billDetail" class="panel" hidden style="margin-top:10px"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="dt-h" style="margin-top:14px">
-    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인한 상세페이지는 미니숍 공개 조건이 갖춰진 셀러 화면에 모여요</small></h3>
-    <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
-  </section>
-  <section class="panel" aria-labelledby="jn-h" style="margin-top:14px">
-    <h3 id="jn-h">입점 신청 <small style="font-weight:400;color:var(--ink3)">AI 1차 분석 · 문제없으면 체험 코드 자동 · 입점 승인은 여기서</small></h3>
-    <p class="basis" style="margin-top:0">체험 셀러는 셀러센터에서 상품을 올려 볼 수만 있고 손님에게 보이지 않아요. 서류를 열어 사업자등록증·신고증을 대조한 뒤 ‘입점 승인’을 눌러 주세요. 반려 사유는 신청인에게 보여요. 신청 페이지: <a href="/join" target="_blank" rel="noopener">/join</a></p>
-    <div class="tblwrap"><table><thead><tr><th>신청</th><th>상호 · 번호</th><th>상품</th><th>1차 분석</th><th>상태</th><th></th></tr></thead><tbody id="joins"></tbody></table></div>
-    <div id="joinOut" class="basis"></div>
   </section>
 
   <section class="panel" aria-labelledby="ms-h" style="margin-top:14px">
@@ -192,9 +168,42 @@ tbody tr{cursor:default}
       <div class="panel detail" id="pd" hidden aria-live="polite"></div>
     </div>
   </section>
+
+  <section class="panel" aria-labelledby="dt-h" style="margin-top:14px">
+    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인한 상세페이지는 미니숍 공개 조건이 갖춰진 셀러 화면에 모여요</small></h3>
+    <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="bl-h" style="margin-top:14px">
+    <h3 id="bl-h">월 이용료 <small style="font-weight:400;color:var(--ink3)">표시·기록만 — 실제 청구·결제 없음</small></h3>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>요금제</th><th class="num">월 합계</th><th>이번 달</th><th class="num">미수(예정+발행)</th><th></th></tr></thead><tbody id="billing"></tbody></table></div>
+    <div id="billDetail" class="panel" hidden style="margin-top:10px"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="al-h" style="margin-top:14px">
+    <h3 id="al-h">품절 · 출고 지연 알림</h3>
+    <p class="basis" style="margin-top:0">셀러별 숫자만 보여요(받는 분 정보 없음). 지연 = 주문일 뒤 2영업일 넘게 송장 없음.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>품절(승인 상품)</th><th class="num">출고 지연</th><th class="num">발주 전</th><th class="num">송장 대기</th></tr></thead><tbody id="alerts"></tbody></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="dd-h" style="margin-top:14px">
+    <h3 id="dd-h">죽은 몰 후보 · 주의</h3>
+    <p class="basis" style="margin-top:0" id="ddRule"></p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>단계</th><th class="num">변화 없음</th><th class="num">30일 주문</th><th>클릭(30일)</th><th>이유</th></tr></thead><tbody id="dormant"></tbody></table></div>
+    <div id="noEntry" class="basis"></div>
+  </section>
 </main>
 </div>
 <script>
+function fmtPhone(v){const d=String(v||"").replace(/\D/g,"").slice(0,12);if(!d)return"";
+  if(/^1[568]/.test(d))return d.length>4?d.slice(0,4)+"-"+d.slice(4,8):d;
+  if(d.startsWith("02")){if(d.length<=2)return d;if(d.length<=5)return d.slice(0,2)+"-"+d.slice(2);if(d.length<=9)return d.slice(0,2)+"-"+d.slice(2,5)+"-"+d.slice(5);return d.slice(0,2)+"-"+d.slice(2,6)+"-"+d.slice(6,10)}
+  if(d.startsWith("050")&&d.length>11)return d.slice(0,4)+"-"+d.slice(4,8)+"-"+d.slice(8);
+  if(d.length<=3)return d;if(d.length<=6)return d.slice(0,3)+"-"+d.slice(3);if(d.length<=10)return d.slice(0,3)+"-"+d.slice(3,6)+"-"+d.slice(6);return d.slice(0,3)+"-"+d.slice(3,7)+"-"+d.slice(7,11)}
+// 전화 칸: 치는 대로 '-' 를 넣는다 (서버는 숫자만 저장) — 2026-11-25
+document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matches("input[data-phone]")){t.value=fmtPhone(t.value)}});
+
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/seller";throw new Error("auth")}

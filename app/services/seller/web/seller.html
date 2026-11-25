@@ -234,7 +234,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
         <div class="field"><label for="s_name">공급사 이름 *</label><input id="s_name" maxlength="40"></div>
         <div class="field"><label for="s_cname">담당자</label><input id="s_cname" maxlength="30"></div>
         <div class="field"><label for="s_cmail">메일</label><input id="s_cmail" type="email" maxlength="120"></div>
-        <div class="field"><label for="s_cphone">전화</label><input id="s_cphone" maxlength="20"></div>
+        <div class="field"><label for="s_cphone">전화</label><input id="s_cphone" maxlength="14" type="tel" inputmode="tel" data-phone placeholder="010-0000-0000"></div>
         <div class="row"><button type="submit">공급사 저장</button></div>
       </form>
       <div id="sMsg" role="status"></div>
@@ -261,7 +261,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <form id="ctForm">
         <div class="field"><label for="ct_name">이름</label><input id="ct_name" maxlength="30" autocomplete="name"></div>
         <div class="field"><label for="ct_email">메일</label><input id="ct_email" type="email" maxlength="120" autocomplete="email"></div>
-        <div class="field"><label for="ct_phone">전화</label><input id="ct_phone" maxlength="20" inputmode="tel" autocomplete="tel"></div>
+        <div class="field"><label for="ct_phone">전화</label><input id="ct_phone" maxlength="14" type="tel" inputmode="tel" autocomplete="tel" data-phone placeholder="010-0000-0000"></div>
         <p class="note">운영팀이 입점·정산 일로 연락할 때만 써요. 메일이나 전화 중 하나만 넣어도 돼요. 암호화해 저장하고, 계약이 끝나고 1년 뒤 지워요.</p>
         <div class="row"><button type="submit">저장</button></div>
       </form>
@@ -272,6 +272,14 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   <footer>이 화면은 검색에 노출되지 않아요. 코드를 잃어버렸으면 운영팀에 새 코드를 요청해 주세요 — 새 코드를 만들면 옛 코드는 바로 막혀요.</footer>
 </main>
 <script>
+function fmtPhone(v){const d=String(v||"").replace(/\D/g,"").slice(0,12);if(!d)return"";
+  if(/^1[568]/.test(d))return d.length>4?d.slice(0,4)+"-"+d.slice(4,8):d;
+  if(d.startsWith("02")){if(d.length<=2)return d;if(d.length<=5)return d.slice(0,2)+"-"+d.slice(2);if(d.length<=9)return d.slice(0,2)+"-"+d.slice(2,5)+"-"+d.slice(5);return d.slice(0,2)+"-"+d.slice(2,6)+"-"+d.slice(6,10)}
+  if(d.startsWith("050")&&d.length>11)return d.slice(0,4)+"-"+d.slice(4,8)+"-"+d.slice(8);
+  if(d.length<=3)return d;if(d.length<=6)return d.slice(0,3)+"-"+d.slice(3);if(d.length<=10)return d.slice(0,3)+"-"+d.slice(3,6)+"-"+d.slice(6);return d.slice(0,3)+"-"+d.slice(3,7)+"-"+d.slice(7,11)}
+// 전화 칸: 치는 대로 '-' 를 넣는다 (서버는 숫자만 저장) — 2026-11-25
+document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matches("input[data-phone]")){t.value=fmtPhone(t.value)}});
+
 (function(){
   let KEY = "";
   const $ = (id) => document.getElementById(id);
@@ -393,7 +401,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   // ── 미니숍 공개 · 판매자 정보 (2026-11-25) ──
   const MODE = {off: "꺼짐", test: "시험 공개 중", formal: "정식 공개"};
   function showBiz(b){
-    $("msFields").innerHTML = b.fields.map((f) => `<div class="field"><label for="ms_${f.key}">${esc(f.label)}</label><input id="ms_${f.key}" maxlength="120" value="${esc(b.info[f.key] || "")}"></div>`).join("");
+    $("msFields").innerHTML = b.fields.map((f) => `<div class="field"><label for="ms_${f.key}">${esc(f.label)}</label><input id="ms_${f.key}" maxlength="120" value="${esc(b.info[f.key] || "")}"${f.key === "phone" ? ' type="tel" inputmode="tel" data-phone' : ""}></div>`).join("");
     $("msState").innerHTML = `미니숍: <b>${esc(MODE[b.mode] || b.mode)}</b> · 운영팀 확인 <span class="badge${b.verified ? " ok" : ""}">${b.verified ? "확인됨" : "확인 전"}</span> · 공개 동의 <span class="badge${b.consent ? " ok" : ""}">${b.consent ? "동의함" : "안 함"}</span>`
       + (b.missing.length ? ` · 빈 칸: ${esc(b.missing.join(", "))}` : "");
     $("msLink").href = b.url; $("msLink").hidden = b.mode === "off";

@@ -40,7 +40,6 @@ CONTACT_KEEP_DAYS = 365  # 계약 종료 뒤 (결정 3, 2026-11-25)
 LIMIT_KEY = "seller"
 TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{24}$")
 EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,120}\.[A-Za-z]{2,}$")
-PHONE_RE = re.compile(r"^[0-9-]{8,15}$")
 OPERATOR_RE = re.compile(r"^operator(:[\w.@-]{1,40})?$")
 
 meta = MetaData()
@@ -108,6 +107,36 @@ def _event(c, seller_id: str, kind: str, by: str, detail: dict | None = None) ->
     c.execute(t_event.insert().values(seller_id=seller_id, kind=kind, by=by, detail=detail or {}, at=now()))
 
 
+def phone_digits(v) -> str:
+    """전화번호 → 숫자만 (DB 에는 '-' 없이). 휴대폰·유선·대표번호(15xx)만 받는다 — 틀리면 SellerError (2026-11-25)."""
+    d = re.sub(r"[\s\-().]", "", str(v or ""))
+    if not d:
+        return ""
+    if not d.isdigit():
+        raise SellerError("전화번호는 숫자로 넣어 주세요")
+    if d.startswith(("15", "16", "18")) and len(d) == 8:
+        return d
+    if not d.startswith("0") or not 9 <= len(d) <= 12:
+        raise SellerError("전화번호 자리 수를 확인해 주세요 (예: 010-1234-5678, 02-123-4567)")
+    return d
+
+
+def fmt_phone(v) -> str:
+    """숫자만 → 보기용 '-' (010-1234-5678 · 02-123-4567 · 031-123-4567 · 1588-1234 · 0505-123-4567)."""
+    d = re.sub(r"\D", "", str(v or ""))
+    if not d:
+        return ""
+    if d.startswith(("15", "16", "18")) and len(d) == 8:
+        return f"{d[:4]}-{d[4:]}"
+    if d.startswith("02"):
+        return f"02-{d[2:-4]}-{d[-4:]}" if len(d) >= 9 else d
+    if d.startswith("050") and len(d) == 12:
+        return f"{d[:4]}-{d[4:8]}-{d[8:]}"
+    if len(d) in (10, 11):
+        return f"{d[:3]}-{d[3:-4]}-{d[-4:]}"
+    return d
+
+
 def _check_contact(raw: dict | None) -> dict:
     raw = raw or {}
     extra = set(raw) - {"name", "email", "phone"}
@@ -115,15 +144,13 @@ def _check_contact(raw: dict | None) -> dict:
         raise SellerError("받지 않는 칸이 있어요: " + ", ".join(sorted(extra)))
     name = " ".join(str(raw.get("name") or "").split())[:30]
     email = str(raw.get("email") or "").strip()[:120]
-    phone = str(raw.get("phone") or "").strip()[:20]
+    phone = phone_digits(str(raw.get("phone") or "").strip()[:20])
     if not name:
         raise SellerError("담당자 이름을 넣어 주세요")
     if not (email or phone):
         raise SellerError("담당자 메일이나 전화 중 하나는 넣어 주세요")
     if email and not EMAIL_RE.match(email):
         raise SellerError("메일 주소 모양이 아니에요")
-    if phone and not PHONE_RE.match(phone):
-        raise SellerError("전화번호는 숫자와 - 만 넣어 주세요")
     return {"name": name, "email": email, "phone": phone}
 
 
@@ -152,7 +179,9 @@ def _public(r, *, contact: str = "masked") -> dict:
         "kind_label": KINDS.get(r["kind"], r["kind"]),
         "status": r["status"],
         "status_label": STATUSES.get(r["status"], r["status"]),
-        "contact": (ct if contact == "full" else _mask(ct)) if contact != "none" else None,
+        "contact": ((dict(ct, phone=fmt_phone(ct.get("phone"))) if ct else ct) if contact == "full" else _mask(ct))
+        if contact != "none"
+        else None,
         "has_contact": ct is not None,
         "ended_at": r["ended_at"].isoformat() if r["ended_at"] else None,
     }

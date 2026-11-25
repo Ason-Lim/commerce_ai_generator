@@ -401,7 +401,7 @@ def _row_view(j, *, contact: bool = False) -> dict:
     return {"join_id": j["join_id"], "status": j["status"], "status_label": STATUSES[j["status"]],
             "trade_name": j["trade_name"], "biz_no": f"{j['biz_no'][:3]}-{j['biz_no'][3:5]}-{j['biz_no'][5:]}",
             "store_url": j["store_url"] or "", "products": j["products"] or "",
-            "contact": (ct if contact else store._mask(ct)) if ct else None,
+            "contact": (dict(ct, phone=store.fmt_phone(ct.get("phone"))) if contact else store._mask(ct)) if ct else None,
             "files": [{"kind": f["kind"], "label": FILE_KINDS[f["kind"]], "name": f["name"], "size": f["size"]}
                       for f in j["files"] or []],
             "analysis": j["analysis"], "seller_id": j["seller_id"], "note": j["note"] or "",

@@ -58,7 +58,6 @@ BIZ_FIELDS = [
 ]
 OPERATOR_FIELDS = ["trade_name", "ceo", "address", "phone", "email", "biz_no", "mail_order_no", "hosting"]
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-PHONE_RE = re.compile(r"^[0-9][0-9-]{6,18}$")
 FTC_BIZ = "https://www.ftc.go.kr/bizCommPop.do?wrkr_no={}"  # 공정위 사업자정보 공개 페이지 (법 제10조)
 TEST_BANNER = "시험 운영 중 — 실제 판매 안내가 아니에요. 고지 문구·판매자 정보는 확정 전이에요."
 
@@ -117,8 +116,7 @@ def check_biz(raw: dict | None) -> dict:
     v = {k: " ".join(str(raw.get(k) or "").split())[:120] for k, _ in BIZ_FIELDS}
     if v["email"] and not EMAIL_RE.match(v["email"]):
         raise store.SellerError("전자우편 주소 모양이 아니에요")
-    if v["phone"] and not PHONE_RE.match(v["phone"]):
-        raise store.SellerError("전화번호는 숫자와 - 만 넣어 주세요")
+    v["phone"] = store.phone_digits(v["phone"])  # 저장은 숫자만, 화면은 fmt_phone
     if v["biz_no"]:
         if not biz_no_ok(v["biz_no"]):
             raise store.SellerError("사업자등록번호 10자리를 확인해 주세요")
@@ -134,6 +132,7 @@ def _biz_row(c, seller_id: str):
 def _biz_view(r) -> dict:
     info = corp._dec(r["biz_enc"]) if r and r["biz_enc"] else {}
     info = {k: (info or {}).get(k, "") for k, _ in BIZ_FIELDS}
+    info["phone"] = store.fmt_phone(info["phone"])
     missing = [label for k, label in BIZ_FIELDS if not info[k]]
     return {
         "info": info,
