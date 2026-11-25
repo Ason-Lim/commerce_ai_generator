@@ -56,39 +56,49 @@ t_detail = Table(
     Column("reviewed_by", String(48)),
 )
 
-# ── 상품정보제공고시 칸 (품목 이름은 고시 별표를 따름 — 원문 대조 전) ──
+# ── 상품정보제공고시 칸 — 「전자상거래 등에서의 상품 등의 정보제공에 관한 고시」 별표 (2026-11-25 원문 대조) ──
+# 농수축산물(별표 21): 1~10 번호 순서 그대로, 6번(관련 법상 표시사항)은 6-1·6-2·6-3 으로 나눈다.
+# 가공식품(별표 22): 1-1~1-6 은 원문 확인, 7번 이후(영양성분·GMO·주의사항·수입 문구·상담 전화)는 원문 정본 재확인 필요.
+# 해당이 없는 칸은 '해당 없음' 으로 적는다 (빈칸·'상세설명 참조' 는 보완 요청).
 NOTICE = {
     "agri": {
         "label": "농수축산물",
+        "source": "고시 별표 · 농수축산물 (원문 대조 2026-11-25)",
         "fields": [
-            ("volume", "포장단위별 내용물의 용량(중량)·수량·크기"),
-            ("producer", "생산자 (수입품은 수입자 함께)"),
-            ("origin", "원산지"),
-            ("dates", "제조연월일(포장일 또는 생산연도)·소비기한"),
-            ("legal", "관련 법상 표시사항 (등급·이력번호·지리적표시 등, 없으면 '해당 없음')"),
-            ("composition", "상품 구성"),
-            ("storage", "보관 방법 또는 취급 방법"),
-            ("caution", "소비자 안전을 위한 주의사항 (없으면 '해당 없음')"),
-            ("cs_phone", "소비자 상담 관련 전화번호"),
+            ("item_name", "1. 품목 또는 명칭"),
+            ("volume", "2. 포장단위별 내용물의 용량(중량)·수량·크기"),
+            ("producer", "3. 생산자 (수입품은 수입자 함께)"),
+            ("origin", "4. 농수산물의 원산지 표시 등에 관한 법률에 따른 원산지"),
+            ("dates", "5. 제조연월일(포장일 또는 생산연도)·소비기한 또는 품질유지기한"),
+            ("gmo_gi", "6-1. 농수산물 — 유전자변형농산물 표시·지리적 표시 (없으면 '해당 없음')"),
+            ("grade", "6-2. 축산물 — 축산법에 따른 등급 표시 (축산물이 아니면 '해당 없음')"),
+            ("import_notice", "6-3. 수입 농수축산물 — '수입식품안전관리 특별법에 따른 수입신고를 필함' (국산이면 '해당 없음')"),
+            ("composition", "7. 상품 구성"),
+            ("storage", "8. 보관 방법 또는 취급 방법"),
+            ("caution", "9. 소비자 안전을 위한 주의사항 (없으면 '해당 없음')"),
+            ("cs_phone", "10. 소비자 상담 관련 전화번호"),
         ],
     },
     "processed": {
         "label": "가공식품",
+        "source": "고시 별표 · 가공식품 (1번 항목 원문 대조 2026-11-25, 2번 이후 정본 재확인 필요)",
         "fields": [
-            ("product_name", "제품명"),
-            ("food_type", "식품의 유형"),
-            ("producer", "생산자 및 소재지 (수입품은 수입자 함께)"),
-            ("dates", "제조연월일·소비기한 또는 품질유지기한"),
-            ("volume", "포장단위별 내용물의 용량(중량)·수량"),
-            ("ingredients", "원재료명 및 함량 (원산지 포함)"),
-            ("nutrition", "영양성분 (표시 대상이 아니면 '해당 없음')"),
+            ("product_name", "1-1. 제품명"),
+            ("food_type", "1-2. 식품의 유형"),
+            ("producer", "1-3. 생산자 및 소재지 (수입품은 생산자·수입자·제조국)"),
+            ("dates", "1-4. 제조연월일·소비기한 또는 품질유지기한"),
+            ("volume", "1-5. 포장단위별 내용물의 용량(중량)·수량"),
+            ("ingredients", "1-6. 원재료명(원산지 포함) 및 함량 (함량은 원재료 함량 표시대상 식품만)"),
+            ("nutrition", "영양성분 (표시대상 식품이 아니면 '해당 없음')"),
             ("gmo", "유전자변형식품 해당 여부"),
             ("caution", "소비자 안전을 위한 주의사항 (알레르기 유발물질 등)"),
-            ("imported", "수입식품 문구 (국산이면 '해당 없음')"),
+            ("imported", "수입식품 문구 '수입식품안전관리 특별법에 따른 수입신고를 필함' (국산이면 '해당 없음')"),
             ("cs_phone", "소비자 상담 관련 전화번호"),
         ],
     },
 }
+# 예전 칸 이름 → 새 칸 (저장된 입력을 읽을 때만 옮긴다)
+LEGACY_NOTICE = {"agri": {"legal": "gmo_gi"}}
 PROCESSED_RE = re.compile(
     r"가공|김치|장류|소스|양념|음료|과자|간식|떡|빵|면|즉석|반찬|젓갈|통조림|냉동식품|건강기능|차$|커피|잼|가루|분말"
 )
@@ -143,8 +153,18 @@ def notice_kind(category: list | str | None) -> str | None:
     return None
 
 
+def notice_values(kind: str | None, notice: dict | None) -> dict:
+    """저장된 고시 값 — 예전 칸 이름(legal 등)은 새 칸으로 옮겨 읽는다."""
+    notice = dict(notice or {})
+    for was, now in LEGACY_NOTICE.get(kind or "", {}).items():
+        if notice.get(was) and not notice.get(now):
+            notice[now] = notice[was]
+    return notice
+
+
 def missing_notice(kind: str | None, notice: dict) -> list[dict]:
     """빈칸·'상세설명 참조' 칸 — 보완 요청 목록."""
+    notice = notice_values(kind, notice)
     if kind not in NOTICE:
         return [{"key": "notice_kind", "label": "고시 품목(농수축산물 / 가공식품)을 골라 주세요"}]
     out = []
@@ -166,6 +186,9 @@ def check_inputs(raw: dict, default_kind: str | None) -> dict:
     if kind not in (None, "", *NOTICE):
         raise DetailError("고시 품목은 농수축산물(agri) 또는 가공식품(processed)이에요")
     fields = {k for k, _ in NOTICE[kind]["fields"]} if kind else set()
+    for was, now in LEGACY_NOTICE.get(kind or "", {}).items():
+        if was in (raw.get("notice") or {}) and now not in (raw.get("notice") or {}):
+            raw = {**raw, "notice": {**raw["notice"], now: raw["notice"][was]}}
     notice = {k: _txt(v, 300) for k, v in (raw.get("notice") or {}).items() if k in fields and _txt(v, 300)}
     images = []
     for im in (raw.get("images") or [])[:MAX_IMAGES]:
@@ -326,6 +349,7 @@ def render(
     made_by: str | None,
     banner: str | None = None,
     fragment: bool = False,
+    buy_note: str | None = None,
 ) -> str:
     e = html.escape
     kind = inputs.get("notice_kind")
@@ -342,14 +366,17 @@ def render(
     )
     notice_rows = ""
     if kind in NOTICE:
+        nv = notice_values(kind, inputs.get("notice"))
         notice_rows = "".join(
-            f"<tr><th>{e(label.split(' (')[0])}</th><td>{e((inputs.get('notice') or {}).get(k) or '— (보완 필요)')}</td></tr>"
+            f"<tr><th>{e(label.split(' (')[0])}</th><td>{e(nv.get(k) or '— (보완 필요)')}</td></tr>"
             for k, label in NOTICE[kind]["fields"]
         )
     pts = "".join(f'<div class="pt"><b>{e(p["title"])}</b>{e(p["text"])}</div>' for p in sections.get("points") or [])
     care = "".join(f"<li>{e(c)}</li>" for c in sections.get("care") or [])
     buy = (f'<a class="buy" href="{e(product["sale_url"])}" rel="nofollow noopener" target="_blank">판매처에서 보기</a>'
            if product.get("sale_url") else '<p class="foot">판매처 주소가 아직 없어요.</p>')  # fmt: skip
+    if buy_note and product.get("sale_url"):
+        buy = f'<p class="notice buy-note">{e(buy_note)}</p>' + buy  # 판매처 이동 전 고지 (지침: 중요한 거래 절차)
     who = "AI가 판매자가 입력한 정보로 쓰고 판매자가 확인한 글이에요." if (made_by or "").startswith(("ai", "anthropic", "ollama")) \
         else "판매자가 입력한 정보로 만든 글이에요."  # fmt: skip
     body = f"""<h1>{e(sections.get("headline") or "")}</h1><p class="intro">{e(sections.get("intro") or "")}</p>
@@ -365,10 +392,11 @@ def render(
     return page(sections.get("headline") or product["name"], body, banner)
 
 
-def page(title: str, body: str, banner: str | None = None) -> str:
+def page(title: str, body: str, banner: str | None = None, *, index: bool = False) -> str:
     e = html.escape
+    robots = "index,follow" if index else "noindex,nofollow"
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>{e(title)}</title>
+<meta name="robots" content="{robots}"><meta name="referrer" content="no-referrer"><title>{e(title)}</title>
 <style>{CSS}{SHOP_CSS}</style></head><body><main>
 {f'<div class="banner">{e(banner)}</div>' if banner else ""}
 {body}
@@ -382,22 +410,40 @@ SHOP_CSS = """.shop-h{margin:16px 0 4px;font-size:24px}.grid{display:grid;grid-t
 .notice{background:#fff;border:1px solid #e3e2dc;border-radius:12px;padding:10px 12px;font-size:13px;color:#33372f;margin-top:10px}"""
 
 
-def shop_page(eng, seller_id: str, *, banner: str) -> str:
-    """셀러의 승인된 최신 상세페이지들 — 목록 타일 + 상품별 본문(같은 화면 아래). 판매 중이 아닌 상품은 뺀다."""
+def shop_items(eng, seller_id: str, *, on_sale_only: bool = False) -> list[tuple[dict, dict]]:
+    """미니숍에 올라갈 (상품 보기, 상세페이지) — 승인된 상품 · 판매 켬 · 승인된 최신 상세페이지.
+    on_sale_only 면 품절도 뺀다 (고객 공개·UCP)."""
+    with eng.connect() as c:
+        rows = {r["product_id"]: r for r in c.execute(select(products.t_product)
+                                                       .where(products.t_product.c.seller_id == seller_id)).mappings()}  # fmt: skip
+    on = products.listing_of(eng, seller_id)
+    sold = {}
+    if on_sale_only:
+        from app.services.seller import scm
+
+        scm.meta.create_all(eng)
+        sold = {k: v.get("sold_out", False) for k, v in scm.stock_of(eng, seller_id).items()}
+    out = []
+    for d in approved_for(eng, seller_id):
+        pr = rows.get(d["product_id"])
+        if pr is None or pr["status"] != "approved" or not on.get(pr["product_id"], True):
+            continue
+        if on_sale_only and sold.get(pr["product_id"]):
+            continue
+        out.append((products._view(pr, operator=False), d))
+    return out
+
+
+def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = None) -> str:
+    """셀러의 승인된 최신 상세페이지들 — 목록 타일 + 상품별 본문(같은 화면 아래). 판매 중이 아닌 상품은 뺀다.
+    public: 고객 공개 화면의 고지 {top, buy, seller_box(html), footer(html), index} — 없으면 미리보기."""
     e = html.escape
     with eng.connect() as c:
         s = c.execute(select(store.t_seller).where(store.t_seller.c.seller_id == seller_id)).mappings().first()
         if s is None:
             raise DetailError("없는 셀러예요")
-        rows = {r["product_id"]: r for r in c.execute(select(products.t_product)
-                                                       .where(products.t_product.c.seller_id == seller_id)).mappings()}  # fmt: skip
-    on = products.listing_of(eng, seller_id)
     tiles, arts = [], []
-    for d in approved_for(eng, seller_id):
-        pr = rows.get(d["product_id"])
-        if pr is None or pr["status"] != "approved" or not on.get(pr["product_id"], True):
-            continue
-        pv = products._view(pr, operator=False)
+    for pv, d in shop_items(eng, seller_id, on_sale_only=public is not None):
         sec, inp = d["sections"] or {}, d["inputs"] or {}
         img = next(
             (
@@ -411,12 +457,19 @@ def shop_page(eng, seller_id: str, *, banner: str) -> str:
                      + (f'<img src="{e(img)}" alt="" loading="lazy" referrerpolicy="no-referrer">' if img else "")
                      + f'<b>{e(sec.get("headline") or pv["name"])}</b><span class="foot">{e(pv["name"])} {e(pv["volume"])}</span></a>')  # fmt: skip
         arts.append(f'<article id="p-{e(pv["product_id"])}">'
-                    + render(pv, inp, sec, status=d["status"], made_by=d["made_by"], fragment=True) + "</article>")  # fmt: skip
-    body = (f'<h1 class="shop-h">{e(s["name"])}</h1>'
-            f'<p class="notice">이 화면의 상품은 {e(s["name"])}이(가) 판매해요. 주문·결제·배송·교환·환불은 각 판매처에서 진행되고, '
-            "commerce_ai 는 판매 당사자가 아니에요. (통신판매중개자 고지 문구는 법률 검토 뒤 확정)</p>"
+                    + render(pv, inp, sec, status=d["status"], made_by=d["made_by"], fragment=True,
+                             buy_note=(public or {}).get("buy")) + "</article>")  # fmt: skip
+    if public:
+        top = f'<p class="notice">{e(public["top"])}</p>' + (public.get("seller_box") or "")
+    else:
+        top = (f'<p class="notice">이 화면의 상품은 {e(s["name"])}이(가) 판매해요. 주문·결제·배송·교환·환불은 각 판매처에서 진행되고, '
+               "commerce_ai 는 판매 당사자가 아니에요. (미리보기 — 고객 화면은 확정 고지 문구로 바뀌어요)</p>")  # fmt: skip
+    body = (f'<h1 class="shop-h">{e(s["name"])}</h1>' + top
             + (f'<div class="grid">{"".join(tiles)}</div>' + "".join(arts) if tiles
-               else '<p class="foot">아직 승인된 상세페이지가 없어요. 상세페이지를 만들고 검수를 받으면 여기에 모여요.</p>'))  # fmt: skip
+               else '<p class="foot">아직 승인된 상세페이지가 없어요. 상세페이지를 만들고 검수를 받으면 여기에 모여요.</p>')
+            + ((public or {}).get("footer") or ""))  # fmt: skip
+    if public:
+        return page(f"{s['name']} 미니숍", body, banner, index=bool(public.get("index")))
     return page(f"{s['name']} 미니숍", body, banner)
 
 

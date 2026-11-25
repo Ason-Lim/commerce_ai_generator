@@ -247,7 +247,8 @@ def test_not_wired_into_any_app_path_yet():
         # 2026-11-23: 관리자 화면(/admin/trends 가격 전망의 직구 견적, 2026-11-19 참고용)은 일부러 연결했다 —
         # 이 시험은 고객 경로(대화·검색·홈)에 들어가지 않는지만 본다
         rel = path.relative_to(APP).as_posix()
-        if "ucp" in path.parts or rel.startswith("admin/") or rel == ADMIN_ONLY:
+        # 2026-11-25: 우리 플랫폼 프로필 공개(/ucp/platform.json, UCP_PLATFORM_PUBLIC=1)만 shop_routes 에서 읽는다 — 판매자 호출 아님
+        if "ucp" in path.parts or rel.startswith("admin/") or rel in (ADMIN_ONLY, "api/shop_routes.py"):
             continue
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             names = ([node.module] if isinstance(node, ast.ImportFrom) and node.module else

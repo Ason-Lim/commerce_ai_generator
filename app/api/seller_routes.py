@@ -505,3 +505,33 @@ def seller_detail_preview(body: DetailIn, request: Request):
 @router.post("/seller/api/shop/view")
 def seller_shop_preview(body: KeyIn, request: Request):
     return _detail(lambda: _ok(html=detail_page.my_shop(detail_page.engine(), body.key, _client(request))))
+
+
+# ── ⑧ 미니숍 공개 — 사업자 신원정보 · 공개 동의 (2026-11-25) ──
+class BizIn(KeyIn):
+    info: dict
+
+
+class ConsentIn(KeyIn):
+    on: bool
+
+
+@router.post("/seller/api/biz")
+def seller_biz_get(body: KeyIn, request: Request):
+    from app.services.seller import shop_public
+
+    return _detail(lambda: _ok(biz=shop_public.biz_get(shop_public.engine(), body.key, _client(request))))
+
+
+@router.post("/seller/api/biz/save")
+def seller_biz_save(body: BizIn, request: Request):
+    from app.services.seller import shop_public
+
+    return _detail(lambda: _ok(biz=shop_public.biz_save(shop_public.engine(), body.key, _client(request), body.info)))
+
+
+@router.post("/seller/api/biz/consent")
+def seller_biz_consent(body: ConsentIn, request: Request):
+    from app.services.seller import shop_public
+
+    return _detail(lambda: _ok(biz=shop_public.biz_consent(shop_public.engine(), body.key, _client(request), body.on)))

@@ -3231,6 +3231,27 @@ def seller_shop_preview(seller_id: str):
                                        "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
 
 
+class _BizVerifyIn(BaseModel):
+    ok: bool
+
+
+@router.get("/admin/api/seller-biz", dependencies=[api])
+def seller_biz_list():
+    """⑧ 미니숍 공개 — 셀러 사업자 정보 · 확인 · 공개 동의 · 공개 여부, 그리고 운영사 쪽 정식 공개에 빠진 것."""
+    from app.services.seller import shop_public
+
+    return {"sellers": shop_public.biz_list(shop_public.engine()), "mode": shop_public.mode(),
+            "formal_missing": shop_public.formal_missing()}  # fmt: skip
+
+
+@router.post("/admin/api/seller-biz/{seller_id}/verify", dependencies=[api])
+def seller_biz_verify(seller_id: str, body: _BizVerifyIn):
+    from app.services.seller import shop_public, store
+
+    return {"ok": True, "biz": _seller_call(store, lambda: shop_public.biz_verify(shop_public.engine(), seller_id,
+                                                                                ok=body.ok, by="operator"))}  # fmt: skip
+
+
 DETAIL_CSP = "default-src 'none'; img-src https:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 
 
