@@ -60,10 +60,28 @@ class _Days:
 
     def __init__(self, rank_dir: str | Path):
         self.files = period.rank_files(rank_dir)
+        self._memo: dict[str, dict[str, int] | None] = {}
 
     def get(self, d: dt.date) -> dict[str, int] | None:
-        p = self.files.get(d.isoformat())
-        return period.read_ranks(p) if p else None
+        # 2026-11-25: 같은 날 파일을 여러 번 읽지 않게(트렌드 변화 탭 8주 계산이 운영 맥에서 30초 걸렸음)
+        k = d.isoformat()
+        if k not in self._memo:
+            p = self.files.get(k)
+            self._memo[k] = period.read_ranks(p) if p else None
+        return self._memo[k]
+
+
+_DAYS_CACHE: dict = {}
+
+
+def days_for(rank_dir: str | Path) -> _Days:
+    """같은 순위 폴더·같은 파일 목록이면 읽어 둔 _Days 를 다시 쓴다(파일이 늘면 새로). 하나만 보관."""
+    files = period.rank_files(rank_dir)
+    key = (str(rank_dir), len(files), max(files) if files else "")
+    if _DAYS_CACHE.get("key") != key:
+        _DAYS_CACHE.clear()
+        _DAYS_CACHE.update(key=key, days=_Days(rank_dir))
+    return _DAYS_CACHE["days"]
 
 
 def _best(days: _Days, start: dt.date, end: dt.date, *, limit: dt.date) -> dict[str, int]:

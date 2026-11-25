@@ -35,7 +35,7 @@ def default_as_of(rank_dir) -> dt.date | None:
 
 def report(rank_dir: str | Path, as_of: dt.date, *, rows: list[dict] | None = None, limit: int = 30) -> dict:
     rows = cal.load() if rows is None else rows
-    days = bt._Days(rank_dir)
+    days = bt.days_for(rank_dir)
     got = bt.population(days, as_of)
     if got is None:
         return {"as_of": as_of.isoformat(), "status": "no_data", "note": "기준일 최근 7일 순위 파일이 없어요"}
