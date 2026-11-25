@@ -9,7 +9,7 @@
 <style>
 :root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--err:#b3261e;--err-s:#fde9e7;--warn:#9a5b00;--warn-s:#fff4dc}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif}
-main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
 header h1{font-size:22px;margin:0 0 4px}header p{margin:0;color:var(--ink2);font-size:13.5px}
 .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
 h2{font-size:17px;margin:0 0 8px}
@@ -25,6 +25,12 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}dt{color:va
 .msg{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
 .msg.ok{background:var(--accent-s)}.msg.err{background:var(--err-s);color:var(--err)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12.5px;color:var(--ink2);font-weight:600}td.num{text-align:right;white-space:nowrap}
+.src{font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 6px;white-space:nowrap;background:var(--warn-s);color:var(--warn)}.src.v{background:var(--accent-s);color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+textarea{width:100%;min-height:120px;font:13px/1.5 ui-monospace,Menlo,monospace;padding:10px;border:1px solid var(--line);border-radius:12px}
+button.sub{background:#fff;color:var(--ink);border:1px solid var(--line);padding:6px 14px;font-weight:600}
 footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
 </style>
 </head>
@@ -51,7 +57,38 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
         <dt>상태</dt><dd><span id="s_status" class="badge"></span></dd>
         <dt>담당자</dt><dd id="s_contact"></dd>
       </dl>
-      <p class="note">입점 승인·정지는 운영팀이 직접 정해요. 상품 등록은 다음 단계에서 열려요.</p>
+      <p class="note">입점 승인·정지는 운영팀이 직접 정해요.</p>
+    </section>
+
+
+    <section class="box" aria-labelledby="pr-h">
+      <h2 id="pr-h">내 상품</h2>
+      <p class="note">새로 올리거나 고친 상품은 운영팀 검수를 거쳐요. 원산지·인증·당도는 처음엔 <b>판매자 표기</b>로 두고, 운영팀이 서류로 확인한 칸만 <b>확인됨</b>으로 바뀌어요. 표기를 고치면 그 칸의 확인은 다시 받아야 해요. 승인된 상품이 손님 화면에 언제 보일지는 운영팀이 따로 알려 드려요.</p>
+      <div style="overflow-x:auto"><table><thead><tr><th>상품</th><th class="num">가격</th><th>표기</th><th>상태</th><th></th></tr></thead><tbody id="plist"></tbody></table></div>
+    </section>
+
+    <section class="box" aria-labelledby="pf-h">
+      <h2 id="pf-h">상품 올리기</h2>
+      <form id="pForm">
+        <div class="grid2">
+          <div class="field"><label for="p_name">상품명 *</label><input id="p_name" maxlength="80"></div>
+          <div class="field"><label for="p_volume">용량</label><input id="p_volume" maxlength="40" placeholder="예: 5kg"></div>
+          <div class="field"><label for="p_price">가격(원) *</label><input id="p_price" inputmode="numeric" maxlength="10"></div>
+          <div class="field"><label for="p_ship">배송비(원)</label><input id="p_ship" inputmode="numeric" maxlength="6" placeholder="비우면 '판매처 확인'"></div>
+          <div class="field"><label for="p_origin">원산지</label><input id="p_origin" maxlength="40"></div>
+          <div class="field"><label for="p_cert">인증 표기</label><input id="p_cert" maxlength="60" placeholder="예: 무농약, GAP"></div>
+          <div class="field"><label for="p_brix">당도(브릭스)</label><input id="p_brix" inputmode="decimal" maxlength="5"></div>
+          <div class="field"><label for="p_url">판매처 주소</label><input id="p_url" maxlength="300" placeholder="https://"></div>
+        </div>
+        <div class="row"><button type="submit" id="pSave">올리기</button><button type="button" class="sub" id="pCancel" hidden>고치기 그만</button></div>
+      </form>
+      <div id="pMsg" role="status"></div>
+      <details style="margin-top:16px"><summary>CSV 로 한꺼번에 올리기</summary>
+        <p class="note">첫 줄은 칸 이름이에요. 한 줄이라도 틀리면 아무것도 올라가지 않고, 틀린 줄을 알려 드려요(한 번에 300줄까지).</p>
+        <label for="csv" class="note">CSV 내용</label><textarea id="csv" spellcheck="false"></textarea>
+        <div class="row"><button type="button" id="csvBtn">CSV 올리기</button></div>
+        <div id="csvMsg" role="status"></div>
+      </details>
     </section>
 
     <section class="box" aria-labelledby="ct-h">
@@ -90,8 +127,51 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
     if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller);
+    KEY = code; show(j.seller); loadProducts();
   }
+
+  let EDIT = null, PRODS = [];
+  const won = (n) => n == null ? "" : Number(n).toLocaleString("ko-KR") + "원";
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  async function loadProducts(){
+    const j = await post("/seller/api/products", {key: KEY});
+    if (!j.ok) return;
+    PRODS = j.products;
+    if (!$("csv").value) $("csv").value = j.csv_template;
+    $("plist").innerHTML = PRODS.length ? PRODS.map((p) => `<tr><td>${esc(p.name)}<div class="note">${esc(p.volume)}</div></td><td class="num">${won(p.price)}</td>
+      <td>${p.facts.map((f) => `<span class="src${f.source === "verified" ? " v" : ""}">${esc(f.label)} ${esc(f.value)} · ${esc(f.source_label)}</span>`).join(" ")}</td>
+      <td style="white-space:nowrap">${esc(p.status_label)}${p.review_note ? `<div class="note">${esc(p.review_note)}</div>` : ""}</td>
+      <td><button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button> ${p.status !== "withdrawn" ? `<button type="button" class="sub" data-stop="${esc(p.product_id)}">판매 중지</button>` : ""}</td></tr>`).join("")
+      : '<tr><td colspan="5" class="note">아직 올린 상품이 없어요</td></tr>';
+    document.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => edit(PRODS.find((p) => p.product_id === b.dataset.edit)));
+    document.querySelectorAll("[data-stop]").forEach((b) => b.onclick = async () => {
+      if (!confirm("이 상품 판매를 멈출까요? 다시 고치면 검수를 받아요.")) return;
+      await post("/seller/api/products/withdraw", {key: KEY, product_id: b.dataset.stop}); loadProducts();
+    });
+  }
+  const PF = {name:"p_name", volume:"p_volume", price:"p_price", ship_fee:"p_ship", origin:"p_origin", cert:"p_cert", brix:"p_brix", sale_url:"p_url"};
+  function edit(p){
+    EDIT = p.product_id;
+    const v = {...p, ...p.declared};
+    for (const [k, id] of Object.entries(PF)) $(id).value = v[k] ?? "";
+    $("pSave").textContent = "고친 내용 올리기"; $("pCancel").hidden = false; $("p_name").focus();
+  }
+  function resetForm(){ EDIT = null; for (const id of Object.values(PF)) $(id).value = ""; $("pSave").textContent = "올리기"; $("pCancel").hidden = true; }
+  $("pCancel").onclick = resetForm;
+  $("pForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fields = {}; for (const [k, id] of Object.entries(PF)) fields[k] = $(id).value.trim();
+    if (fields.ship_fee === "") fields.ship_fee = null; if (fields.brix === "") fields.brix = null;
+    const j = await post("/seller/api/products/save", {key: KEY, product_id: EDIT, fields});
+    if (!j.ok) { msg($("pMsg"), j.error || (j.detail ? "입력을 확인해 주세요" : "저장하지 못했어요"), "err"); return; }
+    msg($("pMsg"), "올렸어요. 운영팀 검수를 기다려 주세요.", "ok"); resetForm(); loadProducts();
+  });
+  $("csvBtn").onclick = async () => {
+    const j = await post("/seller/api/products/csv", {key: KEY, csv: $("csv").value});
+    if (j.ok) { msg($("csvMsg"), `${j.added}개를 올렸어요. 운영팀 검수를 기다려 주세요.`, "ok"); loadProducts(); return; }
+    msg($("csvMsg"), j.errors ? j.errors.map((x) => `${x.line}번째 줄: ${x.error}`).join("\n") : (j.error || "올리지 못했어요"), "err");
+    $("csvMsg").querySelector(".msg").style.whiteSpace = "pre-line";
+  };
   // # 뒤 코드는 서버로 가지 않는다 — 읽자마자 주소창에서 지운다
   const m = location.hash.match(/k=([A-Za-z0-9_-]{24})/);
   if (m) { history.replaceState(null, "", location.pathname); enter(m[1]); }

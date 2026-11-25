@@ -3143,3 +3143,47 @@ def seller_status(seller_id: str, body: _SellerStatusIn):
     store, eng = _seller()
     got = _seller_call(store, lambda: store.set_status(eng, seller_id, body.status, by="operator", reason=body.reason))
     return {"ok": True, "seller": got}
+
+
+
+# ── 셀러 상품 검수 ② (창 5, 2026-11-25) — 판매자 표기 / 확인됨 분리, 승인·반려·확인은 운영자만. 고객 화면 노출 없음 ──
+class _SellerVerifyIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: Literal["origin", "cert", "brix"]
+    value: str | float | None = None
+    note: str = Field("", max_length=200)
+
+
+class _SellerReviewIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    decision: Literal["approved", "rejected"]
+    note: str = Field("", max_length=200)
+
+
+@router.get("/admin/seller")
+def admin_seller_page(request: Request):
+    return _page(request, WEB / "seller.html")
+
+
+@router.get("/admin/api/seller-products", dependencies=[api])
+def seller_products_queue(status: str = Query("pending", pattern="^(pending|approved|rejected|withdrawn|all)$"),
+                          seller_id: str | None = Query(None, max_length=12)):  # fmt: skip
+    from app.services.seller import products
+
+    return {"products": products.queue(products.engine(), status, seller_id), "statuses": products.STATUSES}
+
+
+@router.post("/admin/api/seller-products/{product_id}/verify", dependencies=[api])
+def seller_product_verify(product_id: str, body: _SellerVerifyIn):
+    from app.services.seller import products, store
+
+    return {"ok": True, "product": _seller_call(store, lambda: products.verify(products.engine(), product_id, body.key,
+                                                                               body.value, by="operator", note=body.note))}  # fmt: skip
+
+
+@router.post("/admin/api/seller-products/{product_id}/review", dependencies=[api])
+def seller_product_review(product_id: str, body: _SellerReviewIn):
+    from app.services.seller import products, store
+
+    return {"ok": True, "product": _seller_call(store, lambda: products.review(products.engine(), product_id, body.decision,
+                                                                               by="operator", note=body.note))}  # fmt: skip
