@@ -463,7 +463,7 @@ def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = 
         top = f'<p class="notice">{e(public["top"])}</p>' + (public.get("seller_box") or "")
     else:
         top = (f'<p class="notice">이 화면의 상품은 {e(s["name"])}이(가) 판매해요. 주문·결제·배송·교환·환불은 각 판매처에서 진행되고, '
-               "commerce_ai 는 판매 당사자가 아니에요. (미리보기 — 고객 화면은 확정 고지 문구로 바뀌어요)</p>")  # fmt: skip
+               "trendguide 는 판매 당사자가 아니에요. (미리보기 — 고객 화면은 확정 고지 문구로 바뀌어요)</p>")  # fmt: skip
     body = (f'<h1 class="shop-h">{e(s["name"])}</h1>' + top
             + (f'<div class="grid">{"".join(tiles)}</div>' + "".join(arts) if tiles
                else '<p class="foot">아직 승인된 상세페이지가 없어요. 상세페이지를 만들고 검수를 받으면 여기에 모여요.</p>')

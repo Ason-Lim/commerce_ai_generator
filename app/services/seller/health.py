@@ -194,6 +194,6 @@ def daily_check(eng, *, at: datetime | None = None) -> dict:
             flagged.append(r["name"])
     how = None
     if flagged:
-        how = _notify("commerce_ai 셀러 알림", f"죽은 몰 후보 {len(flagged)}곳: {', '.join(flagged[:3])}" + (" 외" if len(flagged) > 3 else "")
+        how = _notify("trendguide 셀러 알림", f"죽은 몰 후보 {len(flagged)}곳: {', '.join(flagged[:3])}" + (" 외" if len(flagged) > 3 else "")
                       + " — 관리자 '셀러' 화면에서 확인")  # fmt: skip
     return {"flagged": flagged, "notified": how, "watch": sum(1 for r in rep["sellers"] if r["level"] == "watch")}

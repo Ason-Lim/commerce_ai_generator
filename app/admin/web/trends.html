@@ -150,7 +150,7 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <h2 id="req-h">쇼핑커넥트 발급 요청 <span class="pill p-hold" id="req-n" hidden></span></h2>
     <p class="lede">등록 링크가 없는 급상승 식품과 고객 검색어예요 — <b>발급할 키워드 할 일 목록</b>이에요. 요청 횟수가 많은 것부터 하세요. 주류는 올리지 않아요.
     <br><b>발급하는 법 (크롬 확장 'bc-to-registry')</b>: ① 줄의 <b>브랜드커넥트에서 찾기</b> → 그 키워드의 브랜드커넥트 검색 결과가 바로 열려요
-    → ② 상품의 <b>링크 발급</b> → ③ 오른쪽 아래 'commerce_ai 등록부' 창에서 <b>등록부에 저장</b>.
+    → ② 상품의 <b>링크 발급</b> → ③ 오른쪽 아래 'trendguide 등록부' 창에서 <b>등록부에 저장</b>.
     (검색칸에 다른 말로 찾을 때는 키워드가 복사돼 있으니 <kbd>⌘V</kbd>(Windows: <kbd>Ctrl+V</kbd>)로 붙여 넣으세요.)
     확장 창 키워드가 이 목록 키워드와 <b>글자까지 같으면</b> 요청이 저절로 '발급 완료'가 돼요(다르게 저장했으면 <b>발급 완료</b>를 눌러 정리).
     한 창 안에서 반반으로 보려면 크롬 툴바의 초록 <b>등</b> 아이콘(분할 화면). 브랜드커넥트 탭으로 오가기: <kbd>⌘⌥←</kbd>/<kbd>⌘⌥→</kbd> (Windows: <kbd>Ctrl+PgUp</kbd>/<kbd>Ctrl+PgDn</kbd>).
@@ -665,8 +665,8 @@ function openBrandconnect(q,note,kw){   // q = 브랜드커넥트에서 찾을 �
   if(kw){try{navigator.clipboard&&navigator.clipboard.writeText(kw)}catch(e){}}
   const w=window.open(bcSearchUrl(q),"bc-issue");
   if(!w){note.textContent="팝업이 막혔어요 — 주소창 오른쪽의 팝업 허용을 눌러 주세요.";return}
-  note.textContent=q?`브랜드커넥트에서 '${q.slice(0,40)}' 검색 결과를 열었어요 → 링크 발급 → 오른쪽 아래 'commerce_ai 등록부'에서 저장. 확장 창 키워드를 '${kw}'(복사해 둠)로 두면 발급 요청도 저절로 정리돼요.`
-    :"브랜드커넥트를 열었어요. 발급한 뒤 오른쪽 아래 'commerce_ai 등록부'에서 저장하세요."}
+  note.textContent=q?`브랜드커넥트에서 '${q.slice(0,40)}' 검색 결과를 열었어요 → 링크 발급 → 오른쪽 아래 'trendguide 등록부'에서 저장. 확장 창 키워드를 '${kw}'(복사해 둠)로 두면 발급 요청도 저절로 정리돼요.`
+    :"브랜드커넥트를 열었어요. 발급한 뒤 오른쪽 아래 'trendguide 등록부'에서 저장하세요."}
 $("#bc-open").onclick=()=>openBrandconnect($("#bc-kw").value.trim(),$("#bc-note"));
 $("#link-save").onclick=async()=>{const rows=[...$("#link-rows").children].map(r=>Object.fromEntries([...r.querySelectorAll("input")].map(i=>[i.name,i.value.trim()])))
     .filter(r=>r.product_name||r.link);
