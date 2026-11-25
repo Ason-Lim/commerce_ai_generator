@@ -147,6 +147,13 @@ tbody tr{cursor:default}
     <div id="codeOut" class="code-out" hidden role="status"></div>
   </section>
 
+  <section class="panel" aria-labelledby="dd-h" style="margin-top:14px">
+    <h3 id="dd-h">죽은 몰 후보 · 주의</h3>
+    <p class="basis" style="margin-top:0" id="ddRule"></p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>단계</th><th class="num">변화 없음</th><th class="num">30일 주문</th><th>클릭(30일)</th><th>이유</th></tr></thead><tbody id="dormant"></tbody></table></div>
+    <div id="noEntry" class="basis"></div>
+  </section>
+
   <section class="panel" aria-labelledby="al-h" style="margin-top:14px">
     <h3 id="al-h">품절 · 출고 지연 알림</h3>
     <p class="basis" style="margin-top:0">셀러별 숫자만 보여요(받는 분 정보 없음). 지연 = 주문일 뒤 2영업일 넘게 송장 없음.</p>
@@ -211,7 +218,11 @@ $("#createBtn").onclick=async()=>{try{await post("/admin/api/seller",{name:$("#n
 async function loadAlerts(){let d;try{d=await api("/admin/api/seller-alerts")}catch(e){return err(e)}
   $("#alerts").innerHTML=d.alerts.length?d.alerts.map(a=>`<tr style="cursor:default"><td>${esc(a.name)} <small style="color:var(--ink3)">${esc(a.status_label)}</small></td><td>${a.sold_out.map(x=>esc(x.name)+(x.restock_on?` (${esc(x.restock_on)} 입고)`:"")).join(", ")||"—"}</td>
    <td class="num"${a.delayed_orders?' style="color:var(--ex);font-weight:700"':""}>${a.delayed_orders}</td><td class="num">${a.new_orders}</td><td class="num">${a.no_tracking}</td></tr>`).join(""):'<tr><td colspan="5" class="empty">챙길 일이 없어요</td></tr>'}
-loadSellers();loadQueue();loadAlerts();
+async function loadDormant(){let d;try{d=await api("/admin/api/seller-health")}catch(e){return err(e)}const r=d.rules;
+  $("#ddRule").textContent=`죽은 몰 후보 = 상품 변화·'그대로예요' 확인이 ${r.dead_days}일 없고 + 최근 ${r.window}일 판매 없음 + 클릭 없음(측정 전이면 이 조건은 빼고 봄). 주의 = 신호 둘 이상. 승인 ${r.new_grace}일 안의 새 셀러는 뺌. 정지·종료는 사람이 정해요 — 위 셀러 목록에서.`;
+  $("#dormant").innerHTML=d.sellers.length?d.sellers.map(x=>`<tr style="cursor:default"><td>${esc(x.name)}</td><td><span class="st ${x.level==="dead"?"st-rejected":"st-pending"}">${esc(x.level_label)}</span></td><td class="num">${x.change_days}일</td><td class="num">${x.orders_30}</td><td>${x.clicks_30==null?"측정 전":x.clicks_30}</td><td>${x.reasons.map(esc).join(" · ")}</td></tr>`).join(""):'<tr><td colspan="6" class="empty">죽은 몰 후보·주의 셀러가 없어요</td></tr>';
+  $("#noEntry").textContent=d.no_entry.length?`초대 뒤 ${r.no_entry_days}일 넘게 한 번도 안 들어온 셀러: `+d.no_entry.map(x=>`${x.name}(${x.days}일)`).join(", "):""}
+loadSellers();loadQueue();loadAlerts();loadDormant();
 </script>
 </body>
 </html>

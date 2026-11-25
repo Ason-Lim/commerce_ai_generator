@@ -63,7 +63,9 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
 
     <section class="box" aria-labelledby="pr-h">
       <h2 id="pr-h">내 상품</h2>
-      <p class="note">새로 올리거나 고친 상품은 운영팀 검수를 거쳐요. 원산지·인증·당도는 처음엔 <b>판매자 표기</b>로 두고, 운영팀이 서류로 확인한 칸만 <b>확인됨</b>으로 바뀌어요. 표기를 고치면 그 칸의 확인은 다시 받아야 해요. 승인된 상품이 손님 화면에 언제 보일지는 운영팀이 따로 알려 드려요.</p>
+      <div id="askConfirm" class="msg ok" hidden style="margin:0 0 10px"><span id="askText"></span> <button type="button" class="sub" id="confirmBtn">상품 정보 그대로예요</button></div>
+      <p class="note">판매를 켜고 끄는 건 언제든 바로 돼요(검수 없음). 새로 올리거나 내용을 고친 상품만 운영팀 검수를 거쳐요. 원산지·인증·당도는 처음엔 <b>판매자 표기</b>로 두고, 운영팀이 서류로 확인한 칸만 <b>확인됨</b>으로 바뀌어요. 표기를 고치면 그 칸의 확인은 다시 받아야 해요. 승인된 상품이 손님 화면에 언제 보일지는 운영팀이 따로 알려 드려요.</p>
+      <div class="row" style="margin:0 0 8px"><button type="button" class="sub" id="allOff">모두 판매 끄기</button><button type="button" class="sub" id="allOn">모두 판매 켜기</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>상품</th><th class="num">가격</th><th>표기</th><th>상태</th><th>재고·공급사</th><th></th></tr></thead><tbody id="plist"></tbody></table></div>
     </section>
 
@@ -168,7 +170,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
     if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller); await loadScm(); loadProducts();
+    KEY = code; show(j.seller); await loadScm(); loadProducts(); loadHealth();
   }
 
   let EDIT = null, PRODS = [];
@@ -181,15 +183,14 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     if (!$("csv").value) $("csv").value = j.csv_template;
     $("plist").innerHTML = PRODS.length ? PRODS.map((p) => `<tr><td>${esc(p.name)}<div class="note">${esc(p.volume)}</div></td><td class="num">${won(p.price)}</td>
       <td>${p.facts.map((f) => `<span class="src${f.source === "verified" ? " v" : ""}">${esc(f.label)} ${esc(f.value)} · ${esc(f.source_label)}</span>`).join(" ")}</td>
-      <td style="white-space:nowrap">${esc(p.status_label)}${p.review_note ? `<div class="note">${esc(p.review_note)}</div>` : ""}</td>
+      <td style="white-space:nowrap"><b${p.sale_state === "on_sale" ? ' style="color:var(--accent)"' : ""}>${esc(p.sale_label)}</b>${p.review_note ? `<div class="note">${esc(p.review_note)}</div>` : ""}</td>
       <td>${stockCell(p.product_id)}</td>
-      <td><button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button> ${p.status !== "withdrawn" ? `<button type="button" class="sub" data-stop="${esc(p.product_id)}">판매 중지</button>` : ""}</td></tr>`).join("")
+      <td><button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button> <button type="button" class="sub" data-on="${p.on ? 0 : 1}" data-pid="${esc(p.product_id)}">${p.on ? "판매 끄기" : "판매 켜기"}</button></td></tr>`).join("")
       : '<tr><td colspan="6" class="note">아직 올린 상품이 없어요</td></tr>';
     bindStock();
     document.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => edit(PRODS.find((p) => p.product_id === b.dataset.edit)));
-    document.querySelectorAll("[data-stop]").forEach((b) => b.onclick = async () => {
-      if (!confirm("이 상품 판매를 멈출까요? 다시 고치면 검수를 받아요.")) return;
-      await post("/seller/api/products/withdraw", {key: KEY, product_id: b.dataset.stop}); loadProducts();
+    document.querySelectorAll("[data-pid]").forEach((b) => b.onclick = async () => {
+      await post("/seller/api/products/listing", {key: KEY, product_id: b.dataset.pid, on: b.dataset.on === "1"}); loadProducts(); loadHealth();
     });
   }
   const PF = {name:"p_name", volume:"p_volume", price:"p_price", ship_fee:"p_ship", origin:"p_origin", cert:"p_cert", brix:"p_brix", sale_url:"p_url"};
@@ -288,6 +289,16 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     msg($("sMsg"), j.ok ? "저장했어요" : j.error, j.ok ? "ok" : "err");
     if (j.ok) { ["s_name","s_cname","s_cmail","s_cphone"].forEach((id) => $(id).value = ""); await loadScm(); loadProducts(); }
   });
+
+  async function loadHealth(){
+    const j = await post("/seller/api/health", {key: KEY});
+    if (!j.ok) return;
+    $("askConfirm").hidden = !j.health.ask_confirm;
+    $("askText").textContent = `${j.health.change_days}일 동안 상품 정보가 바뀌지 않았어요. 지금도 그대로 팔고 있다면 확인을 눌러 주세요.`;
+  }
+  $("confirmBtn").onclick = async () => { await post("/seller/api/confirm", {key: KEY}); loadHealth(); };
+  $("allOff").onclick = async () => { if (!confirm("내 상품을 모두 판매 끌까요? (휴가·재고 정리 등)")) return; await post("/seller/api/products/listing", {key: KEY, on: false}); loadProducts(); loadHealth(); };
+  $("allOn").onclick = async () => { await post("/seller/api/products/listing", {key: KEY, on: true}); loadProducts(); loadHealth(); };
   // # 뒤 코드는 서버로 가지 않는다 — 읽자마자 주소창에서 지운다
   const m = location.hash.match(/k=([A-Za-z0-9_-]{24})/);
   if (m) { history.replaceState(null, "", location.pathname); enter(m[1]); }

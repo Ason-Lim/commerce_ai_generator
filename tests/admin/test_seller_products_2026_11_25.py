@@ -165,9 +165,8 @@ def test_review_rules(eng):
     got = prod.review(eng, p["product_id"], "rejected", by="operator", note="원산지 서류가 필요해요")
     assert got["status"] == "rejected"
     assert prod.list_mine(eng, k, IP)[0]["review_note"] == "원산지 서류가 필요해요"
-    prod.withdraw(eng, k, IP, p["product_id"])
-    with pytest.raises(sel.SellerError, match="판매를 멈춘"):
-        prod.review(eng, p["product_id"], "rejected", by="operator", note="x")
+    off = prod.withdraw(eng, k, IP, p["product_id"])  # 판매 끄기(2026-11-25) — 검수 상태는 그대로
+    assert off["status"] == "rejected" and off["on"] is False
 
 
 def test_admin_api_queue_verify_review(client, eng):

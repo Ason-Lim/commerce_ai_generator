@@ -6,7 +6,10 @@
   POST /seller/api/products         {key} → 내 상품 목록 (판매자 표기 / 확인됨 구분)
   POST /seller/api/products/save    {key, product_id?, fields} → 새 상품·고치기 (→ 검수 대기)
   POST /seller/api/products/csv     {key, csv} → 한꺼번에 등록 (한 줄이라도 틀리면 저장 안 함)
-  POST /seller/api/products/withdraw {key, product_id} → 판매 중지
+  POST /seller/api/products/withdraw {key, product_id} → 판매 끄기 (옛 이름)
+  POST /seller/api/products/listing {key, product_id?, on} → 판매 켜기·끄기 (검수 없음, product_id 없으면 모두)
+  POST /seller/api/health           {key} → '상품 정보 그대로예요' 확인 요청 여부
+  POST /seller/api/confirm          {key} → '상품 정보 그대로예요'
   ── ③ SCM (2026-11-25) ──
   POST /seller/api/stock            {key, product_id, stock?, sold_out, restock_on?} → 재고·품절
   POST /seller/api/suppliers        {key} → 내 공급사 · 상품별 공급사 연결 · 재고
@@ -34,7 +37,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.corpmall_routes import NOINDEX, _client
-from app.services.seller import products, scm, store
+from app.services.seller import health, products, scm, store
 
 router = APIRouter(tags=["seller"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "seller" / "web" / "seller.html"
@@ -120,7 +123,7 @@ class ProductIdIn(BaseModel):
 @router.post("/seller/api/products")
 def seller_products(body: KeyIn, request: Request):
     try:
-        got = products.list_mine(products.engine(), body.key, _client(request))
+        got = products.list_mine(scm.engine(), body.key, _client(request))
         return JSONResponse({"ok": True, "products": got, "csv_template": products.csv_template()}, headers=NOINDEX)
     except store.SellerError as e:
         return _err(e)
@@ -147,7 +150,7 @@ def seller_product_csv(body: ProductCsvIn, request: Request):
 @router.post("/seller/api/products/withdraw")
 def seller_product_withdraw(body: ProductIdIn, request: Request):
     try:
-        got = products.withdraw(products.engine(), body.key, _client(request), body.product_id)
+        got = products.withdraw(scm.engine(), body.key, _client(request), body.product_id)
         return JSONResponse({"ok": True, "product": got}, headers=NOINDEX)
     except store.SellerError as e:
         return _err(e)
@@ -283,5 +286,38 @@ async def seller_tracking(
         return _err(store.SellerError("파일은 2MB 까지 올릴 수 있어요"))
     try:
         return _ok(**scm.upload_tracking(scm.engine(), key, _client(request), file.filename or "", data))
+    except store.SellerError as e:
+        return _err(e)
+
+
+# ── 판매 켜기·끄기 · 죽은 몰 확인 (2026-11-25) ──
+class ListingIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    product_id: str | None = Field(None, max_length=12)
+    on: bool
+
+
+@router.post("/seller/api/products/listing")
+def seller_listing(body: ListingIn, request: Request):
+    try:
+        n = products.set_listing(scm.engine(), body.key, _client(request), body.product_id, body.on)
+        return _ok(changed=n)
+    except store.SellerError as e:
+        return _err(e)
+
+
+@router.post("/seller/api/health")
+def seller_health(body: KeyIn, request: Request):
+    try:
+        return _ok(health=health.my_health(scm.engine(), body.key, _client(request)))
+    except store.SellerError as e:
+        return _err(e)
+
+
+@router.post("/seller/api/confirm")
+def seller_confirm(body: KeyIn, request: Request):
+    try:
+        return _ok(health=health.confirm_unchanged(scm.engine(), body.key, _client(request)))
     except store.SellerError as e:
         return _err(e)
