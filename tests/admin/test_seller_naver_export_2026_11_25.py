@@ -92,3 +92,36 @@ def test_naver_file_needs_naver_base(eng):
     _s, k = _seller(eng, channel="coupang")
     with pytest.raises(sel.SellerError, match="네이버"):
         catalog.import_std_csv(eng, k, IP, "coupang", csv_of(row()))
+
+
+# ── 몰 주소 (관리자 셀러 목록 '몰' 칸, 2026-11-25) ──
+def test_store_url_fills_product_links_and_shows_in_admin_list(eng):
+    from app.main import app
+
+    catalog.t_store.create(eng, checkfirst=True)
+    with eng.begin() as c:
+        c.execute(catalog.t_store.delete())
+    s, k = _seller(eng)
+    catalog.import_std_csv(eng, k, IP, "naver", csv_of(row(), row(**{"상품번호(스마트스토어)": "1002"})))
+    assert {p["sale_url"] for p in prod.list_mine(eng, k, IP)} == {""}
+    with pytest.raises(sel.SellerError):
+        catalog.set_store_url(eng, s["seller_id"], "https://smartstore.naver.com/renner", by="ai")
+    with pytest.raises(sel.SellerError, match="https"):
+        catalog.set_store_url(eng, s["seller_id"], "http://x.kr", by="operator")
+    c = TestClient(app)
+    H = {"X-Access-Token": "test-token"}
+    r = c.post(
+        f"/admin/api/seller/{s['seller_id']}/store", headers=H, json={"url": "https://smartstore.naver.com/renner"}
+    ).json()
+    assert r["ok"] and r["filled"] == 2
+    assert {p["sale_url"] for p in prod.list_mine(eng, k, IP)} == {
+        "https://smartstore.naver.com/renner/products/1001",
+        "https://smartstore.naver.com/renner/products/1002",
+    }
+    row_ = next(x for x in c.get("/admin/api/seller", headers=H).json()["sellers"] if x["seller_id"] == s["seller_id"])
+    assert row_["store_url"] == "https://smartstore.naver.com/renner" and row_["shop_preview"].endswith("/shop")
+    # 이후 CSV 는 처음부터 링크가 들어감
+    j = catalog.import_std_csv(eng, k, IP, "naver", csv_of(row(), row(**{"상품번호(스마트스토어)": "1003"})))
+    assert not any("몰 주소" in x for x in j["notes"])
+    assert "https://smartstore.naver.com/renner/products/1003" in {p["sale_url"] for p in prod.list_mine(eng, k, IP)}
+    assert catalog.store_slug("https://brand.naver.com/abc/") == "abc" and catalog.store_slug("https://x.kr") == ""

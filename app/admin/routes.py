@@ -3105,7 +3105,24 @@ def _seller_call(store, fn):
 @router.get("/admin/api/seller", dependencies=[api])
 def seller_list():
     store, eng = _seller()
-    return {"sellers": store.list_sellers(eng)}
+    from app.services.seller import catalog
+
+    links = catalog.store_urls(catalog.engine())
+    return {"sellers": [dict(x, store_url=links.get(x["seller_id"], ""), shop_preview=f"/admin/seller/{x['seller_id']}/shop")
+                        for x in store.list_sellers(eng)]}  # fmt: skip
+
+
+class _StoreUrlIn(BaseModel):
+    url: str = Field("", max_length=300)
+
+
+@router.post("/admin/api/seller/{seller_id}/store", dependencies=[api])
+def seller_store_url(seller_id: str, body: _StoreUrlIn):
+    """셀러 몰(판매처) 주소 — 스마트스토어면 연동 상품의 빈 판매처 링크도 채운다 (2026-11-25)."""
+    store, _eng = _seller()
+    from app.services.seller import catalog
+
+    return {"ok": True, **_seller_call(store, lambda: catalog.set_store_url(catalog.engine(), seller_id, body.url, by="operator"))}
 
 
 @router.post("/admin/api/seller", dependencies=[api])
