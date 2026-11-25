@@ -333,7 +333,8 @@ def trends_forecast_knowledge():
     ds = kn.root() / "dataset"
     files = [{"name": p.name, "rows": sum(1 for _ in p.open(encoding="utf-8"))} for p in sorted(ds.glob("*.jsonl"))] if ds.exists() else []
     return {"built_at": snap.get("built_at") if snap else None, "chars": len(kn.context_text(snap)) if snap else 0,
-            "dataset": files, "rules": kn.RULES}  # fmt: skip
+            "dataset": files, "rules": kn.RULES, "backtests": [(b["file"], b.get("run_at"), b.get("dates")) for b in (snap or {}).get("backtests", [])],
+            "backtests_skipped": (snap or {}).get("backtests_skipped", [])}  # fmt: skip
 
 
 @router.post("/admin/api/trends/forecast/knowledge/build", dependencies=[api])

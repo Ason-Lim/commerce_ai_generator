@@ -50,8 +50,9 @@ def root() -> Path:
     return Path(env) if env else Path(__file__).resolve().parents[4] / "var" / "forecast"
 
 
-def _latest_backtests(forecast_dir: Path) -> list[dict]:
-    """var/forecast/backtest_*.json 중 질문·기간별 최신 결과를 요약(28일만)."""
+def _latest_backtests(forecast_dir: Path, skipped: list | None = None) -> list[dict]:
+    """var/forecast/backtest_*.json 중 **지금 형식**(짝 비교 `paired` 있음 = 11-25 백필 뒤 코드) 결과만 요약(28일만).
+    옛 형식(백필 전 실행·짝 비교 없음)은 숫자가 낡았을 수 있어 묶음에 넣지 않고 skipped 에 이름을 남긴다(11-25 운영 확인)."""
     out = []
     for p in sorted(forecast_dir.glob("backtest_*.json")):
         try:
@@ -60,13 +61,20 @@ def _latest_backtests(forecast_dir: Path) -> list[dict]:
             continue
         if not isinstance(d, dict) or "metrics" not in d:
             continue
+        if "paired" not in d or not d.get("question"):
+            if skipped is not None:
+                skipped.append(
+                    {"file": p.name, "why": "옛 형식(짝 비교 없음) — 지금 코드로 다시 실행해야 묶음에 들어감"}
+                )
+            continue
         rows = {}
         for m, byh in d["metrics"].items():
             x = byh.get("28") or byh.get(28) or {}
             rows[NAMES.get(m, m)] = {"선행적중률": x.get("top20_lead7"), "4분류": x.get("miss_breakdown")}
         paired = {NAMES.get(m, m): (v.get("28") or v.get(28)) for m, v in (d.get("paired") or {}).items()}
         u = (d.get("union") or {}).get("28") or (d.get("union") or {}).get(28) or {}
-        out.append({"file": p.name, "question": d.get("question"), "range": d.get("range"), "dates": d.get("dates"),
+        run_at = dt.datetime.fromtimestamp(p.stat().st_mtime).isoformat(timespec="minutes")
+        out.append({"file": p.name, "run_at": run_at, "question": d.get("question"), "range": d.get("range"), "dates": d.get("dates"),
                     "min_share": (d.get("rules") or {}).get("future_min_share"), "methods": rows, "paired_vs_baseline": paired,
                     "major_missed_all": u.get("major_missed_all"), "no_history_share": u.get("first_seen_share")})  # fmt: skip
     return out
@@ -80,7 +88,9 @@ def build(rank_dir, *, today: dt.date | None = None, save: bool = True, ledger_r
 
     today = today or dt.date.today()
     snap: dict = {"version": VERSION, "built_at": dt.datetime.now().isoformat(timespec="seconds"), "rules": RULES}
-    snap["backtests"] = _latest_backtests(root())
+    skipped: list = []
+    snap["backtests"] = _latest_backtests(root(), skipped)
+    snap["backtests_skipped"] = skipped
     try:
         ev = ledger.evaluate(rank_dir, root=ledger_root)
         snap["ledger"] = {k: ev[k] for k in ("graded_weeks", "pending", "summary", "first_seen", "target", "metric")}

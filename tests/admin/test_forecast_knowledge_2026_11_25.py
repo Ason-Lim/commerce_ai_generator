@@ -52,6 +52,10 @@ def env(tmp_path, monkeypatch):
         ),
         encoding="utf-8",
     )
+    # 옛 형식(백필 전, paired 없음) — 묶음에 넣지 않음
+    (fc / "backtest_2025-01-06_2025-10-27.json").write_text(
+        json.dumps({"dates": 14, "metrics": {"last_year": {"28": {"top20_lead7": 0.13}}}}), encoding="utf-8"
+    )
     monkeypatch.setenv("NAVER_DAILY_RANK_DIR", str(rank))
     monkeypatch.setenv("FORECAST_KNOWLEDGE_DIR", str(fc))
     monkeypatch.setenv("FORECAST_LEDGER_DIR", str(tmp_path / "ledger"))
@@ -63,7 +67,9 @@ def test_build_snapshot_and_dataset(env):
     rank, fc = env
     snap = kn.build(rank, today=dt.date(2026, 1, 21))
     assert (fc / "knowledge" / "2026-01-21.json").exists() and kn.latest()["built_at"] == snap["built_at"]
-    assert snap["backtests"][0]["methods"]["전년 기준(비교 기준)"]["선행적중률"] == 0.095
+    assert len(snap["backtests"]) == 1 and snap["backtests"][0]["methods"]["전년 기준(비교 기준)"]["선행적중률"] == 0.095
+    assert snap["backtests"][0]["run_at"]
+    assert snap["backtests_skipped"][0]["file"] == "backtest_2025-01-06_2025-10-27.json"
     assert snap["trend_shift"]["status"] == "ok" and "ledger" in snap and "next4w" in snap
     assert any("관측창 내 미진입" in r for r in snap["rules"])
     txt = kn.context_text(snap)
