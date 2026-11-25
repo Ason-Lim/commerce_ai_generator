@@ -131,7 +131,14 @@ tbody tr{cursor:default}
   <div class="top"><h2>셀러</h2><span class="spacer"></span><button class="btn primary" type="button" id="newBtn">새 셀러</button></div>
   <div id="err" class="banner" hidden></div>
 
-  <section class="panel" id="newForm" hidden aria-labelledby="new-h">
+  <section class="panel" aria-labelledby="jn-h" style="margin-top:14px">
+    <h3 id="jn-h">입점 신청 <small style="font-weight:400;color:var(--ink3)">AI 1차 분석 · 문제없으면 체험 코드 자동 · 입점 승인은 여기서</small></h3>
+    <p class="basis" style="margin-top:0">체험 셀러는 셀러센터에서 상품을 올려 볼 수만 있고 손님에게 보이지 않아요. 서류를 열어 사업자등록증·신고증을 대조한 뒤 ‘입점 승인’을 눌러 주세요. 반려 사유는 신청인에게 보여요. 신청 페이지: <a href="/join" target="_blank" rel="noopener">/join</a></p>
+    <div class="tblwrap"><table><thead><tr><th>신청</th><th>상호 · 번호</th><th>상품</th><th>1차 분석</th><th>상태</th><th></th></tr></thead><tbody id="joins"></tbody></table></div>
+    <div id="joinOut" class="basis"></div>
+  </section>
+
+  <section class="panel" id="newForm" hidden aria-labelledby="new-h" style="margin-top:14px">
     <h3 id="new-h">새 셀러</h3>
     <div class="bar"><label for="n_name" style="min-width:90px">상호 *</label><input id="n_name" type="text" maxlength="60" style="flex:1">
       <label for="n_kind">종류</label><select id="n_kind"><option value="direct">직접 재고</option><option value="consign">정식 위탁판매</option></select></div>
@@ -147,37 +154,6 @@ tbody tr{cursor:default}
     <div id="codeOut" class="code-out" hidden role="status"></div>
   </section>
 
-  <section class="panel" aria-labelledby="dd-h" style="margin-top:14px">
-    <h3 id="dd-h">죽은 몰 후보 · 주의</h3>
-    <p class="basis" style="margin-top:0" id="ddRule"></p>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>단계</th><th class="num">변화 없음</th><th class="num">30일 주문</th><th>클릭(30일)</th><th>이유</th></tr></thead><tbody id="dormant"></tbody></table></div>
-    <div id="noEntry" class="basis"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="al-h" style="margin-top:14px">
-    <h3 id="al-h">품절 · 출고 지연 알림</h3>
-    <p class="basis" style="margin-top:0">셀러별 숫자만 보여요(받는 분 정보 없음). 지연 = 주문일 뒤 2영업일 넘게 송장 없음.</p>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>품절(승인 상품)</th><th class="num">출고 지연</th><th class="num">발주 전</th><th class="num">송장 대기</th></tr></thead><tbody id="alerts"></tbody></table></div>
-  </section>
-
-  <section class="panel" aria-labelledby="bl-h" style="margin-top:14px">
-    <h3 id="bl-h">월 이용료 <small style="font-weight:400;color:var(--ink3)">표시·기록만 — 실제 청구·결제 없음</small></h3>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>요금제</th><th class="num">월 합계</th><th>이번 달</th><th class="num">미수(예정+발행)</th><th></th></tr></thead><tbody id="billing"></tbody></table></div>
-    <div id="billDetail" class="panel" hidden style="margin-top:10px"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="dt-h" style="margin-top:14px">
-    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인한 상세페이지는 미니숍 공개 조건이 갖춰진 셀러 화면에 모여요</small></h3>
-    <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
-    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
-  </section>
-  <section class="panel" aria-labelledby="jn-h" style="margin-top:14px">
-    <h3 id="jn-h">입점 신청 <small style="font-weight:400;color:var(--ink3)">AI 1차 분석 · 문제없으면 체험 코드 자동 · 입점 승인은 여기서</small></h3>
-    <p class="basis" style="margin-top:0">체험 셀러는 셀러센터에서 상품을 올려 볼 수만 있고 손님에게 보이지 않아요. 서류를 열어 사업자등록증·신고증을 대조한 뒤 ‘입점 승인’을 눌러 주세요. 반려 사유는 신청인에게 보여요. 신청 페이지: <a href="/join" target="_blank" rel="noopener">/join</a></p>
-    <div class="tblwrap"><table><thead><tr><th>신청</th><th>상호 · 번호</th><th>상품</th><th>1차 분석</th><th>상태</th><th></th></tr></thead><tbody id="joins"></tbody></table></div>
-    <div id="joinOut" class="basis"></div>
-  </section>
-
   <section class="panel" aria-labelledby="ms-h" style="margin-top:14px">
     <h3 id="ms-h">미니숍 공개 · 판매자 정보 확인 <small id="msMode" style="font-weight:400;color:var(--ink3)"></small></h3>
     <p class="basis" style="margin-top:0">판매자 정보는 사업자등록증·통신판매업 신고증과 대조한 뒤 ‘확인’을 눌러 주세요(AI가 하지 않아요). 정식 공개는 확인 + 셀러 공개 동의 + 운영사 쪽 조건이 모두 있어야 열려요.</p>
@@ -191,6 +167,31 @@ tbody tr{cursor:default}
       <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th class="num">가격</th><th>표기</th><th>상태</th></tr></thead><tbody id="queue"></tbody></table></div>
       <div class="panel detail" id="pd" hidden aria-live="polite"></div>
     </div>
+  </section>
+
+  <section class="panel" aria-labelledby="dt-h" style="margin-top:14px">
+    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인한 상세페이지는 미니숍 공개 조건이 갖춰진 셀러 화면에 모여요</small></h3>
+    <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="bl-h" style="margin-top:14px">
+    <h3 id="bl-h">월 이용료 <small style="font-weight:400;color:var(--ink3)">표시·기록만 — 실제 청구·결제 없음</small></h3>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>요금제</th><th class="num">월 합계</th><th>이번 달</th><th class="num">미수(예정+발행)</th><th></th></tr></thead><tbody id="billing"></tbody></table></div>
+    <div id="billDetail" class="panel" hidden style="margin-top:10px"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="al-h" style="margin-top:14px">
+    <h3 id="al-h">품절 · 출고 지연 알림</h3>
+    <p class="basis" style="margin-top:0">셀러별 숫자만 보여요(받는 분 정보 없음). 지연 = 주문일 뒤 2영업일 넘게 송장 없음.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>품절(승인 상품)</th><th class="num">출고 지연</th><th class="num">발주 전</th><th class="num">송장 대기</th></tr></thead><tbody id="alerts"></tbody></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="dd-h" style="margin-top:14px">
+    <h3 id="dd-h">죽은 몰 후보 · 주의</h3>
+    <p class="basis" style="margin-top:0" id="ddRule"></p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>단계</th><th class="num">변화 없음</th><th class="num">30일 주문</th><th>클릭(30일)</th><th>이유</th></tr></thead><tbody id="dormant"></tbody></table></div>
+    <div id="noEntry" class="basis"></div>
   </section>
 </main>
 </div>
