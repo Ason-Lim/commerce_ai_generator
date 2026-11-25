@@ -115,3 +115,28 @@ def test_common_dates_and_q1p_and_min_share(rank_dir):
         )
         if m == "recent":
             assert len({r["metrics"][m][h]["n_pred"] for h in (7, 14, 28)}) == 1
+
+
+def test_ordering_experiments_keep_candidates():
+    """실험 순서 바꾸기는 전년 기준 후보 집합을 그대로 두고(②) 순서만 바꾼다."""
+    import datetime as dt
+
+    from app.services.trends.forecast import backtest as bt
+
+    class D:
+        files = {}
+
+        def get(self, d):
+            if d == dt.date(2025, 3, 10):
+                return {"A": 10, "B": 50}
+            if d == dt.date(2024, 3, 11):
+                return {"B": 30}
+            return None
+
+    days = D()
+    as_of = dt.date(2026, 3, 1)
+    base = bt.m_last_year_lunar(days, as_of, 28, set(), rows=[])
+    two = bt.m_ly_two_years(days, as_of, 28, set(), rows=[])
+    assert set(base) == set(two) == {"A", "B"}
+    assert sorted(two, key=two.get) == ["B", "A"] and sorted(base, key=base.get) == ["A", "B"]
+    assert set(bt.EXPERIMENTS) <= set(bt.FUNCS) and not set(bt.EXPERIMENTS) & set(bt.METHODS)

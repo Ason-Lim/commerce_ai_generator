@@ -291,7 +291,45 @@ def m_explorer_repeat(*a, **k) -> dict[str, float]:
     return m_explorer(*a, **k, repeat_only=True)
 
 
+# ── 실험 (2026-11-25, 기본 방법 아님) — 리포트카드에서 '놓친 주요 상승의 절반은 후보 목록엔 있었으나 상위 20 경계에서 잘림'
+# → 후보는 전년 기준 그대로 두고 **순서만** 바꿔 본다. 탐색기(반복만)의 +2.2%p 가 날짜별로 엇갈려 좁히는 방향을 찾는다.
+def m_ly_repeat_first(days: _Days, as_of: dt.date, h: int, top_now: set[str], **k) -> dict[str, float]:
+    """전년 기준 후보 + 탐색기(반복만)에도 있으면 앞으로(같은 묶음 안에서는 작년 순위)."""
+    base = m_last_year_lunar(days, as_of, h, top_now, **k)
+    rep = m_explorer(days, as_of, h, top_now, repeat_only=True, **k)
+    return {kw: (0 if kw in rep else 1000) + r for kw, r in base.items()}
+
+
+def m_ly_two_years(days: _Days, as_of: dt.date, h: int, top_now: set[str], *, rows: list[dict], **_) -> dict[str, float]:
+    """전년 기준 후보 + 2년 전 같은 시기(같은 맞춤 규칙)에도 100위 안이었으면 앞으로."""
+    shifts = lunar_shifts(rows)
+    base = m_last_year_lunar(days, as_of, h, top_now, rows=rows)
+    two: set[str] = set()
+    for k in range(1, h + 1):
+        src, _ = year_back(as_of + dt.timedelta(days=k), shifts)
+        src2, _ = year_back(src, shifts)
+        for kw, r in (days.get(src2) or {}).items():
+            if r <= BAND:
+                two.add(kw)
+    return {kw: (0 if kw in two else 1000) + r for kw, r in base.items()}
+
+
+def m_repeat_then_ly(days: _Days, as_of: dt.date, h: int, top_now: set[str], **k) -> dict[str, float]:
+    """탐색기(반복만) 후보를 먼저(과거 최고 순위 순), 자리가 남으면 전년 기준 후보로 채움."""
+    rep = m_explorer(days, as_of, h, top_now, repeat_only=True, **k)
+    base = m_last_year_lunar(days, as_of, h, top_now, **k)
+    out = {kw: float(r) for kw, r in rep.items()}
+    for kw, r in base.items():
+        out.setdefault(kw, 10_000 + r)
+    return out
+
+
+EXPERIMENTS = ("ly_repeat_first", "ly_two_years", "repeat_then_ly")
+EXPERIMENT_NAMES = {"ly_repeat_first": "실험: 전년 기준 + 반복 우선", "ly_two_years": "실험: 전년 기준 + 2년 연속 우선",
+                    "repeat_then_ly": "실험: 반복 먼저, 전년 기준으로 채움"}  # fmt: skip
+
 FUNCS = {"recent": m_recent, "last_year": m_last_year, "last_year_lunar": m_last_year_lunar, "event_rel": m_event_rel, "explorer": m_explorer,
+         "ly_repeat_first": m_ly_repeat_first, "ly_two_years": m_ly_two_years, "repeat_then_ly": m_repeat_then_ly,
          "explorer_repeat": m_explorer_repeat}  # fmt: skip
 
 

@@ -61,6 +61,8 @@ def _latest_backtests(forecast_dir: Path, skipped: list | None = None) -> list[d
             continue
         if not isinstance(d, dict) or "metrics" not in d:
             continue
+        if p.stem.endswith("_exp"):  # 순서 실험(2026-11-25) — 기본 방법 결과가 아님
+            continue
         if "paired" not in d or not d.get("question"):
             if skipped is not None:
                 skipped.append(

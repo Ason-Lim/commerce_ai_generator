@@ -36,9 +36,12 @@ H = 28
 TOP = 20
 TARGET_REVIEW_WEEKS = 12
 BASELINE = "last_year_lunar"
-METHODS = ("recent", "last_year", "last_year_lunar", "event_rel", "explorer_repeat")
+# 2026-11-25: 실험② '전년 기준 + 2년 연속 우선'을 장부에도 적는다 — 백테스트(2026)에서 좋았지만 규칙을 2026 자료를 본 뒤
+# 만들었으므로, 앞으로 먼저 적어 둔 예보로만 확인한다(기본 방법으로 바꾸지 않음).
+METHODS = ("recent", "last_year", "last_year_lunar", "event_rel", "explorer_repeat", "ly_two_years")
 NAMES = {"recent": "최근 유지", "last_year": "전년 같은 주", "last_year_lunar": "전년 기준(비교 기준)",
-         "event_rel": "행사 상대일", "explorer_repeat": "탐색기(반복만)"}  # fmt: skip
+         "event_rel": "행사 상대일", "explorer_repeat": "탐색기(반복만)",
+         "ly_two_years": "실험: 전년 기준 + 2년 연속 우선"}  # fmt: skip
 VERSION = "2026-11-25"
 
 
