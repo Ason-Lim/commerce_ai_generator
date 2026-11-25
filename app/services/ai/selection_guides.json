@@ -1,5 +1,5 @@
 {
- "_about": "과일 고르는 법 (2026-11-25) — 공공기관(농촌진흥청·농사로·구청) 안내와 그 안내를 옮긴 보도를 정리했다. tips 문장은 출처가 말한 범위 안에서 우리 말로 줄인 것이고, 출처마다 source_name·source_url 을 남긴다. AI 답보다 먼저 쓰인다. 고칠 때는 이 파일을 고치고 reviewed_at 을 새로 적는다. 가격·효능 주장은 넣지 않는다.",
+ "_about": "과일 고르는 법 (2026-11-25) — 공공기관(농촌진흥청·농사로·해양수산부·산림청·국립농산물품질관리원·구청) 안내와 그 안내를 옮긴 보도를 정리했다. tips 문장은 출처가 말한 범위 안에서 우리 말로 줄인 것이고, 출처마다 source_name·source_url 을 남긴다. AI 답보다 먼저 쓰인다. 고칠 때는 이 파일을 고치고 reviewed_at 을 새로 적는다. 가격·효능 주장은 넣지 않는다.",
  "reviewed_at": "2026-11-25",
  "sources": {
   "rda_1049": {
@@ -37,6 +37,26 @@
   "gangnam_summer": {
    "name": "강남구청 「여름철 과일·채소 고르는 꿀팁」",
    "url": "https://www.gangnam.go.kr/board/article/7036/view.do?mid=ID01_0501"
+  },
+  "mof_oyster": {
+   "name": "해양수산부 이달의 수산물 「굴·홍합·피조개」 (인천시 수산자원연구소 게재)",
+   "url": "https://www.incheon.go.kr/fish/FI020401/13702"
+  },
+  "mof_seaweed": {
+   "name": "해양수산부 이달의 수산물 「방어·미역·굴」 (인천시 수산자원연구소 게재)",
+   "url": "https://www.incheon.go.kr/fish/FI020401/2160335"
+  },
+  "rda_sweetpotato_news": {
+   "name": "농촌진흥청 도움말 「별별품종 고구마」 (농민신문 보도)",
+   "url": "https://v.daum.net/v/YZvw8D7v7X"
+  },
+  "rda_ginseng": {
+   "name": "농촌진흥청 「환절기에 딱 좋은 인삼 잘 고르는 방법」",
+   "url": "https://www.rda.go.kr/middlePopOpenPopNongsaroDBView.do?no=2109"
+  },
+  "gotgam_news": {
+   "name": "산림청·국립농산물품질관리원 안내 (비건뉴스 보도)",
+   "url": "https://www.vegannews.co.kr/news/article.html?no=386185"
   }
  },
  "foods": {
@@ -263,6 +283,109 @@
     {
      "text": "배꼽(꽃이 떨어진 자리)이 작은 것을 골라요.",
      "src": "gangnam_summer"
+    }
+   ]
+  },
+  "굴": {
+   "aliases": [
+    "굴",
+    "생굴",
+    "석굴",
+    "통영굴"
+   ],
+   "exact_only": [
+    "굴"
+   ],
+   "tips": [
+    {
+     "text": "알이 굵고 가장자리의 검은 테두리가 선명한 것을 골라요.",
+     "src": "mof_oyster"
+    },
+    {
+     "text": "속살이 통통하고 탄력 있는 것이 좋아요.",
+     "src": "mof_oyster"
+    }
+   ]
+  },
+  "미역": {
+   "aliases": [
+    "미역",
+    "건미역",
+    "생미역",
+    "산모미역"
+   ],
+   "tips": [
+    {
+     "text": "잎이 넓고 줄기가 가늘며 약간 푸른빛을 띠는 것이 좋아요.",
+     "src": "mof_seaweed"
+    }
+   ]
+  },
+  "고구마": {
+   "aliases": [
+    "고구마",
+    "밤고구마",
+    "호박고구마",
+    "꿀고구마"
+   ],
+   "tips": [
+    {
+     "text": "한 개가 100~200g 정도로 너무 크지 않고 모양이 고르며 껍질 색이 선명한 것이 좋아요.",
+     "src": "rda_sweetpotato_news"
+    }
+   ]
+  },
+  "수삼": {
+   "aliases": [
+    "수삼",
+    "인삼",
+    "생삼"
+   ],
+   "tips": [
+    {
+     "text": "머리 부분(뇌두)이 온전히 남아 있고 줄기를 자른 흔적이 분명한 것을 골라요.",
+     "src": "rda_ginseng"
+    },
+    {
+     "text": "몸통은 눌렀을 때 단단하고 탄력이 있는 것이 좋아요.",
+     "src": "rda_ginseng"
+    },
+    {
+     "text": "다리(지근)는 고르게 발달하고 혹이 없는 것, 잔뿌리가 많은 것을 골라요.",
+     "src": "rda_ginseng"
+    }
+   ],
+   "storage": [
+    {
+     "text": "남은 인삼은 젖은 신문지에 싸서 냉장 보관해요.",
+     "src": "rda_ginseng"
+    }
+   ]
+  },
+  "곶감": {
+   "aliases": [
+    "곶감",
+    "반건시",
+    "건시"
+   ],
+   "tips": [
+    {
+     "text": "반건시는 촉촉하고 부드럽지만 수분이 많아 오래 두기 어렵고, 건시는 더 마른 대신 오래 가요. 먹을 기간에 맞춰 골라요.",
+     "src": "gotgam_news"
+    },
+    {
+     "text": "원산지는 겉모습보다 제품에 표시된 원산지를 먼저 확인해요.",
+     "src": "gotgam_news"
+    },
+    {
+     "text": "겉의 하얀 가루(백분)는 마르면서 당 성분이 나와 굳은 것이에요. 다만 이것만으로 상태를 판단하지 말고 곰팡이가 없는지 함께 봐요.",
+     "src": "gotgam_news"
+    }
+   ],
+   "storage": [
+    {
+     "text": "받은 뒤에는 포장에 적힌 냉장·냉동 보관 방법을 따라요(특히 반건시).",
+     "src": "gotgam_news"
     }
    ]
   }
