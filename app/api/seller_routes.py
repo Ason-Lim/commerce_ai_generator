@@ -535,3 +535,50 @@ def seller_biz_consent(body: ConsentIn, request: Request):
     from app.services.seller import shop_public
 
     return _detail(lambda: _ok(biz=shop_public.biz_consent(shop_public.engine(), body.key, _client(request), body.on)))
+
+
+# ── ⑥ 스마트스토어 상품 가져오기 — 네이버 커머스API, 읽기 전용 (2026-11-25) ──
+class NaverKeyIn(KeyIn):
+    client_id: str = Field(..., max_length=60)
+    secret: str = Field(..., max_length=80)
+    store_slug: str = Field("", max_length=40)
+
+
+class NaverSyncIn(KeyIn):
+    set_base: bool = False
+
+
+@router.post("/seller/api/naver")
+def seller_naver_status(body: KeyIn, request: Request):
+    from app.services.seller import naver_api
+
+    return _detail(lambda: _ok(naver=naver_api.status(naver_api.engine(), body.key, _client(request))))
+
+
+@router.post("/seller/api/naver/key")
+def seller_naver_key(body: NaverKeyIn, request: Request):
+    from app.services.seller import naver_api
+
+    return _detail(lambda: _ok(naver=naver_api.save_key(naver_api.engine(), body.key, _client(request), client_id=body.client_id,
+                                                          secret=body.secret, store_slug=body.store_slug)))  # fmt: skip
+
+
+@router.post("/seller/api/naver/key/delete")
+def seller_naver_key_delete(body: KeyIn, request: Request):
+    from app.services.seller import naver_api
+
+    return _detail(lambda: _ok(naver=naver_api.delete_key(naver_api.engine(), body.key, _client(request))))
+
+
+@router.post("/seller/api/naver/look")
+def seller_naver_preview(body: KeyIn, request: Request):
+    from app.services.seller import naver_api
+
+    return _detail(lambda: _ok(preview=naver_api.preview(naver_api.engine(), body.key, _client(request))))
+
+
+@router.post("/seller/api/naver/sync")
+def seller_naver_sync(body: NaverSyncIn, request: Request):
+    from app.services.seller import naver_api
+
+    return _detail(lambda: _ok(sync=naver_api.sync(naver_api.engine(), body.key, _client(request), set_base=body.set_base)))
