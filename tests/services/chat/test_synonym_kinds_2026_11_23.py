@@ -65,12 +65,26 @@ def _items(res):
             for b in res["blocks"] if b["type"] == "product_list"}
 
 
-def test_broaden_never_enters_recommendation_on_zero(table, sqlite_db):
+def test_broaden_never_enters_recommendation_on_zero(table, sqlite_db, monkeypatch):
+    """0건이면 넓힌 말 상품은 **추천 후보가 아닌** '조건을 넓혀 찾은 추가 후보' 칸에만 (2026-11-25). 끄면 예전처럼 안 찾음."""
     shop = ByQuery({"참기름": [_cp("오뚜기 참기름 320ml", 6900, 1), _cp("백설 참기름 500ml", 9900, 2)]})
     svc = ChatService(sqlite_db, shopping=shop, recipe_chat=RecipeChat(statement_factory=str))
     res = svc.handle(None, message="저온압착 참기름")
-    assert "참기름" not in shop.calls                                 # 0건 다시 찾기에 넓힌 말을 쓰지 않음
-    assert not any("오뚜기 참기름" in t for ts in _items(res).values() for t in ts)
+    lists = _items(res)
+    extra = [t for k, v in lists.items() if k and "조건을 넓혀 찾은 추가 후보" in k for t in v]
+    assert any("오뚜기 참기름" in t for t in extra)
+    assert not any("오뚜기 참기름" in t for k, v in lists.items() if not (k and "추가 후보" in k) for t in v)
+    note = next(b["data"].get("note") for b in res["blocks"] if b["type"] == "product_list"
+                and "추가 후보" in (b["data"].get("title") or ""))
+    assert "넓은 말" in note and "추천이 아니에요" in note
+    assert any(b["type"] == "text" and "찾지 못했어요" in str(b["data"]) for b in res["blocks"])
+
+    monkeypatch.setenv("COUPANG_BROADEN_ON_ZERO", "off")
+    shop2 = ByQuery({"참기름": [_cp("오뚜기 참기름 320ml", 6900, 1)]})
+    svc2 = ChatService(sqlite_db, shopping=shop2, recipe_chat=RecipeChat(statement_factory=str))
+    res2 = svc2.handle(None, message="저온압착 참기름")
+    assert "참기름" not in shop2.calls
+    assert not any("오뚜기 참기름" in t for ts in _items(res2).values() for t in ts)
 
 
 def test_broaden_only_in_extra_slot_with_notice(table, sqlite_db):

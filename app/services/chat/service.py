@@ -1281,13 +1281,20 @@ class ChatService:
             if nav:
                 blocks.append(nav)
             blocks.append(B.notice(CHECK_AT_MALL))
-        elif terms or connect:
+        elif terms or connect or more_list:
             blocks.append(B.text(f"쿠팡에서 **{query}** 관련 상품을 찾지 못했어요. 관련 없는 상품은 보여 드리지 않았어요."))
+            if more_list:   # 2026-11-25: 넓힌 말로 찾은 '추가 후보' — 추천 후보가 아님(견주지 않음), 안내 줄 필수
+                blocks.append(B.product_list([_public(c, go=f"/go/{sid}/k/{c['key']}") for c in more_list],
+                                             title=f"조건을 넓혀 찾은 추가 후보 {len(more_list)}개 (추천 후보 아님)",
+                                             note=_broad_note(more_list) + "찾으신 조건에 맞는 상품을 고른 추천이 아니에요."))
+                state = saved_mod.push_seen(state, label, list(more_list), budget["label"] if budget else None)
+                items = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
+                         for c in more_list]
             if connect:
                 blocks += [B.text("네이버 쇼핑커넥트(브랜드커넥트)에서 발급해 등록해 둔 링크예요. " + CONNECT_DISCLOSURE),
                            B.product_list(connect)]
-                items = [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
-                         for c in connect]
+                items += [{"rank": c["rank"], "url": c.get("url"), "title": c["title"], "mall": c.get("mall")}
+                          for c in connect]
             elif connect_on_site():
                 blocks.append(B.notice(
                     f"네이버 쇼핑커넥트(브랜드커넥트)에 등록한 **{query}** 링크도 아직 없어요. 브랜드커넥트에서 링크를 발급해 "

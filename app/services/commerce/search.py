@@ -228,6 +228,19 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
         turn_metrics.flag("more_tried", bool(more_tried))
         turn_metrics.flag("more_found", bool(more_list))
 
+    # 2026-11-25 (3-D 남은 항목): 쿠팡 0건 — 다시 찾기까지 했는데 추천 후보가 없으면, 범위를 넓힌 말(broaden)로 찾은 상품을
+    # **추천 후보가 아닌 '추가 후보' 칸에만** 보인다(안내 문구 필수). 추천 후보·순서는 그대로 0. 끄기: COUPANG_BROADEN_ON_ZERO=off.
+    if error is None and not cards and not grade_unknown and broaden_on_zero_on():
+        broad_alts = [a for a in retry_queries(searched_as or query, purpose="few")
+                      if a not in (query, searched_as) and (coupang_gaps.is_broaden(searched_as or query, a)
+                                                            or coupang_gaps.is_broaden(query, a))]
+        if broad_alts:
+            more_list, more_as = search_more(query, terms, broad_alts, fetch, {_title_key(c["title"]) for c in frozen_list},
+                                             text=text, searched_as=searched_as, tried=more_tried)
+            more_list = [c for c in more_list if c.get("more_broad")]
+            if cacao_cond:
+                more_list, _ = cacao.filter_cards(more_list, cacao_cond)
+
     partner_terms = terms or _content_tokens(label)
     partner_cards = [ChatService._partner_card(it, query) for it in
                      (partner_feed.offers(lambda t: partner_match(t, partner_terms), preview=allow_preview)
@@ -273,7 +286,10 @@ def collect(req: SearchRequest, *, shopping: Callable, keyword_extractor: Callab
     else:
         partner_list = []                       # 웹도 쿠팡 결과가 없으면 업체 목록을 보여 주지 않는다
         frozen_list = []
-        more_list, more_as = [], []
+        # 2026-11-25: 0건일 때 넓힌 말로 찾은 '추가 후보'만 남긴다(추천 후보 아님, 안내 줄 필수)
+        more_list = [dict(c, rank=n, why=[{"text": more_note(c["more_as"], True), "basis": "calc"}])
+                     for n, c in enumerate(more_list, 1) if c.get("more_broad")]
+        more_as = list(dict.fromkeys(c["more_as"] for c in more_list))
         # 표기 상품이 없고 표기 없는 상품만 있으면 그 칸만 (추천 후보 아님)
         grade_unknown = [dict(c, rank=n, why=[c["grade_note"]]) for n, c in enumerate(grade_unknown, 1)]
         connect = [dict(c, rank=len(grade_unknown) + n) for n, c in enumerate(connect, 1)]
@@ -343,6 +359,11 @@ def coupang_gaps_siblings(query: str) -> list[str]:
         return coupang_gaps.sibling_queries(query)
     except Exception:  # noqa: BLE001 — 순위 파일 문제로 검색을 막지 않는다
         return []
+
+
+def broaden_on_zero_on() -> bool:
+    """0건일 때 넓힌 말 '추가 후보' 칸 (2026-11-25). 끄기: COUPANG_BROADEN_ON_ZERO=off."""
+    return (os.environ.get("COUPANG_BROADEN_ON_ZERO") or "on").strip().lower() not in ("off", "0", "false")
 
 
 def more_on_few_on() -> bool:
