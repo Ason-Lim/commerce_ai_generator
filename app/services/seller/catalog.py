@@ -491,8 +491,95 @@ def _set_listing_sync(eng, seller_id: str, product_id: str, on: bool) -> None:
             c.execute(products.t_listing.insert().values(product_id=product_id, **vals))
 
 
+# ── 스마트스토어 '상품 조회/수정' 엑셀(CSV) 그대로 올리기 (2026-11-25, 셀러 실제 파일 칸으로 맞춤) ──
+# 이 파일에는 원산지·옵션별 가격·재고·무료 기준 금액이 없다 → 원산지는 비워 두고(식품이면 보완 요청),
+# 옵션 있는 상품은 대표 가격·전체 재고 한 줄로 넣고 알린다. 실제 셀러 파일은 저장소에 넣지 않는다(시험은 같은 칸의 가짜 파일).
+NAVER_EXPORT_MARK = ("상품번호(스마트스토어)", "판매상태", "전시상태", "판매가")
+VOLUME_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(kg|KG|Kg|g|G|ml|ML|mL|L|l|리터)(?![A-Za-z가-힣])")
+
+
+def is_naver_export(heads: list[str]) -> bool:
+    return all(h in heads for h in NAVER_EXPORT_MARK)
+
+
+def _volume_from(name: str) -> str:
+    found = VOLUME_RE.findall(name or "")
+    if not found:
+        return ""
+    n, u = found[-1]
+    u = {"KG": "kg", "Kg": "kg", "G": "g", "ML": "ml", "mL": "ml", "l": "L", "리터": "L"}.get(u, u)
+    return f"{n}{u}"
+
+
+def naver_export_rows(text: str, *, store_slug: str = "") -> tuple[list[dict], dict]:
+    """스마트스토어 상품 조회 CSV → 표준 칸 줄들 + 알림(옵션 상품 수 · 원산지 없음 · 판매 꺼진 상품 수)."""
+    rd = csv.DictReader(io.StringIO((text or "").lstrip("\ufeff")))
+    rows, notes = [], {"option_products": [], "no_origin": 0, "off": 0, "http_images": 0}
+    for r in rd:
+        r = {(k or "").strip(): (v or "").strip() for k, v in r.items() if k}
+        no = r.get("상품번호(스마트스토어)", "")
+        if not no:
+            continue
+        name = r.get("상품명", "")
+        state, disp = r.get("판매상태", ""), r.get("전시상태", "")
+        on = state in ("판매중", "") and disp in ("전시중", "")
+        if not on:
+            notes["off"] += 1
+        if r.get("옵션") == "Y":
+            notes["option_products"].append(no)
+        notes["no_origin"] += 1
+        cat = [r.get(k, "") for k in ("대분류", "중분류", "소분류", "세분류")]
+        img = r.get("대표이미지 URL", "")
+        if img.startswith("http://"):
+            notes["http_images"] += 1
+        rows.append({
+            "group_no": r.get("그룹상품번호") or None,
+            "group_name": name,
+            "ext_no": no,
+            "category": ">".join(x for x in cat if x),
+            "name": name,
+            "option": "",
+            "volume": _volume_from(name),
+            "list_price": r.get("판매가", ""),
+            "price": r.get("할인가") or r.get("판매가", ""),
+            "tax": "",
+            "ship_type": r.get("배송비유형", ""),
+            "ship_fee": r.get("기본배송비", ""),
+            "free_over": "",
+            "origins": "",
+            "certs": r.get("인증정보", ""),
+            "brand": r.get("브랜드명", ""),
+            "maker": r.get("제조사명", ""),
+            "stock": "0" if state == "품절" else r.get("재고수량", ""),
+            "display": "" if on else "판매중지",
+            "sale_url": f"https://smartstore.naver.com/{store_slug}/products/{no}" if store_slug else "",
+            "seller_code": r.get("판매자상품코드", ""),
+            "made_on": "",
+            "best_before": "",
+        })  # fmt: skip
+    return rows, notes
+
+
 def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, full: bool = False) -> dict:
-    rd = csv.DictReader(io.StringIO((text or "").lstrip("﻿")))
+    rd = csv.DictReader(io.StringIO((text or "").lstrip("\ufeff")))
+    heads = [h.strip() for h in (rd.fieldnames or [])]
+    if is_naver_export(heads):
+        if channel != "naver":
+            raise store.SellerError("스마트스토어 상품 파일이에요. 기준 판매처를 네이버 스마트스토어로 정해 주세요")
+        rows, notes = naver_export_rows(text)
+        if len(rows) > 2000:
+            raise store.SellerError("한 번에 2,000줄까지 올릴 수 있어요")
+        rep = apply_rows(eng, token, client, channel, rows, full=full)
+        n_opt = len(notes["option_products"])
+        rep["source"] = "스마트스토어 상품 조회 파일"
+        rep["notes"] = [x for x in [
+            f"옵션이 있는 상품 {n_opt}개는 옵션별 가격·재고가 파일에 없어 대표 가격·전체 재고 한 줄로 넣었어요." if n_opt else "",
+            "이 파일에는 원산지가 없어요 — 식품이면 상품마다 원산지를 적어 주세요(검수 때 필요)." if notes["no_origin"] else "",
+            f"판매중지·전시중지 상품 {notes['off']}개는 이쪽에서도 판매 꺼짐으로 넣었어요." if notes["off"] else "",
+            "판매처 주소(스마트스토어 링크)는 파일에 없어 비어 있어요." ,
+        ] if x]  # fmt: skip
+        return rep
+    rd = csv.DictReader(io.StringIO((text or "").lstrip("\ufeff")))
     heads = [h.strip() for h in (rd.fieldnames or [])]
     unknown = [h for h in heads if h not in STD_HEADERS]
     if unknown:
