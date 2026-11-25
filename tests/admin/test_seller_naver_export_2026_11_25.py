@@ -125,3 +125,28 @@ def test_store_url_fills_product_links_and_shows_in_admin_list(eng):
     assert not any("몰 주소" in x for x in j["notes"])
     assert "https://smartstore.naver.com/renner/products/1003" in {p["sale_url"] for p in prod.list_mine(eng, k, IP)}
     assert catalog.store_slug("https://brand.naver.com/abc/") == "abc" and catalog.store_slug("https://x.kr") == ""
+
+
+# ── 샘플 화면에서 찾은 것 (2026-11-25): 사진 · 용량 두 번 · 인증 N ──
+def test_images_prefilled_and_cert_flag_ignored(eng):
+    from app.services.seller import detail_page
+
+    detail_page.meta.create_all(eng)
+    with eng.begin() as c:
+        c.execute(detail_page.t_detail.delete())
+    _s, k = _seller(eng)
+    csv = csv_of(
+        row(**{"인증정보": "N", "대표이미지 URL": "http://shop1.phinf.naver.net/a/b.png"}),
+        row(**{"상품번호(스마트스토어)": "1002", "대표이미지 URL": "http://example.com/x.png"}),
+    )
+    j = catalog.import_std_csv(eng, k, IP, "naver", csv)
+    assert j["prefilled"] == 1
+    assert all(not p["declared"].get("certs") for p in prod.list_mine(eng, k, IP))  # 'N' 은 인증이 아님
+    units = {u["ext_no"]: pid for pid, u in catalog.units_of(eng, _s["seller_id"]).items()}
+    cur = detail_page.get(eng, k, IP, units["1001"])["current"]["inputs"]
+    assert cur["images"][0]["url"] == "https://shop-phinf.pstatic.net/a/b.png" and cur["image_ok"] is False
+    assert detail_page.with_volume("가짜 우드 바니쉬 1L", "1L") == "가짜 우드 바니쉬 1L"
+    assert detail_page.with_volume("레너페인트 1kg", "1 KG") == "레너페인트 1kg"
+    assert detail_page.with_volume("감귤", "5kg") == "감귤 5kg"
+    html = detail_page.shop_page(eng, _s["seller_id"], banner=None, sample=True)
+    assert "가짜 우드 바니쉬 1L 1L" not in html and "shop-phinf.pstatic.net/a/b.png" in html

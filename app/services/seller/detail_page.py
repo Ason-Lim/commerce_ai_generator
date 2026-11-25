@@ -268,9 +268,18 @@ def validate(sections, facts: dict, *, has_cert: bool) -> tuple[dict | None, lis
     return (None, probs) if probs else (s, [])
 
 
+def with_volume(name: str, volume: str | None) -> str:
+    """상품명 + 용량 — 상품명에 이미 용량이 있으면 다시 붙이지 않는다('…1L 1L' 방지, 2026-11-25)."""
+    name, volume = (name or "").strip(), (volume or "").strip()
+    norm = lambda t: re.sub(r"\s+", "", t).lower()  # noqa: E731
+    if not volume or norm(volume) in norm(name):
+        return name
+    return f"{name} {volume}"
+
+
 def rule_draft(product: dict, unit: dict | None, inputs: dict) -> dict:
     """AI 없이 — 입력값을 그대로 옮긴 초안(검사를 언제나 통과하는 모양)."""
-    name = (product["name"] + (f" {product['volume']}" if product.get("volume") else "")).strip()
+    name = with_volume(product["name"], product.get("volume"))
     memo = inputs.get("memo") or ""
     first = re.split(r"(?<=[.!?다요])\s+", memo)[0][:180] if memo else ""
     points = [{"title": x["label"], "text": f"{x['value']} ({x['source_label']})"} for x in product.get("facts") or []]
@@ -452,15 +461,25 @@ def _sample_items(eng, seller_id: str, rows: dict) -> list[tuple[dict, dict]]:
         pv = products._view(pr, operator=False)
         d = latest.get(pid)
         if d is not None and d["sections"]:
-            out.append((pv, dict(d)))
+            dd = dict(d)
+            dd["inputs"] = dict(dd["inputs"] or {}, image_ok=True)  # 샘플(운영자만): 권리 체크 전 사진도 보여 줌
+            out.append((pv, dd))
         else:
-            inputs = (d["inputs"] if d is not None else None) or {}
+            inputs = dict((d["inputs"] if d is not None else None) or {}, image_ok=True)
             out.append((pv, {"product_id": pid, "status": "draft", "made_by": "rule", "inputs": inputs,
                              "sections": rule_draft(pv, units.get(pid), inputs)}))  # fmt: skip
     return out
 
 
-def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = None, sample: bool = False) -> str:
+def shop_page(
+    eng,
+    seller_id: str,
+    *,
+    banner: str | None,
+    public: dict | None = None,
+    sample: bool = False,
+    design: dict | None = None,
+) -> str:
     """셀러의 승인된 최신 상세페이지들 — 목록 타일 + 상품별 본문(같은 화면 아래). 판매 중이 아닌 상품은 뺀다.
     public: 고객 공개 화면의 고지 {top, buy, seller_box(html), footer(html), index} — 없으면 미리보기."""
     e = html.escape
@@ -481,7 +500,7 @@ def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = 
         )
         tiles.append(f'<a class="tile" href="#p-{e(pv["product_id"])}">'
                      + (f'<img src="{e(img)}" alt="" loading="lazy" referrerpolicy="no-referrer">' if img else "")
-                     + f'<b>{e(sec.get("headline") or pv["name"])}</b><span class="foot">{e(pv["name"])} {e(pv["volume"])}</span></a>')  # fmt: skip
+                     + f'<b>{e(sec.get("headline") or pv["name"])}</b><span class="foot">{e(with_volume(pv["name"], pv["volume"]))}</span></a>')  # fmt: skip
         arts.append(f'<article id="p-{e(pv["product_id"])}">'
                     + render(pv, inp, sec, status=d["status"], made_by=d["made_by"], fragment=True,
                              buy_note=(public or {}).get("buy")) + "</article>")  # fmt: skip
@@ -490,6 +509,16 @@ def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = 
     else:
         top = (f'<p class="notice">이 화면의 상품은 {e(s["name"])}이(가) 판매해요. 주문·결제·배송·교환·환불은 각 판매처에서 진행되고, '
                "trendguide 는 판매 당사자가 아니에요. (미리보기 — 고객 화면은 확정 고지 문구로 바뀌어요)</p>")  # fmt: skip
+    # 2026-11-25 미니숍 디자인 — 저장된(또는 미리보기 중인) 디자인이 있으면 그 모양으로. 고지·판매자 정보·상세 본문은 그대로.
+    from app.services.seller import shop_design
+
+    shop_design.meta.create_all(eng)
+    dz = design if design is not None else shop_design.design_of(eng, seller_id)
+    if dz:
+        items = shop_items(eng, seller_id, on_sale_only=public is not None, sample=sample)
+        footer = (public or {}).get("footer") or ""
+        return shop_design.render(dz, dict(s), items, banner=banner, top=top, footer=footer, details="".join(arts),
+                                  index=bool((public or {}).get("index")), show_all_images=sample, eng=eng)  # fmt: skip
     body = (f'<h1 class="shop-h">{e(s["name"])}</h1>' + top
             + (f'<div class="grid">{"".join(tiles)}</div>' + "".join(arts) if tiles
                else '<p class="foot">아직 승인된 상세페이지가 없어요. 상세페이지를 만들고 검수를 받으면 여기에 모여요.</p>')

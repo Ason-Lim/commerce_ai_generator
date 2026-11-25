@@ -1,0 +1,1272 @@
+{
+ "_about": "미니숍 디자인 템플릿 60 (2026-11-25) — 사용자 제공 '미니숍 디자인 30'(생활·브랜드, 원래 페인트 예시를 여러 카테고리용으로 일반화)과 '식품 미니숍 디자인 30'에서 이름·유형·색·머리 모양·구성 순서를 옮김. 화면은 shop_design.py 가 그린다.",
+ "templates": [
+  {
+   "id": "G01",
+   "set": "general",
+   "group": "브랜드형",
+   "name": "시그니처 스튜디오",
+   "desc": "브랜드 소개와 대표 상품을 균형 있게 배치한 기본형입니다.",
+   "palette": {
+    "bg": "#F5F2EA",
+    "ink": "#222A25",
+    "accent": "#3D6654",
+    "soft": "#E0E8DA"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "chips",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G02",
+   "set": "general",
+   "group": "브랜드형",
+   "name": "브랜드 저널",
+   "desc": "큰 제목과 공간 이미지로 브랜드 이야기를 먼저 전하는 구성입니다.",
+   "palette": {
+    "bg": "#F7F4EB",
+    "ink": "#302D27",
+    "accent": "#8C553C",
+    "soft": "#E8D9C8"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G03",
+   "set": "general",
+   "group": "브랜드형",
+   "name": "프리미엄 쇼룸",
+   "desc": "어두운 배경과 대표 상품으로 전시관 같은 인상을 만듭니다.",
+   "palette": {
+    "bg": "#172A30",
+    "ink": "#F3EFE5",
+    "accent": "#B27F43",
+    "soft": "#293E44"
+   },
+   "font": "serif",
+   "dark": true,
+   "hero": "split",
+   "sections": [
+    "stats",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G04",
+   "set": "general",
+   "group": "브랜드형",
+   "name": "내추럴 아치",
+   "desc": "아치형 프레임과 여백으로 자연스러운 브랜드 무드를 보여줍니다.",
+   "palette": {
+    "bg": "#F5F5F1",
+    "ink": "#1B1D1A",
+    "accent": "#434D44",
+    "soft": "#DFE3DA"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G05",
+   "set": "general",
+   "group": "브랜드형",
+   "name": "컴팩트 브랜드",
+   "desc": "짧은 소개와 상품 카드로 바로 이어지는 간결한 화면입니다.",
+   "palette": {
+    "bg": "#F4F6EE",
+    "ink": "#253326",
+    "accent": "#53734E",
+    "soft": "#DEE8D2"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "note",
+    "chips",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G06",
+   "set": "general",
+   "group": "상품 탐색형",
+   "name": "카테고리 데스크",
+   "desc": "왼쪽 카테고리 메뉴와 오른쪽 상품 목록을 나란히 배치합니다.",
+   "palette": {
+    "bg": "#F4F6F3",
+    "ink": "#25322E",
+    "accent": "#397262",
+    "soft": "#E0ECE6"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "categories",
+    "side",
+    "notice"
+   ]
+  },
+  {
+   "id": "G07",
+   "set": "general",
+   "group": "상품 탐색형",
+   "name": "서치 퍼스트",
+   "desc": "큰 제목 아래 상품 목록을 넓게 펼치는 탐색형입니다.",
+   "palette": {
+    "bg": "#F3F6FA",
+    "ink": "#1D2938",
+    "accent": "#355D8B",
+    "soft": "#DFE8F2"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "grid4",
+    "notice"
+   ]
+  },
+  {
+   "id": "G08",
+   "set": "general",
+   "group": "상품 탐색형",
+   "name": "상품 비교 보드",
+   "desc": "상품 이미지 아래 비교 정보를 정리합니다.",
+   "palette": {
+    "bg": "#EEEFE8",
+    "ink": "#2B342A",
+    "accent": "#5E7652",
+    "soft": "#D9E1CD"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "grid3",
+    "compare",
+    "notice"
+   ]
+  },
+  {
+   "id": "G09",
+   "set": "general",
+   "group": "상품 탐색형",
+   "name": "싱글 스포트라이트",
+   "desc": "대표 상품 한 개를 크게 보여주고 관련 상품으로 연결합니다.",
+   "palette": {
+    "bg": "#F6F3EE",
+    "ink": "#292E32",
+    "accent": "#566B7F",
+    "soft": "#DEE5EB"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "spotlight",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G10",
+   "set": "general",
+   "group": "상품 탐색형",
+   "name": "컬렉션 타일",
+   "desc": "큰 용도별 타일로 상품군에 들어가는 컬렉션 구성입니다.",
+   "palette": {
+    "bg": "#F2F5F5",
+    "ink": "#273438",
+    "accent": "#3D6B72",
+    "soft": "#DCE8E9"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "grid4",
+    "notice"
+   ]
+  },
+  {
+   "id": "G11",
+   "set": "general",
+   "group": "무드·공간형",
+   "name": "컬러 팔레트 숍",
+   "desc": "컬러 칩과 공간 이미지를 상품에 연결합니다.",
+   "palette": {
+    "bg": "#F6F2EB",
+    "ink": "#33332D",
+    "accent": "#98714D",
+    "soft": "#EAE0D1"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "chips",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G12",
+   "set": "general",
+   "group": "무드·공간형",
+   "name": "무드 스튜디오",
+   "desc": "공간 이미지를 크게 두고 무드에 맞는 상품을 바로 아래에 이어 줍니다.",
+   "palette": {
+    "bg": "#F1EDE5",
+    "ink": "#38342F",
+    "accent": "#886D5C",
+    "soft": "#E4D8C9"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "chips",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G13",
+   "set": "general",
+   "group": "무드·공간형",
+   "name": "소재 앤 텍스처",
+   "desc": "소재 질감 배경과 소재·용도·관리 안내를 함께 배치합니다.",
+   "palette": {
+    "bg": "#F5EFE7",
+    "ink": "#3D302F",
+    "accent": "#946863",
+    "soft": "#EAD9D1"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "mosaic",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G14",
+   "set": "general",
+   "group": "무드·공간형",
+   "name": "와이드 프레임",
+   "desc": "넓은 배경 이미지 위에 소개 카드를 겹친 와이드형입니다.",
+   "palette": {
+    "bg": "#F2EEE8",
+    "ink": "#35312B",
+    "accent": "#7C7050",
+    "soft": "#E0D9C9"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G15",
+   "set": "general",
+   "group": "무드·공간형",
+   "name": "공간별 쇼룸",
+   "desc": "공간·쓰임별 카드로 상품을 나란히 보여줍니다.",
+   "palette": {
+    "bg": "#F3F2EA",
+    "ink": "#2D3634",
+    "accent": "#627D73",
+    "soft": "#DFE7DC"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G16",
+   "set": "general",
+   "group": "선택 안내형",
+   "name": "질문으로 찾기",
+   "desc": "쓰임을 고르면 맞는 상품군을 알려주는 안내형입니다.",
+   "palette": {
+    "bg": "#F4F2E7",
+    "ink": "#343A2B",
+    "accent": "#79834D",
+    "soft": "#E3E7CB"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "categories",
+    "note",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G17",
+   "set": "general",
+   "group": "선택 안내형",
+   "name": "처음 쓰는 분 가이드",
+   "desc": "고르는 법·쓰는 법·상품 정보의 세 단계로 안내합니다.",
+   "palette": {
+    "bg": "#EEF3F3",
+    "ink": "#28373A",
+    "accent": "#4F7881",
+    "soft": "#D7E5E7"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "steps",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G18",
+   "set": "general",
+   "group": "선택 안내형",
+   "name": "비포 앤 애프터",
+   "desc": "같은 상품의 두 가지 쓰임·스타일을 나란히 비교합니다.",
+   "palette": {
+    "bg": "#F4F1F8",
+    "ink": "#312644",
+    "accent": "#75559D",
+    "soft": "#E7DFF0"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G19",
+   "set": "general",
+   "group": "선택 안내형",
+   "name": "사이즈 체크 데스크",
+   "desc": "사이즈·용량을 먼저 확인하고 상품 정보로 연결합니다.",
+   "palette": {
+    "bg": "#F4F3EC",
+    "ink": "#32382B",
+    "accent": "#74834E",
+    "soft": "#E4E8D4"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "note",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G20",
+   "set": "general",
+   "group": "선택 안내형",
+   "name": "FAQ 셀렉트",
+   "desc": "접는 질문과 상품 목록을 함께 두는 상담 안내형입니다.",
+   "palette": {
+    "bg": "#F5F1EC",
+    "ink": "#3B332D",
+    "accent": "#8F6C50",
+    "soft": "#E9DDD1"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "grid3",
+    "faq",
+    "notice"
+   ]
+  },
+  {
+   "id": "G21",
+   "set": "general",
+   "group": "전문가·B2B형",
+   "name": "프로젝트 데스크",
+   "desc": "이미지와 품목 정보를 행 단위로 정리한 전문가용 구성입니다.",
+   "palette": {
+    "bg": "#EDF1F0",
+    "ink": "#213A36",
+    "accent": "#356B62",
+    "soft": "#D6E4DF"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "list",
+    "contact",
+    "notice"
+   ]
+  },
+  {
+   "id": "G22",
+   "set": "general",
+   "group": "전문가·B2B형",
+   "name": "스펙 인덱스",
+   "desc": "상품·용도·스펙을 표처럼 정리한 정보 우선형입니다.",
+   "palette": {
+    "bg": "#EFF2F4",
+    "ink": "#27333C",
+    "accent": "#4B687D",
+    "soft": "#DCE5EB"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "note",
+    "compare",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G23",
+   "set": "general",
+   "group": "전문가·B2B형",
+   "name": "프로젝트 브랜드",
+   "desc": "큰 타이포그래피와 프로젝트 안내로 브랜드의 전문성을 보여줍니다.",
+   "palette": {
+    "bg": "#F0F0E9",
+    "ink": "#343A2C",
+    "accent": "#65754D",
+    "soft": "#DDE3CD"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "stats",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G24",
+   "set": "general",
+   "group": "전문가·B2B형",
+   "name": "견적 준비 보드",
+   "desc": "용도와 문의 항목을 정리한 견적 준비 화면입니다.",
+   "palette": {
+    "bg": "#F4F0E9",
+    "ink": "#38332B",
+    "accent": "#9A7A49",
+    "soft": "#E8DCC6"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "note",
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G25",
+   "set": "general",
+   "group": "전문가·B2B형",
+   "name": "쇼룸 앤 컨택트",
+   "desc": "매장·상담 안내 자리와 방문 전 준비 항목을 배치합니다.",
+   "palette": {
+    "bg": "#F3F1EC",
+    "ink": "#343532",
+    "accent": "#787B69",
+    "soft": "#E0E1D6"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "mosaic",
+    "story",
+    "note",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G26",
+   "set": "general",
+   "group": "콘텐츠·기획형",
+   "name": "리빙 매거진",
+   "desc": "큰 표지 이미지와 이야기를 상품으로 이어주는 매거진 구성입니다.",
+   "palette": {
+    "bg": "#F4EDE5",
+    "ink": "#3C332A",
+    "accent": "#A37B47",
+    "soft": "#E9D9BF"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G27",
+   "set": "general",
+   "group": "콘텐츠·기획형",
+   "name": "프로젝트 앨범",
+   "desc": "크기가 다른 이미지 모자이크로 사용 사례를 보여줍니다.",
+   "palette": {
+    "bg": "#F0F2ED",
+    "ink": "#303A32",
+    "accent": "#5D7C68",
+    "soft": "#DCE6DB"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "mosaic",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G28",
+   "set": "general",
+   "group": "콘텐츠·기획형",
+   "name": "시즌 포스터",
+   "desc": "포스터형 제목과 컬러 스트립으로 시즌 기획을 강조합니다.",
+   "palette": {
+    "bg": "#F9F0E5",
+    "ink": "#38251D",
+    "accent": "#A35332",
+    "soft": "#E8C5AB"
+   },
+   "font": "poster",
+   "dark": false,
+   "hero": "poster",
+   "sections": [
+    "chips",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "G29",
+   "set": "general",
+   "group": "콘텐츠·기획형",
+   "name": "큐레이션 에디트",
+   "desc": "세 가지 쓰임을 제품과 짧은 이유로 묶은 큐레이션 구성입니다.",
+   "palette": {
+    "bg": "#F3EDE9",
+    "ink": "#3B302E",
+    "accent": "#976E66",
+    "soft": "#E8D6D0"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "mosaic",
+    "notice"
+   ]
+  },
+  {
+   "id": "G30",
+   "set": "general",
+   "group": "콘텐츠·기획형",
+   "name": "출시 준비 미니숍",
+   "desc": "승인 상품이 없을 때 상점 소개와 준비 중 안내를 보여줍니다.",
+   "palette": {
+    "bg": "#E9EDE6",
+    "ink": "#24352C",
+    "accent": "#52784C",
+    "soft": "#CFDDC8"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "coming",
+    "note",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F01",
+   "set": "food",
+   "group": "기본 탐색형",
+   "name": "식품 카테고리 허브",
+   "desc": "8개 카테고리와 주목 상품을 한 화면에서 탐색하는 기본형입니다.",
+   "palette": {
+    "bg": "#F8F7F3",
+    "ink": "#202521",
+    "accent": "#227447",
+    "soft": "#E8F0E8"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "compact",
+   "sections": [
+    "categories",
+    "spotlight",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F02",
+   "set": "food",
+   "group": "기본 탐색형",
+   "name": "대화로 찾는 식품",
+   "desc": "자연어 질문 입력과 상품 제안의 예시를 함께 보여주는 대화형입니다.",
+   "palette": {
+    "bg": "#F3F7F6",
+    "ink": "#20352F",
+    "accent": "#286B59",
+    "soft": "#E1EEEA"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "categories",
+    "note",
+    "grid4",
+    "notice"
+   ]
+  },
+  {
+   "id": "F03",
+   "set": "food",
+   "group": "기본 탐색형",
+   "name": "우리 브랜드 식탁",
+   "desc": "브랜드 이야기와 대표 식품을 나란히 소개하는 미니숍 기본형입니다.",
+   "palette": {
+    "bg": "#FCF6ED",
+    "ink": "#3C2C20",
+    "accent": "#A4532C",
+    "soft": "#F0E0CC"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "stats",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F04",
+   "set": "food",
+   "group": "기본 탐색형",
+   "name": "마켓 그리드",
+   "desc": "제품군 메뉴와 상품 그리드를 나란히 배치한 탐색형입니다.",
+   "palette": {
+    "bg": "#F5F7F4",
+    "ink": "#28332A",
+    "accent": "#3F6B42",
+    "soft": "#E3EBDD"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "categories",
+    "side",
+    "notice"
+   ]
+  },
+  {
+   "id": "F05",
+   "set": "food",
+   "group": "기본 탐색형",
+   "name": "빠른 상품 리스트",
+   "desc": "상품명·중량·예시 가격을 행 단위로 보여주는 간결한 목록형입니다.",
+   "palette": {
+    "bg": "#F4F6F8",
+    "ink": "#263541",
+    "accent": "#3C607C",
+    "soft": "#E0E8EE"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "list",
+    "notice"
+   ]
+  },
+  {
+   "id": "F06",
+   "set": "food",
+   "group": "선물·기획형",
+   "name": "명절 선물 상점",
+   "desc": "선물 상자 이미지와 상품 구성을 중심으로 보여주는 기획형입니다.",
+   "palette": {
+    "bg": "#FBF1E9",
+    "ink": "#492C24",
+    "accent": "#A14D35",
+    "soft": "#F0D8CA"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "categories",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F07",
+   "set": "food",
+   "group": "선물·기획형",
+   "name": "예산별 선물 찾기",
+   "desc": "예산 구간 필터와 선물 상품을 연결하는 선택형입니다.",
+   "palette": {
+    "bg": "#F8F2F3",
+    "ink": "#3C2931",
+    "accent": "#9A536B",
+    "soft": "#EEDDE3"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "categories",
+    "grid4",
+    "notice"
+   ]
+  },
+  {
+   "id": "F08",
+   "set": "food",
+   "group": "선물·기획형",
+   "name": "받는 분을 위한 선물",
+   "desc": "받는 분과 선물 상황을 선택해 상품군을 살펴보는 안내형입니다.",
+   "palette": {
+    "bg": "#F8F4E9",
+    "ink": "#393526",
+    "accent": "#8B7338",
+    "soft": "#EEE5CB"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "mosaic",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F09",
+   "set": "food",
+   "group": "선물·기획형",
+   "name": "임직원 선물 컬렉션",
+   "desc": "여러 식품 선물 후보를 동등한 카드로 비교하는 기업용 구성입니다.",
+   "palette": {
+    "bg": "#F0F4F8",
+    "ink": "#25364A",
+    "accent": "#3B6186",
+    "soft": "#DDE7F1"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "contact",
+    "grid3",
+    "note",
+    "notice"
+   ]
+  },
+  {
+   "id": "F10",
+   "set": "food",
+   "group": "선물·기획형",
+   "name": "선물 비교 테이블",
+   "desc": "식품 선물의 구성·중량·가격 확인 항목을 표로 정리합니다.",
+   "palette": {
+    "bg": "#F5F3F8",
+    "ink": "#332D44",
+    "accent": "#725C96",
+    "soft": "#E7E0EE"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "grid3",
+    "compare",
+    "notice"
+   ]
+  },
+  {
+   "id": "F11",
+   "set": "food",
+   "group": "신선식품형",
+   "name": "제철 과일 바구니",
+   "desc": "과일 바구니 이미지와 품목별 상품을 연결한 신선식품형입니다.",
+   "palette": {
+    "bg": "#FCF4E8",
+    "ink": "#3A3021",
+    "accent": "#A45D21",
+    "soft": "#F2DFC0"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F12",
+   "set": "food",
+   "group": "신선식품형",
+   "name": "산지에서 온 식탁",
+   "desc": "산지 안내 자리와 식품 목록을 연결해 출처 정보를 강조합니다.",
+   "palette": {
+    "bg": "#F2F6EA",
+    "ink": "#2F3828",
+    "accent": "#66823C",
+    "soft": "#E2EBCD"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F13",
+   "set": "food",
+   "group": "신선식품형",
+   "name": "바다 식품 상회",
+   "desc": "수산 이미지와 형태·중량·보관 확인 항목을 중심에 둡니다.",
+   "palette": {
+    "bg": "#123D4A",
+    "ink": "#F4F7F4",
+    "accent": "#CF8F45",
+    "soft": "#245564"
+   },
+   "font": "sans",
+   "dark": true,
+   "hero": "split",
+   "sections": [
+    "stats",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F14",
+   "set": "food",
+   "group": "신선식품형",
+   "name": "정육 셀렉트",
+   "desc": "용도별 부위 선택과 정육 상품을 연결하는 전문형입니다.",
+   "palette": {
+    "bg": "#F8EFEC",
+    "ink": "#432D2A",
+    "accent": "#9F5249",
+    "soft": "#EED9D3"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "steps",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F15",
+   "set": "food",
+   "group": "신선식품형",
+   "name": "아침의 달걀과 우유",
+   "desc": "아침 식탁 이미지와 달걀·유제품 확인 정보를 보여줍니다.",
+   "palette": {
+    "bg": "#FAF6E8",
+    "ink": "#373624",
+    "accent": "#8A803E",
+    "soft": "#EEE7C8"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F16",
+   "set": "food",
+   "group": "일상 식품형",
+   "name": "간식과 디저트 숍",
+   "desc": "과자·디저트 이미지와 상품 카드를 편집형으로 배치합니다.",
+   "palette": {
+    "bg": "#FBF0EA",
+    "ink": "#432D2B",
+    "accent": "#A5634B",
+    "soft": "#F2DCD0"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F17",
+   "set": "food",
+   "group": "일상 식품형",
+   "name": "동네 베이커리 노트",
+   "desc": "빵 이미지와 짧은 이야기를 묶은 베이커리 매거진형입니다.",
+   "palette": {
+    "bg": "#F8F2E7",
+    "ink": "#3F3326",
+    "accent": "#9B703C",
+    "soft": "#EBDDCA"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F18",
+   "set": "food",
+   "group": "일상 식품형",
+   "name": "커피와 차의 시간",
+   "desc": "커피·차의 이미지와 취향별 상품을 여백 있게 보여줍니다.",
+   "palette": {
+    "bg": "#F2F0E9",
+    "ink": "#30362C",
+    "accent": "#667258",
+    "soft": "#DDE3D4"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "center",
+   "sections": [
+    "story",
+    "contact",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F19",
+   "set": "food",
+   "group": "일상 식품형",
+   "name": "한 끼 간편식",
+   "desc": "아침·점심·저녁의 세 장면으로 간편식 상품을 연결합니다.",
+   "palette": {
+    "bg": "#F6F3E9",
+    "ink": "#343729",
+    "accent": "#74803B",
+    "soft": "#E5E8CF"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "mosaic",
+    "story",
+    "notice"
+   ]
+  },
+  {
+   "id": "F20",
+   "set": "food",
+   "group": "일상 식품형",
+   "name": "우리 집 팬트리",
+   "desc": "팬트리 선반 이미지와 기본 식재료를 정리한 목록형입니다.",
+   "palette": {
+    "bg": "#F5F1E9",
+    "ink": "#39352D",
+    "accent": "#8C754E",
+    "soft": "#E9DFCD"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F21",
+   "set": "food",
+   "group": "선택·정보형",
+   "name": "레시피 장보기",
+   "desc": "요리 소개와 재료 목록을 상품 정보에 연결하는 구성입니다.",
+   "palette": {
+    "bg": "#F1F6EF",
+    "ink": "#2C3A2C",
+    "accent": "#507B49",
+    "soft": "#DEEAD8"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F22",
+   "set": "food",
+   "group": "선택·정보형",
+   "name": "용량과 단가 비교",
+   "desc": "상품 가격과 용량, 단가를 같은 기준으로 비교하는 정보형입니다.",
+   "palette": {
+    "bg": "#F0F4F7",
+    "ink": "#2B3B47",
+    "accent": "#4A6C85",
+    "soft": "#DCE7EF"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "grid3",
+    "chips",
+    "note",
+    "notice"
+   ]
+  },
+  {
+   "id": "F23",
+   "set": "food",
+   "group": "선택·정보형",
+   "name": "보관 안내 데스크",
+   "desc": "판매처의 보관·해동·조리 안내를 확인할 자리를 정리합니다.",
+   "palette": {
+    "bg": "#F0F5F6",
+    "ink": "#2D3D40",
+    "accent": "#4F7A82",
+    "soft": "#DFEAED"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "mosaic",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F24",
+   "set": "food",
+   "group": "선택·정보형",
+   "name": "영양 표시 읽기",
+   "desc": "원재료·영양·섭취 안내를 상품별로 확인하는 표 중심 구성입니다.",
+   "palette": {
+    "bg": "#F5F2F9",
+    "ink": "#3B3248",
+    "accent": "#806397",
+    "soft": "#E9E0F0"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F25",
+   "set": "food",
+   "group": "선택·정보형",
+   "name": "취향 필터 스튜디오",
+   "desc": "맛과 재료 선택을 상품 탐색에 반영하는 시연형입니다.",
+   "palette": {
+    "bg": "#FAF1F5",
+    "ink": "#44303C",
+    "accent": "#A2557B",
+    "soft": "#F0DDE7"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "contact",
+    "grid4",
+    "notice"
+   ]
+  },
+  {
+   "id": "F26",
+   "set": "food",
+   "group": "콘텐츠·운영형",
+   "name": "시즌 식탁 포스터",
+   "desc": "시즌 메시지와 상품 컬렉션을 큰 포스터로 보여줍니다.",
+   "palette": {
+    "bg": "#F7EEE4",
+    "ink": "#433124",
+    "accent": "#A3642F",
+    "soft": "#EED8BE"
+   },
+   "font": "poster",
+   "dark": false,
+   "hero": "poster",
+   "sections": [
+    "categories",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F27",
+   "set": "food",
+   "group": "콘텐츠·운영형",
+   "name": "트렌드 포커스",
+   "desc": "주목 키워드와 순위 정보를 넣을 자리를 상품과 연결합니다.",
+   "palette": {
+    "bg": "#F3F5F0",
+    "ink": "#29352C",
+    "accent": "#4B7753",
+    "soft": "#E0E8DA"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "spotlight",
+    "list",
+    "notice"
+   ]
+  },
+  {
+   "id": "F28",
+   "set": "food",
+   "group": "콘텐츠·운영형",
+   "name": "푸드 매거진",
+   "desc": "큰 표지 이미지와 식품 이야기를 상품으로 이어주는 매거진형입니다.",
+   "palette": {
+    "bg": "#F7F2EA",
+    "ink": "#3C342B",
+    "accent": "#966B43",
+    "soft": "#EADCC9"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "story",
+   "sections": [
+    "mosaic",
+    "notice"
+   ]
+  },
+  {
+   "id": "F29",
+   "set": "food",
+   "group": "콘텐츠·운영형",
+   "name": "생산자의 식탁",
+   "desc": "생산자 소개 자리와 상품·작업 이야기를 묶는 브랜드형입니다.",
+   "palette": {
+    "bg": "#F0F4EA",
+    "ink": "#323B2B",
+    "accent": "#6B824B",
+    "soft": "#DFE8D1"
+   },
+   "font": "serif",
+   "dark": false,
+   "hero": "split",
+   "sections": [
+    "story",
+    "grid3",
+    "notice"
+   ]
+  },
+  {
+   "id": "F30",
+   "set": "food",
+   "group": "콘텐츠·운영형",
+   "name": "식품 미니숍 준비 중",
+   "desc": "승인 상품이 없을 때 브랜드 소개와 준비 중 안내를 보여줍니다.",
+   "palette": {
+    "bg": "#F5F6EF",
+    "ink": "#30392B",
+    "accent": "#6C7E4E",
+    "soft": "#E5EAD8"
+   },
+   "font": "sans",
+   "dark": false,
+   "hero": "wide",
+   "sections": [
+    "note",
+    "categories",
+    "grid3",
+    "notice"
+   ]
+  }
+ ]
+}
