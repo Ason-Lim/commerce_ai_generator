@@ -697,6 +697,27 @@ def operator_preview(eng, detail_id: str) -> str:
                   banner=f"운영자 미리보기 — {STATUSES[r['status']]} · {r['version']}판 · 손님에게 보이지 않아요")  # fmt: skip
 
 
+def product_preview(eng, product_id: str) -> str:
+    """상품 검수 옆 미리보기 (2026-11-25 사용자 요청) — 최신 상세페이지가 있으면 그것, 없으면 상품 정보로 만든
+    규칙 초안(AI 없음)으로 '손님에게 이렇게 보여요'. 운영자만 · 손님에게 보이지 않음."""
+    from app.services.seller import catalog
+
+    with eng.connect() as c:
+        pr = c.execute(select(products.t_product).where(products.t_product.c.product_id == product_id)).mappings().first()
+        if pr is None:
+            raise DetailError("없는 상품이에요")
+        d = c.execute(select(t_detail).where(t_detail.c.product_id == product_id)
+                      .order_by(t_detail.c.version.desc())).mappings().first()  # fmt: skip
+    p = products._view(pr, operator=False)
+    if d is not None and d["sections"]:
+        return render(p, d["inputs"], d["sections"], status=d["status"], made_by=d["made_by"],
+                      banner=f"상세페이지 미리보기 — {STATUSES[d['status']]} · {d['version']}판 · 손님에게 보이지 않아요")  # fmt: skip
+    unit = catalog.units_of(eng, pr["seller_id"]).get(product_id)
+    inputs = (d["inputs"] if d is not None else None) or {}
+    return render(p, inputs, rule_draft(p, unit, inputs), status="draft", made_by="rule",
+                  banner="상품 정보만으로 만든 미리보기 — 셀러가 아직 상세페이지를 만들지 않았어요 · 손님에게 보이지 않아요")  # fmt: skip
+
+
 def approved_for(eng, seller_id: str) -> list[dict]:
     """미니숍(⑧) — 셀러의 승인된 최신 상세페이지들."""
     with eng.connect() as c:

@@ -273,3 +273,21 @@ def test_mini_shop_shows_only_approved_on_sale_products(eng):
     assert r.status_code == 200 and "운영자 미니숍 미리보기" in r.text
     assert c.post("/seller/api/shop/view", json={"key": k}).json()["ok"]
     assert c.get(f"/shop/{s['seller_id']}").status_code == 404  # SHOP_PUBLIC 꺼짐이면 고객 주소 없음
+
+
+# ── 상품 검수 옆 손님 화면 미리보기 (2026-11-25) ──
+def test_product_preview_with_and_without_detail(eng):
+    from app.main import app
+
+    _s, k, pid = _seller(eng)
+    page = D.product_preview(eng, pid)
+    assert "상품 정보만으로 만든 미리보기" in page and "제주 감귤" in page and "noindex" in page
+    _ready(eng, k, pid)
+    D.generate(eng, k, IP, pid, ai=lambda t: GOOD, ai_name="ai:x")
+    page = D.product_preview(eng, pid)
+    assert "상세페이지 미리보기" in page and "서귀포 노지 감귤 5kg" in page
+    c = TestClient(app)
+    r = c.get(f"/admin/seller-products/{pid}/preview", headers=H)
+    assert r.status_code == 200 and "default-src 'none'" in r.headers["content-security-policy"]
+    assert c.get(f"/admin/seller-products/{pid}/preview").status_code in (401, 403)
+    assert c.get("/admin/seller-products/PNOPE/preview", headers=H).status_code in (400, 404)
