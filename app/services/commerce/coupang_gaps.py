@@ -399,6 +399,45 @@ class GapStore:
         return out[:limit]
 
 
+# ── 2026-11-25 창 5 준비: '쿠팡 빈칸'을 셀러 입점·UCP 판매자 영업 근거로 ──
+LEAD_NOTE = ("쿠팡 파트너스 검색 API 가 쓸 상품을 주지 못한 검색어 × 최근 네이버 식품 인기 순위. 쿠팡 사이트에 상품이 없다는 뜻이 "
+             "아니고, 우리 추천이 비어 있던 검색어예요. 못 찾은 횟수 30 미만은 '관찰'. 영업 전 쿠팡·네이버에서 직접 확인하세요.")
+
+
+def seller_leads(days: int = 28, *, store: GapStore | None = None, ranks: dict[str, int] | None = None,
+                 limit: int = 200) -> list[dict]:
+    """셀러 영업 후보 — 우리 추천이 비었던 검색어(0건·모두 걸러짐, 다시 찾아도 못 찾음 포함)를 수요(네이버 순위)와 함께.
+    우선순위: 높음 = 네이버 100위 안 & 못 찾음 2회+, 중간 = 500위 안, 관찰 = 그 밖. 검색어·숫자만(세션·손님 문장 없음)."""
+    store = store or GapStore()
+    ranks = ranked_keywords() if ranks is None else ranks
+    out = []
+    for g in store.overview(days, limit=10_000):
+        miss = g["zero"] + g["filtered"]
+        if not miss:
+            continue
+        q = g["query"]
+        rank = ranks.get(q) or ranks.get(q.replace(" ", ""))
+        level = "높음" if rank and rank <= 100 and miss >= 2 else "중간" if rank and rank <= 500 else "관찰"
+        out.append({"query": q, "missed": miss, "retry_found": g["retry_found"], "unmet": g["retry_found"] == 0,
+                    "naver_rank": rank, "priority": level, "alts": g["alts"], "last": g["last"],
+                    "small_n": miss < 30})  # fmt: skip
+    order = {"높음": 0, "중간": 1, "관찰": 2}
+    out.sort(key=lambda x: (order[x["priority"]], not x["unmet"], x["naver_rank"] or 10**6, -x["missed"], x["query"]))
+    return out[:limit]
+
+
+def seller_leads_csv(rows: list[dict]) -> str:
+    import io
+
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["우선순위", "검색어", "못 찾은 횟수", "다시 찾아 나옴", "아직 못 채움", "네이버 식품 순위(최근)", "다시 찾은 말", "마지막 날", "비고"])
+    for r in rows:
+        w.writerow([r["priority"], r["query"], r["missed"], r["retry_found"], "예" if r["unmet"] else "아니오",
+                    r["naver_rank"] or "", " / ".join(r["alts"]), r["last"], "관찰(30 미만)" if r["small_n"] else ""])  # fmt: skip
+    return "\ufeff" + buf.getvalue()
+
+
 def record(query: str, outcome: str, alt: str | None = None) -> None:
     """검색 경로가 부른다 — 실패해도 대화에 영향 없음."""
     if not enabled():

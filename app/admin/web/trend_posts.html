@@ -108,6 +108,9 @@ tr.click{cursor:pointer} tr.click:hover td{background:#f7f9fb} tr.sel td{backgro
   <p class="note" id="cf-op"></p>
   <h3>쿠팡 빈칸 <small class="note">최근 28일 · 쿠팡 파트너스 검색이 0건이거나 받은 것이 모두 걸러진 검색어 — 쿠팡 사이트에 없다는 뜻은 아니에요</small></h3>
   <div class="scroll"><table><thead><tr><th>검색어</th><th>0건</th><th>모두 걸러짐</th><th>다시 찾아 나옴</th><th>다시 찾은 말</th><th>마지막</th></tr></thead><tbody id="gap-rows"></tbody></table></div>
+  <h3>셀러 영업 후보 <small class="note">쿠팡 빈칸 × 네이버 식품 순위 — 셀러 입점·UCP 판매자 영업 근거 (창 5 준비)</small> <a class="btn" href="/admin/api/coupang-gaps/leads?format=csv">CSV 내려받기</a></h3>
+  <div class="scroll"><table><thead><tr><th>우선순위</th><th>검색어</th><th>못 찾은 횟수</th><th>아직 못 채움</th><th>네이버 순위</th><th>마지막</th></tr></thead><tbody id="lead-rows"></tbody></table></div>
+  <p class="note" id="lead-note"></p>
   <p class="note" id="gap-syn"></p>
 </section>
 <section id="detail" hidden>
@@ -233,6 +236,12 @@ async function loadGaps(){const j=await api("/admin/api/coupang-gaps");const t=$
   el("td",{},String(g.retry_found)),el("td",{},g.alts.join(", ")||"—"),el("td",{},g.last)));
  $("gap-syn").textContent="바꿔 쓸 말 "+j.synonyms.length+"개 (data/query_synonyms.csv): "+j.synonyms.slice(0,8).map(x=>x.from+"→"+x.to+(x.kind==="broaden"?"(넓힘·추가 후보만)":x.kind==="typo"?"(오타)":"")).join(", ")+(j.synonyms.length>8?" …":"")}
 loadGaps().catch(showErr);
+async function loadLeads(){const j=await api("/admin/api/coupang-gaps/leads");const t=$("lead-rows");t.replaceChildren();
+ if(!j.items.length)t.append(el("tr",{},el("td",{colspan:"6",class:"note"},"아직 없어요")));
+ for(const g of j.items.slice(0,30))t.append(el("tr",{},el("td",{},g.priority),el("td",{},g.query),el("td",{},String(g.missed)+(g.small_n?" (관찰)":"")),
+  el("td",{},g.unmet?"예":"아니오"),el("td",{},g.naver_rank?g.naver_rank+"위":"—"),el("td",{},g.last)));
+ $("lead-note").textContent=j.note+(j.items.length>30?` · 화면엔 30개, 전체 ${j.items.length}개는 CSV`:"")}
+loadLeads().catch(showErr);
 
 </script>
 </body>

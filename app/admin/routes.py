@@ -2860,6 +2860,21 @@ def coupang_gaps_overview(days: int = 28):
             "note": "쿠팡 파트너스 검색 API 기준 — 쿠팡 사이트에 상품이 없다는 뜻은 아니에요."}
 
 
+@router.get("/admin/api/coupang-gaps/leads", dependencies=[api])
+def coupang_gaps_leads(days: int = 28, format: str = Query("json", pattern="^(json|csv)$")):  # noqa: A002
+    """2026-11-25 창 5 준비 — 셀러 영업 후보: 쿠팡 빈칸 검색어 × 네이버 식품 순위, 우선순위. format=csv 는 엑셀용 내려받기."""
+    from fastapi.responses import Response
+
+    from app.services.commerce import coupang_gaps as cg
+
+    days = max(1, min(int(days or 28), 365))
+    rows = cg.seller_leads(days)
+    if format == "csv":
+        return Response(cg.seller_leads_csv(rows), media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="seller_leads_{days}d.csv"'})  # fmt: skip
+    return {"days": days, "items": rows, "note": cg.LEAD_NOTE}
+
+
 class _CheckedIn(BaseModel):
     note: str | None = Field(None, max_length=200)
 
