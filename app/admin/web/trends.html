@@ -963,7 +963,9 @@ async function loadTshift(){const box=$("#ts-box");if(!box)return;const q=new UR
   }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
 if($("#ts-go")){$("#ts-go").onclick=loadTshift;loadTshift().catch(()=>{})}
 async function loadKn(){if(!$("#kn-msg"))return;try{const d=await api("/admin/api/trends/forecast/knowledge");
-  $("#kn-msg").textContent=(d.built_at?`최신 묶음 ${d.built_at} (${d.chars.toLocaleString()}자)`:"아직 묶음이 없어요 — 먼저 만들어 주세요")+(d.dataset.length?` · 데이터셋 ${d.dataset.map(x=>x.name+" "+x.rows+"줄").join(", ")}`:"")}catch(e){$("#kn-msg").textContent=e.message}}
+  $("#kn-msg").textContent=(d.built_at?`최신 묶음 ${d.built_at} (${d.chars.toLocaleString()}자)`:"아직 묶음이 없어요 — 먼저 만들어 주세요")+(d.dataset.length?` · 데이터셋 ${d.dataset.map(x=>x.name+" "+x.rows+"줄").join(", ")}`:"")
+  +(d.backtests&&d.backtests.length?` · 백테스트 ${d.backtests.map(b=>b[0].replace("backtest_","").replace(".json","")+"("+b[2]+"일, "+(b[1]||"").slice(5,16).replace("T"," ")+")").join(", ")}`:" · 묶음에 든 백테스트 없음")
+  +(d.backtests_skipped&&d.backtests_skipped.length?` · ⚠ 옛 형식이라 뺀 백테스트 ${d.backtests_skipped.length}개(다시 실행 필요)`:"")}catch(e){$("#kn-msg").textContent=e.message}}
 function askRow(x){const rt=x.rating?{good:"좋음",fix:"고침",bad:"버림"}[x.rating]:"";
   return `<div class="card" style="margin:8px 0;padding:10px;border:1px solid #e5e7eb;border-radius:8px"><p class="note">${esc(x.at)} · ${x.provider==="anthropic"?"Claude":"Ollama"}${x.model?" ("+esc(x.model)+")":""} · 묶음 ${esc(x.knowledge_built_at||"")}${rt?` · <b>${rt}</b>`:""}</p>
   <p><b>Q.</b> ${esc(x.question)}</p><div style="white-space:pre-wrap">${esc(x.corrected||x.answer)}</div>
