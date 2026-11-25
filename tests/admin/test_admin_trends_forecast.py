@@ -74,11 +74,11 @@ def test_backtest_api(admin_client, rank_dir):
     url = "/admin/api/trends/forecast/backtest?start=2025-10-20&end=2025-10-27&step=7"
     assert admin_client.get(url).status_code == 401
     d = admin_client.get(url, headers=H).json()
-    assert d["dates"] == 2 and set(d["metrics"]) == {"recent", "last_year", "event_rel", "explorer", "explorer_repeat"}
+    assert d["dates"] == 2 and set(d["metrics"]) == {"recent", "last_year", "last_year_lunar", "event_rel", "explorer", "explorer_repeat"}
     x = d["metrics"]["recent"]["28"] if "28" in d["metrics"]["recent"] else d["metrics"]["recent"][28]
     assert {"precision", "recall", "top20_precision", "lead_median", "major_missed", "false_pos"} <= set(x)
     base = admin_client.get(url + "&explorer=0", headers=H).json()
-    assert set(base["metrics"]) == {"recent", "last_year", "event_rel"}
+    assert set(base["metrics"]) == {"recent", "last_year", "last_year_lunar", "event_rel"}
     q1p = admin_client.get(url + "&question=q1p&min_share=0.9", headers=H).json()
     assert q1p["question"] == "q1p" and q1p["rules"]["future_min_share"] == 0.9 and "union" in q1p
     bad = admin_client.get("/admin/api/trends/forecast/backtest?start=2024-01-01&end=2025-12-31", headers=H)
