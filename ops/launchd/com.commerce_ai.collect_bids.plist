@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 매일 04:00 나라장터 입찰 공고 수집(scripts/run_collect_bids.sh). 설치: ops/launchd/install_collect_bids.sh -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.commerce_ai.collect_bids</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/scripts/run_collect_bids.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>4</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__REPO__/var/log/collect_bids.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/var/log/collect_bids.launchd.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>Nice</key>
+  <integer>10</integer>
+</dict>
+</plist>

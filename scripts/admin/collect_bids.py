@@ -8,8 +8,13 @@
 """
 import argparse
 import sys
+from pathlib import Path
 
-from app.admin.b2b.gift_monitor.collectors import collect_all
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")  # launchd 로 돌 때도 G2B_SERVICE_KEY 를 읽도록 (2026-11-25)
+
+from app.admin.b2b.gift_monitor.collectors import collect_all  # noqa: E402
 
 
 def main(argv=None) -> int:
