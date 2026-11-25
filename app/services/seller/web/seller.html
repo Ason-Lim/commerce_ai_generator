@@ -62,7 +62,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   </section>
 
   <div id="body" hidden>
-    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
+    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#dp-h">AI 상세페이지</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
     <section class="box" aria-labelledby="dash-h">
       <div class="row" style="margin:0;justify-content:space-between"><h2 id="dash-h" style="margin:0">대시보드</h2>
         <div class="tabs" role="group" aria-label="기간"><button type="button" data-p="day" aria-pressed="false">오늘</button><button type="button" data-p="week" aria-pressed="true">7일</button><button type="button" data-p="month" aria-pressed="false">30일</button></div></div>
@@ -150,6 +150,29 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
         <div class="row"><button type="button" id="csvBtn">CSV 올리기</button></div>
         <div id="csvMsg" role="status"></div>
       </details>
+    </section>
+
+    <section class="box" aria-labelledby="dp-h">
+      <h2 id="dp-h">AI 상세페이지 <span class="badge ok">AI</span></h2>
+      <p class="note" style="margin:0">적어 주신 정보만으로 AI가 상세페이지 글을 쓰고, 화면은 정해진 틀로 만들어요. 입력에 없는 숫자, 효능·질병 표현, ‘최고·1위’ 같은 단정, 인증 없는 ‘유기농·무농약’은 쓰지 않아요(걸리면 다시 쓰거나 적어 주신 값 그대로 만들어요). 상품정보제공고시 빈칸이 있으면 검수 요청을 할 수 없어요. 운영팀이 승인해도 지금은 손님에게 보이지 않아요(미리보기만).</p>
+      <div class="row"><label for="dpSel" class="note">상품</label><select id="dpSel" style="font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px;max-width:100%"></select><span id="dpState" class="badge"></span></div>
+      <div class="field"><label for="dpMemo">판매 포인트 메모</label><textarea id="dpMemo" maxlength="1500" style="min-height:90px;font-family:inherit" placeholder="사실만 적어 주세요 — 예: 제주 서귀포 노지에서 12월에 수확, 껍질이 얇고 새콤달콤, 크기는 S~M 섞임, 받으면 서늘한 곳에 두세요"></textarea></div>
+      <div class="row"><label for="dpKind" class="note">고시 품목</label><select id="dpKind" style="font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px"><option value="">고르기</option><option value="agri">농수축산물</option><option value="processed">가공식품</option></select></div>
+      <div id="dpNotice" class="grid2"></div>
+      <div class="field"><label for="dpImgs">사진 주소 (한 줄에 하나, https, 최대 10개)</label><textarea id="dpImgs" spellcheck="false" style="min-height:60px"></textarea></div>
+      <label class="note" style="display:flex;gap:6px;align-items:flex-start;font-weight:400"><input type="checkbox" id="dpImgOk" style="width:auto;margin-top:4px"> 이 사진들은 제가 쓸 권리가 있고, 상세페이지에 써도 됩니다(체크하지 않으면 사진 없이 만들어요).</label>
+      <div class="row"><button type="button" id="dpSave">입력 저장</button><button type="button" class="sub" id="dpGen">AI로 초안 만들기</button><button type="button" class="sub" id="dpPrev">미리보기</button><button type="button" class="sub" id="dpSubmit">검수 요청</button><button type="button" class="sub" id="shopPrev">미니숍 미리보기</button></div>
+      <div id="dpMsg" role="status"></div>
+      <div id="dpMiss" class="note"></div>
+      <div id="dpEdit" hidden>
+        <h3 style="font-size:15px;margin:14px 0 4px">초안 문구 고치기 <span class="note" id="dpBy"></span></h3>
+        <div class="field"><label for="dpHead">제목</label><input id="dpHead" maxlength="40"></div>
+        <div class="field"><label for="dpIntro">소개</label><textarea id="dpIntro" maxlength="200" style="min-height:60px;font-family:inherit"></textarea></div>
+        <div class="field"><label for="dpPts">특징 (한 줄에 ‘이름 | 설명’, 2~5줄)</label><textarea id="dpPts" style="min-height:90px;font-family:inherit"></textarea></div>
+        <div class="field"><label for="dpCare">보관·손질 (한 줄에 하나)</label><textarea id="dpCare" style="min-height:50px;font-family:inherit"></textarea></div>
+        <div class="row"><button type="button" class="sub" id="dpSecSave">문구 저장</button></div>
+      </div>
+      <iframe id="dpFrame" title="상세페이지 미리보기" sandbox="" hidden style="width:100%;height:640px;border:1px solid var(--line);border-radius:14px;margin-top:12px;background:#fff"></iframe>
     </section>
 
     <section class="box" aria-labelledby="al-h">
@@ -280,6 +303,67 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     PERIOD = b.dataset.p; document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); loadDash();
   }));
 
+
+  // ── ⑦ AI 상세페이지 (2026-11-25) ──
+  let DP = null, DPID = "";
+  function fillDpSel(){
+    const sel = $("dpSel"); const keep = DPID || sel.value;
+    sel.innerHTML = '<option value="">상품 고르기</option>' + PRODS.map((p) => `<option value="${esc(p.product_id)}">${esc(p.name)} ${esc(p.volume)}</option>`).join("");
+    if (keep) sel.value = keep;
+  }
+  function noticeInputs(kind, values){
+    const spec = DP && DP.notice_spec[kind];
+    $("dpNotice").innerHTML = spec ? spec.fields.map((f) => `<div class="field"><label for="dpN_${f.key}">${esc(f.label)}</label><input id="dpN_${f.key}" data-nk="${f.key}" maxlength="300" value="${esc((values || {})[f.key] || "")}"></div>`).join("") : '<p class="note">고시 품목을 고르면 칸이 나와요.</p>';
+  }
+  function showDetail(d){
+    DP = d; const cur = d.current, inp = (cur && cur.inputs) || {notice_kind: d.default_kind, notice: {}};
+    $("dpState").textContent = cur ? `${cur.version}판 · ${cur.status_label}` + (d.approved ? ` · 승인본 ${d.approved.version}판 있음` : "") : "아직 없음";
+    $("dpState").className = "badge" + (cur && cur.status === "approved" ? " ok" : "");
+    $("dpMemo").value = inp.memo || ""; $("dpKind").value = inp.notice_kind || ""; noticeInputs(inp.notice_kind, inp.notice);
+    $("dpImgs").value = (inp.images || []).map((x) => x.url).join("\n"); $("dpImgOk").checked = !!inp.image_ok;
+    $("dpMiss").innerHTML = d.missing.length ? "보완할 고시 칸: " + d.missing.map((m) => esc(m.label.split(" (")[0]) + (m.why ? ` <span class="note">(${esc(m.why)})</span>` : "")).join(", ") : "상품정보제공고시 칸이 모두 채워졌어요.";
+    const sec = cur && cur.sections;
+    $("dpEdit").hidden = !sec;
+    if (sec) {
+      $("dpHead").value = sec.headline; $("dpIntro").value = sec.intro;
+      $("dpPts").value = sec.points.map((p) => p.title + " | " + p.text).join("\n"); $("dpCare").value = (sec.care || []).join("\n");
+      $("dpBy").textContent = "만든 쪽: " + (cur.made_by || "") + (cur.checks && cur.checks.length ? " · AI 초안이 검사에 걸려 적어 주신 값으로 만들었어요(" + cur.checks.slice(0, 2).join(", ") + ")" : "");
+    }
+    if (cur && cur.status === "rejected" && cur.review_note) msg($("dpMsg"), "반려 이유: " + cur.review_note, "err");
+  }
+  async function openDetail(pid){
+    DPID = pid; $("dpSel").value = pid; $("dpFrame").hidden = true; msg($("dpMsg"), "");
+    const j = await post("/seller/api/detail", {key: KEY, product_id: pid});
+    if (!j.ok) { msg($("dpMsg"), j.error, "err"); return; }
+    showDetail(j.detail); location.hash = "dp-h";
+  }
+  function dpInputs(){
+    const notice = {}; document.querySelectorAll("[data-nk]").forEach((i) => { if (i.value.trim()) notice[i.dataset.nk] = i.value.trim(); });
+    return {memo: $("dpMemo").value, notice_kind: $("dpKind").value || null, notice,
+            images: $("dpImgs").value.split("\n").map((x) => x.trim()).filter(Boolean).map((url) => ({url})), image_ok: $("dpImgOk").checked};
+  }
+  async function dpCall(url, extra, ok){
+    if (!DPID) { msg($("dpMsg"), "상품을 먼저 골라 주세요", "err"); return null; }
+    const j = await post(url, Object.assign({key: KEY, product_id: DPID}, extra || {}));
+    if (!j.ok) { msg($("dpMsg"), j.error, "err"); return null; }
+    if (j.detail) showDetail(j.detail); if (ok) msg($("dpMsg"), ok, "ok"); return j;
+  }
+  $("dpSel").addEventListener("change", () => { if ($("dpSel").value) openDetail($("dpSel").value); });
+  $("dpKind").addEventListener("change", () => noticeInputs($("dpKind").value, {}));
+  $("dpSave").addEventListener("click", () => dpCall("/seller/api/detail/save", {inputs: dpInputs()}, "입력을 저장했어요"));
+  $("dpGen").addEventListener("click", async () => {
+    $("dpGen").disabled = true; msg($("dpMsg"), "초안을 만드는 중이에요…", "ok");
+    const s = await dpCall("/seller/api/detail/save", {inputs: dpInputs()});
+    if (s) await dpCall("/seller/api/detail/generate", {}, "초안을 만들었어요. 미리보기로 확인하고 필요하면 문구를 고쳐 주세요.");
+    $("dpGen").disabled = false;
+  });
+  $("dpSecSave").addEventListener("click", () => {
+    const points = $("dpPts").value.split("\n").map((l) => l.split("|")).filter((x) => x[0].trim()).map((x) => ({title: x[0].trim(), text: (x.slice(1).join("|") || "").trim()}));
+    dpCall("/seller/api/detail/sections", {sections: {headline: $("dpHead").value, intro: $("dpIntro").value, points, care: $("dpCare").value.split("\n").map((x) => x.trim()).filter(Boolean)}}, "문구를 저장했어요");
+  });
+  $("dpPrev").addEventListener("click", async () => { const j = await dpCall("/seller/api/detail/view"); if (j) { $("dpFrame").srcdoc = j.html; $("dpFrame").hidden = false; } });
+  $("shopPrev").addEventListener("click", async () => { const j = await post("/seller/api/shop/view", {key: KEY}); if (!j.ok) { msg($("dpMsg"), j.error, "err"); return; } $("dpFrame").srcdoc = j.html; $("dpFrame").hidden = false; });
+  $("dpSubmit").addEventListener("click", () => dpCall("/seller/api/detail/submit", {}, "운영팀에 검수를 요청했어요"));
   // ── 사용법 도우미 (2026-11-25) ──
   async function askHelp(q){
     q = (q || "").trim(); if (q.length < 2) return;
@@ -310,10 +394,12 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <td>${p.facts.map((f) => `<span class="src${f.source === "verified" ? " v" : ""}">${esc(f.label)} ${esc(f.value)} · ${esc(f.source_label)}</span>`).join(" ")}</td>
       <td style="white-space:nowrap"><b${p.sale_state === "on_sale" ? ' style="color:var(--accent)"' : ""}>${esc(p.sale_label)}</b>${p.review_note ? `<div class="note">${esc(p.review_note)}</div>` : ""}</td>
       <td>${stockCell(p.product_id, p.locked)}</td>
-      <td>${p.locked ? "" : `<button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button>`} <button type="button" class="sub" data-on="${p.on ? 0 : 1}" data-pid="${esc(p.product_id)}">${p.on ? "판매 끄기" : "판매 켜기"}</button></td></tr>`).join("")
+      <td>${p.locked ? "" : `<button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button>`} <button type="button" class="sub" data-on="${p.on ? 0 : 1}" data-pid="${esc(p.product_id)}">${p.on ? "판매 끄기" : "판매 켜기"}</button> <button type="button" class="sub" data-dp="${esc(p.product_id)}">상세페이지</button></td></tr>`).join("")
       : '<tr><td colspan="6" class="note">아직 올린 상품이 없어요</td></tr>';
     bindStock();
     document.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => edit(PRODS.find((p) => p.product_id === b.dataset.edit)));
+    document.querySelectorAll("[data-dp]").forEach((b) => b.onclick = () => openDetail(b.dataset.dp));
+    fillDpSel();
     document.querySelectorAll("[data-pid]").forEach((b) => b.onclick = async () => {
       await post("/seller/api/products/listing", {key: KEY, product_id: b.dataset.pid, on: b.dataset.on === "1"}); loadProducts(); loadHealth();
     });

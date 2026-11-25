@@ -53,6 +53,7 @@ THINKING_BY_TASK: dict[str, bool] = {
     "b2b_proposal_write": True, "b2b_proposal_verify": True,
     "ai_recipe_review": True,   # 레시피 교차 검토(GPT) — 2026-11-12
     "seller_help": False,       # 2026-11-25 셀러 사용법 도우미(Claude/Ollama) — 지식 안에서 짧게 답하는 일
+    "seller_detail": True,      # 2026-11-25 셀러 AI 상세페이지 글(Claude/Ollama) — 저장해 쓰는 작성
 }
 
 

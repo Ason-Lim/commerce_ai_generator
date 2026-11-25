@@ -3190,6 +3190,50 @@ def seller_product_review(product_id: str, body: _SellerReviewIn):
 
 
 
+# ── 셀러 AI 상세페이지 ⑦ (창 5, 2026-11-25) — 검수 요청 목록 · 미리보기 · 승인/반려 (고객 노출 없음) ──
+class _DetailReviewIn(BaseModel):
+    decision: Literal["approved", "rejected"]
+    note: str = Field("", max_length=200)
+
+
+@router.get("/admin/api/seller-details", dependencies=[api])
+def seller_details_queue(status: str = Query("submitted", pattern="^(draft|submitted|approved|rejected|all)$")):
+    from app.services.seller import detail_page
+
+    return {"details": detail_page.queue(detail_page.engine(), status), "statuses": detail_page.STATUSES}
+
+
+@router.post("/admin/api/seller-details/{detail_id}/review", dependencies=[api])
+def seller_detail_review(detail_id: str, body: _DetailReviewIn):
+    from app.services.seller import detail_page, store
+
+    return {"ok": True, **_seller_call(store, lambda: detail_page.review(detail_page.engine(), detail_id, body.decision,
+                                                                         by="operator", note=body.note))}  # fmt: skip
+
+
+@router.get("/admin/seller-details/{detail_id}/preview", dependencies=[api])
+def seller_detail_preview(detail_id: str):
+    from app.services.seller import detail_page, store
+
+    page = _seller_call(store, lambda: detail_page.operator_preview(detail_page.engine(), detail_id))
+    return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                                       "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
+
+
+@router.get("/admin/seller/{seller_id}/shop", dependencies=[api])
+def seller_shop_preview(seller_id: str):
+    """⑧ 미니숍 미리보기 — 승인된 상세페이지만. 고객 화면(/shop/…)은 노출 결정 뒤(결정 2)."""
+    from app.services.seller import detail_page, store
+
+    page = _seller_call(store, lambda: detail_page.shop_page(detail_page.engine(), seller_id,
+                                                             banner="운영자 미니숍 미리보기 — 손님에게 보이지 않아요"))  # fmt: skip
+    return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                                       "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
+
+
+DETAIL_CSP = "default-src 'none'; img-src https:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+
+
 # ── 셀러 SCM ③ (창 5, 2026-11-25) — 품절·출고 지연·송장 미등록 숫자만 (받는 분 정보 없음) ──
 @router.get("/admin/api/seller-alerts", dependencies=[api])
 def seller_alerts():

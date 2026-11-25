@@ -166,6 +166,12 @@ tbody tr{cursor:default}
     <div id="billDetail" class="panel" hidden style="margin-top:10px"></div>
   </section>
 
+  <section class="panel" aria-labelledby="dt-h" style="margin-top:14px">
+    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인해도 고객 화면에는 아직 나가지 않아요(미니숍 미리보기만)</small></h3>
+    <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
+  </section>
+
   <section class="panel" aria-labelledby="q-h" style="margin-top:14px">
     <div class="bar"><h3 id="q-h" style="margin:0">상품 검수</h3><span class="spacer"></span><div class="chips" id="qchips" role="group" aria-label="상품 상태"></div></div>
     <div class="grid" id="qgrid">
@@ -247,7 +253,12 @@ async function openBill(id,name){BSEL={id,name};let d;try{d=await api("/admin/ap
     else if(a==="issued"){const no=prompt("세금계산서 승인번호");if(!no)return;await post(`/admin/api/seller-invoices/${iv}/mark`,{to:"issued",tax_invoice_no:no})}
     else{const note=prompt(a==="paid"?"입금 근거 (입금일·통장 표시)":"면제 이유");if(!note)return;await post(`/admin/api/seller-invoices/${iv}/mark`,{to:a,note})}
     loadBilling()}catch(e){err(e)}})}
-loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();
+async function loadDetails(){let d;try{d=await api("/admin/api/seller-details?status=submitted")}catch(e){return err(e)}
+  $("#details").innerHTML=d.details.map(x=>`<tr style="cursor:default"><td>${esc(x.seller_name)}</td><td>${esc(x.product_name)}</td><td>${x.version}판</td><td>${esc(x.made_by||"")}</td><td>${x.missing.length?`보완 ${x.missing.length}칸`:"모두 채움"}</td>
+   <td class="actions" style="margin:0"><a class="btn" href="/admin/seller-details/${esc(x.detail_id)}/preview" target="_blank" rel="noopener">미리보기</a><a class="btn" href="/admin/seller/${esc(x.seller_id)}/shop" target="_blank" rel="noopener">미니숍</a><button class="btn primary" type="button" data-dt="${esc(x.detail_id)}" data-d="approved">승인</button><button class="btn" type="button" data-dt="${esc(x.detail_id)}" data-d="rejected">반려</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">검수 요청이 없어요</td></tr>';
+  document.querySelectorAll("[data-dt]").forEach(b=>b.onclick=async()=>{const note=b.dataset.d==="rejected"?prompt("반려 이유(셀러에게 보여요)"):"";if(b.dataset.d==="rejected"&&!note)return;
+    try{await post(`/admin/api/seller-details/${b.dataset.dt}/review`,{decision:b.dataset.d,note});loadDetails()}catch(e){err(e)}})}
+loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();
 </script>
 </body>
 </html>
