@@ -10,6 +10,7 @@
   POST /seller/api/products/listing {key, product_id?, on} → 판매 켜기·끄기 (검수 없음, product_id 없으면 모두)
   POST /seller/api/health           {key} → '상품 정보 그대로예요' 확인 요청 여부
   POST /seller/api/confirm          {key} → '상품 정보 그대로예요'
+  POST /seller/api/billing          {key} → ④ 내 요금제·청구 내역 (보기만, 실제 청구 없음)
   ── ③ SCM (2026-11-25) ──
   POST /seller/api/stock            {key, product_id, stock?, sold_out, restock_on?} → 재고·품절
   POST /seller/api/suppliers        {key} → 내 공급사 · 상품별 공급사 연결 · 재고
@@ -37,7 +38,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.corpmall_routes import NOINDEX, _client
-from app.services.seller import health, products, scm, store
+from app.services.seller import billing, health, products, scm, store
 
 router = APIRouter(tags=["seller"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "seller" / "web" / "seller.html"
@@ -319,5 +320,14 @@ def seller_health(body: KeyIn, request: Request):
 def seller_confirm(body: KeyIn, request: Request):
     try:
         return _ok(health=health.confirm_unchanged(scm.engine(), body.key, _client(request)))
+    except store.SellerError as e:
+        return _err(e)
+
+
+# ── ④ 월 이용료 (보기만) ──
+@router.post("/seller/api/billing")
+def seller_billing(body: KeyIn, request: Request):
+    try:
+        return _ok(billing=billing.my_billing(billing.engine(), body.key, _client(request)))
     except store.SellerError as e:
         return _err(e)

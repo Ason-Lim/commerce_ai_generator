@@ -3205,3 +3205,69 @@ def seller_health_report():
     from app.services.seller import health, scm
 
     return health.report(scm.engine())
+
+
+
+# ── 셀러 월 이용료 ④ (2026-11-25) — 표시·기록만, 실제 청구 없음. 금액·조정·발행·입금·면제는 운영자만 ──
+class _SellerPlanIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    plan_name: str = Field(..., max_length=40)
+    monthly_fee: int = Field(..., ge=0, le=10_000_000)
+    vat_mode: Literal["excluded", "included"]
+    starts_on: str = Field(..., pattern=r"^\d{4}-\d{2}$")
+    memo: str = Field("", max_length=200)
+
+
+class _InvAdjustIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    amount: int = Field(..., ge=0, le=10_000_000)
+    reason: str = Field(..., min_length=1, max_length=200)
+
+
+class _InvMarkIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    to: Literal["issued", "paid", "waived"]
+    note: str = Field("", max_length=200)
+    tax_invoice_no: str = Field("", max_length=40)
+
+
+@router.get("/admin/api/seller-billing", dependencies=[api])
+def seller_billing_summary():
+    from app.services.seller import billing
+
+    return {"sellers": billing.summary(billing.engine()), "vat_modes": billing.VAT_MODES, "statuses": billing.INV_STATUS}
+
+
+@router.get("/admin/api/seller-billing/{seller_id}", dependencies=[api])
+def seller_billing_detail(seller_id: str):
+    from app.services.seller import billing
+
+    eng = billing.engine()
+    billing.ensure_invoices(eng)
+    return {"plan": billing.plan_of(eng, seller_id), "invoices": billing.invoices(eng, seller_id)}
+
+
+@router.post("/admin/api/seller-billing/{seller_id}/plan", dependencies=[api])
+def seller_billing_plan(seller_id: str, body: _SellerPlanIn):
+    from app.services.seller import billing, store
+
+    eng = billing.engine()
+    got = _seller_call(store, lambda: billing.set_plan(eng, seller_id, **body.model_dump(), by="operator"))
+    billing.ensure_invoices(eng)
+    return {"ok": True, "plan": got}
+
+
+@router.post("/admin/api/seller-invoices/{invoice_id}/adjust", dependencies=[api])
+def seller_invoice_adjust(invoice_id: str, body: _InvAdjustIn):
+    from app.services.seller import billing, store
+
+    return {"ok": True, "invoice": _seller_call(store, lambda: billing.adjust(billing.engine(), invoice_id, body.amount,
+                                                                              by="operator", reason=body.reason))}  # fmt: skip
+
+
+@router.post("/admin/api/seller-invoices/{invoice_id}/mark", dependencies=[api])
+def seller_invoice_mark(invoice_id: str, body: _InvMarkIn):
+    from app.services.seller import billing, store
+
+    return {"ok": True, "invoice": _seller_call(store, lambda: billing.mark(billing.engine(), invoice_id, body.to, by="operator",
+                                                                            note=body.note, tax_invoice_no=body.tax_invoice_no))}  # fmt: skip
