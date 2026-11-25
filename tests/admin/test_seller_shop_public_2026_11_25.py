@@ -237,3 +237,24 @@ def test_old_legal_field_is_carried_to_6_1():
     old = {k: v for k, v in NOTICE_AGRI.items() if k not in ("gmo_gi",)} | {"legal": "지리적표시 제00호"}
     assert D.notice_values("agri", old)["gmo_gi"] == "지리적표시 제00호"
     assert "gmo_gi" not in {m["key"] for m in D.missing_notice("agri", old)}
+
+
+# ── 운영자가 판매자 정보를 대신 적기 (2026-11-25 '확인이 안 눌러져요') ──
+def test_operator_fills_biz_then_verifies(eng):
+    from app.main import app
+
+    sid, _k, _pid = _shop(eng)
+    c = TestClient(app)
+    r = c.post(f"/admin/api/seller-biz/{sid}/verify", headers=H, json={"ok": True})
+    assert r.status_code >= 400  # 빈 칸이면 확인 안 됨 (화면은 버튼을 막고 이유를 보여 줌)
+    j = c.post(
+        f"/admin/api/seller-biz/{sid}/save",
+        headers=H,
+        json={"info": {"trade_name": "한라농장", "biz_no": "2208162517"}},
+    ).json()
+    assert j["ok"] and j["biz"]["info"]["biz_no"] == "220-81-62517" and "대표자 성명" in j["biz"]["missing"]
+    j = c.post(f"/admin/api/seller-biz/{sid}/save", headers=H, json={"info": BIZ | {"phone": "0640000000"}}).json()
+    assert j["biz"]["missing"] == [] and j["biz"]["info"]["phone"] == "064-000-0000" and j["biz"]["verified"] is False
+    assert c.post(f"/admin/api/seller-biz/{sid}/verify", headers=H, json={"ok": True}).json()["biz"]["verified"]
+    with pytest.raises(sel.SellerError):
+        SP.biz_save_operator(eng, sid, BIZ, by="ai")

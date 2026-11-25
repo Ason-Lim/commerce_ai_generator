@@ -3271,6 +3271,19 @@ def seller_biz_list():
             "formal_missing": shop_public.formal_missing()}  # fmt: skip
 
 
+class _BizInfoIn(BaseModel):
+    info: dict
+
+
+@router.post("/admin/api/seller-biz/{seller_id}/save", dependencies=[api])
+def seller_biz_save(seller_id: str, body: _BizInfoIn):
+    """운영자가 입점 서류를 보고 판매자 정보를 대신 적는다 — 저장하면 확인이 풀리고, '확인'은 따로."""
+    from app.services.seller import shop_public, store
+
+    return {"ok": True, "biz": _seller_call(store, lambda: shop_public.biz_save_operator(shop_public.engine(), seller_id,
+                                                                                        body.info, by="operator"))}  # fmt: skip
+
+
 @router.post("/admin/api/seller-biz/{seller_id}/verify", dependencies=[api])
 def seller_biz_verify(seller_id: str, body: _BizVerifyIn):
     from app.services.seller import shop_public, store
