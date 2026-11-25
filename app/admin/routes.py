@@ -311,6 +311,75 @@ def trends_forecast_trend_shift(request: Request, as_of: str | None = Query(None
     return out
 
 
+class _AskIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question: str = Field(min_length=2, max_length=2000)
+    provider: str = Field(pattern="^(anthropic|ollama)$")
+
+
+class _RateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    at: str = Field(min_length=10, max_length=40)
+    rating: str = Field(pattern="^(good|fix|bad)$")
+    corrected: str | None = Field(default=None, max_length=4000)
+
+
+@router.get("/admin/api/trends/forecast/knowledge", dependencies=[api])
+def trends_forecast_knowledge():
+    """예보 지식 묶음·데이터셋 상태 (2026-11-25) — 최신 묶음 시각·크기, 데이터셋 파일별 줄 수."""
+    from app.services.trends.forecast import knowledge as kn
+
+    snap = kn.latest()
+    ds = kn.root() / "dataset"
+    files = [{"name": p.name, "rows": sum(1 for _ in p.open(encoding="utf-8"))} for p in sorted(ds.glob("*.jsonl"))] if ds.exists() else []
+    return {"built_at": snap.get("built_at") if snap else None, "chars": len(kn.context_text(snap)) if snap else 0,
+            "dataset": files, "rules": kn.RULES}  # fmt: skip
+
+
+@router.post("/admin/api/trends/forecast/knowledge/build", dependencies=[api])
+def trends_forecast_knowledge_build():
+    """지식 묶음 새로 만들기 + 이번 주 템플릿 질문·답 데이터셋 저장. 매주 forecast_ledger.py 도 같은 일을 한다."""
+    from app.services.trends import period
+    from app.services.trends.forecast import knowledge as kn
+
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    snap = kn.build(rank_dir)
+    return {"built_at": snap["built_at"], "chars": len(kn.context_text(snap)), "dataset": kn.export_week(snap)}
+
+
+@router.post("/admin/api/trends/forecast/ask", dependencies=[api])
+def trends_forecast_ask(body: _AskIn):
+    """AI에게 묻기 — 최신 지식 묶음을 함께 주고 Claude(anthropic) 또는 Ollama 에 묻는다. 관리자 질문만 기록."""
+    from app.services.trends.forecast import knowledge as kn
+
+    try:
+        return kn.ask(body.question, body.provider)
+    except LookupError as e:
+        raise HTTPException(409, str(e)) from e
+    except Exception as e:  # noqa: BLE001 — 키 없음·Ollama 꺼짐 등
+        raise HTTPException(502, f"{'Claude' if body.provider == 'anthropic' else 'Ollama'} 호출 실패: {type(e).__name__}: {e}") from e
+
+
+@router.get("/admin/api/trends/forecast/ask/log", dependencies=[api])
+def trends_forecast_ask_log(limit: int = Query(30, ge=1, le=200)):
+    from app.services.trends.forecast import knowledge as kn
+
+    return {"items": list(reversed(kn.ask_log(limit)))}
+
+
+@router.post("/admin/api/trends/forecast/ask/rate", dependencies=[api])
+def trends_forecast_ask_rate(body: _RateIn):
+    """좋음(그대로)·고침(고친 답)·버림 — 좋음·고침은 데이터셋 forecast_ask_gold.jsonl 에 들어간다."""
+    from app.services.trends.forecast import knowledge as kn
+
+    try:
+        return kn.rate(body.at, body.rating, body.corrected)
+    except (LookupError, ValueError) as e:
+        raise HTTPException(404, str(e)) from e
+
+
 @router.get("/admin/api/trends/forecast/backtest")
 def trends_forecast_backtest(request: Request, start: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
                              end: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"), step: int = Query(7, ge=1, le=28),
