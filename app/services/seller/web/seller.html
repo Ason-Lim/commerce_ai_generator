@@ -62,7 +62,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   </section>
 
   <div id="body" hidden>
-    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#dp-h">AI 상세페이지</a><a href="#ms-h">미니숍 공개</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
+    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#nv-h">스마트스토어 가져오기</a><a href="#dp-h">AI 상세페이지</a><a href="#ms-h">미니숍 공개</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
     <section class="box" aria-labelledby="dash-h">
       <div class="row" style="margin:0;justify-content:space-between"><h2 id="dash-h" style="margin:0">대시보드</h2>
         <div class="tabs" role="group" aria-label="기간"><button type="button" data-p="day" aria-pressed="false">오늘</button><button type="button" data-p="week" aria-pressed="true">7일</button><button type="button" data-p="month" aria-pressed="false">30일</button></div></div>
@@ -123,6 +123,20 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <p class="note">판매를 켜고 끄는 건 언제든 바로 돼요(검수 없음). 새로 올리거나 내용을 고친 상품만 운영팀 검수를 거쳐요. 원산지·인증·당도는 처음엔 <b>판매자 표기</b>로 두고, 운영팀이 서류로 확인한 칸만 <b>확인됨</b>으로 바뀌어요. 표기를 고치면 그 칸의 확인은 다시 받아야 해요. 승인된 상품이 손님 화면에 언제 보일지는 운영팀이 따로 알려 드려요.</p>
       <div class="row" style="margin:0 0 8px"><button type="button" class="sub" id="allOff">모두 판매 끄기</button><button type="button" class="sub" id="allOn">모두 판매 켜기</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>상품</th><th class="num">가격</th><th>표기</th><th>상태</th><th>재고·공급사</th><th></th></tr></thead><tbody id="plist"></tbody></table></div>
+    </section>
+
+    <section class="box" aria-labelledby="nv-h">
+      <h2 id="nv-h">스마트스토어 상품 가져오기 <span class="badge">읽기 전용</span></h2>
+      <p class="note" style="margin:0">네이버 <b>커머스API센터 → 내 스토어 애플리케이션</b>의 애플리케이션 ID·시크릿을 넣으면 스마트스토어 상품을 그대로 가져와요. 상품을 바꾸거나 주문을 처리하지 않아요(조회만). 키는 암호화해 저장하고 화면에 다시 보여 주지 않아요. 애플리케이션의 ‘API호출 IP’에 우리 서버 IP가 등록돼 있어야 해요. 원산지·인증은 ‘판매자 표기’로 들어가고 운영팀 확인 전에는 ‘확인됨’이 되지 않아요. 새 상품은 상세페이지의 고시 칸·사진 주소를 미리 채워요(사진 사용 권리 체크는 직접 해 주세요).</p>
+      <div id="nvState" class="note"></div>
+      <div class="grid2">
+        <div class="field"><label for="nvId">애플리케이션 ID</label><input id="nvId" autocomplete="off" spellcheck="false" maxlength="60"></div>
+        <div class="field"><label for="nvSec">애플리케이션 시크릿</label><input id="nvSec" type="password" autocomplete="new-password" spellcheck="false" maxlength="80"></div>
+        <div class="field"><label for="nvSlug">스토어 주소 (smartstore.naver.com/ 뒤 영문, 판매처 링크용)</label><input id="nvSlug" spellcheck="false" maxlength="40"></div>
+      </div>
+      <div class="row"><button type="button" id="nvSave">키 저장</button><button type="button" class="sub" id="nvDel">키 지우기</button><button type="button" class="sub" id="nvPrev">가져올 내용 미리보기</button><button type="button" class="sub" id="nvSync">가져오기</button></div>
+      <div id="nvMsg" role="status"></div>
+      <div id="nvOut" class="note"></div>
     </section>
 
     <section class="box" aria-labelledby="pf-h">
@@ -277,7 +291,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
     if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks(); loadDash(); loadBiz();
+    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks(); loadDash(); loadBiz(); loadNv();
   }
 
   // ── 대시보드 (2026-11-25) ──
@@ -394,6 +408,50 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     const j = await post("/seller/api/biz/consent", {key: KEY, on});
     if (!j.ok) { msg($("msMsg"), j.error, "err"); return; }
     showBiz(j.biz); msg($("msMsg"), on ? "공개에 동의했어요." : "공개 동의를 철회했어요. 손님 화면에서 빠져요.", "ok");
+  };
+
+  // ── 스마트스토어 가져오기 (2026-11-25, 읽기 전용) ──
+  let NV = {};
+  function showNv(n){
+    NV = n;
+    $("nvState").innerHTML = n.connected
+      ? `연결 키 <b>${esc(n.client_id)}</b> 저장됨 · 기준 판매처 ${n.base_channel === "naver" ? "<b>네이버</b>" : esc(n.base_channel)}`
+        + (n.last_sync_at ? ` · 마지막 가져오기 ${esc(n.last_sync_at.slice(0, 16).replace("T", " "))}` : "")
+        + (n.last_error ? ` · <span class="down">${esc(n.last_error)}</span>` : "")
+      : "아직 키가 없어요.";
+    $("nvSlug").value = n.store_slug || "";
+  }
+  async function loadNv(){ const j = await post("/seller/api/naver", {key: KEY}); if (j.ok) showNv(j.naver); }
+  $("nvSave").onclick = async () => {
+    const j = await post("/seller/api/naver/key", {key: KEY, client_id: $("nvId").value.trim(), secret: $("nvSec").value.trim(), store_slug: $("nvSlug").value.trim()});
+    $("nvSec").value = "";
+    if (!j.ok) { msg($("nvMsg"), j.error, "err"); return; }
+    showNv(j.naver); $("nvId").value = ""; msg($("nvMsg"), "키를 저장했어요. ‘미리보기’로 연결을 확인해 주세요.", "ok");
+  };
+  $("nvDel").onclick = async () => { if (!confirm("저장한 키를 지울까요?")) return; const j = await post("/seller/api/naver/key/delete", {key: KEY}); if (j.ok) { showNv(j.naver); msg($("nvMsg"), "키를 지웠어요.", "ok"); } };
+  $("nvPrev").onclick = async () => {
+    msg($("nvMsg"), "스마트스토어에서 읽는 중… (상품이 많으면 몇 분 걸려요)", "ok");
+    const j = await post("/seller/api/naver/look", {key: KEY});
+    if (!j.ok) { msg($("nvMsg"), j.error, "err"); loadNv(); return; }
+    const p = j.preview; msg($("nvMsg"), "", "");
+    $("nvOut").innerHTML = `원상품 ${num(p.total)}개 중 ${num(p.fetched)}개를 읽었고, 판매 단위 ${num(p.units)}개를 가져올 수 있어요.`
+      + (p.more ? " (나머지는 다음 가져오기 때 이어서)" : "")
+      + (p.no_store_url ? "<br>스토어 주소를 넣지 않아 판매처 링크가 비어요." : "")
+      + (p.problems.length ? `<br>읽지 못한 상품 ${p.problems.length}개: ${esc(p.problems.slice(0, 3).map((x) => x.error).join(" / "))}` : "")
+      + (p.unknown_notice.length ? `<br>맞추지 못한 고시 칸(운영팀이 맞출 예정): ${esc(p.unknown_notice.join(", "))}` : "")
+      + (p.sample.length ? "<ul>" + p.sample.slice(0, 10).map((x) => `<li>${esc(x.name)} · ${num(x.price)}원 · 재고 ${x.stock == null ? "–" : num(x.stock)}${x.on ? "" : " · 판매중지"}</li>`).join("") + "</ul>" : "");
+    loadNv();
+  };
+  $("nvSync").onclick = async () => {
+    const setBase = NV.base_channel !== "naver";
+    if (setBase && !confirm("기준 판매처를 네이버 스마트스토어로 바꾸고 가져올까요? 이후 상품명·가격·재고는 스마트스토어에서 바꿔 주세요.")) return;
+    msg($("nvMsg"), "가져오는 중…", "ok");
+    const j = await post("/seller/api/naver/sync", {key: KEY, set_base: setBase});
+    if (!j.ok) { msg($("nvMsg"), j.error, "err"); loadNv(); return; }
+    const r = j.sync;
+    if (r.ok === false) { msg($("nvMsg"), "맞지 않는 줄이 있어 가져오지 않았어요: " + r.errors.slice(0, 3).map((e) => e.error).join(" / "), "err"); return; }
+    msg($("nvMsg"), `새 상품 ${r.added} · 바로 바뀜 ${r.fast} · 검수 대기 ${r.review} · 그대로 ${r.unchanged} · 판매처에서 사라짐 ${r.missing} · 상세페이지 입력 채움 ${r.prefilled}`, "ok");
+    loadNv(); loadProducts(); loadDash();
   };
   async function askHelp(q){
     q = (q || "").trim(); if (q.length < 2) return;
