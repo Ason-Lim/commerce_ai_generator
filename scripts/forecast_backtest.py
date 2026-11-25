@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-NAMES = {"recent": "최근 유지", "last_year": "전년 같은 주", "event_rel": "행사 상대일", "explorer": "탐색기",
+NAMES = {"recent": "최근 유지", "last_year": "전년 같은 주", "last_year_lunar": "전년 기준*", "event_rel": "행사 상대일", "explorer": "탐색기",
          "explorer_repeat": "탐색기(반복만)"}  # fmt: skip
 
 
@@ -71,7 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"  {h}일: {pc(u['major_missed_all'])} (주요 상승 {u['major']}건 · 그중 처음 등장 {u['major_first_seen']}건)"
         )
-    print("\n* 선행 = 그 방법이 맞힌 사례의 첫 관측 진입까지 일수(중앙값) — 방법끼리 견주는 값이 아님. "
+    print("\n* 전년 기준 = 비교 기준(2026-11-25 결정) — 평소 전년 같은 주, 설·추석 D-35~D+7 은 전년 같은 명절 날짜에 맞춤")
+    print("* 선행 = 그 방법이 맞힌 사례의 첫 관측 진입까지 일수(중앙값) — 방법끼리 견주는 값이 아님. "
           "상위20·7일+ = 제출한 상위 20 중 첫 진입이 7일 이상 뒤인 적중 ÷ 제출 수")  # fmt: skip
     out = ROOT / "var" / "forecast"
     out.mkdir(parents=True, exist_ok=True)

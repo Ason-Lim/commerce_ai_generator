@@ -232,8 +232,8 @@ _BACKTEST_CACHE: dict = {}
 def trends_forecast_next4w(request: Request, as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
                            weeks: int = Query(4, ge=1, le=6), top_n: int = Query(20, ge=5, le=50),
                            coupang: int = Query(0, ge=0, le=1)):
-    """다음 4주 예보 (2026-11-24, 예측 창 ⑤ 1차) — 백테스트에서 나았던 기준선 2종(전년 같은 주·행사 상대일)의 후보 목록.
-    탐색기는 쓰지 않는다. 관리자 전용 — 고객 화면·추천 순위에 쓰지 않는다.
+    """다음 4주 예보 (2026-11-24, 예측 창 ⑤ 1차) — 전년 기준(설·추석 명절 맞춤)·행사 상대일 후보 목록.
+    탐색기(반복만)는 근거 열(explorer_repeat)·explorer_only 로만 붙이고 순서에 쓰지 않는다 (2026-11-25). 관리자 전용 — 고객 화면·추천 순위에 쓰지 않는다.
     coupang=1 이면 후보 키워드(주끼리 겹치면 한 번만)의 쿠팡 파트너스 상품 후보 수를 함께 (쿠팡 호출 — 느림).
     기본(0)은 쿠팡을 부르지 않고 coupang=None(미확인)."""
     from app.services.trends import period
@@ -256,6 +256,35 @@ def trends_forecast_next4w(request: Request, as_of: str | None = Query(None, pat
     out["coupang_checked"] = cp is not None
     out["source"] = {"kind": kind, "note": period.source_note(kind, rank_dir)}
     return out
+
+
+@router.get("/admin/api/trends/forecast/ledger")
+def trends_forecast_ledger(request: Request):
+    """예보 성적판 (2026-11-25) — 저장해 둔 주간 예보를 28일 뒤 실제와 맞춘 결과. 주 지표 28일·상위 20·7일+ 앞서, 비교 기준 전년 기준."""
+    from app.services.trends import period
+    from app.services.trends.forecast import ledger
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    return ledger.evaluate(rank_dir)
+
+
+@router.post("/admin/api/trends/forecast/ledger/save", dependencies=[api])
+def trends_forecast_ledger_save():
+    """어제 기준 예보를 장부에 적는다 (이미 있으면 그대로 — 고치지 않음). 지난 날짜는 받지 않는다(뒤늦은 예보 방지)."""
+    from datetime import timedelta
+
+    from app.services.trends import period
+    from app.services.trends.forecast import ledger
+
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    day = date.today() - timedelta(days=1)
+    return ledger.save(rank_dir, day) | {"as_of": day.isoformat()}
 
 
 @router.get("/admin/api/trends/forecast/backtest")

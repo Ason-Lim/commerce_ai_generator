@@ -48,11 +48,11 @@ RECENT_DAYS = 7
 YEAR_SHIFT = 364  # 52주 — 요일을 맞춘다
 FUTURE_MIN_SHARE = 0.6
 TOP_N = 20
-METHODS = ("recent", "last_year", "event_rel", "explorer", "explorer_repeat")
+METHODS = ("recent", "last_year", "last_year_lunar", "event_rel", "explorer", "explorer_repeat")
 QUESTIONS = ("q1", "q1p")  # q1p = 최근 Q1P_DAYS 일 내내 100위 밖이던 키워드만 (최근 재진입 제외 — 보조 실험)
 Q1P_DAYS = 28
 LEAD_MIN = 7  # '준비형' 적중: 첫 진입이 예측 후 7일 이상
-BASELINES = ("recent", "last_year", "event_rel")
+BASELINES = ("recent", "last_year", "last_year_lunar", "event_rel")
 
 
 class _Days:
@@ -139,6 +139,50 @@ def m_last_year(days: _Days, as_of: dt.date, h: int, top_now: set[str], **_) -> 
     return {kw: r for kw, r in best.items() if r <= BAND and kw not in top_now}
 
 
+# 2026-11-25 사용자 결정: 비교 기준 = '전년 기준' — 평소엔 전년 같은 주(364일), 설·추석(음력) 시즌엔 전년 같은 명절 날짜에 맞춤.
+LUNAR_HOLIDAYS = ("설날", "추석")
+LUNAR_BEFORE, LUNAR_AFTER = 35, 7  # 명절 D-35 ~ D+7 은 명절 기준으로 옮긴다 (선물 준비 기간 + 연휴 뒤)
+
+
+def lunar_shifts(rows: list[dict]) -> list[tuple[dt.date, dt.date, int, str]]:
+    """(구간 시작, 구간 끝, 뒤로 옮길 일수, 명절 이름) — 올해 명절 D-35~D+7 안의 날은 (올해 명절 − 작년 명절) 만큼 뒤로."""
+    occ: dict[str, dict[int, dt.date]] = {}
+    for r in rows:
+        if r.get("event") in LUNAR_HOLIDAYS:
+            d = dt.date.fromisoformat(r["date"])
+            occ.setdefault(r["event"], {})[d.year] = d
+    out = []
+    for name, by_year in occ.items():
+        for y, d in by_year.items():
+            prev = by_year.get(y - 1)
+            if prev:
+                out.append((d - dt.timedelta(days=LUNAR_BEFORE), d + dt.timedelta(days=LUNAR_AFTER), (d - prev).days, name))
+    return out
+
+
+def year_back(t: dt.date, shifts) -> tuple[dt.date, str | None]:
+    """t 의 '작년 같은 날' (명절 구간이면 명절 맞춤, 아니면 364일 전) + 맞춘 명절 이름."""
+    for a, b, n, name in shifts:
+        if a <= t <= b:
+            return t - dt.timedelta(days=n), name
+    return t - dt.timedelta(days=YEAR_SHIFT), None
+
+
+def m_last_year_lunar(days: _Days, as_of: dt.date, h: int, top_now: set[str], *, rows: list[dict], **_) -> dict[str, float]:
+    """전년 기준 — 전년 같은 주, 단 설·추석 시즌은 전년 같은 명절 날짜 기준."""
+    shifts = lunar_shifts(rows)
+    out: dict[str, float] = {}
+    for k in range(1, h + 1):
+        src, _ = year_back(as_of + dt.timedelta(days=k), shifts)
+        if src > as_of:
+            continue
+        day = days.get(src)
+        for kw, r in (day or {}).items():
+            if r <= BAND and kw not in top_now and r < out.get(kw, 10**6):
+                out[kw] = r
+    return out
+
+
 def _event_dates(rows: list[dict]) -> list[tuple[str, dt.date]]:
     out = []
     for r in rows:
@@ -200,7 +244,7 @@ def m_explorer_repeat(*a, **k) -> dict[str, float]:
     return m_explorer(*a, **k, repeat_only=True)
 
 
-FUNCS = {"recent": m_recent, "last_year": m_last_year, "event_rel": m_event_rel, "explorer": m_explorer,
+FUNCS = {"recent": m_recent, "last_year": m_last_year, "last_year_lunar": m_last_year_lunar, "event_rel": m_event_rel, "explorer": m_explorer,
          "explorer_repeat": m_explorer_repeat}  # fmt: skip
 
 
@@ -343,4 +387,4 @@ def _summary(a: dict, m: str) -> dict:
     return out
 
 
-__all__ = ["HORIZONS", "METHODS", "BASELINES", "QUESTIONS", "population", "truth", "run", "FUNCS"]
+__all__ = ["HORIZONS", "METHODS", "BASELINES", "QUESTIONS", "population", "truth", "run", "FUNCS", "lunar_shifts", "year_back"]

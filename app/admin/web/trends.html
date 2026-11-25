@@ -227,14 +227,18 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <tbody id="ev-rows"><tr><td colspan="10" class="note">행사를 골라 '보기'를 눌러 주세요.</td></tr></tbody></table></div>
   </section>
   <section id="next4w" aria-labelledby="next4w-h">
-    <h2 id="next4w-h">다음 4주 예보 <small class="note" style="font-weight:400">후보 목록 — 기준선 2종(전년 같은 주 · 행사 상대일), 탐색기 미사용</small></h2>
-    <p class="lede">기준일에 <b>100위 밖</b>이고, <b>작년 같은 주</b> 또는 <b>작년 같은 행사 시점</b>에 100위 안이던 키워드예요. 작년 최고 순위가 높은 순. <b>예보 확정이 아니라 고를 후보</b>예요 — 백테스트(2025년 1~4월)에서 28일·상위 20 중 7일 이상 앞서 맞힌 비율이 약 11%였어요. 매주 월요일 여기서 5~8개를 골라 링크·글을 준비하는 데 써요. 고객 화면·추천 순위에는 쓰지 않아요.</p>
+    <h2 id="next4w-h">다음 4주 예보 <small class="note" style="font-weight:400">후보 목록 — 전년 기준(설·추석은 명절 맞춤) · 행사 상대일 + 탐색기(반복만)는 근거 열만</small></h2>
+    <p class="lede">기준일에 <b>100위 밖</b>이고, <b>전년 기준</b>(평소 작년 같은 주, <b>설·추석 D-35~D+7 은 작년 같은 명절 날짜</b>) 또는 <b>작년 같은 행사 시점</b>에 100위 안이던 키워드예요. 작년 최고 순위가 높은 순. <b>탐색기(반복만)</b>는 그 주 진입이 예상되면 열에 표시만 하고 순서엔 쓰지 않아요. <b>예보 확정이 아니라 고를 후보</b>예요 — 백테스트 28일·상위 20·7일 이상 앞서 맞힌 비율 2025 약 10% · 2026 약 16%. 진짜 성적은 아래 <b>예보 성적판</b>(매주 저장 → 28일 뒤 대조)으로 매겨요. 매주 월요일 여기서 5~8개를 골라 링크·글을 준비하는 데 써요. 고객 화면·추천 순위에는 쓰지 않아요.</p>
     <div class="row">
       <span class="note">기준일</span><input type="date" id="nw-asof" aria-label="예보 기준일">
       <button class="btn primary" id="nw-go">보기</button>
       <button class="btn" id="nw-cp" title="후보 키워드의 쿠팡 파트너스 상품 후보 수를 가져와요 (쿠팡 호출, 키워드가 많으면 수십 초)">쿠팡 상품 확인</button><span class="note" id="nw-cov"></span>
     </div>
     <div id="nw-box"><p class="note">불러오는 중…</p></div>
+    <h3 id="ledger-h">예보 성적판 <small class="note">주 지표: 28일 · 상위 20 · 7일 이상 앞서 맞힌 비율 · 비교 기준: 전년 기준</small></h3>
+    <p class="note">매주 기준일(어제) 예보를 방법별 상위 20 으로 <b>먼저 적어 두고</b>, 28일이 지나면 실제 순위와 맞춰요. 한 번 적은 예보는 고치지 않고, 기준일보다 늦게 만든 예보는 성적에서 빼요. 목표: 두 해 백테스트 모두 비교 기준 이상 — <b>수치 목표는 실제 예보 12주가 쌓이면 다시 정해요.</b></p>
+    <div class="row"><button class="btn" id="lg-save" title="어제 기준 예보를 장부에 적어요 (이미 있으면 그대로)">이번 주 예보 저장</button><span class="note" id="lg-msg"></span></div>
+    <div id="lg-box"><p class="note">불러오는 중…</p></div>
   </section>
   <section id="backtest" aria-labelledby="backtest-h">
     <h2 id="backtest-h">예측 백테스트 <small class="note" style="font-weight:400">기준선 3종 + 선행 곡선 탐색기 — 같은 조건 비교</small></h2>
@@ -876,7 +880,7 @@ loadPeriod({preset:"1m"}).catch(()=>{});
 load().catch(e=>{$("#rows").innerHTML=`<tr><td colspan="10"><div class="err">${esc(e.message)}</div></td></tr>`});
 
 // ── 예측 백테스트 (2026-11-24) ─────────────────────────
-const BTN={recent:"최근 유지",last_year:"전년 같은 주",event_rel:"행사 상대일",explorer:"탐색기",explorer_repeat:"탐색기(반복만)"};
+const BTN={recent:"최근 유지",last_year:"전년 같은 주",last_year_lunar:"전년 기준(설·추석 맞춤) ★비교 기준",event_rel:"행사 상대일",explorer:"탐색기",explorer_repeat:"탐색기(반복만)"};
 (function(){const t=new Date();const e=new Date(t);e.setDate(e.getDate()-35);const s=new Date(e);s.setFullYear(s.getFullYear()-1);
   const f=d=>d.toISOString().slice(0,10);if($("#bt-start")){$("#bt-start").value=f(s);$("#bt-end").value=f(e)}})();
 async function loadBacktest(){const q=new URLSearchParams({start:$("#bt-start").value,end:$("#bt-end").value,step:$("#bt-step").value,explorer:$("#bt-ex").checked?1:0,question:$("#bt-q").value,min_share:$("#bt-ms").value});
@@ -898,17 +902,29 @@ async function loadNext4w(withCoupang){const box=$("#nw-box");if(!box)return;con
     if(d.status!=="ok"){box.innerHTML=`<p class="note">${esc(d.note||"자료 없음")}</p>`;$("#nw-cov").textContent="";return}
     $("#nw-cov").textContent=`기준일 ${d.as_of} · 지금 100위 안 ${d.excluded_top_now}개 제외`;
     const lk=v=>v===true?"있음":v===false?"없음":"—";
-    const srcTxt=it=>{const ly=it.sources.includes("전년 같은 주"),evs=it.sources.filter(x=>x!=="전년 같은 주"),main=it.main_event||evs[0],rest=evs.length-(main?1:0);
-      const parts=[ly?"전년 같은 주":null,main?esc(main):null,rest>0?`<span class="note">외 ${rest}개</span>`:null].filter(Boolean);
+    const srcTxt=it=>{const lyt=it.sources.find(x=>x.startsWith("전년 ")),evs=it.sources.filter(x=>!x.startsWith("전년 ")),main=it.main_event||evs[0],rest=evs.length-(main?1:0);
+      const parts=[lyt?esc(lyt):null,main?esc(main):null,rest>0?`<span class="note">외 ${rest}개</span>`:null].filter(Boolean);
       return `<span title="${esc(it.sources.join(", "))}">${parts.join(" · ")}</span>`};
+    const exc=x=>x?`<span class="pill p-ok" title="과거 최고 ${x.best_rank_past}위">${esc(x.event)} · 진입 ${x.expected_enter.slice(5)}</span>`:'<span class="note">—</span>';
     const cpc=v=>v==null?'<span class="note">미확인</span>':v?`<span class="pill p-ok">${v}개</span>`:'<span class="pill p-err">없음</span>';
     box.innerHTML=d.weeks.map((w,i)=>{
       const ev=w.events.length?w.events.map(e=>`${esc(e.event)} ${e.date.slice(5)} (D-${e.d_day}${e.last_year?"":", 작년 날짜 없음"})`).join(" · "):"행사 없음";
-      const rows=w.items.map(it=>`<tr><td>${esc(it.keyword)}</td><td>${it.last_year_best}위</td><td>${esc(it.last_year_date)}</td><td>${srcTxt(it)}</td><td>${lk(it.has_link)}</td><td>${cpc(it.coupang)}</td></tr>`).join("")||`<tr><td colspan="6" class="note">후보 없음</td></tr>`;
+      const rows=w.items.map(it=>`<tr><td>${esc(it.keyword)}</td><td>${it.last_year_best}위</td><td>${esc(it.last_year_date)}</td><td>${srcTxt(it)}</td><td>${exc(it.explorer_repeat)}</td><td>${lk(it.has_link)}</td><td>${cpc(it.coupang)}</td></tr>`).join("")||`<tr><td colspan="7" class="note">후보 없음</td></tr>`;
+      const exo=(w.explorer_only||[]).length?`<p class="note">탐색기(반복만)에만 있는 키워드: ${w.explorer_only.map(x=>`${esc(x.keyword)} (${esc(x.event)}, 진입 ${x.expected_enter.slice(5)})`).join(" · ")}</p>`:"";
       return `<h3>${i+1}주 뒤 · ${w.start.slice(5)} ~ ${w.end.slice(5)} <small class="note">후보 ${w.candidates}개${w.candidates>w.items.length?` 중 상위 ${w.items.length}`:""} · 작년 자료 ${Math.round(w.last_year_coverage*100)}%</small></h3>
         <p class="note">행사: ${ev}</p>${w.warning?`<p class="note" style="color:#b45309">⚠ ${esc(w.warning)}</p>`:""}
-        <div class="scroll"><table><thead><tr><th>키워드</th><th>작년 최고</th><th>작년 그날</th><th>근거</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead><tbody>${rows}</tbody></table></div>`}).join("")+`<p class="note">${esc(d.note)}</p>`;
+        <div class="scroll"><table><thead><tr><th>키워드</th><th>작년 최고</th><th>작년 그날</th><th>근거</th><th>탐색기(반복만)</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead><tbody>${rows}</tbody></table></div>${exo}`}).join("")+`<p class="note">${esc(d.note)}</p>`;
   }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
+async function loadLedger(){const box=$("#lg-box");if(!box)return;
+  try{const d=await api("/admin/api/trends/forecast/ledger");const pc=v=>v==null?"—":(v*100).toFixed(1)+"%";
+    const t=d.target;const head=`<p class="note">채점된 실제 예보 <b>${d.graded_weeks}주</b> · 대기 ${d.pending}주${d.retro_excluded?` · 늦게 만든 예보 ${d.retro_excluded}건 제외`:""} · ${t.ready?"<b>12주가 쌓였어요 — 수치 목표를 다시 정할 때예요</b>":`목표 재설정까지 ${t.weeks_left}주`}</p>`;
+    const sum=Object.entries(d.summary).map(([m,x])=>`<tr><td>${esc(x.name)}</td><td>${x.submitted}</td><td>${x.lead7}</td><td>${pc(x.lead7_rate)}</td><td>${x.vs_baseline_pp==null?"—":(x.vs_baseline_pp>0?"+":"")+x.vs_baseline_pp+"%p"}</td></tr>`).join("");
+    const ent=d.entries.slice().reverse().map(e=>`<tr><td>${esc(e.as_of)}</td><td>${e.live?"실제":"늦게 만듦"}</td><td>${e.status==="graded"?"채점":"28일 대기"}</td><td>${e.status==="graded"?Object.entries(e.methods).map(([m,x])=>`${esc((d.summary[m]||{}).name||m)} ${x.lead7}/${x.submitted}`).join(" · "):""}</td></tr>`).join("")||`<tr><td colspan="4" class="note">아직 저장한 예보가 없어요 — '이번 주 예보 저장'을 누르거나 매주 자동 저장을 켜 주세요.</td></tr>`;
+    box.innerHTML=head+`<div class="scroll"><table><thead><tr><th>방법</th><th>제출</th><th>7일+ 앞서 적중</th><th>비율</th><th>비교 기준 대비</th></tr></thead><tbody>${sum}</tbody></table></div>
+      <div class="scroll"><table><thead><tr><th>기준일</th><th>종류</th><th>상태</th><th>방법별 7일+ 적중/제출</th></tr></thead><tbody>${ent}</tbody></table></div>`;
+  }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
+if($("#lg-save")){$("#lg-save").onclick=async()=>{$("#lg-msg").textContent="저장 중…";try{const r=await api("/admin/api/trends/forecast/ledger/save",{method:"POST"});
+  $("#lg-msg").textContent=r.status==="saved"?`${r.as_of} 예보를 적었어요`:r.status==="exists"?`${r.as_of} 예보는 이미 있어요(고치지 않음)`:"기준일 순위 자료가 없어요";loadLedger()}catch(e){$("#lg-msg").textContent=e.message}};loadLedger().catch(()=>{})}
 if($("#nw-go")){$("#nw-go").onclick=()=>loadNext4w(false);$("#nw-cp").onclick=()=>loadNext4w(true);loadNext4w(false).catch(()=>{})}
 </script>
 </body>
