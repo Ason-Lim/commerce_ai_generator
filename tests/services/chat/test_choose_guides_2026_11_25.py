@@ -50,7 +50,22 @@ def test_pick_requests_stay_shopping(text):
 
 def test_guide_file_every_tip_has_known_source():
     d = guides.data()
-    assert {"감귤", "사과", "배", "포도", "복숭아", "딸기", "감", "수박", "참외"} <= set(d["foods"])
+    assert {
+        "감귤",
+        "사과",
+        "배",
+        "포도",
+        "복숭아",
+        "딸기",
+        "감",
+        "수박",
+        "참외",
+        "굴",
+        "미역",
+        "고구마",
+        "수삼",
+        "곶감",
+    } <= set(d["foods"])
     for name, g in d["foods"].items():
         assert g["tips"], name
         for item in g["tips"] + g.get("storage", []):
@@ -127,3 +142,26 @@ def test_unknown_fruit_falls_back_to_ai(sqlite_db):
 def test_file_is_valid_json_with_review_date():
     d = json.loads(guides.DEFAULT_FILE.read_text(encoding="utf-8"))
     assert d["reviewed_at"] == "2026-11-25"
+
+
+@pytest.mark.parametrize(
+    "kw, must, src",
+    [
+        ("굴", "검은 테두리가 선명한 것", "해양수산부"),
+        ("곶감", "반건시", "국립농산물품질관리원"),
+        ("고구마", "100~200g", "농촌진흥청"),
+    ],
+)
+def test_bargain_card_question_gets_guide(sqlite_db, kw, must, src):
+    """'알뜰·발견' 카드 문구("{kw} 처음 사 보는데 뭘 보고 골라야 해?")를 그대로 눌렀을 때."""
+    calls = []
+    svc = ChatService(
+        sqlite_db,
+        shopping=FakeShopping(items=[]),
+        nlu_loader=lambda: RecipeNLU(),
+        recipe_chat=RecipeChat(statement_factory=str),
+        food_tips=lambda t: calls.append(t) or {"tips": ["AI 가 쓴 줄"]},
+    )
+    text = md(svc.handle(None, message=f"{kw} 처음 사 보는데 뭘 보고 골라야 해?"))
+    assert "고르는 법이에요" in text and must in text and src in text
+    assert calls == []
