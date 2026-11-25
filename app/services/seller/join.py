@@ -344,10 +344,22 @@ def analyze(eng, join_id: str, *, http=None, env=None, ocr=None, ai=None, ai_nam
     if auto:
         ct = corp._dec(j["contact_enc"]) or {}
         t = store.create_trial(store.engine(), name=j["trade_name"], contact=ct, join_id=join_id)
+        _store_link(t["seller_id"], j["store_url"])
         vals.update(status="trial", seller_id=t["seller_id"], code_enc=corp._enc({"code": t["code"]}))
     with eng.begin() as c:
         c.execute(update(t_join).where(t_join.c.join_id == join_id).values(**vals))
     return analysis
+
+
+def _store_link(seller_id: str, url: str | None) -> None:
+    """신청서의 판매처 주소를 셀러 몰 주소로 (관리자 셀러 목록 '몰' 칸)."""
+    if url:
+        from app.services.seller import catalog
+
+        try:
+            catalog.set_store_url(catalog.engine(), seller_id, url, by="system:join")
+        except store.SellerError:
+            pass
 
 
 # ── 신청인 확인 ──────────────────────────────────────────────────────────
@@ -451,6 +463,7 @@ def decide(eng, join_id: str, decision: str, *, by: str, note: str = "") -> dict
     if decision in ("approve", "trial") and not sid:
         ct = corp._dec(j["contact_enc"]) or {}
         t = store.create_trial(seng, name=j["trade_name"], contact=ct, join_id=join_id)
+        _store_link(t["seller_id"], j["store_url"])
         sid, out["code"] = t["seller_id"], t["code"]
         out["code_note"] = "신청인에게 직접 전달해 주세요 (이 화면에서 한 번만 보여요)."
     vals: dict = {"seller_id": sid}

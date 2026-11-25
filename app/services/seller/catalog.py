@@ -94,6 +94,16 @@ t_base = Table(
     Column("channel", String(8), nullable=False),
     Column("set_at", DateTime(timezone=True)),
 )
+# 셀러 몰(판매처) 주소 — 관리자 셀러 목록의 '몰 링크', 스마트스토어면 상품별 판매처 링크도 채운다 (2026-11-25)
+t_store = Table(
+    "seller_store_link",
+    meta,
+    Column("seller_id", String(12), primary_key=True),
+    Column("url", String(300), nullable=False),
+    Column("set_at", DateTime(timezone=True)),
+    Column("set_by", String(48)),
+)
+SMARTSTORE_RE = re.compile(r"^https://(?:m\.)?(?:smartstore|brand)\.naver\.com/([a-z0-9_-]{2,40})/?(?:[?#].*)?$", re.I)
 
 
 def engine(url: str | None = None):
@@ -200,6 +210,56 @@ def set_base_channel(eng, token: str, client: str, channel: str) -> str:
             c.execute(t_base.insert().values(seller_id=s["seller_id"], channel=channel, set_at=store.now()))
         store._event(c, s["seller_id"], "base_channel", "seller", {"channel": channel})
     return channel
+
+
+def store_urls(eng) -> dict[str, str]:
+    with eng.connect() as c:
+        return dict(c.execute(select(t_store.c.seller_id, t_store.c.url)).all())
+
+
+def store_slug(url: str | None) -> str:
+    m = SMARTSTORE_RE.match((url or "").strip())
+    return m.group(1).lower() if m else ""
+
+
+def set_store_url(eng, seller_id: str, url: str, *, by: str) -> dict:
+    """몰 주소 저장 (운영자 또는 입점 신청 접수). 스마트스토어면 연동 상품 중 판매처 링크가 빈 것을 채운다."""
+    url = (url or "").strip()[:300]
+    if by != "system:join":
+        by = store._operator(by)
+    if url and not products.URL_RE.match(url):
+        raise store.SellerError("몰 주소는 https:// 로 시작해야 해요")
+    with eng.begin() as c:
+        if not url:
+            c.execute(t_store.delete().where(t_store.c.seller_id == seller_id))
+            return {"url": "", "filled": 0}
+        vals = dict(url=url, set_at=store.now(), set_by=by)
+        if c.execute(update(t_store).where(t_store.c.seller_id == seller_id).values(**vals)).rowcount == 0:
+            c.execute(t_store.insert().values(seller_id=seller_id, **vals))
+        store._event(c, seller_id, "store_url", by, {"url": url})
+    return {"url": url, "filled": fill_sale_urls(eng, seller_id)}
+
+
+def fill_sale_urls(eng, seller_id: str) -> int:
+    """스마트스토어 몰 주소가 있으면, 네이버 연동 상품 중 판매처 링크가 빈 것에 상품 링크를 넣는다(이미 있는 링크는 그대로)."""
+    with eng.connect() as c:
+        url = c.execute(select(t_store.c.url).where(t_store.c.seller_id == seller_id)).scalar()
+    slug = store_slug(url)
+    if not slug:
+        return 0
+    n = 0
+    with eng.begin() as c:
+        rows = c.execute(select(t_unit.c.product_id, t_unit.c.ext_no).where(and_(
+            t_unit.c.seller_id == seller_id, t_unit.c.channel == "naver"))).all()  # fmt: skip
+        for pid, ext in rows:
+            no = str(ext or "").split("-")[0]
+            if not no.isdigit():
+                continue
+            n += c.execute(update(products.t_product).where(and_(
+                products.t_product.c.product_id == pid,
+                (products.t_product.c.sale_url.is_(None)) | (products.t_product.c.sale_url == ""))).values(
+                sale_url=f"https://smartstore.naver.com/{slug}/products/{no}")).rowcount  # fmt: skip
+    return n
 
 
 # ── 단위 정보 ─────────────────────────────────────────────────────────────
@@ -566,7 +626,9 @@ def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, ful
     if is_naver_export(heads):
         if channel != "naver":
             raise store.SellerError("스마트스토어 상품 파일이에요. 기준 판매처를 네이버 스마트스토어로 정해 주세요")
-        rows, notes = naver_export_rows(text)
+        sid = store.resolve(eng, token, client)["seller_id"]
+        slug = store_slug(store_urls(eng).get(sid))
+        rows, notes = naver_export_rows(text, store_slug=slug)
         if len(rows) > 2000:
             raise store.SellerError("한 번에 2,000줄까지 올릴 수 있어요")
         rep = apply_rows(eng, token, client, channel, rows, full=full)
@@ -576,7 +638,7 @@ def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, ful
             f"옵션이 있는 상품 {n_opt}개는 옵션별 가격·재고가 파일에 없어 대표 가격·전체 재고 한 줄로 넣었어요." if n_opt else "",
             "이 파일에는 원산지가 없어요 — 식품이면 상품마다 원산지를 적어 주세요(검수 때 필요)." if notes["no_origin"] else "",
             f"판매중지·전시중지 상품 {notes['off']}개는 이쪽에서도 판매 꺼짐으로 넣었어요." if notes["off"] else "",
-            "판매처 주소(스마트스토어 링크)는 파일에 없어 비어 있어요." ,
+            "" if slug else "판매처 링크(스마트스토어 상품 주소)는 운영팀이 몰 주소를 넣으면 채워져요.",
         ] if x]  # fmt: skip
         return rep
     rd = csv.DictReader(io.StringIO((text or "").lstrip("\ufeff")))
