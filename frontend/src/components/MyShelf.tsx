@@ -5,7 +5,8 @@
  * - 장보기 목록·설정: 브라우저 안에만. 설정은 서버로 보내지 않는다(화면 표시·숨기기에만, 순위 불변).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, Eye, Heart, History, MessageSquare, Settings2, ShoppingBasket, Sparkles, Trash2, X } from "lucide-react";
+import { Brand } from "./Brand";
+import { ArrowLeftRight, Eye, Heart, History, MessageSquare, Settings2, ShoppingBasket, Trash2, X } from "lucide-react";
 import type { ApiCard, SavedView, ShelfTicket } from "../types/blocks";
 import { cardToCandidate } from "../api/adapt";
 import { claimTransferCode, fetchShelf, forgetShelf, goHref, issueTransferCode, logDirectClick, resetSavedOwner, sendChat } from "../api/client";
@@ -273,10 +274,7 @@ export function MyShelf() {
       <div className="min-h-screen bg-paper text-ink">
         <header className="sticky top-0 z-10 border-b border-stone-200/70 bg-paper/95 backdrop-blur">
           <div className="mx-auto flex h-[64px] w-full max-w-[900px] items-center justify-between gap-3 px-4 sm:px-8">
-            <a href="/#" className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} aria-hidden /></span>
-              AI 식품 추천
-            </a>
+            <Brand />
             <div className="flex items-center gap-2"><SiteNav current="me" /><ShelfLink current count={view.saved.length} /></div>
           </div>
         </header>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Brand } from "./components/Brand";
 import { ArrowUp, ArrowRight, Plus, Sparkles, ShoppingBag, Utensils, Square, Gift, Cookie, Leaf, TrendingUp, CalendarDays, ChefHat, Lightbulb, Snowflake, Sun, type LucideIcon } from 'lucide-react';
 import { SavedProvider, useSaved } from './state/saved';
 import { PENDING_ASK } from './components/TrendsPage';
@@ -369,10 +370,7 @@ export default function ChatWindow() {
                     · 가운데 = (대화 중에만) 진행 단계 "점 5개 + 2/5 조건 확인" · 오른쪽 = 메뉴 3개 | 관심 · 새 대화.
                     모바일은 메뉴가 아래 탭으로 간다. */}
                 <div className="mx-auto flex h-[64px] w-full max-w-[900px] items-center gap-3 px-4 sm:px-8">
-                    <a href="./" className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
-                        <span className="hidden min-[380px]:inline">AI 식품 추천</span>
-                    </a>
+                    <Brand href="./" />
                     {/* 2026-11-23: 가운데 칸이 좁으면 진행 표시가 칸 밖으로 넘쳐 로고('AI 식품 추…')·메뉴를 덮었다 — 칸 안에서만 줄인다 */}
                     <div className="flex min-w-0 flex-1 justify-center overflow-hidden">
                         {messages.length > 0 && <FlowStepper step={step} compact />}
