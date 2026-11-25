@@ -36,6 +36,9 @@ CSV_HEADERS = {
     "인증 표기": "cert",
     "당도": "brix",
     "판매처 주소": "sale_url",
+    "카테고리": "category",
+    "그룹": "group",
+    "판매옵션": "option",
 }
 URL_RE = re.compile(r"^https://[^\s<>\"']{4,290}$")
 
@@ -69,8 +72,11 @@ t_listing = Table(
 
 
 def engine(url: str | None = None):
+    from app.services.seller import catalog
+
     eng = store.engine(url)
     meta.create_all(eng)
+    catalog.meta.create_all(eng)  # ②-b 그룹·판매 단위 표 (save 가 함께 씀)
     return eng
 
 
@@ -104,9 +110,14 @@ def _txt(v, n: int) -> str:
     return " ".join(str(v or "").split())[:n]
 
 
+EXTRA_FIELDS = {"category", "group", "option"}  # ②-b (2026-11-25) — 직접 입력 셀러도 같은 그룹 + 판매 단위 구조
+
+
 def check_fields(raw: dict) -> dict:
-    """셀러가 넣는 칸 검사 — 모르는 칸은 거부."""
-    extra = set(raw) - {"name", "volume", "price", "ship_fee", "sale_url", *DECLARED}
+    """셀러가 넣는 칸 검사 — 모르는 칸은 거부. 원산지는 쉼표로 여러 개, 인증은 '종류/기관/번호; …'."""
+    from app.services.seller import catalog
+
+    extra = set(raw) - {"name", "volume", "price", "ship_fee", "sale_url", *DECLARED, *EXTRA_FIELDS}
     if extra:
         raise store.SellerError("받지 않는 칸이 있어요: " + ", ".join(sorted(extra)))
     name = _txt(raw.get("name"), 80)
@@ -115,6 +126,12 @@ def check_fields(raw: dict) -> dict:
     url = str(raw.get("sale_url") or "").strip()
     if url and not URL_RE.match(url):
         raise store.SellerError("판매처 주소는 https:// 로 시작하는 주소만 넣어 주세요")
+    origins = catalog.parse_origins(raw.get("origin"))
+    certs = catalog.parse_certs(raw.get("cert"))
+    path = catalog.category_path(raw.get("category"))
+    errors, _ = catalog.check(path, origins, certs)
+    if errors:
+        raise store.SellerError(errors[0])
     return {
         "name": name,
         "volume": _txt(raw.get("volume"), 40),
@@ -122,10 +139,13 @@ def check_fields(raw: dict) -> dict:
         "ship_fee": _int(raw.get("ship_fee"), "배송비", 0, 100_000, allow_none=True),
         "sale_url": url,
         "declared": {
-            "origin": _txt(raw.get("origin"), 40),
-            "cert": _txt(raw.get("cert"), 60),
+            "origin": ", ".join(origins)[:40],
+            "origins": origins,
+            "cert": catalog.cert_text(certs),
+            "certs": certs,
             "brix": _brix(raw.get("brix")),
         },
+        "_unit": {"category": path, "group": _txt(raw.get("group"), 100), "option": catalog._option(raw.get("option"))},
     }
 
 
@@ -206,11 +226,16 @@ def list_mine(eng, token: str, client: str) -> list[dict]:
             .mappings()
             .all()
         )
+    from app.services.seller import catalog
+
     on = listing_of(eng, s["seller_id"])
     stock = scm.stock_of(scm.engine(), s["seller_id"])
+    units = catalog.units_of(eng, s["seller_id"])
     out = []
     for r in rows:
         v = _view(r)
+        v["unit"] = units.get(r["product_id"])
+        v["locked"] = bool(v["unit"] and v["unit"]["channel"] != "manual")
         v["on"] = on.get(r["product_id"], True) and r["status"] != "withdrawn"
         v["sale_state"] = sale_state(r["status"], v["on"], stock.get(r["product_id"], {}).get("sold_out", False))
         v["sale_label"] = SALE_STATES[v["sale_state"]]
@@ -232,8 +257,15 @@ def _count(c, seller_id: str) -> int:
 
 def save(eng, token: str, client: str, raw: dict, product_id: str | None = None) -> dict:
     """새 상품(product_id 없음) 또는 내 상품 고치기 — 어느 쪽이든 '검수 대기'로."""
+    from app.services.seller import catalog
+
     s = store.resolve(eng, token, client)
+    if product_id and (ch := catalog.locked(eng, product_id)):
+        raise store.SellerError(
+            f"{ch}와 연동된 상품이에요. 내용은 {ch}에서 바꿔 주세요 — 바뀐 내용은 다음 동기화 때 들어와요"
+        )
     f = check_fields(raw)
+    unit = f.pop("_unit")
     with eng.begin() as c:
         if product_id is None:
             if _count(c, s["seller_id"]) >= MAX_PER_SELLER:
@@ -261,8 +293,20 @@ def save(eng, token: str, client: str, raw: dict, product_id: str | None = None)
             )
             store._event(c, s["seller_id"], "product_edited", "seller",
                          {"product_id": pid, "from": r["status"], "verified_dropped": dropped})  # fmt: skip
+        _manual_unit(c, s["seller_id"], pid, f["name"], unit)
         r = _mine(c, s["seller_id"], pid)
     return _view(r)
+
+
+def _manual_unit(c, seller_id: str, pid: str, name: str, unit: dict) -> None:
+    """직접 입력 상품도 그룹 + 판매 단위로 — 그룹 이름이 없으면 상품명이 그룹."""
+    from app.services.seller import catalog
+
+    gid = catalog._group(c, seller_id, unit["group"] or name, "manual", None)
+    info = {"category": unit["category"], "our_top": catalog.our_top(unit["category"]), "option": unit["option"]}
+    vals = dict(seller_id=seller_id, group_id=gid, channel="manual", ext_no=None, info=info, source_missing=0)
+    if c.execute(update(catalog.t_unit).where(catalog.t_unit.c.product_id == pid).values(**vals)).rowcount == 0:
+        c.execute(catalog.t_unit.insert().values(product_id=pid, **vals))
 
 
 def set_listing(eng, token: str, client: str, product_id: str | None, on: bool) -> int:
@@ -326,7 +370,12 @@ def import_csv(eng, token: str, client: str, text: str) -> dict:
     with eng.begin() as c:
         if _count(c, s["seller_id"]) + len(rows) > MAX_PER_SELLER:
             raise store.SellerError(f"상품은 {MAX_PER_SELLER:,}개까지 등록할 수 있어요")
-        ids = [_insert(c, s["seller_id"], dict(f)) for f in rows]
+        ids = []
+        for f in rows:
+            unit = f.pop("_unit")
+            pid = _insert(c, s["seller_id"], dict(f))
+            _manual_unit(c, s["seller_id"], pid, f["name"], unit)
+            ids.append(pid)
         store._event(c, s["seller_id"], "product_csv", "seller", {"n": len(ids)})
     return {"ok": True, "added": len(ids), "errors": []}
 
@@ -348,7 +397,19 @@ def queue(eng, status: str = "pending", seller_id: str | None = None) -> list[di
     with eng.connect() as c:
         rows = c.execute(q.order_by(t_product.c.updated_at)).mappings().all()
         names = dict(c.execute(select(store.t_seller.c.seller_id, store.t_seller.c.name)).all())
-    return [dict(_view(r, operator=True), seller_name=names.get(r["seller_id"], "")) for r in rows]
+    from app.services.seller import catalog
+
+    units = catalog.units_of(eng)
+    out = []
+    for r in rows:
+        u = units.get(r["product_id"])
+        d = r["declared"] or {}
+        _, warns = catalog.check((u or {}).get("info", {}).get("category") or [], d.get("origins") or catalog.parse_origins(d.get("origin")),
+                                 d.get("certs") or [])  # fmt: skip
+        if u and u["source_missing"]:
+            warns.append("판매처에서 사라짐")
+        out.append(dict(_view(r, operator=True), seller_name=names.get(r["seller_id"], ""), unit=u, warnings=warns))
+    return out
 
 
 def verify(eng, product_id: str, key: str, value, *, by: str, note: str) -> dict:

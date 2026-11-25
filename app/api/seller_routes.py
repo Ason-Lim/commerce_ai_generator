@@ -11,6 +11,14 @@
   POST /seller/api/health           {key} → '상품 정보 그대로예요' 확인 요청 여부
   POST /seller/api/confirm          {key} → '상품 정보 그대로예요'
   POST /seller/api/billing          {key} → ④ 내 요금제·청구 내역 (보기만, 실제 청구 없음)
+  POST /seller/api/ask              {key, text, handoff?} → ⑤ 문의 — 안내문 바로 + 필요하면 CS 티켓 (규칙만, 외부 AI 없음)
+  POST /seller/api/asks             {key} → 내 문의와 운영팀 답
+  ── ②-b 판매처 호환 (2026-11-25) ──
+  POST /seller/api/channel          {key, channel?} → 기준 판매처 보기·정하기 (naver · coupang · manual)
+  POST /seller/api/sync             {key, channel, csv, full?} → 판매처 상품 자료(표준 칸)로 바뀐 것만 반영
+  ── 대시보드 · 사용법 도우미 (2026-11-25) ──
+  POST /seller/api/dashboard        {key, period: day|week|month} → 판매 현황·주문 흐름·상품 상태·상품별 판매·알림
+  POST /seller/api/help             {key, text} → 사용법 도우미 (Claude/Ollama — help_kb.json 지식만, 안 되면 규칙 답)
   ── ③ SCM (2026-11-25) ──
   POST /seller/api/stock            {key, product_id, stock?, sold_out, restock_on?} → 재고·품절
   POST /seller/api/suppliers        {key} → 내 공급사 · 상품별 공급사 연결 · 재고
@@ -38,7 +46,9 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.corpmall_routes import NOINDEX, _client
-from app.services.seller import billing, health, products, scm, store
+from app.services.seller import billing, catalog, dashboard, health, products, scm, store
+from app.services.seller import help as seller_help
+from app.services.seller import chat as seller_chat
 
 router = APIRouter(tags=["seller"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "seller" / "web" / "seller.html"
@@ -97,9 +107,12 @@ class ProductFieldsIn(BaseModel):
     price: int | str = Field(...)
     ship_fee: int | str | None = None
     sale_url: str = Field("", max_length=300)
-    origin: str = Field("", max_length=40)
-    cert: str = Field("", max_length=60)
+    origin: str = Field("", max_length=200)  # 여러 개면 쉼표
+    cert: str = Field("", max_length=300)  # '무농약/국립농산물품질관리원/12-34-567; GAP'
     brix: float | str | None = None
+    category: str = Field("", max_length=200)  # '식품>과일>감귤'
+    group: str = Field("", max_length=100)
+    option: str = Field("", max_length=200)  # '중량=5kg'
 
 
 class ProductSaveIn(BaseModel):
@@ -133,7 +146,7 @@ def seller_products(body: KeyIn, request: Request):
 @router.post("/seller/api/products/save")
 def seller_product_save(body: ProductSaveIn, request: Request):
     try:
-        got = products.save(products.engine(), body.key, _client(request), body.fields.model_dump(), body.product_id)
+        got = products.save(catalog.engine(), body.key, _client(request), body.fields.model_dump(), body.product_id)
         return JSONResponse({"ok": True, "product": got}, headers=NOINDEX)
     except store.SellerError as e:
         return _err(e)
@@ -142,7 +155,7 @@ def seller_product_save(body: ProductSaveIn, request: Request):
 @router.post("/seller/api/products/csv")
 def seller_product_csv(body: ProductCsvIn, request: Request):
     try:
-        got = products.import_csv(products.engine(), body.key, _client(request), body.csv)
+        got = products.import_csv(catalog.engine(), body.key, _client(request), body.csv)
         return JSONResponse(got, status_code=200 if got["ok"] else 400, headers=NOINDEX)
     except store.SellerError as e:
         return _err(e)
@@ -329,5 +342,99 @@ def seller_confirm(body: KeyIn, request: Request):
 def seller_billing(body: KeyIn, request: Request):
     try:
         return _ok(billing=billing.my_billing(billing.engine(), body.key, _client(request)))
+    except store.SellerError as e:
+        return _err(e)
+
+
+# ── ⑤ 셀러 문의 ──
+class AskIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    text: str = Field(..., max_length=600)
+    handoff: bool = False
+
+
+@router.post("/seller/api/ask")
+def seller_ask(body: AskIn, request: Request):
+    try:
+        return _ok(**seller_chat.ask(store.engine(), body.key, _client(request), body.text, handoff=body.handoff))
+    except store.SellerError as e:
+        return _err(e)
+
+
+@router.post("/seller/api/asks")
+def seller_asks(body: KeyIn, request: Request):
+    try:
+        return _ok(asks=seller_chat.my_asks(store.engine(), body.key, _client(request)))
+    except store.SellerError as e:
+        return _err(e)
+
+
+# ── ②-b 판매처 호환 ──
+class ChannelIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    channel: str | None = Field(None, pattern="^(naver|coupang|manual)$")
+
+
+class SyncIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    channel: str = Field(..., pattern="^(naver|coupang)$")
+    csv: str = Field(..., max_length=2_000_000)
+    full: bool = False
+
+
+@router.post("/seller/api/channel")
+def seller_channel(body: ChannelIn, request: Request):
+    try:
+        eng, cl = catalog.engine(), _client(request)
+        if body.channel:
+            catalog.set_base_channel(eng, body.key, cl, body.channel)
+        s = store.resolve(eng, body.key, cl)
+        ch = catalog.base_channel(eng, s["seller_id"])
+        return _ok(
+            channel=ch, label=catalog.CHANNELS[ch], channels=catalog.CHANNELS, std_template=catalog.std_template()
+        )
+    except store.SellerError as e:
+        return _err(e)
+
+
+@router.post("/seller/api/sync")
+def seller_sync(body: SyncIn, request: Request):
+    try:
+        got = catalog.import_std_csv(
+            catalog.engine(), body.key, _client(request), body.channel, body.csv, full=body.full
+        )
+        return JSONResponse({"ok": got["ok"], **got}, status_code=200 if got["ok"] else 400, headers=NOINDEX)
+    except store.SellerError as e:
+        return _err(e)
+
+
+# ── 대시보드 · 사용법 도우미 (2026-11-25) ──
+class DashIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    period: str = Field("week", max_length=5)
+
+
+@router.post("/seller/api/dashboard")
+def seller_dashboard(body: DashIn, request: Request):
+    try:
+        return _ok(dashboard=dashboard.my_dashboard(store.engine(), body.key, _client(request), period=body.period))
+    except store.SellerError as e:
+        return _err(e)
+
+
+class HelpIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    text: str = Field(..., max_length=300)
+
+
+@router.post("/seller/api/help")
+def seller_help_ask(body: HelpIn, request: Request):
+    try:
+        return _ok(**seller_help.ask(store.engine(), body.key, _client(request), body.text))
     except store.SellerError as e:
         return _err(e)

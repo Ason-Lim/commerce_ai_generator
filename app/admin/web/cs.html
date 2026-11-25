@@ -192,7 +192,7 @@ async function loadReview(){
     for(const it of g.items){const tr=document.createElement("tr");
       tr.innerHTML=`<td><small>${esc(when(it.at))}</small></td><td>${esc(it.text)}</td><td><small>${esc(it.by)}</small></td><td><div class="verdict"></div></td>`;
       const v=tr.querySelector(".verdict");const should=document.createElement("select");should.setAttribute("aria-label","맞는 분야");
-      should.add(new Option("맞는 분야…",""));for(const [k,l] of Object.entries(RV.labels))if(k!==g.domain&&k.startsWith("corp_")===g.domain.startsWith("corp_"))should.add(new Option(l,k,false,it.verdict?.should===k));
+      should.add(new Option("맞는 분야…",""));for(const [k,l] of Object.entries(RV.labels))if(k!==g.domain&&(k.match(/^(corp|seller)_/)||[""])[0]===(g.domain.match(/^(corp|seller)_/)||[""])[0])should.add(new Option(l,k,false,it.verdict?.should===k));
       for(const [k,l] of Object.entries(RV.verdicts)){const b=document.createElement("button");b.type="button";b.textContent=l;if(it.verdict?.verdict===k)b.className="on";
         b.onclick=async()=>{if(k==="wrong"&&!should.value){should.focus();return}
           try{await post(`/admin/api/cs/review/${it.id}`,{verdict:k,should:k==="wrong"?should.value:null});await loadReview()}catch(e){showErr(e)}};v.append(b)}
