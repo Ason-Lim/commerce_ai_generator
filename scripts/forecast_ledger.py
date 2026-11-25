@@ -36,6 +36,12 @@ def main(argv: list[str] | None = None) -> int:
         day = dt.date.today() - dt.timedelta(days=1)
         r = ledger.save(rank_dir, day)
         print(f"{day} 예보: {r['status']} → {r['path']}")
+    if not args.report:  # 2026-11-25: 지식 묶음·데이터셋도 매주 새로 (AI에게 묻기가 최신 결과를 근거로)
+        from app.services.trends.forecast import knowledge as kn
+
+        snap = kn.build(rank_dir)
+        ds = kn.export_week(snap)
+        print(f"지식 묶음 {snap['path']} · 데이터셋 {ds['rows']}줄 → {ds['path']}")
     res = ledger.evaluate(rank_dir)
     t = res["target"]
     print(f"채점 {res['graded_weeks']}주 · 대기 {res['pending']}주 · 목표 재설정까지 {t['weeks_left']}주 ({t['rule']})")

@@ -246,6 +246,19 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <div class="row"><span class="note">기준일</span><input type="date" id="ts-asof" aria-label="트렌드 변화 기준일"><button class="btn primary" id="ts-go">보기</button><span class="note" id="ts-cov"></span></div>
     <div id="ts-box"><p class="note">불러오는 중…</p></div>
   </section>
+  <section id="askai" aria-labelledby="askai-h">
+    <h2 id="askai-h">AI에게 묻기 <small class="note" style="font-weight:400">예보·백테스트·트렌드 변화 결과를 근거로 Claude·Ollama 에 직접 질문</small></h2>
+    <p class="lede">질문할 때마다 <b>최신 지식 묶음</b>(규칙·백테스트 요약·예보 성적판·트렌드 변화·다음 4주 후보)을 함께 보내요. 모델 자체를 고치는 학습이 아니라, 매주 묶음을 새로 만들어 <b>늘 최신 결과를 근거로 답하게</b> 하는 방식이에요(Claude API 는 우리가 모델을 학습시킬 수 없어요). 답이 좋으면 <b>좋음</b>, 틀렸으면 고쳐서 <b>고침</b> — 그 질문·답은 나중에 Ollama 미세조정·평가에 쓸 데이터셋에 쌓여요. 고객 문장은 넣지 않고, Claude 를 고르면 묶음(키워드 순위 집계)이 Anthropic 으로 전송돼요.</p>
+    <div class="row"><button class="btn" id="kn-build">지식 묶음 새로 만들기</button><span class="note" id="kn-msg"></span></div>
+    <div class="row" style="align-items:flex-start">
+      <textarea id="ask-q" rows="3" style="flex:1;min-width:280px" placeholder="예: 2026년에 탐색기(반복만)는 비교 기준보다 꾸준히 나았어? / 요즘 관측창 내 미진입 키워드는 어떤 게 많아?"></textarea>
+      <select id="ask-p" aria-label="모델"><option value="anthropic">Claude</option><option value="ollama">Ollama(로컬)</option></select>
+      <button class="btn primary" id="ask-go">묻기</button>
+    </div>
+    <div id="ask-ans"></div>
+    <h3>지난 질문 <small class="note">좋음·고침은 데이터셋(forecast_ask_gold.jsonl)으로</small></h3>
+    <div id="ask-log"><p class="note">불러오는 중…</p></div>
+  </section>
   <section id="backtest" aria-labelledby="backtest-h">
     <h2 id="backtest-h">예측 백테스트 <small class="note" style="font-weight:400">기준선 3종 + 선행 곡선 탐색기 — 같은 조건 비교</small></h2>
     <p class="lede">질문(Q1): <b>예측일에 100위 밖인 키워드가 7·14·28일 안에 한 번이라도 100위 안에 들어오는가.</b> 예측은 예측일까지의 파일만 읽어요. 기준선: <b>최근 유지</b>(최근 7일 100위 안이던 것) · <b>전년 같은 주</b>(52주 전 같은 기간) · <b>행사 상대일</b>(작년 같은 행사까지 남은 일수가 같은 기간). <b>탐색기</b> = 행사 선행 곡선의 반복/후보 키워드 중 예상 진입일이 기간 안인 것. 2024·2025 는 규칙을 보고 만든 자료라 <b>규칙 비교용</b>이고, 최종 성적은 앞으로 쌓이는 실제 예보로 내요. 목표 초안: 28일 기간 적중률 기준선 대비 +15%p(첫 결과 보고 다시 정함).</p>
@@ -949,6 +962,24 @@ async function loadTshift(){const box=$("#ts-box");if(!box)return;const q=new UR
       <p class="note">${esc(d.note)}</p>`;
   }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
 if($("#ts-go")){$("#ts-go").onclick=loadTshift;loadTshift().catch(()=>{})}
+async function loadKn(){if(!$("#kn-msg"))return;try{const d=await api("/admin/api/trends/forecast/knowledge");
+  $("#kn-msg").textContent=(d.built_at?`최신 묶음 ${d.built_at} (${d.chars.toLocaleString()}자)`:"아직 묶음이 없어요 — 먼저 만들어 주세요")+(d.dataset.length?` · 데이터셋 ${d.dataset.map(x=>x.name+" "+x.rows+"줄").join(", ")}`:"")}catch(e){$("#kn-msg").textContent=e.message}}
+function askRow(x){const rt=x.rating?{good:"좋음",fix:"고침",bad:"버림"}[x.rating]:"";
+  return `<div class="card" style="margin:8px 0;padding:10px;border:1px solid #e5e7eb;border-radius:8px"><p class="note">${esc(x.at)} · ${x.provider==="anthropic"?"Claude":"Ollama"}${x.model?" ("+esc(x.model)+")":""} · 묶음 ${esc(x.knowledge_built_at||"")}${rt?` · <b>${rt}</b>`:""}</p>
+  <p><b>Q.</b> ${esc(x.question)}</p><div style="white-space:pre-wrap">${esc(x.corrected||x.answer)}</div>
+  ${x.rating?"":`<div class="row"><button class="btn" data-at="${esc(x.at)}" data-r="good">좋음</button><button class="btn" data-at="${esc(x.at)}" data-r="fix">고쳐서 저장</button><button class="btn" data-at="${esc(x.at)}" data-r="bad">버림</button></div>`}</div>`}
+async function loadAskLog(){const box=$("#ask-log");if(!box)return;try{const d=await api("/admin/api/trends/forecast/ask/log");
+  box.innerHTML=d.items.map(askRow).join("")||'<p class="note">아직 질문이 없어요.</p>';
+  box.querySelectorAll("button[data-r]").forEach(b=>b.onclick=async()=>{let corrected=null;
+    if(b.dataset.r==="fix"){corrected=prompt("고친 답을 적어 주세요");if(!corrected)return}
+    try{await api("/admin/api/trends/forecast/ask/rate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({at:b.dataset.at,rating:b.dataset.r,corrected})});loadAskLog();loadKn()}catch(e){alert(e.message)}})
+}catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
+if($("#ask-go")){
+  $("#kn-build").onclick=async()=>{$("#kn-msg").textContent="만드는 중… (몇 초~십여 초)";try{const d=await api("/admin/api/trends/forecast/knowledge/build",{method:"POST"});$("#kn-msg").textContent=`새 묶음 ${d.built_at} (${d.chars.toLocaleString()}자) · 템플릿 질문·답 ${d.dataset.rows}줄`;loadKn()}catch(e){$("#kn-msg").textContent=e.message}};
+  $("#ask-go").onclick=async()=>{const q=$("#ask-q").value.trim();if(q.length<2)return;$("#ask-ans").innerHTML='<p class="note">답을 기다리는 중…</p>';
+    try{const x=await api("/admin/api/trends/forecast/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,provider:$("#ask-p").value})});$("#ask-ans").innerHTML=askRow(x);
+      $("#ask-ans").querySelectorAll("button[data-r]").forEach(b=>b.remove());loadAskLog()}catch(e){$("#ask-ans").innerHTML=`<p class="note">${esc(e.message)}</p>`}};
+  loadKn();loadAskLog()}
 if($("#nw-go")){$("#nw-go").onclick=()=>loadNext4w(false);$("#nw-cp").onclick=()=>loadNext4w(true);loadNext4w(false).catch(()=>{})}
 </script>
 </body>
