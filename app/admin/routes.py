@@ -3262,6 +3262,24 @@ def seller_product_preview(product_id: str):
                                        "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
 
 
+@router.get("/admin/seller/{seller_id}/sample", dependencies=[api])
+def seller_shop_sample(seller_id: str):
+    """미니숍 샘플 보기 (2026-11-25 시험용) — 승인 전 상품까지, 상세페이지가 없으면 상품 정보로 만든 규칙 초안.
+    운영자만 · 손님에게 보이지 않음. 고칠 곳을 찾을 때."""
+    from app.services.seller import detail_page, store
+
+    try:
+        from app.services.seller import catalog
+
+        seller_id = getattr(catalog, "resolve_seller", lambda e, k: None)(catalog.engine(), seller_id) or seller_id
+    except Exception:  # noqa: BLE001
+        pass
+    page = _seller_call(store, lambda: detail_page.shop_page(detail_page.engine(), seller_id, sample=True,
+                                                             banner="미니숍 샘플 — 승인 전 상품 포함 · 손님에게 보이지 않아요"))  # fmt: skip
+    return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                                       "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
+
+
 @router.get("/admin/seller/{key}/preview/{product_id}", dependencies=[api])
 def seller_product_preview_named(key: str, product_id: str):
     """회사 이름이 보이는 상품 미리보기 주소 (/admin/seller/renerpaint/preview/P…) — 그 셀러 상품만."""
