@@ -109,7 +109,8 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <p class="note">원래 쓰시던 판매처 하나만 관리하세요. 그 판매처의 상품 자료를 올리면 <b>바뀐 것만</b> 이쪽에 반영돼요 — 가격·재고·품절·옵션·배송비는 바로, 원산지·인증·카테고리가 바뀌면 그 칸만 다시 확인을 받아요. 연동된 상품은 여기서 고칠 수 없어요(판매처에서 바꿔 주세요). 판매 끄기는 여기서도 돼요.</p>
       <div class="row" style="margin-top:6px"><label for="chSel" class="note">기준 판매처</label><select id="chSel" style="font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px"></select><button type="button" class="sub" id="chSave">정하기</button></div>
       <details style="margin-top:10px"><summary>판매처 상품 자료 올리기 (표준 칸)</summary>
-        <p class="note">스마트스토어 '상품 조회/수정' 엑셀이나 쿠팡 WING 상품 엑셀을 아래 칸 이름에 맞춰 붙여 넣어 주세요(판매처 엑셀을 그대로 올리는 기능은 곧 붙어요). '상품번호'는 판매처 번호 — 옵션이면 '원상품번호-옵션번호'.</p>
+        <p class="note"><b>스마트스토어</b>: 스마트스토어센터 → 상품 조회/수정 → 엑셀(CSV) 다운로드한 파일을 <b>그대로</b> 골라 주세요. 이 파일에는 원산지·옵션별 가격이 없어서, 옵션 상품은 대표 가격 한 줄로 들어가고 식품은 원산지를 따로 적어 주셔야 해요. 쿠팡 WING 엑셀은 아래 표준 칸 이름에 맞춰 붙여 넣어 주세요. '상품번호'는 판매처 번호 — 옵션이면 '원상품번호-옵션번호'.</p>
+        <div class="row"><label for="syncFile" class="note">파일 고르기 (.csv)</label><input type="file" id="syncFile" accept=".csv,text/csv" style="width:auto"></div>
         <label for="syncCsv" class="note">표준 칸 CSV</label><textarea id="syncCsv" spellcheck="false"></textarea>
         <label class="note" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="syncFull" style="width:auto"> 전체 목록이에요 (빠진 상품은 이쪽에서 판매 끔)</label>
         <div class="row"><button type="button" id="syncBtn">반영하기</button></div>
@@ -454,6 +455,17 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     msg($("nvMsg"), `새 상품 ${r.added} · 바로 바뀜 ${r.fast} · 검수 대기 ${r.review} · 그대로 ${r.unchanged} · 판매처에서 사라짐 ${r.missing} · 상세페이지 입력 채움 ${r.prefilled}`, "ok");
     loadNv(); loadProducts(); loadDash();
   };
+
+  // 스마트스토어 상품 조회 CSV 그대로 — UTF-8 이 깨지면 EUC-KR 로 다시 읽는다 (2026-11-25)
+  $("syncFile").addEventListener("change", async (ev) => {
+    const f = ev.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { msg($("syncMsg"), "5MB 까지 올릴 수 있어요", "err"); return; }
+    const buf = await f.arrayBuffer();
+    let text = new TextDecoder("utf-8").decode(buf);
+    if (text.includes("\uFFFD")) { try { text = new TextDecoder("euc-kr").decode(buf); } catch (e) { /* 그대로 */ } }
+    $("syncCsv").value = text;
+    msg($("syncMsg"), `${f.name} 을(를) 읽었어요. ‘반영하기’를 눌러 주세요.`, "ok");
+  });
   async function askHelp(q){
     q = (q || "").trim(); if (q.length < 2) return;
     $("helpBtn").disabled = true; $("helpOut").innerHTML = '<div class="msg">찾아보는 중…</div>';
@@ -644,7 +656,8 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     if (CH === "manual") { msg($("syncMsg"), "기준 판매처를 네이버나 쿠팡으로 먼저 정해 주세요", "err"); return; }
     const j = await post("/seller/api/sync", {key: KEY, channel: CH, csv: $("syncCsv").value, full: $("syncFull").checked});
     if (!j.ok) { msg($("syncMsg"), j.errors ? j.errors.map((x) => `${x.line}번째 줄: ${x.error}`).join("\n") : (j.error || "반영하지 못했어요"), "err"); $("syncMsg").querySelector(".msg").style.whiteSpace = "pre-line"; return; }
-    msg($("syncMsg"), `새 상품 ${j.added} · 바로 반영 ${j.fast} · 다시 확인 ${j.review} · 그대로 ${j.unchanged}${j.missing ? ` · 판매처에서 사라짐 ${j.missing}` : ""}`, "ok");
+    msg($("syncMsg"), `${j.source ? j.source + " · " : ""}새 상품 ${j.added} · 바로 반영 ${j.fast} · 다시 확인 ${j.review} · 그대로 ${j.unchanged}${j.missing ? ` · 판매처에서 사라짐 ${j.missing}` : ""}` + (j.notes && j.notes.length ? "\n" + j.notes.join("\n") : ""), "ok");
+    $("syncMsg").querySelector(".msg").style.whiteSpace = "pre-line";
     await loadScm(); loadProducts(); loadHealth();
   };
   // # 뒤 코드는 서버로 가지 않는다 — 읽자마자 주소창에서 지운다
