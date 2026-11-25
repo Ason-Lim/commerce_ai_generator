@@ -360,7 +360,11 @@ def trends_forecast_ask(body: _AskIn):
     except LookupError as e:
         raise HTTPException(409, str(e)) from e
     except Exception as e:  # noqa: BLE001 — 키 없음·Ollama 꺼짐 등
-        raise HTTPException(502, f"{'Claude' if body.provider == 'anthropic' else 'Ollama'} 호출 실패: {type(e).__name__}: {e}") from e
+        # 2026-11-25: 502 는 Cloudflare 가 자기 오류 화면으로 바꿔 이유가 안 보였다 → 424(의존 실패)로 JSON 그대로 전달
+        import logging
+
+        logging.getLogger("forecast.ask").warning("ask failed provider=%s: %r", body.provider, e)
+        raise HTTPException(424, f"{'Claude' if body.provider == 'anthropic' else 'Ollama'} 호출 실패: {type(e).__name__}: {str(e)[:300]}") from e
 
 
 @router.get("/admin/api/trends/forecast/ask/log", dependencies=[api])

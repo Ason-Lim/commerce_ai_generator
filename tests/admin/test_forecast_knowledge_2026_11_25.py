@@ -67,7 +67,9 @@ def test_build_snapshot_and_dataset(env):
     rank, fc = env
     snap = kn.build(rank, today=dt.date(2026, 1, 21))
     assert (fc / "knowledge" / "2026-01-21.json").exists() and kn.latest()["built_at"] == snap["built_at"]
-    assert len(snap["backtests"]) == 1 and snap["backtests"][0]["methods"]["전년 기준(비교 기준)"]["선행적중률"] == 0.095
+    assert (
+        len(snap["backtests"]) == 1 and snap["backtests"][0]["methods"]["전년 기준(비교 기준)"]["선행적중률"] == 0.095
+    )
     assert snap["backtests"][0]["run_at"]
     assert snap["backtests_skipped"][0]["file"] == "backtest_2025-01-06_2025-10-27.json"
     assert snap["trend_shift"]["status"] == "ok" and "ledger" in snap and "next4w" in snap
@@ -139,3 +141,46 @@ def test_routes(admin_client, env, monkeypatch):
     )
     html = admin_client.get("/admin/trends", headers=H).text
     assert 'id="askai"' in html and "/admin/api/trends/forecast/ask" in html
+
+
+def test_ask_failure_is_424_json(admin_client, env, monkeypatch):
+    """Cloudflare 가 502 를 자기 화면으로 바꾸므로 모델 호출 실패는 424 + JSON 이유."""
+
+    def boom(q, p):
+        raise RuntimeError("no api key")
+
+    monkeypatch.setattr(kn, "ask", boom)
+    r = admin_client.post(
+        "/admin/api/trends/forecast/ask", headers=H, json={"question": "성적?", "provider": "anthropic"}
+    )
+    assert r.status_code == 424 and "no api key" in r.json()["detail"] and r.json()["detail"].startswith("Claude")
+
+
+def test_http_claude_without_sdk(monkeypatch):
+    """SDK 없이 httpx 형식으로 부르고, 생각 블록은 빼고 글만."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    seen = {}
+
+    class R:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return {
+                "model": "claude-x",
+                "usage": {"input_tokens": 3, "output_tokens": 4},
+                "content": [{"type": "thinking", "thinking": "…"}, {"type": "text", "text": "답"}],
+            }
+
+    def post(url, json, timeout, headers):
+        seen.update(url=url, body=json, headers=headers)
+        return R()
+
+    c = kn._HttpClaude("claude-x", post=post)
+    assert c.chat("sys", "q", max_tokens=1500) == "답"
+    assert (
+        seen["headers"]["x-api-key"] == "k" and seen["body"]["max_tokens"] == 8000 and "temperature" not in seen["body"]
+    )
+    monkeypatch.delenv("ANTHROPIC_API_KEY")
+    with pytest.raises(RuntimeError):
+        c.chat("sys", "q")

@@ -219,6 +219,50 @@ def export_week(snap: dict) -> dict:
 PROVIDERS = ("anthropic", "ollama")
 
 
+class _HttpClaude:
+    """Claude 를 SDK 없이 httpx 로 (운영 맥엔 anthropic SDK 가 선택 설치라 없음 — 11-25 운영 확인).
+    nlu.llm_client._anthropic 과 같은 방식. Claude 5.5 는 temperature 를 받지 않고 생각까지 포함해 출력 상한을 넉넉히."""
+
+    URL = "https://api.anthropic.com/v1/messages"
+
+    def __init__(self, model: str, post=None):
+        self.model = model
+        self.post = post
+
+    @property
+    def s(self):  # ask() 기록용 — getattr(client.s, "anthropic_model")
+        return type("S", (), {"anthropic_model": self.model})
+
+    def chat(self, system: str, user: str, *, max_tokens: int = 8000, **_) -> str:
+        key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+        if not key:
+            raise RuntimeError("ANTHROPIC_API_KEY 미설정")
+        post = self.post
+        if post is None:
+            import httpx
+
+            post = httpx.post
+        body = {"model": self.model, "max_tokens": max(max_tokens, 8000), "system": system,
+                "messages": [{"role": "user", "content": user}]}  # fmt: skip
+        r = post(self.URL, json=body, timeout=180,
+                 headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})  # fmt: skip
+        if r.status_code >= 400:
+            raise RuntimeError(f"Claude API {r.status_code}: {r.text[:200]}")
+        data = r.json()
+        u = data.get("usage") or {}
+        try:
+            from app.services.ai import usage
+
+            usage.record("admin_llm", f"anthropic:{data.get('model') or self.model}", u.get("input_tokens") or 0,
+                         u.get("output_tokens") or 0)  # fmt: skip
+        except Exception:  # noqa: BLE001 — 비용 기록 실패는 답을 막지 않음
+            pass
+        text = "".join(b.get("text", "") for b in data.get("content") or [] if b.get("type") == "text")
+        if not text:
+            raise RuntimeError(f"Claude 빈 응답 ({data.get('stop_reason')})")
+        return text
+
+
 def ask(question: str, provider: str, *, snap: dict | None = None, client=None) -> dict:
     """최신 지식 묶음을 함께 주고 묻는다. provider = anthropic(Claude) | ollama. 기록은 ask_log.jsonl(관리자 질문만)."""
     from app.admin.shared.config import get_settings
@@ -230,9 +274,12 @@ def ask(question: str, provider: str, *, snap: dict | None = None, client=None) 
     if snap is None:
         raise LookupError("지식 묶음이 아직 없어요 — '지식 묶음 새로 만들기'를 먼저 눌러 주세요")
     if client is None:
-        from dataclasses import replace
+        if provider == "anthropic":
+            client = _HttpClaude(get_settings().anthropic_model)
+        else:
+            from dataclasses import replace
 
-        client = LLMClient(replace(get_settings(), llm_provider=provider))
+            client = LLMClient(replace(get_settings(), llm_provider=provider))
     user = f"[지식 묶음 — {snap.get('built_at')}]\n{context_text(snap)}\n\n[질문]\n{question.strip()}"
     answer = client.chat(SYSTEM, user, max_tokens=1500, temperature=0.2)
     rec = {"at": dt.datetime.now().isoformat(timespec="seconds"), "provider": provider,
