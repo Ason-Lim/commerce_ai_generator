@@ -18,11 +18,8 @@ export function Brand({ href = "/#" }: { href?: string }) {
   return (
     <a href={href} className="flex shrink-0 items-center gap-2.5" aria-label="trendguide — AI 식품 추천 처음 화면">
       <BrandMark />
-      <span className="hidden flex-col leading-none min-[380px]:flex">
-        <span className="text-[21px] font-extrabold tracking-[-0.045em]">
-          <span className="text-ink">trend</span><span className="text-accent">guide</span>
-        </span>
-        <span className="mt-[3px] text-[10.5px] font-medium tracking-[0.02em] text-ink3">AI 식품 추천</span>
+      <span className="hidden text-[22px] font-extrabold leading-none tracking-[-0.045em] min-[380px]:inline">
+        <span className="text-ink">trend</span><span className="text-accent">guide</span>
       </span>
     </a>
   );
