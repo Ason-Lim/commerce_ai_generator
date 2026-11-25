@@ -154,6 +154,31 @@ def test_gpt_image_makes_background_and_is_labeled(eng, tmp_path):
     assert c.get("/shop-img/../../etc.png").status_code == 404
 
 
+def test_logo_upload_kept_and_shown(eng, tmp_path):
+    s, k, _ = _seller(eng)
+    for bad, why in (("", "골라"), (base64.b64encode(b"<svg onload=alert(1)>").decode(), "PNG"),
+                     (base64.b64encode(PNG + b"0" * (1024 * 1024)).decode(), "1MB"), ("@@@", "읽지")):  # fmt: skip
+        with pytest.raises(sel.SellerError, match=why):
+            SD.upload_logo(eng, k, IP, bad)
+    got = SD.upload_logo(eng, k, IP, "data:image/png;base64," + base64.b64encode(PNG).decode())
+    assert got["url"].startswith("/shop-img/") and got["url"].endswith(".png")
+    jpg = SD.upload_logo(eng, k, IP, base64.b64encode(b"\xff\xd8\xff\xe0" + b"0" * 20).decode())["url"]
+    assert jpg.endswith(".jpg")
+    d = SD.apply_template(eng, k, IP, "G03")
+    d["logo_url"] = got["url"]
+    SD.save(eng, k, IP, d)
+    html = SD.look(eng, k, IP, None)
+    assert f'<img class="logo" src="{got["url"]}"' in html and "생활공방 로고" in html
+    assert SD.apply_template(eng, k, IP, "F05")["logo_url"] == got["url"]  # 템플릿을 바꿔도 로고 유지
+    assert SD.save(eng, k, IP, {**d, "logo_url": "javascript:alert(1)"})["logo_url"] == ""
+    from app.main import app
+
+    c = TestClient(app)
+    r = c.get(jpg)
+    assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg"
+    assert c.post("/seller/api/design/logo", json={"key": k, "data": base64.b64encode(PNG).decode()}).json()["ok"]
+
+
 def test_routes(eng):
     from app.main import app
 
@@ -164,5 +189,6 @@ def test_routes(eng):
     d = c.post("/seller/api/design/template", json={"key": k, "template_id": "F03"}).json()["design"]
     assert c.post("/seller/api/design/look", json={"key": k, "design": d}).json()["html"].startswith("<!doctype html>")
     assert c.post("/seller/api/design/save", json={"key": k, "design": d}).json()["ok"]
-    assert 'id="sd-h"' in c.get("/seller").text
+    page = c.get("/seller").text
+    assert 'id="sd-h"' in page and 'id="sdLogoFile"' in page
     assert c.post("/seller/api/design/template", json={"key": k, "template_id": "X99"}).json()["ok"] is False

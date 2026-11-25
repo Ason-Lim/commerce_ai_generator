@@ -151,6 +151,11 @@ def _check_text(t: str, where: str, probs: list[str]) -> str:
     return t
 
 
+LOGO_URL_RE = re.compile(r"/shop-img/[a-f0-9]{16}\.(?:png|jpg|webp)")
+LOGO_MAX = 1024 * 1024
+LOGO_KINDS = ((b"\x89PNG\r\n\x1a\n", "png"), (b"\xff\xd8\xff", "jpg"))
+
+
 def check(raw: dict | None, product_ids: set[str], *, strict: bool = True) -> tuple[dict, list[str]]:
     """셀러 저장·AI 답 공통 검사. strict 면 문제 문구가 있을 때 DesignError, 아니면 (디자인, 문제) 로 돌려준다."""
     raw = raw or {}
@@ -183,7 +188,10 @@ def check(raw: dict | None, product_ids: set[str], *, strict: bool = True) -> tu
         secs.append(
             {"type": "notice", "title": "", "text": "", "items": [], "product_ids": []}
         )  # 판매처 안내는 늘 남긴다
-    d = {"template": t["id"], "palette": pal, "font": font, "hero": hero, "sections": secs}
+    logo = str(raw.get("logo_url") or "").strip()[:300]
+    if logo and not (products.URL_RE.match(logo) or LOGO_URL_RE.fullmatch(logo)):
+        logo = ""
+    d = {"template": t["id"], "palette": pal, "font": font, "logo_url": logo, "hero": hero, "sections": secs}
     if strict and probs:
         raise DesignError(" / ".join(dict.fromkeys(probs)))
     return d, probs
@@ -250,7 +258,9 @@ def apply_template(eng, token: str, client: str, tid: str) -> dict:
     s = store.resolve(eng, token, client)
     if tid not in {t["id"] for t in templates()}:
         raise DesignError("없는 템플릿이에요")
-    return default_design(tid, s["name"], _items(eng, s["seller_id"]))
+    d = default_design(tid, s["name"], _items(eng, s["seller_id"]))
+    d["logo_url"] = (design_of(eng, s["seller_id"]) or {}).get("logo_url") or ""  # 템플릿을 바꿔도 로고는 그대로
+    return d
 
 
 def save(eng, token: str, client: str, raw: dict) -> dict:
@@ -291,7 +301,7 @@ FONT_CSS = {
 DESIGN_CSS = """*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.65}
 a{color:inherit}.wrap{max-width:1120px;margin:auto;padding:0 28px}.banner{background:#fff4dc;color:#7a4b00;border-radius:12px;padding:8px 12px;font-size:13px;margin:12px 0}
 .head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;border-bottom:1px solid color-mix(in srgb,var(--ink) 15%,transparent)}
-.brand{font-size:21px;font-weight:800;letter-spacing:-.5px}.brand small{display:block;font-size:10.5px;font-weight:500;letter-spacing:2px;opacity:.6}
+.brand{font-size:21px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:12px}.brand .logo{height:44px;max-width:160px;object-fit:contain}.brand small{display:block;font-size:10.5px;font-weight:500;letter-spacing:2px;opacity:.6}
 .head nav{display:flex;gap:18px;font-size:14px}.head nav a{text-decoration:none}
 .eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 6px}
 h1{font-size:clamp(30px,4.4vw,54px);line-height:1.2;letter-spacing:-1.5px;margin:0 0 16px;word-break:keep-all}h2{font-size:24px;letter-spacing:-.5px;margin:0 0 14px}
@@ -489,7 +499,13 @@ def render(design: dict, seller: dict, items: list[tuple[dict, dict]], *, banner
         out.append(f'<section class="sec">{top}</section>')
     css_vars = ";".join(f"--{k}:{v}" for k, v in pal.items())
     robots = "index,follow" if index else "noindex,nofollow"
-    head = (f'<header class="head"><div class="brand">{e(seller["name"])}<small>MINI SHOP</small></div>'
+    logo = design.get("logo_url") or ""
+    mark = (
+        f'<img class="logo" src="{e(logo)}" alt="{e(seller["name"])} 로고" referrerpolicy="no-referrer">'
+        if logo
+        else ""
+    )
+    head = (f'<header class="head"><div class="brand">{mark}<span>{e(seller["name"])}<small>MINI SHOP</small></span></div>'
             '<nav><a href="#items">상품</a><a href="#seller-info">판매처 안내</a></nav></header>')  # fmt: skip
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="{robots}"><meta name="referrer" content="no-referrer"><title>{e(seller["name"])} 미니숍</title>
@@ -599,7 +615,7 @@ def _image_dir() -> Path:
 
 
 def image_path(name: str) -> Path | None:
-    if not re.fullmatch(r"[a-f0-9]{16}\.png", name or ""):
+    if not re.fullmatch(r"[a-f0-9]{16}\.(?:png|jpg|webp)", name or ""):
         return None
     p = _image_dir() / name
     return p if p.is_file() else None
@@ -645,5 +661,38 @@ def make_image(eng, token: str, client: str, prompt: str, *, http=None, env=None
     return {"url": f"/shop-img/{name}", "model": model}
 
 
+def _logo_kind(raw: bytes) -> str | None:
+    for magic, ext in LOGO_KINDS:
+        if raw.startswith(magic):
+            return ext
+    if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def upload_logo(eng, token: str, client: str, data: str) -> dict:
+    """셀러 회사 로고 올리기 — PNG·JPG·WEBP, 1MB 이하. SVG 는 받지 않는다(스크립트를 품을 수 있어서). {url}"""
+    s = store.resolve(eng, token, client)
+    data = (data or "").strip()
+    if data.startswith("data:"):
+        data = data.split(",", 1)[-1]
+    try:
+        raw = base64.b64decode(data, validate=True)
+    except ValueError:
+        raise DesignError("로고 파일을 읽지 못했어요") from None
+    if not raw:
+        raise DesignError("로고 파일을 골라 주세요")
+    if len(raw) > LOGO_MAX:
+        raise DesignError("로고는 1MB 이하로 올려 주세요")
+    ext = _logo_kind(raw)
+    if ext is None:
+        raise DesignError("로고는 PNG·JPG·WEBP 파일만 올릴 수 있어요")
+    name = hashlib.sha256(raw + s["seller_id"].encode() + str(time.time()).encode()).hexdigest()[:16] + "." + ext
+    (_image_dir() / name).write_bytes(raw)
+    with eng.begin() as c:
+        store._event(c, s["seller_id"], "shop_logo", "seller", {"name": name, "bytes": len(raw)})
+    return {"url": f"/shop-img/{name}"}
+
+
 __all__ = ["DesignError", "ai_design", "apply_template", "check", "default_design", "design_of", "editor", "engine",
-           "image_path", "look", "make_image", "render", "reset", "save", "templates"]  # fmt: skip
+           "image_path", "look", "make_image", "render", "reset", "save", "templates", "upload_logo"]  # fmt: skip

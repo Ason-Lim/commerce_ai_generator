@@ -210,6 +210,9 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
             <div class="field"><label for="sdEyebrow">작은 글</label><input id="sdEyebrow" maxlength="40"></div>
             <div class="field"><label for="sdTitle">제목</label><input id="sdTitle" maxlength="60"></div>
           </div>
+          <div class="field"><label for="sdLogoFile">회사 로고 <span class="note">PNG·JPG·WEBP, 1MB 이하 · 미니숍 맨 위 상호 옆에 보여요</span></label>
+            <div class="row" style="align-items:center"><img id="sdLogoImg" alt="" style="height:40px;max-width:140px;object-fit:contain;display:none;border:1px solid #e3e0da;border-radius:6px;background:#fff;padding:2px">
+              <input id="sdLogoFile" type="file" accept="image/png,image/jpeg,image/webp"><button type="button" class="sub" id="sdLogoDel">로고 빼기</button><span class="note" id="sdLogoMsg"></span></div></div>
           <div class="field"><label for="sdSub">소개</label><textarea id="sdSub" rows="2" maxlength="200"></textarea></div>
           <div class="grid2">
             <div class="field"><label for="sdImg">대표 이미지 주소 (https)</label><input id="sdImg" maxlength="300" placeholder="https://…"></div>
@@ -526,11 +529,12 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     $("sdTpls").querySelectorAll("[data-tpl]").forEach((b) => b.onclick = async () => {
       const j = await post("/seller/api/design/template", {key: KEY, template_id: b.dataset.tpl});
       if (!j.ok) { msg($("sdMsg"), j.error, "err"); return; }
-      SDD = j.design; sdFill(); sdLook(); msg($("sdMsg"), `${b.dataset.tpl} 템플릿으로 바꿨어요. 저장해야 미니숍에 반영돼요.`, "ok");
+      SDD = Object.assign(j.design, {logo_url: (SDD && SDD.logo_url) || j.design.logo_url || ""}); sdFill(); sdLook(); msg($("sdMsg"), `${b.dataset.tpl} 템플릿으로 바꿨어요. 저장해야 미니숍에 반영돼요.`, "ok");
     });
   }
   function sdFill(){
     const h = SDD.hero || {};
+    $("sdLogoImg").src = SDD.logo_url || ""; $("sdLogoImg").style.display = SDD.logo_url ? "" : "none";
     $("sdEyebrow").value = h.eyebrow || ""; $("sdTitle").value = h.title || ""; $("sdSub").value = h.subtitle || ""; $("sdImg").value = h.image_url || "";
     $("sdFont").innerHTML = Object.entries(SD.fonts).map(([k, v]) => `<option value="${k}"${SDD.font === k ? " selected" : ""}>${esc(v)}</option>`).join("");
     $("sdPal").innerHTML = [["bg","배경"],["ink","글자"],["accent","강조"],["soft","바탕 칸"]].map(([k, l]) => `<label class="note" style="display:flex;gap:4px;align-items:center">${l}<input type="color" data-pal="${k}" value="${esc((SDD.palette || {})[k] || "#ffffff")}" style="width:44px;padding:0;height:30px"></label>`).join("");
@@ -585,6 +589,20 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
   $("sdSecs").addEventListener("change", () => { clearTimeout(sdTimer); sdTimer = setTimeout(() => { sdRead(); sdLook(); }, 300); });
   $("sdAdd").onclick = () => { sdRead(); const n = SDD.sections.findIndex((x) => x.type === "notice"); SDD.sections.splice(n < 0 ? SDD.sections.length : n, 0, {type: $("sdAddType").value, title: "", text: "", items: [], product_ids: []}); sdFill(); sdLook(); };
   $("sdLook").onclick = () => { sdRead(); sdLook(); };
+  $("sdLogoFile").onchange = () => {
+    const f = $("sdLogoFile").files[0]; if (!f) return;
+    if (f.size > 1024 * 1024) { $("sdLogoMsg").textContent = "로고는 1MB 이하로 올려 주세요"; return; }
+    const r = new FileReader();
+    r.onload = async () => {
+      $("sdLogoMsg").textContent = "올리는 중…";
+      const j = await post("/seller/api/design/logo", {key: KEY, data: r.result});
+      $("sdLogoFile").value = "";
+      if (!j.ok) { $("sdLogoMsg").textContent = j.error; return; }
+      sdRead(); SDD.logo_url = j.url; sdFill(); sdLook(); $("sdLogoMsg").textContent = "올렸어요. 저장해야 미니숍에 반영돼요.";
+    };
+    r.readAsDataURL(f);
+  };
+  $("sdLogoDel").onclick = () => { sdRead(); SDD.logo_url = ""; sdFill(); sdLook(); $("sdLogoMsg").textContent = "로고를 뺐어요. 저장해야 반영돼요."; };
   $("sdSave").onclick = async () => { const j = await post("/seller/api/design/save", {key: KEY, design: sdRead()}); if (!j.ok) { msg($("sdMsg"), j.error, "err"); return; } SDD = j.design; SD.saved = true; sdFill(); sdLook(); msg($("sdMsg"), "저장했어요. 미니숍이 이 디자인으로 보여요.", "ok"); };
   $("sdReset").onclick = async () => { if (!confirm("저장한 디자인을 지우고 기본 화면으로 돌아갈까요?")) return; const j = await post("/seller/api/design/reset", {key: KEY}); if (j.ok) { msg($("sdMsg"), "기본 화면으로 돌렸어요.", "ok"); loadDesign(); } };
   $("sdAi").onclick = async () => {
@@ -592,7 +610,7 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     try {
       const j = await post("/seller/api/design/ai", {key: KEY, request: $("sdAsk").value, template_id: $("sdKeepTpl").checked ? SDD.template : ""});
       if (!j.ok) { msg($("sdAiMsg"), j.error, "err"); return; }
-      SDD = j.design; SDSET = sdTpl(SDD.template).set; sdFill(); sdLook();
+      SDD = Object.assign(j.design, {logo_url: SDD.logo_url || ""}); SDSET = sdTpl(SDD.template).set; sdFill(); sdLook();
       msg($("sdAiMsg"), `AI 제안: ${SDD.template} ${sdTpl(SDD.template).name}${j.reason ? " — " + j.reason : ""}${j.fixed && j.fixed.length ? " (쓸 수 없는 표현은 기본 문구로 바꿨어요)" : ""}. 마음에 들면 저장해 주세요.`, "ok");
     } finally { $("sdAi").disabled = false; }
   };
