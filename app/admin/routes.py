@@ -385,6 +385,25 @@ def trends_forecast_ask_rate(body: _RateIn):
         raise HTTPException(404, str(e)) from e
 
 
+@router.get("/admin/api/trends/forecast/report-card")
+def trends_forecast_report_card(request: Request, event: str = Query(..., min_length=1, max_length=40),
+                                year: int | None = Query(None, ge=2024, le=2030)):
+    """행사별 리포트카드 (2026-11-25) — 행사 28일 전에 예보했다면 방법별 선행 적중·4분류, 실제 주요 상승을 누가 맞혔나·놓쳤나.
+    year 없으면 해마다 한 줄 요약만. 참고값(백테스트와 같은 자료)."""
+    from app.services.trends import period
+    from app.services.trends.forecast import report_card as rc
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    out = {"event": event, "summary": rc.summary(rank_dir, event)}
+    if year:
+        out["card"] = rc.report_card(rank_dir, event, year)
+    return out
+
+
 @router.get("/admin/api/trends/forecast/backtest")
 def trends_forecast_backtest(request: Request, start: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
                              end: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"), step: int = Query(7, ge=1, le=28),
