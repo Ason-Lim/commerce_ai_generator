@@ -164,6 +164,10 @@ class Retention:
 
             m = seller_scm.purge(seller_scm.engine(), self.now.replace(tzinfo=seller.KST))
             self.report.append({"step": "seller_orders", "target": "seller_order.ship_enc", "rows": m, "cutoff": None})
+            from app.services.seller import join as seller_join  # ⑩ 입점 신청 — 반려·철회 90일 뒤 서류·연락처
+
+            m = seller_join.purge(seller_join.engine(), self.now.replace(tzinfo=seller.KST))
+            self.report.append({"step": "seller_join", "target": "seller_join.files·contact_enc", "rows": m, "cutoff": None})
             from app.services.seller import health as seller_health  # 죽은 셀러몰 — 새 후보만 운영자 알림(개인정보 아님)
 
             h = seller_health.daily_check(seller_scm.engine())

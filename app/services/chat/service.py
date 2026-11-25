@@ -319,6 +319,20 @@ class ChatService:
             if fu_intent and fu_mod.base_set(state):
                 return self._followup_turn(sid, text, fu_intent, state, revision, persist)
 
+        # 2026-11-25 (창 5 ⑩): '입점하고 싶어요' — 쇼핑 검색 대신 입점 신청 안내 (상품 순위·화면은 그대로)
+        if text and not answers:
+            from app.services.chat.join_intent import asks_to_join
+
+            if asks_to_join(text):
+                blocks = [B.text("입점을 원하시면 **[입점 신청](/join)** 페이지에서 신청서와 사업자등록증·통신판매업 신고증을 올려 주세요.\n\n"
+                                 "- 올리자마자 1차 확인(사업자등록번호·국세청 사업자 상태·서류·판매처·취급 품목)을 해요.\n"
+                                 "- 문제가 없으면 바로 **체험 코드**를 드려요 — 셀러센터에서 상품을 올려 볼 수 있어요.\n"
+                                 "- 손님에게 보이는 건 운영팀이 **입점을 승인**한 뒤예요(3영업일 안에 결과 안내)."),
+                          B.notice("입점 승인·이용료는 운영팀이 정해요. AI 가 승인하지 않아요.")]  # fmt: skip
+                state = _log_turn(dict(state, pending=None), text, "seller_join")
+                self._try_commit(sid, state, revision, persist)
+                return self._response(sid, "seller_join", blocks)
+
         # 2026-11-16 (2단계): '요즘 대방어 왜 유행해?' — 게시된 트렌드 글만 근거로 답하고 원문 보기 카드
         if text and not answers:
             qa_turn = self._trend_qa_turn(sid, text, state, revision, persist)

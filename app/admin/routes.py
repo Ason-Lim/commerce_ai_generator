@@ -3252,6 +3252,47 @@ def seller_biz_verify(seller_id: str, body: _BizVerifyIn):
                                                                                 ok=body.ok, by="operator"))}  # fmt: skip
 
 
+class _JoinDecideIn(BaseModel):
+    decision: str = Field(..., pattern="^(approve|reject|trial)$")
+    note: str = Field("", max_length=300)
+
+
+@router.get("/admin/api/seller-joins", dependencies=[api])
+def seller_joins(status: str = Query("open", pattern="^(open|all|received|check|trial|rejected|approved|withdrawn)$")):
+    """⑩ 입점 신청 — AI 1차 분석 결과와 함께 (연락처는 가려서)."""
+    from app.services.seller import join
+
+    return {"joins": join.queue(join.engine(), status), "statuses": join.STATUSES}
+
+
+@router.get("/admin/api/seller-joins/{join_id}", dependencies=[api])
+def seller_join_detail(join_id: str):
+    from app.services.seller import join, store
+
+    return {"join": _seller_call(store, lambda: join.detail(join.engine(), join_id))}
+
+
+@router.get("/admin/seller-joins/{join_id}/file/{kind}", dependencies=[api])
+def seller_join_file(join_id: str, kind: str):
+    """제출 서류 — 운영자만, 저장 없이 보기."""
+    from fastapi.responses import Response
+
+    from app.services.seller import join, store
+
+    data, typ = _seller_call(store, lambda: join.file_bytes(join.engine(), join_id, kind))
+    return Response(data, media_type=typ, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                                                   "Content-Disposition": "inline", "X-Content-Type-Options": "nosniff"})  # fmt: skip
+
+
+@router.post("/admin/api/seller-joins/{join_id}/decide", dependencies=[api])
+def seller_join_decide(join_id: str, body: _JoinDecideIn):
+    """입점 승인·반려·수동 체험 코드 — 운영자만 (AI 는 승인·반려하지 않는다)."""
+    from app.services.seller import join, store
+
+    return {"ok": True, **_seller_call(store, lambda: join.decide(join.engine(), join_id, body.decision, by="operator",
+                                                                  note=body.note))}  # fmt: skip
+
+
 DETAIL_CSP = "default-src 'none'; img-src https:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 
 

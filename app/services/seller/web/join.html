@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>입점 신청</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d211d;--ink2:#5b605a;--line:#e3e2dc;--accent:#1f6b45;--accent-s:#e7f2ec;--warn:#9a5b00;--warn-s:#fff4dc;--err:#b3261e;--err-s:#fde9e7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:0 0 6px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
+.note{color:var(--ink2);font-size:12.5px}
+label{font-weight:600;font-size:14px}
+input,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+input[type=file]{padding:8px;background:#fafaf7}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 20px;background:var(--ink);color:#fff;cursor:pointer}
+button.sub{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button[disabled]{opacity:.5;cursor:default}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.field{display:grid;gap:4px;margin-top:10px}
+.consent{background:#f4f6f3;border-radius:12px;padding:12px;font-size:13px;margin-top:12px}
+.consent table{border-collapse:collapse;width:100%;margin:6px 0}.consent td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.consent td:first-child{color:var(--ink2);width:28%;white-space:nowrap}
+.msg{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px;white-space:pre-line}
+.msg.ok{background:var(--accent-s)}.msg.err{background:var(--err-s);color:var(--err)}.msg.info{background:var(--warn-s);color:var(--warn)}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:16px;background:#fff;border:1px dashed var(--accent);border-radius:10px;padding:8px 10px;word-break:break-all}
+.steps{margin:8px 0 0;padding-left:18px;color:var(--ink2);font-size:13.5px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+footer{margin-top:28px;color:var(--ink2);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <h1>입점 신청</h1>
+  <p class="note">식품을 파는 사업자라면 신청할 수 있어요. 서류를 올리면 바로 1차 확인을 하고, 문제가 없으면 <b>체험 코드</b>를 드려요 — 셀러센터에서 상품을 올려 볼 수 있지만, 운영팀이 <b>입점을 승인</b>하기 전에는 손님에게 보이지 않아요.</p>
+  <ol class="steps">
+    <li>신청서와 사업자등록증(필수)·통신판매업 신고증을 올려요.</li>
+    <li>1차 확인: 사업자등록번호 · 국세청 사업자 상태 · 서류 판독 · 판매처 · 취급 품목.</li>
+    <li>문제가 없으면 바로 체험 코드, 확인이 필요하면 운영팀이 3영업일 안에 알려 드려요.</li>
+    <li>운영팀 입점 승인 → 상품 검수 → 미니숍 공개.</li>
+  </ol>
+
+  <section class="box" id="formBox" aria-labelledby="f-h">
+    <h2 id="f-h">신청서</h2>
+    <form id="form" novalidate>
+      <div class="grid2">
+        <div class="field"><label for="trade">상호</label><input id="trade" maxlength="60" required autocomplete="organization"></div>
+        <div class="field"><label for="bno">사업자등록번호</label><input id="bno" maxlength="12" inputmode="numeric" placeholder="000-00-00000" required></div>
+        <div class="field"><label for="cname">담당자 이름</label><input id="cname" maxlength="30" required autocomplete="name"></div>
+        <div class="field"><label for="email">담당자 메일</label><input id="email" type="email" maxlength="120" autocomplete="email"></div>
+        <div class="field"><label for="phone">담당자 전화</label><input id="phone" maxlength="20" inputmode="tel" autocomplete="tel"></div>
+        <div class="field"><label for="store">판매처 주소 (스마트스토어 등)</label><input id="store" maxlength="300" placeholder="https://smartstore.naver.com/..."></div>
+      </div>
+      <div class="field"><label for="products">주력 상품</label><textarea id="products" maxlength="500" rows="3" placeholder="예: 제주 노지 감귤, 한라봉 (직접 재배)" required></textarea></div>
+      <div class="grid2">
+        <div class="field"><label for="f_reg">사업자등록증 (PNG·JPG·PDF, 5MB)</label><input id="f_reg" type="file" accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf" required></div>
+        <div class="field"><label for="f_mail">통신판매업 신고증 (있으면)</label><input id="f_mail" type="file" accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf"></div>
+      </div>
+      <div class="hp" aria-hidden="true"><label for="website">웹사이트</label><input id="website" tabindex="-1" autocomplete="off"></div>
+      <div class="consent">
+        <b>개인정보 수집·이용 동의 (필수)</b>
+        <table>
+          <tr><td>항목</td><td>담당자 이름·메일·전화, 사업자등록증·통신판매업 신고증(대표자 성명·사업장 주소 등 서류에 적힌 정보)</td></tr>
+          <tr><td>목적</td><td>입점 심사, 결과 안내, 입점 뒤 셀러 계정 운영</td></tr>
+          <tr><td>보관</td><td>반려·철회 시 결정 뒤 90일에 파기 · 입점 시 계약 기간 동안(계약 종료 뒤 1년 파기)</td></tr>
+          <tr><td>처리</td><td>서류는 암호화 보관, 판독은 이 서버에서만. 사업자등록번호는 국세청 상태 조회에 쓰여요.</td></tr>
+        </table>
+        동의하지 않으면 신청할 수 없어요.
+        <label style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="consent" style="width:auto"> 동의합니다</label>
+      </div>
+      <div class="row"><button type="submit" id="send">신청하기</button></div>
+      <div id="msg" role="status"></div>
+    </form>
+  </section>
+
+  <section class="box" aria-labelledby="l-h">
+    <h2 id="l-h">신청 확인</h2>
+    <p class="note">신청할 때 받은 확인 코드로 진행 상황을 볼 수 있어요.</p>
+    <div class="row"><input id="tok" maxlength="40" style="max-width:340px" placeholder="신청 확인 코드" autocomplete="off" spellcheck="false"><button type="button" class="sub" id="look">확인</button></div>
+    <div id="state" role="status"></div>
+  </section>
+  <footer>입점 승인·정지·이용료는 운영팀이 정해요(AI 가 결정하지 않아요). <a href="/">trendguide 홈</a></footer>
+</main>
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const msg = (el, html, kind) => { el.innerHTML = html ? `<div class="msg ${kind}">${html}</div>` : ""; };
+  async function post(url, body){ const r = await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)}); return r.json(); }
+  async function fileOf(input){
+    const f = input.files[0]; if (!f) return null;
+    if (f.size > 5 * 1024 * 1024) throw new Error("파일은 5MB 까지예요");
+    const type = f.type || (f.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "");
+    const buf = new Uint8Array(await f.arrayBuffer()); let bin = "";
+    for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    return {name: f.name, type, data: btoa(bin)};
+  }
+  function show(j){
+    let h = `<b>${esc(j.status_label)}</b> · ${esc(j.trade_name)} (${esc(j.join_id)})<br>${esc(j.message)}`;
+    if (j.code) h += `<div style="margin-top:8px">체험 코드</div><div class="code">${esc(j.code)}</div><div class="note">${esc(j.code_note)}</div>`
+      + `<div class="row"><a href="/seller">셀러센터로 가기 →</a></div>`;
+    msg($("state"), h, j.status === "rejected" ? "err" : j.status === "check" || j.status === "received" ? "info" : "ok");
+  }
+  $("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!$("consent").checked) { msg($("msg"), "개인정보 수집·이용에 동의해 주세요", "err"); return; }
+    $("send").disabled = true; msg($("msg"), "올리고 확인하는 중이에요… (1분쯤 걸릴 수 있어요)", "info");
+    try {
+      const files = {}; const reg = await fileOf($("f_reg")); const mail = await fileOf($("f_mail"));
+      if (reg) files.biz_reg = reg; if (mail) files.mail_order = mail;
+      const j = await post("/join/api/send", {trade_name: $("trade").value, biz_no: $("bno").value, contact_name: $("cname").value,
+        email: $("email").value, phone: $("phone").value, store_url: $("store").value.trim(), products: $("products").value,
+        files, consent: true, website: $("website").value});
+      if (!j.ok) { msg($("msg"), esc(j.error || "접수하지 못했어요"), "err"); return; }
+      msg($("msg"), `접수됐어요. <b>신청 확인 코드</b>를 꼭 적어 두세요 — 진행 상황을 볼 때 필요해요.<div class="code">${esc(j.token)}</div>`, "ok");
+      $("tok").value = j.token; show(j); $("form").reset();
+    } catch (err) { msg($("msg"), esc(err.message || "접수하지 못했어요"), "err"); }
+    finally { $("send").disabled = false; }
+  });
+  $("look").onclick = async () => { const j = await post("/join/api/look", {token: $("tok").value.trim()}); if (!j.ok) { msg($("state"), esc(j.error), "err"); return; } show(j); };
+  const m = location.hash.match(/t=([A-Za-z0-9_-]{24})/);
+  if (m) { history.replaceState(null, "", location.pathname); $("tok").value = m[1]; $("look").click(); }
+})();
+</script>
+</body>
+</html>

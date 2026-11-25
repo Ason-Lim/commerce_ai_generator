@@ -205,6 +205,28 @@ def issue_key(eng, seller_id: str, *, by: str) -> dict:
     return {"key_id": kid, "code": token, "link": f"/seller#k={token}", "revoked_old": old}
 
 
+TRIAL_BY = "system:join"  # 입점 신청 1차 분석(⑩)이 문제없다고 본 신청만 — 체험(초대 상태) 셀러 + 첫 코드
+
+
+def create_trial(eng, *, name: str, contact: dict, join_id: str) -> dict:
+    """입점 신청 자동 체험 코드 (사용자 결정 11-25 16:24 'A'). 셀러는 '초대'(체험) 상태로만 만든다 —
+    입점 승인(active)·정지·종료·코드 재발급은 여전히 운영자만(_operator). 고객 화면·미니숍 공개는 active 에서만 열린다."""
+    name = " ".join((name or "").split())[:60]
+    if not name:
+        raise SellerError("상호를 넣어 주세요")
+    ct = _check_contact(contact)
+    sid = "S" + secrets.token_hex(4).upper()
+    token = secrets.token_urlsafe(18)
+    kid = "K" + secrets.token_hex(4).upper()
+    with eng.begin() as c:
+        c.execute(t_seller.insert().values(seller_id=sid, name=name, kind="direct", status="invited",
+                                           contact_enc=corp._enc(ct), memo=f"입점 신청 {join_id} 체험", created_at=now()))  # fmt: skip
+        _event(c, sid, "created", TRIAL_BY, {"kind": "direct", "join_id": join_id, "trial": True})
+        c.execute(t_key.insert().values(key_id=kid, seller_id=sid, token_hash=_hash(token), created_at=now()))
+        _event(c, sid, "key_issued", TRIAL_BY, {"key_id": kid, "revoked_old": 0})
+    return {"seller_id": sid, "key_id": kid, "code": token, "link": f"/seller#k={token}"}
+
+
 def revoke_keys(eng, seller_id: str, *, by: str) -> int:
     by = _operator(by)
     with eng.begin() as c:
@@ -359,6 +381,7 @@ def update_contact(eng, token: str, client: str, contact: dict) -> dict:
 __all__ = [
     "SellerError",
     "create_seller",
+    "create_trial",
     "detail",
     "engine",
     "issue_key",
