@@ -67,7 +67,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   </section>
 
   <div id="body" hidden>
-    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#nv-h">스마트스토어 가져오기</a><a href="#dp-h">AI 상세페이지</a><a href="#sd-h">미니숍 디자인</a><a href="#ms-h">미니숍 공개</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
+    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#nv-h">스마트스토어 가져오기</a><a href="#dp-h">AI 상세페이지</a><a href="#sd-h">미니숍 디자인</a><a href="#ms-h">미니숍 공개</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a><a href="#" id="logout">나가기</a></nav>
     <section class="box" aria-labelledby="dash-h">
       <div class="row" style="margin:0;justify-content:space-between"><h2 id="dash-h" style="margin:0">대시보드</h2>
         <div class="tabs" role="group" aria-label="기간"><button type="button" data-p="day" aria-pressed="false">오늘</button><button type="button" data-p="week" aria-pressed="true">7일</button><button type="button" data-p="month" aria-pressed="false">30일</button></div></div>
@@ -339,10 +339,14 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     $("s_contact").textContent = [c.name, c.email, c.phone].filter(Boolean).join(" · ") || "없음";
     $("gate").hidden = true; $("body").hidden = false;
   }
+  // 코드는 이 탭에서만 기억한다(sessionStorage) — 새로고침은 그대로, 탭·창을 닫으면 잊는다
+  const SKEY = "tg_seller_code";
+  function keep(code){ try { code ? sessionStorage.setItem(SKEY, code) : sessionStorage.removeItem(SKEY); } catch (e) { /* 저장 안 되는 브라우저 */ } }
+  function kept(){ try { return sessionStorage.getItem(SKEY); } catch (e) { return null; } }
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
-    if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks(); loadDash(); loadBiz(); loadNv(); loadDesign();
+    if (!j.ok) { keep(null); msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
+    KEY = code; keep(code); show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks(); loadDash(); loadBiz(); loadNv(); loadDesign();
   }
 
   // ── 대시보드 (2026-11-25) ──
@@ -818,8 +822,14 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     await loadScm(); loadProducts(); loadHealth();
   };
   // # 뒤 코드는 서버로 가지 않는다 — 읽자마자 주소창에서 지운다
-  const m = location.hash.match(/k=([A-Za-z0-9_-]{24})/);
-  if (m) { history.replaceState(null, "", location.pathname); enter(m[1]); }
+  function fromHash(){
+    const m = location.hash.match(/k=([A-Za-z0-9_-]{24})/);
+    if (!m) return false;
+    history.replaceState(null, "", location.pathname); enter(m[1]); return true;
+  }
+  if (!fromHash()) { const c = kept(); if (c) enter(c); }
+  window.addEventListener("hashchange", fromHash);  // 셀러 센터를 열어 둔 채 초대 링크를 눌러도 들어가진다
+  $("logout").onclick = (e) => { e.preventDefault(); keep(null); location.replace(location.pathname); };
   $("gateForm").addEventListener("submit", (e) => { e.preventDefault(); enter($("code").value.trim()); });
   $("ctForm").addEventListener("submit", async (e) => {
     e.preventDefault();
