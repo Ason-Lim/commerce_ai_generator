@@ -291,3 +291,18 @@ def test_product_preview_with_and_without_detail(eng):
     assert r.status_code == 200 and "default-src 'none'" in r.headers["content-security-policy"]
     assert c.get(f"/admin/seller-products/{pid}/preview").status_code in (401, 403)
     assert c.get("/admin/seller-products/PNOPE/preview", headers=H).status_code in (400, 404)
+
+
+# ── 미니숍 샘플 보기 — 승인 전 상품까지 (2026-11-25 시험용) ──
+def test_shop_sample_shows_unapproved_products(eng):
+    from app.main import app
+
+    s, k, pid = _seller(eng)
+    pid2 = prod.save(eng, k, IP, {"name": "우드 바니쉬", "volume": "1L", "price": "35000"})["product_id"]
+    c = TestClient(app)
+    normal = c.get(f"/admin/seller/{s['seller_id']}/shop", headers=H).text
+    assert f'id="p-{pid2}"' not in normal  # 미리보기는 승인된 것만
+    r = c.get(f"/admin/seller/{s['seller_id']}/sample", headers=H)
+    assert r.status_code == 200 and "승인 전 상품 포함" in r.text and "default-src 'none'" in r.headers["content-security-policy"]
+    assert f'id="p-{pid}"' in r.text and f'id="p-{pid2}"' in r.text and "우드 바니쉬" in r.text
+    assert c.get(f"/admin/seller/{s['seller_id']}/sample").status_code in (401, 403)

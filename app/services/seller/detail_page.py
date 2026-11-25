@@ -410,12 +410,15 @@ SHOP_CSS = """.shop-h{margin:16px 0 4px;font-size:24px}.grid{display:grid;grid-t
 .notice{background:#fff;border:1px solid #e3e2dc;border-radius:12px;padding:10px 12px;font-size:13px;color:#33372f;margin-top:10px}"""
 
 
-def shop_items(eng, seller_id: str, *, on_sale_only: bool = False) -> list[tuple[dict, dict]]:
+def shop_items(eng, seller_id: str, *, on_sale_only: bool = False, sample: bool = False) -> list[tuple[dict, dict]]:
     """미니숍에 올라갈 (상품 보기, 상세페이지) — 승인된 상품 · 판매 켬 · 승인된 최신 상세페이지.
-    on_sale_only 면 품절도 뺀다 (고객 공개·UCP)."""
+    on_sale_only 면 품절도 뺀다 (고객 공개·UCP).
+    sample(운영자 샘플 보기, 2026-11-25): 승인 전 상품까지 — 상세페이지가 없으면 상품 정보로 만든 규칙 초안."""
     with eng.connect() as c:
         rows = {r["product_id"]: r for r in c.execute(select(products.t_product)
                                                        .where(products.t_product.c.seller_id == seller_id)).mappings()}  # fmt: skip
+    if sample:
+        return _sample_items(eng, seller_id, rows)
     on = products.listing_of(eng, seller_id)
     sold = {}
     if on_sale_only:
@@ -434,7 +437,30 @@ def shop_items(eng, seller_id: str, *, on_sale_only: bool = False) -> list[tuple
     return out
 
 
-def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = None) -> str:
+def _sample_items(eng, seller_id: str, rows: dict) -> list[tuple[dict, dict]]:
+    from app.services.seller import catalog
+
+    units = catalog.units_of(eng, seller_id)
+    with eng.connect() as c:
+        latest = {}
+        for d in c.execute(select(t_detail).where(t_detail.c.seller_id == seller_id).order_by(t_detail.c.version)).mappings():
+            latest[d["product_id"]] = d
+    out = []
+    for pid, pr in sorted(rows.items(), key=lambda x: x[1]["created_at"] or 0):
+        if pr["status"] in ("rejected", "withdrawn"):
+            continue
+        pv = products._view(pr, operator=False)
+        d = latest.get(pid)
+        if d is not None and d["sections"]:
+            out.append((pv, dict(d)))
+        else:
+            inputs = (d["inputs"] if d is not None else None) or {}
+            out.append((pv, {"product_id": pid, "status": "draft", "made_by": "rule", "inputs": inputs,
+                             "sections": rule_draft(pv, units.get(pid), inputs)}))  # fmt: skip
+    return out
+
+
+def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = None, sample: bool = False) -> str:
     """셀러의 승인된 최신 상세페이지들 — 목록 타일 + 상품별 본문(같은 화면 아래). 판매 중이 아닌 상품은 뺀다.
     public: 고객 공개 화면의 고지 {top, buy, seller_box(html), footer(html), index} — 없으면 미리보기."""
     e = html.escape
@@ -443,7 +469,7 @@ def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = 
         if s is None:
             raise DetailError("없는 셀러예요")
     tiles, arts = [], []
-    for pv, d in shop_items(eng, seller_id, on_sale_only=public is not None):
+    for pv, d in shop_items(eng, seller_id, on_sale_only=public is not None, sample=sample):
         sec, inp = d["sections"] or {}, d["inputs"] or {}
         img = next(
             (
