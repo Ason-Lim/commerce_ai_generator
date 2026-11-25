@@ -146,7 +146,16 @@ def test_seller_side_has_no_status_route(client):
     from app.main import app
 
     seller_paths = {r.path for r in app.routes if getattr(r, "path", "").startswith("/seller")}
-    assert seller_paths == {"/seller", "/seller/api/me", "/seller/api/contact"}
+    assert seller_paths == {
+        "/seller",
+        "/seller/api/me",
+        "/seller/api/contact",
+        "/seller/api/products",  # ② 상품 (2026-11-25) — 등록·고치기·CSV·판매 중지만, 승인·검수 경로 없음
+        "/seller/api/products/save",
+        "/seller/api/products/csv",
+        "/seller/api/products/withdraw",
+    }
+    assert not any(w in p for p in seller_paths for w in ("status", "review", "verify", "approve"))
 
 
 # ── 보존 ──
