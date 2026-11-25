@@ -1021,6 +1021,22 @@ class ChatService:
         # 2026-11-11: 저장된 식품 지식이 있으면 AI 를 부르지 않고 다시 쓴다. 새로 만든 답은 Claude 가 검토(교차 확인)해 저장.
         from app.services.chat import food_knowledge
 
+        # 2026-11-25: 고르는 법은 공공기관 안내 저장본(ai/selection_guides.json)이 먼저 — 출처와 함께, AI 호출 없이.
+        # 고르는 법(+보관)만 물었으면 저장본만으로 답하고, 다른 것(제철·품종·손질…)도 물었으면 그 부분만 AI 정리로.
+        from app.services.ai import guides
+
+        tps = food_knowledge.topics(text)
+        hit = guides.find(query, text) if "고르기" in tps else None
+        guide_lead: list = []
+        if hit:
+            g_name, g = hit
+            g_lines, g_srcs = guides.render(g_name, g, storage="보관" in tps)
+            guide_lead = [B.text(f"**{_label(query)}** 고르는 법이에요.\n\n" + "\n".join(f"- {x}" for x in g_lines)),
+                          B.notice("공공기관 안내를 정리했어요 · 출처: " + " · ".join(f"[{x['name']}]({x['url']})" for x in g_srcs)
+                                   + " — 실제 상품 상태는 판매처 사진·설명으로 함께 확인해 주세요.")]  # fmt: skip
+            if not [t for t in tps if t not in ("고르기", "보관", "일반")] and ("보관" not in tps or g.get("storage")):
+                return self._shopping_turn(sid, query, state, revision, persist, {}, lead_blocks=guide_lead)
+
         try:
             know = food_knowledge.answer(text, query, self.food_tips, self.food_review)
         except Exception:  # noqa: BLE001 — 답하지 못해도 상품 후보는 보여 준다
@@ -1052,7 +1068,7 @@ class ChatService:
             if not held(kind, i):
                 return f"{head}{body}{warn(kind, i)}"
             return None if unreviewed else f"{head}_({SAFETY_HOLD})_"
-        lead: list = []
+        lead: list = list(guide_lead)
         # 2026-11-11: 제철·품종을 물었으면 그 답을 먼저 (일반 정보 · AI 정리 표시는 같다)
         answer: list[str] = []
         if got.get("season") and (row := line("season", 0, "**언제 맛있나요 (제철)** ", got["season"])):
