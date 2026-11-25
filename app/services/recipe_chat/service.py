@@ -1184,6 +1184,9 @@ class RecipeChat:
 
         rid = recipe_id(dish)
         record = self.ai_recipes.get(rid)
+        # 2026-11-25: 공개 레시피 참고본이 생기기 전에 만든 저장본은 참고본을 넣어 한 번 다시 만든다
+        if record is not None and getattr(self.ai_recipes, "needs_refresh", None) and self.ai_recipes.needs_refresh(record):
+            record = None
         if record is None:
             found = state.get("discover") or {}
             same = found.get("kind") == "dish" and re.sub(r"\s+", "", found.get("dish") or "") == re.sub(r"\s+", "", dish)
@@ -1247,6 +1250,11 @@ class RecipeChat:
                    if any(re.sub(r"\s+", "", g) in n or (n and n in re.sub(r"\s+", "", g)) for n in in_recipe)]
         if guessed:
             lead += f"\nAI가 짐작한 재료: {', '.join(guessed[:4])} — 검색 결과로는 확인하지 못했어요."
+        # 2026-11-25: 참고한 공개 레시피(참고본)는 출처를 밝힌다 — AI 가 가정용 분량·문장으로 다시 편집한 것
+        refs = (record.get("generated") or {}).get("references") or []
+        if refs:
+            lead += ("\n참고한 공개 레시피: " + ", ".join(f"「{r['title']}」({r['source']})" for r in refs[:2])
+                     + " — 그대로 옮기지 않고 AI가 가정용 분량·순서로 다시 정리했어요.")
         # 결과(카드)가 먼저, 설명은 그 아래 (2026-11-12 사용자: 결과를 먼저 보고 싶어 한다)
         at = next((i + 1 for i, b in enumerate(turn.blocks) if b.get("type") == "recipe_card"), 0)
         turn.blocks.insert(at, B.notice(lead))
