@@ -52,11 +52,19 @@ def shop_index():
     return _html(lambda: shop_public.index_page(shop_public.engine()))
 
 
-@router.get("/shop/{seller_id}", include_in_schema=False)
-def shop_seller(seller_id: str):
-    if not seller_id.isalnum() or len(seller_id) > 12:
+@router.get("/shop/{key}", include_in_schema=False)
+def shop_seller(key: str):
+    """주소 이름(/shop/renerpaint) 또는 셀러 번호."""
+    import re
+
+    from app.services.seller import catalog
+
+    if not re.fullmatch(r"[A-Za-z0-9-]{3,40}", key):
         return NOT_FOUND
-    return _html(lambda: shop_public.page_for(shop_public.engine(), seller_id))
+    sid = catalog.resolve_seller(catalog.engine(), key)
+    if not sid:
+        return NOT_FOUND
+    return _html(lambda: shop_public.page_for(shop_public.engine(), sid))
 
 
 def _ucp_json(data: dict, status: int = 200) -> JSONResponse:
