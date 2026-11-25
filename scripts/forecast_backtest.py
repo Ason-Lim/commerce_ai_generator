@@ -21,7 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 NAMES = {"recent": "최근 유지", "last_year": "전년 같은 주", "last_year_lunar": "전년 기준*", "event_rel": "행사 상대일", "explorer": "탐색기",
-         "explorer_repeat": "탐색기(반복만)"}  # fmt: skip
+         "explorer_repeat": "탐색기(반복만)", "ly_repeat_first": "실험①반복우선", "ly_two_years": "실험②2년연속",
+         "repeat_then_ly": "실험③반복먼저"}  # fmt: skip
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -30,6 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("end")
     ap.add_argument("--step", type=int, default=7)
     ap.add_argument("--no-explorer", action="store_true")
+    ap.add_argument("--experiments", action="store_true", help="전년 기준·탐색기(반복만) + 순서 실험 3종만 (2026-11-25)")
     ap.add_argument("--q1p", action="store_true", help="Q1′ — 최근 28일 안 100위 안이던 키워드 제외")
     ap.add_argument("--min-share", type=float, default=0.6, help="미래 관측일 최소 비율(기본 0.6)")
     args = ap.parse_args(argv)
@@ -48,7 +50,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     q = "q1p" if args.q1p else "q1"
     res = bt.run(rank_dir, dt.date.fromisoformat(args.start), dt.date.fromisoformat(args.end), step=args.step,
-                 methods=bt.BASELINES if args.no_explorer else bt.METHODS, question=q, min_share=args.min_share)  # fmt: skip
+                 methods=(("last_year_lunar", "explorer_repeat") + bt.EXPERIMENTS) if args.experiments
+                 else bt.BASELINES if args.no_explorer else bt.METHODS, question=q, min_share=args.min_share)  # fmt: skip
     print(f"순위 폴더 {rank_dir} ({kind}) · 질문 {'Q1′' if args.q1p else 'Q1'} · 미래 관측률 ≥ {args.min_share:.0%}")
     print(f"예측일 {res['dates']}개 판정 · 건너뜀 {len(res['skipped'])} (달별 {res['skipped_by_month']})")
     reasons: dict[str, int] = {}
@@ -90,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
           "상위20·7일+ = 제출한 상위 20 중 첫 진입이 7일 이상 뒤인 적중 ÷ 제출 수")  # fmt: skip
     out = ROOT / "var" / "forecast"
     out.mkdir(parents=True, exist_ok=True)
-    f = out / f"backtest_{q}_{args.start}_{args.end}_m{int(args.min_share * 100)}.json"
+    f = out / f"backtest_{q}_{args.start}_{args.end}_m{int(args.min_share * 100)}{'_exp' if args.experiments else ''}.json"
     f.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"저장: {f} (커밋하지 않음)")
     return 0
