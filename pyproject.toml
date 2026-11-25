@@ -43,6 +43,8 @@ dependencies = [
     "streamlit>=1.57.0",
     # B2B 폐쇄몰 배송 정보 암호화 저장 (2026-11-24)
     "cryptography>=50.0.2",
+    # 네이버 커머스API 토큰 서명 (셀러 상품 가져오기, 2026-11-25)
+    "bcrypt>=5.0.0",
 ]
 
 [dependency-groups]

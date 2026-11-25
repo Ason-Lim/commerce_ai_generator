@@ -1,0 +1,23 @@
+{
+  "_about": "미니숍 통신판매중개 고지 (법률 검토안: 프로젝트 문서 claude/minishop_legal_review_2026-11-25.md). confirmed=true 와 operator 전 칸이 있어야 정식 공개(SHOP_PUBLIC=1)가 열린다. 문구의 {operator} {seller} {store} 는 화면에서 채운다.",
+  "confirmed": false,
+  "confirmed_at": "",
+  "confirmed_by": "",
+  "operator": {
+    "trade_name": "",
+    "ceo": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "biz_no": "",
+    "mail_order_no": "",
+    "hosting": "",
+    "terms_url": "",
+    "privacy_url": "/privacy"
+  },
+  "texts": {
+    "top": "{operator}는 통신판매중개자로서 통신판매의 당사자가 아닙니다. 이 화면의 상품 정보와 거래(주문·결제·배송·교환·환불)에 관한 의무와 책임은 판매자({seller})에게 있습니다.",
+    "buy": "구매는 {seller}의 판매처({store})에서 진행됩니다. {operator}는 주문을 받거나 대금을 받지 않습니다.",
+    "dispute": "상품·배송·환불 문의는 판매자에게 먼저 해 주세요. 해결되지 않으면 {operator} 고객 문의로 알려 주시면 3영업일 안에 진행 상황을, 10영업일 안에 처리 방안을 알려 드립니다."
+  }
+}

@@ -3187,3 +3187,152 @@ def seller_product_review(product_id: str, body: _SellerReviewIn):
 
     return {"ok": True, "product": _seller_call(store, lambda: products.review(products.engine(), product_id, body.decision,
                                                                                by="operator", note=body.note))}  # fmt: skip
+
+
+
+# ── 셀러 AI 상세페이지 ⑦ (창 5, 2026-11-25) — 검수 요청 목록 · 미리보기 · 승인/반려 (고객 노출 없음) ──
+class _DetailReviewIn(BaseModel):
+    decision: Literal["approved", "rejected"]
+    note: str = Field("", max_length=200)
+
+
+@router.get("/admin/api/seller-details", dependencies=[api])
+def seller_details_queue(status: str = Query("submitted", pattern="^(draft|submitted|approved|rejected|all)$")):
+    from app.services.seller import detail_page
+
+    return {"details": detail_page.queue(detail_page.engine(), status), "statuses": detail_page.STATUSES}
+
+
+@router.post("/admin/api/seller-details/{detail_id}/review", dependencies=[api])
+def seller_detail_review(detail_id: str, body: _DetailReviewIn):
+    from app.services.seller import detail_page, store
+
+    return {"ok": True, **_seller_call(store, lambda: detail_page.review(detail_page.engine(), detail_id, body.decision,
+                                                                         by="operator", note=body.note))}  # fmt: skip
+
+
+@router.get("/admin/seller-details/{detail_id}/preview", dependencies=[api])
+def seller_detail_preview(detail_id: str):
+    from app.services.seller import detail_page, store
+
+    page = _seller_call(store, lambda: detail_page.operator_preview(detail_page.engine(), detail_id))
+    return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                                       "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
+
+
+@router.get("/admin/seller/{seller_id}/shop", dependencies=[api])
+def seller_shop_preview(seller_id: str):
+    """⑧ 미니숍 미리보기 — 승인된 상세페이지만. 고객 화면(/shop/…)은 노출 결정 뒤(결정 2)."""
+    from app.services.seller import detail_page, store
+
+    page = _seller_call(store, lambda: detail_page.shop_page(detail_page.engine(), seller_id,
+                                                             banner="운영자 미니숍 미리보기 — 손님에게 보이지 않아요"))  # fmt: skip
+    return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                                       "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
+
+
+class _BizVerifyIn(BaseModel):
+    ok: bool
+
+
+@router.get("/admin/api/seller-biz", dependencies=[api])
+def seller_biz_list():
+    """⑧ 미니숍 공개 — 셀러 사업자 정보 · 확인 · 공개 동의 · 공개 여부, 그리고 운영사 쪽 정식 공개에 빠진 것."""
+    from app.services.seller import shop_public
+
+    return {"sellers": shop_public.biz_list(shop_public.engine()), "mode": shop_public.mode(),
+            "formal_missing": shop_public.formal_missing()}  # fmt: skip
+
+
+@router.post("/admin/api/seller-biz/{seller_id}/verify", dependencies=[api])
+def seller_biz_verify(seller_id: str, body: _BizVerifyIn):
+    from app.services.seller import shop_public, store
+
+    return {"ok": True, "biz": _seller_call(store, lambda: shop_public.biz_verify(shop_public.engine(), seller_id,
+                                                                                ok=body.ok, by="operator"))}  # fmt: skip
+
+
+DETAIL_CSP = "default-src 'none'; img-src https:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+
+
+# ── 셀러 SCM ③ (창 5, 2026-11-25) — 품절·출고 지연·송장 미등록 숫자만 (받는 분 정보 없음) ──
+@router.get("/admin/api/seller-alerts", dependencies=[api])
+def seller_alerts():
+    from app.services.seller import scm
+
+    return {"alerts": scm.all_alerts(scm.engine()), "delay_biz_days": scm.DELAY_BIZ_DAYS}
+
+
+
+# ── 죽은 셀러몰 찾기 (2026-11-25) — 판매 없음·클릭 없음(측정 전)·변화 없음. 목록·알림까지만, 정지는 운영자 ──
+@router.get("/admin/api/seller-health", dependencies=[api])
+def seller_health_report():
+    from app.services.seller import health, scm
+
+    return health.report(scm.engine())
+
+
+
+# ── 셀러 월 이용료 ④ (2026-11-25) — 표시·기록만, 실제 청구 없음. 금액·조정·발행·입금·면제는 운영자만 ──
+class _SellerPlanIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    plan_name: str = Field(..., max_length=40)
+    monthly_fee: int = Field(..., ge=0, le=10_000_000)
+    vat_mode: Literal["excluded", "included"]
+    starts_on: str = Field(..., pattern=r"^\d{4}-\d{2}$")
+    memo: str = Field("", max_length=200)
+
+
+class _InvAdjustIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    amount: int = Field(..., ge=0, le=10_000_000)
+    reason: str = Field(..., min_length=1, max_length=200)
+
+
+class _InvMarkIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    to: Literal["issued", "paid", "waived"]
+    note: str = Field("", max_length=200)
+    tax_invoice_no: str = Field("", max_length=40)
+
+
+@router.get("/admin/api/seller-billing", dependencies=[api])
+def seller_billing_summary():
+    from app.services.seller import billing
+
+    return {"sellers": billing.summary(billing.engine()), "vat_modes": billing.VAT_MODES, "statuses": billing.INV_STATUS}
+
+
+@router.get("/admin/api/seller-billing/{seller_id}", dependencies=[api])
+def seller_billing_detail(seller_id: str):
+    from app.services.seller import billing
+
+    eng = billing.engine()
+    billing.ensure_invoices(eng)
+    return {"plan": billing.plan_of(eng, seller_id), "invoices": billing.invoices(eng, seller_id)}
+
+
+@router.post("/admin/api/seller-billing/{seller_id}/plan", dependencies=[api])
+def seller_billing_plan(seller_id: str, body: _SellerPlanIn):
+    from app.services.seller import billing, store
+
+    eng = billing.engine()
+    got = _seller_call(store, lambda: billing.set_plan(eng, seller_id, **body.model_dump(), by="operator"))
+    billing.ensure_invoices(eng)
+    return {"ok": True, "plan": got}
+
+
+@router.post("/admin/api/seller-invoices/{invoice_id}/adjust", dependencies=[api])
+def seller_invoice_adjust(invoice_id: str, body: _InvAdjustIn):
+    from app.services.seller import billing, store
+
+    return {"ok": True, "invoice": _seller_call(store, lambda: billing.adjust(billing.engine(), invoice_id, body.amount,
+                                                                              by="operator", reason=body.reason))}  # fmt: skip
+
+
+@router.post("/admin/api/seller-invoices/{invoice_id}/mark", dependencies=[api])
+def seller_invoice_mark(invoice_id: str, body: _InvMarkIn):
+    from app.services.seller import billing, store
+
+    return {"ok": True, "invoice": _seller_call(store, lambda: billing.mark(billing.engine(), invoice_id, body.to, by="operator",
+                                                                            note=body.note, tax_invoice_no=body.tax_invoice_no))}  # fmt: skip

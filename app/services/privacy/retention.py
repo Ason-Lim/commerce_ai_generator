@@ -160,6 +160,14 @@ class Retention:
 
             m = seller.purge(seller.engine(), self.now.replace(tzinfo=seller.KST))
             self.report.append({"step": "seller_contact", "target": "seller_account.contact_enc", "rows": m, "cutoff": None})
+            from app.services.seller import scm as seller_scm  # ③ 주문 받는 분(출고 뒤 30일·미출고 90일)·공급사 연락처
+
+            m = seller_scm.purge(seller_scm.engine(), self.now.replace(tzinfo=seller.KST))
+            self.report.append({"step": "seller_orders", "target": "seller_order.ship_enc", "rows": m, "cutoff": None})
+            from app.services.seller import health as seller_health  # 죽은 셀러몰 — 새 후보만 운영자 알림(개인정보 아님)
+
+            h = seller_health.daily_check(seller_scm.engine())
+            self.report.append({"step": "seller_dormant", "target": "seller_event", "rows": len(h["flagged"]), "cutoff": None})
         except Exception:  # noqa: BLE001
             pass
         try:                                     # 2026-11-24 B2B 문의: 종결 뒤 180일 지난 담당자 연락처

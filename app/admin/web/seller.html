@@ -147,6 +147,37 @@ tbody tr{cursor:default}
     <div id="codeOut" class="code-out" hidden role="status"></div>
   </section>
 
+  <section class="panel" aria-labelledby="dd-h" style="margin-top:14px">
+    <h3 id="dd-h">죽은 몰 후보 · 주의</h3>
+    <p class="basis" style="margin-top:0" id="ddRule"></p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>단계</th><th class="num">변화 없음</th><th class="num">30일 주문</th><th>클릭(30일)</th><th>이유</th></tr></thead><tbody id="dormant"></tbody></table></div>
+    <div id="noEntry" class="basis"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="al-h" style="margin-top:14px">
+    <h3 id="al-h">품절 · 출고 지연 알림</h3>
+    <p class="basis" style="margin-top:0">셀러별 숫자만 보여요(받는 분 정보 없음). 지연 = 주문일 뒤 2영업일 넘게 송장 없음.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>품절(승인 상품)</th><th class="num">출고 지연</th><th class="num">발주 전</th><th class="num">송장 대기</th></tr></thead><tbody id="alerts"></tbody></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="bl-h" style="margin-top:14px">
+    <h3 id="bl-h">월 이용료 <small style="font-weight:400;color:var(--ink3)">표시·기록만 — 실제 청구·결제 없음</small></h3>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>요금제</th><th class="num">월 합계</th><th>이번 달</th><th class="num">미수(예정+발행)</th><th></th></tr></thead><tbody id="billing"></tbody></table></div>
+    <div id="billDetail" class="panel" hidden style="margin-top:10px"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="dt-h" style="margin-top:14px">
+    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인한 상세페이지는 미니숍 공개 조건이 갖춰진 셀러 화면에 모여요</small></h3>
+    <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
+  </section>
+  <section class="panel" aria-labelledby="ms-h" style="margin-top:14px">
+    <h3 id="ms-h">미니숍 공개 · 판매자 정보 확인 <small id="msMode" style="font-weight:400;color:var(--ink3)"></small></h3>
+    <p class="basis" style="margin-top:0">판매자 정보는 사업자등록증·통신판매업 신고증과 대조한 뒤 ‘확인’을 눌러 주세요(AI가 하지 않아요). 정식 공개는 확인 + 셀러 공개 동의 + 운영사 쪽 조건이 모두 있어야 열려요.</p>
+    <p class="basis" id="msMissing"></p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>판매자 정보</th><th>빈 칸</th><th>확인</th><th>동의</th><th>공개</th><th></th></tr></thead><tbody id="biz"></tbody></table></div>
+  </section>
+
   <section class="panel" aria-labelledby="q-h" style="margin-top:14px">
     <div class="bar"><h3 id="q-h" style="margin:0">상품 검수</h3><span class="spacer"></span><div class="chips" id="qchips" role="group" aria-label="상품 상태"></div></div>
     <div class="grid" id="qgrid">
@@ -177,7 +208,7 @@ let QS="pending",CUR=null,ROWS=[];
 async function loadQueue(){let d;try{d=await api("/admin/api/seller-products?status="+QS)}catch(e){return err(e)}ROWS=d.products;
   $("#qchips").innerHTML=Object.entries({...d.statuses,all:"전체"}).map(([k,v])=>`<button type="button" class="chip" data-q="${k}" aria-pressed="${k===QS}">${esc(v)}</button>`).join("");
   document.querySelectorAll("#qchips [data-q]").forEach(b=>b.onclick=()=>{QS=b.dataset.q;loadQueue()});
-  $("#queue").innerHTML=ROWS.length?ROWS.map(p=>`<tr data-id="${esc(p.product_id)}" tabindex="0" style="cursor:pointer" aria-selected="${p.product_id===CUR}"><td>${esc(p.seller_name)}</td><td>${esc(p.name)}<small style="display:block;color:var(--ink3)">${esc(p.volume)}</small></td><td class="num">${won(p.price)}</td>
+  $("#queue").innerHTML=ROWS.length?ROWS.map(p=>`<tr data-id="${esc(p.product_id)}" tabindex="0" style="cursor:pointer" aria-selected="${p.product_id===CUR}"><td>${esc(p.seller_name)}</td><td>${esc(p.name)}<small style="display:block;color:var(--ink3)">${esc(p.volume)}${p.unit&&Object.keys(p.unit.info.option||{}).length?" · "+esc(Object.entries(p.unit.info.option).map(([k,x])=>k+" "+x).join(", ")):""}${p.unit&&p.unit.channel!=="manual"?" · "+esc(p.unit.channel_label)+" "+esc(p.unit.ext_no):""}</small>${(p.unit&&(p.unit.info.category||[]).length)?`<small style="display:block;color:var(--ink3)">${esc(p.unit.info.category.join(" > "))}</small>`:""}${(p.warnings||[]).map(w=>`<span class="src src-seller" style="margin-right:3px">${esc(w)}</span>`).join("")}</td><td class="num">${won(p.price)}</td>
    <td>${p.facts.map(f=>`<span class="src src-${f.source}">${esc(f.label)} ${esc(f.source_label)}</span>`).join(" ")}</td><td><span class="st st-${esc(p.status)}">${esc(p.status_label)}</span></td></tr>`).join(""):'<tr><td colspan="5" class="empty">이 상태의 상품이 없어요</td></tr>';
   document.querySelectorAll("#queue tr[data-id]").forEach(tr=>{tr.onclick=()=>openP(tr.dataset.id);tr.onkeydown=e=>{if(e.key==="Enter")openP(tr.dataset.id)}});
   if(CUR){const p=ROWS.find(x=>x.product_id===CUR);p?showP(p):($("#pd").hidden=true)}}
@@ -202,7 +233,45 @@ $("#newBtn").onclick=()=>{$("#newForm").hidden=false};$("#newClose").onclick=()=
 $("#createBtn").onclick=async()=>{try{await post("/admin/api/seller",{name:$("#n_name").value.trim(),kind:$("#n_kind").value,memo:$("#n_memo").value.trim(),
   contact:{name:$("#n_cname").value.trim(),email:$("#n_cmail").value.trim(),phone:$("#n_cphone").value.trim()}});$("#newForm").hidden=true;
   ["#n_name","#n_cname","#n_cmail","#n_cphone","#n_memo"].forEach(s=>$(s).value="");loadSellers()}catch(e){err(e)}};
-loadSellers();loadQueue();
+async function loadAlerts(){let d;try{d=await api("/admin/api/seller-alerts")}catch(e){return err(e)}
+  $("#alerts").innerHTML=d.alerts.length?d.alerts.map(a=>`<tr style="cursor:default"><td>${esc(a.name)} <small style="color:var(--ink3)">${esc(a.status_label)}</small></td><td>${a.sold_out.map(x=>esc(x.name)+(x.restock_on?` (${esc(x.restock_on)} 입고)`:"")).join(", ")||"—"}</td>
+   <td class="num"${a.delayed_orders?' style="color:var(--ex);font-weight:700"':""}>${a.delayed_orders}</td><td class="num">${a.new_orders}</td><td class="num">${a.no_tracking}</td></tr>`).join(""):'<tr><td colspan="5" class="empty">챙길 일이 없어요</td></tr>'}
+async function loadDormant(){let d;try{d=await api("/admin/api/seller-health")}catch(e){return err(e)}const r=d.rules;
+  $("#ddRule").textContent=`죽은 몰 후보 = 상품 변화·'그대로예요' 확인이 ${r.dead_days}일 없고 + 최근 ${r.window}일 판매 없음 + 클릭 없음(측정 전이면 이 조건은 빼고 봄). 주의 = 신호 둘 이상. 승인 ${r.new_grace}일 안의 새 셀러는 뺌. 정지·종료는 사람이 정해요 — 위 셀러 목록에서.`;
+  $("#dormant").innerHTML=d.sellers.length?d.sellers.map(x=>`<tr style="cursor:default"><td>${esc(x.name)}</td><td><span class="st ${x.level==="dead"?"st-rejected":"st-pending"}">${esc(x.level_label)}</span></td><td class="num">${x.change_days}일</td><td class="num">${x.orders_30}</td><td>${x.clicks_30==null?"측정 전":x.clicks_30}</td><td>${x.reasons.map(esc).join(" · ")}</td></tr>`).join(""):'<tr><td colspan="6" class="empty">죽은 몰 후보·주의 셀러가 없어요</td></tr>';
+  $("#noEntry").textContent=d.no_entry.length?`초대 뒤 ${r.no_entry_days}일 넘게 한 번도 안 들어온 셀러: `+d.no_entry.map(x=>`${x.name}(${x.days}일)`).join(", "):""}
+const wonx=n=>n==null?"—":won(n);let BSEL=null,VATS={};
+async function loadBilling(){let d;try{d=await api("/admin/api/seller-billing")}catch(e){return err(e)}VATS=d.vat_modes;
+  $("#billing").innerHTML=d.sellers.length?d.sellers.map(x=>`<tr style="cursor:default"><td>${esc(x.name)} <small style="color:var(--ink3)">${esc(x.status_label)}</small></td><td>${x.plan?esc(x.plan.plan_name)+` <small style="color:var(--ink3)">${esc(x.plan.starts_on)}부터</small>`:"없음"}</td>
+   <td class="num">${x.plan?won(x.plan.total):"—"}</td><td>${esc(x.this_month)}</td><td class="num">${won(x.open_total)}</td><td><button class="btn" type="button" data-bill="${esc(x.seller_id)}" data-name="${esc(x.name)}">요금제·청구</button></td></tr>`).join(""):'<tr><td colspan="6" class="empty">셀러가 없어요</td></tr>';
+  document.querySelectorAll("[data-bill]").forEach(b=>b.onclick=()=>openBill(b.dataset.bill,b.dataset.name));if(BSEL)openBill(BSEL.id,BSEL.name)}
+async function openBill(id,name){BSEL={id,name};let d;try{d=await api("/admin/api/seller-billing/"+id)}catch(e){return err(e)}const p=d.plan||{},box=$("#billDetail");box.hidden=false;
+  box.innerHTML=`<h3>${esc(name)} — 요금제</h3><div class="bar"><label for="pl_name">요금제 이름</label><input type="text" id="pl_name" maxlength="40" value="${esc(p.plan_name||"")}">
+   <label for="pl_fee">월 이용료(원)</label><input type="text" id="pl_fee" inputmode="numeric" style="width:110px" value="${p.monthly_fee??""}">
+   <label for="pl_vat">기준</label><select id="pl_vat">${Object.entries(VATS).map(([k,v])=>`<option value="${k}"${p.vat_mode===k?" selected":""}>${v}</option>`).join("")}</select>
+   <label for="pl_start">시작 달</label><input type="text" id="pl_start" placeholder="2027-01" style="width:90px" value="${esc(p.starts_on||"")}"><button class="btn primary" type="button" id="plSave">저장</button></div>
+   <p class="basis">금액은 이 DB 에만 남아요(저장소·문서에 쓰지 않음). 시작 달부터 달마다 '청구 예정'이 생겨요. 이미 발행한 달은 바뀌지 않아요.</p>
+   <div class="tblwrap"><table><thead><tr><th>달</th><th class="num">공급가액</th><th class="num">부가세</th><th class="num">합계</th><th>상태</th><th>세금계산서</th><th></th></tr></thead><tbody>${d.invoices.map(i=>`<tr style="cursor:default"><td>${esc(i.month)}</td><td class="num">${won(i.supply)}</td><td class="num">${won(i.vat)}</td><td class="num">${won(i.total)}</td><td>${esc(i.status_label)}</td><td>${esc(i.tax_invoice_no)}</td>
+   <td class="actions" style="margin:0">${i.status==="draft"?`<button class="btn" type="button" data-inv="${i.invoice_id}" data-act="adjust">금액 조정</button><button class="btn" type="button" data-inv="${i.invoice_id}" data-act="issued">발행 기록</button><button class="btn" type="button" data-inv="${i.invoice_id}" data-act="waived">면제</button>`:""}${i.status==="issued"?`<button class="btn" type="button" data-inv="${i.invoice_id}" data-act="paid">입금 확인</button>`:""}</td></tr>`).join("")||'<tr><td colspan="7" class="empty">청구 내역이 없어요</td></tr>'}</tbody></table></div>`;
+  $("#plSave").onclick=async()=>{try{await post(`/admin/api/seller-billing/${id}/plan`,{plan_name:$("#pl_name").value.trim(),monthly_fee:parseInt($("#pl_fee").value.replace(/[^0-9]/g,""),10),vat_mode:$("#pl_vat").value,starts_on:$("#pl_start").value.trim()});loadBilling()}catch(e){err(e)}};
+  box.querySelectorAll("[data-inv]").forEach(b=>b.onclick=async()=>{const iv=b.dataset.inv,a=b.dataset.act;try{
+    if(a==="adjust"){const amt=prompt("조정할 월 금액(요금제 기준, 원)");if(amt===null)return;const reason=prompt("조정 이유");if(!reason)return;await post(`/admin/api/seller-invoices/${iv}/adjust`,{amount:parseInt(amt.replace(/[^0-9]/g,""),10),reason})}
+    else if(a==="issued"){const no=prompt("세금계산서 승인번호");if(!no)return;await post(`/admin/api/seller-invoices/${iv}/mark`,{to:"issued",tax_invoice_no:no})}
+    else{const note=prompt(a==="paid"?"입금 근거 (입금일·통장 표시)":"면제 이유");if(!note)return;await post(`/admin/api/seller-invoices/${iv}/mark`,{to:a,note})}
+    loadBilling()}catch(e){err(e)}})}
+async function loadDetails(){let d;try{d=await api("/admin/api/seller-details?status=submitted")}catch(e){return err(e)}
+  $("#details").innerHTML=d.details.map(x=>`<tr style="cursor:default"><td>${esc(x.seller_name)}</td><td>${esc(x.product_name)}</td><td>${x.version}판</td><td>${esc(x.made_by||"")}</td><td>${x.missing.length?`보완 ${x.missing.length}칸`:"모두 채움"}</td>
+   <td class="actions" style="margin:0"><a class="btn" href="/admin/seller-details/${esc(x.detail_id)}/preview" target="_blank" rel="noopener">미리보기</a><a class="btn" href="/admin/seller/${esc(x.seller_id)}/shop" target="_blank" rel="noopener">미니숍</a><button class="btn primary" type="button" data-dt="${esc(x.detail_id)}" data-d="approved">승인</button><button class="btn" type="button" data-dt="${esc(x.detail_id)}" data-d="rejected">반려</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">검수 요청이 없어요</td></tr>';
+  document.querySelectorAll("[data-dt]").forEach(b=>b.onclick=async()=>{const note=b.dataset.d==="rejected"?prompt("반려 이유(셀러에게 보여요)"):"";if(b.dataset.d==="rejected"&&!note)return;
+    try{await post(`/admin/api/seller-details/${b.dataset.dt}/review`,{decision:b.dataset.d,note});loadDetails()}catch(e){err(e)}})}
+const MSM={off:"꺼짐",test:"시험 공개 중(SHOP_PUBLIC=test)",formal:"정식 공개(SHOP_PUBLIC=1)"};
+async function loadBiz(){let d;try{d=await api("/admin/api/seller-biz")}catch(e){return err(e)}
+  $("#msMode").textContent="· "+(MSM[d.mode]||d.mode);
+  $("#msMissing").textContent=d.formal_missing.length?"정식 공개에 빠진 것(운영사): "+d.formal_missing.join(", "):"운영사 쪽 정식 공개 조건은 갖춰졌어요";
+  $("#biz").innerHTML=d.sellers.map(x=>`<tr style="cursor:default"><td>${esc(x.name)}</td><td>${esc([x.info.trade_name,x.info.ceo,x.info.biz_no,x.info.mail_order_no].filter(Boolean).join(" · "))}</td><td>${esc(x.missing.join(", "))}</td><td>${x.verified?"확인됨":"전"}</td><td>${x.consent?"동의":"안 함"}</td><td>${x.public?`<a href="${esc(x.url)}" target="_blank" rel="noopener">공개 중 ↗</a>`:"안 보임"}</td>
+   <td class="actions" style="margin:0"><button class="btn primary" type="button" data-bz="${esc(x.seller_id)}" data-ok="1">확인</button><button class="btn" type="button" data-bz="${esc(x.seller_id)}" data-ok="0">확인 취소</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">셀러가 없어요</td></tr>';
+  $("#biz").querySelectorAll("[data-bz]").forEach(b=>b.onclick=async()=>{try{await post(`/admin/api/seller-biz/${b.dataset.bz}/verify`,{ok:b.dataset.ok==="1"});loadBiz()}catch(e){err(e)}})}
+loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();loadBiz();
 </script>
 </body>
 </html>
