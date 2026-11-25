@@ -19,6 +19,14 @@
   ── 대시보드 · 사용법 도우미 (2026-11-25) ──
   POST /seller/api/dashboard        {key, period: day|week|month} → 판매 현황·주문 흐름·상품 상태·상품별 판매·알림
   POST /seller/api/help             {key, text} → 사용법 도우미 (Claude/Ollama — help_kb.json 지식만, 안 되면 규칙 답)
+  ── ⑦ AI 상세페이지 (2026-11-25) ──
+  POST /seller/api/detail           {key, product_id} → 입력·초안·보완 요청(고시)·승인본
+  POST /seller/api/detail/save      {key, product_id, inputs} → 메모·고시·사진(허락) 저장
+  POST /seller/api/detail/generate  {key, product_id} → AI 초안(검사 통과분만, 안 되면 규칙 초안)
+  POST /seller/api/detail/sections  {key, product_id, sections} → 셀러가 고친 문구(같은 검사)
+  POST /seller/api/detail/submit    {key, product_id} → 운영팀 검수 요청 (고시 빈칸 있으면 거절)
+  POST /seller/api/detail/view   {key, product_id} → 미리보기 HTML (iframe sandbox 로 보임)
+  POST /seller/api/shop/view     {key} → ⑧ 미니숍 미리보기 HTML (승인된 상세페이지만, 고객 노출 없음)
   ── ③ SCM (2026-11-25) ──
   POST /seller/api/stock            {key, product_id, stock?, sold_out, restock_on?} → 재고·품절
   POST /seller/api/suppliers        {key} → 내 공급사 · 상품별 공급사 연결 · 재고
@@ -46,7 +54,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.corpmall_routes import NOINDEX, _client
-from app.services.seller import billing, catalog, dashboard, health, products, scm, store
+from app.services.seller import billing, catalog, dashboard, detail_page, health, products, scm, store
 from app.services.seller import help as seller_help
 from app.services.seller import chat as seller_chat
 
@@ -438,3 +446,62 @@ def seller_help_ask(body: HelpIn, request: Request):
         return _ok(**seller_help.ask(store.engine(), body.key, _client(request), body.text))
     except store.SellerError as e:
         return _err(e)
+
+
+# ── ⑦ AI 상세페이지 (2026-11-25) ──
+class DetailIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    product_id: str = Field(..., max_length=12)
+
+
+class DetailSaveIn(DetailIn):
+    inputs: dict
+
+
+class DetailSectionsIn(DetailIn):
+    sections: dict
+
+
+def _detail(fn):
+    try:
+        return fn()
+    except store.SellerError as e:
+        return _err(e)
+
+
+@router.post("/seller/api/detail")
+def seller_detail_get(body: DetailIn, request: Request):
+    return _detail(lambda: _ok(detail=detail_page.get(detail_page.engine(), body.key, _client(request), body.product_id)))
+
+
+@router.post("/seller/api/detail/save")
+def seller_detail_save(body: DetailSaveIn, request: Request):
+    return _detail(lambda: _ok(detail=detail_page.save_inputs(detail_page.engine(), body.key, _client(request),
+                                                              body.product_id, body.inputs)))  # fmt: skip
+
+
+@router.post("/seller/api/detail/generate")
+def seller_detail_generate(body: DetailIn, request: Request):
+    return _detail(lambda: _ok(detail=detail_page.generate(detail_page.engine(), body.key, _client(request), body.product_id)))
+
+
+@router.post("/seller/api/detail/sections")
+def seller_detail_sections(body: DetailSectionsIn, request: Request):
+    return _detail(lambda: _ok(detail=detail_page.save_sections(detail_page.engine(), body.key, _client(request),
+                                                                body.product_id, body.sections)))  # fmt: skip
+
+
+@router.post("/seller/api/detail/submit")
+def seller_detail_submit(body: DetailIn, request: Request):
+    return _detail(lambda: _ok(detail=detail_page.submit(detail_page.engine(), body.key, _client(request), body.product_id)))
+
+
+@router.post("/seller/api/detail/view")
+def seller_detail_preview(body: DetailIn, request: Request):
+    return _detail(lambda: _ok(html=detail_page.preview(detail_page.engine(), body.key, _client(request), body.product_id)))
+
+
+@router.post("/seller/api/shop/view")
+def seller_shop_preview(body: KeyIn, request: Request):
+    return _detail(lambda: _ok(html=detail_page.my_shop(detail_page.engine(), body.key, _client(request))))
