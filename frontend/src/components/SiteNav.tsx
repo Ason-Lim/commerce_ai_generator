@@ -25,7 +25,7 @@ export function PolicyLink({ className = "" }: { className?: string }) {
 
 /** 화면 바닥글 — 운영정책 · 개인정보처리방침 링크. */
 export function SiteFooter() {
-  return <footer className="mt-12 flex gap-3 border-t border-stone-200 pt-4 text-xs text-stone-500"><PolicyLink /><PrivacyLink /></footer>;
+  return <footer className="mt-12 flex gap-3 border-t border-stone-200 pt-4 text-xs text-stone-500"><PolicyLink /><PrivacyLink /><a href="/join" className="underline underline-offset-2 hover:text-ink">입점 문의</a></footer>;
 }
 
 const ITEMS: { key: NavKey; label: string; href: string; icon: LucideIcon }[] = [

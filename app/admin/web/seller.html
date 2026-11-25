@@ -171,6 +171,13 @@ tbody tr{cursor:default}
     <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
     <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
   </section>
+  <section class="panel" aria-labelledby="jn-h" style="margin-top:14px">
+    <h3 id="jn-h">입점 신청 <small style="font-weight:400;color:var(--ink3)">AI 1차 분석 · 문제없으면 체험 코드 자동 · 입점 승인은 여기서</small></h3>
+    <p class="basis" style="margin-top:0">체험 셀러는 셀러센터에서 상품을 올려 볼 수만 있고 손님에게 보이지 않아요. 서류를 열어 사업자등록증·신고증을 대조한 뒤 ‘입점 승인’을 눌러 주세요. 반려 사유는 신청인에게 보여요. 신청 페이지: <a href="/join" target="_blank" rel="noopener">/join</a></p>
+    <div class="tblwrap"><table><thead><tr><th>신청</th><th>상호 · 번호</th><th>상품</th><th>1차 분석</th><th>상태</th><th></th></tr></thead><tbody id="joins"></tbody></table></div>
+    <div id="joinOut" class="basis"></div>
+  </section>
+
   <section class="panel" aria-labelledby="ms-h" style="margin-top:14px">
     <h3 id="ms-h">미니숍 공개 · 판매자 정보 확인 <small id="msMode" style="font-weight:400;color:var(--ink3)"></small></h3>
     <p class="basis" style="margin-top:0">판매자 정보는 사업자등록증·통신판매업 신고증과 대조한 뒤 ‘확인’을 눌러 주세요(AI가 하지 않아요). 정식 공개는 확인 + 셀러 공개 동의 + 운영사 쪽 조건이 모두 있어야 열려요.</p>
@@ -271,7 +278,19 @@ async function loadBiz(){let d;try{d=await api("/admin/api/seller-biz")}catch(e)
   $("#biz").innerHTML=d.sellers.map(x=>`<tr style="cursor:default"><td>${esc(x.name)}</td><td>${esc([x.info.trade_name,x.info.ceo,x.info.biz_no,x.info.mail_order_no].filter(Boolean).join(" · "))}</td><td>${esc(x.missing.join(", "))}</td><td>${x.verified?"확인됨":"전"}</td><td>${x.consent?"동의":"안 함"}</td><td>${x.public?`<a href="${esc(x.url)}" target="_blank" rel="noopener">공개 중 ↗</a>`:"안 보임"}</td>
    <td class="actions" style="margin:0"><button class="btn primary" type="button" data-bz="${esc(x.seller_id)}" data-ok="1">확인</button><button class="btn" type="button" data-bz="${esc(x.seller_id)}" data-ok="0">확인 취소</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">셀러가 없어요</td></tr>';
   $("#biz").querySelectorAll("[data-bz]").forEach(b=>b.onclick=async()=>{try{await post(`/admin/api/seller-biz/${b.dataset.bz}/verify`,{ok:b.dataset.ok==="1"});loadBiz()}catch(e){err(e)}})}
-loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();loadBiz();
+const JR={ok:"✓",check:"확인",fail:"✗",skip:"–"};
+async function loadJoins(){let d;try{d=await api("/admin/api/seller-joins?status=open")}catch(e){return err(e)}
+  $("#joins").innerHTML=d.joins.map(x=>{const a=x.analysis||{};const it=(a.items||[]).map(i=>`${JR[i.result]||i.result} ${esc(i.label)}${i.result!=="ok"?": "+esc(i.note):""}`).join("<br>");
+   return `<tr style="cursor:default"><td>${esc(x.join_id)}<br><small>${esc((x.created_at||"").slice(0,16).replace("T"," "))}</small></td><td>${esc(x.trade_name)}<br>${esc(x.biz_no)}<br>${x.store_url?`<a href="${esc(x.store_url)}" target="_blank" rel="noopener noreferrer">판매처 ↗</a>`:""}</td><td>${esc(x.products)}</td>
+   <td><b>${esc(a.reason||"")}</b><br><small>${it}</small></td><td>${esc(x.status_label)}</td>
+   <td class="actions" style="margin:0">${x.files.map(f=>`<a class="btn" href="/admin/seller-joins/${esc(x.join_id)}/file/${esc(f.kind)}" target="_blank" rel="noopener">${esc(f.label)}</a>`).join("")}
+   <button class="btn primary" type="button" data-jn="${esc(x.join_id)}" data-d="approve">입점 승인</button>${x.status==="check"?`<button class="btn" type="button" data-jn="${esc(x.join_id)}" data-d="trial">체험 코드</button>`:""}<button class="btn" type="button" data-jn="${esc(x.join_id)}" data-d="reject">반려</button></td></tr>`}).join("")||'<tr><td colspan="6" class="empty">진행 중인 신청이 없어요</td></tr>';
+  $("#joins").querySelectorAll("[data-jn]").forEach(b=>b.onclick=async()=>{let note="";
+    if(b.dataset.d==="reject"){note=prompt("반려 사유 (신청인에게 보여요)")||"";if(!note)return}
+    else if(b.dataset.d==="approve"&&!confirm("서류를 대조했나요? 입점을 승인하면 셀러가 검수·미니숍 공개를 진행할 수 있어요."))return;
+    try{const r=await post(`/admin/api/seller-joins/${b.dataset.jn}/decide`,{decision:b.dataset.d,note});
+      $("#joinOut").textContent=r.code?`새 셀러 코드 (한 번만 보여요 — 신청인에게 직접 전달): ${r.code}`:`${r.join_id} → ${r.status_label}`;loadJoins();loadSellers()}catch(e){err(e)}})}
+loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();loadBiz();loadJoins();
 </script>
 </body>
 </html>
