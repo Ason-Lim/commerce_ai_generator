@@ -146,3 +146,26 @@ def test_similar_word_keeps_consonants_and_never_alcohol():
     assert cg.similar_word("먹거리", words) is None
     assert cg.similar_word("브레타", words) == "부라타"
     assert cg.similar_word("막걸러", {"막걸리"}) is None      # 술 이름으로는 고치지 않음
+
+
+def test_seller_leads_priority_and_csv(tmp_path):
+    """2026-11-25 창 5 준비 — 쿠팡 빈칸 × 네이버 순위 → 셀러 영업 후보(우선순위·CSV)."""
+    st = cg.GapStore(tmp_path / "l.sqlite3", clock=lambda: datetime(2026, 11, 25, tzinfo=KST))
+    for _ in range(3):
+        st.record("말린 무화과", "zero")
+    st.record("저온압착 들기름", "filtered")
+    st.record("엑스트라버진 올리브유", "zero")
+    st.record("엑스트라버진 올리브유", "retry_found", "올리브유")
+    st.record("이상한검색어", "zero")
+    ranks = {"말린무화과": 40, "저온압착 들기름": 300, "엑스트라버진 올리브유": 20}
+    rows = cg.seller_leads(28, store=st, ranks=ranks)
+    by = {r["query"]: r for r in rows}
+    assert by["말린 무화과"]["priority"] == "높음" and by["말린 무화과"]["naver_rank"] == 40 and by["말린 무화과"]["unmet"]
+    assert by["저온압착 들기름"]["priority"] == "중간"
+    assert by["엑스트라버진 올리브유"]["priority"] == "중간"  # 20위지만 못 찾음 1회 — 높음 아님
+    assert by["이상한검색어"]["priority"] == "관찰"
+    assert by["엑스트라버진 올리브유"]["unmet"] is False and by["이상한검색어"]["naver_rank"] is None
+    assert rows[0]["query"] == "말린 무화과" and all(r["small_n"] for r in rows)
+    text = cg.seller_leads_csv(rows)
+    assert text.startswith("﻿우선순위,검색어") and "말린 무화과" in text and "관찰(30 미만)" in text
+
