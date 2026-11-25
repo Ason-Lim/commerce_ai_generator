@@ -669,8 +669,12 @@ def naver_export_rows(text: str, *, store_slug: str = "") -> tuple[list[dict], d
         notes["no_origin"] += 1
         cat = [r.get(k, "") for k in ("대분류", "중분류", "소분류", "세분류")]
         img = r.get("대표이미지 URL", "")
+        if re.match(r"^https?://shop\d*\.phinf\.naver\.net/", img):
+            img = re.sub(r"^https?://shop\d*\.phinf\.naver\.net/", "https://shop-phinf.pstatic.net/", img)  # 옛 주소 → https 주소(같은 사진)
         if img.startswith("http://"):
             notes["http_images"] += 1
+            img = ""
+        notes.setdefault("images", {})[no] = img
         rows.append({
             "group_no": r.get("그룹상품번호") or None,
             "group_name": name,
@@ -686,7 +690,7 @@ def naver_export_rows(text: str, *, store_slug: str = "") -> tuple[list[dict], d
             "ship_fee": r.get("기본배송비", ""),
             "free_over": "",
             "origins": "",
-            "certs": r.get("인증정보", ""),
+            "certs": "" if r.get("인증정보", "").upper() in ("", "Y", "N") else r.get("인증정보", ""),  # Y/N 은 인증 아님
             "brand": r.get("브랜드명", ""),
             "maker": r.get("제조사명", ""),
             "stock": "0" if state == "품절" else r.get("재고수량", ""),
@@ -697,6 +701,29 @@ def naver_export_rows(text: str, *, store_slug: str = "") -> tuple[list[dict], d
             "best_before": "",
         })  # fmt: skip
     return rows, notes
+
+
+def _prefill_images(eng, token: str, client: str, seller_id: str, images: dict[str, str]) -> int:
+    """스마트스토어 파일의 대표이미지를 상세페이지 입력에 — 사진이 아직 없는 상품만 (사진 권리 체크는 셀러가)."""
+    from app.services.seller import detail_page
+
+    detail_page.meta.create_all(eng)
+    units = {u["ext_no"]: pid for pid, u in units_of(eng, seller_id).items() if u.get("channel") == "naver"}
+    n = 0
+    for ext_no, url in images.items():
+        pid = units.get(ext_no)
+        if not pid or not url or not products.URL_RE.match(url):
+            continue
+        cur = (detail_page.get(eng, token, client, pid).get("current") or {}).get("inputs") or {}
+        if cur.get("images"):
+            continue
+        try:
+            detail_page.save_inputs(eng, token, client, pid, {**{k: v for k, v in cur.items() if k in ("memo", "notice_kind", "notice")},
+                                                               "images": [{"url": url, "alt": ""}], "image_ok": False})  # fmt: skip
+            n += 1
+        except store.SellerError:
+            continue
+    return n
 
 
 def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, full: bool = False) -> dict:
@@ -711,6 +738,7 @@ def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, ful
         if len(rows) > 2000:
             raise store.SellerError("한 번에 2,000줄까지 올릴 수 있어요")
         rep = apply_rows(eng, token, client, channel, rows, full=full)
+        rep["prefilled"] = _prefill_images(eng, token, client, sid, notes.get("images") or {}) if rep.get("ok") else 0
         n_opt = len(notes["option_products"])
         rep["source"] = "스마트스토어 상품 조회 파일"
         rep["notes"] = [x for x in [

@@ -268,9 +268,18 @@ def validate(sections, facts: dict, *, has_cert: bool) -> tuple[dict | None, lis
     return (None, probs) if probs else (s, [])
 
 
+def with_volume(name: str, volume: str | None) -> str:
+    """상품명 + 용량 — 상품명에 이미 용량이 있으면 다시 붙이지 않는다('…1L 1L' 방지, 2026-11-25)."""
+    name, volume = (name or "").strip(), (volume or "").strip()
+    norm = lambda t: re.sub(r"\s+", "", t).lower()  # noqa: E731
+    if not volume or norm(volume) in norm(name):
+        return name
+    return f"{name} {volume}"
+
+
 def rule_draft(product: dict, unit: dict | None, inputs: dict) -> dict:
     """AI 없이 — 입력값을 그대로 옮긴 초안(검사를 언제나 통과하는 모양)."""
-    name = (product["name"] + (f" {product['volume']}" if product.get("volume") else "")).strip()
+    name = with_volume(product["name"], product.get("volume"))
     memo = inputs.get("memo") or ""
     first = re.split(r"(?<=[.!?다요])\s+", memo)[0][:180] if memo else ""
     points = [{"title": x["label"], "text": f"{x['value']} ({x['source_label']})"} for x in product.get("facts") or []]
@@ -452,9 +461,11 @@ def _sample_items(eng, seller_id: str, rows: dict) -> list[tuple[dict, dict]]:
         pv = products._view(pr, operator=False)
         d = latest.get(pid)
         if d is not None and d["sections"]:
-            out.append((pv, dict(d)))
+            dd = dict(d)
+            dd["inputs"] = dict(dd["inputs"] or {}, image_ok=True)  # 샘플(운영자만): 권리 체크 전 사진도 보여 줌
+            out.append((pv, dd))
         else:
-            inputs = (d["inputs"] if d is not None else None) or {}
+            inputs = dict((d["inputs"] if d is not None else None) or {}, image_ok=True)
             out.append((pv, {"product_id": pid, "status": "draft", "made_by": "rule", "inputs": inputs,
                              "sections": rule_draft(pv, units.get(pid), inputs)}))  # fmt: skip
     return out
@@ -481,7 +492,7 @@ def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = 
         )
         tiles.append(f'<a class="tile" href="#p-{e(pv["product_id"])}">'
                      + (f'<img src="{e(img)}" alt="" loading="lazy" referrerpolicy="no-referrer">' if img else "")
-                     + f'<b>{e(sec.get("headline") or pv["name"])}</b><span class="foot">{e(pv["name"])} {e(pv["volume"])}</span></a>')  # fmt: skip
+                     + f'<b>{e(sec.get("headline") or pv["name"])}</b><span class="foot">{e(with_volume(pv["name"], pv["volume"]))}</span></a>')  # fmt: skip
         arts.append(f'<article id="p-{e(pv["product_id"])}">'
                     + render(pv, inp, sec, status=d["status"], made_by=d["made_by"], fragment=True,
                              buy_note=(public or {}).get("buy")) + "</article>")  # fmt: skip
