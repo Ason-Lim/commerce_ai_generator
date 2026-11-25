@@ -32,6 +32,19 @@ th{font-size:12.5px;color:var(--ink2);font-weight:600}td.num{text-align:right;wh
 textarea{width:100%;min-height:120px;font:13px/1.5 ui-monospace,Menlo,monospace;padding:10px;border:1px solid var(--line);border-radius:12px}
 button.sub{background:#fff;color:var(--ink);border:1px solid var(--line);padding:6px 14px;font-weight:600}
 footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
+/* 대시보드 (2026-11-25) */
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.nav a{font-size:13px;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px}
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.tabs button{background:#fff;color:var(--ink2);border-radius:0;padding:5px 14px;font-weight:600}.tabs button[aria-pressed=true]{background:var(--ink);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}@media(max-width:620px){.cards{grid-template-columns:1fr 1fr}}
+.card{border:1px solid var(--line);border-radius:14px;padding:12px}.card .k{font-size:12.5px;color:var(--ink2)}.card .v{font-size:22px;font-weight:800;margin-top:2px}.card .d{font-size:12px;color:var(--ink2)}
+.up{color:var(--accent)}.down{color:var(--err)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}@media(max-width:620px){.tiles{grid-template-columns:1fr}}
+.tile{border:1px solid var(--line);border-radius:14px;padding:10px 12px}.tile h3{font-size:14px;margin:0 0 6px}
+.tile ul{list-style:none;margin:0;padding:0}.tile li{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px dashed var(--line)}.tile li:last-child{border:0}.tile li b{font-variant-numeric:tabular-nums}.tile li.hot b{color:var(--err)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:12px;border-bottom:1px solid var(--line)}.bars div{flex:1;background:var(--accent);border-radius:4px 4px 0 0;min-height:1px;opacity:.85}.bars div.z{background:var(--line)}
+.bx{display:flex;justify-content:space-between;font-size:11px;color:var(--ink2)}
+.help-a{white-space:pre-wrap}.chipl{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chipl a,.chipl button{font-size:12.5px}
+.chipl a{color:var(--accent);text-decoration:none;border:1px solid var(--accent-s);background:var(--accent-s);border-radius:999px;padding:2px 10px}
 </style>
 </head>
 <body>
@@ -49,6 +62,36 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   </section>
 
   <div id="body" hidden>
+    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
+    <section class="box" aria-labelledby="dash-h">
+      <div class="row" style="margin:0;justify-content:space-between"><h2 id="dash-h" style="margin:0">대시보드</h2>
+        <div class="tabs" role="group" aria-label="기간"><button type="button" data-p="day" aria-pressed="false">오늘</button><button type="button" data-p="week" aria-pressed="true">7일</button><button type="button" data-p="month" aria-pressed="false">30일</button></div></div>
+      <p class="note" id="d_range" style="margin:4px 0 0"></p>
+      <div class="cards">
+        <div class="card"><div class="k">주문 건수</div><div class="v" id="d_orders">–</div><div class="d" id="d_orders_c"></div></div>
+        <div class="card"><div class="k">판매 수량</div><div class="v" id="d_qty">–</div><div class="d" id="d_qty_c"></div></div>
+        <div class="card"><div class="k">주문 금액 <span title="현재 판매가 × 수량 추정">(추정)</span></div><div class="v" id="d_amount">–</div><div class="d" id="d_amount_c"></div></div>
+      </div>
+      <div class="bars" id="d_bars" aria-hidden="true"></div><div class="bx"><span id="d_bx0"></span><span>날짜별 판매 수량</span><span id="d_bx1"></span></div>
+      <div class="tiles">
+        <div class="tile"><h3>주문 처리</h3><ul id="d_flow"></ul></div>
+        <div class="tile"><h3>상품 관리</h3><ul id="d_prod"></ul></div>
+        <div class="tile"><h3>확인할 일</h3><ul id="d_todo"></ul></div>
+        <div class="tile"><h3>방문·클릭</h3><ul id="d_visit"></ul></div>
+      </div>
+      <h3 style="font-size:15px;margin:16px 0 6px">상품별 판매</h3>
+      <div style="overflow-x:auto"><table><thead><tr><th>상품</th><th>상태</th><th class="num">주문</th><th class="num">수량</th><th class="num">금액(추정)</th><th class="num">전 기간</th><th class="num">재고</th></tr></thead><tbody id="d_table"></tbody></table></div>
+      <p class="note" id="d_note"></p>
+    </section>
+
+    <section class="box" aria-labelledby="help-h">
+      <h2 id="help-h">사용법 도우미 <span class="badge ok">AI</span></h2>
+      <p class="note" style="margin:0">상품 올리기·내리기, 품절, 발주서, 송장처럼 셀러 센터 사용법을 물어보세요. 셀러 센터 안내 내용만으로 답해요. 입점·정지·이용료처럼 운영팀이 정할 일은 ‘운영팀에 묻기’로 남겨 주세요. 손님 이름·전화·주소는 적지 마세요.</p>
+      <form id="helpForm" class="row" style="flex-wrap:nowrap"><label for="helpQ" class="note" style="position:absolute;left:-9999px">질문</label><input id="helpQ" maxlength="300" placeholder="예: 상품 잠깐 내리려면 어떻게 해요?"><button type="submit" id="helpBtn" style="white-space:nowrap">묻기</button></form>
+      <div class="chipl" id="helpEx"><button type="button" class="sub">상품 내리는 방법</button><button type="button" class="sub">품절 처리는?</button><button type="button" class="sub">스마트스토어 상품 가져오기</button><button type="button" class="sub">송장 넣는 법</button></div>
+      <div id="helpOut" role="status" aria-live="polite"></div>
+    </section>
+
     <section class="box" aria-labelledby="me-h">
       <h2 id="me-h">업체 정보</h2>
       <dl>
@@ -202,13 +245,63 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
     if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks();
+    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks(); loadDash();
   }
+
+  // ── 대시보드 (2026-11-25) ──
+  let PERIOD = "week", DASH_T = null;
+  const num = (n) => n == null ? "–" : Number(n).toLocaleString("ko-KR");
+  const chg = (c, label) => c == null ? `${label}: 비교할 판매 없음` : `${label} 대비 <span class="${c >= 0 ? "up" : "down"}">${c >= 0 ? "▲" : "▼"} ${Math.abs(c)}%</span>`;
+  const li = (k, v, hot) => `<li${hot ? ' class="hot"' : ""}><span>${esc(k)}</span><b>${v}</b></li>`;
+  function refreshDash(){ clearTimeout(DASH_T); DASH_T = setTimeout(loadDash, 400); }
+  async function loadDash(){
+    if (!KEY) return;
+    const j = await post("/seller/api/dashboard", {key: KEY, period: PERIOD});
+    if (!j.ok) { $("d_note").textContent = j.error || "대시보드를 불러오지 못했어요"; return; }
+    const d = j.dashboard, sl = d.sales, lb = d.labels;
+    $("d_range").textContent = `${lb.current} (${d.range.from} ~ ${d.range.to}) · ${d.updated_at} 기준`;
+    $("d_orders").textContent = num(sl.orders) + "건"; $("d_orders_c").innerHTML = chg(sl.change.orders, lb.previous);
+    $("d_qty").textContent = num(sl.qty) + "개"; $("d_qty_c").innerHTML = chg(sl.change.qty, lb.previous);
+    $("d_amount").textContent = won(sl.amount) || "0원"; $("d_amount_c").innerHTML = chg(sl.change.amount, lb.previous);
+    const mx = Math.max(1, ...d.series.map((x) => x.qty));
+    $("d_bars").innerHTML = d.series.map((x) => `<div class="${x.qty ? "" : "z"}" style="height:${Math.max(2, Math.round(x.qty * 100 / mx))}%" title="${x.day} · ${x.qty}개 · 주문 ${x.orders}건"></div>`).join("");
+    $("d_bx0").textContent = d.series.length ? d.series[0].day.slice(5) : ""; $("d_bx1").textContent = d.series.length ? d.series[d.series.length - 1].day.slice(5) : "";
+    const f = d.orders_flow, p = d.products, a = d.alerts;
+    $("d_flow").innerHTML = li("발주 전 (새 주문)", num(f.new) + "건", f.new) + li("발주서 나감 · 송장 대기", num(f.po) + "건") + li("송장 등록", num(f.shipped) + "건") + li("발송 지연", num(f.delayed) + "건", f.delayed);
+    $("d_prod").innerHTML = li("판매 중", num(p.on_sale)) + li("품절", num(p.sold_out), p.sold_out) + li("판매 꺼둠", num(p.off)) + li("검수 대기", num(p.pending)) + li("반려", num(p.rejected), p.rejected);
+    $("d_todo").innerHTML = li("품절 상품", num(a.sold_out), a.sold_out) + li("송장 없는 발주", num(a.no_tracking), a.no_tracking) + li("답 기다리는 문의", d.asks.open == null ? "–" : num(d.asks.open)) + li("받은 답", d.asks.answered == null ? "–" : num(d.asks.answered))
+      + (d.confirm.ask ? li("상품 정보 확인 요청", `${d.confirm.change_days}일째 변화 없음`, true) : "");
+    $("d_visit").innerHTML = d.visits.clicks == null ? `<li><span>${esc(d.visits.note)}</span><b></b></li>` : li("클릭", num(d.visits.clicks));
+    $("d_table").innerHTML = d.by_product.length ? d.by_product.map((r) => `<tr><td>${esc(r.name)}</td><td>${esc(r.state_label)}</td><td class="num">${num(r.orders)}</td><td class="num">${num(r.qty)}</td><td class="num">${r.amount == null ? "가격 없음" : won(r.amount)}</td><td class="num">${num(r.prev_qty)}</td><td class="num">${r.stock == null ? (r.state === "sold_out" ? "품절" : "–") : num(r.stock)}${r.restock_on ? `<div class="note">입고 ${esc(r.restock_on)}</div>` : ""}</td></tr>`).join("")
+      : '<tr><td colspan="7" class="note">아직 올린 상품이 없어요</td></tr>';
+    $("d_note").textContent = sl.amount_note + (sl.unpriced ? ` 판매가가 없는 주문 ${sl.unpriced}줄은 금액에서 빠졌어요.` : "") + " 판매 현황은 ‘주문 · 발주서 · 송장’에 올린 주문으로 세요.";
+  }
+  document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+    PERIOD = b.dataset.p; document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); loadDash();
+  }));
+
+  // ── 사용법 도우미 (2026-11-25) ──
+  async function askHelp(q){
+    q = (q || "").trim(); if (q.length < 2) return;
+    $("helpBtn").disabled = true; $("helpOut").innerHTML = '<div class="msg">찾아보는 중…</div>';
+    const j = await post("/seller/api/help", {key: KEY, text: q});
+    $("helpBtn").disabled = false;
+    if (!j.ok) { msg($("helpOut"), j.error || "답하지 못했어요", "err"); return; }
+    const by = j.by === "rule" ? "안내 내용에서 찾은 답" : "AI 답 (셀러 센터 안내 내용 기준)";
+    $("helpOut").innerHTML = `<div class="msg ok"><div class="help-a">${esc(j.answer)}</div>`
+      + (j.sources.length ? `<div class="chipl">${j.sources.map((s) => `<a href="#${esc(s.section || "")}">${esc(s.title)} ↗</a>`).join("")}</div>` : "")
+      + `<div class="note" style="margin-top:6px">${by}${j.masked && j.masked.length ? " · 개인정보로 보이는 부분은 가리고 물었어요" : ""}</div>`
+      + (j.handoff ? `<div class="row" style="margin-top:6px"><button type="button" class="sub" id="helpHand">운영팀에 이 질문 남기기</button></div>` : "") + "</div>";
+    if (j.handoff) $("helpHand").addEventListener("click", () => { $("askText2").value = q; $("askText2").focus(); location.hash = "ask-h"; });
+  }
+  $("helpForm").addEventListener("submit", (e) => { e.preventDefault(); askHelp($("helpQ").value); });
+  $("helpEx").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("helpQ").value = b.textContent; askHelp(b.textContent); }));
 
   let EDIT = null, PRODS = [];
   const won = (n) => n == null ? "" : Number(n).toLocaleString("ko-KR") + "원";
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   async function loadProducts(){
+    refreshDash();
     const j = await post("/seller/api/products", {key: KEY});
     if (!j.ok) return;
     PRODS = j.products;
@@ -281,6 +374,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     });
   }
   async function loadScm(){
+    refreshDash();
     const j = await post("/seller/api/suppliers", {key: KEY});
     if (j.ok) SUP = j;
     $("slist").innerHTML = SUP.suppliers.length ? SUP.suppliers.map((x) => `· ${esc(x.name)}${x.contact ? " — " + esc([x.contact.name, x.contact.email, x.contact.phone].filter(Boolean).join(" · ")) : ""}`).join("<br>") : "아직 적은 공급사가 없어요";

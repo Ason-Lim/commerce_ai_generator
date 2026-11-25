@@ -16,6 +16,9 @@
   ── ②-b 판매처 호환 (2026-11-25) ──
   POST /seller/api/channel          {key, channel?} → 기준 판매처 보기·정하기 (naver · coupang · manual)
   POST /seller/api/sync             {key, channel, csv, full?} → 판매처 상품 자료(표준 칸)로 바뀐 것만 반영
+  ── 대시보드 · 사용법 도우미 (2026-11-25) ──
+  POST /seller/api/dashboard        {key, period: day|week|month} → 판매 현황·주문 흐름·상품 상태·상품별 판매·알림
+  POST /seller/api/help             {key, text} → 사용법 도우미 (Claude/Ollama — help_kb.json 지식만, 안 되면 규칙 답)
   ── ③ SCM (2026-11-25) ──
   POST /seller/api/stock            {key, product_id, stock?, sold_out, restock_on?} → 재고·품절
   POST /seller/api/suppliers        {key} → 내 공급사 · 상품별 공급사 연결 · 재고
@@ -43,7 +46,8 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.corpmall_routes import NOINDEX, _client
-from app.services.seller import billing, catalog, health, products, scm, store
+from app.services.seller import billing, catalog, dashboard, health, products, scm, store
+from app.services.seller import help as seller_help
 from app.services.seller import chat as seller_chat
 
 router = APIRouter(tags=["seller"], include_in_schema=False)
@@ -403,5 +407,34 @@ def seller_sync(body: SyncIn, request: Request):
             catalog.engine(), body.key, _client(request), body.channel, body.csv, full=body.full
         )
         return JSONResponse({"ok": got["ok"], **got}, status_code=200 if got["ok"] else 400, headers=NOINDEX)
+    except store.SellerError as e:
+        return _err(e)
+
+
+# ── 대시보드 · 사용법 도우미 (2026-11-25) ──
+class DashIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    period: str = Field("week", max_length=5)
+
+
+@router.post("/seller/api/dashboard")
+def seller_dashboard(body: DashIn, request: Request):
+    try:
+        return _ok(dashboard=dashboard.my_dashboard(store.engine(), body.key, _client(request), period=body.period))
+    except store.SellerError as e:
+        return _err(e)
+
+
+class HelpIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    text: str = Field(..., max_length=300)
+
+
+@router.post("/seller/api/help")
+def seller_help_ask(body: HelpIn, request: Request):
+    try:
+        return _ok(**seller_help.ask(store.engine(), body.key, _client(request), body.text))
     except store.SellerError as e:
         return _err(e)
