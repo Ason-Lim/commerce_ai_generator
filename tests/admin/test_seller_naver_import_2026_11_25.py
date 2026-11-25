@@ -115,10 +115,33 @@ def eng(monkeypatch):
     return e
 
 
-def _seller(eng, name="한라농장"):
+OWN: list[str] = []
+
+
+@pytest.fixture(autouse=True)
+def _own(monkeypatch):
+    OWN.clear()
+    monkeypatch.setattr(naver_api, "allowed", lambda sid, env=None: sid in OWN)
+
+
+def _seller(eng, name="한라농장", own=True):
     s = store.create_seller(eng, name=name, kind="direct", contact={"name": "김", "email": "k@a.kr"}, by="operator")
     store.set_status(eng, s["seller_id"], "active", by="operator", reason="ok")
+    if own:
+        OWN.append(s["seller_id"])
     return s["seller_id"], store.issue_key(eng, s["seller_id"], by="operator")["code"]
+
+
+def test_only_operator_own_stores_naver_policy(eng, monkeypatch):
+    """네이버 정책: 내스토어 앱 키를 다른 셀러에게서 받아 서비스하면 안 됨 → 직영 스토어(NAVER_OWN_SELLERS)만."""
+    monkeypatch.undo()  # 실제 allowed 로
+    monkeypatch.setattr(naver_api.time, "sleep", lambda s: None)
+    sid, k = _seller(eng, own=False)
+    st = naver_api.status(eng, k, IP)
+    assert st["allowed"] is False and "커머스솔루션" in st["not_allowed"]
+    with pytest.raises(store.SellerError, match="직영 스토어"):
+        naver_api.save_key(eng, k, IP, client_id=CID, secret=SECRET)
+    assert naver_api.allowed(sid, {"NAVER_OWN_SELLERS": f"X1, {sid}"}) and not naver_api.allowed(sid, {})
 
 
 def test_read_only_module_has_no_write_calls():
@@ -228,7 +251,7 @@ def test_sellers_are_isolated_and_routes(eng, monkeypatch):
     from app.main import app
 
     _s1, k1 = _seller(eng)
-    _s2, k2 = _seller(eng, "나농장")
+    _s2, k2 = _seller(eng, "나농장", own=False)
     c = TestClient(app)
     j = c.post(
         "/seller/api/naver/key", json={"key": k1, "client_id": CID, "secret": SECRET, "store_slug": "halla"}

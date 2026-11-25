@@ -127,7 +127,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
 
     <section class="box" aria-labelledby="nv-h">
       <h2 id="nv-h">스마트스토어 상품 가져오기 <span class="badge">읽기 전용</span></h2>
-      <p class="note" style="margin:0">네이버 <b>커머스API센터 → 내 스토어 애플리케이션</b>의 애플리케이션 ID·시크릿을 넣으면 스마트스토어 상품을 그대로 가져와요. 상품을 바꾸거나 주문을 처리하지 않아요(조회만). 키는 암호화해 저장하고 화면에 다시 보여 주지 않아요. 애플리케이션의 ‘API호출 IP’에 우리 서버 IP가 등록돼 있어야 해요. 원산지·인증은 ‘판매자 표기’로 들어가고 운영팀 확인 전에는 ‘확인됨’이 되지 않아요. 새 상품은 상세페이지의 고시 칸·사진 주소를 미리 채워요(사진 사용 권리 체크는 직접 해 주세요).</p>
+      <p class="note" style="margin:0">지금은 <b>운영사 직영 스토어</b>만 쓸 수 있어요(네이버 정책상 내 스토어 애플리케이션 키는 다른 서비스에 넘기면 안 돼요 — 입점 셀러 연결은 커머스솔루션 입점 뒤). 네이버 <b>커머스API센터 → 내 스토어 애플리케이션</b>의 애플리케이션 ID·시크릿을 넣으면 스마트스토어 상품을 그대로 가져와요. 상품을 바꾸거나 주문을 처리하지 않아요(조회만). 키는 암호화해 저장하고 화면에 다시 보여 주지 않아요. 애플리케이션의 ‘API호출 IP’에 우리 서버 IP가 등록돼 있어야 해요. 원산지·인증은 ‘판매자 표기’로 들어가고 운영팀 확인 전에는 ‘확인됨’이 되지 않아요. 새 상품은 상세페이지의 고시 칸·사진 주소를 미리 채워요(사진 사용 권리 체크는 직접 해 주세요).</p>
       <div id="nvState" class="note"></div>
       <div class="grid2">
         <div class="field"><label for="nvId">애플리케이션 ID</label><input id="nvId" autocomplete="off" spellcheck="false" maxlength="60"></div>
@@ -418,7 +418,8 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       ? `연결 키 <b>${esc(n.client_id)}</b> 저장됨 · 기준 판매처 ${n.base_channel === "naver" ? "<b>네이버</b>" : esc(n.base_channel)}`
         + (n.last_sync_at ? ` · 마지막 가져오기 ${esc(n.last_sync_at.slice(0, 16).replace("T", " "))}` : "")
         + (n.last_error ? ` · <span class="down">${esc(n.last_error)}</span>` : "")
-      : "아직 키가 없어요.";
+      : (n.allowed ? "아직 키가 없어요." : esc(n.not_allowed));
+    document.querySelectorAll("#nvSave,#nvPrev,#nvSync").forEach((b) => b.disabled = !n.allowed);
     $("nvSlug").value = n.store_slug || "";
   }
   async function loadNv(){ const j = await post("/seller/api/naver", {key: KEY}); if (j.ok) showNv(j.naver); }

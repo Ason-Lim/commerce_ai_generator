@@ -1,7 +1,12 @@
 """⑥ 스마트스토어 원클릭 전환 — 네이버 커머스API 상품 가져오기 (읽기 전용, 창 5, 2026-11-25).
 
-사용자 결정 (11-25 15:41): 지금은 **셀러가 자기 커머스API센터 앱(내 스토어 애플리케이션)의 ID·시크릿을 넣는 방식**,
-API 대행사(솔루션) 등록은 사업자등록 뒤 과제.
+사용자 결정 (11-25 15:41): 지금은 내 스토어 애플리케이션 키로, API 대행사(솔루션) 등록은 사업자등록 뒤 과제.
+
+**네이버 정책 (11-25 15:5x 확인 — 커머스API 공식 답변, GitHub discussions #3463):** '내스토어 애플리케이션'은 판매자가
+직접 연동하는 용도이고, 서비스 제공을 위해 그 정보를 제공·위탁받아 운영하면 안 된다. 제3자 서비스는 커머스솔루션(심사·구독)
+또는 API대행사(국내 법인 사업자, 신청서 심사)여야 한다.
+→ 그래서 이 기능은 **운영사가 직접 운영하는 스토어만** 켠다: ``NAVER_OWN_SELLERS`` (셀러 ID 쉼표 목록)에 든 셀러만
+키를 넣고 가져올 수 있다. 다른 입점 셀러는 커머스솔루션 입점(또는 대행사 등록) 뒤 그 앱의 토큰 방식으로 붙인다.
 
 * **읽기만.** 토큰 발급 · 상품 목록 조회(POST /v1/products/search) · 원상품 조회(GET /v2/products/origin-products/{no}).
   상품 등록·수정·주문 처리 같은 쓰기 호출은 이 모듈에 없다 (시험으로 고정).
@@ -62,6 +67,24 @@ def engine(url: str | None = None):
     return eng
 
 
+def allowed(seller_id: str, env=None) -> bool:
+    """운영사가 직접 운영하는 스토어만 (네이버 정책 — 내스토어 앱 키를 다른 셀러에게서 받아 쓰지 않음)."""
+    import os
+
+    env = os.environ if env is None else env
+    return seller_id in {x.strip() for x in (env.get("NAVER_OWN_SELLERS") or "").split(",") if x.strip()}
+
+
+NOT_ALLOWED = ("스마트스토어 가져오기는 아직 운영사 직영 스토어만 쓸 수 있어요. 입점 셀러는 우리 서비스가 네이버 커머스솔루션에 "
+               "입점한 뒤 연결할 수 있어요(네이버 정책상 내 스토어 애플리케이션 키는 다른 서비스에 넘기면 안 돼요). "
+               "그 전에는 상품 엑셀(표준 칸 CSV)로 올려 주세요.")  # fmt: skip
+
+
+def _gate(seller_id: str) -> None:
+    if not allowed(seller_id):
+        raise NaverError(NOT_ALLOWED)
+
+
 # ── 키 ───────────────────────────────────────────────────────────────────
 def _key_row(c, seller_id: str):
     return c.execute(select(t_key).where(t_key.c.seller_id == seller_id)).mappings().first()
@@ -88,12 +111,14 @@ def status(eng, token: str, client: str) -> dict:
     s = store.resolve(eng, token, client)
     with eng.connect() as c:
         r = _key_row(c, s["seller_id"])
-    return {**_status(r), "base_channel": catalog.base_channel(eng, s["seller_id"])}
+    return {**_status(r), "base_channel": catalog.base_channel(eng, s["seller_id"]), "allowed": allowed(s["seller_id"]),
+            "not_allowed": "" if allowed(s["seller_id"]) else NOT_ALLOWED}  # fmt: skip
 
 
 def save_key(eng, token: str, client: str, *, client_id: str, secret: str, store_slug: str = "") -> dict:
     """셀러가 자기 앱 ID·시크릿을 넣는다 — 모양만 검사하고 암호화 저장 (연결 확인은 check/preview 에서)."""
     s = store.resolve(eng, token, client)
+    _gate(s["seller_id"])
     client_id, secret, slug = (client_id or "").strip(), (secret or "").strip(), (store_slug or "").strip().lower()
     if not CLIENT_RE.match(client_id):
         raise NaverError("애플리케이션 ID 모양이 아니에요 (커머스API센터 → 내 스토어 애플리케이션)")
@@ -201,6 +226,7 @@ class Client:
 
 
 def _client_for(eng, seller_id: str, http) -> tuple[Client, dict]:
+    _gate(seller_id)
     with eng.connect() as c:
         r = _key_row(c, seller_id)
     k = corp._dec(r["enc"]) if r and r["enc"] else None
