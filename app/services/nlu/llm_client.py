@@ -55,6 +55,7 @@ THINKING_BY_TASK: dict[str, bool] = {
     "seller_help": False,       # 2026-11-25 셀러 사용법 도우미(Claude/Ollama) — 지식 안에서 짧게 답하는 일
     "seller_join": False,       # 2026-11-25 입점 신청 1차 분석 — 주력 상품 글만 보고 품목 위험 표시(선택)
     "seller_detail": True,      # 2026-11-25 셀러 AI 상세페이지 글(Claude/Ollama) — 저장해 쓰는 작성
+    "seller_shop": False,  # 2026-11-25 미니숍 디자인 도우미 — 템플릿·문구·상품 배치 JSON
 }
 
 

@@ -582,3 +582,75 @@ def seller_naver_sync(body: NaverSyncIn, request: Request):
     from app.services.seller import naver_api
 
     return _detail(lambda: _ok(sync=naver_api.sync(naver_api.engine(), body.key, _client(request), set_base=body.set_base)))
+
+
+# ── 미니숍 디자인 — 템플릿 60 · 편집 · Claude 디자인 · GPT 이미지 (2026-11-25) ──
+class DesignIn(KeyIn):
+    design: dict
+
+
+class DesignLookIn(KeyIn):
+    design: dict | None = None
+
+
+class TemplateIn(KeyIn):
+    template_id: str = Field(..., max_length=4)
+
+
+class DesignAiIn(KeyIn):
+    request: str = Field("", max_length=600)
+    template_id: str = Field("", max_length=4)
+
+
+class DesignImageIn(KeyIn):
+    prompt: str = Field(..., max_length=300)
+
+
+def _sd():
+    from app.services.seller import shop_design
+
+    return shop_design, shop_design.engine()
+
+
+@router.post("/seller/api/design")
+def seller_design(body: KeyIn, request: Request):
+    sd, eng = _sd()
+    return _detail(lambda: _ok(**sd.editor(eng, body.key, _client(request))))
+
+
+@router.post("/seller/api/design/template")
+def seller_design_template(body: TemplateIn, request: Request):
+    sd, eng = _sd()
+    return _detail(lambda: _ok(design=sd.apply_template(eng, body.key, _client(request), body.template_id)))
+
+
+@router.post("/seller/api/design/look")
+def seller_design_look(body: DesignLookIn, request: Request):
+    sd, eng = _sd()
+    return _detail(lambda: _ok(html=sd.look(eng, body.key, _client(request), body.design)))
+
+
+@router.post("/seller/api/design/save")
+def seller_design_save(body: DesignIn, request: Request):
+    sd, eng = _sd()
+    return _detail(lambda: _ok(design=sd.save(eng, body.key, _client(request), body.design)))
+
+
+@router.post("/seller/api/design/reset")
+def seller_design_reset(body: KeyIn, request: Request):
+    sd, eng = _sd()
+    return _detail(lambda: (sd.reset(eng, body.key, _client(request)), _ok())[1])
+
+
+@router.post("/seller/api/design/ai")
+def seller_design_ai(body: DesignAiIn, request: Request):
+    sd, eng = _sd()
+    return _detail(
+        lambda: _ok(**sd.ai_design(eng, body.key, _client(request), body.request, template_id=body.template_id))
+    )
+
+
+@router.post("/seller/api/design/image")
+def seller_design_image(body: DesignImageIn, request: Request):
+    sd, eng = _sd()
+    return _detail(lambda: _ok(**sd.make_image(eng, body.key, _client(request), body.prompt)))

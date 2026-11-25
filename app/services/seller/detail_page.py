@@ -471,7 +471,15 @@ def _sample_items(eng, seller_id: str, rows: dict) -> list[tuple[dict, dict]]:
     return out
 
 
-def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = None, sample: bool = False) -> str:
+def shop_page(
+    eng,
+    seller_id: str,
+    *,
+    banner: str | None,
+    public: dict | None = None,
+    sample: bool = False,
+    design: dict | None = None,
+) -> str:
     """셀러의 승인된 최신 상세페이지들 — 목록 타일 + 상품별 본문(같은 화면 아래). 판매 중이 아닌 상품은 뺀다.
     public: 고객 공개 화면의 고지 {top, buy, seller_box(html), footer(html), index} — 없으면 미리보기."""
     e = html.escape
@@ -501,6 +509,16 @@ def shop_page(eng, seller_id: str, *, banner: str | None, public: dict | None = 
     else:
         top = (f'<p class="notice">이 화면의 상품은 {e(s["name"])}이(가) 판매해요. 주문·결제·배송·교환·환불은 각 판매처에서 진행되고, '
                "trendguide 는 판매 당사자가 아니에요. (미리보기 — 고객 화면은 확정 고지 문구로 바뀌어요)</p>")  # fmt: skip
+    # 2026-11-25 미니숍 디자인 — 저장된(또는 미리보기 중인) 디자인이 있으면 그 모양으로. 고지·판매자 정보·상세 본문은 그대로.
+    from app.services.seller import shop_design
+
+    shop_design.meta.create_all(eng)
+    dz = design if design is not None else shop_design.design_of(eng, seller_id)
+    if dz:
+        items = shop_items(eng, seller_id, on_sale_only=public is not None, sample=sample)
+        footer = (public or {}).get("footer") or ""
+        return shop_design.render(dz, dict(s), items, banner=banner, top=top, footer=footer, details="".join(arts),
+                                  index=bool((public or {}).get("index")), show_all_images=sample, eng=eng)  # fmt: skip
     body = (f'<h1 class="shop-h">{e(s["name"])}</h1>' + top
             + (f'<div class="grid">{"".join(tiles)}</div>' + "".join(arts) if tiles
                else '<p class="foot">아직 승인된 상세페이지가 없어요. 상세페이지를 만들고 검수를 받으면 여기에 모여요.</p>')

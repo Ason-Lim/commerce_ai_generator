@@ -3380,7 +3380,7 @@ def seller_join_decide(join_id: str, body: _JoinDecideIn):
                                                                   note=body.note))}  # fmt: skip
 
 
-DETAIL_CSP = "default-src 'none'; img-src https:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+DETAIL_CSP = "default-src 'none'; img-src 'self' https:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 
 
 # ── 셀러 SCM ③ (창 5, 2026-11-25) — 품절·출고 지연·송장 미등록 숫자만 (받는 분 정보 없음) ──

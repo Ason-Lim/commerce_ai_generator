@@ -45,6 +45,11 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
 .bx{display:flex;justify-content:space-between;font-size:11px;color:var(--ink2)}
 .help-a{white-space:pre-wrap}.chipl{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chipl a,.chipl button{font-size:12.5px}
 .chipl a{color:var(--accent);text-decoration:none;border:1px solid var(--accent-s);background:var(--accent-s);border-radius:999px;padding:2px 10px}
+.sd-tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;max-height:330px;overflow:auto;padding:2px}
+.sd-tpl{border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff;text-align:left;cursor:pointer;font:inherit}.sd-tpl.on{outline:2px solid var(--accent)}
+.sd-tpl .sw{display:flex;height:22px;border-radius:6px;overflow:hidden;margin-bottom:6px}.sd-tpl .sw i{flex:1}.sd-tpl b{display:block;font-size:13px}.sd-tpl small{color:var(--ink2);font-size:11.5px}
+.sd-sec{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px;background:#fafaf7}.sd-sec .row{margin:0}.sd-prods{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;max-height:120px;overflow:auto;margin-top:6px}
+.sd-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px}@media(max-width:900px){.sd-wrap{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -62,7 +67,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   </section>
 
   <div id="body" hidden>
-    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#nv-h">스마트스토어 가져오기</a><a href="#dp-h">AI 상세페이지</a><a href="#ms-h">미니숍 공개</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
+    <nav class="nav" aria-label="바로 가기"><a href="#dash-h">대시보드</a><a href="#help-h">사용법 도우미</a><a href="#pr-h">내 상품</a><a href="#pf-h">상품 올리기</a><a href="#nv-h">스마트스토어 가져오기</a><a href="#dp-h">AI 상세페이지</a><a href="#sd-h">미니숍 디자인</a><a href="#ms-h">미니숍 공개</a><a href="#od-h">주문·발주·송장</a><a href="#ask-h">운영팀에 묻기</a></nav>
     <section class="box" aria-labelledby="dash-h">
       <div class="row" style="margin:0;justify-content:space-between"><h2 id="dash-h" style="margin:0">대시보드</h2>
         <div class="tabs" role="group" aria-label="기간"><button type="button" data-p="day" aria-pressed="false">오늘</button><button type="button" data-p="week" aria-pressed="true">7일</button><button type="button" data-p="month" aria-pressed="false">30일</button></div></div>
@@ -190,6 +195,40 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <iframe id="dpFrame" title="상세페이지 미리보기" sandbox="" hidden style="width:100%;height:640px;border:1px solid var(--line);border-radius:14px;margin-top:12px;background:#fff"></iframe>
     </section>
 
+    <section class="box" aria-labelledby="sd-h">
+      <h2 id="sd-h">미니숍 디자인 <span class="badge ok">AI</span></h2>
+      <p class="note" style="margin:0">템플릿 60개(생활·브랜드 30 · 식품 30)에서 고르고, 색·문구·섹션·상품 배치를 고쳐요. <b>AI로 디자인</b>을 누르면 Claude가 상품을 보고 템플릿·문구·배치를 제안해요(저장 전에 미리 보고 고칠 수 있어요). <b>이미지 만들기</b>는 배경·분위기 이미지만 만들고 'AI 생성 이미지'로 표시돼요. 판매처 안내·판매자 정보 같은 고지는 디자인과 상관없이 들어가요.</p>
+      <div class="sd-wrap" style="margin-top:10px">
+        <div>
+          <div class="row" style="margin-top:0"><button type="button" class="sub" data-sdset="general">생활·브랜드 30</button><button type="button" class="sub" data-sdset="food">식품 30</button><span id="sdGroups" class="row" style="margin:0;gap:4px"></span></div>
+          <div id="sdTpls" class="sd-tpls" role="list"></div>
+          <div class="field"><label for="sdAsk">AI에게 부탁하기 (예: 선물용으로 따뜻한 느낌, 대표 상품은 바니쉬 1L)</label><textarea id="sdAsk" rows="2" maxlength="600"></textarea></div>
+          <div class="row"><button type="button" id="sdAi">AI로 디자인</button><label class="note" style="display:flex;gap:4px;align-items:center"><input type="checkbox" id="sdKeepTpl" style="width:auto"> 고른 템플릿 유지</label></div>
+          <div id="sdAiMsg" role="status"></div>
+          <h3 style="font-size:15px;margin:14px 0 4px">머리 부분</h3>
+          <div class="grid2">
+            <div class="field"><label for="sdEyebrow">작은 글</label><input id="sdEyebrow" maxlength="40"></div>
+            <div class="field"><label for="sdTitle">제목</label><input id="sdTitle" maxlength="60"></div>
+          </div>
+          <div class="field"><label for="sdSub">소개</label><textarea id="sdSub" rows="2" maxlength="200"></textarea></div>
+          <div class="grid2">
+            <div class="field"><label for="sdImg">대표 이미지 주소 (https)</label><input id="sdImg" maxlength="300" placeholder="https://…"></div>
+            <div class="field"><label for="sdFont">글꼴</label><select id="sdFont"></select></div>
+          </div>
+          <div class="field"><label for="sdImgAsk">이미지 만들기 — 어떤 장면? (예: 햇살 드는 원목 작업대, 따뜻한 오후)</label><textarea id="sdImgAsk" rows="2" maxlength="300"></textarea></div>
+          <div class="row"><button type="button" class="sub" id="sdImgGo">이미지 만들기 (GPT)</button><span class="note" id="sdImgMsg"></span></div>
+          <h3 style="font-size:15px;margin:14px 0 4px">색</h3>
+          <div class="row" style="margin:0" id="sdPal"></div>
+          <h3 style="font-size:15px;margin:14px 0 4px">섹션 · 상품 배치</h3>
+          <div id="sdSecs"></div>
+          <div class="row"><select id="sdAddType" style="width:auto"></select><button type="button" class="sub" id="sdAdd">섹션 더하기</button></div>
+          <div class="row"><button type="button" id="sdSave">저장</button><button type="button" class="sub" id="sdLook">미리보기 새로</button><button type="button" class="sub" id="sdReset">기본 화면으로</button></div>
+          <div id="sdMsg" role="status"></div>
+        </div>
+        <div><iframe id="sdFrame" title="미니숍 디자인 미리보기" sandbox="" style="width:100%;height:860px;border:1px solid var(--line);border-radius:14px;background:#fff"></iframe></div>
+      </div>
+    </section>
+
     <section class="box" aria-labelledby="ms-h">
       <h2 id="ms-h">미니숍 공개 · 판매자 정보</h2>
       <p class="note" style="margin:0">손님에게 보이는 미니숍에는 법에 따라 <b>판매자 정보</b>(상호·대표자·주소·전화·전자우편·사업자등록번호·통신판매업 신고번호)가 함께 표시돼요. 적어 주신 정보는 운영팀이 사업자등록증·신고증과 대조해 확인하고, <b>공개에 동의</b>하셔야 손님 화면에 나와요. 정보를 바꾸면 확인을 다시 받아요. 구매는 판매처(스마트스토어 등)에서 진행되고, 미니숍은 주문·결제를 받지 않아요.</p>
@@ -300,7 +339,7 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
     if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks(); loadDash(); loadBiz(); loadNv();
+    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks(); loadDash(); loadBiz(); loadNv(); loadDesign();
   }
 
   // ── 대시보드 (2026-11-25) ──
@@ -474,6 +513,98 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     $("syncCsv").value = text;
     msg($("syncMsg"), `${f.name} 을(를) 읽었어요. ‘반영하기’를 눌러 주세요.`, "ok");
   });
+
+  // ── 미니숍 디자인 (2026-11-25) ──
+  let SD = null, SDD = null, SDSET = "general", SDGRP = "";
+  const sdTpl = (id) => SD.templates.find((t) => t.id === id) || SD.templates[0];
+  function sdTpls(){
+    const list = SD.templates.filter((t) => t.set === SDSET && (!SDGRP || t.group === SDGRP));
+    const groups = [...new Set(SD.templates.filter((t) => t.set === SDSET).map((t) => t.group))];
+    $("sdGroups").innerHTML = ['<button type="button" class="sub" data-sdg="">전체</button>'].concat(groups.map((g) => `<button type="button" class="sub" data-sdg="${esc(g)}">${esc(g)}</button>`)).join("");
+    $("sdGroups").querySelectorAll("[data-sdg]").forEach((b) => b.onclick = () => { SDGRP = b.dataset.sdg; sdTpls(); });
+    $("sdTpls").innerHTML = list.map((t) => `<button type="button" role="listitem" class="sd-tpl${SDD && SDD.template === t.id ? " on" : ""}" data-tpl="${t.id}"><span class="sw">${["bg","soft","accent","ink"].map((k) => `<i style="background:${t.palette[k]}"></i>`).join("")}</span><b>${esc(t.id)} ${esc(t.name)}</b><small>${esc(t.desc)}</small></button>`).join("");
+    $("sdTpls").querySelectorAll("[data-tpl]").forEach((b) => b.onclick = async () => {
+      const j = await post("/seller/api/design/template", {key: KEY, template_id: b.dataset.tpl});
+      if (!j.ok) { msg($("sdMsg"), j.error, "err"); return; }
+      SDD = j.design; sdFill(); sdLook(); msg($("sdMsg"), `${b.dataset.tpl} 템플릿으로 바꿨어요. 저장해야 미니숍에 반영돼요.`, "ok");
+    });
+  }
+  function sdFill(){
+    const h = SDD.hero || {};
+    $("sdEyebrow").value = h.eyebrow || ""; $("sdTitle").value = h.title || ""; $("sdSub").value = h.subtitle || ""; $("sdImg").value = h.image_url || "";
+    $("sdFont").innerHTML = Object.entries(SD.fonts).map(([k, v]) => `<option value="${k}"${SDD.font === k ? " selected" : ""}>${esc(v)}</option>`).join("");
+    $("sdPal").innerHTML = [["bg","배경"],["ink","글자"],["accent","강조"],["soft","바탕 칸"]].map(([k, l]) => `<label class="note" style="display:flex;gap:4px;align-items:center">${l}<input type="color" data-pal="${k}" value="${esc((SDD.palette || {})[k] || "#ffffff")}" style="width:44px;padding:0;height:30px"></label>`).join("");
+    $("sdSecs").innerHTML = (SDD.sections || []).map((sec, i) => {
+      const prod = ["spotlight","grid3","grid4","side","list","compare","mosaic"].includes(sec.type);
+      const txt = ["story","contact","note","coming","spotlight"].includes(sec.type);
+      const its = ["categories","chips","stats","steps","faq"].includes(sec.type);
+      return `<div class="sd-sec" data-i="${i}"><div class="row"><b style="font-size:13.5px">${esc(SD.section_types[sec.type] || sec.type)}</b><span style="flex:1"></span>
+        <button type="button" class="sub" data-mv="-1">위로</button><button type="button" class="sub" data-mv="1">아래로</button>${sec.type === "notice" ? "" : '<button type="button" class="sub" data-del>빼기</button>'}</div>
+        ${sec.type === "notice" ? '<p class="note" style="margin:4px 0 0">판매처 안내 고지 — 빼거나 고칠 수 없어요(자리만 옮길 수 있어요).</p>' : `<input data-f="title" placeholder="섹션 제목" maxlength="60" value="${esc(sec.title || "")}" style="margin-top:6px">`}
+        ${txt ? `<textarea data-f="text" rows="2" maxlength="400" placeholder="글" style="margin-top:6px">${esc(sec.text || "")}</textarea>` : ""}
+        ${its ? `<textarea data-f="items" rows="3" placeholder="한 줄에 하나${["stats","steps","faq"].includes(sec.type) ? " — '앞|뒤' 모양" : ""}" style="margin-top:6px">${esc((sec.items || []).join("\n"))}</textarea>` : ""}
+        ${prod ? `<div class="sd-prods">${SD.products.map((p) => `<label><input type="checkbox" data-pid="${esc(p.product_id)}" style="width:auto"${(sec.product_ids || []).includes(p.product_id) ? " checked" : ""}> ${esc(p.name.slice(0, 26))}</label>`).join("")}</div><p class="note" style="margin:2px 0 0">아무것도 고르지 않으면 모든 상품이 들어가요.</p>` : ""}</div>`;
+    }).join("");
+    $("sdSecs").querySelectorAll(".sd-sec").forEach((box) => {
+      const i = +box.dataset.i;
+      box.querySelectorAll("[data-mv]").forEach((b) => b.onclick = () => { sdRead(); const j = i + +b.dataset.mv; if (j < 0 || j >= SDD.sections.length) return; [SDD.sections[i], SDD.sections[j]] = [SDD.sections[j], SDD.sections[i]]; sdFill(); sdLook(); });
+      box.querySelectorAll("[data-del]").forEach((b) => b.onclick = () => { sdRead(); SDD.sections.splice(i, 1); sdFill(); sdLook(); });
+    });
+    $("sdAddType").innerHTML = Object.entries(SD.section_types).filter(([k]) => k !== "notice").map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
+    sdTpls();
+  }
+  function sdRead(){
+    SDD.hero = Object.assign({}, SDD.hero, {eyebrow: $("sdEyebrow").value, title: $("sdTitle").value, subtitle: $("sdSub").value, image_url: $("sdImg").value.trim()});
+    if (!SDD.hero.image_url.startsWith("/shop-img/")) SDD.hero.image_ai = false;
+    SDD.font = $("sdFont").value;
+    $("sdPal").querySelectorAll("[data-pal]").forEach((x) => SDD.palette[x.dataset.pal] = x.value.toUpperCase());
+    $("sdSecs").querySelectorAll(".sd-sec").forEach((box) => {
+      const sec = SDD.sections[+box.dataset.i];
+      box.querySelectorAll("[data-f]").forEach((x) => { sec[x.dataset.f] = x.dataset.f === "items" ? x.value.split("\n").map((v) => v.trim()).filter(Boolean) : x.value; });
+      const cb = box.querySelectorAll("[data-pid]");
+      if (cb.length) sec.product_ids = [...cb].filter((x) => x.checked).map((x) => x.dataset.pid);
+    });
+    return SDD;
+  }
+  let sdTimer = null;
+  async function sdLook(){
+    const j = await post("/seller/api/design/look", {key: KEY, design: SDD});
+    if (j.ok) $("sdFrame").srcdoc = j.html; else msg($("sdMsg"), j.error, "err");
+  }
+  async function loadDesign(){
+    const j = await post("/seller/api/design", {key: KEY});
+    if (!j.ok) return;
+    SD = j; SDD = j.design; SDSET = sdTpl(SDD.template).set || j.suggest_set;
+    if (!j.ai) { $("sdAi").disabled = true; msg($("sdAiMsg"), "AI 디자인은 운영팀 설정 뒤에 쓸 수 있어요.", "err"); }
+    if (!j.image) { $("sdImgGo").disabled = true; $("sdImgMsg").textContent = "이미지 만들기는 운영팀 설정 뒤에 쓸 수 있어요."; }
+    sdFill(); sdLook();
+  }
+  document.querySelectorAll("[data-sdset]").forEach((b) => b.onclick = () => { SDSET = b.dataset.sdset; SDGRP = ""; sdTpls(); });
+  ["sdEyebrow","sdTitle","sdSub","sdImg","sdFont"].forEach((id) => $(id).addEventListener("change", () => { sdRead(); sdLook(); }));
+  $("sdPal").addEventListener("change", () => { sdRead(); sdLook(); });
+  $("sdSecs").addEventListener("change", () => { clearTimeout(sdTimer); sdTimer = setTimeout(() => { sdRead(); sdLook(); }, 300); });
+  $("sdAdd").onclick = () => { sdRead(); const n = SDD.sections.findIndex((x) => x.type === "notice"); SDD.sections.splice(n < 0 ? SDD.sections.length : n, 0, {type: $("sdAddType").value, title: "", text: "", items: [], product_ids: []}); sdFill(); sdLook(); };
+  $("sdLook").onclick = () => { sdRead(); sdLook(); };
+  $("sdSave").onclick = async () => { const j = await post("/seller/api/design/save", {key: KEY, design: sdRead()}); if (!j.ok) { msg($("sdMsg"), j.error, "err"); return; } SDD = j.design; SD.saved = true; sdFill(); sdLook(); msg($("sdMsg"), "저장했어요. 미니숍이 이 디자인으로 보여요.", "ok"); };
+  $("sdReset").onclick = async () => { if (!confirm("저장한 디자인을 지우고 기본 화면으로 돌아갈까요?")) return; const j = await post("/seller/api/design/reset", {key: KEY}); if (j.ok) { msg($("sdMsg"), "기본 화면으로 돌렸어요.", "ok"); loadDesign(); } };
+  $("sdAi").onclick = async () => {
+    msg($("sdAiMsg"), "Claude가 디자인하는 중… (30초쯤)", "ok"); $("sdAi").disabled = true;
+    try {
+      const j = await post("/seller/api/design/ai", {key: KEY, request: $("sdAsk").value, template_id: $("sdKeepTpl").checked ? SDD.template : ""});
+      if (!j.ok) { msg($("sdAiMsg"), j.error, "err"); return; }
+      SDD = j.design; SDSET = sdTpl(SDD.template).set; sdFill(); sdLook();
+      msg($("sdAiMsg"), `AI 제안: ${SDD.template} ${sdTpl(SDD.template).name}${j.reason ? " — " + j.reason : ""}${j.fixed && j.fixed.length ? " (쓸 수 없는 표현은 기본 문구로 바꿨어요)" : ""}. 마음에 들면 저장해 주세요.`, "ok");
+    } finally { $("sdAi").disabled = false; }
+  };
+  $("sdImgGo").onclick = async () => {
+    $("sdImgMsg").textContent = "이미지를 만드는 중… (1분쯤)"; $("sdImgGo").disabled = true;
+    try {
+      const j = await post("/seller/api/design/image", {key: KEY, prompt: $("sdImgAsk").value});
+      if (!j.ok) { $("sdImgMsg").textContent = j.error; return; }
+      sdRead(); SDD.hero.image_url = j.url; SDD.hero.image_ai = true; $("sdImg").value = j.url; sdLook();
+      $("sdImgMsg").textContent = "만들었어요 (AI 생성 이미지로 표시돼요). 저장해야 반영돼요.";
+    } finally { $("sdImgGo").disabled = false; }
+  };
   async function askHelp(q){
     q = (q || "").trim(); if (q.length < 2) return;
     $("helpBtn").disabled = true; $("helpOut").innerHTML = '<div class="msg">찾아보는 중…</div>';
