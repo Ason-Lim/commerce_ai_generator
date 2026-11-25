@@ -45,9 +45,9 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
 .bx{display:flex;justify-content:space-between;font-size:11px;color:var(--ink2)}
 .help-a{white-space:pre-wrap}.chipl{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chipl a,.chipl button{font-size:12.5px}
 .chipl a{color:var(--accent);text-decoration:none;border:1px solid var(--accent-s);background:var(--accent-s);border-radius:999px;padding:2px 10px}
-.sd-tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;max-height:330px;overflow:auto;padding:2px}
-.sd-tpl{border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff;text-align:left;cursor:pointer;font:inherit}.sd-tpl.on{outline:2px solid var(--accent)}
-.sd-tpl .sw{display:flex;height:22px;border-radius:6px;overflow:hidden;margin-bottom:6px}.sd-tpl .sw i{flex:1}.sd-tpl b{display:block;font-size:13px}.sd-tpl small{color:var(--ink2);font-size:11.5px}
+.sd-tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;max-height:440px;overflow:auto;padding:2px}
+.sd-tpl{border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;font:inherit;font-weight:400}.sd-tpl:hover{border-color:var(--accent)}.sd-tpl.on{outline:2px solid var(--accent)}
+.sd-tpl .sw{display:flex;height:22px;border-radius:6px;overflow:hidden;margin-bottom:6px}.sd-tpl .sw i{flex:1}.sd-tpl b{display:block;font-size:13px;margin-bottom:2px}.sd-tpl em{display:inline-block;font-style:normal;font-size:10.5px;color:var(--accent);background:var(--accent-s);border-radius:99px;padding:0 6px;margin-bottom:4px}.sd-tpl small{color:var(--ink2);font-size:11.5px}
 .sd-sec{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px;background:#fafaf7}.sd-sec .row{margin:0}.sd-prods{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;max-height:120px;overflow:auto;margin-top:6px}
 .sd-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px}@media(max-width:900px){.sd-wrap{grid-template-columns:1fr}}
 </style>
@@ -525,7 +525,7 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     const groups = [...new Set(SD.templates.filter((t) => t.set === SDSET).map((t) => t.group))];
     $("sdGroups").innerHTML = ['<button type="button" class="sub" data-sdg="">전체</button>'].concat(groups.map((g) => `<button type="button" class="sub" data-sdg="${esc(g)}">${esc(g)}</button>`)).join("");
     $("sdGroups").querySelectorAll("[data-sdg]").forEach((b) => b.onclick = () => { SDGRP = b.dataset.sdg; sdTpls(); });
-    $("sdTpls").innerHTML = list.map((t) => `<button type="button" role="listitem" class="sd-tpl${SDD && SDD.template === t.id ? " on" : ""}" data-tpl="${t.id}"><span class="sw">${["bg","soft","accent","ink"].map((k) => `<i style="background:${t.palette[k]}"></i>`).join("")}</span><b>${esc(t.id)} ${esc(t.name)}</b><small>${esc(t.desc)}</small></button>`).join("");
+    $("sdTpls").innerHTML = list.map((t) => `<button type="button" role="listitem" class="sd-tpl${SDD && SDD.template === t.id ? " on" : ""}" data-tpl="${t.id}"><span class="sw">${["bg","soft","accent","ink"].map((k) => `<i style="background:${t.palette[k]}"></i>`).join("")}</span><b>${esc(t.id)} ${esc(t.name)}</b><em>${esc(t.group)}</em><br><small>${esc(t.desc)}</small></button>`).join("");
     $("sdTpls").querySelectorAll("[data-tpl]").forEach((b) => b.onclick = async () => {
       const j = await post("/seller/api/design/template", {key: KEY, template_id: b.dataset.tpl});
       if (!j.ok) { msg($("sdMsg"), j.error, "err"); return; }
