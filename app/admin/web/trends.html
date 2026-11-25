@@ -80,7 +80,7 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b">B2B</a></nav>
   <nav aria-label="트렌드 메뉴">
-    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#next4w">다음 4주 예보</a><a href="#backtest">예측 백테스트</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
+    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#next4w">다음 4주 예보</a><a href="#tshift">트렌드 변화</a><a href="#backtest">예측 백테스트</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
     <div class="grp" id="grp-naver">네이버 <small>블로그</small></div><a href="#blog" id="nav-blog">블로그 초안</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a>
     <div class="grp">쿠팡 <small>사이트 글</small></div><a href="/admin/trend-posts">글 검토 대기열</a></nav>
   <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
@@ -240,6 +240,12 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <div class="row"><button class="btn" id="lg-save" title="어제 기준 예보를 장부에 적어요 (이미 있으면 그대로)">이번 주 예보 저장</button><span class="note" id="lg-msg"></span></div>
     <div id="lg-box"><p class="note">불러오는 중…</p></div>
   </section>
+  <section id="tshift" aria-labelledby="tshift-h">
+    <h2 id="tshift-h">트렌드 변화 <small class="note" style="font-weight:400">예보가 못 맞힌 것 중 '트렌드가 바뀐' 몫 — 식은 키워드 · 새로 뜬 키워드</small></h2>
+    <p class="lede"><b>식은 키워드</b> = 전년 기준(평소 작년 같은 주, 설·추석은 작년 같은 명절 날짜)으로 작년 이 기간 <b>50위 안</b>이던 키워드가 올해 같은 28일 동안 100위 안에 한 번도 못 들고, 앞뒤 14일에도 없던 것(앞뒤 14일 안에 들었으면 '시점 어긋남'이라 뺌). <b>새로 뜬 키워드</b> = 28일 안 <b>50위 안</b>까지 올랐는데 지난 400일 동안 상위 500에 없던 것. 기준일 뒤 42일 실제 순위가 있어야 판정해요. 참고 자료 — 추천 순위에는 쓰지 않아요.</p>
+    <div class="row"><span class="note">기준일</span><input type="date" id="ts-asof" aria-label="트렌드 변화 기준일"><button class="btn primary" id="ts-go">보기</button><span class="note" id="ts-cov"></span></div>
+    <div id="ts-box"><p class="note">불러오는 중…</p></div>
+  </section>
   <section id="backtest" aria-labelledby="backtest-h">
     <h2 id="backtest-h">예측 백테스트 <small class="note" style="font-weight:400">기준선 3종 + 선행 곡선 탐색기 — 같은 조건 비교</small></h2>
     <p class="lede">질문(Q1): <b>예측일에 100위 밖인 키워드가 7·14·28일 안에 한 번이라도 100위 안에 들어오는가.</b> 예측은 예측일까지의 파일만 읽어요. 기준선: <b>최근 유지</b>(최근 7일 100위 안이던 것) · <b>전년 같은 주</b>(52주 전 같은 기간) · <b>행사 상대일</b>(작년 같은 행사까지 남은 일수가 같은 기간). <b>탐색기</b> = 행사 선행 곡선의 반복/후보 키워드 중 예상 진입일이 기간 안인 것. 2024·2025 는 규칙을 보고 만든 자료라 <b>규칙 비교용</b>이고, 최종 성적은 앞으로 쌓이는 실제 예보로 내요. 목표 초안: 28일 기간 적중률 기준선 대비 +15%p(첫 결과 보고 다시 정함).</p>
@@ -251,8 +257,8 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
       <select id="bt-ms" aria-label="미래 관측률 기준"><option value="0.6">관측률 60%+</option><option value="0.8">80%+</option><option value="0.9">90%+</option></select>
       <button class="btn primary" id="bt-go">계산</button><span class="note" id="bt-cov"></span>
     </div>
-    <div class="scroll"><table><thead><tr><th>방법</th><th>기간</th><th>정답 수</th><th>예측 수</th><th>적중</th><th>적중률(정밀도)</th><th>재현율</th><th>재현율(과거 본 키워드)</th><th>상위 20 적중률</th><th>상위 20 · 7일+ 앞서</th><th>선행 일수*(맞힌 것만)</th><th>놓친 주요 상승(50위 안)</th><th>불필요한 준비</th><th>추가 적중</th></tr></thead>
-    <tbody id="bt-rows"><tr><td colspan="14" class="note">범위를 고르고 '계산'을 눌러 주세요. 1년치 매주는 몇십 초 걸릴 수 있어요.</td></tr></tbody></table></div>
+    <div class="scroll"><table><thead><tr><th>방법</th><th>기간</th><th>정답 수</th><th>예측 수</th><th>적중</th><th>적중률(정밀도)</th><th>재현율</th><th>재현율(과거 본 키워드)</th><th>상위 20 적중률</th><th>상위 20 · 7일+ 앞서</th><th>선행 일수*(맞힌 것만)</th><th>놓친 주요 상승(50위 안)</th><th>불필요한 준비</th><th>추가 적중</th><th title="제출 상위 20 기준">못 맞힌 이유: 7일+ / 늦게 / 시점 / 안 옴</th></tr></thead>
+    <tbody id="bt-rows"><tr><td colspan="15" class="note">범위를 고르고 '계산'을 눌러 주세요. 1년치 매주는 몇십 초 걸릴 수 있어요.</td></tr></tbody></table></div>
     <p class="note" id="bt-notes"></p>
   </section>
   <section id="pricefc" aria-labelledby="pricefc-h">
@@ -889,9 +895,9 @@ async function loadBacktest(){const q=new URLSearchParams({start:$("#bt-start").
     $("#bt-cov").textContent=`예측일 ${d.dates}개`+(d.skipped.length?` · 건너뜀 ${d.skipped.length} (${Object.entries(d.skipped_by_month).map(([m,n])=>m.slice(2)+":"+n).join(" ")})`:"");
     const pc=v=>v==null?"—":(v*100).toFixed(1)+"%";const rows=[];
     for(const [m,byh] of Object.entries(d.metrics))for(const [h,x] of Object.entries(byh))
-      rows.push(`<tr><td>${esc(BTN[m]||m)}</td><td>${h}일</td><td>${x.n_true}</td><td>${x.n_pred}</td><td>${x.hits}</td><td>${pc(x.precision)}</td><td>${pc(x.recall)}</td><td>${pc(x.recall_known)}</td><td>${pc(x.top20_precision)}</td><td>${pc(x.top20_lead7)}</td><td>${x.lead_median??"—"}</td><td>${pc(x.major_missed)}</td><td>${x.false_pos}</td><td>${x.extra_hits??""}</td></tr>`);
+      rows.push(`<tr><td>${esc(BTN[m]||m)}</td><td>${h}일</td><td>${x.n_true}</td><td>${x.n_pred}</td><td>${x.hits}</td><td>${pc(x.precision)}</td><td>${pc(x.recall)}</td><td>${pc(x.recall_known)}</td><td>${pc(x.top20_precision)}</td><td>${pc(x.top20_lead7)}</td><td>${x.lead_median??"—"}</td><td>${pc(x.major_missed)}</td><td>${x.false_pos}</td><td>${x.extra_hits??""}</td><td>${x.miss_breakdown&&x.miss_breakdown.lead!=null?["lead","late","timing","gone"].map(r=>pc(x.miss_breakdown[r])).join(" / "):"—"}</td></tr>`);
     $("#bt-rows").innerHTML=rows.join("")||`<tr><td colspan="14" class="note">결과 없음</td></tr>`;
-    $("#bt-notes").textContent=(d.notes||[]).join(" · ")+" · 합집합으로도 놓친 주요 상승: "+Object.entries(d.union).map(([h,u])=>`${h}일 ${pc(u.major_missed_all)}(처음 등장 ${u.major_first_seen}건)`).join(", ")+" · *선행 일수는 그 방법이 맞힌 사례만 — 방법끼리 견주는 값 아님";
+    $("#bt-notes").textContent=(d.notes||[]).join(" · ")+" · 합집합으로도 놓친 주요 상승: "+Object.entries(d.union).map(([h,u])=>`${h}일 ${pc(u.major_missed_all)}(처음 등장 ${u.major_first_seen}건 = ${pc(u.first_seen_share)})`).join(", ")+" · *선행 일수는 그 방법이 맞힌 사례만 — 방법끼리 견주는 값 아님";
   }catch(e){$("#bt-rows").innerHTML=`<tr><td colspan="14" class="note">${esc(e.message)}</td></tr>`}}
 if($("#bt-go"))$("#bt-go").onclick=loadBacktest;
 // ── 다음 4주 예보 (2026-11-24) ─────────────────────────
@@ -918,13 +924,31 @@ async function loadNext4w(withCoupang){const box=$("#nw-box");if(!box)return;con
 async function loadLedger(){const box=$("#lg-box");if(!box)return;
   try{const d=await api("/admin/api/trends/forecast/ledger");const pc=v=>v==null?"—":(v*100).toFixed(1)+"%";
     const t=d.target;const head=`<p class="note">채점된 실제 예보 <b>${d.graded_weeks}주</b> · 대기 ${d.pending}주${d.retro_excluded?` · 늦게 만든 예보 ${d.retro_excluded}건 제외`:""} · ${t.ready?"<b>12주가 쌓였어요 — 수치 목표를 다시 정할 때예요</b>":`목표 재설정까지 ${t.weeks_left}주`}</p>`;
-    const sum=Object.entries(d.summary).map(([m,x])=>`<tr><td>${esc(x.name)}</td><td>${x.submitted}</td><td>${x.lead7}</td><td>${pc(x.lead7_rate)}</td><td>${x.vs_baseline_pp==null?"—":(x.vs_baseline_pp>0?"+":"")+x.vs_baseline_pp+"%p"}</td></tr>`).join("");
-    const ent=d.entries.slice().reverse().map(e=>`<tr><td>${esc(e.as_of)}</td><td>${e.live?"실제":"늦게 만듦"}</td><td>${e.status==="graded"?"채점":"28일 대기"}</td><td>${e.status==="graded"?Object.entries(e.methods).map(([m,x])=>`${esc((d.summary[m]||{}).name||m)} ${x.lead7}/${x.submitted}`).join(" · "):""}</td></tr>`).join("")||`<tr><td colspan="4" class="note">아직 저장한 예보가 없어요 — '이번 주 예보 저장'을 누르거나 매주 자동 저장을 켜 주세요.</td></tr>`;
-    box.innerHTML=head+`<div class="scroll"><table><thead><tr><th>방법</th><th>제출</th><th>7일+ 앞서 적중</th><th>비율</th><th>비교 기준 대비</th></tr></thead><tbody>${sum}</tbody></table></div>
+    const rz=x=>x.reasons?["lead","late","timing","gone"].map(r=>pc(x.reasons[r])).join(" / "):"—";
+    const sum=Object.entries(d.summary).map(([m,x])=>`<tr><td>${esc(x.name)}</td><td>${x.submitted}</td><td>${x.lead7}</td><td>${pc(x.lead7_rate)}</td><td>${x.vs_baseline_pp==null?"—":(x.vs_baseline_pp>0?"+":"")+x.vs_baseline_pp+"%p"}</td><td>${rz(x)}</td></tr>`).join("");
+    const fsn=d.first_seen&&d.first_seen.major_rise?`<p class="note">처음 등장(놓친 쪽): 주요 상승 ${d.first_seen.major_rise}건 중 ${d.first_seen.first_seen}건 = ${pc(d.first_seen.share)} — 과거 순위로는 원리상 못 맞히는 몫(트렌드 변화).</p>`:"";
+    const ent=d.entries.slice().reverse().map(e=>`<tr><td>${esc(e.as_of)}</td><td>${e.live?"실제":"늦게 만듦"}</td><td>${e.status==="graded"?"채점":"42일 대기"}</td><td>${e.status==="graded"?Object.entries(e.methods).map(([m,x])=>`${esc((d.summary[m]||{}).name||m)} ${x.lead7}/${x.submitted}`).join(" · "):""}</td></tr>`).join("")||`<tr><td colspan="4" class="note">아직 저장한 예보가 없어요 — '이번 주 예보 저장'을 누르거나 매주 자동 저장을 켜 주세요.</td></tr>`;
+    box.innerHTML=head+`<div class="scroll"><table><thead><tr><th>방법</th><th>제출</th><th>7일+ 앞서 적중</th><th>비율</th><th>비교 기준 대비</th><th title="제출 상위 20 기준. 늦게·시점 = 방법으로 줄일 몫, 안 옴 = 트렌드 변화">못 맞힌 이유: 7일+ 앞서 / 늦게 / 시점 어긋남 / 안 옴</th></tr></thead><tbody>${sum}</tbody></table></div>${fsn}
       <div class="scroll"><table><thead><tr><th>기준일</th><th>종류</th><th>상태</th><th>방법별 7일+ 적중/제출</th></tr></thead><tbody>${ent}</tbody></table></div>`;
   }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
 if($("#lg-save")){$("#lg-save").onclick=async()=>{$("#lg-msg").textContent="저장 중…";try{const r=await api("/admin/api/trends/forecast/ledger/save",{method:"POST"});
   $("#lg-msg").textContent=r.status==="saved"?`${r.as_of} 예보를 적었어요`:r.status==="exists"?`${r.as_of} 예보는 이미 있어요(고치지 않음)`:"기준일 순위 자료가 없어요";loadLedger()}catch(e){$("#lg-msg").textContent=e.message}};loadLedger().catch(()=>{})}
+async function loadTshift(){const box=$("#ts-box");if(!box)return;const q=new URLSearchParams();if($("#ts-asof").value)q.set("as_of",$("#ts-asof").value);
+  box.innerHTML=`<p class="note">계산 중…</p>`;
+  try{const d=await api("/admin/api/trends/forecast/trend-shift?"+q.toString());const pc=v=>v==null?"—":(v*100).toFixed(1)+"%";
+    if(!$("#ts-asof").value)$("#ts-asof").value=d.as_of;
+    if(d.status!=="ok"){box.innerHTML=`<p class="note">${esc(d.note||"자료 없음")}${d.latest_as_of?` · 판정 가능한 마지막 기준일 ${esc(d.latest_as_of)}`:""}</p>`;$("#ts-cov").textContent="";return}
+    $("#ts-cov").textContent=`기간 ${d.window[0]} ~ ${d.window[1]}`;
+    const wk=d.weekly.map(w=>w.status==="ok"?`<tr><td>${esc(w.as_of)}</td><td>${w.last_year_major}</td><td>${w.came_back}</td><td>${w.timing_off}</td><td><b>${w.cooled}</b> (${pc(w.cooled_share)})</td><td>${w.major_rise}</td><td><b>${w.new}</b> (${pc(w.new_share)})</td></tr>`:`<tr><td>${esc(w.as_of)}</td><td colspan="6" class="note">${w.status==="pending"?"아직 판정 못 함":"자료 없음"}</td></tr>`).join("");
+    const cool=d.cooled_items.map(x=>`<tr><td>${esc(x.keyword)}</td><td>${x.last_year_best}위</td><td>${x.this_year_best?x.this_year_best+"위":"500위 밖"}</td></tr>`).join("")||`<tr><td colspan="3" class="note">없음</td></tr>`;
+    const nw=d.new_items.map(x=>`<tr><td>${esc(x.keyword)}</td><td>${x.best}위</td><td>${esc(x.first_date)}</td></tr>`).join("")||`<tr><td colspan="3" class="note">없음</td></tr>`;
+    box.innerHTML=`<div class="scroll"><table><thead><tr><th>기준일</th><th>작년 이 기간 50위 안</th><th>다시 옴</th><th>시점 어긋남</th><th>식음</th><th>올해 주요 상승</th><th>처음 등장</th></tr></thead><tbody>${wk}</tbody></table></div>
+      <div class="row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:260px"><h3>식은 키워드 <small class="note">${d.cooled}개 · 작년 순위 순</small></h3><div class="scroll"><table><thead><tr><th>키워드</th><th>작년 최고</th><th>올해 같은 기간 최고</th></tr></thead><tbody>${cool}</tbody></table></div></div>
+      <div style="flex:1;min-width:260px"><h3>새로 뜬 키워드 <small class="note">${d.new}개 · 올해 순위 순</small></h3><div class="scroll"><table><thead><tr><th>키워드</th><th>최고</th><th>처음 100위 안</th></tr></thead><tbody>${nw}</tbody></table></div></div></div>
+      <p class="note">${esc(d.note)}</p>`;
+  }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
+if($("#ts-go")){$("#ts-go").onclick=loadTshift;loadTshift().catch(()=>{})}
 if($("#nw-go")){$("#nw-go").onclick=()=>loadNext4w(false);$("#nw-cp").onclick=()=>loadNext4w(true);loadNext4w(false).catch(()=>{})}
 </script>
 </body>

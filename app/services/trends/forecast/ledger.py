@@ -11,6 +11,9 @@
   비교 기준 = 전년 기준(평소 전년 같은 주, 설·추석 시즌은 전년 같은 명절 날짜).
 * 목표(2026-11-25 사용자 결정): 지금은 '두 해 백테스트 모두 비교 기준 이상'만 조건으로 두고,
   **실제 예보 12주가 쌓이면 수치 목표를 다시 정한다** (`TARGET_REVIEW_WEEKS`).
+* 못 맞힌 이유(2026-11-25): 제출 상위 20 을 7일+ 앞서 적중 · 늦게 적중 · 시점 어긋남(기간 앞뒤 14일 안 진입) · 작년 키워드 안 옴
+  으로 나누고, 정답 쪽 '처음 등장'(주요 상승 중 400일 동안 상위 500 에 없던 것) 비율을 따로 낸다.
+  '안 옴'·'처음 등장' = 트렌드 변화(trend_shift), '늦게'·'시점' = 방법으로 줄일 몫. 그래서 채점은 기준일 + 28 + 14일 뒤.
 * 정직성: 기준일보다 늦게(다음 날 이후) 저장한 예보는 `live=False` — 뒤늦게 만든 예보라 성적에서 뺀다.
 * 고객 화면·추천 순위에는 쓰지 않는다.
 """
@@ -82,18 +85,25 @@ def save(rank_dir, as_of: dt.date, *, now: dt.datetime | None = None, root: Path
 
 def _grade(days: bt._Days, rec: dict, min_share: float) -> dict:
     as_of = dt.date.fromisoformat(rec["as_of"])
-    got = bt.truth(days, as_of, rec.get("horizon", H), set(rec["top_now"]), min_share=min_share)
-    if got is None:
+    h = rec.get("horizon", H)
+    got = bt.truth(days, as_of, h, set(rec["top_now"]), min_share=min_share)
+    # 못 맞힌 이유의 '시점 어긋남'은 기간 뒤 14일까지 봐야 해서, 그만큼 지나야 채점한다
+    if got is None or max(days.files, default="") < (as_of + dt.timedelta(days=h + bt.TIMING_DAYS)).isoformat():
         return {"status": "pending"}
     hits, seen = got
+    near = bt.near_window(days, as_of, h)
+    pop = bt.population(days, as_of)
+    vocab = pop[1] if pop else set()
+    majors = {k for k, v in hits.items() if v["best"] <= bt.MAJOR_BAND}
     res = {}
     for m, x in rec["methods"].items():
         top = x["top"]
-        hit = [k for k in top if k in hits]
-        lead = [k for k in hit if hits[k]["first"] >= bt.LEAD_MIN]
-        res[m] = {"submitted": len(top), "hits": len(hit), "lead7": len(lead),
-                  "lead7_rate": round(len(lead) / len(top), 4) if top else None, "lead7_keywords": lead}  # fmt: skip
-    return {"status": "graded", "observed_days": seen, "n_true": len(hits), "methods": res}
+        br = bt.classify_top(top, hits, near)
+        res[m] = {"submitted": len(top), "hits": len(br["lead"]) + len(br["late"]), "lead7": len(br["lead"]),
+                  "lead7_rate": round(len(br["lead"]) / len(top), 4) if top else None, "lead7_keywords": br["lead"],
+                  "reasons": {r: len(br[r]) for r in bt.REASONS}, "gone_keywords": br["gone"]}  # fmt: skip
+    return {"status": "graded", "observed_days": seen, "n_true": len(hits), "major_rise": len(majors),
+            "first_seen": len(majors - vocab), "methods": res}  # fmt: skip
 
 
 def evaluate(rank_dir, *, root: Path | None = None, min_share: float = bt.FUTURE_MIN_SHARE,
@@ -117,6 +127,12 @@ def evaluate(rank_dir, *, root: Path | None = None, min_share: float = bt.FUTURE
             "submitted": sub,
             "lead7": lead,
             "lead7_rate": round(lead / sub, 4) if sub else None,
+            "reasons": {
+                r: round(sum(e["methods"][m]["reasons"][r] for e in counted if m in e["methods"]) / sub, 4)
+                if sub
+                else None
+                for r in bt.REASONS
+            },
         }
     base = summary[BASELINE]["lead7_rate"]
     for m, x in summary.items():
@@ -124,12 +140,17 @@ def evaluate(rank_dir, *, root: Path | None = None, min_share: float = bt.FUTURE
             round((x["lead7_rate"] - base) * 100, 1) if x["lead7_rate"] is not None and base is not None else None
         )
     n = len(counted)
+    maj = sum(e["major_rise"] for e in counted)
+    fs = sum(e["first_seen"] for e in counted)
+    first_seen = {"major_rise": maj, "first_seen": fs, "share": round(fs / maj, 4) if maj else None}
     return {
         "entries": entries,
         "graded_weeks": n,
         "pending": sum(1 for e in entries if e["status"] == "pending"),
         "retro_excluded": sum(1 for e in entries if e["status"] == "graded" and not e["live"] and not include_retro),
         "summary": summary,
+        "first_seen": first_seen,
+        "reason_names": bt.REASON_NAMES,
         "baseline": BASELINE,
         "target": {
             "rule": "두 해 백테스트 모두 비교 기준(전년 기준) 이상 — 수치 목표는 실제 예보 12주 뒤 다시 정함",
