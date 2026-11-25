@@ -3220,6 +3220,16 @@ def seller_detail_preview(detail_id: str):
                                        "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
 
 
+@router.get("/admin/seller-products/{product_id}/preview", dependencies=[api])
+def seller_product_preview(product_id: str):
+    """상품 검수 옆 '손님 화면 미리보기' — 상세페이지가 없으면 상품 정보만으로 (2026-11-25)."""
+    from app.services.seller import detail_page, store
+
+    page = _seller_call(store, lambda: detail_page.product_preview(detail_page.engine(), product_id))
+    return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                                       "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
+
+
 @router.get("/admin/seller/{seller_id}/shop", dependencies=[api])
 def seller_shop_preview(seller_id: str):
     """⑧ 미니숍 미리보기 — 승인된 상세페이지만. 고객 화면(/shop/…)은 노출 결정 뒤(결정 2)."""

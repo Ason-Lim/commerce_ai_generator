@@ -42,6 +42,7 @@ input[type=search]{min-width:200px}
 .spacer{flex:1}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;align-items:start}
 .grid.nodetail{grid-template-columns:minmax(0,1fr)}
+iframe.pv{width:100%;height:520px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:6px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
 .panel h3{margin:0 0 10px;font-size:15px}
 .tblwrap{overflow-x:auto}
@@ -227,11 +228,15 @@ async function loadQueue(){let d;try{d=await api("/admin/api/seller-products?sta
   $("#queue").innerHTML=ROWS.length?ROWS.map(p=>`<tr data-id="${esc(p.product_id)}" tabindex="0" style="cursor:pointer" aria-selected="${p.product_id===CUR}"><td>${esc(p.seller_name)}</td><td>${esc(p.name)}<small style="display:block;color:var(--ink3)">${esc(p.volume)}${p.unit&&Object.keys(p.unit.info.option||{}).length?" · "+esc(Object.entries(p.unit.info.option).map(([k,x])=>k+" "+x).join(", ")):""}${p.unit&&p.unit.channel!=="manual"?" · "+esc(p.unit.channel_label)+" "+esc(p.unit.ext_no):""}</small>${(p.unit&&(p.unit.info.category||[]).length)?`<small style="display:block;color:var(--ink3)">${esc(p.unit.info.category.join(" > "))}</small>`:""}${(p.warnings||[]).map(w=>`<span class="src src-seller" style="margin-right:3px">${esc(w)}</span>`).join("")}</td><td class="num">${won(p.price)}</td>
    <td>${p.facts.map(f=>`<span class="src src-${f.source}">${esc(f.label)} ${esc(f.source_label)}</span>`).join(" ")}</td><td><span class="st st-${esc(p.status)}">${esc(p.status_label)}</span></td></tr>`).join(""):'<tr><td colspan="5" class="empty">이 상태의 상품이 없어요</td></tr>';
   document.querySelectorAll("#queue tr[data-id]").forEach(tr=>{tr.onclick=()=>openP(tr.dataset.id);tr.onkeydown=e=>{if(e.key==="Enter")openP(tr.dataset.id)}});
-  if(CUR){const p=ROWS.find(x=>x.product_id===CUR);p?showP(p):($("#pd").hidden=true)}}
+  const cur=CUR&&ROWS.find(x=>x.product_id===CUR);
+  if(cur)showP(cur);else if(ROWS.length)openP(ROWS[0].product_id);else $("#pd").hidden=true;
+  $("#qgrid").classList.toggle("nodetail",!ROWS.length)}
 function openP(id){CUR=id;showP(ROWS.find(x=>x.product_id===id));document.querySelectorAll("#queue tr").forEach(t=>t.setAttribute("aria-selected",t.dataset.id===id))}
 const LABEL={origin:"원산지",cert:"인증 표기",brix:"당도(브릭스)"};
 function showP(p){const pd=$("#pd");pd.hidden=false;const v=p.verified||{};
-  pd.innerHTML=`<h3>${esc(p.name)}</h3><dl class="kv"><dt>셀러</dt><dd>${esc(p.seller_name)}</dd><dt>용량</dt><dd>${esc(p.volume)}</dd><dt>가격</dt><dd>${won(p.price)}</dd>
+  pd.innerHTML=`<div class="sec" style="margin-top:0"><div style="display:flex;align-items:center;gap:6px"><h4 style="margin:0">손님 화면 미리보기</h4><span class="spacer"></span><a class="btn" href="/admin/seller-products/${esc(p.product_id)}/preview" target="_blank" rel="noopener">새 창</a></div>
+   <iframe class="pv" title="손님 화면 미리보기" sandbox="" loading="lazy" src="/admin/seller-products/${esc(p.product_id)}/preview"></iframe></div>
+   <h3>${esc(p.name)}</h3><dl class="kv"><dt>셀러</dt><dd>${esc(p.seller_name)}</dd><dt>용량</dt><dd>${esc(p.volume)}</dd><dt>가격</dt><dd>${won(p.price)}</dd>
    <dt>배송비</dt><dd>${p.ship_fee==null?"판매처 확인":won(p.ship_fee)}</dd><dt>판매처</dt><dd>${p.sale_url?`<a href="${esc(p.sale_url)}" target="_blank" rel="noopener noreferrer">${esc(p.sale_url)}</a>`:""}</dd>
    <dt>상태</dt><dd><span class="st st-${esc(p.status)}">${esc(p.status_label)}</span> ${esc(p.review_note)}</dd></dl>
    <div class="sec"><h4>표기 확인</h4>${Object.entries(LABEL).map(([k,l])=>{const d=p.declared[k];const x=v[k];return `<div class="fact"><div>${l}</div><div>
