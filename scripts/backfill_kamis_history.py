@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import http.client
 import json
 import sys
 import time
@@ -81,7 +82,9 @@ def fetch(day: str, category: str, cls: str, country: str, key: str, cid: str, t
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return json.loads(r.read().decode("utf-8", "replace"))
-        except (urllib.error.URLError, TimeoutError, OSError) as e:   # socket.timeout 은 TimeoutError, 연결 거부는 URLError
+        # socket.timeout 은 TimeoutError, 연결 거부는 URLError, 연결 끊김은 OSError(ConnectionResetError),
+        # 응답 중간 끊김(IncompleteRead·RemoteDisconnected)은 http.client.HTTPException·json 깨짐 (2026-11-25)
+        except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException, json.JSONDecodeError) as e:
             last = e
             if i < retries:
                 time.sleep(RETRY_WAITS[i])
@@ -203,7 +206,7 @@ def main() -> int:
         day = a.end
         try:
             doc = fetch(day, "100", a.cls, a.country, key, cid, timeout=a.timeout, retries=1)
-        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
+        except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException, json.JSONDecodeError) as e:
             print(f"KAMIS 응답 없음({type(e).__name__}: {e}) — 재시도 {len(RETRY_WAITS)}번 뒤에도 실패. 잠시 뒤(아침 시세 갱신 시간대 피해서) 다시 해 보세요.")
             return 1
         rows = rows_of(doc, day, "100", a.cls, a.country)
@@ -232,7 +235,7 @@ def main() -> int:
         p.parent.mkdir(parents=True, exist_ok=True)
         try:
             doc = fetch(day, c, a.cls, a.country, key, cid, timeout=a.timeout)
-        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
+        except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException, json.JSONDecodeError) as e:
             fail += 1
             streak += 1
             print(f"  실패 {day} {c}: {type(e).__name__} {e}", flush=True)
