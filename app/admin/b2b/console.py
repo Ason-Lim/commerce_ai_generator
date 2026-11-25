@@ -90,12 +90,47 @@ class Console:
         if action in ("list_bids", "help") and re.search(r"\d+\s*명|1인당|[A-Za-z가-힣]+-\d{6,}|(?:G2B|legacy|bid)-[\w-]+", p):
             action = "analyze"
         if action in ("rfq", "proposal", "report", "cost", "discover") and w.req is None:
+            # 2026-11-25 (지인 의견): 새 대화에서 '제안서 작성해줘'만 누르면 '분석할 공고나 조건을 찾지 못했어요'로 끝났다
+            # → 공고번호·조건이 없으면 어느 공고로 만들지 고르게 한다 (공고마다 '…제안서 작성해줘' 버튼)
+            if not self._has_target(p):
+                return self._out(w, action, self._pick_bid(action, today))
             pre = self._analyze(w, p, today)
             if w.req is None:
                 return self._out(w, action, pre)
         handler = getattr(self, "_" + action)
         blocks = handler(w, p, today)
         return self._out(w, action, blocks)
+
+    TARGET_RE = re.compile(r"(?:G2B|legacy|bid)-[\w-]+|[A-Za-z가-힣]+-\d{6,8}|\d+\s*명|1인당|\d+\s*(?:만\s*)?원")
+    ACTION_WORD = {"proposal": "제안서 작성해줘", "rfq": "견적 요청서 만들어줘", "report": "분석 리포트 보여줘",
+                   "cost": "비용 계산해줘", "discover": "후보 더 찾아줘"}  # fmt: skip
+    ACTION_NAME = {"proposal": "제안서", "rfq": "견적 요청서", "report": "분석 리포트", "cost": "비용 계산", "discover": "후보 찾기"}
+
+    def _has_target(self, p: str) -> bool:
+        return bool(self.TARGET_RE.search(p or ""))
+
+    def _pick_bid(self, action: str, today) -> list[dict]:
+        """어느 공고로 할지 — 조건(인원·예산·품목)이 있는 입찰중·마감임박 공고부터 버튼으로."""
+        rows = []
+        for b in bidstore.list_bids():
+            v = b.view(today)
+            if v["status"] not in ("입찰중", "마감임박", "마감일 미확인") or b.verification == "legacy_unverified":
+                continue
+            r = b.requirement
+            ready = bool(r and (r.headcount or r.budget_per_person or r.categories))
+            rows.append((0 if ready else 1, 0 if v["status"] == "마감임박" else 1, b.bid_id, b.title, ready))
+        rows.sort()
+        word, name = self.ACTION_WORD[action], self.ACTION_NAME[action]
+        ready = [r for r in rows if r[4]][:5]
+        md = (f"**{name}**를 만들 공고를 먼저 골라 주세요. 아래 공고 버튼을 누르거나, 공고번호와 함께 "
+              f"‘IBK서비스-2026008 {word}’처럼 말하거나, 공고 조건(인원·1인 예산·품목·배송 기한)을 붙여 넣어 주세요.")
+        if not ready:
+            md += "\n\n지금은 인원·예산·품목 조건이 들어 있는 입찰중 공고가 없어요. 조건을 직접 넣어 주세요."
+        items = [f"{r[2]} {word}" for r in ready] + ["직원 500명 1인당 5만원 식품 2종 생활용품 1종 3영업일 배송 조건 분석", "입찰중 공고 보여줘"]
+        out = [{"type": "text", "md": md}]
+        if ready:
+            out.append({"type": "text", "md": "\n".join(f"- **{r[2]}** {r[3]}" for r in ready)})
+        return out + [{"type": "actions", "items": items}]
 
     def _out(self, w: Workspace, action: str, blocks: list[dict]) -> dict:
         return {"workspace_id": w.id, "action": action, "bid_id": w.bid_id, "blocks": blocks}
