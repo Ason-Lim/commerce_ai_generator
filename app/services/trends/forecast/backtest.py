@@ -126,6 +126,41 @@ def truth(days: _Days, as_of: dt.date, h: int, top_now: set[str], *, min_share: 
     return hits, seen
 
 
+# ── 못 맞힌 이유 (2026-11-25) ──
+# 제출한 상위 20 을 넷으로: 7일+ 앞서 적중(성과) · 늦게 적중(7일 안) · 시점 어긋남(기간 앞뒤 14일 안엔 100위 진입) · 안 옴.
+# '안 옴'과 정답 쪽 '처음 등장'은 트렌드 변화로 본다(trend_shift). 늦게·시점은 방법으로 줄일 수 있는 몫.
+TIMING_DAYS = 14
+REASONS = ("lead", "late", "timing", "gone")
+REASON_NAMES = {"lead": "7일+ 앞서 적중", "late": "늦게 적중(7일 안)", "timing": "시점 어긋남",
+                "gone": "작년 키워드가 안 옴", "first_seen": "처음 등장(놓친 쪽)"}  # fmt: skip
+
+
+def near_window(days: _Days, as_of: dt.date, h: int) -> set[str]:
+    """기간 바로 앞(as_of−14~as_of−1)·바로 뒤(as_of+h+1~+h+14)에 100위 안이던 키워드 — '시점 어긋남' 판정용(채점에서만 씀)."""
+    out: set[str] = set()
+    for a, b in ((as_of - dt.timedelta(days=TIMING_DAYS), as_of - dt.timedelta(days=1)),
+                 (as_of + dt.timedelta(days=h + 1), as_of + dt.timedelta(days=h + TIMING_DAYS))):  # fmt: skip
+        d = a
+        while d <= b:
+            for kw, r in (days.get(d) or {}).items():
+                if r <= BAND:
+                    out.add(kw)
+            d += dt.timedelta(days=1)
+    return out
+
+
+def classify_top(top: list[str], hits_true: dict[str, dict], near: set[str]) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {r: [] for r in REASONS}
+    for k in top:
+        if k in hits_true:
+            out["lead" if hits_true[k]["first"] >= LEAD_MIN else "late"].append(k)
+        elif k in near:
+            out["timing"].append(k)
+        else:
+            out["gone"].append(k)
+    return out
+
+
 # ── 방법들: {키워드: 점수(작을수록 확신 — 근거 순위)} ──
 def m_recent(days: _Days, as_of: dt.date, h: int, top_now: set[str], **_) -> dict[str, float]:
     best = _best(days, as_of - dt.timedelta(days=RECENT_DAYS - 1), as_of, limit=as_of)
@@ -250,7 +285,8 @@ FUNCS = {"recent": m_recent, "last_year": m_last_year, "last_year_lunar": m_last
 
 def _empty() -> dict:
     return {"n_true": 0, "n_true_known": 0, "n_pred": 0, "hits": 0, "hits_known": 0, "top_pred": 0, "top_hits": 0,
-            "top_lead": 0, "leads": [], "major": 0, "major_hit": 0, "extra_hits": 0}  # fmt: skip
+            "top_lead": 0, "leads": [], "major": 0, "major_hit": 0, "extra_hits": 0,
+            "br_late": 0, "br_timing": 0, "br_gone": 0}  # fmt: skip
 
 
 def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, horizons=HORIZONS,
@@ -288,6 +324,7 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
             hits_true, seen = truths[h]
             known_true = {k for k in hits_true if k in vocab}
             major = {k for k, v in hits_true.items() if v["best"] <= MAJOR_BAND}
+            near = near_window(days, d, h)
             base_hit: set[str] = set()
             all_hit: set[str] = set()
             res = {}
@@ -304,6 +341,10 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
                 a["top_pred"] += len(top)
                 a["top_hits"] += sum(1 for k in top if k in hits_true)
                 a["top_lead"] += sum(1 for k in top if k in hits_true and hits_true[k]["first"] >= LEAD_MIN)
+                br = classify_top(top, hits_true, near)
+                a["br_late"] += len(br["late"])
+                a["br_timing"] += len(br["timing"])
+                a["br_gone"] += len(br["gone"])
                 a["leads"] += [hits_true[k]["first"] for k in hit]
                 a["major"] += len(major)
                 a["major_hit"] += len(major & hit)
@@ -338,6 +379,7 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
                 "major": u["major"],
                 "major_missed_all": round(1 - u["major_hit"] / u["major"], 4) if u["major"] else None,
                 "major_first_seen": u["new_major"],
+                "first_seen_share": round(u["new_major"] / u["major"], 4) if u["major"] else None,
             }
             for h, u in union.items()
         },
@@ -381,10 +423,17 @@ def _summary(a: dict, m: str) -> dict:
         "lead_median": statistics.median(a["leads"]) if a["leads"] else None,
         "major_missed": round(1 - a["major_hit"] / a["major"], 4) if a["major"] else None,
         "false_pos": a["n_pred"] - a["hits"],
+        "miss_breakdown": {  # 제출 상위 20 기준 비율 (합 = 1)
+            "lead": round(a["top_lead"] / a["top_pred"], 4) if a["top_pred"] else None,
+            "late": round(a["br_late"] / a["top_pred"], 4) if a["top_pred"] else None,
+            "timing": round(a["br_timing"] / a["top_pred"], 4) if a["top_pred"] else None,
+            "gone": round(a["br_gone"] / a["top_pred"], 4) if a["top_pred"] else None,
+        },
     }
     if m.startswith("explorer"):
         out["extra_hits"] = a["extra_hits"]
     return out
 
 
-__all__ = ["HORIZONS", "METHODS", "BASELINES", "QUESTIONS", "population", "truth", "run", "FUNCS", "lunar_shifts", "year_back"]
+__all__ = ["HORIZONS", "METHODS", "BASELINES", "QUESTIONS", "population", "truth", "run", "FUNCS", "lunar_shifts", "year_back",
+           "classify_top", "near_window", "REASONS", "REASON_NAMES"]

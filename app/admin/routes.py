@@ -287,6 +287,29 @@ def trends_forecast_ledger_save():
     return ledger.save(rank_dir, day) | {"as_of": day.isoformat()}
 
 
+@router.get("/admin/api/trends/forecast/trend-shift")
+def trends_forecast_trend_shift(request: Request, as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+                                weeks: int = Query(8, ge=1, le=26)):
+    """트렌드 변화 (2026-11-25) — 식은 키워드(작년 이 기간 50위 안 → 올해 안 옴) · 새로 뜬 키워드(처음 등장 50위 안).
+    기준일 뒤 28+14일 실제 순위가 있어야 판정. 기본 기준일 = 마지막 순위 파일 − 42일. 참고 자료(추천 순위에 쓰지 않음)."""
+    from app.services.trends import period
+    from app.services.trends.forecast import trend_shift as ts
+
+    if not request_ok(request) and not guest_trends_on():
+        raise HTTPException(401, "관리자 로그인이 필요해요")
+    rank_dir, kind, _ = _period_dirs()
+    if not rank_dir:
+        raise HTTPException(404, period.source_note(kind, rank_dir) or "식품 순위 자료가 없어요")
+    latest = ts.default_as_of(rank_dir)
+    day = date.fromisoformat(as_of) if as_of else latest
+    if day is None:
+        raise HTTPException(404, "순위 파일이 없어요")
+    out = ts.report(rank_dir, day)
+    out["latest_as_of"] = latest.isoformat() if latest else None
+    out["weekly"] = ts.weekly(rank_dir, day, weeks=weeks)
+    return out
+
+
 @router.get("/admin/api/trends/forecast/backtest")
 def trends_forecast_backtest(request: Request, start: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
                              end: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"), step: int = Query(7, ge=1, le=28),
