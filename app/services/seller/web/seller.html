@@ -61,6 +61,19 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     </section>
 
 
+    <section class="box" aria-labelledby="ch-h">
+      <h2 id="ch-h">기준 판매처 · 따라가기</h2>
+      <p class="note">원래 쓰시던 판매처 하나만 관리하세요. 그 판매처의 상품 자료를 올리면 <b>바뀐 것만</b> 이쪽에 반영돼요 — 가격·재고·품절·옵션·배송비는 바로, 원산지·인증·카테고리가 바뀌면 그 칸만 다시 확인을 받아요. 연동된 상품은 여기서 고칠 수 없어요(판매처에서 바꿔 주세요). 판매 끄기는 여기서도 돼요.</p>
+      <div class="row" style="margin-top:6px"><label for="chSel" class="note">기준 판매처</label><select id="chSel" style="font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px"></select><button type="button" class="sub" id="chSave">정하기</button></div>
+      <details style="margin-top:10px"><summary>판매처 상품 자료 올리기 (표준 칸)</summary>
+        <p class="note">스마트스토어 '상품 조회/수정' 엑셀이나 쿠팡 WING 상품 엑셀을 아래 칸 이름에 맞춰 붙여 넣어 주세요(판매처 엑셀을 그대로 올리는 기능은 곧 붙어요). '상품번호'는 판매처 번호 — 옵션이면 '원상품번호-옵션번호'.</p>
+        <label for="syncCsv" class="note">표준 칸 CSV</label><textarea id="syncCsv" spellcheck="false"></textarea>
+        <label class="note" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="syncFull" style="width:auto"> 전체 목록이에요 (빠진 상품은 이쪽에서 판매 끔)</label>
+        <div class="row"><button type="button" id="syncBtn">반영하기</button></div>
+        <div id="syncMsg" role="status"></div>
+      </details>
+    </section>
+
     <section class="box" aria-labelledby="pr-h">
       <h2 id="pr-h">내 상품</h2>
       <div id="askConfirm" class="msg ok" hidden style="margin:0 0 10px"><span id="askText"></span> <button type="button" class="sub" id="confirmBtn">상품 정보 그대로예요</button></div>
@@ -77,10 +90,13 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
           <div class="field"><label for="p_volume">용량</label><input id="p_volume" maxlength="40" placeholder="예: 5kg"></div>
           <div class="field"><label for="p_price">가격(원) *</label><input id="p_price" inputmode="numeric" maxlength="10"></div>
           <div class="field"><label for="p_ship">배송비(원)</label><input id="p_ship" inputmode="numeric" maxlength="6" placeholder="비우면 '판매처 확인'"></div>
-          <div class="field"><label for="p_origin">원산지</label><input id="p_origin" maxlength="40"></div>
-          <div class="field"><label for="p_cert">인증 표기</label><input id="p_cert" maxlength="60" placeholder="예: 무농약, GAP"></div>
+          <div class="field"><label for="p_origin">원산지</label><input id="p_origin" maxlength="200" placeholder="여러 곳이면 쉼표로 (예: 국산, 중국산)"></div>
+          <div class="field"><label for="p_cert">인증 표기</label><input id="p_cert" maxlength="300" placeholder="종류/인증기관/인증번호 — 여러 개면 ; (친환경 인증은 기관·번호 필수)"></div>
           <div class="field"><label for="p_brix">당도(브릭스)</label><input id="p_brix" inputmode="decimal" maxlength="5"></div>
           <div class="field"><label for="p_url">판매처 주소</label><input id="p_url" maxlength="300" placeholder="https://"></div>
+          <div class="field"><label for="p_cat">카테고리</label><input id="p_cat" maxlength="200" placeholder="예: 식품>과일>감귤 (판매처 카테고리 그대로)"></div>
+          <div class="field"><label for="p_group">묶음(그룹) 이름</label><input id="p_group" maxlength="100" placeholder="같은 상품의 다른 용량을 묶는 이름 — 비우면 상품명"></div>
+          <div class="field"><label for="p_opt">판매옵션</label><input id="p_opt" maxlength="200" placeholder="예: 중량=5kg, 등급=특"></div>
         </div>
         <div class="row"><button type="submit" id="pSave">올리기</button><button type="button" class="sub" id="pCancel" hidden>고치기 그만</button></div>
       </form>
@@ -186,7 +202,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
     if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks();
+    KEY = code; show(j.seller); loadChannel(); await loadScm(); loadProducts(); loadHealth(); loadBilling(); loadAsks();
   }
 
   let EDIT = null, PRODS = [];
@@ -197,11 +213,11 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     if (!j.ok) return;
     PRODS = j.products;
     if (!$("csv").value) $("csv").value = j.csv_template;
-    $("plist").innerHTML = PRODS.length ? PRODS.map((p) => `<tr><td>${esc(p.name)}<div class="note">${esc(p.volume)}</div></td><td class="num">${won(p.price)}</td>
+    $("plist").innerHTML = PRODS.length ? PRODS.map((p) => `<tr><td>${esc(p.name)}<div class="note">${esc(p.volume)}${p.unit && p.unit.group_name && p.unit.group_name !== p.name ? " · 묶음 " + esc(p.unit.group_name) : ""}${p.unit && Object.keys(p.unit.info.option || {}).length ? " · " + esc(Object.entries(p.unit.info.option).map(([k, x]) => k + " " + x).join(", ")) : ""}</div>${p.unit && (p.unit.info.category || []).length ? `<div class="note">${esc(p.unit.info.category.join(" > "))}</div>` : ""}${p.locked ? `<div class="note" style="color:var(--accent)">${esc(p.unit.channel_label)} 연동${p.unit.source_missing ? " · 판매처에서 사라짐" : ""}</div>` : ""}</td><td class="num">${won(p.price)}</td>
       <td>${p.facts.map((f) => `<span class="src${f.source === "verified" ? " v" : ""}">${esc(f.label)} ${esc(f.value)} · ${esc(f.source_label)}</span>`).join(" ")}</td>
       <td style="white-space:nowrap"><b${p.sale_state === "on_sale" ? ' style="color:var(--accent)"' : ""}>${esc(p.sale_label)}</b>${p.review_note ? `<div class="note">${esc(p.review_note)}</div>` : ""}</td>
-      <td>${stockCell(p.product_id)}</td>
-      <td><button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button> <button type="button" class="sub" data-on="${p.on ? 0 : 1}" data-pid="${esc(p.product_id)}">${p.on ? "판매 끄기" : "판매 켜기"}</button></td></tr>`).join("")
+      <td>${stockCell(p.product_id, p.locked)}</td>
+      <td>${p.locked ? "" : `<button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button>`} <button type="button" class="sub" data-on="${p.on ? 0 : 1}" data-pid="${esc(p.product_id)}">${p.on ? "판매 끄기" : "판매 켜기"}</button></td></tr>`).join("")
       : '<tr><td colspan="6" class="note">아직 올린 상품이 없어요</td></tr>';
     bindStock();
     document.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => edit(PRODS.find((p) => p.product_id === b.dataset.edit)));
@@ -209,10 +225,14 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       await post("/seller/api/products/listing", {key: KEY, product_id: b.dataset.pid, on: b.dataset.on === "1"}); loadProducts(); loadHealth();
     });
   }
-  const PF = {name:"p_name", volume:"p_volume", price:"p_price", ship_fee:"p_ship", origin:"p_origin", cert:"p_cert", brix:"p_brix", sale_url:"p_url"};
+  const PF = {name:"p_name", volume:"p_volume", price:"p_price", ship_fee:"p_ship", origin:"p_origin", cert:"p_cert", brix:"p_brix", sale_url:"p_url", category:"p_cat", group:"p_group", option:"p_opt"};
   function edit(p){
     EDIT = p.product_id;
-    const v = {...p, ...p.declared};
+    const u = p.unit || {}, inf = u.info || {};
+    const v = {...p, ...p.declared, category: (inf.category || []).join(">"), group: u.group_name || "",
+      option: Object.entries(inf.option || {}).map(([k, x]) => `${k}=${x}`).join(", "),
+      origin: (p.declared.origins || []).join(", ") || p.declared.origin || "",
+      cert: (p.declared.certs || []).map((c) => [c.kind, c.org, c.no].filter(Boolean).join("/")).join("; ") || p.declared.cert || ""};
     for (const [k, id] of Object.entries(PF)) $(id).value = v[k] ?? "";
     $("pSave").textContent = "고친 내용 올리기"; $("pCancel").hidden = false; $("p_name").focus();
   }
@@ -234,11 +254,11 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   };
 
   let SUP = {suppliers: [], supply: {}, stock: {}};
-  function stockCell(pid){
+  function stockCell(pid, locked){
     const st = SUP.stock[pid] || {}, sp = SUP.supply[pid] || {};
     const sname = (SUP.suppliers.find((x) => x.supplier_id === sp.supplier_id) || {}).name || "직접 출고";
     const label = st.sold_out ? `<b style="color:var(--err)">품절</b>${st.restock_on ? ` · ${esc(st.restock_on)} 입고` : ""}` : (st.stock == null ? "재고 관리 안 함" : `재고 ${st.stock}`);
-    return `${label}<div class="note">${esc(sname)}${sp.sku ? " · " + esc(sp.sku) : ""}</div><button type="button" class="sub" data-stock="${esc(pid)}">바꾸기</button>`;
+    return `${label}<div class="note">${esc(sname)}${sp.sku ? " · " + esc(sp.sku) : ""}</div>${locked ? '<div class="note">판매처 값</div>' : `<button type="button" class="sub" data-stock="${esc(pid)}">바꾸기</button>`}`;
   }
   function bindStock(){
     document.querySelectorAll("[data-stock]").forEach((b) => b.onclick = async () => {
@@ -341,6 +361,23 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     showAsks(j.asks);
   }
   $("askForm").addEventListener("submit", (e) => { e.preventDefault(); sendAsk(false); });
+
+  let CH = "manual";
+  async function loadChannel(){
+    const j = await post("/seller/api/channel", {key: KEY});
+    if (!j.ok) return;
+    CH = j.channel;
+    $("chSel").innerHTML = Object.entries(j.channels).map(([k, v]) => `<option value="${k}"${k === CH ? " selected" : ""}>${esc(v)}</option>`).join("");
+    if (!$("syncCsv").value) $("syncCsv").value = j.std_template;
+  }
+  $("chSave").onclick = async () => { const j = await post("/seller/api/channel", {key: KEY, channel: $("chSel").value}); if (j.ok) { CH = j.channel; msg($("syncMsg"), `기준 판매처: ${j.label}`, "ok"); } };
+  $("syncBtn").onclick = async () => {
+    if (CH === "manual") { msg($("syncMsg"), "기준 판매처를 네이버나 쿠팡으로 먼저 정해 주세요", "err"); return; }
+    const j = await post("/seller/api/sync", {key: KEY, channel: CH, csv: $("syncCsv").value, full: $("syncFull").checked});
+    if (!j.ok) { msg($("syncMsg"), j.errors ? j.errors.map((x) => `${x.line}번째 줄: ${x.error}`).join("\n") : (j.error || "반영하지 못했어요"), "err"); $("syncMsg").querySelector(".msg").style.whiteSpace = "pre-line"; return; }
+    msg($("syncMsg"), `새 상품 ${j.added} · 바로 반영 ${j.fast} · 다시 확인 ${j.review} · 그대로 ${j.unchanged}${j.missing ? ` · 판매처에서 사라짐 ${j.missing}` : ""}`, "ok");
+    await loadScm(); loadProducts(); loadHealth();
+  };
   // # 뒤 코드는 서버로 가지 않는다 — 읽자마자 주소창에서 지운다
   const m = location.hash.match(/k=([A-Za-z0-9_-]{24})/);
   if (m) { history.replaceState(null, "", location.pathname); enter(m[1]); }
