@@ -153,7 +153,11 @@ def _own_product(c, seller_id: str, product_id: str):
 
 # ── 재고·품절 ─────────────────────────────────────────────────────────────
 def set_stock(eng, token: str, client: str, product_id: str, *, stock, sold_out: bool, restock_on: str | None) -> dict:
+    from app.services.seller import catalog
+
     s = store.resolve(eng, token, client)
+    if ch := catalog.locked(eng, product_id):
+        raise store.SellerError(f"{ch}와 연동된 상품이에요. 재고·품절은 {ch}에서 바꿔 주세요 — 다음 동기화 때 들어와요")
     st = None
     if stock is not None and str(stock).strip() != "":
         try:
