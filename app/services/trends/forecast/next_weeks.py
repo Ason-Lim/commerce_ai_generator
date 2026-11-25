@@ -18,6 +18,8 @@
 * (2026-11-25) 탐색기(반복만)는 **근거 열로만** 붙인다 — 목록에 넣거나 순서를 바꾸지 않는다. 그 주에 진입이 예상되는데
   목록에 없는 반복 키워드는 주마다 `explorer_only` 로 따로 낸다. 2026 백테스트 28일·상위20·7일+ 20.5%
   (규칙을 만들 때 본 자료라 참고값 — 실제 성적은 forecast.ledger).
+* (2026-11-24 밤) 거리가 같으면 절기(type=solar_term, 입하 등)를 쇼핑 행사·공휴일보다 뒤로 민다 — 절기는 날짜가
+  다른 행사와 자주 겹치고(입하=어린이날 5-05), 실제 수요를 끄는 쪽은 대개 쇼핑 행사라서. 순서: 거리 → 절기 여부 → D-day → 달력 순서.
 """
 
 from __future__ import annotations
@@ -110,6 +112,7 @@ def next_weeks(rank_dir: str | Path, as_of: dt.date, *, weeks: int = 4, top_n: i
     for name, d in bt._event_dates(rows):
         occ.setdefault(name, {})[d.year] = d
     exr = explorer_repeat(days, as_of, 7 * weeks, top_now, rows, rank_dir) if with_explorer else {}
+    solar = {r["event"] for r in rows if r.get("type") == "solar_term"}  # 거리 동점이면 절기는 뒤로
     out_weeks = []
     for k in range(1, weeks + 1):
         a = as_of + dt.timedelta(days=7 * (k - 1) + 1)
@@ -141,13 +144,13 @@ def next_weeks(rank_dir: str | Path, as_of: dt.date, *, weeks: int = 4, top_n: i
                                          "last_year_date": when.isoformat(), "sources": []})  # fmt: skip
                 if tag not in c["sources"]:
                     c["sources"].append(tag)
-                    c.setdefault("_ev", []).append((tag, prev, (d - as_of).days))
+                    c.setdefault("_ev", []).append((tag, prev, (d - as_of).days, name in solar))
                 if r < c["score"]:
                     c.update(score=r, last_year_best=r, last_year_date=when.isoformat())
         for c in cand.values():
             evs = c.pop("_ev", [])
             best_day = dt.date.fromisoformat(c["last_year_date"])
-            c["main_event"] = min(evs, key=lambda e: (abs((e[1] - best_day).days), e[2]))[0] if evs else None
+            c["main_event"] = min(evs, key=lambda e: (abs((e[1] - best_day).days), e[3], e[2]))[0] if evs else None
         items = sorted(cand.values(), key=lambda c: (c["score"], -len(c["sources"]), c["keyword"]))
         week_ex = {kw: x for kw, x in exr.items() if a.isoformat() <= x["expected_enter"] <= b.isoformat()}
         for c in items:
