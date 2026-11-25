@@ -3108,8 +3108,23 @@ def seller_list():
     from app.services.seller import catalog
 
     links = catalog.store_urls(catalog.engine())
-    return {"sellers": [dict(x, store_url=links.get(x["seller_id"], ""), shop_preview=f"/admin/seller/{x['seller_id']}/shop")
+    slugs = catalog.slugs(catalog.engine())
+    return {"sellers": [dict(x, store_url=links.get(x["seller_id"], ""), slug=slugs.get(x["seller_id"], ""),
+                             shop_preview=f"/admin/seller/{slugs.get(x['seller_id']) or x['seller_id']}/shop")
                         for x in store.list_sellers(eng)]}  # fmt: skip
+
+
+class _SlugIn(BaseModel):
+    slug: str = Field("", max_length=40)
+
+
+@router.post("/admin/api/seller/{seller_id}/slug", dependencies=[api])
+def seller_slug(seller_id: str, body: _SlugIn):
+    """셀러 주소 이름 (/shop/renerpaint) — 같은 이름의 다른 회사면 막고 후보를 알려 준다 (2026-11-25)."""
+    store, _eng = _seller()
+    from app.services.seller import catalog
+
+    return {"ok": True, **_seller_call(store, lambda: catalog.set_slug(catalog.engine(), seller_id, body.slug, by="operator"))}
 
 
 class _StoreUrlIn(BaseModel):
@@ -3265,11 +3280,25 @@ def seller_shop_sample(seller_id: str):
                                        "Content-Security-Policy": DETAIL_CSP})  # fmt: skip
 
 
+@router.get("/admin/seller/{key}/preview/{product_id}", dependencies=[api])
+def seller_product_preview_named(key: str, product_id: str):
+    """회사 이름이 보이는 상품 미리보기 주소 (/admin/seller/renerpaint/preview/P…) — 그 셀러 상품만."""
+    from app.services.seller import catalog, detail_page, products, store
+
+    sid = catalog.resolve_seller(catalog.engine(), key)
+    with detail_page.engine().connect() as c:
+        owner = c.execute(products.t_product.select().where(products.t_product.c.product_id == product_id)).mappings().first()
+    if not sid or owner is None or owner["seller_id"] != sid:
+        raise HTTPException(404, "없는 상품이에요")
+    return seller_product_preview(product_id)
+
+
 @router.get("/admin/seller/{seller_id}/shop", dependencies=[api])
 def seller_shop_preview(seller_id: str):
-    """⑧ 미니숍 미리보기 — 승인된 상세페이지만. 고객 화면(/shop/…)은 노출 결정 뒤(결정 2)."""
-    from app.services.seller import detail_page, store
+    """⑧ 미니숍 미리보기 — 승인된 상세페이지만. 주소 이름(/admin/seller/renerpaint/shop)이나 셀러 번호로."""
+    from app.services.seller import catalog, detail_page, store
 
+    seller_id = catalog.resolve_seller(catalog.engine(), seller_id) or seller_id
     page = _seller_call(store, lambda: detail_page.shop_page(detail_page.engine(), seller_id,
                                                              banner="운영자 미니숍 미리보기 — 손님에게 보이지 않아요"))  # fmt: skip
     return HTMLResponse(page, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex",

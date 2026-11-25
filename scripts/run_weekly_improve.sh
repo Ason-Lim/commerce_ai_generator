@@ -18,6 +18,6 @@ PY=.venv/bin/python
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') 끝 (종료 코드 $CODE)"
   echo "$(date '+%Y-%m-%d %H:%M:%S') $CODE" > var/log/weekly_improve.status
   if [ "$CODE" -ne 0 ] && command -v osascript >/dev/null 2>&1; then
-    osascript -e 'display notification "var/log/weekly_improve.log 를 확인해 주세요" with title "commerce_ai 주간 개선 지표 실패"' || true
+    osascript -e 'display notification "var/log/weekly_improve.log 를 확인해 주세요" with title "trendguide 주간 개선 지표 실패"' || true
   fi
 } >>"$LOG" 2>&1

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
+import { Brand } from "./Brand";
+import { ArrowRight, TrendingUp } from "lucide-react";
 import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteFooter, SiteNav } from "./SiteNav";
 import { fetchTrends, type TrendItem, type TrendView } from "../api/client";
 
@@ -78,10 +79,7 @@ export function TrendsPage() {
       <header className="sticky top-0 z-10 border-b border-stone-200/70 bg-paper/95 backdrop-blur">
         {/* 대화 화면과 같은 머리줄 (2026-11-18 헤더 B안): 로고는 본문 왼쪽 끝, 메뉴는 오른쪽 */}
         <div className="mx-auto flex h-[64px] w-full max-w-[900px] items-center justify-between gap-3 px-4 sm:px-8">
-          <a href="/#" className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-white"><Sparkles size={17} /></span>
-            AI 식품 추천
-          </a>
+          <Brand />
           <div className="flex items-center gap-2"><SiteNav current="hot" /><ShelfLink /></div>
         </div>
       </header>

@@ -19,6 +19,6 @@ DAYS="${COLLECT_DAYS:-3}"
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') 끝 (종료 코드 $CODE)"
   echo "$(date '+%Y-%m-%d %H:%M:%S') $CODE" > var/log/collect_bids.status
   if [ "$CODE" -ne 0 ] && command -v osascript >/dev/null 2>&1; then
-    osascript -e 'display notification "var/log/collect_bids.log 를 확인해 주세요 (나라장터 키·인터넷)" with title "commerce_ai 입찰 공고 수집 실패"' || true
+    osascript -e 'display notification "var/log/collect_bids.log 를 확인해 주세요 (나라장터 키·인터넷)" with title "trendguide 입찰 공고 수집 실패"' || true
   fi
 } >>"$LOG" 2>&1

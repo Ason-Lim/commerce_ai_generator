@@ -142,7 +142,7 @@ details{{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margi
 @media (max-width:820px){{.strip{{grid-template-columns:1fr 1fr}}}}
 @media print{{body{{background:#fff}} section{{break-inside:avoid}}}}
 </style></head><body><div class="wrap">
-<div class="meta">{today.isoformat()} · 내부 검토용 · commerce_ai B2B</div>
+<div class="meta">{today.isoformat()} · 내부 검토용 · trendguide B2B</div>
 <h1>{E(title)} — 후보·조건 분석</h1>
 <div class="banner">조사 후보이며 최종 추천·계약 가능·온라인 최저가 검증 완료를 의미하지 않습니다. 공개 판매가는 견적이 아니며, 견적 요청은 발송되지 않았습니다.</div>
 {strip}

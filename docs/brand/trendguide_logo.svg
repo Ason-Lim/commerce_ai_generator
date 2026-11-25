@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 96" width="400" height="96" role="img" aria-label="trendguide">
+  <!-- trendguide 로고 (2026-11-25). 글꼴: Pretendard ExtraBold (없으면 Inter). 먹색 #17181c · 초록 #1f6f43 · 회색 #8a8d95 -->
+  <rect x="4" y="12" width="72" height="72" rx="20" fill="#17181c"/>
+  <g transform="translate(4 12) scale(2.25)" fill="none" stroke="#f7f6f2" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 21.5 L13 15.5 L17 18.5 L24.5 10.5"/><path d="M19.8 10.2 H24.8 V15.2"/>
+    <circle cx="13" cy="15.5" r="2.1" fill="#1f6f43" stroke-width="1.2"/>
+  </g>
+  <text x="92" y="66" font-family="Pretendard, Inter, 'Apple SD Gothic Neo', sans-serif" font-size="50" font-weight="800" letter-spacing="-2.2"><tspan fill="#17181c">trend</tspan><tspan fill="#1f6f43">guide</tspan></text>
+</svg>

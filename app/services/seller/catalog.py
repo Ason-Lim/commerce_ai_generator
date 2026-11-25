@@ -103,6 +103,18 @@ t_store = Table(
     Column("set_at", DateTime(timezone=True)),
     Column("set_by", String(48)),
 )
+# 셀러 주소 이름 — 링크에 회사 이름이 보이게 (/shop/renerpaint, 관리자 미리보기) (2026-11-25 사용자 요청)
+t_slug = Table(
+    "seller_slug",
+    meta,
+    Column("seller_id", String(12), primary_key=True),
+    Column("slug", String(40), nullable=False, unique=True),
+    Column("set_at", DateTime(timezone=True)),
+    Column("set_by", String(48)),
+)
+SLUG_RE = re.compile(r"^[a-z][a-z0-9-]{1,28}[a-z0-9]$")
+RESERVED_SLUGS = {"admin", "api", "seller", "sellers", "shop", "join", "trendguide", "help", "login", "static", "assets",
+                  "new", "all", "test", "www", "app", "ucp", "well-known"}  # fmt: skip
 SMARTSTORE_RE = re.compile(r"^https://(?:m\.)?(?:smartstore|brand)\.naver\.com/([a-z0-9_-]{2,40})/?(?:[?#].*)?$", re.I)
 
 
@@ -210,6 +222,73 @@ def set_base_channel(eng, token: str, client: str, channel: str) -> str:
             c.execute(t_base.insert().values(seller_id=s["seller_id"], channel=channel, set_at=store.now()))
         store._event(c, s["seller_id"], "base_channel", "seller", {"channel": channel})
     return channel
+
+
+def slugs(eng) -> dict[str, str]:
+    with eng.connect() as c:
+        return dict(c.execute(select(t_slug.c.seller_id, t_slug.c.slug)).all())
+
+
+def resolve_seller(eng, key: str) -> str | None:
+    """주소 이름 또는 셀러 번호 → 셀러 번호 (없으면 None)."""
+    key = (key or "").strip()
+    with eng.connect() as c:
+        sid = c.execute(select(t_slug.c.seller_id).where(t_slug.c.slug == key.lower())).scalar()
+        if sid:
+            return sid
+        return c.execute(select(store.t_seller.c.seller_id).where(store.t_seller.c.seller_id == key)).scalar()
+
+
+def _slug_suggestions(c, base: str, seller_id: str) -> list[str]:
+    """같은 이름이 이미 있을 때 — ① 사업자등록번호 끝 4자리 ② 판매처 몰 이름 ③ -2, -3… (쓰이지 않은 것만)."""
+    from app.services.corpmall import store as corp
+
+    taken = {r[0] for r in c.execute(select(t_slug.c.slug))}
+    out = []
+    try:
+        from app.services.seller import shop_public
+
+        enc = c.execute(select(shop_public.t_biz.c.biz_enc).where(shop_public.t_biz.c.seller_id == seller_id)).scalar()
+        bno = re.sub(r"\D", "", ((corp._dec(enc) or {}).get("biz_no") or "") if enc else "")
+        if len(bno) == 10:
+            out.append(f"{base[:24]}-{bno[-4:]}")
+    except Exception:  # noqa: BLE001 — 사업자 정보 표가 없을 수도
+        pass
+    url = c.execute(select(t_store.c.url).where(t_store.c.seller_id == seller_id)).scalar()
+    sl = store_slug(url)
+    if sl and sl != base and SLUG_RE.match(sl):
+        out.append(sl)
+    n = 2
+    while len(out) < 3 and n < 50:
+        out.append(f"{base[:26]}-{n}")
+        n += 1
+    return [x for x in dict.fromkeys(out) if x not in taken and SLUG_RE.match(x)][:3]
+
+
+def set_slug(eng, seller_id: str, slug: str, *, by: str) -> dict:
+    """운영자만. 규칙: 영문 소문자·숫자·'-', 3~30자, 영문으로 시작. 같은 회사명이라도 다른 회사면 이름이 겹치지 않게
+    — 이미 쓰는 이름이면 막고 '사업자번호 끝 4자리 · 몰 이름 · -2' 후보를 알려 준다. 비우면 지움(셀러 번호 주소만)."""
+    by = store._operator(by)
+    slug = (slug or "").strip().lower()
+    with eng.begin() as c:
+        if c.execute(select(store.t_seller.c.seller_id).where(store.t_seller.c.seller_id == seller_id)).scalar() is None:
+            raise store.SellerError("없는 셀러예요")
+        if not slug:
+            c.execute(t_slug.delete().where(t_slug.c.seller_id == seller_id))
+            return {"slug": ""}
+        if not SLUG_RE.match(slug) or "--" in slug:
+            raise store.SellerError("주소 이름은 영문 소문자·숫자·'-' 로 3~30자, 영문으로 시작해 주세요 (예: renerpaint)")
+        if slug in RESERVED_SLUGS:
+            raise store.SellerError(f"'{slug}' 는 쓸 수 없는 이름이에요")
+        owner = c.execute(select(t_slug.c.seller_id).where(t_slug.c.slug == slug)).scalar()
+        if owner and owner != seller_id:
+            sug = _slug_suggestions(c, slug, seller_id)
+            raise store.SellerError(f"'{slug}' 는 다른 셀러가 쓰고 있어요(같은 이름의 다른 회사). 이런 이름은 어때요: " + ", ".join(sug))
+        vals = dict(slug=slug, set_at=store.now(), set_by=by)
+        if c.execute(update(t_slug).where(t_slug.c.seller_id == seller_id).values(**vals)).rowcount == 0:
+            c.execute(t_slug.insert().values(seller_id=seller_id, **vals))
+        store._event(c, seller_id, "slug", by, {"slug": slug})
+    return {"slug": slug}
 
 
 def store_urls(eng) -> dict[str, str]:

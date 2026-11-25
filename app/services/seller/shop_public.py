@@ -69,7 +69,17 @@ class NotPublic(store.SellerError):
 def engine(url: str | None = None):
     eng = detail_page.engine(url)
     meta.create_all(eng)
+    from app.services.seller import catalog
+
+    catalog.meta.create_all(eng)
     return eng
+
+
+def _shop_key(eng, seller_id: str) -> str:
+    """고객 주소에 쓰는 이름 — 주소 이름이 있으면 그것(/shop/renerpaint), 없으면 셀러 번호."""
+    from app.services.seller import catalog
+
+    return catalog.slugs(eng).get(seller_id) or seller_id
 
 
 def mode() -> str:
@@ -149,7 +159,7 @@ def biz_get(eng, token: str, client: str) -> dict:
     s = store.resolve(eng, token, client)
     with eng.connect() as c:
         r = _biz_row(c, s["seller_id"])
-    return {**_biz_view(r), "mode": mode(), "url": f"/shop/{s['seller_id']}"}
+    return {**_biz_view(r), "mode": mode(), "url": f"/shop/{_shop_key(eng, s['seller_id'])}"}
 
 
 def biz_save(eng, token: str, client: str, raw: dict) -> dict:
@@ -188,7 +198,7 @@ def biz_list(eng) -> list[dict]:
     for s in sellers:
         v = _biz_view(rows.get(s["seller_id"]))
         out.append({"seller_id": s["seller_id"], "name": s["name"], "status": s["status"], **v,
-                    "public": _seller_ok(s, rows.get(s["seller_id"]), mode()), "url": f"/shop/{s['seller_id']}"})  # fmt: skip
+                    "public": _seller_ok(s, rows.get(s["seller_id"]), mode()), "url": f"/shop/{_shop_key(eng, s['seller_id'])}"})  # fmt: skip
     return out
 
 
@@ -270,7 +280,7 @@ def _store_name(urls: list[str]) -> str:
 
 def texts_for(eng, s: dict) -> dict:
     n = notice()
-    op = (n.get("operator") or {}).get("trade_name") or "commerce_ai"
+    op = (n.get("operator") or {}).get("trade_name") or "trendguide"
     seller = s["biz"]["info"].get("trade_name") or s["name"]
     urls = [pv.get("sale_url") for pv, _ in detail_page.shop_items(eng, s["seller_id"], on_sale_only=True)]
     kw = {"operator": op, "seller": seller, "store": _store_name(urls)}
@@ -321,7 +331,7 @@ def index_page(eng) -> str:
     if not sellers:
         raise NotPublic("없는 화면이에요")
     tiles = "".join(
-        f'<a class="tile" href="/shop/{e(s["seller_id"])}"><b>{e(s["biz"]["info"].get("trade_name") or s["name"])}</b></a>'
+        f'<a class="tile" href="/shop/{e(_shop_key(eng, s["seller_id"]))}"><b>{e(s["biz"]["info"].get("trade_name") or s["name"])}</b></a>'
         for s in sellers
     )
     top = texts_for(eng, sellers[0])["top"].replace(
@@ -362,7 +372,7 @@ def _ucp_product(eng, s: dict, pv: dict, d: dict, base_url: str) -> dict | None:
     seller = s["biz"]["info"].get("trade_name") or s["name"]
     plain = " ".join(x for x in [sec.get("intro") or ""] + [p.get("text", "") for p in sec.get("points") or []] if x)
     links = [
-        {"type": "seller_page", "url": f"{base_url.rstrip('/')}/shop/{s['seller_id']}", "title": "미니숍 · 판매자 정보"}
+        {"type": "seller_page", "url": f"{base_url.rstrip('/')}/shop/{_shop_key(eng, s['seller_id'])}", "title": "미니숍 · 판매자 정보"}
     ]
     biz = re.sub(r"\D", "", s["biz"]["info"].get("biz_no") or "")
     if biz:
@@ -384,7 +394,7 @@ def _ucp_product(eng, s: dict, pv: dict, d: dict, base_url: str) -> dict | None:
         "id": pv["product_id"],
         "title": sec.get("headline") or pv["name"],
         "description": {"plain": plain or pv["name"]},
-        "url": f"{base_url.rstrip('/')}/shop/{s['seller_id']}#p-{pv['product_id']}",
+        "url": f"{base_url.rstrip('/')}/shop/{_shop_key(eng, s['seller_id'])}#p-{pv['product_id']}",
         "price_range": {"min": _price(pv["price"]), "max": _price(pv["price"])},
         "variants": [variant],
     }
