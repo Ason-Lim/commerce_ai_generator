@@ -126,13 +126,25 @@ def truth(days: _Days, as_of: dt.date, h: int, top_now: set[str], *, min_share: 
     return hits, seen
 
 
-# ── 못 맞힌 이유 (2026-11-25) ──
-# 제출한 상위 20 을 넷으로: 7일+ 앞서 적중(성과) · 늦게 적중(7일 안) · 시점 어긋남(기간 앞뒤 14일 안엔 100위 진입) · 안 옴.
-# '안 옴'과 정답 쪽 '처음 등장'은 트렌드 변화로 본다(trend_shift). 늦게·시점은 방법으로 줄일 수 있는 몫.
+# ── 제출 예측의 결과 4분류 (2026-11-25, GPT 검토 반영) ──
+# 제출한 상위 20 을 넷으로 나눈다(분모 = 제출 수, 합 100%):
+#   선행 적중(첫 진입 7~28일) · 선행 부족 적중(1~6일) · 시점 어긋남(기간 앞 14일 또는 뒤 14일 안 100위 진입) · 관측창 내 미진입.
+# '관측창 내 미진입'은 관측 결과일 뿐 원인 확정이 아니다 — 트렌드 변화는 **검토 가설**(trend_shift 탭), 후보 선정 오류일 수도 있다.
+# 그래서 성능 평가에서 빼지 않는다: 주 지표는 늘 제출 상위 20 전체의 선행 적중률, 4분류는 개선 방향을 찾는 보조 지표.
+# 실제 상승 쪽의 '과거 400일 Top500 관측 이력 없음' 비율은 분모(실제 주요 상승)가 달라 따로 낸다.
 TIMING_DAYS = 14
 REASONS = ("lead", "late", "timing", "gone")
-REASON_NAMES = {"lead": "7일+ 앞서 적중", "late": "늦게 적중(7일 안)", "timing": "시점 어긋남",
-                "gone": "작년 키워드가 안 옴", "first_seen": "처음 등장(놓친 쪽)"}  # fmt: skip
+REASON_NAMES = {"lead": "선행 적중(7~28일)", "late": "선행 부족 적중(1~6일)", "timing": "시점 어긋남(앞뒤 14일 안 진입)",
+                "gone": "관측창 내 미진입"}  # fmt: skip
+NO_HISTORY_NAME = "과거 400일 Top500 관측 이력 없음"
+HISTORY_MIN = 0.9  # 과거 400일 중 순위 파일이 이 비율 미만이면 '이력 없음'을 판정하지 않음(자료 부족)
+
+
+def history_coverage(days: _Days, as_of: dt.date) -> float:
+    """기준일 전 VOCAB_DAYS 일(기준일 포함) 중 순위 파일이 있는 날 비율 — '이력 없음' 판정이 믿을 만한지."""
+    n = VOCAB_DAYS + 1
+    have = sum(1 for k in range(n) if (as_of - dt.timedelta(days=k)).isoformat() in days.files)
+    return have / n
 
 
 def near_window(days: _Days, as_of: dt.date, h: int) -> set[str]:
@@ -299,7 +311,8 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
     rows = cal.load() if rows is None else rows
     days = _Days(rank_dir)
     acc = {m: {h: _empty() for h in horizons} for m in methods}
-    union = {h: {"major": 0, "major_hit": 0, "new_major": 0} for h in horizons}
+    union = {h: {"major": 0, "major_hit": 0, "new_major": 0, "major_hist_ok": 0} for h in horizons}
+    paired = {m: {h: [] for h in horizons} for m in methods}  # 날짜별 (선행 적중, 제출) — 비교 기준과 짝 비교
     dates, skipped, per_date = [], [], []
     cache: dict = {}
     d = start
@@ -319,7 +332,8 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
             skipped.append({"as_of": d.isoformat(), "why": f"미래 관측일 부족({', '.join(f'{h}일' for h in lacking)})"})
             d += dt.timedelta(days=step)
             continue
-        row = {"as_of": d.isoformat(), "excluded": len(excl), "vocab": len(vocab), "h": {}}
+        hist_ok = history_coverage(days, d) >= HISTORY_MIN
+        row = {"as_of": d.isoformat(), "excluded": len(excl), "vocab": len(vocab), "history_ok": hist_ok, "h": {}}
         for h in horizons:
             hits_true, seen = truths[h]
             known_true = {k for k in hits_true if k in vocab}
@@ -345,6 +359,7 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
                 a["br_late"] += len(br["late"])
                 a["br_timing"] += len(br["timing"])
                 a["br_gone"] += len(br["gone"])
+                paired[m][h].append((len(br["lead"]), len(top)))
                 a["leads"] += [hits_true[k]["first"] for k in hit]
                 a["major"] += len(major)
                 a["major_hit"] += len(major & hit)
@@ -357,7 +372,9 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
                     acc[m][h]["extra_hits"] += len(res[m] - base_hit)
             union[h]["major"] += len(major)
             union[h]["major_hit"] += len(major & all_hit)
-            union[h]["new_major"] += len(major - vocab)
+            if hist_ok:  # 과거 자료가 모자란 날은 '이력 없음'을 세지 않는다
+                union[h]["new_major"] += len(major - vocab)
+                union[h]["major_hist_ok"] += len(major)
             row["h"][h] = {"true": len(hits_true), "seen_days": seen, **{m: len(v) for m, v in res.items()}}
         dates.append(d.isoformat())
         per_date.append(row)
@@ -374,12 +391,14 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
         "skipped": skipped,
         "skipped_by_month": by_month,
         "metrics": {m: {h: _summary(acc[m][h], m) for h in horizons} for m in methods},
+        "paired": _paired(paired, horizons),
         "union": {
             h: {
                 "major": u["major"],
                 "major_missed_all": round(1 - u["major_hit"] / u["major"], 4) if u["major"] else None,
-                "major_first_seen": u["new_major"],
-                "first_seen_share": round(u["new_major"] / u["major"], 4) if u["major"] else None,
+                "major_first_seen": u["new_major"],  # = 과거 400일 Top500 관측 이력 없음 (자료 충분한 날만)
+                "first_seen_share": round(u["new_major"] / u["major_hist_ok"], 4) if u["major_hist_ok"] else None,
+                "history_short_dates": sum(1 for r in per_date if not r["history_ok"]),
             }
             for h, u in union.items()
         },
@@ -404,6 +423,35 @@ def run(rank_dir: str | Path, start: dt.date, end: dt.date, *, step: int = 7, ho
             "2024·2025 는 규칙을 보고 만든 탐색·개발 자료 — 최종 성적은 앞으로 쌓이는 실제 예보로",
         ],
     }
+
+
+PAIR_BASE = "last_year_lunar"
+
+
+def _paired(paired: dict, horizons) -> dict:
+    """비교 기준(전년 기준)과 같은 평가일끼리 짝 비교 — 날짜별 선행 적중률 차이의 나음/같음/못함 일수·평균."""
+    if PAIR_BASE not in paired:
+        return {}
+    out: dict = {}
+    for m, byh in paired.items():
+        if m == PAIR_BASE:
+            continue
+        out[m] = {}
+        for h in horizons:
+            diffs = []
+            for (lm, sm), (lb, sb) in zip(byh[h], paired[PAIR_BASE][h]):
+                if sm and sb:
+                    diffs.append(lm / sm - lb / sb)
+            out[m][h] = {
+                "dates": len(diffs),
+                "better": sum(1 for x in diffs if x > 0),
+                "same": sum(1 for x in diffs if x == 0),
+                "worse": sum(1 for x in diffs if x < 0),
+                "mean_diff_pp": round(statistics.mean(diffs) * 100, 1) if diffs else None,
+                "submitted": sum(s for _, s in byh[h]),
+                "lead_hits": sum(x for x, _ in byh[h]),
+            }
+    return out
 
 
 def _summary(a: dict, m: str) -> dict:
@@ -436,4 +484,5 @@ def _summary(a: dict, m: str) -> dict:
 
 
 __all__ = ["HORIZONS", "METHODS", "BASELINES", "QUESTIONS", "population", "truth", "run", "FUNCS", "lunar_shifts", "year_back",
-           "classify_top", "near_window", "REASONS", "REASON_NAMES"]
+           "classify_top", "near_window", "REASONS", "REASON_NAMES",
+           "NO_HISTORY_NAME", "HISTORY_MIN", "history_coverage"]

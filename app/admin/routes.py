@@ -260,7 +260,7 @@ def trends_forecast_next4w(request: Request, as_of: str | None = Query(None, pat
 
 @router.get("/admin/api/trends/forecast/ledger")
 def trends_forecast_ledger(request: Request):
-    """예보 성적판 (2026-11-25) — 저장해 둔 주간 예보를 28일 뒤 실제와 맞춘 결과. 주 지표 28일·상위 20·7일+ 앞서, 비교 기준 전년 기준."""
+    """예보 성적판 (2026-11-25) — 저장해 둔 주간 예보를 28일 뒤 실제와 맞춘 결과. 주 지표 28일·상위 20·선행 적중률(7~28일, 제출 전체), 비교 기준 전년 기준. 4분류는 보조."""
     from app.services.trends import period
     from app.services.trends.forecast import ledger
 
@@ -290,8 +290,9 @@ def trends_forecast_ledger_save():
 @router.get("/admin/api/trends/forecast/trend-shift")
 def trends_forecast_trend_shift(request: Request, as_of: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
                                 weeks: int = Query(8, ge=1, le=26)):
-    """트렌드 변화 (2026-11-25) — 식은 키워드(작년 이 기간 50위 안 → 올해 안 옴) · 새로 뜬 키워드(처음 등장 50위 안).
-    기준일 뒤 28+14일 실제 순위가 있어야 판정. 기본 기준일 = 마지막 순위 파일 − 42일. 참고 자료(추천 순위에 쓰지 않음)."""
+    """트렌드 변화(검토 가설, 2026-11-25) — 관측창 내 미진입(작년 이 기간 50위 안 → 올해 28일 100위 밖·앞뒤 14일도 없음)
+    · 과거 400일 Top500 관측 이력 없음(28일 안 50위 안). 관측 결과이지 원인 확정이 아니다. 기준일 뒤 42일 순위 필요,
+    결측일 수 함께. 기본 기준일 = 마지막 순위 파일 − 42일. 참고 자료(추천 순위에 쓰지 않음)."""
     from app.services.trends import period
     from app.services.trends.forecast import trend_shift as ts
 

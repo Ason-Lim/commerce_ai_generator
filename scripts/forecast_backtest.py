@@ -66,15 +66,24 @@ def main(argv: list[str] | None = None) -> int:
                   f"{pc(x['recall']):>7} {pc(x['recall_known']):>9} {pc(x['top20_precision']):>7} "
                   f"{pc(x['top20_lead7']):>10} {x['lead_median'] if x['lead_median'] is not None else '—':>5} "
                   f"{pc(x['major_missed']):>8}" + (f"  추가 적중 {x['extra_hits']}" if "extra_hits" in x else ""))  # fmt: skip
-    print("\n못 맞힌 이유 — 28일 · 제출 상위 20 기준 (7일+ 앞서 적중 / 늦게 적중 / 시점 어긋남 / 작년 키워드 안 옴):")
+    print("\n[표 1] 제출 예측의 결과 4분류 — 28일 · 분모 = 제출 상위 20 (합 100%)")
+    print("        선행 적중(7~28일) / 선행 부족 적중(1~6일) / 시점 어긋남(앞뒤 14일 안) / 관측창 내 미진입")
     for m, byh in res["metrics"].items():
         b = (byh.get(28) or {}).get("miss_breakdown")
         if b and b["lead"] is not None:
             print(f"  {NAMES.get(m, m):<10} {pc(b['lead']):>6} / {pc(b['late']):>6} / {pc(b['timing']):>6} / {pc(b['gone']):>6}")
-    print("\n합집합(모든 방법)으로도 놓친 주요 상승(50위 안까지):")
+    if res.get("paired"):
+        print("\n[표 2] 비교 기준(전년 기준)과 같은 평가일 짝 비교 — 28일 선행 적중률")
+        for m, byh in res["paired"].items():
+            x = byh.get(28) or {}
+            if x.get("dates"):
+                print(f"  {NAMES.get(m, m):<10} 평가일 {x['dates']} · 나음 {x['better']} / 같음 {x['same']} / 못함 {x['worse']} · "
+                      f"평균 차이 {x['mean_diff_pp']:+.1f}%p · 선행 적중 {x['lead_hits']}/{x['submitted']}")  # fmt: skip
+    print("\n[표 3] 실제 주요 상승(50위 안) — 모든 방법 합집합으로도 놓친 비율 · 과거 400일 Top500 관측 이력 없음 (분모 = 실제 주요 상승)")
     for h, u in res["union"].items():
         print(
-            f"  {h}일: {pc(u['major_missed_all'])} (주요 상승 {u['major']}건 · 그중 처음 등장 {u['major_first_seen']}건 = {pc(u['first_seen_share'])})"
+            f"  {h}일: 놓침 {pc(u['major_missed_all'])} (주요 상승 {u['major']}건) · 이력 없음 {u['major_first_seen']}건 = "
+            f"{pc(u['first_seen_share'])}" + (f" · 과거 자료 부족으로 판정 제외한 평가일 {u['history_short_dates']}" if u.get("history_short_dates") else "")
         )
     print("\n* 전년 기준 = 비교 기준(2026-11-25 결정) — 평소 전년 같은 주, 설·추석 D-35~D+7 은 전년 같은 명절 날짜에 맞춤")
     print("* 선행 = 그 방법이 맞힌 사례의 첫 관측 진입까지 일수(중앙값) — 방법끼리 견주는 값이 아님. "

@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     for x in res["summary"].values():
         rate = "—" if x["lead7_rate"] is None else f"{x['lead7_rate'] * 100:.1f}%"
         vs = "" if x["vs_baseline_pp"] is None else f" ({x['vs_baseline_pp']:+.1f}%p)"
-        print(f"  {x['name']:<14} 7일+ 앞서 {x['lead7']}/{x['submitted']} = {rate}{vs}")
+        print(f"  {x['name']:<14} 선행 적중 {x['lead7']}/{x['submitted']} = {rate}{vs}")
     return 0
 
 
