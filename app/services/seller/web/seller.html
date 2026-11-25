@@ -64,7 +64,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     <section class="box" aria-labelledby="pr-h">
       <h2 id="pr-h">내 상품</h2>
       <p class="note">새로 올리거나 고친 상품은 운영팀 검수를 거쳐요. 원산지·인증·당도는 처음엔 <b>판매자 표기</b>로 두고, 운영팀이 서류로 확인한 칸만 <b>확인됨</b>으로 바뀌어요. 표기를 고치면 그 칸의 확인은 다시 받아야 해요. 승인된 상품이 손님 화면에 언제 보일지는 운영팀이 따로 알려 드려요.</p>
-      <div style="overflow-x:auto"><table><thead><tr><th>상품</th><th class="num">가격</th><th>표기</th><th>상태</th><th></th></tr></thead><tbody id="plist"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>상품</th><th class="num">가격</th><th>표기</th><th>상태</th><th>재고·공급사</th><th></th></tr></thead><tbody id="plist"></tbody></table></div>
     </section>
 
     <section class="box" aria-labelledby="pf-h">
@@ -89,6 +89,47 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
         <div class="row"><button type="button" id="csvBtn">CSV 올리기</button></div>
         <div id="csvMsg" role="status"></div>
       </details>
+    </section>
+
+    <section class="box" aria-labelledby="al-h">
+      <h2 id="al-h">알림</h2>
+      <div id="alerts" class="note">불러오는 중…</div>
+    </section>
+
+    <section class="box" aria-labelledby="od-h">
+      <h2 id="od-h">주문 · 발주서 · 송장</h2>
+      <p class="note">판매처(스마트스토어 등)의 주문을 올리면 공급사별 <b>발주서 엑셀</b>을 만들어 드려요. 발주서는 직접 공급사에 보내 주세요 — 여기서는 보내지 않아요. 공급사가 송장 칸을 채워 돌려준 파일을 올리면 송장이 들어가요. 정식 계약 전에는 <b>시험 데이터</b>만 올려 주세요.</p>
+      <div style="overflow-x:auto"><table><thead><tr><th>판매처 주문</th><th>상품</th><th class="num">수량</th><th>받는 분</th><th>상태</th><th>송장</th></tr></thead><tbody id="olist"></tbody></table></div>
+      <div class="row"><button type="button" id="poBtn">새 주문으로 발주서 만들기</button></div>
+      <div id="batches" class="note" style="margin-top:8px"></div>
+      <div id="poMsg" role="status"></div>
+      <details style="margin-top:14px"><summary>판매처 주문 CSV 올리기</summary>
+        <p class="note">'상품 번호'는 위 내 상품의 번호(P로 시작)예요. 이미 올린 주문(판매처 주문번호 + 상품)은 건너뛰어요. 받는 분 정보는 암호화해 두고, 송장이 들어간 뒤 30일(출고 안 되면 90일) 지나면 지워요.</p>
+        <label for="ocsv" class="note">주문 CSV 내용</label><textarea id="ocsv" spellcheck="false"></textarea>
+        <label class="note" style="display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-weight:400"><input type="checkbox" id="entrust" style="width:auto;margin-top:4px"> 받는 분 정보를 발주서에 옮겨 적는 일을 commerce_ai 에 맡깁니다(우리 판매처 처리방침에 수탁자로 적음).</label>
+        <div class="row"><button type="button" id="ocsvBtn">주문 올리기</button></div>
+        <div id="ocsvMsg" role="status"></div>
+      </details>
+      <details style="margin-top:10px"><summary>송장 파일 올리기</summary>
+        <p class="note">발주서 엑셀에 공급사가 송장 칸을 채운 파일(또는 '주문 번호'·'송장' 칸이 있는 CSV). 송장은 글자 칸으로 적어 주세요 — 숫자로 바뀐 송장은 넣지 않고 알려 드려요.</p>
+        <label for="tfile" class="note">송장 파일</label><input type="file" id="tfile" accept=".xlsx,.csv">
+        <div class="row"><button type="button" id="tBtn">송장 넣기</button></div>
+        <div id="tMsg" role="status"></div>
+      </details>
+    </section>
+
+    <section class="box" aria-labelledby="sp-h">
+      <h2 id="sp-h">공급사</h2>
+      <p class="note">위탁판매라면 상품을 보내는 공급사를 적고, 내 상품 표의 '재고·공급사'에서 상품마다 붙여 주세요. 붙이지 않은 상품은 '직접 출고' 시트로 나가요.</p>
+      <div id="slist" class="note"></div>
+      <form id="sForm" class="grid2">
+        <div class="field"><label for="s_name">공급사 이름 *</label><input id="s_name" maxlength="40"></div>
+        <div class="field"><label for="s_cname">담당자</label><input id="s_cname" maxlength="30"></div>
+        <div class="field"><label for="s_cmail">메일</label><input id="s_cmail" type="email" maxlength="120"></div>
+        <div class="field"><label for="s_cphone">전화</label><input id="s_cphone" maxlength="20"></div>
+        <div class="row"><button type="submit">공급사 저장</button></div>
+      </form>
+      <div id="sMsg" role="status"></div>
     </section>
 
     <section class="box" aria-labelledby="ct-h">
@@ -127,7 +168,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
   async function enter(code){
     const j = await post("/seller/api/me", {key: code});
     if (!j.ok) { msg($("gateMsg"), j.error || "들어가지 못했어요", "err"); return; }
-    KEY = code; show(j.seller); loadProducts();
+    KEY = code; show(j.seller); await loadScm(); loadProducts();
   }
 
   let EDIT = null, PRODS = [];
@@ -141,8 +182,10 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     $("plist").innerHTML = PRODS.length ? PRODS.map((p) => `<tr><td>${esc(p.name)}<div class="note">${esc(p.volume)}</div></td><td class="num">${won(p.price)}</td>
       <td>${p.facts.map((f) => `<span class="src${f.source === "verified" ? " v" : ""}">${esc(f.label)} ${esc(f.value)} · ${esc(f.source_label)}</span>`).join(" ")}</td>
       <td style="white-space:nowrap">${esc(p.status_label)}${p.review_note ? `<div class="note">${esc(p.review_note)}</div>` : ""}</td>
+      <td>${stockCell(p.product_id)}</td>
       <td><button type="button" class="sub" data-edit="${esc(p.product_id)}">고치기</button> ${p.status !== "withdrawn" ? `<button type="button" class="sub" data-stop="${esc(p.product_id)}">판매 중지</button>` : ""}</td></tr>`).join("")
-      : '<tr><td colspan="5" class="note">아직 올린 상품이 없어요</td></tr>';
+      : '<tr><td colspan="6" class="note">아직 올린 상품이 없어요</td></tr>';
+    bindStock();
     document.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => edit(PRODS.find((p) => p.product_id === b.dataset.edit)));
     document.querySelectorAll("[data-stop]").forEach((b) => b.onclick = async () => {
       if (!confirm("이 상품 판매를 멈출까요? 다시 고치면 검수를 받아요.")) return;
@@ -172,6 +215,79 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     msg($("csvMsg"), j.errors ? j.errors.map((x) => `${x.line}번째 줄: ${x.error}`).join("\n") : (j.error || "올리지 못했어요"), "err");
     $("csvMsg").querySelector(".msg").style.whiteSpace = "pre-line";
   };
+
+  let SUP = {suppliers: [], supply: {}, stock: {}};
+  function stockCell(pid){
+    const st = SUP.stock[pid] || {}, sp = SUP.supply[pid] || {};
+    const sname = (SUP.suppliers.find((x) => x.supplier_id === sp.supplier_id) || {}).name || "직접 출고";
+    const label = st.sold_out ? `<b style="color:var(--err)">품절</b>${st.restock_on ? ` · ${esc(st.restock_on)} 입고` : ""}` : (st.stock == null ? "재고 관리 안 함" : `재고 ${st.stock}`);
+    return `${label}<div class="note">${esc(sname)}${sp.sku ? " · " + esc(sp.sku) : ""}</div><button type="button" class="sub" data-stock="${esc(pid)}">바꾸기</button>`;
+  }
+  function bindStock(){
+    document.querySelectorAll("[data-stock]").forEach((b) => b.onclick = async () => {
+      const pid = b.dataset.stock, st = SUP.stock[pid] || {};
+      const v = prompt("재고 수량 (비우면 재고 관리 안 함, 0 이면 품절)", st.stock ?? ""); if (v === null) return;
+      let restock = null;
+      if (v.trim() === "0") { restock = prompt("입고 예정일 (예: 2026-12-01, 모르면 비움)", st.restock_on || "") || null; }
+      const j = await post("/seller/api/stock", {key: KEY, product_id: pid, stock: v.trim() === "" ? null : v.trim(), sold_out: v.trim() === "0", restock_on: restock});
+      if (!j.ok) { alert(j.error || "저장하지 못했어요"); return; }
+      if (SUP.suppliers.length) {
+        const names = ["직접 출고", ...SUP.suppliers.map((x) => x.name)];
+        const pick = prompt("공급사 이름 (" + names.join(" / ") + ")", (SUP.suppliers.find((x) => x.supplier_id === (SUP.supply[pid] || {}).supplier_id) || {}).name || "직접 출고");
+        if (pick !== null) {
+          const sid = (SUP.suppliers.find((x) => x.name === pick.trim()) || {}).supplier_id || null;
+          const sku = prompt("공급사 품번 (모르면 비움)", (SUP.supply[pid] || {}).sku || "") || "";
+          await post("/seller/api/supply", {key: KEY, product_id: pid, supplier_id: sid, sku});
+        }
+      }
+      await loadScm(); loadProducts();
+    });
+  }
+  async function loadScm(){
+    const j = await post("/seller/api/suppliers", {key: KEY});
+    if (j.ok) SUP = j;
+    $("slist").innerHTML = SUP.suppliers.length ? SUP.suppliers.map((x) => `· ${esc(x.name)}${x.contact ? " — " + esc([x.contact.name, x.contact.email, x.contact.phone].filter(Boolean).join(" · ")) : ""}`).join("<br>") : "아직 적은 공급사가 없어요";
+    const o = await post("/seller/api/orders", {key: KEY});
+    if (!o.ok) return;
+    if (!$("ocsv").value) $("ocsv").value = o.csv_template;
+    const a = o.alerts, parts = [];
+    if (a.sold_out.length) parts.push(`승인 상품 품절 ${a.sold_out.length}개: ${a.sold_out.map((x) => esc(x.name) + (x.restock_on ? ` (${esc(x.restock_on)} 입고)` : "")).join(", ")}`);
+    if (a.delayed_orders) parts.push(`<b style="color:var(--err)">주문 뒤 2영업일 넘게 출고 안 된 주문 ${a.delayed_orders}건</b>`);
+    if (a.new_orders) parts.push(`발주서를 아직 만들지 않은 주문 ${a.new_orders}건`);
+    if (a.no_tracking) parts.push(`송장을 기다리는 주문 ${a.no_tracking}건`);
+    $("alerts").innerHTML = parts.length ? parts.join("<br>") : "지금 챙길 일이 없어요";
+    $("olist").innerHTML = o.orders.length ? o.orders.map((x) => `<tr><td>${esc(x.store_order_no)}<div class="note">${esc(x.order_id)} · ${esc(x.ordered_on)}</div></td><td>${esc(x.product)}</td><td class="num">${x.qty}</td><td>${esc(x.recipient)}</td>
+      <td style="white-space:nowrap">${esc(x.status_label)}${x.delayed ? ' <b style="color:var(--err)">지연</b>' : ""}</td><td>${esc(x.tracking)}</td></tr>`).join("") : '<tr><td colspan="6" class="note">아직 올린 주문이 없어요</td></tr>';
+    $("batches").innerHTML = o.batches.map((b) => `발주 묶음 ${esc(b.batch_id)} · 주문 ${b.n_orders}건 · 공급사 ${b.n_suppliers}곳 · 내려받기 ${b.downloads}번 <button type="button" class="sub" data-file="${esc(b.batch_id)}">엑셀 받기</button>`).join("<br>");
+    document.querySelectorAll("[data-file]").forEach((b) => b.onclick = async () => {
+      const r = await fetch("/seller/api/po/file", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({key: KEY, batch_id: b.dataset.file})});
+      if (!r.ok) { msg($("poMsg"), (await r.json()).error || "받지 못했어요", "err"); return; }
+      const url = URL.createObjectURL(await r.blob()); const a2 = document.createElement("a"); a2.href = url; a2.download = `발주서_${b.dataset.file}.xlsx`; a2.click(); URL.revokeObjectURL(url);
+      msg($("poMsg"), "받았어요. 받는 분 정보가 들어 있으니 공급사에 보낸 뒤 파일을 지워 주세요.", "ok"); loadScm();
+    });
+  }
+  $("poBtn").onclick = async () => { const j = await post("/seller/api/po", {key: KEY}); msg($("poMsg"), j.ok ? `발주 묶음 ${j.batch.batch_id}를 만들었어요 (주문 ${j.batch.n_orders}건). '엑셀 받기'를 눌러 주세요.` : j.error, j.ok ? "ok" : "err"); loadScm(); };
+  $("ocsvBtn").onclick = async () => {
+    const j = await post("/seller/api/orders/csv", {key: KEY, csv: $("ocsv").value, entrust_ok: $("entrust").checked});
+    if (j.ok) { msg($("ocsvMsg"), `${j.added}건을 올렸어요${j.skipped ? ` (이미 있던 ${j.skipped}건은 건너뜀)` : ""}.`, "ok"); loadScm(); return; }
+    msg($("ocsvMsg"), j.errors ? j.errors.map((x) => `${x.line}번째 줄: ${x.error}`).join("\n") : (j.error || "올리지 못했어요"), "err");
+    $("ocsvMsg").querySelector(".msg").style.whiteSpace = "pre-line";
+  };
+  $("tBtn").onclick = async () => {
+    const f = $("tfile").files[0]; if (!f) return;
+    const fd = new FormData(); fd.append("key", KEY); fd.append("file", f);
+    const j = await (await fetch("/seller/api/tracking", {method: "POST", body: fd})).json();
+    if (!j.ok) { msg($("tMsg"), j.error || "넣지 못했어요", "err"); return; }
+    msg($("tMsg"), `송장 ${j.set}건을 넣었어요.` + (j.problems.length ? "\n" + j.problems.map((x) => `${x.order_id}: ${x.why}`).join("\n") : ""), j.problems.length ? "err" : "ok");
+    $("tMsg").querySelector(".msg").style.whiteSpace = "pre-line"; loadScm();
+  };
+  $("sForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const contact = {name: $("s_cname").value.trim(), email: $("s_cmail").value.trim(), phone: $("s_cphone").value.trim()};
+    const j = await post("/seller/api/suppliers/save", {key: KEY, name: $("s_name").value.trim(), contact: (contact.name || contact.email || contact.phone) ? contact : null});
+    msg($("sMsg"), j.ok ? "저장했어요" : j.error, j.ok ? "ok" : "err");
+    if (j.ok) { ["s_name","s_cname","s_cmail","s_cphone"].forEach((id) => $(id).value = ""); await loadScm(); loadProducts(); }
+  });
   // # 뒤 코드는 서버로 가지 않는다 — 읽자마자 주소창에서 지운다
   const m = location.hash.match(/k=([A-Za-z0-9_-]{24})/);
   if (m) { history.replaceState(null, "", location.pathname); enter(m[1]); }

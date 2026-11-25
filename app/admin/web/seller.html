@@ -147,6 +147,12 @@ tbody tr{cursor:default}
     <div id="codeOut" class="code-out" hidden role="status"></div>
   </section>
 
+  <section class="panel" aria-labelledby="al-h" style="margin-top:14px">
+    <h3 id="al-h">품절 · 출고 지연 알림</h3>
+    <p class="basis" style="margin-top:0">셀러별 숫자만 보여요(받는 분 정보 없음). 지연 = 주문일 뒤 2영업일 넘게 송장 없음.</p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>품절(승인 상품)</th><th class="num">출고 지연</th><th class="num">발주 전</th><th class="num">송장 대기</th></tr></thead><tbody id="alerts"></tbody></table></div>
+  </section>
+
   <section class="panel" aria-labelledby="q-h" style="margin-top:14px">
     <div class="bar"><h3 id="q-h" style="margin:0">상품 검수</h3><span class="spacer"></span><div class="chips" id="qchips" role="group" aria-label="상품 상태"></div></div>
     <div class="grid" id="qgrid">
@@ -202,7 +208,10 @@ $("#newBtn").onclick=()=>{$("#newForm").hidden=false};$("#newClose").onclick=()=
 $("#createBtn").onclick=async()=>{try{await post("/admin/api/seller",{name:$("#n_name").value.trim(),kind:$("#n_kind").value,memo:$("#n_memo").value.trim(),
   contact:{name:$("#n_cname").value.trim(),email:$("#n_cmail").value.trim(),phone:$("#n_cphone").value.trim()}});$("#newForm").hidden=true;
   ["#n_name","#n_cname","#n_cmail","#n_cphone","#n_memo"].forEach(s=>$(s).value="");loadSellers()}catch(e){err(e)}};
-loadSellers();loadQueue();
+async function loadAlerts(){let d;try{d=await api("/admin/api/seller-alerts")}catch(e){return err(e)}
+  $("#alerts").innerHTML=d.alerts.length?d.alerts.map(a=>`<tr style="cursor:default"><td>${esc(a.name)} <small style="color:var(--ink3)">${esc(a.status_label)}</small></td><td>${a.sold_out.map(x=>esc(x.name)+(x.restock_on?` (${esc(x.restock_on)} 입고)`:"")).join(", ")||"—"}</td>
+   <td class="num"${a.delayed_orders?' style="color:var(--ex);font-weight:700"':""}>${a.delayed_orders}</td><td class="num">${a.new_orders}</td><td class="num">${a.no_tracking}</td></tr>`).join(""):'<tr><td colspan="5" class="empty">챙길 일이 없어요</td></tr>'}
+loadSellers();loadQueue();loadAlerts();
 </script>
 </body>
 </html>

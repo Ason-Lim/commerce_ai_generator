@@ -3187,3 +3187,12 @@ def seller_product_review(product_id: str, body: _SellerReviewIn):
 
     return {"ok": True, "product": _seller_call(store, lambda: products.review(products.engine(), product_id, body.decision,
                                                                                by="operator", note=body.note))}  # fmt: skip
+
+
+
+# ── 셀러 SCM ③ (창 5, 2026-11-25) — 품절·출고 지연·송장 미등록 숫자만 (받는 분 정보 없음) ──
+@router.get("/admin/api/seller-alerts", dependencies=[api])
+def seller_alerts():
+    from app.services.seller import scm
+
+    return {"alerts": scm.all_alerts(scm.engine()), "delay_biz_days": scm.DELAY_BIZ_DAYS}
