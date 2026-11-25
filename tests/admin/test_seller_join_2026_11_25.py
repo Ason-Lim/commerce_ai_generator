@@ -81,6 +81,8 @@ def test_clean_application_gets_trial_code_once_and_seller_is_invited_only(eng, 
     assert "code" not in join.check(eng, got["token"])  # 체험 코드는 처음 한 번만
     s = sel.resolve(sel.engine(), got["code"], IP)
     assert s["status"] == "invited"  # 체험 — 입점 승인(active) 아님
+    info = shop_public.biz_get(shop_public.engine(), got["code"], IP)["info"]
+    assert info["trade_name"] == "한라농장" and info["biz_no"] == "220-81-62517"  # 신청서 값을 미리
     # 서류는 암호화해 저장
     files = list(tmp_path.rglob("*.enc"))
     assert files and all(PNG not in f.read_bytes() and PDF not in f.read_bytes() for f in files)

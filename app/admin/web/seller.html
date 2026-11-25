@@ -159,6 +159,7 @@ tbody tr{cursor:default}
     <h3 id="ms-h">미니숍 공개 · 판매자 정보 확인 <small id="msMode" style="font-weight:400;color:var(--ink3)"></small></h3>
     <p class="basis" style="margin-top:0">판매자 정보는 사업자등록증·통신판매업 신고증과 대조한 뒤 ‘확인’을 눌러 주세요(AI가 하지 않아요). 정식 공개는 확인 + 셀러 공개 동의 + 운영사 쪽 조건이 모두 있어야 열려요.</p>
     <p class="basis" id="msMissing"></p>
+    <p class="basis" id="bizMsg" hidden role="status" style="font-weight:600"></p>
     <div class="tblwrap"><table><thead><tr><th>셀러</th><th>판매자 정보</th><th>빈 칸</th><th>확인</th><th>동의</th><th>공개</th><th></th></tr></thead><tbody id="biz"></tbody></table></div>
   </section>
 
@@ -290,12 +291,20 @@ async function loadDetails(){let d;try{d=await api("/admin/api/seller-details?st
   document.querySelectorAll("[data-dt]").forEach(b=>b.onclick=async()=>{const note=b.dataset.d==="rejected"?prompt("반려 이유(셀러에게 보여요)"):"";if(b.dataset.d==="rejected"&&!note)return;
     try{await post(`/admin/api/seller-details/${b.dataset.dt}/review`,{decision:b.dataset.d,note});loadDetails()}catch(e){err(e)}})}
 const MSM={off:"꺼짐",test:"시험 공개 중(SHOP_PUBLIC=test)",formal:"정식 공개(SHOP_PUBLIC=1)"};
+const BZF=[["trade_name","상호"],["ceo","대표자 성명"],["address","사업장 주소"],["phone","전화번호"],["email","전자우편"],["biz_no","사업자등록번호"],["mail_order_no","통신판매업 신고번호"]];
+function bizMsg(t,kind){const m=$("#bizMsg");m.hidden=!t;m.textContent=t||"";m.style.color=kind==="err"?"var(--bad,#b3261e)":"var(--accent,#1f6f43)"}
 async function loadBiz(){let d;try{d=await api("/admin/api/seller-biz")}catch(e){return err(e)}
   $("#msMode").textContent="· "+(MSM[d.mode]||d.mode);
   $("#msMissing").textContent=d.formal_missing.length?"정식 공개에 빠진 것(운영사): "+d.formal_missing.join(", "):"운영사 쪽 정식 공개 조건은 갖춰졌어요";
-  $("#biz").innerHTML=d.sellers.map(x=>`<tr style="cursor:default"><td>${esc(x.name)}</td><td>${esc([x.info.trade_name,x.info.ceo,x.info.biz_no,x.info.mail_order_no].filter(Boolean).join(" · "))}</td><td>${esc(x.missing.join(", "))}</td><td>${x.verified?"확인됨":"전"}</td><td>${x.consent?"동의":"안 함"}</td><td>${x.public?`<a href="${esc(x.url)}" target="_blank" rel="noopener">공개 중 ↗</a>`:"안 보임"}</td>
-   <td class="actions" style="margin:0"><button class="btn primary" type="button" data-bz="${esc(x.seller_id)}" data-ok="1">확인</button><button class="btn" type="button" data-bz="${esc(x.seller_id)}" data-ok="0">확인 취소</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">셀러가 없어요</td></tr>';
-  $("#biz").querySelectorAll("[data-bz]").forEach(b=>b.onclick=async()=>{try{await post(`/admin/api/seller-biz/${b.dataset.bz}/verify`,{ok:b.dataset.ok==="1"});loadBiz()}catch(e){err(e)}})}
+  $("#biz").innerHTML=d.sellers.map(x=>{const miss=x.missing.length;
+   return `<tr style="cursor:default"><td>${esc(x.name)}</td><td>${esc([x.info.trade_name,x.info.ceo,x.info.biz_no,x.info.mail_order_no].filter(Boolean).join(" · "))||'<span class="basis">아직 없음</span>'}</td><td>${esc(x.missing.join(", "))}</td><td>${x.verified?"확인됨":"전"}</td><td>${x.consent?"동의":"안 함"}</td><td>${x.public?`<a href="${esc(x.url)}" target="_blank" rel="noopener">공개 중 ↗</a>`:"안 보임"}</td>
+   <td class="actions" style="margin:0"><button class="btn" type="button" data-bzedit="${esc(x.seller_id)}">정보 넣기</button><button class="btn primary" type="button" data-bz="${esc(x.seller_id)}" data-ok="1" ${miss?'disabled title="빈 칸을 먼저 채워 주세요 — 정보 넣기 또는 셀러가 셀러센터에서"':""}>확인</button><button class="btn" type="button" data-bz="${esc(x.seller_id)}" data-ok="0" ${x.verified?"":"disabled"}>확인 취소</button></td></tr>
+   <tr id="bzf-${esc(x.seller_id)}" hidden><td colspan="7"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">${BZF.map(([k,l])=>`<label style="display:grid;gap:2px;font-size:12px">${l}<input data-k="${k}" value="${esc(x.info[k]||"")}" maxlength="120"${k==="phone"?' type="tel" inputmode="tel" data-phone':""}></label>`).join("")}</div>
+   <div class="actions"><button class="btn primary" type="button" data-bzsave="${esc(x.seller_id)}">저장</button><span class="basis">사업자등록증·통신판매업 신고증을 보고 적어 주세요. 저장하면 ‘확인’은 다시 눌러야 해요.</span></div></td></tr>`}).join("")||'<tr><td colspan="7" class="empty">셀러가 없어요</td></tr>';
+  $("#biz").querySelectorAll("[data-bzedit]").forEach(b=>b.onclick=()=>{const r=$("#bzf-"+b.dataset.bzedit);r.hidden=!r.hidden});
+  $("#biz").querySelectorAll("[data-bzsave]").forEach(b=>b.onclick=async()=>{const info={};$("#bzf-"+b.dataset.bzsave).querySelectorAll("[data-k]").forEach(i=>info[i.dataset.k]=i.value.trim());
+    try{const r=await post(`/admin/api/seller-biz/${b.dataset.bzsave}/save`,{info});bizMsg(r.biz.missing.length?"저장했어요. 남은 빈 칸: "+r.biz.missing.join(", "):"저장했어요. 이제 ‘확인’을 누를 수 있어요.");loadBiz()}catch(e){bizMsg(e.message,"err")}});
+  $("#biz").querySelectorAll("[data-bz]").forEach(b=>b.onclick=async()=>{try{await post(`/admin/api/seller-biz/${b.dataset.bz}/verify`,{ok:b.dataset.ok==="1"});bizMsg(b.dataset.ok==="1"?"확인했어요.":"확인을 취소했어요.");loadBiz()}catch(e){bizMsg(e.message,"err")}})}
 const JR={ok:"✓",check:"확인",fail:"✗",skip:"–"};
 async function loadJoins(){let d;try{d=await api("/admin/api/seller-joins?status=open")}catch(e){return err(e)}
   $("#joins").innerHTML=d.joins.map(x=>{const a=x.analysis||{};const it=(a.items||[]).map(i=>`${JR[i.result]||i.result} ${esc(i.label)}${i.result!=="ok"?": "+esc(i.note):""}`).join("<br>");

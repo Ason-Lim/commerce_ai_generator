@@ -345,10 +345,20 @@ def analyze(eng, join_id: str, *, http=None, env=None, ocr=None, ai=None, ai_nam
         ct = corp._dec(j["contact_enc"]) or {}
         t = store.create_trial(store.engine(), name=j["trade_name"], contact=ct, join_id=join_id)
         _store_link(t["seller_id"], j["store_url"])
+        _biz_prefill(t["seller_id"], j["trade_name"], j["biz_no"])
         vals.update(status="trial", seller_id=t["seller_id"], code_enc=corp._enc({"code": t["code"]}))
     with eng.begin() as c:
         c.execute(update(t_join).where(t_join.c.join_id == join_id).values(**vals))
     return analysis
+
+
+def _biz_prefill(seller_id: str, trade_name: str, biz_no: str) -> None:
+    """신청서의 상호·사업자등록번호를 판매자 정보에 미리 (나머지는 셀러나 운영자가 서류 보고)."""
+    try:
+        shop_public.biz_save_operator(shop_public.engine(), seller_id, {"trade_name": trade_name, "biz_no": biz_no},
+                                      by="system:join")  # fmt: skip
+    except store.SellerError:
+        pass
 
 
 def _store_link(seller_id: str, url: str | None) -> None:
@@ -464,6 +474,7 @@ def decide(eng, join_id: str, decision: str, *, by: str, note: str = "") -> dict
         ct = corp._dec(j["contact_enc"]) or {}
         t = store.create_trial(seng, name=j["trade_name"], contact=ct, join_id=join_id)
         _store_link(t["seller_id"], j["store_url"])
+        _biz_prefill(t["seller_id"], j["trade_name"], j["biz_no"])
         sid, out["code"] = t["seller_id"], t["code"]
         out["code_note"] = "신청인에게 직접 전달해 주세요 (이 화면에서 한 번만 보여요)."
     vals: dict = {"seller_id": sid}

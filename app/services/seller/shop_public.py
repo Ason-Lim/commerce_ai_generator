@@ -192,6 +192,25 @@ def biz_list(eng) -> list[dict]:
     return out
 
 
+def biz_save_operator(eng, seller_id: str, raw: dict, *, by: str) -> dict:
+    """운영자가 입점 서류(사업자등록증·통신판매업 신고증)를 보고 판매자 정보를 대신 적는다 (2026-11-25).
+    저장하면 '확인'은 풀린다 — 다 적은 뒤 '확인'을 따로 누른다. 셀러가 셀러센터에서 고칠 수도 있다."""
+    if by != "system:join":
+        by = store._operator(by)
+    with eng.connect() as c:
+        if c.execute(select(store.t_seller.c.seller_id).where(store.t_seller.c.seller_id == seller_id)).scalar() is None:
+            raise store.SellerError("없는 셀러예요")
+        old = _biz_view(_biz_row(c, seller_id))["info"]
+    info = check_biz({k: (raw or {}).get(k, old.get(k, "")) for k, _ in BIZ_FIELDS})
+    with eng.begin() as c:
+        vals = dict(biz_enc=corp._enc(info), saved_at=store.now(), verified_at=None, verified_by=None)
+        if c.execute(update(t_biz).where(t_biz.c.seller_id == seller_id).values(**vals)).rowcount == 0:
+            c.execute(t_biz.insert().values(seller_id=seller_id, **vals))
+        store._event(c, seller_id, "biz_saved", by, {})
+        r = _biz_row(c, seller_id)
+    return _biz_view(r)
+
+
 def biz_verify(eng, seller_id: str, *, ok: bool, by: str) -> dict:
     """운영자가 사업자등록증·통신판매업 신고증과 대조해 확인한다 (AI 아님)."""
     by = store._operator(by)
