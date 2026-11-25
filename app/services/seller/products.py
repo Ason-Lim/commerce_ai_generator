@@ -17,12 +17,14 @@ import io
 import re
 import secrets
 
-from sqlalchemy import JSON, Column, DateTime, Integer, MetaData, String, Table, and_, func, select, update
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, MetaData, String, Table, and_, func, select, update
 
 from app.services.seller import store
 
 DECLARED = {"origin": "원산지", "cert": "인증 표기", "brix": "당도(브릭스)"}
-STATUSES = {"pending": "검수 대기", "approved": "승인", "rejected": "반려", "withdrawn": "판매 중지(셀러)"}
+STATUSES = {"pending": "검수 대기", "approved": "승인", "rejected": "반려", "withdrawn": "판매 중지(셀러, 옛 기록)"}
+# 판매 켜기·끄기는 셀러가 정한다(2026-11-25 사용자 결정) — 검수 상태와 따로. 끄고 켜는 데 검수 없음, 내용을 고칠 때만 검수.
+SALE_STATES = {"on_sale": "판매 중", "off": "판매 꺼둠", "sold_out": "품절", "pending": "검수 대기", "rejected": "반려"}
 MAX_PER_SELLER = 2000
 MAX_CSV_ROWS = 300
 CSV_HEADERS = {
@@ -55,6 +57,14 @@ t_product = Table(
     Column("created_at", DateTime(timezone=True)),
     Column("updated_at", DateTime(timezone=True)),
     Column("reviewed_at", DateTime(timezone=True)),
+)
+t_listing = Table(
+    "seller_listing",
+    meta,  # 셀러가 정하는 판매 켜기·끄기 — 행이 없으면 켜짐
+    Column("product_id", String(12), primary_key=True),
+    Column("seller_id", String(12), index=True, nullable=False),
+    Column("is_on", Boolean, nullable=False, default=True),
+    Column("changed_at", DateTime(timezone=True)),
 )
 
 
@@ -171,7 +181,24 @@ def _mine(c, seller_id: str, product_id: str):
     return r
 
 
+def listing_of(eng, seller_id: str) -> dict[str, bool]:
+    with eng.connect() as c:
+        return dict(
+            c.execute(select(t_listing.c.product_id, t_listing.c.is_on).where(t_listing.c.seller_id == seller_id)).all()
+        )
+
+
+def sale_state(status: str, on: bool, sold_out: bool) -> str:
+    if status in ("pending", "rejected"):
+        return status
+    if status == "withdrawn" or not on:
+        return "off"
+    return "sold_out" if sold_out else "on_sale"
+
+
 def list_mine(eng, token: str, client: str) -> list[dict]:
+    from app.services.seller import scm  # 재고는 ③ 표
+
     s = store.resolve(eng, token, client)
     with eng.connect() as c:
         rows = (
@@ -179,7 +206,16 @@ def list_mine(eng, token: str, client: str) -> list[dict]:
             .mappings()
             .all()
         )
-    return [_view(r) for r in rows]
+    on = listing_of(eng, s["seller_id"])
+    stock = scm.stock_of(scm.engine(), s["seller_id"])
+    out = []
+    for r in rows:
+        v = _view(r)
+        v["on"] = on.get(r["product_id"], True) and r["status"] != "withdrawn"
+        v["sale_state"] = sale_state(r["status"], v["on"], stock.get(r["product_id"], {}).get("sold_out", False))
+        v["sale_label"] = SALE_STATES[v["sale_state"]]
+        out.append(v)
+    return out
 
 
 def _insert(c, seller_id: str, f: dict) -> str:
@@ -229,16 +265,36 @@ def save(eng, token: str, client: str, raw: dict, product_id: str | None = None)
     return _view(r)
 
 
-def withdraw(eng, token: str, client: str, product_id: str) -> dict:
-    """셀러가 자기 상품 판매를 멈춤 — 다시 고치면 검수 대기로."""
+def set_listing(eng, token: str, client: str, product_id: str | None, on: bool) -> int:
+    """셀러가 판매를 켜고 끈다 — 검수 없이 바로. product_id 가 없으면 내 상품 모두. 바뀐 상품 수를 돌려줌."""
     s = store.resolve(eng, token, client)
     with eng.begin() as c:
-        _mine(c, s["seller_id"], product_id)
-        c.execute(update(t_product).where(t_product.c.product_id == product_id)
-                  .values(status="withdrawn", updated_at=store.now()))  # fmt: skip
-        store._event(c, s["seller_id"], "product_withdrawn", "seller", {"product_id": product_id})
-        r = _mine(c, s["seller_id"], product_id)
-    return _view(r)
+        if product_id:
+            r = _mine(c, s["seller_id"], product_id)
+            ids = [product_id]
+            if (
+                r["status"] == "withdrawn"
+            ):  # 옛 '판매 중지' 상태 → 내용은 그대로이니 이전 검수 결과로 되돌릴 수 없음 → 검수 대기
+                c.execute(update(t_product).where(t_product.c.product_id == product_id).values(status="pending"))
+        else:
+            ids = [
+                x[0]
+                for x in c.execute(select(t_product.c.product_id).where(t_product.c.seller_id == s["seller_id"])).all()
+            ]
+        t = store.now()
+        for pid in ids:
+            vals = dict(seller_id=s["seller_id"], is_on=bool(on), changed_at=t)
+            if c.execute(update(t_listing).where(t_listing.c.product_id == pid).values(**vals)).rowcount == 0:
+                c.execute(t_listing.insert().values(product_id=pid, **vals))
+        store._event(c, s["seller_id"], "listing_on" if on else "listing_off", "seller",
+                     {"product_id": product_id, "n": len(ids)})  # fmt: skip
+    return len(ids)
+
+
+def withdraw(eng, token: str, client: str, product_id: str) -> dict:
+    """옛 이름 — 판매 끄기(검수 상태는 그대로)."""
+    set_listing(eng, token, client, product_id, False)
+    return next(p for p in list_mine(eng, token, client) if p["product_id"] == product_id)
 
 
 def import_csv(eng, token: str, client: str, text: str) -> dict:
@@ -329,7 +385,7 @@ def review(eng, product_id: str, decision: str, *, by: str, note: str = "") -> d
     with eng.begin() as c:
         r = _row(c, product_id)
         if r["status"] == "withdrawn":
-            raise store.SellerError("셀러가 판매를 멈춘 상품이에요")
+            raise store.SellerError("옛 '판매 중지' 상품이에요 — 셀러가 다시 켜면 검수 대기로 와요")
         s = c.execute(select(store.t_seller.c.status).where(store.t_seller.c.seller_id == r["seller_id"])).scalar_one()
         if decision == "approved" and s != "active":
             raise store.SellerError("입점 승인 전(또는 정지·종료) 셀러의 상품은 승인할 수 없어요")
@@ -348,4 +404,15 @@ def csv_template() -> str:
     )
 
 
-__all__ = ["check_fields", "facts", "import_csv", "list_mine", "queue", "review", "save", "verify", "withdraw"]
+__all__ = [
+    "check_fields",
+    "facts",
+    "import_csv",
+    "list_mine",
+    "queue",
+    "review",
+    "save",
+    "set_listing",
+    "verify",
+    "withdraw",
+]

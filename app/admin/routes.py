@@ -3196,3 +3196,12 @@ def seller_alerts():
     from app.services.seller import scm
 
     return {"alerts": scm.all_alerts(scm.engine()), "delay_biz_days": scm.DELAY_BIZ_DAYS}
+
+
+
+# ── 죽은 셀러몰 찾기 (2026-11-25) — 판매 없음·클릭 없음(측정 전)·변화 없음. 목록·알림까지만, 정지는 운영자 ──
+@router.get("/admin/api/seller-health", dependencies=[api])
+def seller_health_report():
+    from app.services.seller import health, scm
+
+    return health.report(scm.engine())
