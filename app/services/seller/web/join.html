@@ -52,7 +52,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px}
         <div class="field"><label for="bno">사업자등록번호</label><input id="bno" maxlength="12" inputmode="numeric" placeholder="000-00-00000" required></div>
         <div class="field"><label for="cname">담당자 이름</label><input id="cname" maxlength="30" required autocomplete="name"></div>
         <div class="field"><label for="email">담당자 메일</label><input id="email" type="email" maxlength="120" autocomplete="email"></div>
-        <div class="field"><label for="phone">담당자 전화</label><input id="phone" maxlength="20" inputmode="tel" autocomplete="tel"></div>
+        <div class="field"><label for="phone">담당자 전화</label><input id="phone" maxlength="14" type="tel" inputmode="tel" autocomplete="tel" data-phone placeholder="010-0000-0000"></div>
         <div class="field"><label for="store">판매처 주소 (스마트스토어 등)</label><input id="store" maxlength="300" placeholder="https://smartstore.naver.com/..."></div>
       </div>
       <div class="field"><label for="products">주력 상품</label><textarea id="products" maxlength="500" rows="3" placeholder="예: 제주 노지 감귤, 한라봉 (직접 재배)" required></textarea></div>
@@ -86,6 +86,14 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px}
   <footer>입점 승인·정지·이용료는 운영팀이 정해요(AI 가 결정하지 않아요). <a href="/">trendguide 홈</a></footer>
 </main>
 <script>
+function fmtPhone(v){const d=String(v||"").replace(/\D/g,"").slice(0,12);if(!d)return"";
+  if(/^1[568]/.test(d))return d.length>4?d.slice(0,4)+"-"+d.slice(4,8):d;
+  if(d.startsWith("02")){if(d.length<=2)return d;if(d.length<=5)return d.slice(0,2)+"-"+d.slice(2);if(d.length<=9)return d.slice(0,2)+"-"+d.slice(2,5)+"-"+d.slice(5);return d.slice(0,2)+"-"+d.slice(2,6)+"-"+d.slice(6,10)}
+  if(d.startsWith("050")&&d.length>11)return d.slice(0,4)+"-"+d.slice(4,8)+"-"+d.slice(8);
+  if(d.length<=3)return d;if(d.length<=6)return d.slice(0,3)+"-"+d.slice(3);if(d.length<=10)return d.slice(0,3)+"-"+d.slice(3,6)+"-"+d.slice(6);return d.slice(0,3)+"-"+d.slice(3,7)+"-"+d.slice(7,11)}
+// 전화 칸: 치는 대로 '-' 를 넣는다 (서버는 숫자만 저장) — 2026-11-25
+document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matches("input[data-phone]")){t.value=fmtPhone(t.value)}});
+
 (function(){
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

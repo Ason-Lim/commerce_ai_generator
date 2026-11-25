@@ -180,6 +180,11 @@ def set_stock(eng, token: str, client: str, product_id: str, *, stock, sold_out:
     return stock_of(eng, s["seller_id"])[product_id]
 
 
+def _ct_view(ct: dict | None) -> dict | None:
+    """저장은 숫자만 — 화면에는 '-' 넣어서 (2026-11-25)."""
+    return dict(ct, phone=store.fmt_phone(ct.get("phone"))) if ct else ct
+
+
 def stock_of(eng, seller_id: str) -> dict[str, dict]:
     with eng.connect() as c:
         rows = c.execute(select(t_stock).where(t_stock.c.seller_id == seller_id)).mappings().all()
@@ -240,7 +245,7 @@ def list_suppliers(eng, token: str, client: str) -> list[dict]:
             .all()
         )
     return [{"supplier_id": r["supplier_id"], "name": r["name"], "memo": r["memo"] or "",
-             "contact": corp._dec(r["contact_enc"])} for r in rows]  # fmt: skip
+             "contact": _ct_view(corp._dec(r["contact_enc"]))} for r in rows]  # fmt: skip
 
 
 def set_supply(eng, token: str, client: str, product_id: str, *, supplier_id: str | None, sku: str = "") -> dict:
