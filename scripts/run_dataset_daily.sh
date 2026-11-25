@@ -19,6 +19,6 @@ PY=.venv/bin/python
   # 2026-11-22: 실패하면 상태 파일 + 맥 알림 — 다음 날 같은 시각에 다시 돈다(남은 것부터 이어서 처리)
   echo "$(date '+%Y-%m-%d %H:%M:%S') $CODE" > var/log/dataset_daily.status
   if [ "$CODE" -ne 0 ] && command -v osascript >/dev/null 2>&1; then
-    osascript -e 'display notification "var/log/dataset_daily.log 를 확인해 주세요" with title "commerce_ai 학습 데이터 정리 실패"' || true
+    osascript -e 'display notification "var/log/dataset_daily.log 를 확인해 주세요" with title "trendguide 학습 데이터 정리 실패"' || true
   fi
 } >>"$LOG" 2>&1

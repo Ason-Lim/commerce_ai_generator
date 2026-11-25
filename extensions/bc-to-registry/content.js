@@ -236,7 +236,7 @@
     el.className = (state.open ? 'bcr-open' : 'bcr-closed') + (drag.on ? ' bcr-dragging' : '');   // 옮기는 중 다시 그려도 표시 유지
     el.innerHTML = `
       <div class="bcr-head">
-        <button class="bcr-toggle" title="눌러서 접기/펴기 · 끌어서 옮기기 · 두 번 눌러 처음 자리로">commerce_ai 등록부 ${state.open ? '▾' : '▸'}</button>
+        <button class="bcr-toggle" title="눌러서 접기/펴기 · 끌어서 옮기기 · 두 번 눌러 처음 자리로">trendguide 등록부 ${state.open ? '▾' : '▸'}</button>
         <span class="bcr-server ${state.server.ok === false ? 'bcr-err' : ''}">${esc(state.server.text || '')}</span>
         <button class="bcr-reload" title="등록부 다시 읽기">↻</button>
         <button class="bcr-options" title="서버 주소·관리자 토큰">⚙</button>

@@ -35,7 +35,7 @@ def operator(ticket: dict, store_dir) -> str:
     """사람 필수 티켓을 운영자에게 알린다. 돌려주는 값: 'mac' · 'queue'(대기열에만) · 'off'."""
     mode = _mode()
     how = "off" if mode in ("off", "0", "none") else ("mac" if mode == "mac" and _mac(
-        "commerce_ai 운영 알림", f"{ticket.get('label')} 접수 {ticket.get('id')} — 관리자 CS 화면에서 확인") else "queue")
+        "trendguide 운영 알림", f"{ticket.get('label')} 접수 {ticket.get('id')} — 관리자 CS 화면에서 확인") else "queue")
     try:
         from pathlib import Path
 

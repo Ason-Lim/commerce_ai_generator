@@ -280,7 +280,7 @@ def _store_name(urls: list[str]) -> str:
 
 def texts_for(eng, s: dict) -> dict:
     n = notice()
-    op = (n.get("operator") or {}).get("trade_name") or "commerce_ai"
+    op = (n.get("operator") or {}).get("trade_name") or "trendguide"
     seller = s["biz"]["info"].get("trade_name") or s["name"]
     urls = [pv.get("sale_url") for pv, _ in detail_page.shop_items(eng, s["seller_id"], on_sale_only=True)]
     kw = {"operator": op, "seller": seller, "store": _store_name(urls)}

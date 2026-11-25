@@ -1,4 +1,5 @@
 """머리줄 겹침 (2026-11-23 사용자 PDF): 대화 중 진행 표시 '3/5 후보 비교'가 로고를 덮어 'AI 식품 추'까지만 보였다.
+2026-11-25: 로고가 'trendguide' 글자로 바뀜 — 로고 링크(aria-label 'trendguide…')와 글자로 잰다.
 
 여러 화면 폭에서 로고 · 진행 표시 · 메뉴의 상자가 서로 겹치지 않는지 잰다.
 """
@@ -16,10 +17,10 @@ from tests.e2e.test_site_browser import DIST, _free_port  # noqa: E402
 BOX_JS = """() => {
   const r = (el) => el && el.getBoundingClientRect();
   const head = document.querySelector('header');
-  const logo = r([...head.querySelectorAll('a')].find(a => a.textContent.includes('AI 식품 추천')));
+  const logo = r(head.querySelector('a[aria-label^="trendguide"]'));
   const step = r(head.querySelector('[aria-label^="진행 단계"]'));
   const right = r(head.querySelector('nav[aria-label="주요 메뉴"]') || head.querySelector('button'));
-  const logoText = [...head.querySelectorAll('a span')].find(s => s.textContent === 'AI 식품 추천');
+  const logoText = [...head.querySelectorAll('a[aria-label^="trendguide"] span')].find(s => s.textContent === 'trendguide');
   return {logo: logo && [logo.left, logo.right], step: step && [step.left, step.right],
           right: right && [right.left, right.right], logoVisible: !!(logoText && logoText.offsetWidth),
           clipped: logoText ? logoText.scrollWidth > logoText.clientWidth + 1 : null};

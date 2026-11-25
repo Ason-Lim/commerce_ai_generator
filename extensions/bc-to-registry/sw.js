@@ -29,7 +29,7 @@ async function call(path, init) {
       headers: { 'Content-Type': 'application/json', 'X-Access-Token': s.token, ...((init && init.headers) || {}) },
     });
   } catch (e) {
-    return { ok: false, error: `commerce_ai 서버(${s.server})에 닿지 않아요 — 켜져 있는지 확인해 주세요` };
+    return { ok: false, error: `trendguide 서버(${s.server})에 닿지 않아요 — 켜져 있는지 확인해 주세요` };
   }
   if (res.status === 401) return { ok: false, error: '관리자 토큰이 맞지 않아요 — ⚙에서 확인해 주세요' };
   let body = null;
