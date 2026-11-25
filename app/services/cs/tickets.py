@@ -30,6 +30,11 @@ SPEC: dict[str, dict] = {
     "dispute":     {"label": "분쟁·보상 문의", "human": True, "due": ("bizdays", 10), "alert": True, "follow": True},
     # 2026-11-24 B2B 폐쇄몰 임직원 문의 (배송·교환·하자·기타) — 1차는 모두 운영자가 답한다. 직원 화면에서 답을 본다.
     "corpmall":    {"label": "폐쇄몰 문의", "human": True, "due": ("bizdays", 1), "alert": True, "follow": True},
+    # 2026-11-25 창 5 ⑤ 셀러 센터 문의 — 사람이 맡는 일(로드맵 기한): 입점·정지·해지 3영업일, 이용료 환불·감면 5영업일, 계정 복구 3영업일
+    "seller":         {"label": "셀러 문의", "human": True, "due": ("bizdays", 2), "alert": False, "follow": True},
+    "seller_status":  {"label": "셀러 입점·정지·해지", "human": True, "due": ("bizdays", 3), "alert": True, "follow": True},
+    "seller_fee":     {"label": "셀러 이용료·환불·감면", "human": True, "due": ("bizdays", 5), "alert": True, "follow": True},
+    "seller_account": {"label": "셀러 코드·담당자", "human": True, "due": ("bizdays", 3), "alert": True, "follow": True},
 }
 FOLLOW_BIZDAYS = 3
 STATUSES = ("open", "answered", "closed")

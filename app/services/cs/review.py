@@ -31,6 +31,11 @@ LABELS.update({f"corp_{k}": f"폐쇄몰·{v}" for k, v in (
     ("eta", "도착일"), ("address_change", "배송지 변경"), ("item_change", "상품 변경"), ("exchange", "교환·반품"),
     ("defect", "상품 이상"), ("food_safety", "식품 안전"), ("refund", "환불·현금"), ("deadline", "선택 기한"),
     ("how_to", "고르는 법"), ("privacy", "개인정보"), ("contact", "담당자 연락"), ("unknown", "모름"))})
+# 2026-11-25 창 5 ⑤ 셀러 센터 문의 분야(규칙) — 같은 주간 검수에
+LABELS.update({f"seller_{k}": f"셀러·{v}" for k, v in (
+    ("status", "입점·정지·해지"), ("fee", "이용료"), ("account", "코드·담당자"), ("review", "검수·표기"),
+    ("listing", "판매 켜기·끄기"), ("orders", "주문·발주·송장"), ("import", "스마트스토어 연동"),
+    ("food_safety", "식품 안전"), ("emergency", "위급"), ("other", "기타"))})
 
 
 def _dir() -> Path:

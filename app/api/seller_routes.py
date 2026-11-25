@@ -11,6 +11,8 @@
   POST /seller/api/health           {key} → '상품 정보 그대로예요' 확인 요청 여부
   POST /seller/api/confirm          {key} → '상품 정보 그대로예요'
   POST /seller/api/billing          {key} → ④ 내 요금제·청구 내역 (보기만, 실제 청구 없음)
+  POST /seller/api/ask              {key, text, handoff?} → ⑤ 문의 — 안내문 바로 + 필요하면 CS 티켓 (규칙만, 외부 AI 없음)
+  POST /seller/api/asks             {key} → 내 문의와 운영팀 답
   ── ③ SCM (2026-11-25) ──
   POST /seller/api/stock            {key, product_id, stock?, sold_out, restock_on?} → 재고·품절
   POST /seller/api/suppliers        {key} → 내 공급사 · 상품별 공급사 연결 · 재고
@@ -39,6 +41,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.corpmall_routes import NOINDEX, _client
 from app.services.seller import billing, health, products, scm, store
+from app.services.seller import chat as seller_chat
 
 router = APIRouter(tags=["seller"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "seller" / "web" / "seller.html"
@@ -329,5 +332,29 @@ def seller_confirm(body: KeyIn, request: Request):
 def seller_billing(body: KeyIn, request: Request):
     try:
         return _ok(billing=billing.my_billing(billing.engine(), body.key, _client(request)))
+    except store.SellerError as e:
+        return _err(e)
+
+
+# ── ⑤ 셀러 문의 ──
+class AskIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    text: str = Field(..., max_length=600)
+    handoff: bool = False
+
+
+@router.post("/seller/api/ask")
+def seller_ask(body: AskIn, request: Request):
+    try:
+        return _ok(**seller_chat.ask(store.engine(), body.key, _client(request), body.text, handoff=body.handoff))
+    except store.SellerError as e:
+        return _err(e)
+
+
+@router.post("/seller/api/asks")
+def seller_asks(body: KeyIn, request: Request):
+    try:
+        return _ok(asks=seller_chat.my_asks(store.engine(), body.key, _client(request)))
     except store.SellerError as e:
         return _err(e)
