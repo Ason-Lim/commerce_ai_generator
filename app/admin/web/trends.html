@@ -80,7 +80,7 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
   <h1>관리자</h1><div class="sub">AI 식품 추천 · 내부 전용</div>
   <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends" aria-current="page">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/b2b">B2B</a></nav>
   <nav aria-label="트렌드 메뉴">
-    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#next4w">다음 4주 예보</a><a href="#tshift">트렌드 변화(가설)</a><a href="#backtest">예측 백테스트</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
+    <div class="grp">급상승 키워드 <small>쿠팡·네이버 공통</small></div><a href="#summary">리포트 요약</a><a href="#period">기간별 순위 변화</a><a href="#khist">키워드 관심 이력</a><a href="#evcurve">행사 선행 곡선</a><a href="#rcard">행사별 리포트카드</a><a href="#next4w">다음 4주 예보</a><a href="#tshift">트렌드 변화(가설)</a><a href="#backtest">예측 백테스트</a><a href="#surge">급상승 키워드 목록</a><a href="#detail">비교 분석</a>
     <div class="grp" id="grp-naver">네이버 <small>블로그</small></div><a href="#blog" id="nav-blog">블로그 초안</a><a href="#requests" id="nav-req">발급 요청</a><a href="#bc" id="nav-bc">브랜드커넥트 상품 찾기</a><a href="#links" id="nav-links">등록된 링크</a>
     <div class="grp">쿠팡 <small>사이트 글</small></div><a href="/admin/trend-posts">글 검토 대기열</a></nav>
   <div class="railnote">네이버 데이터랩 검색량이 평소보다 크게 늘어난 식품을 찾고, 블로그·식품 순위·구글 트렌드가 함께 움직였는지 확인해요.
@@ -225,6 +225,12 @@ body[data-view=naver] main>section:not(#blog):not(#requests):not(#bc):not(#links
     <div class="kpis" id="ev-kpis"></div>
     <div class="scroll"><table><thead><tr><th>키워드</th><th>등급</th><th>상대일 곡선 (−35…+14, 해마다 한 줄)</th><th>진입 선행일</th><th>최고 순위 구간</th><th>최고</th><th>해별 판정</th><th>다음 행사 예보 재료</th><th>네이버 링크</th><th>쿠팡 상품</th></tr></thead>
     <tbody id="ev-rows"><tr><td colspan="10" class="note">행사를 골라 '보기'를 눌러 주세요.</td></tr></tbody></table></div>
+  </section>
+  <section id="rcard" aria-labelledby="rcard-h">
+    <h2 id="rcard-h">행사별 리포트카드 <small class="note" style="font-weight:400">행사 28일 전에 예보했다면 — 무엇을 맞히고 무엇을 놓쳤나 (참고값)</small></h2>
+    <p class="lede">예보일 = 행사 시작 28일 전(그날까지의 순위만 읽음), 관측창 = 그 뒤 28일(행사 시작일까지). 방법마다 상위 20 의 <b>선행 적중(7~28일)</b>, 그리고 50위 안까지 오른 <b>실제 주요 상승</b>을 어느 방법이 상위 20 에 냈는지, 놓친 것은 <b>후보 목록 몇 번째</b>에 있었는지(상위 20 경계에서 잘림)·<b>과거 400일 Top500 이력</b>이 있었는지 보여 줘요. 백테스트와 같은 자료라 참고값이에요.</p>
+    <div class="row"><select id="rc-ev" aria-label="리포트카드 행사"></select><select id="rc-yr" aria-label="연도"></select><button class="btn primary" id="rc-go">보기</button><span class="note" id="rc-msg"></span></div>
+    <div id="rc-box"></div>
   </section>
   <section id="next4w" aria-labelledby="next4w-h">
     <h2 id="next4w-h">다음 4주 예보 <small class="note" style="font-weight:400">후보 목록 — 전년 기준(설·추석은 명절 맞춤) · 행사 상대일 + 탐색기(반복만)는 근거 열만</small></h2>
@@ -982,6 +988,25 @@ if($("#ask-go")){
     try{const x=await api("/admin/api/trends/forecast/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,provider:$("#ask-p").value})});$("#ask-ans").innerHTML=askRow(x);
       $("#ask-ans").querySelectorAll("button[data-r]").forEach(b=>b.remove());loadAskLog()}catch(e){$("#ask-ans").innerHTML=`<p class="note">${esc(e.message)}</p>`}};
   loadKn();loadAskLog()}
+async function loadRcard(withYear){const box=$("#rc-box");const ev=$("#rc-ev").value;if(!ev)return;const q=new URLSearchParams({event:ev});if(withYear&&$("#rc-yr").value)q.set("year",$("#rc-yr").value);
+  box.innerHTML='<p class="note">계산 중…</p>';
+  try{const d=await api("/admin/api/trends/forecast/report-card?"+q.toString());const pc=v=>v==null?"—":(v*100).toFixed(0)+"%";
+    const ms=["last_year_lunar","event_rel","explorer_repeat","recent"],MN={last_year_lunar:"전년 기준",event_rel:"행사 상대일",explorer_repeat:"탐색기(반복만)",recent:"최근 유지"};
+    const ok=d.summary.filter(x=>x.status==="ok");const yrSel=$("#rc-yr");const cur=yrSel.value;
+    yrSel.innerHTML=ok.map(x=>`<option value="${x.year}">${x.year} (${x.date.slice(5)})</option>`).join("");if(cur&&ok.some(x=>String(x.year)===cur))yrSel.value=cur;
+    const sum=`<div class="scroll"><table><thead><tr><th>연도</th><th>행사일</th>${ms.map(m=>`<th>${MN[m]}</th>`).join("")}<th>주요 상승</th><th>상위 20 에 낸 것</th><th>놓침(후보에 있었음 · 이력 없음)</th></tr></thead><tbody>${d.summary.map(x=>x.status==="ok"?`<tr><td>${x.year}</td><td>${x.date}</td>${ms.map(m=>`<td>${pc(x.lead_rate[m])}</td>`).join("")}<td>${x.major_rise}</td><td>${x.major_predicted}</td><td>${x.missed} (${x.missed_beyond_top20} · ${x.missed_no_history})</td></tr>`:`<tr><td>${x.year}</td><td>${x.date||""}</td><td colspan="${ms.length+3}" class="note">${x.status==="pending"?"아직 판정 못 함":"자료 없음"}</td></tr>`).join("")}</tbody></table></div><p class="note">방법 칸 = 상위 20 선행 적중률(7~28일). — = 그 방법이 후보를 못 냄(예: 반복 판정할 해가 모자람).</p>`;
+    let card="";const c=d.card;
+    if(c&&c.status==="ok"){card=`<h3>${esc(c.event)} ${c.year} <small class="note">예보일 ${c.as_of} · 관측창 ${c.window[0]} ~ ${c.window[1]}${c.history_ok?"":" · 과거 자료 부족(이력 판정 안 함)"}</small></h3>
+      <p class="note">${Object.values(c.methods).map(x=>`${esc(x.name)} 선행 적중 ${x.lead}/${x.submitted}${x.lead_keywords.length?" ("+x.lead_keywords.slice(0,5).map(esc).join(", ")+")":""}`).join(" · ")}</p>
+      <div class="scroll"><table><thead><tr><th>주요 상승 키워드</th><th>최고</th><th>처음 100위 안</th><th>상위 20 에 낸 방법</th><th>후보 순위(상위 20 밖 포함)</th><th>과거 이력</th></tr></thead><tbody>${c.rises.map(r=>`<tr><td>${esc(r.keyword)}</td><td>${r.best}위</td><td>${r.first_date.slice(5)} (D-${r.d_day})</td><td>${r.predicted_by.length?r.predicted_by.map(esc).join(", "):'<span class="note">없음</span>'}</td><td>${Object.entries(r.candidate_rank).map(([m,i])=>esc(m)+" "+i+"번째").join(", ")||"—"}</td><td>${esc(r.history)}</td></tr>`).join("")}</tbody></table></div><p class="note">${esc(c.note)}</p>`}
+    else if(c){card=`<p class="note">${esc(c.note||c.status)}</p>`}
+    box.innerHTML=sum+card;$("#rc-msg").textContent="";
+  }catch(e){box.innerHTML=`<p class="note">${esc(e.message)}</p>`}}
+async function initRcard(){if(!$("#rc-ev"))return;try{const d=await api("/admin/api/trends/forecast/events?days=42");
+  $("#rc-ev").innerHTML=d.events.filter(e=>e.type!=="solar_term").map(e=>`<option value="${esc(e.event)}">${esc(e.event)}</option>`).join("");
+  $("#rc-ev").value=d.events.some(e=>e.event==="추석")?"추석":$("#rc-ev").value;$("#rc-ev").onchange=()=>loadRcard(false);$("#rc-go").onclick=()=>loadRcard(true);
+  await loadRcard(false);}catch(e){$("#rc-msg").textContent=e.message}}
+initRcard();
 if($("#nw-go")){$("#nw-go").onclick=()=>loadNext4w(false);$("#nw-cp").onclick=()=>loadNext4w(true);loadNext4w(false).catch(()=>{})}
 </script>
 </body>
