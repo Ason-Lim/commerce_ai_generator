@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ExternalLink, Globe2, Search, ShieldAlert, Sparkles } from "lucide-react";
-import { fetchDirectHome, fetchDirectSearch, type DirectHome, type DirectProduct, type DirectSearch, type DirectStep } from "../api/client";
+import { fetchDirectHome, fetchDirectSearch, type DirectFx, type DirectHome, type DirectProduct, type DirectSearch, type DirectStep } from "../api/client";
 import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteFooter, SiteNav } from "./SiteNav";
 
 /**
@@ -19,6 +19,16 @@ function money(p: DirectProduct) {
   if (p.price == null || !p.currency) return "가격 확인 필요";
   const v = p.currency === "KRW" ? `${p.price.toLocaleString()}원` : `${(p.price / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${p.currency}`;
   return p.krw_estimate ? `${v} · 약 ${p.krw_estimate.toLocaleString()}원` : v;
+}
+
+/** 원화 환산 기준 — 출처·기준일과 함께, 참고용임을 밝힘 (2026-11-26 관세청 관세환율). */
+function FxNote({ fx }: { fx?: DirectFx | null }) {
+  if (!fx) return null;
+  return (
+    <p className="mt-2 text-[11px] leading-4 text-ink3">
+      원화는 {fx.source} 1달러 {fx.rate.toLocaleString()}원{fx.date ? ` (${fx.date} 기준)` : ""}로 바꾼 참고 금액이에요{fx.stale ? " · 최근 받은 값" : ""}. 결제 환율·실제 세액과 다를 수 있어요.
+    </p>
+  );
 }
 
 /** 직구 도우미 — 상품을 고르면 순서대로 확인하고 판매처로 이동. */
@@ -124,6 +134,7 @@ export function DirectBuySection() {
           {sec && sec.error && <p className="mt-3 text-sm text-ink3">{sec.error}</p>}
           {sec && sec.status === "ok" && !sec.error && !sec.products.length && <p className="mt-3 text-sm text-ink3">한국으로 보내는 상품을 찾지 못했어요.</p>}
           {sec && sec.products.length > 0 && <ProductGrid items={sec.products} steps={data.checklist} />}
+          <FxNote fx={data.fx} />
           <p className="mt-2 text-right text-[11px] text-ink3">출처 {data.source} · 방금 조회 · 저장하지 않음</p>
         </>
       )}
@@ -178,6 +189,7 @@ export function DirectBuyPage() {
             {!res.ok && <p className="mt-3 text-sm text-ink3">{res.error}</p>}
             {res.ok && !res.products.length && !res.quarantine_note && <p className="mt-3 text-sm text-ink3">한국으로 보내는 상품을 찾지 못했어요. 영어 이름으로도 찾아보세요.</p>}
             {res.products.length > 0 && <ProductGrid items={res.products} steps={res.checklist} />}
+            {res.products.length > 0 && <FxNote fx={res.fx} />}
           </section>
         )}
         <SiteFooter />

@@ -257,11 +257,12 @@ export type DirectProduct = {
   title: string; url: string; checkout_url: string | null; image: string | null; price: number | null; currency: string | null;
   seller: string | null; seller_domain: string | null; refund_policy: string | null; duty: DirectDuty; krw_estimate: number | null; quarantine: boolean;
 };
+export type DirectFx = { rate: number; source: string; date: string; kind: "customs" | "reference" | "manual"; stale: boolean };
 export type DirectStep = { key: string; title: string; text: string; url?: string };
 export type DirectSection = { key: string; label: string; status: "ok" | "quarantine" | "blocked"; note?: string | null; products: DirectProduct[]; error: string | null };
-export type DirectHome = { enabled: boolean; notice: string; checked_at: number; sections: DirectSection[]; checklist: DirectStep[]; source: string };
+export type DirectHome = { enabled: boolean; notice: string; checked_at: number; sections: DirectSection[]; checklist: DirectStep[]; source: string; fx?: DirectFx | null };
 export type DirectSearch = { enabled: boolean; query: string; ok: boolean; error: string | null; notice: string; checked_at: number;
-  products: DirectProduct[]; quarantine_note: string | null; checklist: DirectStep[] };
+  products: DirectProduct[]; quarantine_note: string | null; checklist: DirectStep[]; fx?: DirectFx | null };
 
 export async function fetchDirectHome(signal?: AbortSignal): Promise<DirectHome | null> {
   if (API_MODE === "mock") return null;
