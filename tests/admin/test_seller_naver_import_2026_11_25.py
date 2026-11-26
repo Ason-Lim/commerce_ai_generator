@@ -270,3 +270,62 @@ def test_sellers_are_isolated_and_routes(eng, monkeypatch):
     j = c.post("/seller/api/naver/sync", json={"key": k1, "set_base": True}).json()
     assert j["ok"] and j["sync"]["added"] == 1
     assert 'id="nv-h"' in c.get("/seller").text
+
+
+# ── 이어받기·호출 제한 실측 (2026-11-26) ──────────────────────────────────
+class Http429(Http):
+    """search 를 n번째 호출부터 계속 429 로 막는다(Retry-After 1초)."""
+
+    def __init__(self, items, origins, *, block_after=None, origin_block=None):
+        super().__init__(items, origins)
+        self.block_after, self.search_n, self.origin_block = block_after, 0, origin_block
+
+    def post(self, url, **kw):
+        if url.endswith("/v1/products/search"):
+            self.search_n += 1
+            if self.block_after is not None and self.search_n > self.block_after:
+                return R429()
+        return super().post(url, **kw)
+
+    def get(self, url, **kw):
+        if self.origin_block and url.rsplit("/", 1)[1] == self.origin_block:
+            return R429()
+        return super().get(url, **kw)
+
+
+class R429(R):
+    def __init__(self):
+        super().__init__(429, {"code": "GW.RATE_LIMIT"})
+        self.headers = {"Retry-After": "1"}
+
+
+def test_resume_after_rate_limit_and_limit(eng, monkeypatch):
+    sid, k = _seller(eng)
+    naver_api.save_key(eng, k, IP, client_id=CID, secret=SECRET, store_slug="halla")
+    monkeypatch.setattr(naver_api, "PAGE_SIZE", 2)
+    items = [item(100 + i, 900 + i, name=f"감귤 {i}") for i in range(5)]
+    origins = {str(100 + i): origin(name=f"감귤 {i}") for i in range(5)}
+    waits = []
+    monkeypatch.setattr(naver_api.time, "sleep", lambda s: waits.append(s))
+    # 1회차: 2쪽까지 읽고 3쪽 검색이 계속 429 → 읽은 4개 반영, 3쪽부터 이어받기
+    r1 = naver_api.sync(eng, k, IP, http=Http429(items, origins, block_after=2), set_base=True)
+    assert r1["added"] >= 1 and r1["resume_page"] == 3 and r1["stopped"] == "rate" and r1["missing"] == 0
+    assert 1 in waits and r1["measure"]["rate_waits"] == 3  # Retry-After 를 따름
+    st = naver_api.status(eng, k, IP)
+    assert st["last_report"]["resume_page"] == 3
+    # 2회차: 3쪽부터 — 마지막 1개, 끝까지 → 이어받기 지움
+    http = Http429(items, origins)
+    r2 = naver_api.sync(eng, k, IP, http=http)
+    assert r2["start_page"] == 3 and r2["resume_page"] is None and r2["missing"] == 0
+    pages = [c for c in http.calls if c[1].endswith("/v1/products/search")]
+    assert len(pages) == 1
+    assert len([u for u in catalog.units_of(eng, sid).values() if u.get("channel") == "naver"]) == 5
+    # 상세 조회가 429 면 그 쪽에서 멈추고 그 쪽부터 다시
+    r3 = naver_api.sync(eng, k, IP, http=Http429(items, origins, origin_block="102"))
+    assert r3["resume_page"] == 2 and r3["stopped"] == "rate"
+    # 한 번 상한
+    monkeypatch.setattr(naver_api, "MAX_PRODUCTS", 3)
+    got = naver_api.fetch(
+        naver_api.Client(CID, SECRET, http=Http(items, origins), sleep=lambda s: None), start_page=1, limit=3
+    )
+    assert got["fetched"] == 3 and got["next_page"] == 2 and got["stopped"] == "limit" and got["measure"]["calls"] >= 4
