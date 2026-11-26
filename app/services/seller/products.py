@@ -451,6 +451,10 @@ def review(eng, product_id: str, decision: str, *, by: str, note: str = "") -> d
         s = c.execute(select(store.t_seller.c.status).where(store.t_seller.c.seller_id == r["seller_id"])).scalar_one()
         if decision == "approved" and s != "active":
             raise store.SellerError("입점 승인 전(또는 정지·종료) 셀러의 상품은 승인할 수 없어요")
+        if decision == "approved":  # 위탁판매 셀러 상품은 공급사가 붙어 있어야 (2026-11-26)
+            from app.services.seller import consign
+
+            consign.gate_approve(c, r["seller_id"], product_id)
         c.execute(update(t_product).where(t_product.c.product_id == product_id)
                   .values(status=decision, review_note=note or None, reviewed_at=store.now()))  # fmt: skip
         store._event(c, r["seller_id"], "product_review", by, {"product_id": product_id, "to": decision})

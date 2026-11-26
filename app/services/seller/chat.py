@@ -26,6 +26,7 @@ TOPICS = {
     "review": "상품 검수·표기",
     "listing": "판매 켜기·끄기·품절",
     "orders": "주문·발주서·송장",
+    "ship_issue": "배송 예외(지연·오배송·파손·반품)",
     "import": "스마트스토어 연동",
     "food_safety": "식품 안전",
     "emergency": "위급",
@@ -38,7 +39,7 @@ TICKET = {
     "food_safety": "food_safety",
     "emergency": "emergency",
     "other": "seller",
-}  # 나머지 분야는 안내문으로 답하고, 셀러가 '운영팀에 남기기'를 누르면 seller 티켓
+}  # ship_issue 는 손님 분쟁·보상 말이 있을 때만 seller_ship 티켓(아래 respond)  # 나머지 분야는 안내문으로 답하고, 셀러가 '운영팀에 남기기'를 누르면 seller 티켓
 
 ANSWERS = {
     "status": "입점 승인·정지·해지는 운영팀이 직접 확인하고 정해요. 문의를 운영팀에 남겼어요.",
@@ -51,16 +52,26 @@ ANSWERS = {
     "food_safety": "식품 안전 신고로 받았어요. 운영팀이 오늘 안에 확인해요. 손님에게 증상이 있으면 먼저 의료기관 진료를 안내하고, 남은 상품·포장은 버리지 말고 보관해 주세요. 식품 안전 신고는 식품의약품안전처 부정·불량식품 신고(1399)로 할 수 있어요.",
     "emergency": "위험한 상황이라면 이 문의보다 가까운 사람이나 긴급 기관에 바로 도움을 요청해 주세요. 운영팀에도 바로 알렸어요.",  # 창 4 결정 F: 위급 안내에 전화번호 없음
     "other": "운영팀에 문의를 남겼어요. 영업일 기준으로 답을 드려요.",
+    "ship_issue": "배송 예외는 판매처(셀러) 쪽에서 손님에게 먼저 안내해요 — 주문은 셀러 판매처에 있고 우리는 발주서·송장만 옮겨 적어요. "
+    "① 공급사에 출고·송장 여부를 확인하고 ② 지연이면 손님에게 예상일을, 오배송·파손·분실이면 사진을 받아 공급사와 재발송·회수를 정하고 "
+    "③ 반품·교환은 입점 때 정한 반품지·기준대로 처리해 주세요. 송장이 바뀌면 ‘송장 파일 올리기’로 다시 올리면 돼요. "
+    "공급사가 답하지 않거나 손님이 보상·분쟁을 말하면 ‘운영팀에 남기기’를 눌러 주세요.",
 }
+SHIP_DISPUTE = re.compile(r"보상|분쟁|소비자\s*원|신고|고소|배상|소송|공정위|민원")
 
 _RULES: list[tuple[str, re.Pattern]] = [
+    (
+        "ship_issue",
+        re.compile(r"오배송|파손|깨져|분실|미배송|배송\s*(지연|사고|누락|안\s*(돼|됨|와|옴))|반품|교환|회수|재발송|"
+                   r"공급사\s*(품절|지연|연락|답)|출고\s*(지연|안\s*(돼|됨|해))|택배\s*(사고|분실)"),  # fmt: skip
+    ),
     ("fee", re.compile(r"이용료|요금|청구|세금\s*계산서|환불|감면|면제|입금|정산")),
     ("status", re.compile(r"입점|승인\s*(이|은|해|좀|언제|여부|요청)|정지|해지|탈퇴|계약\s*(종료|해지)")),
     (
         "account",
         re.compile(r"초대\s*코드|코드\s*(를|가|분실|잃|새로)|링크\s*(분실|잃|안\s*열)|담당자\s*(바뀌|변경|교체)"),
     ),
-    ("orders", re.compile(r"발주|송장|운송장|주문\s*(csv|CSV|올리)|엑셀|출고|배송\s*지연")),
+    ("orders", re.compile(r"발주|송장|운송장|주문\s*(csv|CSV|올리)|엑셀|출고")),
     ("import", re.compile(r"스마트\s*스토어|네이버|커머스\s*api|연동|원클릭|가져오")),
     ("review", re.compile(r"검수|반려|확인됨|판매자\s*표기|원산지|인증|당도")),
     ("listing", re.compile(r"판매\s*(켜|끄|중지|중단|재개)|품절|재고|입고")),
@@ -91,6 +102,8 @@ def classify(text: str) -> str:
 def respond(text: str, *, handoff: bool = False) -> Reply:
     topic = "other" if handoff else classify(text)
     dom = TICKET.get(topic)
+    if topic == "ship_issue" and SHIP_DISPUTE.search(text or ""):
+        dom = "seller_ship"
     return Reply(topic, ANSWERS[topic], dom, offer_handoff=dom is None)
 
 

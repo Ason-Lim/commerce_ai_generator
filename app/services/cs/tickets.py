@@ -35,6 +35,8 @@ SPEC: dict[str, dict] = {
     "seller_status":  {"label": "셀러 입점·정지·해지", "human": True, "due": ("bizdays", 3), "alert": True, "follow": True},
     "seller_fee":     {"label": "셀러 이용료·환불·감면", "human": True, "due": ("bizdays", 5), "alert": True, "follow": True},
     "seller_account": {"label": "셀러 코드·담당자", "human": True, "due": ("bizdays", 3), "alert": True, "follow": True},
+    # 2026-11-26 위탁판매 배송 예외 — 손님 보상·분쟁 말이 있을 때 (보상 결정은 판매처·운영자, AI 아님)
+    "seller_ship":    {"label": "셀러 배송 예외·분쟁", "human": True, "due": ("bizdays", 2), "alert": True, "follow": True},
 }
 FOLLOW_BIZDAYS = 3
 STATUSES = ("open", "answered", "closed")

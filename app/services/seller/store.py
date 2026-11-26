@@ -287,6 +287,10 @@ def set_status(eng, seller_id: str, status: str, *, by: str, reason: str) -> dic
         raise SellerError("없는 셀러예요")
     if status not in ALLOWED.get(r["status"], set()):
         raise SellerError(f"'{STATUSES[r['status']]}' 상태에서 '{STATUSES.get(status, status)}'(으)로 바꿀 수 없어요")
+    if status == "active" and r["kind"] == "consign":  # 정식 위탁판매 셀러는 입점 심사표가 먼저 (2026-11-26)
+        from app.services.seller import consign
+
+        consign.gate_activate(eng, seller_id)
     vals: dict = {"status": status}
     if status == "ended":
         vals["ended_at"] = now()

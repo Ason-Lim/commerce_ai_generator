@@ -266,8 +266,12 @@ def seller_supply(body: SupplyIn, request: Request):
 def seller_orders(body: KeyIn, request: Request):
     try:
         eng, cl = scm.engine(), _client(request)
+        from app.services.seller import consign
+
+        consign.meta.create_all(eng)
         return _ok(orders=scm.list_orders(eng, body.key, cl), batches=scm.list_batches(eng, body.key, cl),
-                   alerts=scm.my_alerts(eng, body.key, cl), csv_template=scm.order_csv_template())  # fmt: skip
+                   alerts=scm.my_alerts(eng, body.key, cl), csv_template=scm.order_csv_template(),
+                   metrics=consign.my_metrics(eng, body.key, cl))  # fmt: skip
     except store.SellerError as e:
         return _err(e)
 

@@ -3506,6 +3506,30 @@ def seller_join_decide(join_id: str, body: _JoinDecideIn):
 DETAIL_CSP = "default-src 'none'; img-src 'self' https:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 
 
+# ── 정식 위탁판매 셀러 — 입점 심사표 · 운영 지표 (2026-11-26) ──
+class _ConsignCheckIn(BaseModel):
+    item: str = Field(..., max_length=24)
+    ok: bool
+    note: str = Field("", max_length=200)
+
+
+@router.get("/admin/api/seller-consign", dependencies=[api])
+def seller_consign_board():
+    from app.services.seller import consign
+
+    eng = consign.engine()
+    return {"sellers": consign.board(eng), "items": {k: {"label": v[0], "what": v[1]} for k, v in consign.ITEMS.items()},
+            "rule": {"min_orders": consign.MIN_ORDERS, "warn": consign.WARN_DELAY, "bad": consign.BAD_DELAY, "days": consign.WINDOW_DAYS}}  # fmt: skip
+
+
+@router.post("/admin/api/seller-consign/{seller_id}/check", dependencies=[api])
+def seller_consign_check(seller_id: str, body: _ConsignCheckIn):
+    from app.services.seller import consign, store
+
+    return {"ok": True, **_seller_call(store, lambda: consign.set_check(consign.engine(), seller_id, body.item, body.ok,
+                                                                       by="operator", note=body.note))}  # fmt: skip
+
+
 # ── 셀러 SCM ③ (창 5, 2026-11-25) — 품절·출고 지연·송장 미등록 숫자만 (받는 분 정보 없음) ──
 @router.get("/admin/api/seller-alerts", dependencies=[api])
 def seller_alerts():

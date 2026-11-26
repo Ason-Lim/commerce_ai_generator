@@ -232,6 +232,13 @@ tbody tr{cursor:default}
     <div class="tblwrap"><table><thead><tr><th>셀러</th><th>품절(승인 상품)</th><th class="num">출고 지연</th><th class="num">발주 전</th><th class="num">송장 대기</th></tr></thead><tbody id="alerts"></tbody></table></div>
   </section>
 
+  <section class="panel" aria-labelledby="cg-h" style="margin-top:14px">
+    <h3 id="cg-h">정식 위탁판매 셀러 · 입점 심사 · 운영 지표</h3>
+    <p class="basis" style="margin-top:0" id="cgRule"></p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>종류·상태</th><th>입점 심사표</th><th>운영 지표 (30일)</th><th class="num">평균 출고</th><th>품절</th></tr></thead><tbody id="consign"></tbody></table></div>
+    <div id="cgDetail" class="panel" hidden style="margin-top:10px"></div>
+  </section>
+
   <section class="panel" aria-labelledby="dd-h" style="margin-top:14px">
     <h3 id="dd-h">죽은 몰 후보 · 주의</h3>
     <p class="basis" style="margin-top:0" id="ddRule"></p>
@@ -423,6 +430,23 @@ $("#tpSave").onclick=async()=>{const t=tpRead(),isNew=!t.id;const n=!isNew&&TP.u
 $("#tpHide").onclick=async()=>{const t=TPCUR;try{const r=await post(`/admin/api/shop-templates/${t.id}/hide`,{hidden:!t.hidden});await loadTpl(r.template.id);$("#tpMsg").textContent=r.template.hidden?"숨겼어요 — 셀러 고르기 목록에서 빠져요(이미 쓰는 셀러 화면은 그대로).":"다시 보이게 했어요."}catch(e){$("#tpMsg").textContent=e.message}};
 $("#tpRestore").onclick=async()=>{const t=TPCUR;if(!confirm(`${t.id}를 처음 모습으로 되돌릴까요? 고친 내용과 숨김이 사라져요.`))return;try{const r=await post(`/admin/api/shop-templates/${t.id}/restore`);await loadTpl(r.template.id);$("#tpMsg").textContent="기본값으로 되돌렸어요."}catch(e){$("#tpMsg").textContent=e.message}};
 loadLab();loadTpl();
+// ── 정식 위탁판매 셀러 (2026-11-26) ──
+let CG=null;
+async function loadConsign(){try{CG=await api("/admin/api/seller-consign")}catch(e){return err(e)}const r=CG.rule;
+  $("#cgRule").textContent=`위탁판매 셀러는 심사표가 모두 ‘확인’이어야 입점 승인돼요(확인은 운영자만, 서류 원본은 받지 않고 메모만). 위탁판매 상품은 공급사가 붙어야 검수 승인돼요. 소매몰(쿠팡·스마트스토어 등)은 공급사로 등록되지 않아요. 지표: 최근 ${r.days}일, 주문 ${r.min_orders}건 미만은 ‘관찰’, 지연율 ${Math.round(r.warn*100)}% 넘으면 주의·${Math.round(r.bad*100)}% 넘으면 경고(기본값 — 자동 제재 없음).`;
+  const LV={ok:"st-active",warn:"st-pending",bad:"st-suspended",watch:""};
+  $("#consign").innerHTML=CG.sellers.length?CG.sellers.map(s=>{const m=s.metrics;return `<tr><td>${esc(s.name)}</td><td>${esc(s.kind_label)} · ${esc(s.status_label)}</td>
+   <td>${s.kind==="consign"?`${s.ready?'<span class="st st-active">모두 확인</span>':`<span class="st st-pending">남음 ${s.missing.length}</span>`} <button class="btn" type="button" data-cg="${esc(s.seller_id)}">심사표</button>`:'<span class="basis">직접 재고 — 해당 없음</span>'}</td>
+   <td><span class="st ${LV[m.level]||""}">${esc(m.level_label)}</span><div class="basis">주문 ${m.orders} · 출고 ${m.shipped} · 지연 ${m.late}${m.by_supplier.some(x=>x.late)?" · "+m.by_supplier.filter(x=>x.late).map(x=>`${esc(x.supplier)} ${x.late}/${x.orders}`).join(", "):""}</div></td>
+   <td class="num">${m.avg_ship_bizdays==null?"–":m.avg_ship_bizdays+"영업일"}</td><td>${m.sold_out}/${m.approved}</td></tr>`}).join(""):'<tr><td colspan="6" class="basis">셀러가 없어요</td></tr>';
+  document.querySelectorAll("#consign [data-cg]").forEach(b=>b.onclick=()=>cgOpen(b.dataset.cg))}
+function cgOpen(sid){const s=CG.sellers.find(x=>x.seller_id===sid);if(!s)return;const box=$("#cgDetail");box.hidden=false;
+  box.innerHTML=`<h3>${esc(s.name)} — 입점 심사표</h3><p class="basis">모두 확인돼야 ‘입점 승인’ 버튼이 통과해요. 확인할 때는 무엇을 봤는지 메모를 남겨 주세요.</p><table><tbody>${s.items.map(i=>`<tr><td><b>${esc(i.label)}</b><div class="basis">${esc(i.what)}</div></td>
+   <td>${i.ok?'<span class="st st-active">확인</span>':'<span class="st st-invited">미확인</span>'}<div class="basis">${esc(i.note)}${i.by?` · ${esc(i.by)} ${esc((i.at||"").slice(0,10))}`:""}</div></td>
+   <td>${i.auto?'<span class="basis">자동</span>':`<button class="btn" type="button" data-ci="${esc(i.item)}" data-ok="${i.ok?0:1}">${i.ok?"확인 취소":"확인"}</button>`}</td></tr>`).join("")}</tbody></table><p class="basis" id="cgMsg" role="status"></p>`;
+  box.querySelectorAll("[data-ci]").forEach(b=>b.onclick=async()=>{const ok=b.dataset.ok==="1";const note=ok?prompt("무엇을 보고 확인했나요? (예: 계약서 2026-11-26 확인, 기간 1년)"):(prompt("확인을 취소하는 이유 (선택)")??null);if(note===null)return;
+    try{await post(`/admin/api/seller-consign/${sid}/check`,{item:b.dataset.ci,ok,note});await loadConsign();cgOpen(sid)}catch(e){$("#cgMsg").textContent=e.message}})}
+loadConsign();
 loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();loadBiz();loadJoins();
 </script>
 </body>

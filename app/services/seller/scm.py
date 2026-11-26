@@ -206,6 +206,9 @@ def save_supplier(eng, token: str, client: str, *, name: str, contact: dict | No
     name = _txt(name, 40)
     if not name or name == DIRECT:
         raise store.SellerError("공급사 이름을 넣어 주세요")
+    from app.services.seller import consign
+
+    consign.check_supplier_name(name)  # 소매몰은 공급사로 받지 않음 (2026-11-26)
     ct = None
     if contact and any(str(v or "").strip() for v in contact.values()):
         ct = store._check_contact(contact)
