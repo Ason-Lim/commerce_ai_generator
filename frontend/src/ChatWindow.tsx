@@ -9,6 +9,7 @@ import { MobileTabBar, MOBILE_TAB_H, AiNoticeLink, PrivacyLink, ShelfLink, SiteF
 import { TrendPostPanel } from './components/TrendPost';
 import { FlowStepper } from './components/FlowStepper';
 import { HomeRankings } from './components/HomeRankings';
+import { DirectBuySection } from './components/DirectBuy';
 import { ChatActions, type ChatActionsValue } from './components/ChatActions';
 import type { FlowStep, SendPayload } from './state/useConversation';
 import type { Message } from './types';
@@ -435,6 +436,7 @@ export default function ChatWindow() {
                         {/* 창 3-C (2026-11-22): 지금 순위 — 예시 질문 아래 */}
                         <RecentViewed variant="home" />
                         <HomeRankings view="home" busy={busy} onAsk={submit} />
+                        <DirectBuySection />
                         <SiteFooter />
                     </section>
                 ) : (

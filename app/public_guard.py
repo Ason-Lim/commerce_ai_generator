@@ -23,7 +23,7 @@ from fastapi.responses import JSONResponse
 
 BLOCKED_EXACT = {"/generate", "/track-click", "/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"}
 BLOCKED_PREFIX = ("/recommendations/",)
-LIMITED_PREFIX = ("/api/chat", "/api/recipe/")
+LIMITED_PREFIX = ("/api/chat", "/api/recipe/", "/api/direct/search")  # 2026-11-26 직구 검색은 바깥 호출이라 같이 제한
 LIMIT_METHODS = {"POST", "GET"}
 
 

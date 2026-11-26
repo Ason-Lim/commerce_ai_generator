@@ -7,6 +7,7 @@ import { PrivacyPage } from "./components/PrivacyPage";
 import { PolicyPage } from "./components/PolicyPage";
 import { AiNoticePage } from "./components/AiNoticePage";
 import { TermsPage } from "./components/TermsPage";
+import { DIRECT_HASH, DirectBuyPage } from "./components/DirectBuy";
 import { MyShelf } from "./components/MyShelf";
 import "./index.css";
 
@@ -26,6 +27,7 @@ function Root() {
   }, []);
   if (hash === ME_HASH) return <MyShelf />;          // 2026-11-22 창 3-B 내 보관함
   if (hash === PRIVACY_HASH) return <PrivacyPage />; // 2026-11-23 개인정보처리방침 (한 곳으로 모음)
+  if (hash === DIRECT_HASH) return <DirectBuyPage />;      // 2026-11-26 해외 직구 찾기
   if (hash === TERMS_HASH) return <TermsPage />;          // 2026-11-26 이용약관
   if (hash === AI_NOTICE_HASH) return <AiNoticePage />;   // 2026-11-26 AI 기본법에 따른 고지
   if (hash === POLICY_HASH) return <PolicyPage />;   // 2026-11-23 운영정책 (순위·추천 기준·갱신·가격 표시)
