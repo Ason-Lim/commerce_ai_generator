@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import re
 import secrets
@@ -650,8 +651,45 @@ def _volume_from(name: str) -> str:
     return f"{n}{u}"
 
 
-def naver_export_rows(text: str, *, store_slug: str = "") -> tuple[list[dict], dict]:
-    """스마트스토어 상품 조회 CSV → 표준 칸 줄들 + 알림(옵션 상품 수 · 원산지 없음 · 판매 꺼진 상품 수)."""
+TAG_RE = re.compile(r"\[[^\]]*\]|\([^)]*(?:용량|개인용|전문가용|대용량|소용량)[^)]*\)")
+
+
+def base_name(name: str) -> str:
+    """같은 상품의 다른 용량을 묶는 열쇠 — 용량·[대용량/전문가용] 같은 꼬리표를 떼고 띄어쓰기를 없앤다."""
+    s = TAG_RE.sub(" ", name or "")
+    s = VOLUME_RE.sub(" ", s)
+    s = re.sub(r"[\s.·,/_-]+", "", s)
+    return s.lower()
+
+
+def _shown_base(name: str) -> str:
+    s = VOLUME_RE.sub(" ", TAG_RE.sub(" ", name or ""))
+    return " ".join(s.replace(" .", " ").split()).strip(" .·-")
+
+
+def auto_groups(rows: list[dict]) -> dict:
+    """그룹상품번호가 없는 줄을 이름으로 묶는다 — 같은 이름(용량만 다름)이 2줄 이상이면 한 그룹, 용량을 판매 단위(옵션)로.
+    돌려준 것: {열쇠: {name, ext_nos}} (미리보기용). rows 는 제자리에서 고친다."""
+    by: dict[str, list[dict]] = {}
+    for r in rows:
+        if r.get("group_no") or not r.get("volume"):
+            continue
+        by.setdefault(base_name(r["name"]), []).append(r)
+    out = {}
+    for key, rs in by.items():
+        if len(rs) < 2 or len({r["volume"] for r in rs}) < len(rs):
+            continue  # 한 줄뿐이거나 같은 용량이 겹치면 묶지 않는다(다른 상품일 수 있음)
+        gname = _shown_base(rs[0]["name"])
+        gno = "auto-" + hashlib.sha1(key.encode()).hexdigest()[:10]
+        for r in rs:
+            r.update(group_no=gno, group_name=gname, option=r["option"] or r["volume"])
+        out[gno] = {"name": gname, "units": [{"ext_no": r["ext_no"], "volume": r["volume"], "price": r["price"]} for r in rs]}
+    return out
+
+
+def naver_export_rows(text: str, *, store_slug: str = "", group_same: bool = False) -> tuple[list[dict], dict]:
+    """스마트스토어 상품 조회 CSV → 표준 칸 줄들 + 알림(옵션 상품 수 · 원산지 없음 · 판매 꺼진 상품 수).
+    group_same: 그룹상품번호가 없을 때 같은 이름(용량만 다름)끼리 한 그룹으로 묶는다(셀러가 미리보기에서 고름)."""
     rd = csv.DictReader(io.StringIO((text or "").lstrip("\ufeff")))
     rows, notes = [], {"option_products": [], "no_origin": 0, "off": 0, "http_images": 0}
     for r in rd:
@@ -700,6 +738,8 @@ def naver_export_rows(text: str, *, store_slug: str = "") -> tuple[list[dict], d
             "made_on": "",
             "best_before": "",
         })  # fmt: skip
+    if group_same:
+        notes["groups"] = auto_groups(rows)
     return rows, notes
 
 
@@ -726,7 +766,8 @@ def _prefill_images(eng, token: str, client: str, seller_id: str, images: dict[s
     return n
 
 
-def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, full: bool = False) -> dict:
+def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, full: bool = False,
+                   group_same: bool = False) -> dict:  # fmt: skip
     rd = csv.DictReader(io.StringIO((text or "").lstrip("\ufeff")))
     heads = [h.strip() for h in (rd.fieldnames or [])]
     if is_naver_export(heads):
@@ -734,13 +775,14 @@ def import_std_csv(eng, token: str, client: str, channel: str, text: str, *, ful
             raise store.SellerError("스마트스토어 상품 파일이에요. 기준 판매처를 네이버 스마트스토어로 정해 주세요")
         sid = store.resolve(eng, token, client)["seller_id"]
         slug = store_slug(store_urls(eng).get(sid))
-        rows, notes = naver_export_rows(text, store_slug=slug)
+        rows, notes = naver_export_rows(text, store_slug=slug, group_same=group_same)
         if len(rows) > 2000:
             raise store.SellerError("한 번에 2,000줄까지 올릴 수 있어요")
         rep = apply_rows(eng, token, client, channel, rows, full=full)
         rep["prefilled"] = _prefill_images(eng, token, client, sid, notes.get("images") or {}) if rep.get("ok") else 0
         n_opt = len(notes["option_products"])
         rep["source"] = "스마트스토어 상품 조회 파일"
+        rep["groups"] = len(notes.get("groups") or {})
         rep["notes"] = [x for x in [
             f"옵션이 있는 상품 {n_opt}개는 옵션별 가격·재고가 파일에 없어 대표 가격·전체 재고 한 줄로 넣었어요." if n_opt else "",
             "이 파일에는 원산지가 없어요 — 식품이면 상품마다 원산지를 적어 주세요(검수 때 필요)." if notes["no_origin"] else "",

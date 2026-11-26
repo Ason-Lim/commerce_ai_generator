@@ -391,6 +391,15 @@ class SyncIn(BaseModel):
     channel: str = Field(..., pattern="^(naver|coupang)$")
     csv: str = Field(..., max_length=2_000_000)
     full: bool = False
+    group_same: bool = False
+
+
+class ConvertIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str = Field(..., max_length=40)
+    filename: str = Field("", max_length=200)
+    data: str = Field(..., max_length=7_200_000)
+    group_same: bool = True
 
 
 @router.post("/seller/api/channel")
@@ -408,11 +417,24 @@ def seller_channel(body: ChannelIn, request: Request):
         return _err(e)
 
 
+@router.post("/seller/api/convert")
+def seller_convert(body: ConvertIn, request: Request):
+    """판매처 엑셀 변환기 — 파일(.xlsx·.csv)을 표준 칸으로 바꿔 미리보기만(저장 안 함, 파일 안 남김). 2026-11-26"""
+    from app.services.seller import convert
+
+    try:
+        return _ok(convert=convert.preview(catalog.engine(), body.key, _client(request), body.filename, body.data,
+                                           group_same=body.group_same))  # fmt: skip
+    except store.SellerError as e:
+        return _err(e)
+
+
 @router.post("/seller/api/sync")
 def seller_sync(body: SyncIn, request: Request):
     try:
         got = catalog.import_std_csv(
-            catalog.engine(), body.key, _client(request), body.channel, body.csv, full=body.full
+            catalog.engine(), body.key, _client(request), body.channel, body.csv, full=body.full,
+            group_same=body.group_same,
         )
         return JSONResponse({"ok": got["ok"], **got}, status_code=200 if got["ok"] else 400, headers=NOINDEX)
     except store.SellerError as e:
