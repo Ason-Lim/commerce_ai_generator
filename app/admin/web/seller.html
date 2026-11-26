@@ -69,6 +69,16 @@ dl.kv dt{color:var(--ink3)} dl.kv dd{margin:0;word-break:break-all}
 .sec h4{margin:0 0 6px;font-size:13.5px}
 .sec ul{margin:0;padding-left:18px;font-size:13px}
 .basis{font-size:12px;color:var(--ink3);margin-top:6px}
+.tp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:14px;align-items:start;margin-top:10px}
+.tp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;max-height:760px;overflow:auto;padding:2px}
+.tp-card{border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff;text-align:left;cursor:pointer}.tp-card:hover{border-color:var(--acc)}.tp-card.on{outline:2px solid var(--acc)}
+.tp-card.off{opacity:.55}.tp-card .sw{display:flex;height:20px;border-radius:6px;overflow:hidden;margin-bottom:6px}.tp-card .sw i{flex:1}
+.tp-card b{display:block;font-size:13px}.tp-card small{display:block;color:var(--ink3);font-size:11.5px}
+.tag{display:inline-block;font-size:10.5px;border-radius:99px;padding:0 6px;margin:2px 3px 2px 0;background:var(--mut-s);color:var(--ink2)}.tag.ed{background:var(--acc-s);color:var(--acc)}.tag.cu{background:var(--ok-s);color:var(--ok)}.tag.hd{background:var(--hold-s);color:var(--hold)}
+.tp-edit{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.tp-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}.tp-form label{display:flex;flex-direction:column;font-size:12px;color:var(--ink2);gap:3px}
+.tp-form label.wide{grid-column:span 2}.tp-form label.chk{flex-direction:row;align-items:center;gap:6px}.tp-form input[type=color]{height:32px;width:100%;border:1px solid var(--line);border-radius:8px;padding:2px;background:#fff}
+.tp-secs{margin:0;padding-left:20px}.tp-secs li{margin:3px 0;font-size:13px}.tp-secs li .btn{padding:1px 8px;font-size:12px;margin-left:4px}
 .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .up{display:inline-block}
 .log{background:#0f1a24;color:#cfe0f0;border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto;margin-bottom:12px}
@@ -177,6 +187,39 @@ tbody tr{cursor:default}
     <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
   </section>
 
+  <section class="panel" aria-labelledby="lab-h" style="margin-top:14px">
+    <h3 id="lab-h">미니숍 실험실 <small style="font-weight:400;color:var(--ink3)">관리자 전용 · 손님에게 공개되지 않아요</small></h3>
+    <p class="basis" style="margin-top:0">테스트 셀러로 셀러 센터를 그대로 써 보세요 — 대시보드, 상품 올리기, AI 상세페이지, 미니숍 디자인(Claude·GPT 이미지 포함). 화면을 익히고 고칠 점을 찾거나 셀러 문의에 답할 때 써요. 열 때마다 새 테스트 코드가 나와요.</p>
+    <div class="bar" style="gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="labOpen">테스트 셀러센터 열기 ↗</button><button class="btn" type="button" id="labShop">테스트 미니숍 손님 화면 ↗</button><span class="basis" id="labMsg" role="status"></span></div>
+    <h4 style="margin:16px 0 6px;font-size:14px">셀러 미니숍 보기 <span class="basis">(상담용 — 셀러 코드는 건드리지 않아요)</span></h4>
+    <div class="bar" style="gap:8px;flex-wrap:wrap"><label for="labSeller" class="basis" style="margin:0">셀러</label><select id="labSeller"></select><button class="btn" type="button" id="labLook">디자인 보기</button><button class="btn" type="button" id="labSample">미니숍 미리보기 ↗</button></div>
+    <div id="labSum" class="basis" style="font-size:13px;color:var(--ink2)" aria-live="polite"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="tp-h" style="margin-top:14px">
+    <div class="bar"><h3 id="tp-h" style="margin:0">미니숍 템플릿 관리</h3><span class="spacer"></span><div class="chips" id="tpSets" role="group" aria-label="세트"></div><button class="btn" type="button" id="tpNew">새 템플릿</button></div>
+    <p class="basis" style="margin-top:6px">기본 60종을 고치거나 새로 만들고(C01…) 숨길 수 있어요. 배치(첫 화면·어두운 화면)를 고치면 그 템플릿을 쓰는 셀러 화면에 바로 반영되고, 색·글꼴·문구는 셀러가 저장한 값이 그대로예요. 숨긴 템플릿은 셀러 고르기 목록에서만 빠져요. 판매처 안내 섹션은 늘 마지막에 붙어요.</p>
+    <div class="tp-grid">
+      <div class="tp-list" id="tpList" role="list"></div>
+      <div class="panel tp-edit" id="tpEdit" hidden>
+        <div class="bar"><b id="tpTitle"></b><span class="spacer"></span><span class="basis" id="tpUsers"></span></div>
+        <div class="tp-form">
+          <label>세트<select id="tpSet"></select></label><label>유형<input type="text" id="tpGroup" maxlength="20"></label>
+          <label class="wide">이름<input type="text" id="tpName" maxlength="30"></label>
+          <label class="wide">설명<input type="text" id="tpDesc" maxlength="90"></label>
+          <label>배경<input type="color" id="tp_bg"></label><label>글자<input type="color" id="tp_ink"></label><label>강조<input type="color" id="tp_accent"></label><label>바탕 칸<input type="color" id="tp_soft"></label>
+          <label>글꼴<select id="tpFont"></select></label><label>첫 화면 배치<select id="tpHero"></select></label><label class="chk"><input type="checkbox" id="tpDark"> 어두운 화면</label>
+        </div>
+        <div class="basis" style="margin:8px 0 4px">섹션 (위에서 아래 순서 · 판매처 안내는 자동으로 마지막)</div>
+        <ol id="tpSecs" class="tp-secs"></ol>
+        <div class="bar" style="gap:6px"><select id="tpAddType"></select><button class="btn" type="button" id="tpAdd">섹션 넣기</button></div>
+        <div class="bar" style="gap:6px;margin-top:10px;flex-wrap:wrap"><label for="tpPrevSeller" class="basis" style="margin:0">미리보기 상품</label><select id="tpPrevSeller"></select><button class="btn" type="button" id="tpLook">미리보기</button></div>
+        <div class="bar" style="gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn primary" type="button" id="tpSave">저장</button><button class="btn" type="button" id="tpCopy">복사해서 새 템플릿</button><button class="btn" type="button" id="tpHide"></button><button class="btn" type="button" id="tpRestore">기본값으로 되돌리기</button><span class="basis" id="tpMsg" role="status"></span></div>
+        <iframe id="tpFrame" title="템플릿 미리보기" sandbox="" hidden style="width:100%;height:640px;border:1px solid var(--line);border-radius:12px;margin-top:12px;background:#fff"></iframe>
+      </div>
+    </div>
+  </section>
+
   <section class="panel" aria-labelledby="bl-h" style="margin-top:14px">
     <h3 id="bl-h">월 이용료 <small style="font-weight:400;color:var(--ink3)">표시·기록만 — 실제 청구·결제 없음</small></h3>
     <div class="tblwrap"><table><thead><tr><th>셀러</th><th>요금제</th><th class="num">월 합계</th><th>이번 달</th><th class="num">미수(예정+발행)</th><th></th></tr></thead><tbody id="billing"></tbody></table></div>
@@ -215,9 +258,10 @@ function err(e){if(e.message==="auth")return;const b=$("#err");b.hidden=false;b.
 const won=n=>n==null?"":Number(n).toLocaleString("ko-KR")+"원";
 const NEXT={invited:[["active","입점 승인"],["ended","계약 종료"]],active:[["suspended","정지"],["ended","계약 종료"]],suspended:[["active","재개"],["ended","계약 종료"]],ended:[]};
 async function loadSellers(){let d;try{d=await api("/admin/api/seller")}catch(e){return err(e)}
-  $("#sellers").innerHTML=d.sellers.length?d.sellers.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.kind_label)}</td><td><span class="st st-${esc(s.status)}">${esc(s.status_label)}</span></td><td>${s.has_contact?"있음":"지움"}</td>
+  $("#sellers").innerHTML=d.sellers.length?d.sellers.map(s=>`<tr><td>${esc(s.name)}${s.lab?' <span class="tag hd">관리자 테스트 · 공개 안 함</span>':""}</td><td>${esc(s.kind_label)}</td><td><span class="st st-${esc(s.status)}">${esc(s.status_label)}</span></td><td>${s.has_contact?"있음":"지움"}</td>
    <td style="white-space:nowrap">${s.store_url?`<a href="${esc(s.store_url)}" target="_blank" rel="noopener noreferrer" title="${esc(s.store_url)}">판매처 몰 ↗</a>`:'<span class="basis">몰 주소 없음</span>'}<br><a href="${esc(s.shop_preview)}" target="_blank" rel="noopener">미니숍 미리보기 ↗</a><br><a href="${esc(s.shop_preview.replace(/\/shop$/,"/sample"))}" target="_blank" rel="noopener">샘플 보기(승인 전 포함) ↗</a><br><small class="basis">주소 이름: ${s.slug?`<b>${esc(s.slug)}</b>`:"없음(셀러 번호)"}</small><br><button class="btn" type="button" data-store="${esc(s.seller_id)}" data-name="${esc(s.name)}" data-url="${esc(s.store_url)}" style="margin-top:4px">몰 주소 ${s.store_url?"바꾸기":"넣기"}</button><button class="btn" type="button" data-slug="${esc(s.seller_id)}" data-name="${esc(s.name)}" data-v="${esc(s.slug)}" style="margin-top:4px">주소 이름</button></td>
-   <td class="actions" style="margin:0">${["invited","active"].includes(s.status)?`<button class="btn" type="button" data-key="${esc(s.seller_id)}" data-name="${esc(s.name)}">초대 코드 만들기</button>`:""}${NEXT[s.status].map(([k,l])=>`<button class="btn" type="button" data-st="${k}" data-id="${esc(s.seller_id)}" data-name="${esc(s.name)}">${l}</button>`).join("")}</td></tr>`).join(""):'<tr><td colspan="6" class="empty">셀러가 없어요</td></tr>';
+   <td class="actions" style="margin:0">${["invited","active"].includes(s.status)?`<button class="btn" type="button" data-key="${esc(s.seller_id)}" data-name="${esc(s.name)}">초대 코드 만들기</button>`:""}${(s.lab?[]:NEXT[s.status]).map(([k,l])=>`<button class="btn" type="button" data-st="${k}" data-id="${esc(s.seller_id)}" data-name="${esc(s.name)}">${l}</button>`).join("")}</td></tr>`).join(""):'<tr><td colspan="6" class="empty">셀러가 없어요</td></tr>';
+  SELLERS=d.sellers;fillSellerPickers();
   SLUGS=Object.fromEntries(d.sellers.filter(x=>x.slug).map(x=>[x.seller_id,x.slug]));
   document.querySelectorAll("#sellers [data-slug]").forEach(b=>b.onclick=async()=>{const v=prompt(`${b.dataset.name} 주소 이름 — 영문 소문자·숫자·'-' 3~30자 (예: renerpaint). 링크가 /shop/이름 이 돼요. 비우면 지움`,b.dataset.v||"");if(v===null)return;
     try{const r=await post(`/admin/api/seller/${b.dataset.slug}/slug`,{slug:v.trim()});$("#codeOut").hidden=false;$("#codeOut").textContent=r.slug?`${b.dataset.name} 주소 이름: ${r.slug} — 미니숍 ${location.origin}/shop/${r.slug}`:`${b.dataset.name} 주소 이름을 지웠어요.`;loadSellers();if(CUR)openP(CUR)}catch(e){err(e)}});
@@ -229,7 +273,7 @@ async function loadSellers(){let d;try{d=await api("/admin/api/seller")}catch(e)
       o.innerHTML=`<b>${esc(b.dataset.name)}</b> 초대 링크 — 지금 한 번만 보여요. 셀러에게 직접 전해 주세요.<br><code>${esc(location.origin+d.link)}</code>`}catch(e){err(e)}});
   document.querySelectorAll("#sellers [data-st]").forEach(b=>b.onclick=async()=>{const reason=prompt(`${b.dataset.name} — '${b.textContent}' 이유를 적어 주세요`);if(!reason)return;
     try{await post(`/admin/api/seller/${b.dataset.id}/status`,{status:b.dataset.st,reason});loadSellers();loadQueue()}catch(e){err(e)}})}
-let QS="pending",CUR=null,ROWS=[],SLUGS={};
+let QS="pending",CUR=null,ROWS=[],SLUGS={},SELLERS=[];
 const pvUrl=p=>SLUGS[p.seller_id]?`/admin/seller/${encodeURIComponent(SLUGS[p.seller_id])}/preview/${encodeURIComponent(p.product_id)}`:`/admin/seller-products/${encodeURIComponent(p.product_id)}/preview`;
 async function loadQueue(){let d;try{d=await api("/admin/api/seller-products?status="+QS)}catch(e){return err(e)}ROWS=d.products;
   $("#qchips").innerHTML=Object.entries({...d.statuses,all:"전체"}).map(([k,v])=>`<button type="button" class="chip" data-q="${k}" aria-pressed="${k===QS}">${esc(v)}</button>`).join("");
@@ -321,6 +365,64 @@ async function loadJoins(){let d;try{d=await api("/admin/api/seller-joins?status
     else if(b.dataset.d==="approve"&&!confirm("서류를 대조했나요? 입점을 승인하면 셀러가 검수·미니숍 공개를 진행할 수 있어요."))return;
     try{const r=await post(`/admin/api/seller-joins/${b.dataset.jn}/decide`,{decision:b.dataset.d,note});
       $("#joinOut").textContent=r.code?`새 셀러 코드 (한 번만 보여요 — 신청인에게 직접 전달): ${r.code}`:`${r.join_id} → ${r.status_label}`;loadJoins();loadSellers()}catch(e){err(e)}})}
+
+// ── 미니숍 실험실 · 템플릿 관리 (2026-11-26) ───────────────────────────
+let LAB=null,TP=null,TPSET="general",TPCUR=null,TPSECS=[];
+function fillSellerPickers(){const real=SELLERS.filter(x=>!x.lab);
+  $("#labSeller").innerHTML=real.map(x=>`<option value="${esc(x.seller_id)}">${esc(x.name)}</option>`).join("")||'<option value="">셀러 없음</option>';
+  const keep=$("#tpPrevSeller").value;
+  $("#tpPrevSeller").innerHTML='<option value="">테스트 셀러 (데모 상품)</option>'+real.map(x=>`<option value="${esc(x.seller_id)}">${esc(x.name)} 상품</option>`).join("");
+  if(keep)$("#tpPrevSeller").value=keep}
+async function loadLab(){try{LAB=await api("/admin/api/shop-lab")}catch(e){return err(e)}}
+$("#labOpen").onclick=async()=>{const w=window.open("about:blank","_blank");$("#labMsg").textContent="여는 중…";
+  try{const r=await post("/admin/api/shop-lab/open");if(w)w.location=r.url;else location.href=r.url;$("#labMsg").textContent=`${r.name} 셀러 센터를 새 탭에서 열었어요. (이전 테스트 코드는 막혀요)`;loadLab();loadSellers()}
+  catch(e){if(w)w.close();$("#labMsg").textContent="";err(e)}};
+$("#labShop").onclick=async()=>{await loadLab();if(!LAB.lab_seller){$("#labMsg").textContent="먼저 ‘테스트 셀러센터 열기’를 한 번 눌러 주세요.";return}window.open(`/admin/seller/${LAB.lab_seller}/sample`,"_blank","noopener")};
+$("#labSample").onclick=()=>{const v=$("#labSeller").value;if(v)window.open(`/admin/seller/${encodeURIComponent(SLUGS[v]||v)}/sample`,"_blank","noopener")};
+$("#labLook").onclick=async()=>{const v=$("#labSeller").value;if(!v)return;let d;try{d=await api(`/admin/api/shop-lab/seller/${encodeURIComponent(v)}`)}catch(e){return err(e)}
+  $("#labSum").innerHTML=!d.saved?`<b>${esc(d.name)}</b> — 아직 저장한 디자인이 없어요. 손님 화면은 기본 목록형으로 보여요.`:
+   `<b>${esc(d.name)}</b> — 템플릿 <b>${esc(d.template)} ${esc(d.template_name)}</b>${d.template_hidden?' <span class="tag hd">숨긴 템플릿</span>':""} · 글꼴 ${esc(d.font)} · 로고 ${d.logo?"있음":"없음"} · 대표 이미지 ${d.hero_ai_image?"AI 생성":"상품/직접"}<br>`+
+   `대표 문구: ${esc(d.hero_title)} · 색 ${Object.values(d.palette||{}).map(c=>`<span title="${esc(c)}" style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;background:${esc(c)};border:1px solid var(--line)"></span>`).join(" ")}<br>`+
+   `섹션: ${d.sections.map(esc).join(" → ")}<br>저장 ${esc((d.updated_at||"").replace("T"," ").slice(0,16))} (${esc(d.updated_by||"")})`};
+async function loadTpl(sel){try{TP=await api("/admin/api/shop-templates")}catch(e){return err(e)}
+  $("#tpSets").innerHTML=Object.entries(TP.sets).map(([k,l])=>`<button class="chip" type="button" data-set="${k}" aria-pressed="${k===TPSET}">${esc(l)} ${TP.templates.filter(t=>t.set===k).length}</button>`).join("");
+  $("#tpSets").querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{TPSET=b.dataset.set;loadTpl()});
+  $("#tpSet").innerHTML=Object.entries(TP.sets).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("");
+  $("#tpFont").innerHTML=Object.entries(TP.fonts).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("");
+  const HL={split:"좌우 나눔",center:"가운데",compact:"짧게",poster:"포스터",wide:"넓은 이미지",story:"이야기"};
+  $("#tpHero").innerHTML=TP.heros.map(h=>`<option value="${h}">${esc(HL[h]||h)}</option>`).join("");
+  $("#tpAddType").innerHTML=Object.entries(TP.section_types).filter(([k])=>k!=="notice").map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("");
+  $("#tpList").innerHTML=TP.templates.filter(t=>t.set===TPSET).map(t=>`<button type="button" role="listitem" class="tp-card${t.hidden?" off":""}${TPCUR&&TPCUR.id===t.id?" on":""}" data-tid="${esc(t.id)}"><span class="sw">${["bg","soft","accent","ink"].map(k=>`<i style="background:${esc(t.palette[k])}"></i>`).join("")}</span><b>${esc(t.id)} ${esc(t.name)}</b>`+
+    `<span class="tag">${esc(t.group)}</span>${t.kind==="edited"?'<span class="tag ed">고침</span>':""}${t.kind==="custom"?'<span class="tag cu">새로 만듦</span>':""}${t.hidden?'<span class="tag hd">숨김</span>':""}${TP.users[t.id]?`<span class="tag">셀러 ${TP.users[t.id]}</span>`:""}<small>${esc(t.desc)}</small></button>`).join("");
+  $("#tpList").querySelectorAll("[data-tid]").forEach(b=>b.onclick=()=>tpOpen(TP.templates.find(t=>t.id===b.dataset.tid)));
+  if(sel)tpOpen(TP.templates.find(t=>t.id===sel)||sel)}
+function tpOpen(t){TPCUR=t;$("#tpEdit").hidden=false;$("#tpFrame").hidden=true;$("#tpMsg").textContent="";
+  $("#tpTitle").textContent=t.id?`${t.id} ${t.name}`:"새 템플릿";
+  $("#tpUsers").textContent=t.id&&TP.users[t.id]?`이 템플릿을 쓰는 셀러 ${TP.users[t.id]}곳`:"";
+  $("#tpSet").value=t.set;$("#tpGroup").value=t.group||"";$("#tpName").value=t.name||"";$("#tpDesc").value=t.desc||"";
+  for(const k of ["bg","ink","accent","soft"])$("#tp_"+k).value=(t.palette||{})[k]||"#ffffff";
+  $("#tpFont").value=t.font||"sans";$("#tpHero").value=t.hero||"split";$("#tpDark").checked=!!t.dark;
+  TPSECS=(t.sections||[]).filter(x=>x!=="notice");tpSecs();
+  $("#tpHide").hidden=!t.id;$("#tpHide").textContent=t.hidden?"다시 보이기":"숨기기";$("#tpRestore").hidden=t.kind!=="edited"&&!(t.kind==="base"&&t.hidden);$("#tpCopy").hidden=!t.id;
+  $("#tpSave").textContent=t.id?"저장":"새 템플릿으로 저장";
+  document.querySelectorAll(".tp-card").forEach(b=>b.classList.toggle("on",b.dataset.tid===t.id))}
+function tpSecs(){$("#tpSecs").innerHTML=TPSECS.map((x,i)=>`<li>${esc(TP.section_types[x]||x)}<button class="btn" type="button" data-up="${i}" aria-label="위로">↑</button><button class="btn" type="button" data-dn="${i}" aria-label="아래로">↓</button><button class="btn" type="button" data-rm="${i}" aria-label="빼기">빼기</button></li>`).join("")+`<li class="basis">${esc(TP.section_types.notice)} (자동)</li>`;
+  $("#tpSecs").querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const i=+b.dataset.up;if(i>0){[TPSECS[i-1],TPSECS[i]]=[TPSECS[i],TPSECS[i-1]];tpSecs()}});
+  $("#tpSecs").querySelectorAll("[data-dn]").forEach(b=>b.onclick=()=>{const i=+b.dataset.dn;if(i<TPSECS.length-1){[TPSECS[i+1],TPSECS[i]]=[TPSECS[i],TPSECS[i+1]];tpSecs()}});
+  $("#tpSecs").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{TPSECS.splice(+b.dataset.rm,1);tpSecs()})}
+function tpRead(){return {id:TPCUR&&TPCUR.id||"",set:$("#tpSet").value,group:$("#tpGroup").value,name:$("#tpName").value,desc:$("#tpDesc").value,
+  palette:Object.fromEntries(["bg","ink","accent","soft"].map(k=>[k,$("#tp_"+k).value.toUpperCase()])),font:$("#tpFont").value,hero:$("#tpHero").value,dark:$("#tpDark").checked,sections:TPSECS.slice()}}
+$("#tpAdd").onclick=()=>{if(TPSECS.length>=11){$("#tpMsg").textContent="섹션은 11개까지예요";return}TPSECS.push($("#tpAddType").value);tpSecs()};
+$("#tpNew").onclick=()=>{const b=TP.templates.find(t=>t.set===TPSET);tpOpen({...b,id:"",name:"",kind:"new",hidden:false})};
+$("#tpCopy").onclick=()=>{const t=tpRead();tpOpen({...t,id:"",name:t.name+" 복사",kind:"new",hidden:false})};
+$("#tpLook").onclick=async()=>{$("#tpMsg").textContent="그리는 중…";try{const r=await post("/admin/api/shop-templates/look",{template:tpRead(),seller_id:$("#tpPrevSeller").value});
+  $("#tpFrame").hidden=false;$("#tpFrame").srcdoc=r.html;$("#tpMsg").textContent="미리보기 — 저장 전이에요"}catch(e){$("#tpMsg").textContent=e.message}};
+$("#tpSave").onclick=async()=>{const t=tpRead(),isNew=!t.id;const n=!isNew&&TP.users[t.id];
+  if(n&&!confirm(`이 템플릿을 쓰는 셀러 ${n}곳의 화면 배치가 바뀔 수 있어요. 저장할까요?`))return;
+  try{const r=await post(isNew?"/admin/api/shop-templates/new":"/admin/api/shop-templates/save",{template:t});TPSET=r.template.set;await loadTpl(r.template.id);$("#tpMsg").textContent=isNew?`${r.template.id}로 만들었어요. 셀러 고르기 목록에 바로 보여요.`:"저장했어요."}catch(e){$("#tpMsg").textContent=e.message}};
+$("#tpHide").onclick=async()=>{const t=TPCUR;try{const r=await post(`/admin/api/shop-templates/${t.id}/hide`,{hidden:!t.hidden});await loadTpl(r.template.id);$("#tpMsg").textContent=r.template.hidden?"숨겼어요 — 셀러 고르기 목록에서 빠져요(이미 쓰는 셀러 화면은 그대로).":"다시 보이게 했어요."}catch(e){$("#tpMsg").textContent=e.message}};
+$("#tpRestore").onclick=async()=>{const t=TPCUR;if(!confirm(`${t.id}를 처음 모습으로 되돌릴까요? 고친 내용과 숨김이 사라져요.`))return;try{const r=await post(`/admin/api/shop-templates/${t.id}/restore`);await loadTpl(r.template.id);$("#tpMsg").textContent="기본값으로 되돌렸어요."}catch(e){$("#tpMsg").textContent=e.message}};
+loadLab();loadTpl();
 loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();loadBiz();loadJoins();
 </script>
 </body>
