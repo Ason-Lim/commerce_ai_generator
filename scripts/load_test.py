@@ -33,7 +33,8 @@ def _pct(xs: list[float], q: float) -> float | None:
     return round(xs[k], 1)
 
 
-async def run(base: str, paths: list[str], concurrency: int, total: int, timeout: float, transport=None) -> dict:
+async def run(base: str, paths: list[str], concurrency: int, total: int, timeout: float, transport=None,
+              warm: bool = True) -> dict:
     import httpx
 
     sem = asyncio.Semaphore(concurrency)
@@ -53,8 +54,14 @@ async def run(base: str, paths: list[str], concurrency: int, total: int, timeout
             if code.isdigit() and int(code) < 500:
                 res["ms"].append(ms)
 
-    t0 = time.perf_counter()
     async with httpx.AsyncClient(base_url=base, timeout=timeout, follow_redirects=True, transport=transport) as client:
+        if warm:  # 2026-11-26: 재기 전에 주소마다 한 번씩(캐시·표 준비) — 결과에는 넣지 않는다
+            for p in paths:
+                try:
+                    await client.get(p)
+                except Exception:  # noqa: BLE001
+                    pass
+        t0 = time.perf_counter()
         await asyncio.gather(*(one(client, paths[i % len(paths)]) for i in range(total)))
     elapsed = time.perf_counter() - t0
     out = {"base": base, "concurrency": concurrency, "requests": total, "seconds": round(elapsed, 2),
@@ -76,6 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--requests", type=int, default=400)
     ap.add_argument("--timeout", type=float, default=30.0)
     ap.add_argument("--allow-remote", action="store_true", help="로컬이 아닌 주소에도 돌림(운영 주소는 권하지 않음)")
+    ap.add_argument("--no-warm", action="store_true", help="미리 한 번씩 부르지 않음(재시작 직후 첫 요청을 잴 때)")
     ap.add_argument("--out", help="결과 JSON 경로 (예: var/load_test/2026-11-25.json)")
     a = ap.parse_args(argv)
     host = a.base.split("://", 1)[-1].split("/", 1)[0].rsplit(":", 1)[0]
@@ -84,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
             f"'{host}' 는 로컬 주소가 아니에요 — 맥에서 시험 서버를 띄워 그 주소로 돌려 주세요(필요하면 --allow-remote)."
         )
         return 2
-    res = asyncio.run(run(a.base, a.path or DEFAULT_PATHS, a.concurrency, a.requests, a.timeout))
+    res = asyncio.run(run(a.base, a.path or DEFAULT_PATHS, a.concurrency, a.requests, a.timeout, warm=not a.no_warm))
     print(
         f"{res['base']} · 동시 {res['concurrency']} · 요청 {res['requests']} · {res['seconds']}초 · 초당 {res['rps']}"
     )
