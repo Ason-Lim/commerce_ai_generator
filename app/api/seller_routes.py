@@ -602,6 +602,10 @@ class DesignAiIn(KeyIn):
     template_id: str = Field("", max_length=4)
 
 
+class DesignLogoIn(KeyIn):
+    data: str = Field(..., max_length=1_500_000)
+
+
 class DesignImageIn(KeyIn):
     prompt: str = Field(..., max_length=300)
 
@@ -654,3 +658,9 @@ def seller_design_ai(body: DesignAiIn, request: Request):
 def seller_design_image(body: DesignImageIn, request: Request):
     sd, eng = _sd()
     return _detail(lambda: _ok(**sd.make_image(eng, body.key, _client(request), body.prompt)))
+
+
+@router.post("/seller/api/design/logo")
+def seller_design_logo(body: DesignLogoIn, request: Request):
+    sd, eng = _sd()
+    return _detail(lambda: _ok(**sd.upload_logo(eng, body.key, _client(request), body.data)))

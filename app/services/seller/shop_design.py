@@ -27,7 +27,7 @@ from collections import Counter
 from datetime import timedelta
 from pathlib import Path
 
-from sqlalchemy import JSON, Column, DateTime, MetaData, String, Table, and_, func, select, update
+from sqlalchemy import JSON, Boolean, Column, DateTime, MetaData, String, Table, and_, func, select, update
 
 from app.services.seller import detail_page, products, store
 
@@ -49,6 +49,16 @@ t_usage = Table(
     Column("kind", String(8), nullable=False),  # design | image
     Column("at", DateTime(timezone=True), nullable=False),
     Column("model", String(60)),
+)
+
+t_tpl = Table(  # 2026-11-26 관리자 템플릿 관리 — 기본 60종을 고친 것·새로 만든 것·숨긴 것
+    "seller_shop_template",
+    meta,
+    Column("template_id", String(4), primary_key=True),
+    Column("data", JSON, nullable=False),
+    Column("hidden", Boolean, nullable=False, default=False),
+    Column("updated_at", DateTime(timezone=True)),
+    Column("updated_by", String(48)),
 )
 
 TEMPLATES_FILE = Path(__file__).with_name("shop_templates.json")
@@ -79,15 +89,34 @@ def engine(url: str | None = None):
 _TPL: list[dict] | None = None
 
 
-def templates() -> list[dict]:
+def base_templates() -> list[dict]:
     global _TPL
     if _TPL is None:
         _TPL = json.loads(TEMPLATES_FILE.read_text(encoding="utf-8"))["templates"]
     return _TPL
 
 
-def template(tid: str | None) -> dict:
-    return next((t for t in templates() if t["id"] == tid), templates()[0])
+def templates(eng=None, *, hidden: bool = False) -> list[dict]:
+    """템플릿 목록 — eng 가 있으면 관리자가 고친 것·새로 만든 것을 합친다. hidden=True 면 숨긴 것도(관리자용).
+    각 항목에 kind(base|edited|custom)·hidden 표시."""
+    out = {t["id"]: dict(t, kind="base", hidden=False) for t in base_templates()}
+    if eng is not None:
+        try:
+            with eng.connect() as c:
+                rows = c.execute(select(t_tpl)).mappings().all()
+        except Exception:  # noqa: BLE001 — 표가 아직 없으면 기본만
+            rows = []
+        for r in rows:
+            tid = r["template_id"]
+            kind = "edited" if tid in out else "custom"
+            out[tid] = dict(out.get(tid) or {}, **(r["data"] or {}), id=tid, kind=kind, hidden=bool(r["hidden"]))
+    return [t for t in out.values() if hidden or not t["hidden"]]
+
+
+def template(tid: str | None, eng=None) -> dict:
+    """id 로 템플릿 — 숨긴 템플릿도 찾는다(이미 고른 셀러 화면은 그대로 그려야 해서). 없으면 첫 템플릿."""
+    every = templates(eng, hidden=True)
+    return next((t for t in every if t["id"] == tid), None) or next(t for t in every if not t["hidden"])
 
 
 def _txt(v, n: int) -> str:
@@ -100,9 +129,10 @@ def _leaf(cat: str | None) -> str:
 
 
 # ── 기본 디자인 (템플릿 + 셀러 상품으로 채움) ──────────────────────────────
-def default_design(tid: str, seller_name: str, items: list[dict]) -> dict:
-    """템플릿을 고르면 바로 볼 수 있게 — 문구는 셀러가 고치거나 AI 가 쓴다. 효능·최고 같은 말은 넣지 않는다."""
-    t = template(tid)
+def default_design(tid: str | dict, seller_name: str, items: list[dict], eng=None) -> dict:
+    """템플릿을 고르면 바로 볼 수 있게 — 문구는 셀러가 고치거나 AI 가 쓴다. 효능·최고 같은 말은 넣지 않는다.
+    tid 에 템플릿 dict 를 주면 그걸로(관리자 템플릿 미리보기)."""
+    t = tid if isinstance(tid, dict) else template(tid, eng)
     ids = [p["product_id"] for p in items]
     first_image = next((p.get("image") for p in items if p.get("image")), "")
     cats = [c for c, _ in Counter(_leaf(p.get("category")) for p in items if _leaf(p.get("category"))).most_common(8)]
@@ -151,11 +181,16 @@ def _check_text(t: str, where: str, probs: list[str]) -> str:
     return t
 
 
-def check(raw: dict | None, product_ids: set[str], *, strict: bool = True) -> tuple[dict, list[str]]:
+LOGO_URL_RE = re.compile(r"/shop-img/[a-f0-9]{16}\.(?:png|jpg|webp)")
+LOGO_MAX = 1024 * 1024
+LOGO_KINDS = ((b"\x89PNG\r\n\x1a\n", "png"), (b"\xff\xd8\xff", "jpg"))
+
+
+def check(raw: dict | None, product_ids: set[str], *, strict: bool = True, eng=None) -> tuple[dict, list[str]]:
     """셀러 저장·AI 답 공통 검사. strict 면 문제 문구가 있을 때 DesignError, 아니면 (디자인, 문제) 로 돌려준다."""
     raw = raw or {}
     probs: list[str] = []
-    t = template(raw.get("template"))
+    t = template(raw.get("template"), eng)
     pal = {k: (v.upper() if isinstance(v, str) and HEX_RE.match(v) else t["palette"][k])
            for k, v in {**t["palette"], **(raw.get("palette") or {})}.items() if k in t["palette"]}  # fmt: skip
     font = raw.get("font") if raw.get("font") in FONTS else t["font"]
@@ -183,7 +218,10 @@ def check(raw: dict | None, product_ids: set[str], *, strict: bool = True) -> tu
         secs.append(
             {"type": "notice", "title": "", "text": "", "items": [], "product_ids": []}
         )  # 판매처 안내는 늘 남긴다
-    d = {"template": t["id"], "palette": pal, "font": font, "hero": hero, "sections": secs}
+    logo = str(raw.get("logo_url") or "").strip()[:300]
+    if logo and not (products.URL_RE.match(logo) or LOGO_URL_RE.fullmatch(logo)):
+        logo = ""
+    d = {"template": t["id"], "palette": pal, "font": font, "logo_url": logo, "hero": hero, "sections": secs}
     if strict and probs:
         raise DesignError(" / ".join(dict.fromkeys(probs)))
     return d, probs
@@ -237,9 +275,11 @@ def editor(eng, token: str, client: str) -> dict:
     items = _items(eng, s["seller_id"])
     cur = design_of(eng, s["seller_id"])
     tset = "food" if sum("식품" in (p.get("category") or "") for p in items) * 2 > len(items or [1]) else "general"
+    tpls = templates(eng)
+    first = next((t["id"] for t in tpls if t["set"] == tset), tpls[0]["id"])
     return {
-        "templates": templates(), "suggest_set": tset, "section_types": SECTION_TYPES, "fonts": FONTS,
-        "design": cur or default_design("F01" if tset == "food" else "G01", s["name"], items), "saved": cur is not None,
+        "templates": tpls, "suggest_set": tset, "section_types": SECTION_TYPES, "fonts": FONTS,
+        "design": cur or default_design(first, s["name"], items, eng), "saved": cur is not None,
         "products": [{"product_id": p["product_id"], "name": detail_page.with_volume(p["name"], p["volume"]),
                       "category": _leaf(p.get("category")), "price": p.get("price"), "status": p["status"]} for p in items],
         "ai": _ai_ready(), "image": _image_ready(),
@@ -248,15 +288,17 @@ def editor(eng, token: str, client: str) -> dict:
 
 def apply_template(eng, token: str, client: str, tid: str) -> dict:
     s = store.resolve(eng, token, client)
-    if tid not in {t["id"] for t in templates()}:
+    if tid not in {t["id"] for t in templates(eng)}:
         raise DesignError("없는 템플릿이에요")
-    return default_design(tid, s["name"], _items(eng, s["seller_id"]))
+    d = default_design(tid, s["name"], _items(eng, s["seller_id"]), eng)
+    d["logo_url"] = (design_of(eng, s["seller_id"]) or {}).get("logo_url") or ""  # 템플릿을 바꿔도 로고는 그대로
+    return d
 
 
 def save(eng, token: str, client: str, raw: dict) -> dict:
     s = store.resolve(eng, token, client)
     ids = {p["product_id"] for p in _items(eng, s["seller_id"])}
-    d, _ = check(raw, ids)
+    d, _ = check(raw, ids, eng=eng)
     with eng.begin() as c:
         vals = dict(template_id=d["template"], design=d, updated_at=store.now(), updated_by="seller")
         if c.execute(update(t_design).where(t_design.c.seller_id == s["seller_id"]).values(**vals)).rowcount == 0:
@@ -275,7 +317,7 @@ def look(eng, token: str, client: str, raw: dict | None) -> str:
     """저장 전 디자인 미리보기 — 셀러 모든 상품(승인 전 포함, 사진도) · 손님에게 보이지 않음."""
     s = store.resolve(eng, token, client)
     ids = {p["product_id"] for p in _items(eng, s["seller_id"])}
-    d, probs = check(raw, ids, strict=False) if raw else (design_of(eng, s["seller_id"]), [])
+    d, probs = check(raw, ids, strict=False, eng=eng) if raw else (design_of(eng, s["seller_id"]), [])
     banner = "디자인 미리보기 — 승인 전 상품 포함 · 손님에게 보이지 않아요" + (
         f" · 고칠 문구: {' / '.join(probs)}" if probs else ""
     )
@@ -291,7 +333,7 @@ FONT_CSS = {
 DESIGN_CSS = """*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.65}
 a{color:inherit}.wrap{max-width:1120px;margin:auto;padding:0 28px}.banner{background:#fff4dc;color:#7a4b00;border-radius:12px;padding:8px 12px;font-size:13px;margin:12px 0}
 .head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;border-bottom:1px solid color-mix(in srgb,var(--ink) 15%,transparent)}
-.brand{font-size:21px;font-weight:800;letter-spacing:-.5px}.brand small{display:block;font-size:10.5px;font-weight:500;letter-spacing:2px;opacity:.6}
+.brand{font-size:21px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:12px}.brand .logo{height:44px;max-width:160px;object-fit:contain}.brand small{display:block;font-size:10.5px;font-weight:500;letter-spacing:2px;opacity:.6}
 .head nav{display:flex;gap:18px;font-size:14px}.head nav a{text-decoration:none}
 .eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--accent);margin:0 0 6px}
 h1{font-size:clamp(30px,4.4vw,54px);line-height:1.2;letter-spacing:-1.5px;margin:0 0 16px;word-break:keep-all}h2{font-size:24px;letter-spacing:-.5px;margin:0 0 14px}
@@ -353,7 +395,7 @@ def _img_of(d: dict | None, *, show_all: bool) -> str | None:
 def render(design: dict, seller: dict, items: list[tuple[dict, dict]], *, banner: str | None, top: str, footer: str,
            details: str, index: bool, show_all_images: bool, eng=None) -> str:  # fmt: skip
     e = html.escape
-    t = template(design.get("template"))
+    t = design.get("_tpl") or template(design.get("template"), eng)  # _tpl: 관리자 템플릿 미리보기(저장 전)
     pal = design.get("palette") or t["palette"]
     font = design.get("font") or t["font"]
     cats = {}
@@ -489,7 +531,13 @@ def render(design: dict, seller: dict, items: list[tuple[dict, dict]], *, banner
         out.append(f'<section class="sec">{top}</section>')
     css_vars = ";".join(f"--{k}:{v}" for k, v in pal.items())
     robots = "index,follow" if index else "noindex,nofollow"
-    head = (f'<header class="head"><div class="brand">{e(seller["name"])}<small>MINI SHOP</small></div>'
+    logo = design.get("logo_url") or ""
+    mark = (
+        f'<img class="logo" src="{e(logo)}" alt="{e(seller["name"])} 로고" referrerpolicy="no-referrer">'
+        if logo
+        else ""
+    )
+    head = (f'<header class="head"><div class="brand">{mark}<span>{e(seller["name"])}<small>MINI SHOP</small></span></div>'
             '<nav><a href="#items">상품</a><a href="#seller-info">판매처 안내</a></nav></header>')  # fmt: skip
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="{robots}"><meta name="referrer" content="no-referrer"><title>{e(seller["name"])} 미니숍</title>
@@ -565,21 +613,23 @@ def ai_design(
     payload = {
         "seller": s["name"], "request": request or "상품에 어울리는 깔끔한 미니숍",
         "fixed_template": template_id or None,
-        "templates": [{k: t[k] for k in ("id", "group", "name", "desc", "hero", "sections")} for t in templates()],
+        "templates": [{k: t[k] for k in ("id", "group", "name", "desc", "hero", "sections")} for t in templates(eng)],
         "section_types": SECTION_TYPES,
         "products": [{"id": p["product_id"], "name": detail_page.with_volume(p["name"], p["volume"]), "category": p.get("category") or "",
                       "price": p.get("price")} for p in items[:80]],
     }  # fmt: skip
     got = ai(json.dumps(payload, ensure_ascii=False)) or {}
+    if got.get("template") not in {t["id"] for t in templates(eng)}:  # 숨긴·없는 템플릿은 고르지 않는다
+        got.pop("template", None)
     if template_id:
         got["template"] = template_id
-    d, probs = check(got, {p["product_id"] for p in items}, strict=False)
+    d, probs = check(got, {p["product_id"] for p in items}, strict=False, eng=eng)
     if probs:  # 문제 문구는 기본 문구로 되돌린다
-        base = default_design(d["template"], s["name"], items)
+        base = default_design(d["template"], s["name"], items, eng)
         d2, probs2 = check({**got, "hero": {**(got.get("hero") or {}), **{k: base["hero"][k] for k in ("eyebrow", "title", "subtitle")}},
                             "sections": [x if not any(p.startswith(SECTION_TYPES.get(x.get("type"), "?")) for p in probs) else
                                          {**x, "title": "", "text": "", "items": []} for x in (got.get("sections") or [])]},
-                           {p["product_id"] for p in items}, strict=False)  # fmt: skip
+                           {p["product_id"] for p in items}, strict=False, eng=eng)  # fmt: skip
         d = d2 if not probs2 else base
     return {"design": d, "reason": _txt(got.get("reason"), 200), "model": ai_name, "fixed": probs}
 
@@ -599,7 +649,7 @@ def _image_dir() -> Path:
 
 
 def image_path(name: str) -> Path | None:
-    if not re.fullmatch(r"[a-f0-9]{16}\.png", name or ""):
+    if not re.fullmatch(r"[a-f0-9]{16}\.(?:png|jpg|webp)", name or ""):
         return None
     p = _image_dir() / name
     return p if p.is_file() else None
@@ -645,5 +695,38 @@ def make_image(eng, token: str, client: str, prompt: str, *, http=None, env=None
     return {"url": f"/shop-img/{name}", "model": model}
 
 
+def _logo_kind(raw: bytes) -> str | None:
+    for magic, ext in LOGO_KINDS:
+        if raw.startswith(magic):
+            return ext
+    if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def upload_logo(eng, token: str, client: str, data: str) -> dict:
+    """셀러 회사 로고 올리기 — PNG·JPG·WEBP, 1MB 이하. SVG 는 받지 않는다(스크립트를 품을 수 있어서). {url}"""
+    s = store.resolve(eng, token, client)
+    data = (data or "").strip()
+    if data.startswith("data:"):
+        data = data.split(",", 1)[-1]
+    try:
+        raw = base64.b64decode(data, validate=True)
+    except ValueError:
+        raise DesignError("로고 파일을 읽지 못했어요") from None
+    if not raw:
+        raise DesignError("로고 파일을 골라 주세요")
+    if len(raw) > LOGO_MAX:
+        raise DesignError("로고는 1MB 이하로 올려 주세요")
+    ext = _logo_kind(raw)
+    if ext is None:
+        raise DesignError("로고는 PNG·JPG·WEBP 파일만 올릴 수 있어요")
+    name = hashlib.sha256(raw + s["seller_id"].encode() + str(time.time()).encode()).hexdigest()[:16] + "." + ext
+    (_image_dir() / name).write_bytes(raw)
+    with eng.begin() as c:
+        store._event(c, s["seller_id"], "shop_logo", "seller", {"name": name, "bytes": len(raw)})
+    return {"url": f"/shop-img/{name}"}
+
+
 __all__ = ["DesignError", "ai_design", "apply_template", "check", "default_design", "design_of", "editor", "engine",
-           "image_path", "look", "make_image", "render", "reset", "save", "templates"]  # fmt: skip
+           "image_path", "look", "make_image", "render", "reset", "save", "templates", "upload_logo"]  # fmt: skip

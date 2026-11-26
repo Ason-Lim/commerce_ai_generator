@@ -241,6 +241,10 @@ def biz_verify(eng, seller_id: str, *, ok: bool, by: str) -> dict:
 def _seller_ok(s, biz, m: str) -> bool:
     if m == "off" or s is None or s["status"] != "active":
         return False
+    from app.services.seller import shop_lab
+
+    if shop_lab.is_lab(engine(), s["seller_id"]):  # 관리자 실험실 셀러는 어떤 모드에서도 공개하지 않는다
+        return False
     if m == "test":
         return True
     v = _biz_view(biz)

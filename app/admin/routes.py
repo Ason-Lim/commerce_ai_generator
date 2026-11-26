@@ -3107,11 +3107,92 @@ def seller_list():
     store, eng = _seller()
     from app.services.seller import catalog
 
+    from app.services.seller import shop_lab
+
     links = catalog.store_urls(catalog.engine())
     slugs = catalog.slugs(catalog.engine())
+    lab_sid = shop_lab.lab_id(shop_lab.engine())
     return {"sellers": [dict(x, store_url=links.get(x["seller_id"], ""), slug=slugs.get(x["seller_id"], ""),
+                             lab=x["seller_id"] == lab_sid,
                              shop_preview=f"/admin/seller/{slugs.get(x['seller_id']) or x['seller_id']}/shop")
                         for x in store.list_sellers(eng)]}  # fmt: skip
+
+
+# ── 미니숍 실험실 · 템플릿 관리 (2026-11-26, 관리자 전용) ─────────────────
+def _lab():
+    from app.services.seller import shop_lab, store
+
+    return shop_lab, store, shop_lab.engine()
+
+
+class _TplIn(BaseModel):
+    template: dict
+    seller_id: str = Field("", max_length=40)
+
+
+class _HideIn(BaseModel):
+    hidden: bool
+
+
+@router.post("/admin/api/shop-lab/open", dependencies=[api])
+def shop_lab_open():
+    """테스트 셀러센터 열기 — 관리자 전용 테스트 셀러(공개 안 함)로 셀러 화면 전체를 써 본다."""
+    lab, store, eng = _lab()
+    return {"ok": True, **_seller_call(store, lambda: lab.open_lab(eng, by="operator"))}
+
+
+@router.get("/admin/api/shop-lab", dependencies=[api])
+def shop_lab_info():
+    lab, _store, eng = _lab()
+    return {"ok": True, "lab_seller": lab.lab_id(eng), "users": lab.users_of(eng)}
+
+
+@router.get("/admin/api/shop-lab/seller/{seller_id}", dependencies=[api])
+def shop_lab_seller(seller_id: str):
+    """상담용 — 셀러가 저장한 미니숍 디자인 요약(템플릿·로고·섹션·저장 시각). 셀러 코드는 건드리지 않는다."""
+    lab, store, eng = _lab()
+    from app.services.seller import catalog
+
+    sid = catalog.resolve_seller(catalog.engine(), seller_id) or seller_id
+    return {"ok": True, **_seller_call(store, lambda: lab.design_summary(eng, sid))}
+
+
+@router.get("/admin/api/shop-templates", dependencies=[api])
+def shop_templates_list():
+    lab, _store, eng = _lab()
+    return {"ok": True, **lab.list_templates(eng), "users": lab.users_of(eng)}
+
+
+@router.post("/admin/api/shop-templates/look", dependencies=[api])
+def shop_templates_look(body: _TplIn):
+    lab, store, eng = _lab()
+    html_ = _seller_call(store, lambda: lab.preview_template(eng, body.template, body.seller_id or None))
+    return {"ok": True, "html": html_}
+
+
+@router.post("/admin/api/shop-templates/save", dependencies=[api])
+def shop_templates_save(body: _TplIn):
+    lab, store, eng = _lab()
+    return {"ok": True, "template": _seller_call(store, lambda: lab.save_template(eng, body.template, by="operator"))}
+
+
+@router.post("/admin/api/shop-templates/new", dependencies=[api])
+def shop_templates_new(body: _TplIn):
+    lab, store, eng = _lab()
+    t = _seller_call(store, lambda: lab.save_template(eng, body.template, by="operator", new=True))
+    return {"ok": True, "template": t}
+
+
+@router.post("/admin/api/shop-templates/{tid}/hide", dependencies=[api])
+def shop_templates_hide(tid: str, body: _HideIn):
+    lab, store, eng = _lab()
+    return {"ok": True, "template": _seller_call(store, lambda: lab.hide_template(eng, tid, body.hidden, by="operator"))}
+
+
+@router.post("/admin/api/shop-templates/{tid}/restore", dependencies=[api])
+def shop_templates_restore(tid: str):
+    lab, store, eng = _lab()
+    return {"ok": True, "template": _seller_call(store, lambda: lab.restore_template(eng, tid, by="operator"))}
 
 
 class _SlugIn(BaseModel):

@@ -130,7 +130,7 @@ def ucp_platform_profile():
 
 @router.get("/shop-img/{name}", include_in_schema=False)
 def shop_image(name: str):
-    """미니숍 디자인의 AI 생성 배경 이미지 (2026-11-25) — 파일 이름은 무작위 16자리."""
+    """미니숍 디자인의 AI 생성 배경 이미지·셀러 로고 (2026-11-25) — 파일 이름은 무작위 16자리."""
     from fastapi.responses import FileResponse
 
     from app.services.seller import shop_design
@@ -140,6 +140,6 @@ def shop_image(name: str):
         return NOT_FOUND
     return FileResponse(
         p,
-        media_type="image/png",
+        media_type={"png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}[p.suffix[1:]],
         headers={"Cache-Control": "public, max-age=86400", "X-Content-Type-Options": "nosniff"},
     )
