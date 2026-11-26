@@ -132,6 +132,7 @@ summary{cursor:pointer} pre{white-space:pre-wrap;font-family:inherit;background:
  .res{margin-left:0}.covrow{grid-template-columns:1fr}.wfrow{grid-template-columns:120px 1fr 80px}.outline{columns:1}}
 .tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
 .tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+tr.bidrow{cursor:pointer}tr.bidrow:hover td{background:#f4f8fd}.bidacts{display:flex;gap:4px;margin-top:4px}.bidacts .chip{border:1px solid #dde3ea;background:#fff;border-radius:999px;padding:1px 10px;font-size:12px;cursor:pointer}.bidacts .chip:hover{border-color:#1d5fa8;color:#1d5fa8}
 </style>
 </head>
 <body>
@@ -244,7 +245,12 @@ function render(b){
   if(b.type==="notice"){const d=document.createElement("div");d.className="notice "+(b.tone||"");d.innerHTML=md(b.md);return d}
   if(b.type==="actions"){const d=document.createElement("div");d.className="actions";b.items.forEach(t=>d.append(btn(t)));return d}
   if(b.type==="bid_list"){const p=panel("공고",b.rows.length+"건");p.insertAdjacentHTML("beforeend",`<div style="overflow-x:auto"><table><thead><tr><th>상태</th><th>공고</th><th>유형</th><th class=num>예산</th><th>마감</th><th>신뢰 등급</th></tr></thead><tbody>${
-    b.rows.map(r=>`<tr><td><span class="pill s-${esc(r.status.split(" ")[0])}">${esc(r.status)}</span></td><td><b>${esc(r.title)}</b><div class=q>${esc(r.bid_id)} · ${esc(r.agency||"")}</div></td><td>${esc(r.bid_type)}</td><td class=num><b style="font-size:15px">${r.budget?won(r.budget):"-"}</b></td><td style="white-space:nowrap"><b style="font-size:15px">${esc((r.deadline||"").slice(0,10))}</b>${ddayTag(r.deadline)}<div class=q>${esc((r.deadline||"").slice(11,16))}</div></td><td><span class="v v-${esc(r.verification)}">${esc(r.verification_label)}</span></td></tr>`).join("")}</tbody></table></div>`);return p}
+    b.rows.map(r=>`<tr class="bidrow" data-bid="${esc(r.bid_id)}" tabindex="0" title="눌러서 공고 분석"><td><span class="pill s-${esc(r.status.split(" ")[0])}">${esc(r.status)}</span></td><td><b>${esc(r.title)}</b><div class=q>${esc(r.bid_id)} · ${esc(r.agency||"")}${r.url?` · <a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" data-stop="1">공고문 ↗</a>`:""}</div><div class="bidacts"><button type="button" class="chip" data-run="${esc(r.bid_id)} 분석해줘">분석</button><button type="button" class="chip" data-run="${esc(r.bid_id)} 제안서 작성해줘">제안서</button></div></td><td>${esc(r.bid_type)}</td><td class=num><b style="font-size:15px">${r.budget?won(r.budget):"-"}</b></td><td style="white-space:nowrap"><b style="font-size:15px">${esc((r.deadline||"").slice(0,10))}</b>${ddayTag(r.deadline)}<div class=q>${esc((r.deadline||"").slice(11,16))}</div></td><td><span class="v v-${esc(r.verification)}">${esc(r.verification_label)}</span></td></tr>`).join("")}</tbody></table></div>`);
+    // 2026-11-26: 공고 줄을 누르면 분석, 버튼으로 분석·제안서, '공고문 ↗'은 원문 새 창
+    p.querySelectorAll("[data-run]").forEach(x=>x.onclick=e=>{e.stopPropagation();run(x.dataset.run)});
+    p.querySelectorAll("[data-stop]").forEach(x=>x.onclick=e=>e.stopPropagation());
+    p.querySelectorAll("tr.bidrow").forEach(tr=>{tr.onclick=()=>run(`${tr.dataset.bid} 분석해줘`);tr.onkeydown=e=>{if(e.key==="Enter")run(`${tr.dataset.bid} 분석해줘`)}});
+    return p}
   if(b.type==="log"){const d=document.createElement("div");d.className="log";d.textContent=b.lines.join("\n");return d}
   if(b.type==="bid_card"){const p=panel(b.title);p.insertAdjacentHTML("beforeend",keyFacts(b)+`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="v v-${esc(b.verification)}">${esc(b.verification_label)}</span><span class=tag>${esc(b.bid_type)}</span></div>
     <div class=q>${esc(b.agency||"기관 미상")} · 출처 ${esc(b.source)}${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">원문</a>`:""}</div>`);return p}

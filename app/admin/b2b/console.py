@@ -122,14 +122,20 @@ class Console:
         rows.sort()
         word, name = self.ACTION_WORD[action], self.ACTION_NAME[action]
         ready = [r for r in rows if r[4]][:5]
+        # 2026-11-26: 조건이 아직 안 읽힌 입찰중 공고도 버튼으로 — 누르면 공고문을 먼저 분석(조건 읽기)한다
+        unread = [r for r in rows if not r[4]][: max(0, 5 - len(ready))]
         md = (f"**{name}**를 만들 공고를 먼저 골라 주세요. 아래 공고 버튼을 누르거나, 공고번호와 함께 "
               f"‘IBK서비스-2026008 {word}’처럼 말하거나, 공고 조건(인원·1인 예산·품목·배송 기한)을 붙여 넣어 주세요.")
-        if not ready:
-            md += "\n\n지금은 인원·예산·품목 조건이 들어 있는 입찰중 공고가 없어요. 조건을 직접 넣어 주세요."
-        items = [f"{r[2]} {word}" for r in ready] + ["직원 500명 1인당 5만원 식품 2종 생활용품 1종 3영업일 배송 조건 분석", "입찰중 공고 보여줘"]
+        if not ready and not unread:
+            md += "\n\n지금은 입찰중 공고가 없어요. 조건을 직접 넣거나 '나라장터 공고 수집해줘'로 새 공고를 받아 주세요."
+        elif not ready:
+            md += "\n\n입찰중 공고는 있지만 아직 인원·예산·품목 조건을 읽지 않았어요. 공고를 누르면 공고문을 먼저 분석해요."
+        items = ([f"{r[2]} {word}" for r in ready] + [f"{r[2]} 분석해줘" for r in unread]
+                 + ["직원 500명 1인당 5만원 식품 2종 생활용품 1종 3영업일 배송 조건 분석", "입찰중 공고 보여줘"])  # fmt: skip
         out = [{"type": "text", "md": md}]
-        if ready:
-            out.append({"type": "text", "md": "\n".join(f"- **{r[2]}** {r[3]}" for r in ready)})
+        lines = [f"- **{r[2]}** {r[3]}" for r in ready] + [f"- **{r[2]}** {r[3]} — 조건 읽기 전" for r in unread]
+        if lines:
+            out.append({"type": "text", "md": "\n".join(lines)})
         return out + [{"type": "actions", "items": items}]
 
     def _out(self, w: Workspace, action: str, blocks: list[dict]) -> dict:
