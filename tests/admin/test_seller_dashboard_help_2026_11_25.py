@@ -44,8 +44,22 @@ def eng(tmp_path, monkeypatch):
 
 def _seller(eng, name="가농장"):
     s = sel.create_seller(eng, name=name, kind="consign", contact={"name": "김", "email": "k@a.kr"}, by="operator")
+    k = sel.issue_key(eng, s["seller_id"], by="operator")["code"]
+    _pass_consign(eng, s["seller_id"], k)
     sel.set_status(eng, s["seller_id"], "active", by="operator", reason="ok")
     return s, sel.issue_key(eng, s["seller_id"], by="operator")["code"]
+
+def _pass_consign(eng, sid, key):
+    """위탁판매 셀러 입점 심사표 통과 (2026-11-26 — 승인 전에 필요)."""
+    from app.services.seller import consign
+
+    consign.engine()
+    sup = scm.save_supplier(eng, key, IP, name="가공급", contact=None)["supplier_id"]
+    for item in consign.ITEMS:
+        if item not in consign.AUTO:
+            consign.set_check(eng, sid, item, True, by="operator", note="시험")
+    return sup
+
 
 
 def _orders(eng, k, lines):
@@ -61,7 +75,9 @@ def _shop(eng):
     s, k = _seller(eng)
     a = prod.save(eng, k, IP, {"name": "제주 감귤", "volume": "5kg", "price": "23900", "origin": "제주"})["product_id"]
     b = prod.save(eng, k, IP, {"name": "한라봉", "volume": "3kg", "price": "31000", "origin": "제주"})["product_id"]
+    sup = scm.list_suppliers(eng, k, IP)[0]["supplier_id"]
     for pid in (a, b):
+        scm.set_supply(eng, k, IP, pid, supplier_id=sup)
         prod.review(eng, pid, "approved", by="operator")
     _orders(eng, k, [("N1", a, 2, "2026-11-25"), ("N2", a, 1, "2026-11-23"), ("N2", b, 1, "2026-11-23"),
                      ("N3", b, 3, "2026-11-15"), ("N4", a, 1, "2026-10-01")])  # fmt: skip

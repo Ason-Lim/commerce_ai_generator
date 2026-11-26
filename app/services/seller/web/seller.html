@@ -249,6 +249,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
     <section class="box" aria-labelledby="od-h">
       <h2 id="od-h">주문 · 발주서 · 송장</h2>
       <p class="note">판매처(스마트스토어 등)의 주문을 올리면 공급사별 <b>발주서 엑셀</b>을 만들어 드려요. 발주서는 직접 공급사에 보내 주세요 — 여기서는 보내지 않아요. 공급사가 송장 칸을 채워 돌려준 파일을 올리면 송장이 들어가요. 정식 계약 전에는 <b>시험 데이터</b>만 올려 주세요.</p>
+      <div id="omet" class="note" style="margin:6px 0 10px" aria-live="polite"></div>
       <div style="overflow-x:auto"><table><thead><tr><th>판매처 주문</th><th>상품</th><th class="num">수량</th><th>받는 분</th><th>상태</th><th>송장</th></tr></thead><tbody id="olist"></tbody></table></div>
       <div class="row"><button type="button" id="poBtn">새 주문으로 발주서 만들기</button></div>
       <div id="batches" class="note" style="margin-top:8px"></div>
@@ -735,6 +736,11 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     if (a.new_orders) parts.push(`발주서를 아직 만들지 않은 주문 ${a.new_orders}건`);
     if (a.no_tracking) parts.push(`송장을 기다리는 주문 ${a.no_tracking}건`);
     $("alerts").innerHTML = parts.length ? parts.join("<br>") : "지금 챙길 일이 없어요";
+    const m = o.metrics;
+    if (m) $("omet").innerHTML = `<b>운영 지표 (최근 ${m.window_days}일)</b> · ${esc(m.level_label)} · 주문 ${num(m.orders)} · 출고 ${num(m.shipped)}`
+      + (m.avg_ship_bizdays != null ? ` · 평균 출고 ${m.avg_ship_bizdays}영업일` : "") + ` · 지연 ${num(m.late)}건 · 승인 상품 품절 ${m.sold_out}/${m.approved}`
+      + (m.by_supplier.some((x) => x.late) ? "<br>공급사별 지연: " + m.by_supplier.filter((x) => x.late).map((x) => `${esc(x.supplier)} ${x.late}/${x.orders}`).join(" · ") : "")
+      + `<br>지연 = 주문일 뒤 ${m.rule.delay_biz_days}영업일 넘게 출고 안 됨. 운영팀도 같은 숫자를 봐요(자동 제재 없음).`;
     $("olist").innerHTML = o.orders.length ? o.orders.map((x) => `<tr><td>${esc(x.store_order_no)}<div class="note">${esc(x.order_id)} · ${esc(x.ordered_on)}</div></td><td>${esc(x.product)}</td><td class="num">${x.qty}</td><td>${esc(x.recipient)}</td>
       <td style="white-space:nowrap">${esc(x.status_label)}${x.delayed ? ' <b style="color:var(--err)">지연</b>' : ""}</td><td>${esc(x.tracking)}</td></tr>`).join("") : '<tr><td colspan="6" class="note">아직 올린 주문이 없어요</td></tr>';
     $("batches").innerHTML = o.batches.map((b) => `발주 묶음 ${esc(b.batch_id)} · 주문 ${b.n_orders}건 · 공급사 ${b.n_suppliers}곳 · 내려받기 ${b.downloads}번 <button type="button" class="sub" data-file="${esc(b.batch_id)}">엑셀 받기</button>`).join("<br>");

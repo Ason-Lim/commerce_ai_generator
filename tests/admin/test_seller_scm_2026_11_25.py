@@ -44,10 +44,25 @@ def client():
 
 def _seller(eng, name="가농장"):
     s = sel.create_seller(eng, name=name, kind="consign", contact={"name": "김", "email": "k@a.kr"}, by="operator")
+    k = sel.issue_key(eng, s["seller_id"], by="operator")["code"]
+    sup = _pass_consign(eng, s["seller_id"], k)
     sel.set_status(eng, s["seller_id"], "active", by="operator", reason="ok")
     k = sel.issue_key(eng, s["seller_id"], by="operator")["code"]
     p = prod.save(eng, k, IP, P)
+    scm.set_supply(eng, k, IP, p["product_id"], supplier_id=sup)
     return s, k, p["product_id"]
+
+def _pass_consign(eng, sid, key):
+    """위탁판매 셀러 입점 심사표 통과 (2026-11-26 — 승인 전에 필요)."""
+    from app.services.seller import consign
+
+    consign.engine()
+    sup = scm.save_supplier(eng, key, IP, name="가공급", contact=None)["supplier_id"]
+    for item in consign.ITEMS:
+        if item not in consign.AUTO:
+            consign.set_check(eng, sid, item, True, by="operator", note="시험")
+    return sup
+
 
 
 def _csv(pid, *lines):
@@ -161,7 +176,8 @@ def test_isolation_batches_and_suppliers(eng):
     b = scm.create_batch(eng, ka, IP)
     with pytest.raises(sel.SellerError, match="없는 발주 묶음"):
         scm.render_batch(eng, kb, IP, b["batch_id"])
-    assert scm.list_orders(eng, kb, IP) == [] and scm.list_suppliers(eng, kb, IP) == []
+    assert scm.list_orders(eng, kb, IP) == []
+    assert "한라농원" not in {x["name"] for x in scm.list_suppliers(eng, kb, IP)}  # 나수산은 자기 공급사만
 
 
 # ── 지연 알림 ──
