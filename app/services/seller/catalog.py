@@ -30,6 +30,7 @@ import secrets
 
 from sqlalchemy import JSON, Column, DateTime, Integer, MetaData, String, Table, UniqueConstraint, and_, select, update
 
+from app.services.corpmall import store as corp
 from app.services.seller import products, store
 
 CHANNELS = {"naver": "네이버 스마트스토어", "coupang": "쿠팡", "manual": "직접 입력(셀러 센터)"}
@@ -123,7 +124,7 @@ def engine(url: str | None = None):
     from app.services.seller import scm  # 재고 표(③)도 함께
 
     eng = scm.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 
@@ -747,7 +748,7 @@ def _prefill_images(eng, token: str, client: str, seller_id: str, images: dict[s
     """스마트스토어 파일의 대표이미지를 상세페이지 입력에 — 사진이 아직 없는 상품만 (사진 권리 체크는 셀러가)."""
     from app.services.seller import detail_page
 
-    detail_page.meta.create_all(eng)
+    corp.ensure(eng, detail_page.meta)
     units = {u["ext_no"]: pid for pid, u in units_of(eng, seller_id).items() if u.get("channel") == "naver"}
     n = 0
     for ext_no, url in images.items():

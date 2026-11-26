@@ -88,7 +88,7 @@ def now() -> datetime:
 
 def engine(url: str | None = None):
     eng = corp.engine(url)  # 같은 B2B DB
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 

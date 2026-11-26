@@ -62,8 +62,8 @@ class NaverError(store.SellerError):
 
 def engine(url: str | None = None):
     eng = catalog.engine(url)
-    detail_page.meta.create_all(eng)
-    meta.create_all(eng)
+    corp.ensure(eng, detail_page.meta)
+    corp.ensure(eng, meta)
     return eng
 
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 매일 03:20 데이터 백업 (scripts/backup_data.sh, 2026-11-26). 04:00 입찰 수집 전. 설치: ops/launchd/install_backup.sh -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.commerce_ai.backup</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/scripts/backup_data.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>3</integer>
+    <key>Minute</key>
+    <integer>20</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__REPO__/var/log/backup.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/var/log/backup.launchd.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>Nice</key>
+  <integer>10</integer>
+</dict>
+</plist>

@@ -28,6 +28,7 @@ from datetime import timedelta
 
 from sqlalchemy import JSON, Column, DateTime, Integer, String, Table, and_, func, select, update
 
+from app.services.corpmall import store as corp
 from app.services.seller import products, store
 
 log = logging.getLogger(__name__)
@@ -133,7 +134,7 @@ class DetailError(store.SellerError):
 
 def engine(url: str | None = None):
     eng = products.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 
@@ -433,7 +434,7 @@ def shop_items(eng, seller_id: str, *, on_sale_only: bool = False, sample: bool 
     if on_sale_only:
         from app.services.seller import scm
 
-        scm.meta.create_all(eng)
+        corp.ensure(eng, scm.meta)
         sold = {k: v.get("sold_out", False) for k, v in scm.stock_of(eng, seller_id).items()}
     out = []
     for d in approved_for(eng, seller_id):
@@ -512,7 +513,7 @@ def shop_page(
     # 2026-11-25 미니숍 디자인 — 저장된(또는 미리보기 중인) 디자인이 있으면 그 모양으로. 고지·판매자 정보·상세 본문은 그대로.
     from app.services.seller import shop_design
 
-    shop_design.meta.create_all(eng)
+    corp.ensure(eng, shop_design.meta)
     dz = design if design is not None else shop_design.design_of(eng, seller_id)
     if dz:
         items = shop_items(eng, seller_id, on_sale_only=public is not None, sample=sample)

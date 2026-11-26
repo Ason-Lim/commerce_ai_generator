@@ -128,7 +128,7 @@ t_batch = Table(
 
 def engine(url: str | None = None):
     eng = products.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 

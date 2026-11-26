@@ -19,6 +19,7 @@ import secrets
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, MetaData, String, Table, and_, func, select, update
 
+from app.services.corpmall import store as corp
 from app.services.seller import store
 
 DECLARED = {"origin": "원산지", "cert": "인증 표기", "brix": "당도(브릭스)"}
@@ -75,8 +76,8 @@ def engine(url: str | None = None):
     from app.services.seller import catalog
 
     eng = store.engine(url)
-    meta.create_all(eng)
-    catalog.meta.create_all(eng)  # ②-b 그룹·판매 단위 표 (save 가 함께 씀)
+    corp.ensure(eng, meta)
+    corp.ensure(eng, catalog.meta)  # ②-b 그룹·판매 단위 표 (save 가 함께 씀)
     return eng
 
 
