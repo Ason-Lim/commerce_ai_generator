@@ -311,9 +311,11 @@ def _footer(dispute: str) -> str:
     biz = re.sub(r"\D", "", op.get("biz_no") or "")
     if biz:
         links.append(f'<a href="{e(FTC_BIZ.format(biz))}" rel="noopener" target="_blank">사업자정보 확인</a>')
-    for k, label in (("terms_url", "이용약관"), ("privacy_url", "개인정보처리방침")):
-        if op.get(k):
-            links.append(f'<a href="{e(op[k])}">{label}</a>')
+    # 2026-11-26 운영사 설정이 없으면 사이트 화면(/#/terms·/#/privacy)으로 — AI 기본법 고지는 늘 링크
+    defaults = (("terms_url", "이용약관", "/#/terms"), ("privacy_url", "개인정보처리방침", "/#/privacy"))
+    for k, label, url in defaults:
+        links.append(f'<a href="{e(op.get(k) or url)}">{label}</a>')
+    links.append('<a href="/#/ai-notice">AI 기본법에 따른 고지</a>')
     return (f'<p class="notice">{e(dispute)}</p>' if dispute else "") + (
         f'<footer class="foot" style="margin-top:24px">{" · ".join(parts)}<br>{" · ".join(links)}</footer>'
     )

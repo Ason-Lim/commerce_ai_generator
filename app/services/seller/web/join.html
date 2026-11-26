@@ -72,6 +72,10 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px}
         동의하지 않으면 신청할 수 없어요.
         <label style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="consent" style="width:auto"> 동의합니다</label>
       </div>
+      <div class="consent">
+        <b>셀러 입점 이용약관 동의 (필수)</b> — <a href="/seller/terms" target="_blank" rel="noopener">약관 보기</a>
+        <label style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="terms" style="width:auto"> 동의합니다</label>
+      </div>
       <div class="row"><button type="submit" id="send">신청하기</button></div>
       <div id="msg" role="status"></div>
     </form>
@@ -83,7 +87,7 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px}
     <div class="row"><input id="tok" maxlength="40" style="max-width:340px" placeholder="신청 확인 코드" autocomplete="off" spellcheck="false"><button type="button" class="sub" id="look">확인</button></div>
     <div id="state" role="status"></div>
   </section>
-  <footer>입점 승인·정지·이용료는 운영팀이 정해요(AI 가 결정하지 않아요). <a href="/">trendguide 홈</a></footer>
+  <footer>입점 승인·정지·이용료는 운영팀이 정해요(AI 가 결정하지 않아요). <a href="/seller/terms">셀러 입점 이용약관</a> · <a href="/">trendguide 홈</a></footer>
 </main>
 <script>
 function fmtPhone(v){const d=String(v||"").replace(/\D/g,"").slice(0,12);if(!d)return"";
@@ -116,6 +120,7 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
   $("form").addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!$("consent").checked) { msg($("msg"), "개인정보 수집·이용에 동의해 주세요", "err"); return; }
+    if (!$("terms").checked) { msg($("msg"), "셀러 입점 이용약관에 동의해 주세요", "err"); return; }
     $("send").disabled = true; msg($("msg"), "올리고 확인하는 중이에요… (1분쯤 걸릴 수 있어요)", "info");
     try {
       const files = {}; const reg = await fileOf($("f_reg")); const mail = await fileOf($("f_mail"));

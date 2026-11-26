@@ -21,6 +21,7 @@ from app.services.seller import join
 
 router = APIRouter(tags=["seller-join"], include_in_schema=False)
 PAGE = Path(__file__).resolve().parents[1] / "services" / "seller" / "web" / "join.html"
+TERMS_PAGE = PAGE.with_name("seller_terms.html")  # 2026-11-26 셀러 입점 이용약관(초안)
 
 
 class FileIn(BaseModel):
@@ -56,6 +57,11 @@ def _err(e: Exception) -> JSONResponse:
 @router.get("/join")
 def join_page():
     return FileResponse(PAGE, headers=NOINDEX)
+
+
+@router.get("/seller/terms")
+def seller_terms_page():
+    return FileResponse(TERMS_PAGE, headers=NOINDEX)
 
 
 @router.post("/join/api/send")
