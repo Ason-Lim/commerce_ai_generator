@@ -11,6 +11,7 @@ export type NavKey = "chat" | "hot" | "posts" | "me";
 export const HOT_HASH = "#/hot";
 export const ME_HASH = "#/me";        // 2026-11-22 창 3-B 내 보관함
 export const PRIVACY_HASH = "#/privacy";   // 2026-11-23 개인정보처리방침 — 화면 곳곳의 개인정보 설명은 이 한 곳으로 잇는다
+export const AI_NOTICE_HASH = "#/ai-notice";  // 2026-11-26 AI 기본법에 따른 고지 — 화면에 긴 AI 문구를 붙이지 않고 이 한 곳에
 export const POLICY_HASH = "#/policy";     // 2026-11-23 운영정책 — 순위·추천 기준, 자료 갱신, 가격 표시, 문의 처리 (화면 곳곳의 긴 설명 대신)
 
 /** 개인정보처리방침 링크 (입력창 안내·바닥글·맞춤 추천 칸에서 같은 모양). */
@@ -23,9 +24,14 @@ export function PolicyLink({ className = "" }: { className?: string }) {
   return <a href={"/" + POLICY_HASH} className={`underline underline-offset-2 hover:text-ink ${className}`}>운영정책</a>;
 }
 
-/** 화면 바닥글 — 운영정책 · 개인정보처리방침 링크. */
+/** AI 기본법에 따른 고지 링크 (2026-11-26 — 입력창 안내·바닥글에서 같은 모양). */
+export function AiNoticeLink({ className = "" }: { className?: string }) {
+  return <a href={"/" + AI_NOTICE_HASH} className={`underline underline-offset-2 hover:text-ink ${className}`}>AI 기본법에 따른 고지</a>;
+}
+
+/** 화면 바닥글 — 운영정책 · 개인정보처리방침 · AI 기본법에 따른 고지 링크. */
 export function SiteFooter() {
-  return <footer className="mt-12 flex gap-3 border-t border-stone-200 pt-4 text-xs text-stone-500"><PolicyLink /><PrivacyLink /><a href="/join" className="underline underline-offset-2 hover:text-ink">입점 문의</a></footer>;
+  return <footer className="mt-12 flex gap-3 border-t border-stone-200 pt-4 text-xs text-stone-500"><PolicyLink /><PrivacyLink /><AiNoticeLink /><a href="/join" className="underline underline-offset-2 hover:text-ink">입점 문의</a></footer>;
 }
 
 const ITEMS: { key: NavKey; label: string; href: string; icon: LucideIcon }[] = [

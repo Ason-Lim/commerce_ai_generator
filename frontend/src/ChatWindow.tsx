@@ -5,7 +5,7 @@ import { SavedProvider, useSaved } from './state/saved';
 import { PENDING_ASK } from './components/TrendsPage';
 import { BlockRenderer } from './components/BlockRenderer';
 import { ProductDetail } from './components/ProductDetail';
-import { MobileTabBar, MOBILE_TAB_H, PrivacyLink, ShelfLink, SiteFooter, SiteNav } from './components/SiteNav';
+import { MobileTabBar, MOBILE_TAB_H, AiNoticeLink, PrivacyLink, ShelfLink, SiteFooter, SiteNav } from './components/SiteNav';
 import { TrendPostPanel } from './components/TrendPost';
 import { FlowStepper } from './components/FlowStepper';
 import { HomeRankings } from './components/HomeRankings';
@@ -473,7 +473,7 @@ export default function ChatWindow() {
                     <label htmlFor="prompt" className="sr-only">쇼핑 질문</label>
                     <textarea id="prompt" value={input} onChange={e => setInput(e.target.value)} rows={2} maxLength={4000} placeholder={inRecipe ? '재료나 만드는 방법을 물어보세요' : '어떤 상품을 찾으세요? 예산과 원하는 조건을 알려주세요.'} className="max-h-40 min-h-14 w-full resize-y bg-transparent px-2 py-1 text-sm leading-6 outline-none placeholder:text-stone-400" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit(input); } }} />
                     <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] text-stone-400">추천 정보는 판매처에서 최종 확인해 주세요 · {PII_HINT} (외부 AI로 보내져요) · <PrivacyLink /></span>
+                        <span className="text-[11px] text-stone-400">추천 정보는 판매처에서 최종 확인해 주세요 · {PII_HINT} (외부 AI로 보내져요) · <PrivacyLink /> · <AiNoticeLink /></span>
                         {busy ? (
                             <button type="button" aria-label="응답 중단" className="send" onClick={() => controller.current?.abort('cancelled')}><Square size={15} /></button>
                         ) : (

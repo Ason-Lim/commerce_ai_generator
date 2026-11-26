@@ -118,3 +118,14 @@ def test_hold_criteria_for_health_food_have_no_storage_line():
 def test_feedback_chip_rows_really_hide():
     """배포 확인(11-21 22:24): .fbrow{display:flex} 가 hidden 을 덮어 좋음 칩 줄이 '나쁨'에도 보였음."""
     assert ".fb [hidden]{display:none}" in render.CSS
+
+
+def test_ai_basic_act_label_on_post(tmp_path):
+    """2026-11-26 AI 기본법 제31조 — 긴 문구 대신 글 머리 메타 줄에 'AI 기본법에 따른 고지' 링크."""
+    svc = service(tmp_path)
+    post, _ = svc.create_from_surge(report(), "대방어", find_products=lambda k: search_result())
+    live = post.model_copy(update={"status": "approved", "approved_at": "2026-11-16T03:00:00+00:00"})
+    page = render.post_page(live, T0)
+    assert '<a href="/#/ai-notice">AI 기본법에 따른 고지</a>' in page
+    assert "생성형 AI가 공개 자료로" not in page
+    assert page.index("AI 기본법에 따른 고지") < page.index("</article>")
