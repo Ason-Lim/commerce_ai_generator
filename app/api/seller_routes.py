@@ -497,6 +497,20 @@ def seller_detail_submit(body: DetailIn, request: Request):
     return _detail(lambda: _ok(detail=detail_page.submit(detail_page.engine(), body.key, _client(request), body.product_id)))
 
 
+class DetailOcrIn(DetailIn):
+    urls: list[str] = Field(default_factory=list, max_length=5)
+    upload: str = Field("", max_length=14_000_000)
+
+
+@router.post("/seller/api/detail/ocr")
+def seller_detail_ocr(body: DetailOcrIn, request: Request):
+    """상세 이미지 글자 읽기 — 빈 고시 칸 후보만 돌려준다(저장 안 함, 이미지·글 남기지 않음). 2026-11-26"""
+    from app.services.seller import detail_ocr
+
+    return _detail(lambda: _ok(ocr=detail_ocr.read(detail_page.engine(), body.key, _client(request), body.product_id,
+                                                   urls=body.urls, upload=body.upload)))  # fmt: skip
+
+
 @router.post("/seller/api/detail/view")
 def seller_detail_preview(body: DetailIn, request: Request):
     return _detail(lambda: _ok(html=detail_page.preview(detail_page.engine(), body.key, _client(request), body.product_id)))

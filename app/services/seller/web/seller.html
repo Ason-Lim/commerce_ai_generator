@@ -179,6 +179,12 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <div class="field"><label for="dpMemo">판매 포인트 메모</label><textarea id="dpMemo" maxlength="1500" style="min-height:90px;font-family:inherit" placeholder="사실만 적어 주세요 — 예: 제주 서귀포 노지에서 12월에 수확, 껍질이 얇고 새콤달콤, 크기는 S~M 섞임, 받으면 서늘한 곳에 두세요"></textarea></div>
       <div class="row"><label for="dpKind" class="note">고시 품목</label><select id="dpKind" style="font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px"><option value="">고르기</option><option value="agri">농수축산물</option><option value="processed">가공식품</option></select></div>
       <div id="dpNotice" class="grid2"></div>
+      <details id="ocrBox" style="margin:6px 0 10px"><summary class="note" style="cursor:pointer">상세 이미지에서 고시 칸 읽어 오기 <span class="badge">글자 읽기</span></summary>
+        <p class="note" style="margin:6px 0">상세페이지 그림에 적힌 ‘원산지 : 국산’ 같은 줄을 읽어 <b>빈 칸의 후보</b>를 보여 드려요. 고른 것만 칸에 들어가고, 저장·검수는 똑같아요. 그림과 읽은 글은 남기지 않아요(이 서버에서 읽고 바로 버려요).</p>
+        <div class="field"><label for="ocrUrls">상세 이미지 주소 (한 줄에 하나, https, 최대 5개 — 비우면 위 ‘사진 주소’를 읽어요)</label><textarea id="ocrUrls" spellcheck="false" style="min-height:44px"></textarea></div>
+        <div class="row" style="align-items:center"><input type="file" id="ocrFile" accept="image/png,image/jpeg,image/webp" style="width:auto"><button type="button" class="sub" id="ocrGo">글자 읽기</button><span class="note" id="ocrMsg" role="status"></span></div>
+        <div id="ocrOut"></div>
+      </details>
       <div class="field"><label for="dpImgs">사진 주소 (한 줄에 하나, https, 최대 10개)</label><textarea id="dpImgs" spellcheck="false" style="min-height:60px"></textarea></div>
       <label class="note" style="display:flex;gap:6px;align-items:flex-start;font-weight:400"><input type="checkbox" id="dpImgOk" style="width:auto;margin-top:4px"> 이 사진들은 제가 쓸 권리가 있고, 상세페이지에 써도 됩니다(체크하지 않으면 사진 없이 만들어요).</label>
       <div class="row"><button type="button" id="dpSave">입력 저장</button><button type="button" class="sub" id="dpGen">AI로 초안 만들기</button><button type="button" class="sub" id="dpPrev">미리보기</button><button type="button" class="sub" id="dpSubmit">검수 요청</button><button type="button" class="sub" id="shopPrev">미니숍 미리보기</button></div>
@@ -427,6 +433,33 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     if (j.detail) showDetail(j.detail); if (ok) msg($("dpMsg"), ok, "ok"); return j;
   }
   $("dpSel").addEventListener("change", () => { if ($("dpSel").value) openDetail($("dpSel").value); });
+  // 상세 이미지 글자 읽기 → 빈 고시 칸 후보 (2026-11-26)
+  function fileData(f){ return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); }); }
+  $("ocrGo").addEventListener("click", async () => {
+    if (!DPID) { $("ocrMsg").textContent = "상품을 먼저 골라 주세요"; return; }
+    const f = $("ocrFile").files[0];
+    if (f && f.size > 10 * 1024 * 1024) { $("ocrMsg").textContent = "파일은 10MB 까지예요"; return; }
+    let urls = $("ocrUrls").value.split("\n").map((x) => x.trim()).filter(Boolean);
+    if (!urls.length && !f) urls = $("dpImgs").value.split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 5);
+    $("ocrGo").disabled = true; $("ocrMsg").textContent = "읽는 중… (긴 그림은 1분쯤 걸려요)"; $("ocrOut").innerHTML = "";
+    try {
+      const j = await post("/seller/api/detail/ocr", {key: KEY, product_id: DPID, urls, upload: f ? await fileData(f) : ""});
+      if (!j.ok) { $("ocrMsg").textContent = j.error; return; }
+      const o = j.ocr; $("ocrMsg").textContent = `그림 ${o.read}장을 읽었어요.`;
+      if (o.kind && $("dpKind").value !== o.kind && !$("dpKind").value) { $("dpKind").value = o.kind; noticeInputs(o.kind, {}); }
+      $("ocrOut").innerHTML = (o.suggestions.length
+        ? `<p class="note" style="margin:6px 0">빈 칸 후보 — 맞는 것만 골라 넣어 주세요.</p><ul style="list-style:none;padding:0;margin:0">` + o.suggestions.map((x, i) => `<li style="margin:4px 0"><label style="font-weight:400;display:flex;gap:6px;align-items:flex-start"><input type="checkbox" data-oc="${i}" checked style="width:auto;margin-top:4px"><span><b>${esc(x.label.split(" (")[0])}</b>: ${esc(x.value)}<br><span class="note">읽은 줄 “${esc(x.line)}”</span></span></label></li>`).join("") + `</ul><div class="row"><button type="button" class="sub" id="ocrPut">고른 것 칸에 넣기</button></div>`
+        : `<p class="note">빈 칸에 넣을 만한 줄을 찾지 못했어요.${o.filled.length ? " (이미 채운 칸은 건너뛰었어요)" : ""}</p>`)
+        + o.warnings.map((w) => `<p class="note" style="color:var(--warn)">${esc(w)}</p>`).join("")
+        + o.problems.map((p) => `<p class="note" style="color:var(--err)">${esc(p.image)} — ${esc(p.error)}</p>`).join("");
+      const put = $("ocrPut");
+      if (put) put.onclick = () => {
+        let n = 0;
+        document.querySelectorAll("[data-oc]").forEach((c) => { if (!c.checked) return; const x = o.suggestions[+c.dataset.oc]; const inp = $("dpN_" + x.key); if (inp && !inp.value.trim()) { inp.value = x.value; n++; } });
+        $("ocrMsg").textContent = `${n}칸에 넣었어요. 확인한 뒤 ‘입력 저장’을 눌러 주세요.`;
+      };
+    } finally { $("ocrGo").disabled = false; }
+  });
   $("dpKind").addEventListener("change", () => noticeInputs($("dpKind").value, {}));
   $("dpSave").addEventListener("click", () => dpCall("/seller/api/detail/save", {inputs: dpInputs()}, "입력을 저장했어요"));
   $("dpGen").addEventListener("click", async () => {
