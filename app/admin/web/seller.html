@@ -289,7 +289,7 @@ const LABEL={origin:"원산지",cert:"인증 표기",brix:"당도(브릭스)"};
 function showP(p){const pd=$("#pd");pd.hidden=false;const v=p.verified||{};
   pd.innerHTML=`<div class="sec" style="margin-top:0"><div style="display:flex;align-items:center;gap:6px"><h4 style="margin:0">손님 화면 미리보기</h4><span class="spacer"></span><a class="btn" href="${esc(pvUrl(p))}" target="_blank" rel="noopener">새 창</a></div>
    <iframe class="pv" title="손님 화면 미리보기" sandbox="" loading="lazy" src="${esc(pvUrl(p))}"></iframe></div>
-   <h3>${esc(p.name)}</h3><dl class="kv"><dt>셀러</dt><dd>${esc(p.seller_name)}</dd><dt>용량</dt><dd>${esc(p.volume)}</dd><dt>가격</dt><dd>${won(p.price)}</dd>
+   <h3>${esc(p.name)}</h3><dl class="kv"><dt>셀러</dt><dd>${esc(p.seller_name)}</dd><dt>용량</dt><dd>${esc(p.volume)}</dd><dt>가격</dt><dd>${won(p.price)} <a class="btn" style="padding:1px 8px;font-size:12px" href="/admin/b2b/market?name=${encodeURIComponent((p.name||"")+(p.volume&&!(p.name||"").includes(p.volume)?" "+p.volume:""))}&price=${encodeURIComponent(p.price||"")}" target="_blank" rel="noopener">시장가 비교 ↗</a></dd>
    <dt>배송비</dt><dd>${p.ship_fee==null?"판매처 확인":won(p.ship_fee)}</dd><dt>판매처</dt><dd>${p.sale_url?`<a href="${esc(p.sale_url)}" target="_blank" rel="noopener noreferrer">${esc(p.sale_url)}</a>`:""}</dd>
    <dt>상태</dt><dd><span class="st st-${esc(p.status)}">${esc(p.status_label)}</span> ${esc(p.review_note)}</dd></dl>
    <div class="sec"><h4>표기 확인</h4>${Object.entries(LABEL).map(([k,l])=>{const d=p.declared[k];const x=v[k];return `<div class="fact"><div>${l}</div><div>

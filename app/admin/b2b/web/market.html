@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시장가 비교 | 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#14212e;--ink2:#46576a;--ink3:#8494a5;--line:#dde3ea;--rail:#0f1a24;--rail2:#18293a;
+ --ok:#1f7a4a;--ok-s:#e3f4ea;--hold:#9a6200;--hold-s:#fff1d1;--ex:#b42318;--ex-s:#fde8e6;--acc:#1d5fa8;--acc-s:#e7f0fb;--mut-s:#eef1f4}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:var(--rail);color:#d6e0ea;padding:18px 14px;position:sticky;top:0;height:100vh}
+aside h1{font-size:16px;margin:0 0 2px;color:#fff} aside .sub{font-size:12px;color:#7f93a8;margin-bottom:18px}
+nav a{display:block;color:#c3d1de;text-decoration:none;padding:9px 12px;border-radius:10px;margin:2px 0}
+nav a[aria-current=page]{background:var(--rail2);color:#fff;font-weight:650}
+nav a:hover{background:#15222f}
+.railnote{font-size:12px;color:#7f93a8;margin-top:22px;line-height:1.6}
+main{padding:22px 28px 60px;min-width:0}
+.top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.top h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--mut-s);border-radius:12px;padding:4px}
+.tabs button{border:0;background:transparent;border-radius:9px;padding:6px 14px;cursor:pointer;font-weight:600;color:var(--ink2)}
+.tabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.banner{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin:0 0 14px}
+.banner b{font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi span{display:block;font-size:12px;color:var(--ink3)} .kpi b{font-size:22px;font-variant-numeric:tabular-nums}
+.kpi.k-open b{color:var(--ok)} .kpi.k-closing b{color:var(--hold)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+select,input[type=search],input[type=text],input[type=date],textarea{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;font-size:13.5px}
+input[type=search]{min-width:200px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:13.5px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;align-items:start}
+.grid.nodetail{grid-template-columns:minmax(0,1fr)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.panel h3{margin:0 0 10px;font-size:15px}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+thead th{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap}
+tbody tr{cursor:pointer} tbody tr:hover td{background:#f8fafc} tbody tr[aria-selected=true] td{background:var(--acc-s)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;display:inline-block}
+.s-입찰중{background:var(--ok-s);color:var(--ok)} .s-마감임박{background:var(--hold-s);color:var(--hold)}
+.s-입찰마감{background:var(--mut-s);color:var(--ink3)} .s-마감일{background:var(--mut-s);color:var(--ink2)}
+.v{font-size:11px;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.v-verified{background:var(--ok-s);color:var(--ok)} .v-document_provided{background:var(--acc-s);color:var(--acc)}
+.v-unverified{background:var(--hold-s);color:var(--hold)} .v-legacy_unverified{background:var(--ex-s);color:var(--ex)}
+.t{font-weight:600} .t small{display:block;color:var(--ink3);font-weight:400;font-size:12px}
+.dday{font-size:11.5px;color:var(--ink3)}
+.empty{color:var(--ink3);padding:24px 6px;text-align:center}
+/* 상세 */
+.detail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.detail h3{font-size:16px;line-height:1.4}
+dl.kv{display:grid;grid-template-columns:86px 1fr;gap:4px 10px;margin:0 0 12px;font-size:13px}
+dl.kv dt{color:var(--ink3)} dl.kv dd{margin:0;word-break:break-all}
+.sec{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.sec h4{margin:0 0 6px;font-size:13.5px}
+.sec ul{margin:0;padding-left:18px;font-size:13px}
+.basis{font-size:12px;color:var(--ink3);margin-top:6px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.up{display:inline-block}
+.log{background:#0f1a24;color:#cfe0f0;border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto;margin-bottom:12px}
+/* 트렌드 */
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.hb{display:grid;grid-template-columns:160px 1fr 92px;gap:10px;align-items:center;font-size:13px;margin:5px 0}
+.hb .track{height:12px;background:var(--mut-s);border-radius:6px;overflow:hidden}
+.hb .track i{display:block;height:100%;background:var(--acc);border-radius:6px}
+.hb .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.months{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px;border-bottom:1px solid var(--line)}
+.months div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.months i{display:block;width:70%;background:var(--acc);border-radius:4px 4px 0 0}
+.months b{font-size:11.5px;font-weight:600;color:var(--ink2)}
+.mlabels{display:flex;gap:6px} .mlabels span{flex:1;text-align:center;font-size:11px;color:var(--ink3);min-width:0;overflow:hidden}
+.report li{margin:4px 0}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px}
+/* 점검 */
+.evrow{display:grid;grid-template-columns:70px 1fr 70px 220px;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:13.5px}
+.evrow input{width:60px}
+.evres{font-size:28px;font-weight:800} .evres small{font-size:14px;color:var(--ink3);font-weight:500}
+dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog form{padding:20px;display:grid;gap:10px}
+dialog label{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
+dialog textarea{min-height:120px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.detail{position:static;max-height:none}.kpis{grid-template-columns:repeat(3,1fr)}.tgrid{grid-template-columns:1fr}}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto}main{padding:14px 12px}.kpis{grid-template-columns:repeat(2,1fr)}
+ .hb{grid-template-columns:110px 1fr 56px}.evrow{grid-template-columns:1fr 1fr}.tabs{margin-left:0}}
+.tabs-top{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.tabs-top a{flex:1 0 auto;text-align:center;padding:7px 8px;white-space:nowrap;border-radius:10px;border:1px solid #23364a;color:#c3d1de;text-decoration:none;font-size:13px;margin:0}
+.tabs-top a[aria-current=page]{background:#e8edf2;color:#0f1a24;font-weight:700;border-color:#e8edf2}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.code-out{background:var(--hold-s);color:var(--hold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:8px}
+textarea.spec{width:100%;min-height:260px;font-family:ui-monospace,monospace;font-size:12.5px}
+.st{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px}
+.st-draft{background:var(--mut-s);color:var(--ink2)} .st-open{background:var(--ok-s);color:var(--ok)} .st-closed,.st-ended{background:var(--hold-s);color:var(--hold)}
+tbody tr{cursor:default}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}.res .panel{margin:0}
+.vd{font-weight:800;border-radius:999px;padding:2px 10px;font-size:12.5px}.vd-higher{background:var(--ex-s);color:var(--ex)}.vd-lower{background:var(--ok-s);color:var(--ok)}
+.vd-similar{background:var(--acc-s);color:var(--acc)}.vd-mixed,.vd-none{background:var(--mut-s);color:var(--ink2)}
+.cp{background:#fffaf0;border:1px dashed #e7c98b;border-radius:12px;padding:10px 12px;margin-top:10px}
+textarea.lines{width:100%;min-height:110px;font-family:ui-monospace,monospace;font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <h1>B2B 입찰 콘솔</h1><div class="sub">내부 전용 · 외부 발송 기능 없음</div>
+  <nav class="tabs-top" aria-label="관리자 탭"><a href="/admin">운영</a><a href="/admin/trends">트렌드</a><a href="/admin/evidence">근거</a><a href="/admin/ai">AI</a><a href="/admin/improve">개선</a><a href="/admin/cs">CS</a><a href="/admin/seller">셀러</a><a href="/admin/b2b" aria-current="page">B2B</a></nav><nav aria-label="B2B 메뉴"><a href="/admin/b2b">프롬프트 콘솔</a><a href="/admin/b2b/monitor">선물 입찰 모니터</a><a href="/admin/b2b/evidence">공급사 근거</a><a href="/admin/b2b/market" aria-current="page">시장가 비교</a><a href="/admin/b2b/inquiries">문의</a><a href="/admin/b2b/suppliers">공급 거래처</a><a href="/admin/b2b/mall">폐쇄몰</a><a href="/admin/b2b/settle">정산</a><a href="/admin/b2b/templates">제안서 템플릿</a></nav>
+  <div class="railnote"><b>시장가 비교.</b> 우리 가격이 공공 시세보다 높은지 낮은지 봐요.<br><br>
+  근거: 한국소비자원 <b>참가격</b>(생필품 업소별 조사 가격 중앙값) · <b>KAMIS</b>(농축수산 시세). 100g·100ml 처럼 단위를 맞출 수 있을 때만 판정해요(±5% 안은 '비슷').<br><br>
+  <b>쿠팡 가격</b>은 '쿠팡 가격 검색'을 누를 때 불러와 보여 주기만 해요 — 저장하지 않고 판정·제안서에 쓰지 않아요(쿠팡 약관).<br><br>
+  가격을 정하는 건 사람이에요. 이 화면은 참고용이에요.</div>
+</aside>
+<main>
+  <div class="top"><h2>시장가 비교</h2></div>
+  <div id="err" class="banner" hidden></div>
+  <section class="panel" aria-labelledby="one-h">
+    <h3 id="one-h">상품 하나</h3>
+    <div class="bar" style="gap:8px;flex-wrap:wrap"><label for="mName" class="basis" style="margin:0">상품명 (용량 포함)</label><input type="text" id="mName" maxlength="120" style="min-width:320px" placeholder="예: 해표 꽃소금 1kg / 제주 감귤 5kg">
+      <label for="mPrice" class="basis" style="margin:0">우리 가격(원)</label><input type="text" id="mPrice" maxlength="12" style="width:120px" placeholder="23900">
+      <button class="btn primary" type="button" id="mGo">시장가 비교</button><button class="btn" type="button" id="mCp">쿠팡 가격 검색</button></div>
+    <div id="mOut" aria-live="polite"></div>
+  </section>
+  <section class="panel" aria-labelledby="many-h" style="margin-top:14px">
+    <h3 id="many-h">여러 개 한꺼번에 <small style="font-weight:400;color:var(--ink3)">한 줄에 ‘상품명, 가격’ · 30줄까지</small></h3>
+    <textarea class="lines" id="mLines" spellcheck="false" placeholder="해표 꽃소금 1kg, 3500&#10;제주 감귤 5kg, 23900"></textarea>
+    <div class="bar" style="margin-top:6px"><button class="btn" type="button" id="mMany">한꺼번에 비교</button></div>
+    <div class="tblwrap"><table><thead><tr><th>상품</th><th class="num">우리 가격</th><th>판정</th><th>참가격</th><th>KAMIS</th></tr></thead><tbody id="mRows"></tbody></table></div>
+  </section>
+</main>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won=v=>v==null?"—":Number(v).toLocaleString()+"원";
+async function api(url,opt){const r=await fetch(url,opt);if(r.status===401){location.href="/admin/login?next=/admin/b2b/market";throw new Error("auth")}
+  if(!r.ok){let m=r.statusText;try{const j=await r.json();m=typeof j.detail==="string"?j.detail:JSON.stringify(j.detail)}catch{}throw new Error(m)}return r.json()}
+const post=(u,b)=>api(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})});
+function err(e){if(e.message==="auth")return;$("#err").hidden=false;$("#err").textContent="문제가 생겼어요: "+e.message}
+const vd=(v,l)=>`<span class="vd vd-${v||"none"}">${esc(l||({higher:"높아요",lower:"낮아요",similar:"비슷해요",mixed:"근거마다 달라요"}[v]||"판정 안 함"))}</span>`;
+const pct=p=>p==null?"":` (${p>0?"+":""}${p}%)`;
+function cgCell(c){if(!c)return'<span class="basis">맞는 상품 없음</span>';const g=c.good;
+  return `${c.verdict?vd(c.verdict)+pct(c.pct):vd(null)} <b>${esc(g?g.name:"")}</b>${g?` <span class="basis">이름 일치 ${Math.round(g.score*100)}%</span>`:""}`
+   +(c.median?`<div class="basis">조사일 ${esc((c.day||"").replace(/(\d{4})(\d\d)(\d\d)/,"$1-$2-$3"))} · ${c.n}곳 중앙값 ${won(c.median)} (최저 ${won(c.min)} · 최고 ${won(c.max)})${c.per?` · ${esc(c.per)} 우리 ${won(c.own_per)} / 시장 ${won(c.market_per)}`:""}</div>`:"")
+   +(c.why?`<div class="basis">${esc(c.why)}</div>`:"")+((c.candidates||[]).length?`<div class="basis">다른 후보: ${c.candidates.map(x=>esc(x.name)).join(" · ")}</div>`:"")}
+function kmCell(k){return k?`${vd(k.verdict)}${pct(k.pct)}<div class="basis">${esc(k.line)}</div>`:'<span class="basis">해당 시세 없음</span>'}
+$("#mGo").onclick=async()=>{let r;try{r=await post("/admin/api/b2b-market/compare",{name:$("#mName").value,price:$("#mPrice").value})}catch(e){return err(e)}
+  if(r.error){$("#mOut").innerHTML=`<p class="basis">${esc(r.error)}</p>`;return}
+  $("#mOut").innerHTML=`<p style="margin:10px 0 0">${vd(r.verdict,r.label)} <span class="basis">${esc(r.name)} · ${won(r.price)}</span></p>`
+   +`<div class="res"><div class="panel"><h3>한국소비자원 참가격</h3>${cgCell(r.chamga)}</div><div class="panel"><h3>KAMIS</h3>${kmCell(r.kamis)}</div></div>`
+   +(r.notes.length?`<p class="basis">${r.notes.map(esc).join(" · ")}</p>`:"")+'<div id="cpOut"></div>'};
+$("#mCp").onclick=async()=>{const k=$("#mName").value.trim();if(!k)return;let r;try{r=await post("/admin/api/b2b-market/coupang",{keyword:k})}catch(e){return err(e)}
+  let box=$("#cpOut");if(!box){$("#mOut").insertAdjacentHTML("beforeend",'<div id="cpOut"></div>');box=$("#cpOut")}
+  box.innerHTML=`<div class="cp"><b>쿠팡 가격 검색 — 조회만</b> <span class="basis">${esc(r.notice||"")}</span>`
+   +(r.error?`<p class="basis">${esc(r.error)}</p>`:r.items.length?`<p class="basis" style="margin:6px 0">${r.n}개 · 중앙값 ${won(r.median)} · 최저 ${won(r.min)}${r.fetched_at?` · ${esc(r.fetched_at.replace("T"," ").slice(0,16))} UTC 확인`:""}</p><ol style="margin:0;padding-left:20px">`
+     +r.items.map(x=>`<li>${esc(x.name)} — <b>${won(x.price)}</b>${x.rocket?" · 로켓":""} <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer sponsored">보기 ↗</a></li>`).join("")+"</ol>":'<p class="basis">결과가 없어요</p>')+"</div>"};
+{const q=new URLSearchParams(location.search);if(q.get("name")){$("#mName").value=q.get("name");$("#mPrice").value=q.get("price")||"";if(q.get("price"))$("#mGo").click()}}
+$("#mMany").onclick=async()=>{let r;try{r=await post("/admin/api/b2b-market/compare-many",{lines:$("#mLines").value})}catch(e){return err(e)}
+  $("#mRows").innerHTML=r.rows.length?r.rows.map(x=>x.error?`<tr><td>${esc(x.name)}</td><td colspan="4" class="basis">${esc(x.error)}</td></tr>`:
+   `<tr><td>${esc(x.name)}</td><td class="num">${won(x.price)}</td><td>${vd(x.verdict,x.label)}</td><td>${cgCell(x.chamga)}</td><td>${kmCell(x.kamis)}</td></tr>`).join(""):'<tr><td colspan="5" class="basis">줄을 넣어 주세요</td></tr>'};
+</script>
+</body>
+</html>

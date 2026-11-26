@@ -27,7 +27,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.admin.auth import COOKIE, guest_trends_on, request_ok, require_admin, token_ok
@@ -1642,6 +1642,48 @@ def admin_b2b_settle(request: Request):
 @router.get("/admin/b2b/inquiries")
 def admin_b2b_inquiries(request: Request):
     return _page(request, B2B_WEB / "inquiries.html")
+
+
+# ── 시장가 비교 (2026-11-26) — 참가격·KAMIS 판정, 쿠팡은 조회만(저장 안 함) ──
+@router.get("/admin/b2b/market")
+def admin_b2b_market(request: Request):
+    return _page(request, B2B_WEB / "market.html")
+
+
+class _MarketIn(BaseModel):
+    name: str = Field("", max_length=200)
+    price: str | int = Field("", max_length=20)
+
+
+class _MarketManyIn(BaseModel):
+    lines: str = Field("", max_length=8000)
+
+
+class _CoupangIn(BaseModel):
+    keyword: str = Field("", max_length=80)
+
+
+@router.post("/admin/api/b2b-market/compare", dependencies=[api])
+def b2b_market_compare(body: _MarketIn):
+    from app.admin.b2b import market_price
+
+    return market_price.compare(body.name, body.price)
+
+
+@router.post("/admin/api/b2b-market/compare-many", dependencies=[api])
+def b2b_market_compare_many(body: _MarketManyIn):
+    from app.admin.b2b import market_price
+
+    return {"rows": market_price.compare_many(body.lines)}
+
+
+@router.post("/admin/api/b2b-market/coupang", dependencies=[api])
+def b2b_market_coupang(body: _CoupangIn):
+    """쿠팡 가격 검색 — 그때 불러와 보여 주기만(저장·기록 안 함, 브라우저도 저장하지 않게 no-store)."""
+    from app.admin.b2b import market_price
+
+    return JSONResponse(market_price.coupang_lookup(body.keyword),
+                        headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})  # fmt: skip
 
 
 # ── B2B 문의 창구 (2026-11-24) — 설계 claude/b2b_inquiry_desk_2026-11-24.md ──
