@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 운영 서버(:8001)를 로그인할 때 켜고, 꺼지면 다시 켠다 (맥미니 운영 전환 준비, 2026-11-26). 설치: ops/launchd/install_api.sh
+     화면 빌드는 하지 않는다(skip-build). git pull 뒤에는 install_api.sh 에 rebuild 옵션으로 빌드하고 다시 켠다. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.commerce_ai.api</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/run_prod.sh</string>
+    <string>--skip-build</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>__HOME__/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>15</integer>
+  <key>StandardOutPath</key>
+  <string>__REPO__/var/log/api.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/var/log/api.launchd.log</string>
+</dict>
+</plist>
