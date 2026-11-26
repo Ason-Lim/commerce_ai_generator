@@ -56,6 +56,7 @@ IMAGE_HOSTS = ("coupangcdn.com",)
 
 _LOCK = threading.Lock()
 _CACHE: dict[str, tuple[float, dict]] = {}
+_BUILD_LOCKS: dict[str, threading.Lock] = {}
 _NORMAL: dict[tuple[str, float], bool] = {}
 
 
@@ -341,11 +342,24 @@ def coupang_part(view: str, now: dt.datetime, env=None) -> dict:
 def build(view: str = "home", *, now: dt.datetime | None = None, env=None, posts=None,
           rank_dir: Path | None = None, use_cache: bool = True) -> dict:
     view = "full" if view == "full" else "home"
-    if use_cache and posts is None and rank_dir is None and env is None:
+    cached = use_cache and posts is None and rank_dir is None and env is None
+    if cached:
         with _LOCK:
             hit = _CACHE.get(view)
         if hit and time.monotonic() - hit[0] < CACHE_SECONDS:
             return hit[1]
+        # 2026-11-26 부하 시험: 캐시가 비었을 때 동시 요청이 모두 다시 만들어 첫 요청들이 2초 넘게 걸렸다 —
+        # 만드는 것은 한 요청만, 나머지는 기다렸다가 그 결과를 쓴다(보기마다 따로).
+        with _BUILD_LOCKS.setdefault(view, threading.Lock()):
+            with _LOCK:
+                hit = _CACHE.get(view)
+            if hit and time.monotonic() - hit[0] < CACHE_SECONDS:
+                return hit[1]
+            return _build(view, now=now, env=env, posts=posts, rank_dir=rank_dir, cache=True)
+    return _build(view, now=now, env=env, posts=posts, rank_dir=rank_dir, cache=False)
+
+
+def _build(view: str, *, now, env, posts, rank_dir, cache: bool) -> dict:
     now = now or dt.datetime.now(KST)
     today = now.astimezone(KST).date()
     out = {"generated_at": now.astimezone(KST).isoformat(timespec="minutes"), "view": view}
@@ -360,7 +374,7 @@ def build(view: str = "home", *, now: dt.datetime | None = None, env=None, posts
 
             logging.getLogger(__name__).exception("home rankings %s failed", name)
             out[name] = {"status": "none", "items": [], "tabs": [], "groups": {"recent": [], "steady": []}}
-    if use_cache and posts is None and rank_dir is None and env is None:
+    if cache:
         with _LOCK:
             _CACHE[view] = (time.monotonic(), out)
     return out

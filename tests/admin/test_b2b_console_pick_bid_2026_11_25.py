@@ -43,7 +43,17 @@ def test_no_bid_asks_which_bid_with_buttons(con, prompt, action):
     items = next(b["items"] for b in out["blocks"] if b["type"] == "actions")
     word = C.Console.ACTION_WORD[action]
     assert items[:2] == [f"가공사-2026010 {word}", f"IBK서비스-2026008 {word}"]  # 조건 있는 공고, 마감임박 먼저
-    assert not any("나기관" in x or "옛공고" in x or "끝-" in x for x in items)
+    assert items[2] == "나기관-2026011 분석해줘"  # 2026-11-26: 조건 읽기 전 공고도 버튼(누르면 공고문 분석)
+    assert not any("옛공고" in x or "끝-" in x for x in items)
+
+
+def test_only_unread_bids_are_still_clickable(con, monkeypatch):
+    """조건이 읽힌 공고가 없어도 입찰중 공고는 눌러서 분석할 수 있다 (2026-11-26 '공고문이 클릭이 안돼요')."""
+    monkeypatch.setattr(C.bidstore, "list_bids", lambda: [bid("나기관-2026011", "조건 없는 공고", "입찰중", req=False)])
+    out = con.run(None, "제안서 작성해줘")
+    md = "\n".join(b.get("md", "") for b in out["blocks"])
+    items = next(b["items"] for b in out["blocks"] if b["type"] == "actions")
+    assert items[0] == "나기관-2026011 분석해줘" and "조건을 읽지 않았어요" in md and "조건 읽기 전" in md
 
 
 def test_with_bid_number_it_analyzes_first(con):

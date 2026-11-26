@@ -19,6 +19,9 @@ for i in $(seq 1 60); do
   curl -s -o /dev/null "http://127.0.0.1:$PORT/" && break; sleep 1
 done
 FAIL=0
+echo "── 켠 직후 첫 요청 (동시 20, 미리 부르지 않음) ──"
+uv run python scripts/load_test.py --base "http://127.0.0.1:$PORT" --concurrency 20 --requests 160 --no-warm \
+  --out "$OUT/${DAY}_cold.json" || FAIL=1
 for C in 20 50 100; do
   echo "── 동시 $C ──"
   uv run python scripts/load_test.py --base "http://127.0.0.1:$PORT" --concurrency "$C" --requests $((C * 40)) \
