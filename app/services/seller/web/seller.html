@@ -473,6 +473,8 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
       ? `연결 키 <b>${esc(n.client_id)}</b> 저장됨 · 기준 판매처 ${n.base_channel === "naver" ? "<b>네이버</b>" : esc(n.base_channel)}`
         + (n.last_sync_at ? ` · 마지막 가져오기 ${esc(n.last_sync_at.slice(0, 16).replace("T", " "))}` : "")
         + (n.last_error ? ` · <span class="down">${esc(n.last_error)}</span>` : "")
+        + (n.last_report && n.last_report.resume_page ? `<br>지난번에 ${n.last_report.stopped === "rate" ? "네이버 호출 제한에 걸려" : "한 번에 가져올 수 있는 수를 넘어"} 멈췄어요 — 다음 ‘가져오기’가 ${num(n.last_report.resume_page)}쪽부터 이어받아요.` : "")
+        + (n.last_report && n.last_report.measure ? `<br><span class="note">지난 호출 ${num(n.last_report.measure.calls)}번 · 걸린 시간 ${n.last_report.measure.seconds}초 · 제한 대기 ${n.last_report.measure.rate_waits}번</span>` : "")
       : (n.allowed ? "아직 키가 없어요." : esc(n.not_allowed));
     document.querySelectorAll("#nvSave,#nvPrev,#nvSync").forEach((b) => b.disabled = !n.allowed);
     $("nvSlug").value = n.store_slug || "";
@@ -491,7 +493,8 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     if (!j.ok) { msg($("nvMsg"), j.error, "err"); loadNv(); return; }
     const p = j.preview; msg($("nvMsg"), "", "");
     $("nvOut").innerHTML = `원상품 ${num(p.total)}개 중 ${num(p.fetched)}개를 읽었고, 판매 단위 ${num(p.units)}개를 가져올 수 있어요.`
-      + (p.more ? " (나머지는 다음 가져오기 때 이어서)" : "")
+      + (p.resume_from ? ` (지난번 멈춘 ${num(p.resume_from)}쪽부터 읽었어요)` : "")
+      + (p.more ? (p.stopped === "rate" ? " · 네이버 호출 제한에 걸려 여기까지 읽었어요. ‘가져오기’ 하면 읽은 것까지 반영하고 다음에 이어받아요." : " (나머지는 다음 가져오기 때 이어서)") : "")
       + (p.no_store_url ? "<br>스토어 주소를 넣지 않아 판매처 링크가 비어요." : "")
       + (p.problems.length ? `<br>읽지 못한 상품 ${p.problems.length}개: ${esc(p.problems.slice(0, 3).map((x) => x.error).join(" / "))}` : "")
       + (p.unknown_notice.length ? `<br>맞추지 못한 고시 칸(운영팀이 맞출 예정): ${esc(p.unknown_notice.join(", "))}` : "")
@@ -506,7 +509,8 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     if (!j.ok) { msg($("nvMsg"), j.error, "err"); loadNv(); return; }
     const r = j.sync;
     if (r.ok === false) { msg($("nvMsg"), "맞지 않는 줄이 있어 가져오지 않았어요: " + r.errors.slice(0, 3).map((e) => e.error).join(" / "), "err"); return; }
-    msg($("nvMsg"), `새 상품 ${r.added} · 바로 바뀜 ${r.fast} · 검수 대기 ${r.review} · 그대로 ${r.unchanged} · 판매처에서 사라짐 ${r.missing} · 상세페이지 입력 채움 ${r.prefilled}`, "ok");
+    msg($("nvMsg"), `새 상품 ${r.added} · 바로 바뀜 ${r.fast} · 검수 대기 ${r.review} · 그대로 ${r.unchanged} · 판매처에서 사라짐 ${r.missing} · 상세페이지 입력 채움 ${r.prefilled}`
+      + (r.resume_page ? ` — 아직 남았어요. 한 번 더 ‘가져오기’ 하면 ${num(r.resume_page)}쪽부터 이어받아요.` : ""), "ok");
     loadNv(); loadProducts(); loadDash();
   };
 

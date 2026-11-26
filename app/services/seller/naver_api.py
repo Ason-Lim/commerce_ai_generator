@@ -16,7 +16,9 @@
 * 새로 들어온 상품은 ⑦ 상세페이지 입력(고시 칸·사진 주소)을 미리 채운다 — 이미 셀러가 입력한 상품은 덮어쓰지 않는다.
   사진은 '쓸 권리' 체크를 셀러가 직접 해야 한다(자동으로 켜지 않음). 상세설명 HTML 은 가져오지 않는다(설계 결정).
 * 미리보기(preview)로 먼저 보여 주고, 셀러가 '가져오기'를 눌러야 반영한다.
-* 호출 간격 0.5초(기술지원 답변 초당 2회 — 확정값 아님), 429 면 기다렸다 3번까지. 실제 제한은 응답으로 실측해 기록.
+* 호출 간격 0.5초(기술지원 답변 초당 2회 — 확정값 아님), 429 면 기다렸다(Retry-After 가 있으면 그만큼, 최대 30초) 3번까지.
+  그래도 막히거나 한 번 상한(MAX_PRODUCTS)에 닿으면 거기까지 반영하고 다음 '가져오기'가 그 쪽부터 이어받는다(resume_page).
+  실제 제한은 응답으로 실측해 기록(호출 수·대기 횟수·걸린 시간·초당 호출) — 관리자·셀러 화면의 마지막 보고에 남는다.
 
 응답 칸 이름 주의: 공식 문서·첫 실제 응답으로 다시 맞춰야 한다. 모르는 고시 칸은 버리지 않고 '칸 맞춤 필요'로 보고한다.
 """
@@ -58,6 +60,10 @@ SLUG_RE = re.compile(r"^[a-z0-9_-]{2,40}$")
 
 class NaverError(store.SellerError):
     pass
+
+
+class RateLimited(NaverError):
+    """기다렸다 다시 해도 429 — 가져오기는 여기까지 반영하고 다음에 이어받는다."""
 
 
 def engine(url: str | None = None):
@@ -161,11 +167,13 @@ def sign(client_id: str, secret: str, ts: str) -> str:
 class Client:
     """http: requests 와 같은 post/get(url, …, timeout) → .status_code · .json() · .headers."""
 
-    def __init__(self, client_id: str, secret: str, *, http, sleep=time.sleep, clock=time.time):
-        self.client_id, self.secret, self.http, self.sleep, self.clock = client_id, secret, http, sleep, clock
+    def __init__(self, client_id: str, secret: str, *, http, sleep=None, clock=None):
+        self.client_id, self.secret, self.http = client_id, secret, http
+        self.sleep, self.clock = sleep or time.sleep, clock or time.time
         self.token: str | None = None
         self.calls = 0
         self.rate_waits = 0
+        self.waited = 0.0
         self._last = 0.0
 
     def _err(self, r) -> NaverError:
@@ -208,21 +216,34 @@ class Client:
             self.calls += 1
             if r.status_code == 429 and attempt < 3:
                 self.rate_waits += 1
-                self.sleep(2**attempt)
+                wait = _retry_after(r) or 2**attempt
+                self.waited += wait
+                self.sleep(wait)
                 continue
+            if r.status_code == 429:
+                raise RateLimited(ERRORS["GW.RATE_LIMIT"])
             if r.status_code == 401 and attempt == 0:
                 self.auth()
                 continue
             if r.status_code != 200:
                 raise self._err(r)
             return r.json() or {}
-        raise NaverError(ERRORS["GW.RATE_LIMIT"])
+        raise RateLimited(ERRORS["GW.RATE_LIMIT"])
 
-    def search(self, page: int, size: int = PAGE_SIZE) -> dict:
-        return self._call("post", "/v1/products/search", json={"page": page, "size": size})
+    def search(self, page: int, size: int | None = None) -> dict:
+        return self._call("post", "/v1/products/search", json={"page": page, "size": size or PAGE_SIZE})
 
     def origin(self, origin_no) -> dict:
         return self._call("get", f"/v2/products/origin-products/{origin_no}")
+
+
+def _retry_after(r) -> float | None:
+    """429 응답의 Retry-After(초) — 없거나 이상하면 None, 최대 30초."""
+    try:
+        v = float((getattr(r, "headers", None) or {}).get("Retry-After") or 0)
+    except TypeError, ValueError:
+        return None
+    return min(v, 30.0) if v > 0 else None
 
 
 def _client_for(eng, seller_id: str, http) -> tuple[Client, dict]:
@@ -407,16 +428,25 @@ def rows_from(origin_no, detail: dict, channel_product: dict, *, store_slug: str
 
 
 # ── 가져오기 ─────────────────────────────────────────────────────────────
-def fetch(cl: Client, *, store_slug: str = "", limit: int = MAX_PRODUCTS) -> dict:
-    """전체 목록을 페이지로 넘기며 원상품마다 상세 조회."""
+def fetch(cl: Client, *, store_slug: str = "", limit: int = MAX_PRODUCTS, start_page: int = 1) -> dict:
+    """목록을 페이지로 넘기며 원상품마다 상세 조회. start_page 부터(이어받기).
+    상한·호출 제한에 걸리면 그 페이지를 next_page 로 돌려준다(그 페이지는 다음에 처음부터 — 같은 상품은 바뀐 칸만 반영)."""
     rows, details, problems, unknown = [], {}, [], set()
-    page, seen, total = 1, 0, None
+    page, seen, total, next_page, stopped = max(1, int(start_page or 1)), 0, None, None, ""
+    t0 = cl.clock()
     while True:
-        res = cl.search(page)
+        try:
+            res = cl.search(page)
+        except RateLimited:
+            next_page, stopped = page, "rate"
+            break
         total = res.get("totalElements", total)
         contents = res.get("contents") or []
+        pages = res.get("totalPages") or 1
+        page_rows, page_details, cut = [], {}, False
         for item in contents:
             if seen >= limit:
+                cut = True
                 break
             seen += 1
             ono = item.get("originProductNo")
@@ -425,6 +455,9 @@ def fetch(cl: Client, *, store_slug: str = "", limit: int = MAX_PRODUCTS) -> dic
                 continue
             try:
                 d = cl.origin(ono)
+            except RateLimited:
+                cut, stopped = True, "rate"
+                break
             except NaverError as e:
                 problems.append({"origin_no": str(ono), "error": str(e)})
                 continue
@@ -432,17 +465,27 @@ def fetch(cl: Client, *, store_slug: str = "", limit: int = MAX_PRODUCTS) -> dic
             if not rs:
                 problems.append({"origin_no": str(ono), "error": "판매가를 읽지 못했어요"})
                 continue
-            rows += rs
+            page_rows += rs
             for r in rs:
-                details[r["ext_no"]] = dp
+                page_details[r["ext_no"]] = dp
             unknown.update(dp.get("unknown_notice") or [])
-        pages = res.get("totalPages") or 1
-        if seen >= limit or page >= pages or not contents:
+        rows += page_rows  # 끊긴 페이지도 읽은 상품까지는 반영한다(다음에 그 페이지부터 다시 — 같은 값은 '그대로')
+        details.update(page_details)
+        if cut:
+            next_page, stopped = page, stopped or "limit"
+            break
+        if seen >= limit and page < pages:
+            next_page, stopped = page + 1, "limit"
+            break
+        if page >= pages or not contents:
             break
         page += 1
+    took = max(cl.clock() - t0, 0.0)
     return {"rows": rows, "details": details, "problems": problems, "total": total, "fetched": seen,
-            "more": bool(total and seen < total), "unknown_notice": sorted(unknown), "calls": cl.calls,
-            "rate_waits": cl.rate_waits}  # fmt: skip
+            "more": next_page is not None, "next_page": next_page, "start_page": max(1, int(start_page or 1)),
+            "stopped": stopped, "unknown_notice": sorted(unknown), "calls": cl.calls, "rate_waits": cl.rate_waits,
+            "measure": {"calls": cl.calls, "rate_waits": cl.rate_waits, "waited_s": round(cl.waited, 1),
+                        "seconds": round(took, 1), "per_sec": round(cl.calls / took, 2) if took > 0 else None}}  # fmt: skip
 
 
 def _record(eng, seller_id: str, *, ok: bool, error: str = "", report: dict | None = None, synced: bool = False):
@@ -459,8 +502,9 @@ def preview(eng, token: str, client: str, *, http=None) -> dict:
     """가져올 내용 미리보기 — 아무것도 바꾸지 않는다."""
     s = store.resolve(eng, token, client)
     cl, k = _client_for(eng, s["seller_id"], http)
+    resume = _resume_page(eng, s["seller_id"])
     try:
-        got = fetch(cl, store_slug=k.get("store_slug") or "")
+        got = fetch(cl, store_slug=k.get("store_slug") or "", start_page=resume)
     except NaverError as e:
         _record(eng, s["seller_id"], ok=False, error=str(e))
         raise
@@ -469,7 +513,8 @@ def preview(eng, token: str, client: str, *, http=None) -> dict:
                "origins": r["origins"], "on": r["display"] == ""} for r in got["rows"][:30]]  # fmt: skip
     return {"total": got["total"], "fetched": got["fetched"], "units": len(got["rows"]), "more": got["more"],
             "sample": sample, "problems": got["problems"], "unknown_notice": got["unknown_notice"],
-            "no_store_url": not k.get("store_slug"), "calls": got["calls"],
+            "no_store_url": not k.get("store_slug"), "calls": got["calls"], "resume_from": resume if resume > 1 else None,
+            "next_page": got["next_page"], "stopped": got["stopped"], "measure": got["measure"],
             "base_channel": catalog.base_channel(eng, s["seller_id"])}  # fmt: skip
 
 
@@ -482,12 +527,15 @@ def sync(eng, token: str, client: str, *, http=None, set_base: bool = False) -> 
             raise NaverError("기준 판매처를 네이버 스마트스토어로 바꿔야 가져올 수 있어요")
         catalog.set_base_channel(eng, token, client, "naver")
     cl, k = _client_for(eng, sid, http)
+    resume = _resume_page(eng, sid)
     try:
-        got = fetch(cl, store_slug=k.get("store_slug") or "")
+        got = fetch(cl, store_slug=k.get("store_slug") or "", start_page=resume)
     except NaverError as e:
         _record(eng, sid, ok=False, error=str(e))
         raise
-    rep = catalog.apply_rows(eng, token, client, "naver", got["rows"], full=not got["more"]) if got["rows"] else {
+    # 처음부터 끝까지 한 번에 읽었을 때만 '판매처에서 없어진 상품'을 셈한다(이어받은 회차는 일부만 봤으니)
+    whole = resume == 1 and not got["more"]
+    rep = catalog.apply_rows(eng, token, client, "naver", got["rows"], full=whole) if got["rows"] else {
         "ok": True, "added": 0, "fast": 0, "review": 0, "unchanged": 0, "missing": 0, "warnings": []}  # fmt: skip
     if not rep.get("ok"):
         _record(eng, sid, ok=False, error="가져온 자료에 맞지 않는 줄이 있어요", report={"errors": rep["errors"][:20]})
@@ -495,7 +543,8 @@ def sync(eng, token: str, client: str, *, http=None, set_base: bool = False) -> 
     prefilled = _prefill(eng, token, client, sid, got["details"])
     report = {k2: rep[k2] for k2 in ("added", "fast", "review", "unchanged", "missing")} | {
         "prefilled": prefilled, "problems": len(got["problems"]), "more": got["more"], "calls": got["calls"],
-        "rate_waits": got["rate_waits"], "unknown_notice": got["unknown_notice"]}  # fmt: skip
+        "rate_waits": got["rate_waits"], "unknown_notice": got["unknown_notice"], "measure": got["measure"],
+        "start_page": got["start_page"], "resume_page": got["next_page"], "stopped": got["stopped"]}  # fmt: skip
     _record(eng, sid, ok=True, report=report, synced=True)
     with eng.begin() as c:
         store._event(
@@ -506,6 +555,16 @@ def sync(eng, token: str, client: str, *, http=None, set_base: bool = False) -> 
             {k2: report[k2] for k2 in ("added", "fast", "review", "missing", "prefilled")},
         )
     return {**rep, **report, "problems": got["problems"]}
+
+
+def _resume_page(eng, seller_id: str) -> int:
+    """지난 가져오기가 끊긴 페이지 — 없으면 1."""
+    with eng.connect() as c:
+        r = _key_row(c, seller_id)
+    try:
+        return max(1, int(((r and r["last_report"]) or {}).get("resume_page") or 1))
+    except TypeError, ValueError:
+        return 1
 
 
 def _prefill(eng, token: str, client: str, seller_id: str, details: dict) -> int:
@@ -530,4 +589,16 @@ def _prefill(eng, token: str, client: str, seller_id: str, details: dict) -> int
     return n
 
 
-__all__ = ["Client", "NaverError", "delete_key", "engine", "preview", "rows_from", "save_key", "sign", "status", "sync"]
+__all__ = [
+    "Client",
+    "NaverError",
+    "RateLimited",
+    "delete_key",
+    "engine",
+    "preview",
+    "rows_from",
+    "save_key",
+    "sign",
+    "status",
+    "sync",
+]
