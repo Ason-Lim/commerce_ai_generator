@@ -838,6 +838,10 @@ app.include_router(join_router)
 from app.api.shop_routes import router as shop_router
 app.include_router(shop_router)
 
+# 해외 직구 (2026-11-26) — Shopify Global Catalog, 한국 배송 상품만, 저장·캐시 없음, 결제는 판매처
+from app.api.direct_routes import router as direct_router
+app.include_router(direct_router)
+
 # Conversation API (shopping + recipe) for the React front end
 from app.api.chat_routes import router as chat_router
 app.include_router(chat_router)

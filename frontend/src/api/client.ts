@@ -250,3 +250,29 @@ export async function fetchHomeRankings(view: "home" | "full", signal?: AbortSig
   if (!r.ok) throw new Error(`rankings ${r.status}`);
   return (await r.json()) as HomeRankings;
 }
+
+/** 해외 직구 (2026-11-26) — Shopify Global Catalog, 한국 배송 상품. 서버·브라우저 모두 저장하지 않음(no-store). */
+export type DirectDuty = { kind: "in" | "us_only" | "over" | "unknown"; text: string };
+export type DirectProduct = {
+  title: string; url: string; checkout_url: string | null; image: string | null; price: number | null; currency: string | null;
+  seller: string | null; seller_domain: string | null; refund_policy: string | null; duty: DirectDuty; krw_estimate: number | null; quarantine: boolean;
+};
+export type DirectStep = { key: string; title: string; text: string; url?: string };
+export type DirectSection = { key: string; label: string; status: "ok" | "quarantine" | "blocked"; note?: string | null; products: DirectProduct[]; error: string | null };
+export type DirectHome = { enabled: boolean; notice: string; checked_at: number; sections: DirectSection[]; checklist: DirectStep[]; source: string };
+export type DirectSearch = { enabled: boolean; query: string; ok: boolean; error: string | null; notice: string; checked_at: number;
+  products: DirectProduct[]; quarantine_note: string | null; checklist: DirectStep[] };
+
+export async function fetchDirectHome(signal?: AbortSignal): Promise<DirectHome | null> {
+  if (API_MODE === "mock") return null;
+  const r = await fetch("/api/direct/home", { signal, cache: "no-store" });
+  if (!r.ok) return null;
+  return (await r.json()) as DirectHome;
+}
+export async function fetchDirectSearch(q: string, signal?: AbortSignal): Promise<DirectSearch | null> {
+  if (API_MODE === "mock") return null;
+  const r = await fetch(`/api/direct/search?q=${encodeURIComponent(q)}`, { signal, cache: "no-store" });
+  if (r.status === 429) throw new Error("rate_limited");
+  if (!r.ok) return null;
+  return (await r.json()) as DirectSearch;
+}
