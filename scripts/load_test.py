@@ -20,7 +20,8 @@ import statistics
 import time
 from pathlib import Path
 
-DEFAULT_PATHS = ["/", "/api/trends/posts", "/api/home/rankings?view=home", "/api/home/highlight", "/api/trends/surge"]
+DEFAULT_PATHS = ["/", "/api/trends/posts", "/api/home/rankings?view=home", "/api/trends/surge",
+                 "/seller", "/join", "/shop", "/.well-known/ucp"]  # 2026-11-26 셀러 센터·입점 신청·미니숍 목록·UCP 추가
 LOCAL_HOSTS = ("127.0.0.1", "localhost", "[::1]")
 
 

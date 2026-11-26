@@ -14,6 +14,7 @@ import re
 
 from sqlalchemy import Column, DateTime, MetaData, String, Table, select, update
 
+from app.services.corpmall import store as corp
 from app.services.seller import detail_page, products, shop_design, store
 
 meta = MetaData()
@@ -43,7 +44,7 @@ class LabError(store.SellerError):
 
 def engine(url: str | None = None):
     eng = shop_design.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 

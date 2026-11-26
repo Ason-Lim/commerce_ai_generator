@@ -74,3 +74,4 @@ var/coupang_reports/
 var/forecast/
 # 2026-11-25 셀러 도우미 학습 자료 내보내기 결과 (scripts/export_seller_help_dataset.py) — 다시 만들 수 있음
 var/datasets/
+var/load_test/

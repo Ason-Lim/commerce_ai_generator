@@ -68,10 +68,10 @@ class NotPublic(store.SellerError):
 
 def engine(url: str | None = None):
     eng = detail_page.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     from app.services.seller import catalog
 
-    catalog.meta.create_all(eng)
+    corp.ensure(eng, catalog.meta)
     return eng
 
 

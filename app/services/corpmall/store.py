@@ -209,12 +209,43 @@ def now() -> datetime:
     return datetime.now(KST)
 
 
-def engine(url: str | None = None):
-    eng = sqlalchemy.create_engine(url or get_settings().b2b_db_url, future=True)
-    from app.services.corpmall import suppliers  # noqa: F401 — 거래처 표도 같은 meta 에 (create_all 전에 등록)
+_ENGINES: dict[str, sqlalchemy.engine.Engine] = {}
+_READY: set[tuple[int, int]] = set()
+_LOCK = threading.RLock()
 
-    meta.create_all(eng)
-    _migrate(eng)
+
+def ensure(eng, md) -> None:
+    """표 만들기를 엔진·메타마다 한 번만, 잠금 안에서 (2026-11-26 부하 시험에서 찾음 — 새 표가 생긴 뒤 첫 요청들이 동시에 오면
+    create_all 이 '이미 있음'으로 500). 다른 프로세스가 먼저 만든 경우의 '이미 있음'도 넘긴다."""
+    key = (id(eng), id(md))
+    if key in _READY:
+        return
+    with _LOCK:
+        if key in _READY:
+            return
+        try:
+            md.create_all(eng)
+        except sqlalchemy.exc.OperationalError as e:
+            if "already exists" not in str(e):
+                raise
+            md.create_all(eng)
+        _READY.add(key)
+
+
+def engine(url: str | None = None):
+    """주소마다 엔진 하나를 다시 쓴다(요청마다 새 연결 풀·표 검사를 하지 않게). 메모리 DB 는 매번 새로."""
+    url = url or get_settings().b2b_db_url
+    with _LOCK:
+        eng = _ENGINES.get(url)
+        if eng is None:
+            eng = sqlalchemy.create_engine(url, future=True)
+            if ":memory:" not in url and url.rstrip("/") not in ("sqlite:", "sqlite:/"):
+                _ENGINES[url] = eng
+        if (id(eng), id(meta)) not in _READY:
+            from app.services.corpmall import suppliers  # noqa: F401 — 거래처 표도 같은 meta 에 (create_all 전에 등록)
+
+            ensure(eng, meta)
+            _migrate(eng)
     return eng
 
 

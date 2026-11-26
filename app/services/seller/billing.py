@@ -16,6 +16,7 @@ from datetime import date
 
 from sqlalchemy import JSON, Column, DateTime, Integer, MetaData, String, Table, UniqueConstraint, select, update
 
+from app.services.corpmall import store as corp
 from app.services.seller import store
 
 VAT_MODES = {"excluded": "부가세 별도", "included": "부가세 포함"}
@@ -53,7 +54,7 @@ t_invoice = Table(
 
 def engine(url: str | None = None):
     eng = store.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 

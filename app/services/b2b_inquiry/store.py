@@ -72,7 +72,7 @@ class InquiryError(ValueError):
 
 def engine(url: str | None = None):
     eng = corp.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 

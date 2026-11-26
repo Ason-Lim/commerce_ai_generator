@@ -29,6 +29,7 @@ from pathlib import Path
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, MetaData, String, Table, and_, func, select, update
 
+from app.services.corpmall import store as corp
 from app.services.seller import detail_page, products, store
 
 meta = MetaData()
@@ -82,7 +83,7 @@ class DesignError(store.SellerError):
 
 def engine(url: str | None = None):
     eng = detail_page.engine(url)
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     return eng
 
 
@@ -229,7 +230,7 @@ def check(raw: dict | None, product_ids: set[str], *, strict: bool = True, eng=N
 
 # ── 저장 ────────────────────────────────────────────────────────────────
 def design_of(eng, seller_id: str) -> dict | None:
-    meta.create_all(eng)
+    corp.ensure(eng, meta)
     with eng.connect() as c:
         r = c.execute(select(t_design.c.design).where(t_design.c.seller_id == seller_id)).scalar()
     return r
