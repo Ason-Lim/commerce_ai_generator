@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { ScrollText, Sparkles } from "lucide-react";
-import { MobileTabBar, MOBILE_TAB_H, PrivacyLink, ShelfLink, SiteNav } from "./SiteNav";
+import { MobileTabBar, MOBILE_TAB_H, AiNoticeLink, PrivacyLink, ShelfLink, SiteNav } from "./SiteNav";
 
 /**
  * 운영정책 — /#/policy (2026-11-23, 사용자: 화면에 자료 갱신 간격 같은 설명을 적지 말고 개인정보처럼 정책 한 곳에).
@@ -82,7 +82,7 @@ export function PolicyPage() {
 
         <Section n={7} title="이 정책의 변경">
           <p>기준이 바뀌면 이 화면을 고치고 변경일을 적어요. 운영사: 【정해지면 적어요】 · 시행일: 【정해지면 적어요】</p>
-          <p>개인정보에 관한 내용은 <PrivacyLink />에 따로 적었어요.</p>
+          <p>개인정보에 관한 내용은 <PrivacyLink />, 생성형 AI 이용은 <AiNoticeLink />에 따로 적었어요.</p>
         </Section>
       </main>
       <MobileTabBar current="chat" />

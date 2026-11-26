@@ -213,9 +213,9 @@ def post_page(post: Post, now: datetime | None = None) -> str:
         parts.append(f'<p class=ad role=note>{e(post.disclosure)}</p>')
     parts.append(f"<h1>{e(post.title)}</h1>")
     parts.append(f'<p class=meta>게시 {e(_kst(post.approved_at))}'
-                 + (f" · 데이터 기준 {e(_kst(post.data_until))}까지" if post.data_until else "") + "</p>")
-    # 2026-11-26 AI 기본법 제31조(생성형 AI 결과물 표시) — 글은 AI 가 공개 자료로 초안을 쓰고 운영팀이 검토해 게시
-    parts.append('<p class=meta role=note>생성형 AI가 공개 자료로 초안을 쓰고 운영팀이 검토해 게시한 글이에요.</p>')
+                 + (f" · 데이터 기준 {e(_kst(post.data_until))}까지" if post.data_until else "")
+                 # 2026-11-26 AI 기본법 — 긴 문구 대신 고지 화면 링크(운영정책처럼)
+                 + ' · <a href="/#/ai-notice">AI 기본법에 따른 고지</a></p>')
     hero = cover(post)
     if hero:
         ref = " referrerpolicy=no-referrer" if hero["kind"] == "product" else ""
