@@ -118,3 +118,13 @@ def test_hold_criteria_for_health_food_have_no_storage_line():
 def test_feedback_chip_rows_really_hide():
     """배포 확인(11-21 22:24): .fbrow{display:flex} 가 hidden 을 덮어 좋음 칩 줄이 '나쁨'에도 보였음."""
     assert ".fb [hidden]{display:none}" in render.CSS
+
+
+def test_ai_basic_act_label_on_post(tmp_path):
+    """2026-11-26 AI 기본법 제31조 — 게시 글 머리에 생성형 AI 작성 표시."""
+    svc = service(tmp_path)
+    post, _ = svc.create_from_surge(report(), "대방어", find_products=lambda k: search_result())
+    live = post.model_copy(update={"status": "approved", "approved_at": "2026-11-16T03:00:00+00:00"})
+    page = render.post_page(live, T0)
+    assert "생성형 AI가 공개 자료로 초안을 쓰고 운영팀이 검토해 게시한 글이에요" in page
+    assert page.index("생성형 AI가") < page.index("</article>")
