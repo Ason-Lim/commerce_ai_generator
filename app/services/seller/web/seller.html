@@ -115,7 +115,9 @@ footer{margin-top:28px;color:var(--ink2);font-size:12px;line-height:1.7}
       <div class="row" style="margin-top:6px"><label for="chSel" class="note">기준 판매처</label><select id="chSel" style="font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:10px"></select><button type="button" class="sub" id="chSave">정하기</button></div>
       <details style="margin-top:10px"><summary>판매처 상품 자료 올리기 (표준 칸)</summary>
         <p class="note"><b>스마트스토어</b>: 스마트스토어센터 → 상품 조회/수정 → 엑셀(CSV) 다운로드한 파일을 <b>그대로</b> 골라 주세요. 이 파일에는 원산지·옵션별 가격이 없어서, 옵션 상품은 대표 가격 한 줄로 들어가고 식품은 원산지를 따로 적어 주셔야 해요. 쿠팡 WING 엑셀은 아래 표준 칸 이름에 맞춰 붙여 넣어 주세요. '상품번호'는 판매처 번호 — 옵션이면 '원상품번호-옵션번호'.</p>
-        <div class="row"><label for="syncFile" class="note">파일 고르기 (.csv)</label><input type="file" id="syncFile" accept=".csv,text/csv" style="width:auto"></div>
+        <div class="row"><label for="syncFile" class="note">판매처 파일 고르기 (.xlsx · .csv)</label><input type="file" id="syncFile" accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="width:auto"></div>
+        <label class="note" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="syncGroup" checked style="width:auto"> 이름이 같고 용량만 다른 상품은 한 상품(판매 단위)으로 묶기</label>
+        <div id="convOut" class="note"></div>
         <label for="syncCsv" class="note">표준 칸 CSV</label><textarea id="syncCsv" spellcheck="false"></textarea>
         <label class="note" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="syncFull" style="width:auto"> 전체 목록이에요 (빠진 상품은 이쪽에서 판매 끔)</label>
         <div class="row"><button type="button" id="syncBtn">반영하기</button></div>
@@ -543,16 +545,23 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
     loadNv(); loadProducts(); loadDash();
   };
 
-  // 스마트스토어 상품 조회 CSV 그대로 — UTF-8 이 깨지면 EUC-KR 로 다시 읽는다 (2026-11-25)
-  $("syncFile").addEventListener("change", async (ev) => {
-    const f = ev.target.files[0]; if (!f) return;
+  // 판매처 엑셀 변환기 (2026-11-26) — .xlsx·.csv 를 서버에서 표준 칸으로 바꿔 미리보기(저장 안 함)
+  function convFile(f){ return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); }); }
+  async function convert(){
+    const f = $("syncFile").files[0]; if (!f) return;
     if (f.size > 5 * 1024 * 1024) { msg($("syncMsg"), "5MB 까지 올릴 수 있어요", "err"); return; }
-    const buf = await f.arrayBuffer();
-    let text = new TextDecoder("utf-8").decode(buf);
-    if (text.includes("\uFFFD")) { try { text = new TextDecoder("euc-kr").decode(buf); } catch (e) { /* 그대로 */ } }
-    $("syncCsv").value = text;
-    msg($("syncMsg"), `${f.name} 을(를) 읽었어요. ‘반영하기’를 눌러 주세요.`, "ok");
-  });
+    msg($("syncMsg"), `${f.name} 을(를) 읽는 중…`, "ok"); $("convOut").innerHTML = "";
+    const j = await post("/seller/api/convert", {key: KEY, filename: f.name, data: await convFile(f), group_same: $("syncGroup").checked});
+    if (!j.ok) { msg($("syncMsg"), j.error, "err"); return; }
+    const c = j.convert; $("syncCsv").value = c.csv;
+    if (c.format === "naver_export" && CH !== "naver") msg($("syncMsg"), "스마트스토어 파일이에요 — 기준 판매처를 ‘네이버 스마트스토어’로 정한 뒤 반영해 주세요.", "err");
+    else msg($("syncMsg"), `${c.label} · 상품 ${c.rows}줄을 읽었어요. 아래를 확인하고 ‘반영하기’를 눌러 주세요(아직 저장 안 됨).`, "ok");
+    $("convOut").innerHTML = (c.groups.length ? `<p style="margin:6px 0"><b>한 상품으로 묶을 것 ${c.groups.length}개</b></p><ul style="margin:0 0 6px">` + c.groups.map((g) => `<li>${esc(g.name)} — ${g.units.map((u) => `${esc(u.volume)} ${num(u.price)}원`).join(" · ")}</li>`).join("") + "</ul>" : "")
+      + c.notes.map((x) => `<div>· ${esc(x)}</div>`).join("")
+      + (c.sample.length ? `<details style="margin-top:6px"><summary>읽은 상품 ${c.sample.length}개 보기</summary><ul>` + c.sample.map((x) => `<li>${esc(x.name)} · ${num(x.price)}원 · 재고 ${esc(x.stock || "–")}${x.on ? "" : " · 판매 꺼짐"}${x.group ? ` · 묶음: ${esc(x.group)}` : ""}</li>`).join("") + "</ul></details>" : "");
+  }
+  $("syncFile").addEventListener("change", convert);
+  $("syncGroup").addEventListener("change", () => { if ($("syncFile").files[0]) convert(); });
 
   // ── 미니숍 디자인 (2026-11-25) ──
   let SD = null, SDD = null, SDSET = "general", SDGRP = "";
@@ -848,9 +857,9 @@ document.addEventListener("input",(e)=>{const t=e.target;if(t&&t.matches&&t.matc
   $("chSave").onclick = async () => { const j = await post("/seller/api/channel", {key: KEY, channel: $("chSel").value}); if (j.ok) { CH = j.channel; msg($("syncMsg"), `기준 판매처: ${j.label}`, "ok"); } };
   $("syncBtn").onclick = async () => {
     if (CH === "manual") { msg($("syncMsg"), "기준 판매처를 네이버나 쿠팡으로 먼저 정해 주세요", "err"); return; }
-    const j = await post("/seller/api/sync", {key: KEY, channel: CH, csv: $("syncCsv").value, full: $("syncFull").checked});
+    const j = await post("/seller/api/sync", {key: KEY, channel: CH, csv: $("syncCsv").value, full: $("syncFull").checked, group_same: $("syncGroup").checked});
     if (!j.ok) { msg($("syncMsg"), j.errors ? j.errors.map((x) => `${x.line}번째 줄: ${x.error}`).join("\n") : (j.error || "반영하지 못했어요"), "err"); $("syncMsg").querySelector(".msg").style.whiteSpace = "pre-line"; return; }
-    msg($("syncMsg"), `${j.source ? j.source + " · " : ""}새 상품 ${j.added} · 바로 반영 ${j.fast} · 다시 확인 ${j.review} · 그대로 ${j.unchanged}${j.missing ? ` · 판매처에서 사라짐 ${j.missing}` : ""}` + (j.notes && j.notes.length ? "\n" + j.notes.join("\n") : ""), "ok");
+    msg($("syncMsg"), `${j.source ? j.source + " · " : ""}새 상품 ${j.added} · 바로 반영 ${j.fast} · 다시 확인 ${j.review} · 그대로 ${j.unchanged}${j.missing ? ` · 판매처에서 사라짐 ${j.missing}` : ""}${j.groups ? ` · 묶은 상품 ${j.groups}개` : ""}` + (j.notes && j.notes.length ? "\n" + j.notes.join("\n") : ""), "ok");
     $("syncMsg").querySelector(".msg").style.whiteSpace = "pre-line";
     await loadScm(); loadProducts(); loadHealth();
   };
