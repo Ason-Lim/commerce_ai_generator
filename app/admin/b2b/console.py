@@ -251,6 +251,10 @@ class Console:
                                              for pv in req.provenance], "missing": req.missing(),
              "total": req.computed_total()},
             {"type": "coverage", "rows": cov},
+            *([{"type": "notice", "tone": "warn",
+                "md": "공고에서 **품목 구성**(카테고리·종수)을 찾지 못해 모든 후보를 '확인 필요'로 두었고, 제안서 가격 근거표에는 "
+                      "후보를 넣지 않습니다. 예: '생활용품 2종'처럼 품목을 말해 주거나 제안요청서를 첨부해 주세요."}]
+              if not req.categories else []),
             dict(self._cand_block(w.evals), bid=bid_head),
             self._cost_block(w.cost),
             {"type": "actions", "items": ["견적 요청서 만들어줘", "분석 리포트 열어줘", "제안서 작성해줘",

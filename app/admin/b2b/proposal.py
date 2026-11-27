@@ -297,7 +297,9 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             S.append(Section(id="appendix_cost", title="부록 B. 비용 구조 (내부용)", internal_only=True, elements=els2))
 
     if ai:
-        S = _apply_ai(S, ai)
+        from app.admin.b2b.proposal_ai import relevant
+
+        S = _apply_ai(S, ai, allowed={e.candidate.name for e in relevant(req, evals)}, need=cat_txt)
     prop = Proposal(title=title, subtitle="임직원 선물 공급 제안서" + (" — 내부 검토본" if mode == "internal" else " — 제출본 초안"),
                     bid_id=req.bid_id, agency=agency, company=company, created=today, mode=mode, sections=S)
     prop.facts = {
@@ -322,7 +324,19 @@ def _product_image(c, mode: str) -> dict | None:
         return None
 
 
-def _apply_ai(S: list[Section], body: dict) -> list[Section]:
+def _evidence_rows(rows: list[list[str]], allowed: set[str] | None, need: str) -> list[list[str]]:
+    """AI 가격 근거표 안전장치 (2026-11-27) — 공고 품목에 맞는 후보 이름이 아닌 줄은 뺀다.
+    남는 줄이 없으면 '후보 발굴 중' 한 줄 (다른 품목 상품이 가격 근거로 나가지 않게)."""
+    if allowed is None:
+        return rows
+    keep = [r for r in rows if r and (r[0].strip() in allowed or any(a and a in r[0] for a in allowed))]
+    if keep:
+        return keep
+    todo = "[확인 필요: 후보 발굴 중]"
+    return [[f"[확인 필요: {need} 후보]", todo, todo, "[확인 필요: 견적]", "후보 발굴·공급사 견적 후 작성"]]
+
+
+def _apply_ai(S: list[Section], body: dict, *, allowed: set[str] | None = None, need: str = "공고 품목") -> list[Section]:
     """2026-11-12: AI 본문(proposal_ai — Claude 작성·GPT 검증, 문제 문장은 [확인 필요] 표시)을 템플릿 장에 끼운다.
     표·조건 대응표·가격표 같은 사실 중심 장은 템플릿 그대로 두고, 서술·전략·평가 대응·운영·일정·질의를 AI 본문으로."""
     def rows(key):
@@ -343,7 +357,7 @@ def _apply_ai(S: list[Section], body: dict) -> list[Section]:
             sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only, elements=list(sec.elements) + [
                 Element(kind="para", text="■ 상품별 가격 근거 (관측 소매가 · 온라인 최저가 검증 · 확정 공급단가)"),
                 Element(kind="table", headers=["후보 상품", "관측 소매가(일자)", "온라인 최저가 검증", "확정 공급단가", "판단"],
-                        rows=rows("evidence_table"))])
+                        rows=_evidence_rows(rows("evidence_table"), allowed, need))])
         if sec.id == "risk" and items("risks"):
             sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only,
                           elements=list(sec.elements) + [Element(kind="bullets", items=items("risks"))])

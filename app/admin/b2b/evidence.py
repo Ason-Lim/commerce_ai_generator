@@ -131,7 +131,12 @@ def evaluate(c: Candidate, req: BidRequirement, today: date | None = None, max_a
 
     # 1 품목 카테고리
     wanted = [x.name for x in req.categories]
-    if wanted:
+    if not wanted:
+        # 2026-11-27: 공고 품목 구성이 비어 있으면 카테고리 판정을 건너뛰지 않는다 — 건너뛰면 묶음의 모든 식품 후보가
+        # '타올·핸드워시' 같은 공고에도 HOLD 로 남아 제안서 가격 근거표에 들어갔음. 품목이 확인될 때까지 확정 불가.
+        add("category", "품목 구분", "UNKNOWN", None, c.category, "공고 품목 구성 미확인",
+            "공고의 품목 구성(카테고리·종수)을 확인해 주세요.")
+    else:
         if c.category is None:
             add("category", "품목 구분", "UNKNOWN", "/".join(wanted), None, "상품 분류 미확인", "상품 분류(식품/건강기능식품/생활용품)를 확인해 주세요.")
         else:
