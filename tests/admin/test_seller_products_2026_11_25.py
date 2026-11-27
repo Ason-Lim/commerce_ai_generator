@@ -185,8 +185,9 @@ def test_admin_api_queue_verify_review(client, eng):
 
 
 # ── 노출 없음 (결정 2) ──
+# 2026-11-25: 미니숍 고객 공개(shop_routes)는 셀러 자기 화면 — 대화·검색·홈 추천과 순위 계산에는 여전히 들어가지 않는다
 ALLOWED_IMPORTERS = {"app/services/seller", "app/api/seller_routes.py", "app/admin/routes.py",
-                     "app/services/privacy/retention.py"}  # fmt: skip
+                     "app/services/privacy/retention.py", "app/api/shop_routes.py"}  # fmt: skip
 
 
 def test_seller_data_not_wired_into_customer_or_recommendation_paths():

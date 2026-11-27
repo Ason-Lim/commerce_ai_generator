@@ -831,6 +831,9 @@ app.include_router(b2b_inquiry_router)
 # 셀러 센터 ① (창 5, 2026-11-25) — /seller, 초대 코드 입장, 셀러 간 격리, 검색 노출 막음
 from app.api.seller_routes import router as seller_router
 app.include_router(seller_router)
+# 미니숍 고객 공개 · UCP 공개 (창 5, 2026-11-25) — SHOP_PUBLIC=test|1 일 때만, 아니면 404
+from app.api.shop_routes import router as shop_router
+app.include_router(shop_router)
 
 # Conversation API (shopping + recipe) for the React front end
 from app.api.chat_routes import router as chat_router

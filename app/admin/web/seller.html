@@ -167,9 +167,15 @@ tbody tr{cursor:default}
   </section>
 
   <section class="panel" aria-labelledby="dt-h" style="margin-top:14px">
-    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인해도 고객 화면에는 아직 나가지 않아요(미니숍 미리보기만)</small></h3>
+    <h3 id="dt-h">AI 상세페이지 검수 <small style="font-weight:400;color:var(--ink3)">승인한 상세페이지는 미니숍 공개 조건이 갖춰진 셀러 화면에 모여요</small></h3>
     <p class="basis" style="margin-top:0">AI 글은 입력에 없는 숫자·효능·단정·인증 없는 ‘유기농’ 표현을 이미 걸렀어요. 사진은 셀러가 권리 확인에 체크한 것만 보여요. 미리보기는 새 창에서 열려요.</p>
     <div class="tblwrap"><table><thead><tr><th>셀러</th><th>상품</th><th>판</th><th>만든 쪽</th><th>고시</th><th></th></tr></thead><tbody id="details"></tbody></table></div>
+  </section>
+  <section class="panel" aria-labelledby="ms-h" style="margin-top:14px">
+    <h3 id="ms-h">미니숍 공개 · 판매자 정보 확인 <small id="msMode" style="font-weight:400;color:var(--ink3)"></small></h3>
+    <p class="basis" style="margin-top:0">판매자 정보는 사업자등록증·통신판매업 신고증과 대조한 뒤 ‘확인’을 눌러 주세요(AI가 하지 않아요). 정식 공개는 확인 + 셀러 공개 동의 + 운영사 쪽 조건이 모두 있어야 열려요.</p>
+    <p class="basis" id="msMissing"></p>
+    <div class="tblwrap"><table><thead><tr><th>셀러</th><th>판매자 정보</th><th>빈 칸</th><th>확인</th><th>동의</th><th>공개</th><th></th></tr></thead><tbody id="biz"></tbody></table></div>
   </section>
 
   <section class="panel" aria-labelledby="q-h" style="margin-top:14px">
@@ -258,7 +264,14 @@ async function loadDetails(){let d;try{d=await api("/admin/api/seller-details?st
    <td class="actions" style="margin:0"><a class="btn" href="/admin/seller-details/${esc(x.detail_id)}/preview" target="_blank" rel="noopener">미리보기</a><a class="btn" href="/admin/seller/${esc(x.seller_id)}/shop" target="_blank" rel="noopener">미니숍</a><button class="btn primary" type="button" data-dt="${esc(x.detail_id)}" data-d="approved">승인</button><button class="btn" type="button" data-dt="${esc(x.detail_id)}" data-d="rejected">반려</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">검수 요청이 없어요</td></tr>';
   document.querySelectorAll("[data-dt]").forEach(b=>b.onclick=async()=>{const note=b.dataset.d==="rejected"?prompt("반려 이유(셀러에게 보여요)"):"";if(b.dataset.d==="rejected"&&!note)return;
     try{await post(`/admin/api/seller-details/${b.dataset.dt}/review`,{decision:b.dataset.d,note});loadDetails()}catch(e){err(e)}})}
-loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();
+const MSM={off:"꺼짐",test:"시험 공개 중(SHOP_PUBLIC=test)",formal:"정식 공개(SHOP_PUBLIC=1)"};
+async function loadBiz(){let d;try{d=await api("/admin/api/seller-biz")}catch(e){return err(e)}
+  $("#msMode").textContent="· "+(MSM[d.mode]||d.mode);
+  $("#msMissing").textContent=d.formal_missing.length?"정식 공개에 빠진 것(운영사): "+d.formal_missing.join(", "):"운영사 쪽 정식 공개 조건은 갖춰졌어요";
+  $("#biz").innerHTML=d.sellers.map(x=>`<tr style="cursor:default"><td>${esc(x.name)}</td><td>${esc([x.info.trade_name,x.info.ceo,x.info.biz_no,x.info.mail_order_no].filter(Boolean).join(" · "))}</td><td>${esc(x.missing.join(", "))}</td><td>${x.verified?"확인됨":"전"}</td><td>${x.consent?"동의":"안 함"}</td><td>${x.public?`<a href="${esc(x.url)}" target="_blank" rel="noopener">공개 중 ↗</a>`:"안 보임"}</td>
+   <td class="actions" style="margin:0"><button class="btn primary" type="button" data-bz="${esc(x.seller_id)}" data-ok="1">확인</button><button class="btn" type="button" data-bz="${esc(x.seller_id)}" data-ok="0">확인 취소</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">셀러가 없어요</td></tr>';
+  $("#biz").querySelectorAll("[data-bz]").forEach(b=>b.onclick=async()=>{try{await post(`/admin/api/seller-biz/${b.dataset.bz}/verify`,{ok:b.dataset.ok==="1"});loadBiz()}catch(e){err(e)}})}
+loadSellers();loadQueue();loadAlerts();loadDormant();loadBilling();loadDetails();loadBiz();
 </script>
 </body>
 </html>

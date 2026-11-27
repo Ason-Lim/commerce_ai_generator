@@ -23,7 +23,10 @@ NOTICE_AGRI = {
     "producer": "한라농장 (제주 서귀포)",
     "origin": "국산(제주)",
     "dates": "2026년 12월 수확",
-    "legal": "해당 없음",
+    "item_name": "제주 노지 감귤",
+    "gmo_gi": "해당 없음",
+    "grade": "해당 없음",
+    "import_notice": "해당 없음",
     "composition": "감귤 5kg 1상자",
     "storage": "서늘한 곳에 두고 받은 뒤 2주 안에 드세요",
     "caution": "해당 없음",
@@ -269,4 +272,4 @@ def test_mini_shop_shows_only_approved_on_sale_products(eng):
     r = c.get(f"/admin/seller/{s['seller_id']}/shop", headers=H)
     assert r.status_code == 200 and "운영자 미니숍 미리보기" in r.text
     assert c.post("/seller/api/shop/view", json={"key": k}).json()["ok"]
-    assert c.get(f"/shop/{s['seller_id']}").status_code == 404  # 고객 주소는 아직 없음(결정 2)
+    assert c.get(f"/shop/{s['seller_id']}").status_code == 404  # SHOP_PUBLIC 꺼짐이면 고객 주소 없음
