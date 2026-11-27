@@ -63,6 +63,7 @@ class Offer:
     seller_domain: str | None
     refund_policy: str | None
     available: bool | None
+    option: str | None = None           # 고른 옵션 이름(예: '500ml') — 가격이 이 옵션 값이라 양 읽기에 먼저 쓴다 (2026-11-27)
 
 
 @dataclass
@@ -129,6 +130,11 @@ def _money(m) -> tuple[int | None, str | None]:
     return amt, cur
 
 
+def _option(v: dict | None) -> str | None:
+    t = str((v or {}).get("title") or "").strip()[:80]
+    return None if not t or t.lower() in ("default", "default title") else t
+
+
 def to_offers(data: dict) -> list[Offer]:
     """structuredContent.products → Offer. 판매 가능한 첫 변형(옵션)의 값 — 없으면 상품 최저가."""
     out: list[Offer] = []
@@ -155,7 +161,8 @@ def to_offers(data: dict) -> list[Offer]:
                          image=_https(media.get("url")), price=price, currency=cur,
                          seller=(seller.get("name") or None), seller_domain=(seller.get("domain") or None),
                          refund_policy=refund,
-                         available=((v or {}).get("availability") or {}).get("available") if v else None))
+                         available=((v or {}).get("availability") or {}).get("available") if v else None,
+                         option=_option(v)))
     return out
 
 

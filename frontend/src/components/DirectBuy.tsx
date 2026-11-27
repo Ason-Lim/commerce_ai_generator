@@ -80,6 +80,7 @@ function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px]">
                     <span className="font-semibold tabular-nums">{money(p)}</span>
                     <span className={`tag ${DUTY_TONE[p.duty.kind]}`}>{DUTY_LABEL[p.duty.kind]}</span>
+                    {p.saving && <span className="tag bg-emerald-50 text-emerald-700" title={`도착 추정 ${p.saving.per100.toLocaleString()}원/100${p.saving.unit} · 국내 ${p.saving.domestic_per100.toLocaleString()}원/100${p.saving.unit}`}>직구 추정 약 {p.saving.pct}% 저렴</span>}
                     <span className="truncate text-ink3">{p.seller || p.seller_domain}</span>
                   </span>
                 </span>
@@ -118,15 +119,16 @@ function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]
 
 /** 대화 결과 아래 '해외 직구' 칸 (2026-11-27) — 품목표에 맞는 검색에만, 그려질 때 한 번 조회, 찾은 게 없으면 아무것도 안 그림. */
 export function DirectBuyInline({ block }: { block: DirectBuyBlock }) {
-  const { key, label, status, note } = block.data;
+  const { key, label, status, note, domestic } = block.data;
   const [data, setData] = useState<DirectItem | null>(null);
   const [state, setState] = useState<"loading" | "done" | "error">(status === "blocked" ? "done" : "loading");
   useEffect(() => {
     if (status === "blocked") return;
     const ctl = new AbortController();
-    fetchDirectItem(key, ctl.signal).then((d) => { setData(d); setState(d ? "done" : "error"); })
+    fetchDirectItem(key, ctl.signal, domestic).then((d) => { setData(d); setState(d ? "done" : "error"); })
       .catch(() => { if (!ctl.signal.aborted) setState("error"); });
     return () => ctl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 블록 값은 한 번 정해지면 바뀌지 않음
   }, [key, status]);
   if (status === "blocked") {
     return note ? (
@@ -146,6 +148,13 @@ export function DirectBuyInline({ block }: { block: DirectBuyBlock }) {
       </header>
       <p className="mt-1 text-[11.5px] leading-4 text-ink3">{data.notice}</p>
       {data.note && <p className={`mt-2 rounded-xl px-3 py-2 text-[12px] leading-5 ${data.status === "ok" ? "bg-chip text-ink2" : "bg-amber-50 text-amber-800"}`}>{data.note}</p>}
+      {data.compare?.best && (
+        <p className="mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12.5px] leading-5 text-emerald-800">
+          같은 양으로 견주면 직구가 <b>대략 {data.compare.best.pct}% 저렴</b>할 수 있어요
+          (도착 추정 {data.compare.best.per100.toLocaleString()}원 · 국내 {data.compare.best.domestic_per100.toLocaleString()}원, 100{data.compare.best.unit}당).
+          <span className="block text-[11.5px] text-emerald-700/80">{data.compare.basis}</span>
+        </p>
+      )}
       <ProductGrid items={data.products} steps={data.checklist} compact />
       <FxNote fx={data.fx} />
       <p className="mt-1 text-right text-[11px] text-ink3">출처 {data.source} · 방금 조회 · 저장하지 않음 · 상품을 누르면 직구 도우미</p>

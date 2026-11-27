@@ -256,7 +256,11 @@ export type DirectDuty = { kind: "in" | "us_only" | "over" | "unknown"; text: st
 export type DirectProduct = {
   title: string; url: string; checkout_url: string | null; image: string | null; price: number | null; currency: string | null;
   seller: string | null; seller_domain: string | null; refund_policy: string | null; duty: DirectDuty; krw_estimate: number | null; quarantine: boolean;
+  /** 직구 추정이 국내 후보 중간값보다 15% 이상 쌀 때만 (2026-11-27) */
+  saving?: DirectSaving | null;
 };
+export type DirectSaving = { pct: number; per100: number; unit: "g" | "ml"; domestic_per100: number; landed_krw: number; taxed: boolean };
+export type DirectRef = { per100: number; unit: "g" | "ml"; n: number };
 export type DirectFx = { rate: number; source: string; date: string; kind: "customs" | "reference" | "manual"; stale: boolean };
 export type DirectStep = { key: string; title: string; text: string; url?: string };
 export type DirectSection = { key: string; label: string; status: "ok" | "quarantine" | "blocked"; note?: string | null; products: DirectProduct[]; error: string | null };
@@ -278,12 +282,14 @@ export async function fetchDirectSearch(q: string, signal?: AbortSignal): Promis
   return (await r.json()) as DirectSearch;
 }
 export type DirectItem = { enabled: boolean; ok: boolean; error: string | null; key: string; label: string; status: "ok" | "caution" | "blocked";
-  note: string | null; notice: string; source: string; checklist: DirectStep[]; products: DirectProduct[]; fx: DirectFx | null; checked_at: number };
+  note: string | null; notice: string; source: string; checklist: DirectStep[]; products: DirectProduct[]; fx: DirectFx | null; checked_at: number;
+  compare?: { ref: DirectRef; best: DirectSaving | null; basis: string } | null };
 
 /** 대화 결과 아래 해외 직구 칸 (2026-11-27) — 품목표 품목만, 저장하지 않음. */
-export async function fetchDirectItem(key: string, signal?: AbortSignal): Promise<DirectItem | null> {
+export async function fetchDirectItem(key: string, signal?: AbortSignal, ref?: DirectRef): Promise<DirectItem | null> {
   if (API_MODE === "mock") return null;
-  const r = await fetch(`/api/direct/item/${encodeURIComponent(key)}`, { signal, cache: "no-store" });
+  const qs = ref ? `?ref=${ref.per100}&unit=${ref.unit}&n=${ref.n}` : "";
+  const r = await fetch(`/api/direct/item/${encodeURIComponent(key)}${qs}`, { signal, cache: "no-store" });
   if (!r.ok) return null;
   return (await r.json()) as DirectItem;
 }
