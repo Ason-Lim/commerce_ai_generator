@@ -53,34 +53,35 @@ def keep(title: str, *, item_status: str = "ok") -> bool:
     return True
 
 
-def usd_krw() -> float | None:
-    try:
-        v = float(os.getenv("DIRECT_USD_KRW") or 0)
-    except ValueError:
-        return None
-    return v if v > 0 else None
+TAX_CALC_URL = "https://www.customs.go.kr/kcs/ad/tax/BuyTaxCalculation.do"   # 관세청 해외직구 예상세액
 
 
-def duty(price_cents: int | None, currency: str | None) -> dict:
-    """물품가(판매가) 기준 면세 한도 안내. 배송비·발송국 세금은 결제 화면에서 더해질 수 있어 '판매가 기준'이라고 밝힌다."""
-    if price_cents is None or (currency or "").upper() != "USD":
-        return {"kind": "unknown", "text": "판매가를 달러로 받지 못해 면세 한도를 계산하지 않았어요. 결제 화면에서 확인해 주세요."}
-    usd = price_cents / 100
+def duty(price_cents: int | None, currency: str | None, usd: float | None = None) -> dict:
+    """판매가 기준 참고 안내 (2026-11-26 검토 반영 — 판매가만으로 면세·세액을 단정하지 않는다).
+    usd: 달러가 아닌 통화를 관세청 과세환율로 바꾼 값(2026-11-27). 실제 면세·세액은 통관 때 정해진다."""
+    tail = " 실제 면세 여부와 세액은 통관 때 정해져요."
+    if usd is None and price_cents is not None and (currency or "").upper() == "USD":
+        usd = price_cents / 100
+    if usd is None:
+        return {"kind": "unknown", "text": "판매가를 달러로 바꾸지 못해 면세 한도와 비교하지 않았어요." + tail}
+    how = "" if (currency or "").upper() == "USD" else " (관세청 과세환율로 바꾼 값)"
     if usd <= 150:
-        return {"kind": "in", "text": f"판매가 {usd:,.2f}달러 — 면세 한도(150달러, 미국 발송 200달러) 안이에요. "
-                                      "발송국 세금·현지 운임이 더해지면 달라질 수 있어요."}
+        return {"kind": "in", "text": f"판매가 약 {usd:,.2f}달러{how} — 판매가로만 보면 면세 한도(150달러, 미국 발송 200달러)보다 낮아요. "
+                                      "발송국 세금·현지 운임이 더해지면 달라질 수 있어요." + tail}
     if usd <= 200:
-        return {"kind": "us_only", "text": f"판매가 {usd:,.2f}달러 — 미국에서 보내면 면세(200달러), 다른 나라에서 보내면 "
-                                           "관세·부가세가 붙을 수 있어요."}
-    return {"kind": "over", "text": f"판매가 {usd:,.2f}달러 — 면세 한도를 넘어 관세·부가세가 붙어요. 결제 전 예상 세금을 확인해 주세요."}
+        return {"kind": "us_only", "text": f"판매가 약 {usd:,.2f}달러{how} — 판매가로만 보면 미국 발송일 때만 면세 한도(200달러) 안이에요." + tail}
+    return {"kind": "over", "text": f"판매가 약 {usd:,.2f}달러{how} — 면세 한도보다 높아 관세·부가세가 붙을 수 있어요. "
+                                    "관세청 예상세액 계산으로 확인해 보세요." + tail}
 
 
-def checklist(item_status: str = "ok") -> list[dict]:
+def checklist(item_status: str = "ok", item_note: str | None = None) -> list[dict]:
     """직구 도우미 순서 — 고객이 직접 판매처에서 결제한다(운영사는 주문·대금을 받지 않음)."""
     steps = [
         {"key": "ship", "title": "한국 배송 확인", "text": "한국으로 배송하는 상품만 골랐어요. 배송비와 도착 예정일은 판매처 결제 화면에서 정해져요."},
         {"key": "duty", "title": "면세 한도", "text": "본인이 쓸 물건이고 물품가격이 150달러(미국 200달러) 이하면 면세예요. "
                                                     "여러 건을 함께 사면 합쳐서 볼 수 있으니 관세청 안내를 확인해 주세요.", "url": CUSTOMS_URL},
+        {"key": "tax", "title": "예상 세액", "text": "한도를 넘거나 애매하면 관세청 해외직구 예상세액 계산으로 확인해 주세요. "
+                                                    "이 화면의 원화는 출처·기준일이 있는 참고 환산이에요.", "url": TAX_CALC_URL},
         {"key": "safety", "title": "위해식품·반입 차단 확인", "text": "식약처 '해외직구식품 올바로'에서 상품·성분이 차단 목록에 없는지 확인해 주세요.", "url": OLBARO_URL},
         {"key": "pccc", "title": "개인통관고유부호", "text": "판매처나 배송사가 요구하면 관세청 UNI-PASS에서 발급한 번호를 적어요. "
                                                       "이 사이트는 이 번호를 받지 않아요.", "url": UNIPASS_URL},
@@ -88,6 +89,6 @@ def checklist(item_status: str = "ok") -> list[dict]:
         {"key": "resale", "title": "다시 팔지 않기", "text": "면세로 들어온 직구 물품을 되팔면 처벌받을 수 있어요."},
     ]
     if item_status != "ok":
-        steps.insert(2, {"key": "quarantine", "title": "검역", "text": "동식물·축산물은 검역 신고가 필요하고 반입이 막힐 수 있어요.",
-                         "url": QUARANTINE_URL})
+        steps.insert(2, {"key": "quarantine", "title": "검역·조건", "text": (item_note + " " if item_note else "")
+                         + "동식물·축산물은 검역 신고가 필요하고 반입이 막힐 수 있어요.", "url": QUARANTINE_URL})
     return steps

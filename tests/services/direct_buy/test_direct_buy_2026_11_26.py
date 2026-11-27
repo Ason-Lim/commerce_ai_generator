@@ -48,6 +48,7 @@ def env(monkeypatch):
               "DIRECT_USD_KRW", "UCP_PLATFORM_PROFILE_URL"):
         monkeypatch.delenv(k, raising=False)
     catalog._token.clear()
+    monkeypatch.setattr(service.fx, "usd_krw", lambda **k: None)     # 환율 바깥 호출 막기 (환율은 test_fx 에서)
 
 
 def test_request_asks_korea_shipping_and_sends_no_personal_data():
@@ -134,11 +135,19 @@ def test_search_quarantine_query_shows_guidance(monkeypatch):
     assert any(s["key"] == "quarantine" for s in data["checklist"])
 
 
-def test_krw_estimate_only_with_configured_rate(monkeypatch):
+def test_krw_estimate_uses_fx_with_source(monkeypatch):
     http = FakeHttp([product("Extra Virgin Olive Oil", cents=2000)])
-    assert service.search("olive oil", http=http)["products"][0]["krw_estimate"] is None
-    monkeypatch.setenv("DIRECT_USD_KRW", "1400")
-    assert service.search("olive oil", http=http)["products"][0]["krw_estimate"] == 28000
+    data = service.search("olive oil", http=http)
+    assert data["products"][0]["krw_estimate"] is None and data["fx"] is None
+    monkeypatch.setattr(service.fx, "usd_krw", lambda **k: {"rate": 1400.0, "source": "관세청 과세환율(수입)",
+                                                             "date": "2026-11-22", "kind": "customs", "stale": False})
+    data = service.search("olive oil", http=http)
+    assert data["products"][0]["krw_estimate"] == 28000 and data["fx"]["source"].startswith("관세청")
+
+
+def test_duty_text_does_not_assert_final_tax():
+    for cents in (1000, 18000, 30000):
+        assert "통관 때 정해져요" in rules.duty(cents, "USD")["text"]
 
 
 def test_routes_no_store(monkeypatch):

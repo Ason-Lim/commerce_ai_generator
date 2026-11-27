@@ -480,12 +480,22 @@ OVERSEAS_QUERY = {"올리브유": "extra virgin olive oil", "커피 원두": "co
 
 
 def _fx(fx_usd: float | None, fx_eur: float | None) -> dict:
-    """환율 — 질의값 > 환경 변수(FX_USD_KRW·FX_EUR_KRW). 자동 조회는 다음 단계(출처·날짜를 함께 보관해야 해서)."""
+    """환율 — 질의값 > 환경 변수(FX_USD_KRW·FX_EUR_KRW) > 관세청 관세환율(수입, 2026-11-26 자동 조회 — 출처·적용일 함께)."""
     import os
 
     usd = fx_usd or _float(os.getenv("FX_USD_KRW"))
     eur = fx_eur or _float(os.getenv("FX_EUR_KRW"))
     src = "질의값" if fx_usd else ("환경 변수 FX_USD_KRW" if usd else None)
+    if not usd:
+        from app.services.public_price import fx as fxsvc
+
+        try:
+            t = fxsvc.customs_table()
+        except Exception:  # noqa: BLE001
+            t = None
+        if t and t["rates"].get("USD"):
+            usd, eur = t["rates"]["USD"], eur or t["rates"].get("EUR")
+            return {k: v for k, v in (("USD", usd), ("EUR", eur)) if v} | {"source": t["source"], "date": t["date"]}
     return {k: v for k, v in (("USD", usd), ("EUR", eur)) if v} | {"source": src, "date": date.today().isoformat()}
 
 

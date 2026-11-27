@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ExternalLink, Globe2, Search, ShieldAlert, Sparkles } from "lucide-react";
-import { fetchDirectHome, fetchDirectSearch, type DirectHome, type DirectProduct, type DirectSearch, type DirectStep } from "../api/client";
+import { fetchDirectItem, fetchDirectSearch, type DirectFx, type DirectItem, type DirectProduct, type DirectSearch, type DirectStep } from "../api/client";
+import type { DirectBuyBlock } from "../types/blocks";
 import { MobileTabBar, MOBILE_TAB_H, ShelfLink, SiteFooter, SiteNav } from "./SiteNav";
 
 /**
- * 해외 직구 (2026-11-26, 사용자 요청: 메인에 올리브유·생올리브·치즈 등 Shopify 직구 상품 + 직구 자동화 과정).
+ * 해외 직구 (2026-11-26 · 11-27 사용자 결정: 메인 화면 칸은 빼고, 손님이 식품을 검색했을 때 품목표에 맞으면 결과 아래에 함께).
  * - 데이터: Shopify Global Catalog(한국 배송 가능만). 부를 때마다 새로 묻고 서버·브라우저 어디에도 저장하지 않음
  *   (Shopify 조건 — 결과 캐시·이미지 재호스팅 금지). 그래서 '최근 본 상품'에도 넣지 않는다.
  * - 판매 유형 '판매처 이동': 주문·결제·배송·환불은 해외 판매처. 운영사는 대금·개인통관고유부호를 받지 않는다.
@@ -16,9 +17,20 @@ const DUTY_TONE: Record<string, string> = { in: "bg-accentSoft text-accent", us_
 const DUTY_LABEL: Record<string, string> = { in: "면세 한도 안", us_only: "미국 발송만 면세", over: "관부가세 대상", unknown: "세금 결제 화면에서" };
 
 function money(p: DirectProduct) {
+  const zero = ["KRW", "JPY", "VND", "CLP", "ISK"].includes(p.currency ?? "");
   if (p.price == null || !p.currency) return "가격 확인 필요";
-  const v = p.currency === "KRW" ? `${p.price.toLocaleString()}원` : `${(p.price / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${p.currency}`;
+  const v = p.currency === "KRW" ? `${p.price.toLocaleString()}원` : zero ? `${p.price.toLocaleString()} ${p.currency}` : `${(p.price / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${p.currency}`;
   return p.krw_estimate ? `${v} · 약 ${p.krw_estimate.toLocaleString()}원` : v;
+}
+
+/** 원화 환산 기준 — 출처·기준일과 함께, 참고용임을 밝힘 (2026-11-26 관세청 관세환율). */
+function FxNote({ fx }: { fx?: DirectFx | null }) {
+  if (!fx) return null;
+  return (
+    <p className="mt-2 text-[11px] leading-4 text-ink3">
+      원화는 {fx.source} 1달러 {fx.rate.toLocaleString()}원{fx.date ? ` (${fx.date} 기준)` : ""}로 바꾼 참고 금액이에요{fx.stale ? " · 최근 받은 값" : ""}. 결제 환율·실제 세액과 다를 수 있어요.
+    </p>
+  );
 }
 
 /** 직구 도우미 — 상품을 고르면 순서대로 확인하고 판매처로 이동. */
@@ -50,9 +62,35 @@ function Guide({ p, steps, onClose }: { p: DirectProduct; steps: DirectStep[]; o
   );
 }
 
-function ProductGrid({ items, steps }: { items: DirectProduct[]; steps: DirectStep[] }) {
+function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]; steps: DirectStep[]; compact?: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   const picked = items.find((p) => p.url === open);
+  if (compact) {
+    // 대화 안 칸 — 작은 사진 + 한 줄씩 (추천 카드보다 조용하게, 2026-11-27)
+    return (
+      <>
+        <ul className="mt-2 divide-y divide-line/70">
+          {items.map((p) => (
+            <li key={p.url}>
+              <button type="button" onClick={() => setOpen(open === p.url ? null : p.url)} aria-expanded={open === p.url}
+                className={`flex w-full items-center gap-3 py-2 text-left ${open === p.url ? "bg-accentSoft/40" : ""}`}>
+                <span className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-chip">{p.image && <img src={p.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover" />}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 text-[13px] font-medium leading-snug">{p.title}</span>
+                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px]">
+                    <span className="font-semibold tabular-nums">{money(p)}</span>
+                    <span className={`tag ${DUTY_TONE[p.duty.kind]}`}>{DUTY_LABEL[p.duty.kind]}</span>
+                    <span className="truncate text-ink3">{p.seller || p.seller_domain}</span>
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {picked && <Guide p={picked} steps={steps} onClose={() => setOpen(null)} />}
+      </>
+    );
+  }
   return (
     <>
       <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
@@ -78,55 +116,39 @@ function ProductGrid({ items, steps }: { items: DirectProduct[]; steps: DirectSt
   );
 }
 
-/** 홈 칸 — 화면에 보일 때 한 번 부른다(저장 없음). */
-export function DirectBuySection() {
-  const box = useRef<HTMLElement>(null);
-  const [data, setData] = useState<DirectHome | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const [tab, setTab] = useState<string>("");
+/** 대화 결과 아래 '해외 직구' 칸 (2026-11-27) — 품목표에 맞는 검색에만, 그려질 때 한 번 조회, 찾은 게 없으면 아무것도 안 그림. */
+export function DirectBuyInline({ block }: { block: DirectBuyBlock }) {
+  const { key, label, status, note } = block.data;
+  const [data, setData] = useState<DirectItem | null>(null);
+  const [state, setState] = useState<"loading" | "done" | "error">(status === "blocked" ? "done" : "loading");
   useEffect(() => {
-    // 화면에 보일 때 한 번만 부른다. (상태를 의존성에 두면 '불러오는 중'으로 바뀔 때 정리 함수가 요청을 끊는다)
-    const el = box.current;
-    if (!el) return;
+    if (status === "blocked") return;
     const ctl = new AbortController();
-    const go = () => {
-      setState("loading");
-      fetchDirectHome(ctl.signal).then((d) => { setData(d); setTab(d?.sections.find((s) => s.products.length)?.key ?? d?.sections[0]?.key ?? ""); setState(d ? "done" : "error"); })
-        .catch((e) => { if (!ctl.signal.aborted) setState("error"); void e; });
-    };
-    if (!("IntersectionObserver" in window)) { go(); return () => ctl.abort(); }
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); go(); } }, { rootMargin: "200px" });
-    io.observe(el);
-    return () => { io.disconnect(); ctl.abort(); };
-  }, []);
-  if (state === "done" && (!data || !data.enabled || data.sections.every((s) => !s.products.length && s.status === "ok"))) return null;
-  const sec = data?.sections.find((s) => s.key === tab);
+    fetchDirectItem(key, ctl.signal).then((d) => { setData(d); setState(d ? "done" : "error"); })
+      .catch(() => { if (!ctl.signal.aborted) setState("error"); });
+    return () => ctl.abort();
+  }, [key, status]);
+  if (status === "blocked") {
+    return note ? (
+      <p className="my-3 flex gap-1.5 rounded-xl bg-rose-50 px-3 py-2 text-[13px] leading-5 text-rose-700" role="note">
+        <ShieldAlert size={15} className="mt-0.5 shrink-0" aria-hidden />해외 직구 안내 · {note}
+      </p>
+    ) : null;
+  }
+  if (state === "loading") return <p className="my-3 text-[12.5px] text-ink3">해외 상점에서도 {label}을(를) 찾는 중…</p>;
+  if (!data || !data.enabled || !data.ok || !data.products.length) return null;
   return (
-    <section ref={box} className="mt-10" aria-labelledby="direct-h">
-      <div className="flex items-end justify-between gap-3">
-        <h2 id="direct-h" className="flex items-center gap-2 text-lg font-semibold"><Globe2 size={18} className="text-accent" />해외 직구로 사 볼 만한 식품</h2>
-        <a href={"/" + DIRECT_HASH} className="shrink-0 text-sm text-ink2 underline underline-offset-2">직구 찾기</a>
-      </div>
-      {state === "loading" && <p className="mt-3 text-sm text-ink3">한국으로 보내는 해외 상점을 찾고 있어요…</p>}
-      {state === "error" && <p className="mt-3 text-sm text-ink3">지금은 해외 상품을 불러오지 못했어요.</p>}
-      {data && (
-        <>
-          <p className="mt-1 text-xs leading-5 text-ink3">{data.notice}</p>
-          <div className="mt-3 flex flex-wrap gap-2" role="tablist">
-            {data.sections.map((s) => (
-              <button key={s.key} type="button" role="tab" aria-selected={tab === s.key} onClick={() => setTab(s.key)}
-                className={`rounded-full border px-3 py-1.5 text-sm ${tab === s.key ? "border-ink bg-ink text-white" : "border-stone-200 bg-white text-ink2"}`}>
-                {s.label}{s.status !== "ok" && <span className="ml-1 text-[11px] opacity-80">{s.status === "blocked" ? "· 반입 금지" : "· 검역"}</span>}
-              </button>
-            ))}
-          </div>
-          {sec && (sec.note) && <p className={`mt-3 rounded-xl px-3 py-2 text-xs leading-5 ${sec.status === "ok" ? "bg-chip text-ink2" : "bg-rose-50 text-rose-700"}`}>{sec.note}</p>}
-          {sec && sec.error && <p className="mt-3 text-sm text-ink3">{sec.error}</p>}
-          {sec && sec.status === "ok" && !sec.error && !sec.products.length && <p className="mt-3 text-sm text-ink3">한국으로 보내는 상품을 찾지 못했어요.</p>}
-          {sec && sec.products.length > 0 && <ProductGrid items={sec.products} steps={data.checklist} />}
-          <p className="mt-2 text-right text-[11px] text-ink3">출처 {data.source} · 방금 조회 · 저장하지 않음</p>
-        </>
-      )}
+    <section className="my-4 rounded-2xl border border-line bg-surface/70 px-4 py-3" aria-label={`해외 직구 ${label}`}>
+      <header className="flex flex-wrap items-center gap-2">
+        <Globe2 size={15} className="text-accent" aria-hidden />
+        <h3 className="text-[13.5px] font-semibold text-ink2">해외 직구로도 살 수 있어요 · {label}</h3>
+        <span className="rounded-md bg-chip px-1.5 py-px text-[11px] text-ink3">해외 판매처 · 추천 후보 아님</span>
+      </header>
+      <p className="mt-1 text-[11.5px] leading-4 text-ink3">{data.notice}</p>
+      {data.note && <p className={`mt-2 rounded-xl px-3 py-2 text-[12px] leading-5 ${data.status === "ok" ? "bg-chip text-ink2" : "bg-amber-50 text-amber-800"}`}>{data.note}</p>}
+      <ProductGrid items={data.products} steps={data.checklist} compact />
+      <FxNote fx={data.fx} />
+      <p className="mt-1 text-right text-[11px] text-ink3">출처 {data.source} · 방금 조회 · 저장하지 않음 · 상품을 누르면 직구 도우미</p>
     </section>
   );
 }
@@ -178,6 +200,7 @@ export function DirectBuyPage() {
             {!res.ok && <p className="mt-3 text-sm text-ink3">{res.error}</p>}
             {res.ok && !res.products.length && !res.quarantine_note && <p className="mt-3 text-sm text-ink3">한국으로 보내는 상품을 찾지 못했어요. 영어 이름으로도 찾아보세요.</p>}
             {res.products.length > 0 && <ProductGrid items={res.products} steps={res.checklist} />}
+            {res.products.length > 0 && <FxNote fx={res.fx} />}
           </section>
         )}
         <SiteFooter />

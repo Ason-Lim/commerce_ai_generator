@@ -257,11 +257,12 @@ export type DirectProduct = {
   title: string; url: string; checkout_url: string | null; image: string | null; price: number | null; currency: string | null;
   seller: string | null; seller_domain: string | null; refund_policy: string | null; duty: DirectDuty; krw_estimate: number | null; quarantine: boolean;
 };
+export type DirectFx = { rate: number; source: string; date: string; kind: "customs" | "reference" | "manual"; stale: boolean };
 export type DirectStep = { key: string; title: string; text: string; url?: string };
 export type DirectSection = { key: string; label: string; status: "ok" | "quarantine" | "blocked"; note?: string | null; products: DirectProduct[]; error: string | null };
-export type DirectHome = { enabled: boolean; notice: string; checked_at: number; sections: DirectSection[]; checklist: DirectStep[]; source: string };
+export type DirectHome = { enabled: boolean; notice: string; checked_at: number; sections: DirectSection[]; checklist: DirectStep[]; source: string; fx?: DirectFx | null };
 export type DirectSearch = { enabled: boolean; query: string; ok: boolean; error: string | null; notice: string; checked_at: number;
-  products: DirectProduct[]; quarantine_note: string | null; checklist: DirectStep[] };
+  products: DirectProduct[]; quarantine_note: string | null; checklist: DirectStep[]; fx?: DirectFx | null };
 
 export async function fetchDirectHome(signal?: AbortSignal): Promise<DirectHome | null> {
   if (API_MODE === "mock") return null;
@@ -275,4 +276,14 @@ export async function fetchDirectSearch(q: string, signal?: AbortSignal): Promis
   if (r.status === 429) throw new Error("rate_limited");
   if (!r.ok) return null;
   return (await r.json()) as DirectSearch;
+}
+export type DirectItem = { enabled: boolean; ok: boolean; error: string | null; key: string; label: string; status: "ok" | "caution" | "blocked";
+  note: string | null; notice: string; source: string; checklist: DirectStep[]; products: DirectProduct[]; fx: DirectFx | null; checked_at: number };
+
+/** 대화 결과 아래 해외 직구 칸 (2026-11-27) — 품목표 품목만, 저장하지 않음. */
+export async function fetchDirectItem(key: string, signal?: AbortSignal): Promise<DirectItem | null> {
+  if (API_MODE === "mock") return null;
+  const r = await fetch(`/api/direct/item/${encodeURIComponent(key)}`, { signal, cache: "no-store" });
+  if (!r.ok) return null;
+  return (await r.json()) as DirectItem;
 }

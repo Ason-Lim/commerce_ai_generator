@@ -10,6 +10,7 @@ import { ProductCompareTable } from "./ProductCompareTable";
 import { ProductList, SponsoredList } from "./ProductList";
 import { RecipeCard } from "./RecipeCard";
 import { SearchLinks } from "./SearchLinks";
+import { DirectBuyInline } from "./DirectBuy";
 import { ShippingOptions } from "./ShippingOptions";
 import { TrendList } from "./TrendList";
 import { TrendPostCard } from "./TrendPost";
@@ -60,6 +61,8 @@ function BlockView({ block }: { block: Block }) {
       return <RecipeCard block={block} />;
     case "search_links":
       return <SearchLinks block={block} />;
+    case "direct_buy":
+      return <DirectBuyInline block={block} />;
     case "trend_list":
       return <TrendList block={block} />;
     case "trend_post":

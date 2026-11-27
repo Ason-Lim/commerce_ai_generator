@@ -18,3 +18,9 @@ def direct_home():
 @router.get("/api/direct/search")
 def direct_search(q: str = Query("", max_length=100)):
     return JSONResponse(service.search(q), headers=NO_STORE)
+
+
+@router.get("/api/direct/item/{key}")
+def direct_item(key: str):
+    """대화 결과 아래 '해외 직구' 칸 (2026-11-27) — 품목표의 품목만."""
+    return JSONResponse(service.search_item(key[:40]), headers=NO_STORE)
