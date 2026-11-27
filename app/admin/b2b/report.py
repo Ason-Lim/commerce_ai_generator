@@ -82,7 +82,8 @@ def render(req: BidRequirement, evals: list[Evaluation], cov: list[dict], cost: 
     for e in evals:
         c = e.candidate
         d, dcls = DEC[e.decision]
-        price = f"{c.observed_price:,}원" if c.observed_price else "미수집"
+        price = ("판매처 화면 확인(쿠팡 — 저장 안 함)" if c.source == "market_search_transient"
+                 else f"{c.observed_price:,}원" if c.observed_price else "미수집")
         notes = " · ".join(c.notes)
         name = f"<a href='{E(c.url)}' target='_blank' rel='noopener'>{E(c.name)}</a>" if c.url else E(c.name)
         sample = " <span class='src'>예시</span>" if c.is_sample else ""
