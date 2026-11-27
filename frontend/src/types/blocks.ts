@@ -25,6 +25,8 @@ export interface NoticeBlock { type: "notice"; data: { md: string; tone?: "info"
 export interface VerdictBlock { type: "verdict"; data: { md: string } }
 /** 네이버쇼핑 검색 링크 (2026-11-04) — 고객 편의용, 제휴 아님 · 수수료 없음. 상품이 아니라 검색 화면으로만 연결 */
 export interface SearchLink { query: string; url: string; check: string }
+/** 해외 직구 칸 (2026-11-27) — 상품은 담지 않음, 화면이 /api/direct/item/{key} 로 조회 */
+export interface DirectBuyBlock { type: "direct_buy"; data: { key: string; label: string; status: "ok" | "caution" | "blocked"; note?: string } }
 export interface SearchLinksBlock { type: "search_links"; data: { title: string; badge?: string; links: SearchLink[]; note?: string } }
 
 export interface ChipsBlock {
@@ -374,7 +376,7 @@ export interface AnswerFeedbackBlock {
 export type Block =
   | TextBlock | NoticeBlock | VerdictBlock | ChipsBlock | ClarifyFormBlock
   | ComparisonPairBlock | ProductListBlock | ShippingOptionsBlock
-  | CandidateCompareBlock | SponsoredListBlock | RecipeCardBlock | SearchLinksBlock | ProductCompareBlock
+  | CandidateCompareBlock | SponsoredListBlock | RecipeCardBlock | SearchLinksBlock | DirectBuyBlock | ProductCompareBlock
   | TrendListBlock | CompareCtaBlock | TrendPostBlock | AnswerFeedbackBlock;
 
 /** 지금 검색이 늘어난 식품 (2026-11-06, '요즘 뜨는 식품') — 서버 급상승 리포트의 고객용 항목 */

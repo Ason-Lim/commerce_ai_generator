@@ -277,3 +277,13 @@ export async function fetchDirectSearch(q: string, signal?: AbortSignal): Promis
   if (!r.ok) return null;
   return (await r.json()) as DirectSearch;
 }
+export type DirectItem = { enabled: boolean; ok: boolean; error: string | null; key: string; label: string; status: "ok" | "caution" | "blocked";
+  note: string | null; notice: string; source: string; checklist: DirectStep[]; products: DirectProduct[]; fx: DirectFx | null; checked_at: number };
+
+/** 대화 결과 아래 해외 직구 칸 (2026-11-27) — 품목표 품목만, 저장하지 않음. */
+export async function fetchDirectItem(key: string, signal?: AbortSignal): Promise<DirectItem | null> {
+  if (API_MODE === "mock") return null;
+  const r = await fetch(`/api/direct/item/${encodeURIComponent(key)}`, { signal, cache: "no-store" });
+  if (!r.ok) return null;
+  return (await r.json()) as DirectItem;
+}

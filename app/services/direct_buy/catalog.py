@@ -24,6 +24,26 @@ MAX_BYTES = 2_000_000
 MAX_PARALLEL = 4                       # 동시에 Shopify 로 나가는 검색 수 (우리 서버·상대 한도 보호)
 
 _slots = threading.BoundedSemaphore(MAX_PARALLEL)
+_minute: list[float] = []                # 지난 60초 Shopify 호출 시각 (서버 전체 상한 — 2026-11-27 대화 결과 칸)
+_minute_lock = threading.Lock()
+
+
+def _per_min() -> int:
+    try:
+        return max(1, int(os.getenv("SHOPIFY_CATALOG_PER_MIN") or 60))
+    except ValueError:
+        return 60
+
+
+def _take_minute_slot() -> bool:
+    now = time.time()
+    with _minute_lock:
+        while _minute and now - _minute[0] > 60:
+            _minute.pop(0)
+        if len(_minute) >= _per_min():
+            return False
+        _minute.append(now)
+        return True
 _token_lock = threading.Lock()
 _token: dict = {}
 _flight_lock = threading.Lock()
@@ -144,6 +164,8 @@ def _call(body: dict, http) -> Result:
     tok = _bearer(http)
     if tok:
         headers["Authorization"] = f"Bearer {tok}"
+    if not _take_minute_slot():
+        return Result(False, error="해외 상점 조회가 몰려 잠시 쉬어 가요", code="busy")
     if not _slots.acquire(timeout=8):
         return Result(False, error="요청이 몰려 잠시 뒤에 다시 시도해 주세요", code="busy")
     try:

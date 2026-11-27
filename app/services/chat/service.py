@@ -14,6 +14,8 @@ LLM or the recommendation pipeline is called:
 """
 from __future__ import annotations
 
+import os
+
 import logging
 import re
 import threading
@@ -1268,6 +1270,9 @@ class ChatService:
             nav = naver_search_block(label, text, picked["picks"])
             if nav:
                 blocks.append(nav)
+            dbk = direct_buy_block(label, text)          # 2026-11-27 품목표에 맞으면 해외 직구 칸 (순위·후보와 별개)
+            if dbk:
+                blocks.append(dbk)
             if not budget:
                 pending = {"kind": "budget", "query": label}
                 blocks.append(B.text("💬 예산이 있으면 편하게 말씀해 주세요. 예: **3만원 이하**, **5만원 정도**, **10만원대** — "
@@ -1337,6 +1342,9 @@ class ChatService:
             nav = naver_search_block(label, text)
             if nav:
                 blocks.append(nav)
+            dbk = direct_buy_block(label, text)
+            if dbk:
+                blocks.append(dbk)
         elif len(blocks) == len(lead_blocks or []):
             blocks.append(B.text(f"'{query}' 조건에 맞는 상품을 찾지 못했어요."))
         if changed and not picked:
@@ -2072,6 +2080,21 @@ def _fresh_produce(label: str) -> bool:
     words = re.split(r"\s+", (label or "").strip())
     produce = set(_KIND_WORDS["과일"]) | set(_VEGETABLES) | {"과일", "채소", "야채"}
     return any(w in produce for w in words)
+
+
+def direct_buy_block(label: str | None, text: str | None) -> dict | None:
+    """해외 직구 칸 (2026-11-27 사용자 요청: 식품을 검색하면 Shopify 에도 있으면 함께). 품목표(direct_buy/items.py)에 맞을 때만.
+    추천 후보·순위와 섞지 않는 별도 칸이며, 상품은 화면이 그때 조회한다(저장 없음). DIRECT_IN_CHAT=0 이면 끔."""
+    if (os.getenv("DIRECT_IN_CHAT") or "1").strip() == "0" or (os.getenv("SHOPIFY_CATALOG") or "1").strip() == "0":
+        return None
+    if is_alcohol_request(text or ""):
+        return None
+    from app.services.direct_buy import items as direct_items
+
+    it = direct_items.match(label, text)
+    if it is None:
+        return None
+    return B.direct_buy(it.key, it.label, it.status, it.note or None)
 
 
 def naver_search_links(label: str, text: str, picks: list[dict] | None = None) -> list[tuple[str, str]]:
