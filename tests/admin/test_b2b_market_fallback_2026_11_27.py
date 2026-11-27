@@ -28,7 +28,8 @@ def test_title_query_keeps_product_words():
     assert sourcing.title_query(REQ) == "타올 핸드워시 세트"
 
 
-def test_discover_searches_title_first_and_does_not_store_coupang(monkeypatch):
+def test_discover_searches_title_first_and_does_not_store_coupang_when_off(monkeypatch):
+    monkeypatch.setenv("B2B_COUPANG_KEEP", "0")
     stored = []
     monkeypatch.setattr(sourcing, "upsert_candidate", stored.append)
     monkeypatch.setattr(sourcing.store, "recent_observations", lambda *a, **k: [])
@@ -41,7 +42,8 @@ def test_discover_searches_title_first_and_does_not_store_coupang(monkeypatch):
     assert cp.supplier == "쿠팡" and any("저장하지 않음" in n for n in cp.notes)
 
 
-def test_coupang_candidate_not_sent_to_ai_and_price_not_printed(monkeypatch):
+def test_coupang_candidate_not_sent_to_ai_and_price_not_printed_when_off(monkeypatch):
+    monkeypatch.setenv("B2B_COUPANG_KEEP", "0")
     monkeypatch.setattr(sourcing, "upsert_candidate", lambda c: None)
     monkeypatch.setattr(sourcing.store, "recent_observations", lambda *a, **k: [])
     found = sourcing.discover(REQ, ["생활용품"], markets=FakeMarkets())
@@ -51,3 +53,16 @@ def test_coupang_candidate_not_sent_to_ai_and_price_not_printed(monkeypatch):
     p = proposal.build(REQ, evs, profile={}, mode="external", today=date(2026, 11, 27), ai={"evidence_table": []})
     flat = " ".join(" ".join(r) for s in p.sections for e in s.elements if e.kind == "table" for r in e.rows)
     assert "송월 호텔 타올 핸드워시 선물세트" in flat and "29,000" not in flat
+
+
+def test_default_keeps_coupang_and_sends_to_ai(monkeypatch):
+    """2026-11-27 사용자 결정: 제안 준비용이라 쿠팡 후보도 저장하고 제안서 AI 가 알게."""
+    monkeypatch.delenv("B2B_COUPANG_KEEP", raising=False)
+    stored = []
+    monkeypatch.setattr(sourcing, "upsert_candidate", stored.append)
+    monkeypatch.setattr(sourcing.store, "recent_observations", lambda *a, **k: [])
+    found = sourcing.discover(REQ, ["생활용품"], markets=FakeMarkets())
+    assert {c.source for c in found} == {"market_search"} and len(stored) == 2
+    evs = evidence.evaluate_all(REQ, found, today=date(2026, 11, 27))
+    sent = {c["상품"]: c["관측 가격"] for c in proposal_ai.facts(REQ, evs, {})["후보 상품 (관측 가격 — 확정 단가 아님)"]}
+    assert sent["송월 호텔 타올 핸드워시 선물세트"] == 29000
