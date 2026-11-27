@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import os
+import re
 import threading
 import time
 import uuid
@@ -63,6 +64,7 @@ class Offer:
     seller_domain: str | None
     refund_policy: str | None
     available: bool | None
+    variant_id: str | None = None       # 판매처 이동 전 재확인(lookup_catalog)에 쓰는 옵션 ID (2026-11-27)
     option: str | None = None           # 고른 옵션 이름(예: '500ml') — 가격이 이 옵션 값이라 양 읽기에 먼저 쓴다 (2026-11-27)
 
 
@@ -114,6 +116,14 @@ def request_body(query: str, *, ships_to: str = "KR", currency: str = "USD", lim
                        "arguments": {"meta": {"ucp-agent": {"profile": profile_url()}}, "catalog": catalog}}}
 
 
+def lookup_body(ids: list[str], *, ships_to: str = "KR", currency: str = "USD") -> dict:
+    """lookup_catalog — ID 로 지금 가격·재고·결제 주소를 다시 묻는다 (판매처 이동 직전 재확인)."""
+    catalog = {"ids": list(ids)[:10], "context": {"address_country": ships_to, "currency": currency, "language": "ko"}}
+    return {"jsonrpc": "2.0", "id": str(uuid.uuid4()), "method": "tools/call",
+            "params": {"name": "lookup_catalog",
+                       "arguments": {"meta": {"ucp-agent": {"profile": profile_url()}}, "catalog": catalog}}}
+
+
 def _https(v) -> str | None:
     return v if isinstance(v, str) and v.startswith("https://") else None
 
@@ -128,6 +138,13 @@ def _money(m) -> tuple[int | None, str | None]:
         amt = None
     cur = m.get("currency") if isinstance(m.get("currency"), str) else None
     return amt, cur
+
+
+_GID = re.compile(r"^gid://shopify/[A-Za-z]+/[A-Za-z0-9_-]{1,64}$")
+
+
+def _gid(v) -> str | None:
+    return v if isinstance(v, str) and _GID.match(v) else None
 
 
 def _option(v: dict | None) -> str | None:
@@ -162,7 +179,7 @@ def to_offers(data: dict) -> list[Offer]:
                          seller=(seller.get("name") or None), seller_domain=(seller.get("domain") or None),
                          refund_policy=refund,
                          available=((v or {}).get("availability") or {}).get("available") if v else None,
-                         option=_option(v)))
+                         variant_id=_gid((v or {}).get("id")), option=_option(v)))
     return out
 
 
@@ -239,3 +256,12 @@ def search(query: str, *, http=requests, ships_to: str = "KR", currency: str = "
         with _flight_lock:
             _flights.pop(key, None)                      # 응답이 끝나면 버림 — 다음 요청은 새로 부른다
         f.done.set()
+
+
+def lookup(variant_id: str, *, http=requests, ships_to: str = "KR", currency: str = "USD") -> Result:
+    """한 옵션을 지금 다시 조회 (2026-11-27 — 직구 도우미가 열릴 때). 저장 없음."""
+    if not enabled():
+        return Result(False, error="해외 직구 검색이 꺼져 있어요 (SHOPIFY_CATALOG=0)", code="disabled")
+    if not _gid(variant_id):
+        return Result(False, error="ID 형식 아님", code="bad_id")
+    return _call(lookup_body([variant_id], ships_to=ships_to, currency=currency), http)

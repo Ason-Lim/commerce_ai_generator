@@ -258,7 +258,19 @@ export type DirectProduct = {
   seller: string | null; seller_domain: string | null; refund_policy: string | null; duty: DirectDuty; krw_estimate: number | null; quarantine: boolean;
   /** 직구 추정이 국내 후보 중간값보다 15% 이상 쌀 때만 (2026-11-27) */
   saving?: DirectSaving | null;
+  variant_id?: string | null; option?: string | null;
 };
+export type DirectRecheck = { ok: boolean; state: "same" | "changed" | "sold_out" | "unknown"; text: string; checked_at: number;
+  price?: number | null; currency?: string | null; url?: string; checkout_url?: string | null };
+export async function fetchDirectRecheck(p: { variant_id?: string | null; price: number | null; currency: string | null }, signal?: AbortSignal): Promise<DirectRecheck | null> {
+  if (API_MODE === "mock" || !p.variant_id) return null;
+  const qs = new URLSearchParams({ id: p.variant_id });
+  if (p.price != null) qs.set("price", String(p.price));
+  if (p.currency) qs.set("cur", p.currency);
+  const r = await fetch(`/api/direct/recheck?${qs}`, { signal, cache: "no-store" });
+  if (!r.ok) return null;
+  return (await r.json()) as DirectRecheck;
+}
 export type DirectSaving = { pct: number; per100: number; unit: "g" | "ml"; domestic_per100: number; landed_krw: number; taxed: boolean };
 export type DirectRef = { per100: number; unit: "g" | "ml"; n: number };
 export type DirectFx = { rate: number; source: string; date: string; kind: "customs" | "reference" | "manual"; stale: boolean };
