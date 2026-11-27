@@ -40,7 +40,7 @@ def clean(tmp_path, monkeypatch):
     monkeypatch.setenv("FX_CACHE_DIR", str(tmp_path))
     monkeypatch.setenv("KAT_REALTIME_API_KEY", "abc+/=")
     monkeypatch.delenv("DIRECT_USD_KRW", raising=False)
-    for k in ("CHAMGA_SERVICE_KEY", "G2B_SERVICE_KEY", "NTS_SERVICE_KEY"):
+    for k in ("CUSTOMS_FX_SERVICE_KEY", "CHAMGA_SERVICE_KEY", "G2B_SERVICE_KEY", "NTS_SERVICE_KEY"):
         monkeypatch.delenv(k, raising=False)
     fx._fail_until.clear()
 
@@ -85,3 +85,10 @@ def test_recent_saved_table_used_when_customs_down(tmp_path):
 def test_no_key_no_source_returns_none(monkeypatch):
     monkeypatch.delenv("KAT_REALTIME_API_KEY")
     assert fx.usd_krw(http=Http(R(500), R(500))) is None
+
+
+def test_dedicated_key_first(monkeypatch):
+    monkeypatch.setenv("CUSTOMS_FX_SERVICE_KEY", "fxkey")
+    http = Http(R(content=XML_OK))
+    fx.customs_rates("20261126", http=http)
+    assert "serviceKey=fxkey" in http.urls[0]

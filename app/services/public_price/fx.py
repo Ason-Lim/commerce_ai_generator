@@ -2,7 +2,8 @@
 
 - 관세청_관세환율정보(GW): https://apis.data.go.kr/1220000/retrieveTrifFxrtInfo/getRetrieveTrifFxrtInfo
   요청 aplyBgnDt(YYYYMMDD)·weekFxrtTpcd(1 수출, 2 수입) · 응답 item(cntySgn·mtryUtNm·fxrt·currSgn·aplyBgnDt·imexTp), XML.
-  주간 고시라 하루 한 번만 묻고 파일에 둔다(공공데이터 — 이용허락범위 제한 없음). 키는 참가격과 같은 공공데이터포털 키.
+  주간 고시라 하루 한 번만 묻고 파일에 둔다(공공데이터 — 이용허락범위 제한 없음).
+  키: CUSTOMS_FX_SERVICE_KEY, 없으면 참가격과 같은 공공데이터포털 키(CHAMGA_SERVICE_KEY·KAT_REALTIME_API_KEY…).
 - 예비: Frankfurter(https://api.frankfurter.dev, 키 없음, 중앙은행 기준환율) — 우리나라 고시 환율이 아니므로 출처를 바꿔 표시.
 - 마지막: DIRECT_USD_KRW(.env 수동 값).
 값은 늘 {rate, source, date, kind} 로 — 화면은 출처·기준일을 함께 보여 준다(참고 환산, 실제 세액·결제 환율과 다를 수 있음).
@@ -48,9 +49,10 @@ def _fmt(d: str) -> str:
 
 def customs_rates(day: str | None = None, *, http=None, env=None) -> dict:
     """관세청 수입 과세환율 표 {통화: 원} + 적용개시일. 실패하면 FxError."""
-    key = service_key(env)
+    src = os.environ if env is None else env
+    key = (src.get("CUSTOMS_FX_SERVICE_KEY") or "").strip().strip('"').strip("'") or service_key(env)
     if not key:
-        raise FxError("공공데이터포털 인증키가 없어요")
+        raise FxError("공공데이터포털 인증키가 없어요 (.env CUSTOMS_FX_SERVICE_KEY)")
     if http is None:
         import requests
 
