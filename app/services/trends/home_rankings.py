@@ -38,9 +38,10 @@ PICK_WINDOW, PICK_MIN_OBS = 30, 20          # 상품 배지 '관련 키워드 �
 COMPARE_DAYS = 7
 STALE_RANK_DAYS = 3             # 순위 파일이 이보다 오래되면 stale
 STALE_SURGE_DAYS = 3
-# 2026-11-23 사용자 요청: 홈 쿠팡 식품 랭킹 30개(화면은 6개 + 더보기)
+# 2026-11-23 사용자 요청: 홈 쿠팡 식품 랭킹 30개(화면은 6개 + 더보기) → 11-27 100개
 # 11-23 저녁: 카테고리도 30개(화면 6개 + 더보기) — 오르는 중을 먼저, 모자라면 나머지 순위순으로 채움
-LIMITS = {"home": {"surge": 6, "category": 30, "recent": 4, "steady": 2, "coupang": 30},
+# 2026-11-27 사용자: 쿠팡 랭킹 102개 요청 → 쿠팡 파트너스 베스트 API 한 번에 최대 100개라 100개(처음 6개 + 더보기·접기 그대로)
+LIMITS = {"home": {"surge": 6, "category": 30, "recent": 4, "steady": 2, "coupang": 100},
           "full": {"surge": 100, "category": TOP_BAND, "recent": 16, "steady": 4, "coupang": 100}}
 COUPANG_NOTE = ("쿠팡 파트너스가 주는 식품 카테고리 베스트 순위 그대로예요 (우리 점수로 다시 줄 세우지 않아요). "
                 "10분마다 새로 받고, 가격은 받은 시각의 가격이에요.")
