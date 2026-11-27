@@ -8,6 +8,7 @@
 * ``health``      질환·임신·알레르기와 먹어도 되는지·효능 — 일반 안내, '안전' 보증·효능 단정 없음
 * ``privacy``     기록·개인정보 삭제·열람 — '기록 지우기' 안내 (개인정보 요청 접수는 ③, AI 로 보내지 않음 — 결정 D)
 * ``dispute``     보상·소송·피해 구제 — 우리는 판매자가 아님 + 판매처 안내 (분쟁 티켓은 ③)
+* ``direct_buy``  해외 직구의 관세·부가세·통관·개인통관고유부호·면세 한도 (2026-11-27, 6단계 '해외 직구 CS 분야')
 * ``affiliate``   주문·배송·환불·제휴 질문 — 우리는 판매자가 아님, 주문은 판매처에서
 * ``stock``       품절·재입고 — 판매처 확인 안내 (+ 직전 검색어 다시 찾기 칩)
 * ``account``     로그인·계정 — 지금은 로그인 없이 쓰는 서비스
@@ -26,7 +27,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-DOMAINS = ("food", "emergency", "food_safety", "health", "privacy", "dispute", "affiliate", "stock",
+DOMAINS = ("food", "emergency", "food_safety", "health", "privacy", "dispute", "direct_buy", "affiliate", "stock",
            "account", "site_help", "not_food", "chitchat")
 # 사람이 반드시 맡는 분야 (③ 에서 대기열·운영자 알림 — 여기서는 표시만)
 HUMAN_REQUIRED = frozenset({"emergency", "food_safety"})
@@ -121,6 +122,11 @@ AFFILIATE = _rx(r"수수료", r"파트너스", r"제휴\s*(링크|야|예요|인
                 r"배송\s*(조회|언제|안\s*와|안와|안\s*오|늦|지연|어디)", r"(택배|상품|주문한\s*거)\S{0,3}\s*(안\s*와|안와|언제\s*와|안\s*오)",
                 r"(송장|운송장)\s*(번호)?", r"등기\s*번호")
 
+# ── 해외 직구 통관·세금 (좁게, 2026-11-27) ── '직구 올리브유 추천'처럼 상품을 찾는 말은 식품 흐름
+DIRECT_BUY = _rx(r"관부가세", r"(?<![가-힣])관세(?!청\s*고시)", r"개인\s*통관\s*(고유)?\s*(부호|번호)", r"통관\s*(부호|번호)",
+                 r"통관\s*(이|은|는)?\s*(어떻게|돼|되|안\s*돼|보류|막혀|걸려|지연|언제|절차)", r"면세\s*(한도|기준|범위|금액)",
+                 r"직구\S{0,4}\s*(세금|부가세|어떻게\s*(해|하|사)|방법|하는\s*법|배송\s*(조회|언제|안\s*와|안와|늦)|환불|반품|안전)")
+
 # ── 품절·재입고 (좁게)
 STOCK = _rx(r"품절", r"재\s*입고", r"입고\s*(언제|되|예정|알림)", r"다시\s*들어\s*(와|오)", r"재고\s*(있|없|언제)")
 
@@ -167,6 +173,7 @@ _ORDER: tuple[tuple[str, object], ...] = (
     ("privacy", PRIVACY),
     ("privacy", PRIVACY_WIDE),
     ("dispute", DISPUTE),
+    ("direct_buy", DIRECT_BUY),
     ("affiliate", AFFILIATE),
     ("stock", STOCK),
     ("account", ACCOUNT),
@@ -208,6 +215,7 @@ domain 값은 아래 중 하나만:
 - food: 식품·음료·식재료·요리·레시피·식품 보관이나 손질·식품 추천 (이름을 처음 보는 식품·간식·지역 특산물·유행 디저트도 food)
 - not_food: 식품이 아닌 물건(전자기기·옷·화장품·생활용품·주방 도구·가구 등)을 찾거나 추천해 달라는 것
 - health: 질환·임신·약·알레르기와 관련해 먹어도 되는지, 효능·효과를 묻는 것
+- direct_buy: 해외 직구의 관세·부가세·통관·개인통관고유부호·면세 한도를 묻는 것
 - affiliate: 주문·결제·배송·교환·환불·제휴 링크·수수료를 묻는 것
 - stock: 품절·재입고를 묻는 것
 - account: 로그인·회원가입·계정
