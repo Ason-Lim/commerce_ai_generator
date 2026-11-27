@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import colorsys
 import io
 import json
@@ -176,12 +177,24 @@ def delete(tid: str) -> None:
     shutil.rmtree(folder(t), ignore_errors=True)
 
 
+# 2026-11-27 사용자: 제안서에도 trendguide 로고 — 템플릿에 올린 로고가 없으면 기본 로고 (PROPOSAL_DEFAULT_LOGO=0 이면 끔)
+DEFAULT_LOGO = Path(__file__).resolve().parent / "assets" / "trendguide_logo.png"
+
+
+def default_logo() -> Path | None:
+    if (os.getenv("PROPOSAL_DEFAULT_LOGO") or "1").strip() == "0":
+        return None
+    return DEFAULT_LOGO if DEFAULT_LOGO.exists() else None
+
+
 def asset(t: Template, attr: str) -> Path | None:
     fn = getattr(t, attr, None)
     if not fn or t.builtin:
-        return None
+        return default_logo() if attr == "logo" else None
     p = folder(t) / fn
-    return p if p.exists() else None
+    if p.exists():
+        return p
+    return default_logo() if attr == "logo" else None
 
 
 def logo_data_uri(t: Template) -> str | None:
