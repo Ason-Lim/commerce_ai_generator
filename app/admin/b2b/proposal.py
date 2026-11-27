@@ -298,13 +298,16 @@ def build(req: BidRequirement, evals: list[Evaluation], *, profile: dict | None 
             els2.append(Element(kind="bullets", items=cost.notes))
             S.append(Section(id="appendix_cost", title="부록 B. 비용 구조 (내부용)", internal_only=True, elements=els2))
 
-    if ai:
-        from app.admin.b2b.proposal_ai import relevant
+    from app.admin.b2b.proposal_ai import relevant
 
-        rel = relevant(req, evals)
-        extra = [[e.candidate.name, "쿠팡 판매 중 — 가격은 제출 시점 화면으로 증빙", "검증 전", "[확인 필요: 견적]",
-                  "HOLD: 공급사 견적·온라인가 증빙 전"] for e in rel if e.candidate.source == "market_search_transient"][:4]
-        S = _apply_ai(S, ai, allowed={e.candidate.name for e in rel}, need=cat_txt, extra=extra)
+    ev_rows = evidence_rows(relevant(req, evals), need=cat_txt, mode=mode)   # AI 가 없어도 같은 가격 근거표 (코드 작성)
+    if ai:
+        S = _apply_ai(S, ai, evidence=ev_rows)
+    else:
+        S = [Section(id=x.id, title=x.title, internal_only=x.internal_only, elements=list(x.elements) + [
+                Element(kind="para", text="■ 상품별 가격 근거 (관측 소매가 · 온라인 최저가 검증 · 확정 공급단가)"),
+                Element(kind="table", headers=["후보 상품", "관측 소매가(일자)", "온라인 최저가 검증", "확정 공급단가", "판단"],
+                        rows=ev_rows)]) if x.id == "products" else x for x in S]
     prop = Proposal(title=title, subtitle="임직원 선물 공급 제안서" + (" — 내부 검토본" if mode == "internal" else " — 제출본 초안"),
                     bid_id=req.bid_id, agency=agency, company=company, created=today, mode=mode, sections=S)
     prop.facts = {
@@ -329,23 +332,39 @@ def _product_image(c, mode: str) -> dict | None:
         return None
 
 
-def _evidence_rows(rows: list[list[str]], allowed: set[str] | None, need: str,
-                   extra: list[list[str]] | None = None) -> list[list[str]]:
-    """AI 가격 근거표 안전장치 (2026-11-27) — 공고 품목에 맞는 후보 이름이 아닌 줄은 뺀다.
-    남는 줄이 없으면 '후보 발굴 중' 한 줄 (다른 품목 상품이 가격 근거로 나가지 않게)."""
-    if allowed is None:
+_PRICE_KIND = {"public_retail": "소매", "supply_table": "공급표", "wholesale": "도매", "supplier_quote": "견적", "consign": "위탁"}
+_DECISION = {"ELIGIBLE": "적합", "HOLD": "HOLD", "EXCLUDED": "제외"}
+
+
+def evidence_rows(evals: list, *, need: str = "공고 품목", mode: str = "external", limit: int = 8) -> list[list[str]]:
+    """상품별 가격 근거표 — 후보·근거 필드에서 코드가 직접 만든다 (2026-11-27 GPT 검토: AI 가 쓴 가격·관측일·판정 줄은
+    통과시키지 않음). 쿠팡 관측가는 제출본에 숫자를 옮기지 않고 '제출 시점 판매처 화면 증빙'."""
+    rows = []
+    for e in evals[:limit]:
+        c = e.candidate
+        coupang = c.source == "market_search_transient" or (c.supplier or "").startswith("쿠팡")
+        if coupang and (mode != "internal" or c.source == "market_search_transient"):
+            seen = "[확인 필요: 제출 시점 판매처 화면 증빙] (쿠팡 판매 중)"
+        elif c.observed_price:
+            seen = f"{c.observed_price:,}원 ({_PRICE_KIND.get(c.price_kind, '관측')}, {c.observed_date or '일자 미상'})"
+        else:
+            seen = "[확인 필요: 관측가]"
+        online = (f"{c.online_min_price_verified:,}원 (검증 기록 있음)" if c.online_min_price_verified
+                  else "검증 전 (제출 시점 화면·일시 증빙 예정)")
+        if c.unit_price_quote:   # 공급사 견적 금액은 내부용 — 제출본에는 금액 없이 '확보'만
+            quote = f"{c.unit_price_quote:,}원 (공급사 견적)" if mode == "internal" else "공급사 견적 확보 (금액은 가격 제안서)"
+        else:
+            quote = "[확인 필요: 견적]"
+        why = [x.label for x in e.failed][:2] or [x.label for x in e.unknown][:2]
+        verdict = _DECISION.get(e.decision, str(e.decision)) + (f": {'·'.join(why)} {'미충족' if e.failed else '확인 전'}" if why else "")
+        rows.append([c.name, seen, online, quote, verdict])
+    if rows:
         return rows
-    keep = [r for r in rows if r and (r[0].strip() in allowed or any(a and a in r[0] for a in allowed))]
-    have = {r[0] for r in keep}
-    keep += [r for r in extra or [] if r[0] not in have]       # 쿠팡 후보: AI 를 거치지 않고 코드가 넣은 줄
-    if keep:
-        return keep
     todo = "[확인 필요: 후보 발굴 중]"
     return [[f"[확인 필요: {need} 후보]", todo, todo, "[확인 필요: 견적]", "후보 발굴·공급사 견적 후 작성"]]
 
 
-def _apply_ai(S: list[Section], body: dict, *, allowed: set[str] | None = None, need: str = "공고 품목",
-              extra: list[list[str]] | None = None) -> list[Section]:
+def _apply_ai(S: list[Section], body: dict, *, evidence: list[list[str]] | None = None) -> list[Section]:
     """2026-11-12: AI 본문(proposal_ai — Claude 작성·GPT 검증, 문제 문장은 [확인 필요] 표시)을 템플릿 장에 끼운다.
     표·조건 대응표·가격표 같은 사실 중심 장은 템플릿 그대로 두고, 서술·전략·평가 대응·운영·일정·질의를 AI 본문으로."""
     def rows(key):
@@ -362,11 +381,11 @@ def _apply_ai(S: list[Section], body: dict, *, allowed: set[str] | None = None, 
             if k is not None:
                 els[k] = Element(kind="para", text=body["understanding"])
             sec = Section(id=sec.id, title=sec.title, elements=els, internal_only=sec.internal_only)
-        if sec.id == "products" and (rows("evidence_table") or extra):
+        if sec.id == "products" and evidence:          # AI 의 evidence_table 은 쓰지 않음 (코드가 근거 필드로 만든 줄만)
             sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only, elements=list(sec.elements) + [
                 Element(kind="para", text="■ 상품별 가격 근거 (관측 소매가 · 온라인 최저가 검증 · 확정 공급단가)"),
                 Element(kind="table", headers=["후보 상품", "관측 소매가(일자)", "온라인 최저가 검증", "확정 공급단가", "판단"],
-                        rows=_evidence_rows(rows("evidence_table"), allowed, need, extra))])
+                        rows=evidence)])
         if sec.id == "risk" and items("risks"):
             sec = Section(id=sec.id, title=sec.title, internal_only=sec.internal_only,
                           elements=list(sec.elements) + [Element(kind="bullets", items=items("risks"))])

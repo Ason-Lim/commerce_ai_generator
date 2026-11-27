@@ -261,6 +261,8 @@ export type DirectProduct = {
   variant_id?: string | null; option?: string | null;
   /** 국내·직구 함께 비교용 도착 추정 (양을 읽었을 때만) */
   landed?: DirectLanded | null;
+  /** 판매가만으로 본 양·100g(ml)당 — 배송비·관부가세 미포함 (GPT 검토 11-27) */
+  sale?: { qty: number; unit: "g" | "ml"; krw: number; per100: number } | null;
 };
 export type DirectLanded = { qty: number; unit: "g" | "ml"; landed_krw: number; ship_krw: number; tax_krw: number; per100: number; taxed: boolean };
 export type DirectRecheck = { ok: boolean; state: "same" | "changed" | "sold_out" | "unknown"; text: string; checked_at: number;

@@ -122,11 +122,13 @@ def search_item(key: str, *, limit: int = 6, http=None, ref: dict | None = None,
     for p in products:
         krw = _krw(p.get("price"), p.get("currency"), rate)
         size = p.get("option") if savings.amount(p.get("option")) else p.get("title")   # 가격은 옵션 값 — 옵션 양을 먼저
-        p["saving"] = savings.estimate(size or "", krw, ref, usd_rate, label=it.label)
-        p["landed"] = savings.quote(size or "", krw, usd_rate, label=it.label)   # 국내·직구 함께 비교 표
+        est = savings.estimate_enabled()          # 실측 운임 전에는 꺼 둠 (GPT 검토 11-27)
+        p["saving"] = savings.estimate(size or "", krw, ref, usd_rate, label=it.label) if est else None
+        p["landed"] = savings.quote(size or "", krw, usd_rate, label=it.label) if est else None
+        p["sale"] = savings.sale_info(size or "", krw)          # 판매가만 — 배송비·관부가세 미포함
     best = max((p["saving"] for p in products if p.get("saving")), key=lambda s: s["pct"], default=None)
     compare = None
-    if ref:
+    if ref and savings.estimate_enabled():
         compare = {"ref": ref, "best": best,
                    "basis": savings.BASIS.format(n=ref["n"], unit="100g" if ref["unit"] == "g" else "100ml")}
     return {**base, "ok": res.ok, "error": res.error, "products": products, "fx": _public_fx(rate), "compare": compare,
@@ -135,14 +137,17 @@ def search_item(key: str, *, limit: int = 6, http=None, ref: dict | None = None,
 
 def recheck(variant_id: str, price: int | None = None, currency: str | None = None, *, http=None) -> dict:
     """판매처로 가기 전 재확인 (2026-11-27) — 지금 가격·재고를 다시 묻고 화면 값과 견준다. 저장 없음.
-    lookup 결과에 같은 옵션이 없으면 첫 판매 가능 옵션을 쓴다(Global Catalog 가 상품 단위로 돌려줄 수 있음)."""
+    같은 옵션 ID 가 결과에 없으면 다른 옵션으로 대신하지 않고 unknown (GPT 검토 11-27)."""
     res = catalog.lookup(variant_id, http=http or catalog.requests)
     base = {"checked_at": int(time.time()), "variant_id": variant_id}
     if not res.ok:
         return {**base, "ok": False, "state": "unknown", "error": res.error,
                 "text": "지금 다시 확인하지 못했어요. 판매처 화면에서 가격·재고를 꼭 확인해 주세요."}
-    o = next((x for x in res.offers if x.variant_id == variant_id), res.offers[0] if res.offers else None)
-    if o is None or o.available is False:
+    o = next((x for x in res.offers if x.variant_id == variant_id), None)
+    if o is None:
+        return {**base, "ok": True, "state": "unknown",
+                "text": "방금 다시 물었지만 같은 옵션을 찾지 못했어요. 판매처 화면에서 옵션·가격·재고를 꼭 확인해 주세요."}
+    if o.available is False:
         return {**base, "ok": True, "state": "sold_out", "text": "방금 다시 확인해 보니 한국 배송으로 살 수 없거나 품절이에요."}
     same_cur = (currency or "").upper() == (o.currency or "").upper()
     state = "same" if (price is not None and same_cur and o.price == price) else ("changed" if price is not None and same_cur else "unknown")

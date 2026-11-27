@@ -55,3 +55,25 @@ def test_ai_evidence_rows_of_matching_items_stay():
     body = {"evidence_table": AI_BODY["evidence_table"] + [[TOWEL_C.name, "29,000원", "검증 전", "[확인 필요: 견적]", "HOLD"]]}
     t = _table(proposal.build(req, evs, profile={}, mode="external", today=date(2026, 11, 27), ai=body))
     assert [r[0] for r in t.rows] == [TOWEL_C.name]
+
+
+# ── 2026-11-27 GPT 검토(보완): 가격 근거표는 코드가 후보 필드로 만든다 — AI 가 쓴 가격·관측일·판정은 통과시키지 않음 ──
+def test_ai_evidence_price_and_verdict_are_not_trusted():
+    req = TOWEL.model_copy(update={"categories": [CategoryNeed(name="생활용품", count=2)]})
+    evs = evidence.evaluate_all(req, [TOWEL_C], today=date(2026, 11, 27))
+    body = {"evidence_table": [[TOWEL_C.name, "9,900원 (소매, 2026-11-01)", "최저가 확인됨", "8,000원", "ELIGIBLE: 확정"]]}
+    row = _table(proposal.build(req, evs, profile={}, mode="external", today=date(2026, 11, 27), ai=body)).rows[0]
+    assert row[0] == TOWEL_C.name
+    assert row[1] == "29,000원 (소매, 2026-11-20)"               # 후보 근거 필드
+    assert "9,900" not in " ".join(row) and "8,000" not in " ".join(row) and "확정" not in row[4]
+    assert row[3] == "[확인 필요: 견적]" and row[4].startswith("HOLD")
+
+
+def test_coupang_kept_price_only_in_internal(monkeypatch):
+    c = TOWEL_C.model_copy(update={"supplier": "쿠팡", "source": "market_search", "candidate_id": "cp1"})
+    req = TOWEL.model_copy(update={"categories": [CategoryNeed(name="생활용품", count=2)]})
+    evs = evidence.evaluate_all(req, [c], today=date(2026, 11, 27))
+    ext = _table(proposal.build(req, evs, profile={}, mode="external", today=date(2026, 11, 27), ai={})).rows[0]
+    inn = _table(proposal.build(req, evs, profile={}, mode="internal", today=date(2026, 11, 27), ai={})).rows[0]
+    assert "제출 시점 판매처 화면 증빙" in ext[1] and "29,000" not in ext[1]
+    assert inn[1].startswith("29,000원")

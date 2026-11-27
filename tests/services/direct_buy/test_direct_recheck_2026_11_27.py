@@ -63,3 +63,19 @@ def test_route_no_store(monkeypatch):
     monkeypatch.setattr(service, "recheck", lambda i, p, c: {"ok": True, "state": "same", "id": i, "p": p, "c": c})
     r = TestClient(app).get("/api/direct/recheck", params={"id": VID, "price": 2499, "cur": "USD"})
     assert r.status_code == 200 and r.json()["p"] == 2499 and "no-store" in r.headers["cache-control"]
+
+
+
+# ── 2026-11-27 GPT 검토(높음): 같은 옵션이 없으면 다른 옵션으로 대신하지 않음 ──
+def test_recheck_other_option_only_is_unknown():
+    out = service.recheck(VID, 2499, "USD", http=FakeHttp([item(vid="gid://shopify/ProductVariant/999")]))
+    assert out["state"] == "unknown" and "같은 옵션" in out["text"]
+
+
+def test_recheck_picks_requested_option_among_many():
+    p = item(2499)
+    other = dict(p["variants"][0], id="gid://shopify/ProductVariant/1")
+    mine = dict(p["variants"][0], id=VID, price={"amount": 3999, "currency": "USD"})
+    p["variants"] = [other, mine]
+    out = service.recheck(VID, 2499, "USD", http=FakeHttp([p]))
+    assert out["state"] == "changed" and out["price"] == 3999

@@ -152,14 +152,16 @@ def _option(v: dict | None) -> str | None:
     return None if not t or t.lower() in ("default", "default title") else t
 
 
-def to_offers(data: dict) -> list[Offer]:
+def to_offers(data: dict, want: str | None = None) -> list[Offer]:
+    """want: 재확인할 옵션 ID — 있으면 그 옵션을 고르고(품절이어도 available=False 로 남김), 다른 옵션으로 바꾸지 않는다."""
     """structuredContent.products → Offer. 판매 가능한 첫 변형(옵션)의 값 — 없으면 상품 최저가."""
     out: list[Offer] = []
     for p in data.get("products") or []:
         if not isinstance(p, dict) or not p.get("title"):
             continue
         variants = [v for v in p.get("variants") or [] if isinstance(v, dict)]
-        v = next((x for x in variants if (x.get("availability") or {}).get("available") is not False), None)
+        exact = next((x for x in variants if want and x.get("id") == want), None)
+        v = exact or next((x for x in variants if (x.get("availability") or {}).get("available") is not False), None)
         if v is None and variants:
             continue                                     # 모든 옵션 품절
         url = _https((v or {}).get("url")) or _https(p.get("url"))
@@ -183,7 +185,7 @@ def to_offers(data: dict) -> list[Offer]:
     return out
 
 
-def _call(body: dict, http) -> Result:
+def _call(body: dict, http, want: str | None = None) -> Result:
     headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
     tok = _bearer(http)
     if tok:
@@ -223,7 +225,7 @@ def _call(body: dict, http) -> Result:
     if ucp.get("status") == "error":
         msg = next((m for m in sc.get("messages") or [] if isinstance(m, dict)), {})
         return Result(False, error=msg.get("content") or "Shopify 오류", code=msg.get("code") or "error")
-    return Result(True, offers=to_offers(sc))
+    return Result(True, offers=to_offers(sc, want))
 
 
 class _Flight:
@@ -264,4 +266,4 @@ def lookup(variant_id: str, *, http=requests, ships_to: str = "KR", currency: st
         return Result(False, error="해외 직구 검색이 꺼져 있어요 (SHOPIFY_CATALOG=0)", code="disabled")
     if not _gid(variant_id):
         return Result(False, error="ID 형식 아님", code="bad_id")
-    return _call(lookup_body([variant_id], ships_to=ships_to, currency=currency), http)
+    return _call(lookup_body([variant_id], ships_to=ships_to, currency=currency), http, want=variant_id)
