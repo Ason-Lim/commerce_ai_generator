@@ -44,6 +44,7 @@ class Workspace:
     item_icons: bool = True
     art_ctx: dict | None = None        # 마지막 제안서의 장 목록·품목·제목 (그림 후보 계산용)
     ai_last: dict | None = None        # 마지막 AI 본문 — 그림만 바꿀 때 AI 를 다시 부르지 않는다
+    draft_only: bool = False           # 2026-11-27 조건 없는 공고로 만든 제안서 초안 (후보 판정·비용 분석 없음)
 
 
 ROUTES = [
@@ -90,14 +91,21 @@ class Console:
         # 공고번호가 있거나 숫자 조건이 섞여 있으면 분석 우선 (단, 제안서·견적 지시는 유지)
         if action in ("list_bids", "help") and re.search(r"\d+\s*명|1인당|[A-Za-z가-힣]+-\d{6,}|(?:G2B|legacy|bid)-[\w-]+", p):
             action = "analyze"
-        if action in ("rfq", "proposal", "report", "cost", "discover") and w.req is None:
+        named = re.search(r"(?:G2B|legacy|bid)-[\w-]+|[A-Za-z가-힣]+-\d{6,8}", p)
+        other_bid = bool(named and named.group(0) != w.bid_id and bidstore.get(named.group(0)))   # 다른 공고번호를 말함
+        if action in ("rfq", "proposal", "report", "cost", "discover") and (w.req is None or other_bid):
             # 2026-11-25 (지인 의견): 새 대화에서 '제안서 작성해줘'만 누르면 '분석할 공고나 조건을 찾지 못했어요'로 끝났다
             # → 공고번호·조건이 없으면 어느 공고로 만들지 고르게 한다 (공고마다 '…제안서 작성해줘' 버튼)
             if not self._has_target(p):
                 return self._out(w, action, self._pick_bid(action, today))
-            pre = self._analyze(w, p, today)
+            # 2026-11-27 사용자: 'G2B-… 제안서 만들어 주세요'가 공고 분석에서 멈추고 제안서가 안 나옴 (공고 본문에 인원·예산·품목이 없음)
+            # → 제안서는 조건이 비어도 '[확인 필요]'를 채운 초안으로 만들고, 무엇이 비었는지·어떻게 채우는지를 함께 보여 준다
+            pre = self._analyze(w, p, today, draft=(action == "proposal"))
             if w.req is None:
                 return self._out(w, action, pre)
+            if action == "proposal" and w.draft_only:
+                return self._out(w, action, [b for b in pre if b.get("type") in ("bid_card", "notice")]
+                                 + getattr(self, "_" + action)(w, p, today))
         handler = getattr(self, "_" + action)
         blocks = handler(w, p, today)
         return self._out(w, action, blocks)
@@ -205,13 +213,28 @@ class Console:
             return [{"type": "notice", "tone": "warn", "md": f"가져오기 실패: {e}"}]
         return [{"type": "text", "md": f"공고 **{n}건**을 가져왔습니다."}] + self._list_bids(w, p, today)
 
-    def _analyze(self, w, p, today):
+    @staticmethod
+    def _bid_base(bid) -> BidRequirement:
+        """공고에 읽힌 조건이 없으면 공고명·기관·마감만 가진 빈 조건 (조건을 말하면 그 위에 얹는다)."""
+        if bid.requirement:
+            return bid.requirement
+        dl = None
+        try:
+            dl = date.fromisoformat((bid.deadline or "")[:10])
+        except ValueError:
+            pass
+        return BidRequirement(bid_id=bid.bid_id, title=bid.title, agency=bid.agency, deadline=dl)
+
+    def _analyze(self, w, p, today, draft: bool = False):
         m = re.search(r"(?:G2B|legacy|bid)-[\w-]+|[A-Za-z가-힣]+-\d{6,8}", p)
         base, bid = None, None
+        w.draft_only = False
         if m and (bid := bidstore.get(m.group(0))):
-            base, w.bid_id = bid.requirement, bid.bid_id
+            base, w.bid_id = self._bid_base(bid), bid.bid_id
         elif w.req and not m:
             base = w.req  # 이어서 조건 수정 ("배송 3영업일로 바꿔")
+        elif not m and w.bid_id and (bid := bidstore.get(w.bid_id)):
+            base = self._bid_base(bid)   # 2026-11-27: 조건 없던 공고 다음에 '300명 1인 3만원 생활용품 1종'만 말해도 그 공고에 얹음
         req = parse_with_llm(p, base)
         pre: list[dict] = []
         if bid:
@@ -224,9 +247,24 @@ class Console:
             pre.append({"type": "checkpoints", **checkpoints.checkpoints(bid.title, bid.summary)})
         if not (req.headcount or req.budget_per_person or req.categories):
             if bid:
+                how = (f"조건을 채우는 방법 — ① 이 대화에 조건을 말하기: 예) **{bid.bid_id} 300명 1인당 3만원 생활용품 1종 5영업일 배송** "
+                       "② 선물 입찰 모니터에서 이 공고에 제안요청서(HWPX·PDF·DOCX)를 첨부하면 조건을 다시 읽어요.")
+                if draft:
+                    # 제안서 요청 — 빈 조건으로 초안을 만든다 (후보 판정·비용 분석 없이, 비어 있는 칸은 [확인 필요])
+                    w.req, w.bid_id, w.draft_only = req, bid.bid_id, True
+                    w.transient, w.evals = [], []
+                    try:
+                        w.cost = self._calc_cost(w)
+                    except Exception:  # noqa: BLE001 — 조건이 없어 비용 분석은 못 함
+                        w.cost = None
+                    return pre + [{"type": "notice", "tone": "warn",
+                                   "md": "공고 본문에 **인원·1인 예산·품목 구성**이 없어 후보 판정·비용 분석 없이 **제안서 초안**을 만들었어요. "
+                                         "비어 있는 칸은 [확인 필요]로 두었어요.\n\n" + how}]
                 return pre + [{"type": "notice", "tone": "warn",
-                               "md": "공고 본문에 인원·1인 예산·품목 구성이 없어 후보 판정과 비용 분석은 하지 않았어요. 입찰 모니터에서 제안요청서(HWPX·PDF·DOCX)를 첨부하면 조건을 다시 추출합니다."},
-                              {"type": "actions", "items": ["입찰중 공고 보여줘", "입찰 트렌드 분석해줘"]}]
+                               "md": "공고 본문에 인원·1인 예산·품목 구성이 없어 후보 판정과 비용 분석은 하지 않았어요.\n\n" + how},
+                              {"type": "actions", "items": [f"{bid.bid_id} 제안서 초안 만들어줘",
+                                                            f"{bid.bid_id} 300명 1인당 3만원 생활용품 1종 5영업일 배송",
+                                                            "입찰중 공고 보여줘"]}]
             return [{"type": "text", "md": "분석할 공고나 조건을 찾지 못했어요. 공고번호를 말하거나 공고 조건(인원·1인 예산·품목·배송 기한)을 붙여 넣어 주세요."},
                     *self._help(w, p, today)[1:]]
         w.req = req
