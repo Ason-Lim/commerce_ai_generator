@@ -24,7 +24,7 @@ FOOD_EVERY = 10
 OBSERVE_BELOW = 30
 VERDICTS = {"right": "맞음", "wrong": "틀림", "unsure": "모름"}
 LABELS = {"food": "식품", "emergency": "위급", "food_safety": "식품 안전", "health": "건강·알레르기", "privacy": "개인정보",
-          "dispute": "분쟁·보상", "affiliate": "제휴·주문", "stock": "품절·재고", "account": "계정", "site_help": "사이트 이용",
+          "dispute": "분쟁·보상", "direct_buy": "해외 직구·통관", "affiliate": "제휴·주문", "stock": "품절·재고", "account": "계정", "site_help": "사이트 이용",
           "not_food": "식품 아님", "chitchat": "잡담"}
 # 2026-11-24 폐쇄몰 임직원 문의 자동 답 — 문의 종류 판단도 같은 주간 검수에 (맞는 종류는 같은 'corp_' 묶음 안에서 고른다)
 LABELS.update({f"corp_{k}": f"폐쇄몰·{v}" for k, v in (
