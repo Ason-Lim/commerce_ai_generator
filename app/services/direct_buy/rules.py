@@ -44,11 +44,13 @@ def show_quarantine() -> bool:
     return (os.getenv("DIRECT_SHOW_QUARANTINE") or "0").strip() == "1"
 
 
-def keep(title: str, *, item_status: str = "ok") -> bool:
-    """식품이 아닌 것은 늘 뺌. 검역 품목은 그 품목 칸(치즈 등)에서만, 다른 칸(올리브유)에서는 뺌."""
+def keep(title: str, *, item_status: str = "ok", allow: str = "") -> bool:
+    """식품이 아닌 것은 늘 뺌. 검역 품목은 그 품목 칸(치즈 등)에서만, 다른 칸(올리브유)에서는 뺌.
+    allow: 그 품목에서 재료로 흔한 낱말(쿠키의 butter 등) — 지우고 검사 (2026-11-27 '버터 쿠키'가 다 걸러지던 문제)."""
     if NON_FOOD.search(title or ""):
         return False
-    if item_status == "ok" and QUARANTINE.search(title or ""):
+    t = re.sub(rf"\b(?:{allow})\b", " ", title or "", flags=re.I) if allow else (title or "")
+    if item_status == "ok" and QUARANTINE.search(t):
         return False
     return True
 

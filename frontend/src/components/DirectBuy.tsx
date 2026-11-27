@@ -16,6 +16,12 @@ export const DIRECT_HASH = "#/direct";
 const DUTY_TONE: Record<string, string> = { in: "bg-accentSoft text-accent", us_only: "bg-amber-50 text-amber-800", over: "bg-rose-50 text-rose-700", unknown: "bg-chip text-ink2" };
 const DUTY_LABEL: Record<string, string> = { in: "면세 한도 안", us_only: "미국 발송만 면세", over: "관부가세 대상", unknown: "세금 결제 화면에서" };
 
+/** 판매자 이름이 없으면 상품 주소의 사이트 이름 (2026-11-27 '판매자: 확인 필요' 줄이기) */
+function sellerOf(p: { seller: string | null; seller_domain: string | null; url: string }) {
+  if (p.seller || p.seller_domain) return p.seller || p.seller_domain;
+  try { return new URL(p.url).hostname.replace(/^www\./, ""); } catch { return null; }
+}
+
 function money(p: { price: number | null; currency: string | null; krw_estimate?: number | null }) {
   const zero = ["KRW", "JPY", "VND", "CLP", "ISK"].includes(p.currency ?? "");
   if (p.price == null || !p.currency) return "가격 확인 필요";
@@ -80,7 +86,7 @@ function Guide({ p, steps, onClose }: { p: DirectProduct; steps: DirectStep[]; o
         )}
         {p.refund_policy && <a href={p.refund_policy} target="_blank" rel="noopener nofollow" className="rounded-full border border-stone-200 px-4 py-2 text-sm">반품·환불 조건</a>}
       </div>
-      <p className="mt-2 text-[11px] text-ink3">판매자: {p.seller || p.seller_domain || "확인 필요"} · 주문·결제·배송·환불은 판매처가 맡아요.</p>
+      <p className="mt-2 text-[11px] text-ink3">판매자: {sellerOf(p) || "확인 필요"} · 주문·결제·배송·환불은 판매처가 맡아요.</p>
     </div>
   );
 }
@@ -104,10 +110,14 @@ function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]
                     <span className="font-semibold tabular-nums">{money(p)}</span>
                     <span className={`tag ${DUTY_TONE[p.duty.kind]}`}>{DUTY_LABEL[p.duty.kind]}</span>
                     {p.saving && <span className="tag bg-emerald-50 text-emerald-700" title={`도착 추정 ${p.saving.per100.toLocaleString()}원/100${p.saving.unit} · 국내 ${p.saving.domestic_per100.toLocaleString()}원/100${p.saving.unit}`}>직구 추정 약 {p.saving.pct}% 저렴</span>}
-                    <span className="truncate text-ink3">{p.seller || p.seller_domain}</span>
+                    <span className="truncate text-ink3">{sellerOf(p)}</span>
                   </span>
                 </span>
               </button>
+              {/* 2026-11-27 상품 링크 — 줄을 누르면 직구 도우미, 이 링크는 판매처 상품 화면으로 바로 */}
+              <a href={p.url} target="_blank" rel="noopener nofollow" className="mb-2 ml-[68px] inline-flex items-center gap-1 text-[12px] text-ink3 underline underline-offset-2">
+                판매처 상품 보기 <ExternalLink size={12} aria-hidden />
+              </a>
             </li>
           ))}
         </ul>
@@ -129,7 +139,7 @@ function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]
                 <span className="flex flex-wrap items-center gap-1">
                   <span className={`tag ${DUTY_TONE[p.duty.kind]}`}>{DUTY_LABEL[p.duty.kind]}</span>
                 </span>
-                <span className="truncate text-[11px] text-ink3">{p.seller || p.seller_domain}</span>
+                <span className="truncate text-[11px] text-ink3">{sellerOf(p)}</span>
               </span>
             </button>
           </li>
@@ -142,13 +152,13 @@ function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]
 
 /** 대화 결과 아래 '해외 직구' 칸 (2026-11-27) — 품목표에 맞는 검색에만, 그려질 때 한 번 조회, 찾은 게 없으면 아무것도 안 그림. */
 export function DirectBuyInline({ block }: { block: DirectBuyBlock }) {
-  const { key, label, status, note, domestic, compare } = block.data;
+  const { key, label, status, note, domestic, compare, term } = block.data;
   const [data, setData] = useState<DirectItem | null>(null);
   const [state, setState] = useState<"loading" | "done" | "error">(status === "blocked" ? "done" : "loading");
   useEffect(() => {
     if (status === "blocked") return;
     const ctl = new AbortController();
-    fetchDirectItem(key, ctl.signal, domestic).then((d) => { setData(d); setState(d ? "done" : "error"); })
+    fetchDirectItem(key, ctl.signal, domestic, term).then((d) => { setData(d); setState(d ? "done" : "error"); })
       .catch(() => { if (!ctl.signal.aborted) setState("error"); });
     return () => ctl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 블록 값은 한 번 정해지면 바뀌지 않음
@@ -195,7 +205,7 @@ function MixedCompare({ label, domestic, overseas }: { label: string; domestic: 
   const rows: MixRow[] = [
     ...domestic.map((d) => ({ kind: "domestic" as const, title: d.title, price: d.price, per100: d.per100, unit: d.unit, go: d.go,
       sub: (d.total_known ? "배송비 포함" : "배송비는 판매처에서 확인") + (d.rocket ? " · 로켓배송" : "") })),
-    ...overseas.filter((p) => p.landed).map((p) => ({ kind: "overseas" as const, title: p.title, price: p.landed!.landed_krw,
+    ...overseas.filter((p) => p.landed).map((p) => ({ kind: "overseas" as const, title: p.title, price: p.landed!.landed_krw, go: p.url,
       per100: p.landed!.per100, unit: p.landed!.unit,
       sub: `판매가 약 ${(p.landed!.landed_krw - p.landed!.ship_krw - p.landed!.tax_krw).toLocaleString()}원 + 국제 배송 추정 ${p.landed!.ship_krw.toLocaleString()}원`
         + (p.landed!.taxed ? ` + 관부가세 추정 ${p.landed!.tax_krw.toLocaleString()}원` : " · 면세 한도 안(판매가 기준)") })),

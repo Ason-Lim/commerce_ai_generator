@@ -2116,7 +2116,7 @@ def direct_buy_block(label: str | None, text: str | None, picks: list[dict] | No
     ref = savings.domestic_ref(picks) if it.status != "blocked" else None
     rows = savings.domestic_rows([dict(c, go=f"/go/{sid}/k/{c.get('key')}") if sid and c.get("key") else c
                                   for c in picks or []]) if it.status != "blocked" else None
-    return B.direct_buy(it.key, it.label, it.status, it.note or None, ref, rows)
+    return B.direct_buy(it.key, it.label, it.status, it.note or None, ref, rows, (label or "").strip()[:40] or None)
 
 
 def naver_search_links(label: str, text: str, picks: list[dict] | None = None) -> list[tuple[str, str]]:

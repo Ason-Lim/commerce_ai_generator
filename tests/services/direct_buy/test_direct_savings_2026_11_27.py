@@ -125,3 +125,31 @@ def test_new_items(text, key):
 @pytest.mark.parametrize("text", ["소금빵 추천", "버터 추천", "아보카도 추천", "고구마 추천"])
 def test_new_items_do_not_catch_ordinary(text):
     assert items.match(text.split()[0], text) is None
+
+
+# ── 2026-11-27 '버터 쿠키' 검토: 꾸밈말을 해외 검색어에, 엉뚱한 상품(Butterscotch Bites) 거르기 ──
+@pytest.mark.parametrize("term,q", [("버터 쿠키", "butter cookies"), ("쿠키", "cookies"), ("초코칩 쿠키", "chocolate chip cookies"),
+                                    ("스페인 올리브유", "spanish extra virgin olive oil"), ("마누카 꿀", "manuka raw honey"),
+                                    ("올리브유", "extra virgin olive oil")])
+def test_query_for_uses_customer_modifiers(term, q):
+    assert items.query_for(items.match(term, term), term) == q
+
+
+def test_cookie_must_filter_and_term_reaches_shopify():
+    http = FakeHttp([product("Ho Ho Ho Butterscotch Bites Tin 200g"), product("Danish Butter Cookies Tin 454g", url="https://d.example/p")])
+    data = service.search_item("cookie", http=http, term="버터 쿠키")
+    assert [p["title"] for p in data["products"]] == ["Danish Butter Cookies Tin 454g"]
+    assert http.calls[-1]["json"]["params"]["arguments"]["catalog"]["query"] == "butter cookies"
+
+
+def test_block_carries_customer_term_only_when_different():
+    assert direct_buy_block("버터 쿠키", "버터 쿠키 추천")["data"]["term"] == "버터 쿠키"
+    assert "term" not in direct_buy_block("올리브유", "올리브유 추천")["data"]
+
+
+def test_route_passes_term(monkeypatch):
+    from app.main import app
+    seen = {}
+    monkeypatch.setattr(service, "search_item", lambda key, ref=None, term=None, **k: seen.update(term=term) or {"ok": True})
+    TestClient(app).get("/api/direct/item/cookie", params={"term": "버터 쿠키"})
+    assert seen == {"term": "버터 쿠키"}

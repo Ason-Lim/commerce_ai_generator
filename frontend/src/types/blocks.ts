@@ -30,7 +30,9 @@ export interface DirectBuyBlock { type: "direct_buy"; data: { key: string; label
   /** 이번 대화 쿠팡 후보의 100g(ml)당 중간값 — 직구 추정가와 견줄 때만 */
   domestic?: { per100: number; unit: "g" | "ml"; n: number };
   /** 같은 답의 국내 추천 후보 — 국내·직구 함께 비교 표 */
-  compare?: DomesticRow[] } }
+  compare?: DomesticRow[];
+  /** 손님 검색어 ('버터 쿠키') — 꾸밈말을 해외 검색어에 반영 */
+  term?: string } }
 export interface DomesticRow { title: string; price: number; total_known: boolean; per100: number | null; unit: "g" | "ml" | null;
   rocket: boolean; mall?: string | null; go?: string | null }
 export interface SearchLinksBlock { type: "search_links"; data: { title: string; badge?: string; links: SearchLink[]; note?: string } }

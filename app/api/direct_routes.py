@@ -21,9 +21,10 @@ def direct_search(q: str = Query("", max_length=100)):
 
 
 @router.get("/api/direct/item/{key}")
-def direct_item(key: str, ref: str | None = None, unit: str | None = None, n: str | None = None):
+def direct_item(key: str, ref: str | None = None, unit: str | None = None, n: str | None = None,
+                term: str | None = Query(None, max_length=40)):
     """대화 결과 아래 '해외 직구' 칸 (2026-11-27) — 품목표의 품목만. ref·unit·n: 국내 후보 100g(ml)당 중간값(저장 안 함)."""
-    return JSONResponse(service.search_item(key[:40], ref=savings.parse_ref(ref, unit, n)), headers=NO_STORE)
+    return JSONResponse(service.search_item(key[:40], ref=savings.parse_ref(ref, unit, n), term=term), headers=NO_STORE)
 
 
 @router.get("/api/direct/recheck")

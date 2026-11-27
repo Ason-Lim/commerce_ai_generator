@@ -62,7 +62,7 @@ def search_links(links: list[dict], *, title: str, badge: str | None = None, not
 
 
 def direct_buy(key: str, label: str, status: str, note: str | None = None, domestic: dict | None = None,
-               compare: list[dict] | None = None) -> dict:
+               compare: list[dict] | None = None, term: str | None = None) -> dict:
     """해외 직구 칸 (2026-11-27) — Shopify 상품은 담지 않는다(저장·캐시 금지). 화면이 /api/direct/item/{key} 로 그때 조회.
     status blocked 면 조회 없이 안내 한 줄만."""
     data: dict = {"key": key, "label": label, "status": status}
@@ -70,6 +70,8 @@ def direct_buy(key: str, label: str, status: str, note: str | None = None, domes
         data["note"] = note
     if domestic:                       # {"per100", "unit", "n"} — 직구 추정가와 견줄 국내 후보 중간값(화면이 그대로 넘김)
         data["domestic"] = domestic
+    if term and term != label:         # 손님 검색어 ('버터 쿠키') — 꾸밈말을 해외 검색어에 반영
+        data["term"] = term
     if compare:                        # 국내 추천 후보 줄 — 같은 응답 상품 목록의 값 (국내·직구 함께 비교 표)
         data["compare"] = compare
     return {"type": "direct_buy", "data": data}

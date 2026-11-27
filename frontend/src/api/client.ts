@@ -301,9 +301,12 @@ export type DirectItem = { enabled: boolean; ok: boolean; error: string | null; 
   compare?: { ref: DirectRef; best: DirectSaving | null; basis: string } | null };
 
 /** 대화 결과 아래 해외 직구 칸 (2026-11-27) — 품목표 품목만, 저장하지 않음. */
-export async function fetchDirectItem(key: string, signal?: AbortSignal, ref?: DirectRef): Promise<DirectItem | null> {
+export async function fetchDirectItem(key: string, signal?: AbortSignal, ref?: DirectRef, term?: string): Promise<DirectItem | null> {
   if (API_MODE === "mock") return null;
-  const qs = ref ? `?ref=${ref.per100}&unit=${ref.unit}&n=${ref.n}` : "";
+  const p = new URLSearchParams();
+  if (ref) { p.set("ref", String(ref.per100)); p.set("unit", ref.unit); p.set("n", String(ref.n)); }
+  if (term) p.set("term", term);
+  const qs = p.toString() ? `?${p}` : "";
   const r = await fetch(`/api/direct/item/${encodeURIComponent(key)}${qs}`, { signal, cache: "no-store" });
   if (!r.ok) return null;
   return (await r.json()) as DirectItem;
