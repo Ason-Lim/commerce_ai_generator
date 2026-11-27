@@ -17,6 +17,7 @@ FX = {"rate": 1333.88, "source": "관세청 과세환율(수입)", "date": "2026
 def env(monkeypatch):
     for k in ("DIRECT_IN_CHAT", "SHOPIFY_CATALOG"):
         monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("DIRECT_LANDED_ESTIMATE", "1")     # 이 파일은 추정식 자체를 시험 (기본은 꺼짐 — 아래 별도 시험)
     monkeypatch.setattr(service, "_fx", lambda: dict(FX))
 
 
@@ -37,12 +38,11 @@ def test_domestic_ref_median_and_unit():
 
 def test_estimate_only_when_cheaper_by_15pct_same_unit():
     ref = {"per100": 5000, "unit": "ml", "n": 3}
-    # 500ml 15달러 → 20,008원 + 배송 14달러(18,674원) → 약 7,740원/100ml → 국내보다 비쌈
+    # 배송 무게: ml×1.4(용기) → 500ml=700g(2단위 18달러), 1L=1.4kg(3단위 22달러), 3L=4.2kg(9단위 46달러)
     assert savings.estimate("Olive Oil 500ml", 20008, ref, 1333.88) is None
-    # 1L 20달러 → 26,678원 + 배송 18달러(24,010원) = 50,688 → 5,069원/100ml → 국내 5,000 보다 비쌈
     assert savings.estimate("Olive Oil 1L", 26678, ref, 1333.88) is None
-    cheap = savings.estimate("Olive Oil 3L", 40000, ref, 1333.88)       # 40,000 + 34달러(45,352) = 85,352 → 2,845원/100ml
-    assert cheap["pct"] == 40 and cheap["unit"] == "ml" and cheap["taxed"] is False
+    cheap = savings.estimate("Olive Oil 3L", 40000, ref, 1333.88)       # 40,000 + 46달러(61,358) = 101,358 → 3,379원/100ml
+    assert cheap["pct"] == 30 and cheap["unit"] == "ml" and cheap["taxed"] is False
     assert savings.estimate("Olive Oil 3kg", 40000, ref, 1333.88) is None      # g 와 ml 는 견주지 않음
     assert savings.estimate("Olive Oil", 40000, ref, 1333.88) is None
 
@@ -98,7 +98,8 @@ def test_compare_rows_carry_go_link_with_session():
 
 def test_quote_for_every_readable_product():
     q = savings.quote("ATLAS Olive Oil 16,9 OZ (500 ML)", 28000, 1333.88)
-    assert q["unit"] == "ml" and q["qty"] == 500 and q["landed_krw"] == 46700 and q["per100"] == 9330 and not q["taxed"]
+    # ml 는 용기 무게 근사(×1.4) → 700g → 500g 단위 2개: 10+4×2=18달러
+    assert q["unit"] == "ml" and q["qty"] == 500 and q["landed_krw"] == 52000 and not q["taxed"]
     assert savings.quote("Olive Oil", 28000, 1333.88) is None
 
 
@@ -153,3 +154,19 @@ def test_route_passes_term(monkeypatch):
     monkeypatch.setattr(service, "search_item", lambda key, ref=None, term=None, **k: seen.update(term=term) or {"ok": True})
     TestClient(app).get("/api/direct/item/cookie", params={"term": "버터 쿠키"})
     assert seen == {"term": "버터 쿠키"}
+
+
+
+# ── 2026-11-27 GPT 검토(높음): 실측 운임 전에는 추정 배지·도착 추정·순위를 고객 화면에 내지 않음 ──
+def test_estimate_off_by_default_only_sale_price(monkeypatch):
+    monkeypatch.delenv("DIRECT_LANDED_ESTIMATE", raising=False)
+    big = product("Spanish Extra Virgin Olive Oil 3L", cents=2999)
+    big["variants"][0]["title"] = "Default Title"
+    data = service.search_item("olive_oil", http=FakeHttp([big]), ref={"per100": 5000, "unit": "ml", "n": 4})
+    p = data["products"][0]
+    assert p["saving"] is None and p["landed"] is None and data["compare"] is None
+    assert p["sale"]["unit"] == "ml" and p["sale"]["qty"] == 3000 and p["sale"]["per100"] > 0
+
+
+def test_ml_ship_weight_heavier_than_g():
+    assert savings.ship_weight_g(500, "ml") > savings.ship_weight_g(500, "g")

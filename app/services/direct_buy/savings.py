@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import os
 import re
 
 # 값은 연구 모듈 trends/forecast/overseas.py 와 같게 둔다 — 고객 경로가 그 모듈을 불러오지 않는 원칙(test_ucp_catalog) 때문에 따로 적음.
@@ -20,6 +21,25 @@ DEFAULT_DUTY = 0.08
 TARIFF = {"올리브유": {"duty": 0.08}, "커피 원두": {"duty": 0.08}, "초콜릿": {"duty": 0.08}, "견과류": {"duty": 0.08}, "파스타 면": {"duty": 0.08}}
 
 SAVE_MIN = 15
+
+
+def estimate_enabled() -> bool:
+    """2026-11-27 GPT 검토(높음): 국제 배송비가 자리 표시 값이고 품목별 세율·발송국이 없어, 실제 운임·통관 근거를 얻기 전에는
+    '약 n% 저렴'·도착 추정가·'가장 낮음' 정렬을 고객 화면에 내지 않는다. 실측 운임을 넣은 뒤 DIRECT_LANDED_ESTIMATE=1."""
+    return (os.getenv("DIRECT_LANDED_ESTIMATE") or "0").strip() == "1"
+
+
+def ship_weight_g(qty: float, unit: str) -> float:
+    """배송 무게 근사 — ml 는 용기(유리병 등) 무게가 커서 g 와 같게 보지 않는다(GPT 검토). 실측 전 근사값."""
+    return qty * (1.4 if unit == "ml" else 1.1)
+
+
+def sale_info(title: str, krw: float | None) -> dict | None:
+    """판매가만으로 본 양·100g(ml)당 — 배송비·관부가세 미포함임을 화면이 함께 밝힌다."""
+    a = amount(title)
+    if not a or krw is None:
+        return None
+    return {"qty": a[0], "unit": a[1], "krw": int(round(krw, -2)), "per100": int(round(krw / a[0] * 100, -1))}
 THRESHOLD_USD = 150.0          # 발송국을 모르므로 낮은 쪽 한도로 본다
 BASIS = "쿠팡 추천 후보 {n}개의 {unit}당 중간값과 견준 추정이에요. 국제 배송비·관부가세 추정을 넣었고, 실제 금액은 판매처 결제 화면에서 정해져요."
 
@@ -65,9 +85,9 @@ def domestic_ref(picks: list[dict] | None) -> dict | None:
     return {"per100": int(round(med)), "unit": unit, "n": len(vals)}
 
 
-def landed(krw: float, qty: float, usd_rate: float, *, label: str = "") -> dict:
-    """원화 판매가 + 배송·세금 추정 → 도착 추정 총액."""
-    units = max(1, int(qty / 500 + 0.999))
+def landed(krw: float, qty: float, usd_rate: float, *, label: str = "", unit: str = "g") -> dict:
+    """원화 판매가 + 배송·세금 추정 → 도착 추정 총액. (estimate_enabled() 일 때만 고객 화면에 나감)"""
+    units = max(1, int(ship_weight_g(qty, unit) / 500 + 0.999))
     ship = (SHIPPING_USD["base"] + SHIPPING_USD["per_500g"] * units) * usd_rate
     over = krw / usd_rate > THRESHOLD_USD
     rate = TARIFF.get(label, {}).get("duty", DEFAULT_DUTY)
@@ -83,7 +103,7 @@ def quote(title: str, krw: float | None, usd_rate: float | None, *, label: str =
     a = amount(title)
     if not a:
         return None
-    land = landed(krw, a[0], usd_rate, label=label)
+    land = landed(krw, a[0], usd_rate, label=label, unit=a[1])
     return {"qty": a[0], "unit": a[1], "landed_krw": int(round(land["total"], -2)), "ship_krw": int(round(land["ship"], -2)),
             "tax_krw": int(round(land["tax"], -2)), "per100": int(round(land["total"] / a[0] * 100, -1)), "taxed": land["over"]}
 
@@ -106,7 +126,7 @@ def estimate(title: str, krw: float | None, ref: dict | None, usd_rate: float | 
     a = amount(title)
     if not a or a[1] != ref.get("unit"):
         return None
-    land = landed(krw, a[0], usd_rate, label=label)
+    land = landed(krw, a[0], usd_rate, label=label, unit=a[1])
     per100 = land["total"] / a[0] * 100
     pct = (1 - per100 / ref["per100"]) * 100
     if pct < SAVE_MIN:

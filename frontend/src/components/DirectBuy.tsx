@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ExternalLink, Globe2, Search, ShieldAlert, Sparkles } from "lucide-react";
 import { fetchDirectItem, fetchDirectRecheck, fetchDirectSearch, type DirectFx, type DirectRecheck, type DirectItem, type DirectProduct, type DirectSearch, type DirectStep } from "../api/client";
 import type { DirectBuyBlock, DomesticRow } from "../types/blocks";
@@ -50,11 +50,13 @@ function Guide({ p, steps, onClose }: { p: DirectProduct; steps: DirectStep[]; o
     return () => ctl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 같은 상품이면 한 번만
   }, [p.url]);
+  const box = useRef<HTMLDivElement>(null);       // 비교 표에서 열어도 도우미가 보이게
+  useEffect(() => { box.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" }); }, [p.url]);
   const fresh = chk && chk !== "loading" ? chk : null;
   const soldOut = fresh?.state === "sold_out";
   const href = (fresh?.ok && fresh.url) || p.url;
   return (
-    <div className="mt-3 rounded-2xl border border-accent/40 bg-white p-4" role="region" aria-label={`${p.title} 직구 도우미`}>
+    <div ref={box} className="mt-3 rounded-2xl border border-accent/40 bg-white p-4" role="region" aria-label={`${p.title} 직구 도우미`}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-semibold leading-6">직구 도우미 · <span className="font-normal">{p.title}</span></p>
         <button type="button" onClick={onClose} className="shrink-0 text-xs text-ink3 underline">닫기</button>
@@ -91,8 +93,11 @@ function Guide({ p, steps, onClose }: { p: DirectProduct; steps: DirectStep[]; o
   );
 }
 
-function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]; steps: DirectStep[]; compact?: boolean }) {
-  const [open, setOpen] = useState<string | null>(null);
+function ProductGrid({ items, steps, compact = false, open: openProp, onOpen }: {
+  items: DirectProduct[]; steps: DirectStep[]; compact?: boolean; open?: string | null; onOpen?: (url: string | null) => void }) {
+  const [openSelf, setOpenSelf] = useState<string | null>(null);
+  const open = onOpen ? (openProp ?? null) : openSelf;
+  const setOpen = onOpen ?? setOpenSelf;
   const picked = items.find((p) => p.url === open);
   if (compact) {
     // 대화 안 칸 — 작은 사진 + 한 줄씩 (추천 카드보다 조용하게, 2026-11-27)
@@ -114,9 +119,12 @@ function ProductGrid({ items, steps, compact = false }: { items: DirectProduct[]
                   </span>
                 </span>
               </button>
-              {/* 2026-11-27 상품 링크 — 줄을 누르면 직구 도우미, 이 링크는 판매처 상품 화면으로 바로 */}
-              <a href={p.url} target="_blank" rel="noopener nofollow" className="mb-2 ml-[68px] inline-flex items-center gap-1 text-[12px] text-ink3 underline underline-offset-2">
-                판매처 상품 보기 <ExternalLink size={12} aria-hidden />
+              {/* 상품 링크 (2026-11-27). GPT 검토: 화면에서 누르면 바로 나가지 않고 직구 도우미(가격·재고 재확인)를 거침.
+                  href 는 인쇄·PDF 에서도 주소가 남도록 둠. */}
+              <a href={p.url} target="_blank" rel="noopener nofollow"
+                onClick={(e) => { e.preventDefault(); setOpen(p.url); }}
+                className="mb-2 ml-[68px] inline-flex items-center gap-1 text-[12px] text-ink3 underline underline-offset-2">
+                판매처 상품 보기 · 가격·재고 다시 확인 <ExternalLink size={12} aria-hidden />
               </a>
             </li>
           ))}
@@ -155,6 +163,7 @@ export function DirectBuyInline({ block }: { block: DirectBuyBlock }) {
   const { key, label, status, note, domestic, compare, term } = block.data;
   const [data, setData] = useState<DirectItem | null>(null);
   const [state, setState] = useState<"loading" | "done" | "error">(status === "blocked" ? "done" : "loading");
+  const [openUrl, setOpenUrl] = useState<string | null>(null);   // 직구 도우미 — 목록·비교 표 링크가 함께 씀
   useEffect(() => {
     if (status === "blocked") return;
     const ctl = new AbortController();
@@ -188,46 +197,58 @@ export function DirectBuyInline({ block }: { block: DirectBuyBlock }) {
           <span className="block text-[11.5px] text-emerald-700/80">{data.compare.basis}</span>
         </p>
       )}
-      <ProductGrid items={data.products} steps={data.checklist} compact />
-      {compare && compare.length > 0 && <MixedCompare label={label} domestic={compare} overseas={data.products} />}
+      <ProductGrid items={data.products} steps={data.checklist} compact open={openUrl} onOpen={setOpenUrl} />
+      {compare && compare.length > 0 && <MixedCompare label={label} domestic={compare} overseas={data.products} onOpen={setOpenUrl} />}
       <FxNote fx={data.fx} />
       <p className="mt-1 text-right text-[11px] text-ink3">출처 {data.source} · 방금 조회 · 저장하지 않음 · 상품을 누르면 직구 도우미</p>
     </section>
   );
 }
 
-/** 국내·직구 함께 비교 (2026-11-27) — 같은 양(100g·100ml) 기준. 직구는 배송·세금 추정을 넣은 도착 추정가. */
+/** 국내·직구 함께 비교 (2026-11-27).
+ * GPT 검토(11-27, 높음): 국제 배송비·품목별 세율·발송국이 확인되지 않아, 기본은 '판매가만' 나란히 놓고 순위·'가장 낮음'을 매기지 않는다.
+ * 실측 운임이 들어가 서버가 도착 추정(landed)을 주면(DIRECT_LANDED_ESTIMATE=1) 그때만 같은 양 기준 낮은 순. */
 type MixRow = { kind: "domestic" | "overseas"; title: string; price: number; per100: number | null; unit: string | null;
-  sub: string; go?: string | null };
+  sub: string; go?: string | null; url?: string; priceLabel?: string; per100Note?: string };
 
-function MixedCompare({ label, domestic, overseas }: { label: string; domestic: DomesticRow[]; overseas: DirectProduct[] }) {
+function MixedCompare({ label, domestic, overseas, onOpen }: {
+  label: string; domestic: DomesticRow[]; overseas: DirectProduct[]; onOpen: (url: string) => void }) {
   const [open, setOpen] = useState(false);
-  const rows: MixRow[] = [
-    ...domestic.map((d) => ({ kind: "domestic" as const, title: d.title, price: d.price, per100: d.per100, unit: d.unit, go: d.go,
-      sub: (d.total_known ? "배송비 포함" : "배송비는 판매처에서 확인") + (d.rocket ? " · 로켓배송" : "") })),
-    ...overseas.filter((p) => p.landed).map((p) => ({ kind: "overseas" as const, title: p.title, price: p.landed!.landed_krw, go: p.url,
-      per100: p.landed!.per100, unit: p.landed!.unit,
-      sub: `판매가 약 ${(p.landed!.landed_krw - p.landed!.ship_krw - p.landed!.tax_krw).toLocaleString()}원 + 국제 배송 추정 ${p.landed!.ship_krw.toLocaleString()}원`
-        + (p.landed!.taxed ? ` + 관부가세 추정 ${p.landed!.tax_krw.toLocaleString()}원` : " · 면세 한도 안(판매가 기준)") })),
-  ];
-  const units = rows.map((r) => r.unit).filter(Boolean) as string[];
-  const unit = units.sort((a, b) => units.filter((u) => u === b).length - units.filter((u) => u === a).length)[0] ?? null;
-  const same = rows.filter((r) => r.per100 != null && r.unit === unit).sort((a, b) => (a.per100 ?? 0) - (b.per100 ?? 0));
-  const rest = rows.filter((r) => !same.includes(r));
-  const best = same[0];
-  const nOver = rows.filter((r) => r.kind === "overseas").length;
-  if (!nOver) return null;
+  const estimated = overseas.some((p) => p.landed);
+  const dom: MixRow[] = domestic.map((d) => ({ kind: "domestic", title: d.title, price: d.price, per100: d.per100, unit: d.unit, go: d.go,
+    sub: (d.total_known ? "배송비 포함" : "배송비는 판매처에서 확인") + (d.rocket ? " · 로켓배송" : "") }));
+  const over: MixRow[] = estimated
+    ? overseas.filter((p) => p.landed).map((p) => ({ kind: "overseas", title: p.title, url: p.url, price: p.landed!.landed_krw,
+        per100: p.landed!.per100, unit: p.landed!.unit, priceLabel: "도착 추정 약 ",
+        sub: `판매가 약 ${(p.landed!.landed_krw - p.landed!.ship_krw - p.landed!.tax_krw).toLocaleString()}원 + 국제 배송 추정 ${p.landed!.ship_krw.toLocaleString()}원`
+          + (p.landed!.taxed ? ` + 관부가세 추정 ${p.landed!.tax_krw.toLocaleString()}원` : "") }))
+    : overseas.filter((p) => p.sale || p.krw_estimate != null).map((p) => ({ kind: "overseas", title: p.title, url: p.url,
+        price: p.sale?.krw ?? p.krw_estimate!, per100: p.sale?.per100 ?? null, unit: p.sale?.unit ?? null,
+        priceLabel: "판매가 약 ", per100Note: " (판매가만)",
+        sub: "국제 배송비·관부가세 미포함 — 판매처 결제 화면에서 확인" }));
+  if (!over.length) return null;
+  const units = [...dom, ...over].map((r) => r.unit).filter(Boolean) as string[];
+  const unit = [...units].sort((a, b) => units.filter((u) => u === b).length - units.filter((u) => u === a).length)[0] ?? null;
+  let rows: MixRow[]; let best: MixRow | undefined;
+  if (estimated) {
+    const same = [...dom, ...over].filter((r) => r.per100 != null && r.unit === unit).sort((a, b) => (a.per100 ?? 0) - (b.per100 ?? 0));
+    rows = [...same, ...[...dom, ...over].filter((r) => !same.includes(r))];
+    best = same[0];
+  } else {
+    rows = [...dom, ...over];                                    // 국내(추천 순) 다음 해외 — 순위 없음
+  }
   return (
     <div className="mt-3">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
         className="rounded-full border border-line bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink2">
-        {open ? "비교 닫기" : `국내 상품과 함께 비교 (국내 ${domestic.length} · 직구 ${nOver})`}
+        {open ? "비교 닫기" : `국내 상품과 함께 보기 (국내 ${dom.length} · 직구 ${over.length})`}
       </button>
       {open && (
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[560px] text-left text-[12.5px]">
             <caption className="pb-1 text-left text-[12px] text-ink3">
-              {label} · {unit ? `같은 양(100${unit})으로 견줘 낮은 순` : "양을 읽지 못해 가격만"} — 추천 순서가 아니에요
+              {label} · {estimated ? `같은 양(100${unit})으로 견줘 낮은 순 — 추천 순서가 아니에요`
+                : "국내와 해외 직구는 비용 구성이 달라 순위를 매기지 않아요"}
             </caption>
             <thead><tr className="border-b border-line text-ink3">
               <th className="py-1.5 pr-2 font-medium">구분</th><th className="py-1.5 pr-2 font-medium">상품</th>
@@ -235,27 +256,33 @@ function MixedCompare({ label, domestic, overseas }: { label: string; domestic: 
               <th className="py-1.5 text-right font-medium">{unit ? `100${unit}당` : "양 기준"}</th>
             </tr></thead>
             <tbody>
-              {[...same, ...rest].map((r, i) => (
+              {rows.map((r, i) => (
                 <tr key={`${r.kind}-${i}`} className={`border-b border-line/60 align-top ${r === best ? "bg-emerald-50/60" : ""}`}>
                   <td className="py-2 pr-2"><span className={`tag ${r.kind === "domestic" ? "bg-chip text-ink2" : "bg-sky-50 text-sky-800"}`}>
                     {r.kind === "domestic" ? "국내" : "해외직구"}</span></td>
                   <td className="py-2 pr-2">
                     {r.go ? <a href={r.go} target="_blank" rel="noopener nofollow" className="line-clamp-2 underline-offset-2 hover:underline">{r.title}</a>
+                      : r.url ? <a href={r.url} target="_blank" rel="noopener nofollow" onClick={(e) => { e.preventDefault(); onOpen(r.url!); }}
+                          className="line-clamp-2 underline-offset-2 hover:underline" title="직구 도우미에서 가격·재고를 다시 확인해요">{r.title}</a>
                       : <span className="line-clamp-2">{r.title}</span>}
                     <span className="block text-[11px] text-ink3">{r.sub}</span>
                   </td>
-                  <td className="whitespace-nowrap py-2 pr-2 text-right tabular-nums">
-                    {r.kind === "overseas" ? "도착 추정 약 " : ""}{r.price.toLocaleString()}원</td>
+                  <td className="whitespace-nowrap py-2 pr-2 text-right tabular-nums">{r.priceLabel ?? ""}{r.price.toLocaleString()}원</td>
                   <td className="whitespace-nowrap py-2 text-right tabular-nums">
-                    {r.per100 != null && r.unit === unit ? <>{r.per100.toLocaleString()}원{r === best && <span className="ml-1 tag bg-emerald-100 text-emerald-800">가장 낮음</span>}</> : <span className="text-ink3">양 표기 없음</span>}
+                    {r.per100 != null && r.unit === unit
+                      ? <>{r.per100.toLocaleString()}원{r.per100Note && <span className="text-ink3">{r.per100Note}</span>}
+                          {r === best && <span className="ml-1 tag bg-emerald-100 text-emerald-800">가장 낮음</span>}</>
+                      : <span className="text-ink3">양 표기 없음</span>}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           <p className="mt-1.5 text-[11px] leading-4 text-ink3">
-            국내 가격은 추천 때 확인한 값이고, 직구는 관세청 과세환율 환산 + 국제 배송비 추정(10달러 + 500g당 4달러) + 150달러 초과 시
-            관세 8%·부가세 10% 추정이에요. 양은 상품명 표기로 읽었어요. 실제 금액은 각 판매처 결제 화면에서 정해져요.
+            {estimated
+              ? "직구는 관세청 과세환율 환산 + 국제 배송비 추정 + 면세 한도 초과 시 관부가세 추정이에요. "
+              : "해외 직구 가격은 판매가를 관세청 과세환율로 바꾼 참고 금액이며, 국제 배송비·관부가세는 들어 있지 않아요(발송국·운임·품목별 세율이 확인되지 않음). "}
+            국내 가격은 추천 때 확인한 값이에요. 양은 상품명 표기로 읽었어요. 실제 금액은 각 판매처 결제 화면에서 정해져요.
           </p>
         </div>
       )}
