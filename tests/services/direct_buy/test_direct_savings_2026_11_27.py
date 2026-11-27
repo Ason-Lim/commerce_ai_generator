@@ -83,10 +83,28 @@ def test_search_item_without_ref_has_no_compare():
 
 
 def test_chat_block_carries_domestic_ref_only():
-    picks = [{"per100ml": 1980, "title": "x", "price": 19800}, {"per100ml": 2400}]
+    picks = [{"per100ml": 1980, "title": "x", "price": 19800}, {"per100ml": 2400, "title": "y", "price": 12000}]
     blk = direct_buy_block("올리브유", "올리브유 추천해줘", picks)
     assert blk["data"]["domestic"] == {"per100": 2190, "unit": "ml", "n": 2}
-    assert set(blk["data"]) == {"key", "label", "status", "domestic"}
+    assert set(blk["data"]) == {"key", "label", "status", "domestic", "compare"}
+    assert [r["per100"] for r in blk["data"]["compare"]] == [1980, 2400] and blk["data"]["compare"][0]["unit"] == "ml"
+
+
+def test_compare_rows_carry_go_link_with_session():
+    picks = [{"key": "k1", "rank": 1, "title": "올리브유 1L", "price": 19800, "per100ml": 1980}]
+    blk = direct_buy_block("올리브유", "올리브유 추천해줘", picks, "sid123")
+    assert blk["data"]["compare"][0]["go"] == "/go/sid123/k/k1"
+
+
+def test_quote_for_every_readable_product():
+    q = savings.quote("ATLAS Olive Oil 16,9 OZ (500 ML)", 28000, 1333.88)
+    assert q["unit"] == "ml" and q["qty"] == 500 and q["landed_krw"] == 46700 and q["per100"] == 9330 and not q["taxed"]
+    assert savings.quote("Olive Oil", 28000, 1333.88) is None
+
+
+def test_search_item_adds_landed_for_compare_table():
+    data = service.search_item("olive_oil", http=FakeHttp([product("Olive Oil 1L", cents=2000)]))
+    assert data["products"][0]["landed"]["unit"] == "ml"
 
 
 def test_route_passes_ref(monkeypatch):

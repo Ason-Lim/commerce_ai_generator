@@ -120,6 +120,7 @@ def search_item(key: str, *, limit: int = 6, http=None, ref: dict | None = None)
         krw = _krw(p.get("price"), p.get("currency"), rate)
         size = p.get("option") if savings.amount(p.get("option")) else p.get("title")   # 가격은 옵션 값 — 옵션 양을 먼저
         p["saving"] = savings.estimate(size or "", krw, ref, usd_rate, label=it.label)
+        p["landed"] = savings.quote(size or "", krw, usd_rate, label=it.label)   # 국내·직구 함께 비교 표
     best = max((p["saving"] for p in products if p.get("saving")), key=lambda s: s["pct"], default=None)
     compare = None
     if ref:

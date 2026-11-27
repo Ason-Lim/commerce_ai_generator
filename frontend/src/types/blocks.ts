@@ -28,7 +28,11 @@ export interface SearchLink { query: string; url: string; check: string }
 /** 해외 직구 칸 (2026-11-27) — 상품은 담지 않음, 화면이 /api/direct/item/{key} 로 조회 */
 export interface DirectBuyBlock { type: "direct_buy"; data: { key: string; label: string; status: "ok" | "caution" | "blocked"; note?: string;
   /** 이번 대화 쿠팡 후보의 100g(ml)당 중간값 — 직구 추정가와 견줄 때만 */
-  domestic?: { per100: number; unit: "g" | "ml"; n: number } } }
+  domestic?: { per100: number; unit: "g" | "ml"; n: number };
+  /** 같은 답의 국내 추천 후보 — 국내·직구 함께 비교 표 */
+  compare?: DomesticRow[] } }
+export interface DomesticRow { title: string; price: number; total_known: boolean; per100: number | null; unit: "g" | "ml" | null;
+  rocket: boolean; mall?: string | null; go?: string | null }
 export interface SearchLinksBlock { type: "search_links"; data: { title: string; badge?: string; links: SearchLink[]; note?: string } }
 
 export interface ChipsBlock {
