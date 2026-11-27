@@ -29,7 +29,7 @@ def con(monkeypatch):
     called = []
     c = C.Console.__new__(C.Console)
     c.ws = {}
-    monkeypatch.setattr(c, "_analyze", lambda w, p, today: called.append(p) or [], raising=False)
+    monkeypatch.setattr(c, "_analyze", lambda w, p, today, draft=False: called.append(p) or [], raising=False)
     c.called = called
     return c
 
