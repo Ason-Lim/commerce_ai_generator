@@ -1270,7 +1270,7 @@ class ChatService:
             nav = naver_search_block(label, text, picked["picks"])
             if nav:
                 blocks.append(nav)
-            dbk = direct_buy_block(label, text)          # 2026-11-27 품목표에 맞으면 해외 직구 칸 (순위·후보와 별개)
+            dbk = direct_buy_block(label, text, picked["picks"] + picked["others"])   # 2026-11-27 품목표에 맞으면 해외 직구 칸 (순위·후보와 별개)
             if dbk:
                 blocks.append(dbk)
             if not budget:
@@ -2082,7 +2082,7 @@ def _fresh_produce(label: str) -> bool:
     return any(w in produce for w in words)
 
 
-def direct_buy_block(label: str | None, text: str | None) -> dict | None:
+def direct_buy_block(label: str | None, text: str | None, picks: list[dict] | None = None) -> dict | None:
     """해외 직구 칸 (2026-11-27 사용자 요청: 식품을 검색하면 Shopify 에도 있으면 함께). 품목표(direct_buy/items.py)에 맞을 때만.
     추천 후보·순위와 섞지 않는 별도 칸이며, 상품은 화면이 그때 조회한다(저장 없음). DIRECT_IN_CHAT=0 이면 끔."""
     if (os.getenv("DIRECT_IN_CHAT") or "1").strip() == "0" or (os.getenv("SHOPIFY_CATALOG") or "1").strip() == "0":
@@ -2094,7 +2094,10 @@ def direct_buy_block(label: str | None, text: str | None) -> dict | None:
     it = direct_items.match(label, text)
     if it is None:
         return None
-    return B.direct_buy(it.key, it.label, it.status, it.note or None)
+    from app.services.direct_buy import savings
+
+    ref = savings.domestic_ref(picks) if it.status != "blocked" else None
+    return B.direct_buy(it.key, it.label, it.status, it.note or None, ref)
 
 
 def naver_search_links(label: str, text: str, picks: list[dict] | None = None) -> list[tuple[str, str]]:

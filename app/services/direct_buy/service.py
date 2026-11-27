@@ -8,7 +8,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 
-from app.services.direct_buy import catalog, items, rules
+from app.services.direct_buy import catalog, items, rules, savings
 from app.services.public_price import fx
 
 NOTICE = ("해외 판매처(Shopify 상점) 상품이에요. trendguide는 판매 당사자가 아니며 주문·결제·배송·환불은 판매처가 맡아요. "
@@ -101,8 +101,9 @@ def search(q: str, *, limit: int = 12, http=None) -> dict:
             "checklist": rules.checklist("quarantine" if blocked else "ok")}
 
 
-def search_item(key: str, *, limit: int = 6, http=None) -> dict:
-    """대화 결과 아래 칸 (2026-11-27) — 품목표의 영어 검색어로 찾는다. blocked 는 부르지 않고 안내만."""
+def search_item(key: str, *, limit: int = 6, http=None, ref: dict | None = None) -> dict:
+    """대화 결과 아래 칸 (2026-11-27) — 품목표의 영어 검색어로 찾는다. blocked 는 부르지 않고 안내만.
+    ref: 이번 대화 쿠팡 후보의 100g(ml)당 중간값(savings.parse_ref) — 있으면 '직구 추정 약 n% 저렴'을 붙인다(15% 이상일 때만)."""
     it = items.by_key(key)
     if it is None:
         return {"enabled": catalog.enabled(), "ok": False, "error": "모르는 품목", "products": []}
@@ -114,4 +115,35 @@ def search_item(key: str, *, limit: int = 6, http=None) -> dict:
     res = catalog.search(it.query, limit=limit + 4, http=http)
     rate = _fx() if res.ok else None
     products = [_card(o, it.status, rate) for o in res.offers if rules.keep(o.title, item_status="ok")][:limit] if res.ok else []
-    return {**base, "ok": res.ok, "error": res.error, "products": products, "fx": _public_fx(rate), "checked_at": int(time.time())}
+    usd_rate = (rate or {}).get("rate")
+    for p in products:
+        krw = _krw(p.get("price"), p.get("currency"), rate)
+        size = p.get("option") if savings.amount(p.get("option")) else p.get("title")   # 가격은 옵션 값 — 옵션 양을 먼저
+        p["saving"] = savings.estimate(size or "", krw, ref, usd_rate, label=it.label)
+    best = max((p["saving"] for p in products if p.get("saving")), key=lambda s: s["pct"], default=None)
+    compare = None
+    if ref:
+        compare = {"ref": ref, "best": best,
+                   "basis": savings.BASIS.format(n=ref["n"], unit="100g" if ref["unit"] == "g" else "100ml")}
+    return {**base, "ok": res.ok, "error": res.error, "products": products, "fx": _public_fx(rate), "compare": compare,
+            "checked_at": int(time.time())}
+
+
+def recheck(variant_id: str, price: int | None = None, currency: str | None = None, *, http=None) -> dict:
+    """판매처로 가기 전 재확인 (2026-11-27) — 지금 가격·재고를 다시 묻고 화면 값과 견준다. 저장 없음.
+    lookup 결과에 같은 옵션이 없으면 첫 판매 가능 옵션을 쓴다(Global Catalog 가 상품 단위로 돌려줄 수 있음)."""
+    res = catalog.lookup(variant_id, http=http or catalog.requests)
+    base = {"checked_at": int(time.time()), "variant_id": variant_id}
+    if not res.ok:
+        return {**base, "ok": False, "state": "unknown", "error": res.error,
+                "text": "지금 다시 확인하지 못했어요. 판매처 화면에서 가격·재고를 꼭 확인해 주세요."}
+    o = next((x for x in res.offers if x.variant_id == variant_id), res.offers[0] if res.offers else None)
+    if o is None or o.available is False:
+        return {**base, "ok": True, "state": "sold_out", "text": "방금 다시 확인해 보니 한국 배송으로 살 수 없거나 품절이에요."}
+    same_cur = (currency or "").upper() == (o.currency or "").upper()
+    state = "same" if (price is not None and same_cur and o.price == price) else ("changed" if price is not None and same_cur else "unknown")
+    text = {"same": "방금 다시 확인했어요 — 가격이 그대로예요.",
+            "changed": "방금 다시 확인해 보니 가격이 바뀌었어요. 아래 새 가격을 보세요.",
+            "unknown": "방금 다시 확인했어요. 판매처 화면의 최종 금액을 확인해 주세요."}[state]
+    return {**base, "ok": True, "state": state, "text": text, "price": o.price, "currency": o.currency,
+            "url": o.url, "checkout_url": o.checkout_url}

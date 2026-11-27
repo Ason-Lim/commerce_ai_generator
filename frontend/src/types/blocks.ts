@@ -26,7 +26,9 @@ export interface VerdictBlock { type: "verdict"; data: { md: string } }
 /** 네이버쇼핑 검색 링크 (2026-11-04) — 고객 편의용, 제휴 아님 · 수수료 없음. 상품이 아니라 검색 화면으로만 연결 */
 export interface SearchLink { query: string; url: string; check: string }
 /** 해외 직구 칸 (2026-11-27) — 상품은 담지 않음, 화면이 /api/direct/item/{key} 로 조회 */
-export interface DirectBuyBlock { type: "direct_buy"; data: { key: string; label: string; status: "ok" | "caution" | "blocked"; note?: string } }
+export interface DirectBuyBlock { type: "direct_buy"; data: { key: string; label: string; status: "ok" | "caution" | "blocked"; note?: string;
+  /** 이번 대화 쿠팡 후보의 100g(ml)당 중간값 — 직구 추정가와 견줄 때만 */
+  domestic?: { per100: number; unit: "g" | "ml"; n: number } } }
 export interface SearchLinksBlock { type: "search_links"; data: { title: string; badge?: string; links: SearchLink[]; note?: string } }
 
 export interface ChipsBlock {
