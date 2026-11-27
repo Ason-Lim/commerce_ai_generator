@@ -259,7 +259,10 @@ export type DirectProduct = {
   /** 직구 추정이 국내 후보 중간값보다 15% 이상 쌀 때만 (2026-11-27) */
   saving?: DirectSaving | null;
   variant_id?: string | null; option?: string | null;
+  /** 국내·직구 함께 비교용 도착 추정 (양을 읽었을 때만) */
+  landed?: DirectLanded | null;
 };
+export type DirectLanded = { qty: number; unit: "g" | "ml"; landed_krw: number; ship_krw: number; tax_krw: number; per100: number; taxed: boolean };
 export type DirectRecheck = { ok: boolean; state: "same" | "changed" | "sold_out" | "unknown"; text: string; checked_at: number;
   price?: number | null; currency?: string | null; url?: string; checkout_url?: string | null };
 export async function fetchDirectRecheck(p: { variant_id?: string | null; price: number | null; currency: string | null }, signal?: AbortSignal): Promise<DirectRecheck | null> {
@@ -298,9 +301,12 @@ export type DirectItem = { enabled: boolean; ok: boolean; error: string | null; 
   compare?: { ref: DirectRef; best: DirectSaving | null; basis: string } | null };
 
 /** 대화 결과 아래 해외 직구 칸 (2026-11-27) — 품목표 품목만, 저장하지 않음. */
-export async function fetchDirectItem(key: string, signal?: AbortSignal, ref?: DirectRef): Promise<DirectItem | null> {
+export async function fetchDirectItem(key: string, signal?: AbortSignal, ref?: DirectRef, term?: string): Promise<DirectItem | null> {
   if (API_MODE === "mock") return null;
-  const qs = ref ? `?ref=${ref.per100}&unit=${ref.unit}&n=${ref.n}` : "";
+  const p = new URLSearchParams();
+  if (ref) { p.set("ref", String(ref.per100)); p.set("unit", ref.unit); p.set("n", String(ref.n)); }
+  if (term) p.set("term", term);
+  const qs = p.toString() ? `?${p}` : "";
   const r = await fetch(`/api/direct/item/${encodeURIComponent(key)}${qs}`, { signal, cache: "no-store" });
   if (!r.ok) return null;
   return (await r.json()) as DirectItem;

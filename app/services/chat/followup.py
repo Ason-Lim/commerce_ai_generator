@@ -12,6 +12,7 @@
 | 2kg으로 · 1L짜리 · 10개짜리 | size/count — 검색어의 양을 바꿔 새로 찾음 | 예 |
 | 선물용으로 | gift — '○○ 선물세트'로 새로 찾음 | 예 |
 | 더 찾아보기 · 다른 거 더 | more — 바꿔 쓸 말로 더 찾아 '추천순 아님' 칸 | 예 |
+| 해외직구 · 직구로 보여줘 | direct — 같은 품목을 해외 직구(Shopify) 칸으로 (2026-11-27, 품목표에 있을 때만 칩) | 아니오(Shopify 조회) |
 | 처음 조건으로 · 원래대로 | reset — 처음 찾은 후보를 추천순으로 (저장된 후보, 새로 찾지 않음) | 아니오 |
 
 * 문장 전체가 조건 말일 때만 잡는다 — '사과 2kg'·'올리브유 싼 거'처럼 품목이 들어가면 새 검색(평소 경로).
@@ -86,11 +87,16 @@ def base_set(state: dict) -> dict | None:
     return seen[-1] if seen else None
 
 
+_DIRECT = re.compile(r"^(?:해외\s*)?직구(?:\s*(?:상품|제품|만|도|로|으로))?" + _END)
+
+
 def parse(text: str) -> dict | None:
     """짧은 조건 말 → {'kind': …, …} 또는 None."""
     t = " ".join((text or "").split())
     if not t or len(t) > 30:
         return None
+    if _DIRECT.match(t):
+        return {"kind": "direct"}
     if _SORT_PER100G.match(t):
         return {"kind": "sort", "by": "per100g"}
     if m := _SORT_CACAO.match(t):
@@ -225,7 +231,7 @@ def describe_conds(conds: list[dict]) -> str:
     return " · ".join(describe(c) for c in conds or [])
 
 
-def chips_after(cards: list[dict], *, more_left: bool, changed: bool) -> list[str]:
+def chips_after(cards: list[dict], *, more_left: bool, changed: bool, direct: bool = False) -> list[str]:
     """쇼핑 답 끝 칩 — 누르면 그 말을 보낸다 (parse 가 받는 말만)."""
     base = compared(cards)
     out = []
@@ -237,6 +243,8 @@ def chips_after(cards: list[dict], *, more_left: bool, changed: bool) -> list[st
         out.append("가격 낮은 순으로")
     if any(c.get("rocket") for c in base) and not all(c.get("rocket") for c in base):
         out.append("로켓배송만")
+    if direct:                              # 2026-11-27 사용자: '로켓배송만' 옆에 '해외직구'
+        out.append("해외직구")
     if more_left:
         out.append("더 찾아보기")
     return out

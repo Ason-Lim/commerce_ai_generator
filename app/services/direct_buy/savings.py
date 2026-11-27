@@ -76,6 +76,29 @@ def landed(krw: float, qty: float, usd_rate: float, *, label: str = "") -> dict:
     return {"total": krw + ship + duty + vat, "ship": ship, "tax": duty + vat, "over": over}
 
 
+def quote(title: str, krw: float | None, usd_rate: float | None, *, label: str = "") -> dict | None:
+    """국내·직구 함께 비교용 도착 추정 (2026-11-27) — 양을 읽을 수 있을 때만. 저장 없음."""
+    if krw is None or not usd_rate:
+        return None
+    a = amount(title)
+    if not a:
+        return None
+    land = landed(krw, a[0], usd_rate, label=label)
+    return {"qty": a[0], "unit": a[1], "landed_krw": int(round(land["total"], -2)), "ship_krw": int(round(land["ship"], -2)),
+            "tax_krw": int(round(land["tax"], -2)), "per100": int(round(land["total"] / a[0] * 100, -1)), "taxed": land["over"]}
+
+
+def domestic_rows(picks: list[dict] | None, limit: int = 5) -> list[dict]:
+    """대화 추천 후보 → 비교 표의 국내 줄 (같은 응답의 상품 목록에 이미 있는 값만, 저장 안 함)."""
+    out = []
+    for c in sorted(picks or [], key=lambda c: c.get("rank") or 0)[:limit]:
+        unit = "g" if c.get("per100g") else "ml" if c.get("per100ml") else None
+        out.append({"title": c.get("title"), "price": c.get("total") or c.get("price"), "total_known": bool(c.get("total")),
+                    "per100": c.get("per100g") or c.get("per100ml"), "unit": unit, "rocket": bool(c.get("rocket")),
+                    "mall": c.get("mall") or c.get("source"), "go": c.get("go")})
+    return [r for r in out if r["title"] and r["price"]]
+
+
 def estimate(title: str, krw: float | None, ref: dict | None, usd_rate: float | None, *, label: str = "") -> dict | None:
     """한 상품의 '약 n% 저렴' — 조건이 안 맞으면 None(보이지 않음)."""
     if not ref or krw is None or not usd_rate:

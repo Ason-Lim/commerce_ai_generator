@@ -31,6 +31,8 @@ class Item:
     query: str                 # Shopify 검색어(영어가 잘 찾아짐)
     status: str                # ok · caution · blocked
     note: str = ""
+    must: str = ""             # 상품명에 있어야 하는 말(정규식, 대소문자 무시) — 엉뚱한 상품 거르기 (2026-11-27)
+    allow: str = ""            # 가공식품 재료로 흔한 검역 낱말(butter·milk·honey…)은 이 품목에서 걸러 내지 않음 (2026-11-27)
 
 
 ITEMS: tuple[Item, ...] = (
@@ -43,7 +45,7 @@ ITEMS: tuple[Item, ...] = (
     Item("maple", "메이플 시럽", ("메이플 시럽", "메이플시럽", "메이플"), "pure maple syrup", "ok"),
     Item("truffle_oil", "트러플 오일", ("트러플 오일", "트러플오일", "트러플 소스"), "truffle oil", "ok"),
     Item("pasta", "파스타 면", ("파스타", "스파게티", "펜네", "링귀네"), "dried italian pasta", "ok"),
-    Item("chocolate", "초콜릿", ("초콜릿", "초콜렛"), "dark chocolate bar", "ok"),
+    Item("chocolate", "초콜릿", ("초콜릿", "초콜렛"), "dark chocolate bar", "ok", allow="milk|butter|honey"),
     Item("jam", "잼", ("잼", "마멀레이드"), "fruit jam jar", "ok"),
     Item("hot_sauce", "핫소스", ("핫소스", "핫 소스", "타바스코"), "hot sauce", "ok"),
     Item("tea", "차(티백·잎차)", ("홍차", "얼그레이", "허브티", "말차"), "loose leaf tea", "ok"),
@@ -53,12 +55,15 @@ ITEMS: tuple[Item, ...] = (
          "sea salt flakes", "ok"),
     Item("coconut_oil", "코코넛 오일", ("코코넛오일", "코코넛 오일"), "organic coconut oil", "ok"),
     Item("avocado_oil", "아보카도 오일", ("아보카도오일", "아보카도 오일"), "avocado oil", "ok"),
-    Item("nut_butter", "땅콩버터", ("땅콩버터", "땅콩 버터", "피넛버터", "피넛 버터", "아몬드버터", "아몬드 버터"), "peanut butter", "ok"),
+    Item("nut_butter", "땅콩버터", ("땅콩버터", "땅콩 버터", "피넛버터", "피넛 버터", "아몬드버터", "아몬드 버터"), "peanut butter", "ok",
+         allow="butter|honey"),
     Item("mayo", "마요네즈", ("마요네즈", "=마요", "큐피"), "japanese mayonnaise", "ok"),
     Item("chili_oil", "칠리오일", ("칠리오일", "칠리 오일", "고추기름", "라유", "칠리크리스프", "칠리 크리스프"), "chili crisp oil", "ok"),
-    Item("candy", "사탕·캔디", ("사탕", "캔디", "목캔디", "젤리빈"), "hard candy", "ok"),
-    Item("cookie", "쿠키·비스킷", ("쿠키", "비스킷", "크래커", "웨하스"), "butter cookies tin", "ok"),
-    Item("bar", "에너지바·프로틴바", ("에너지바", "프로틴바", "단백질바", "그래놀라바", "시리얼바"), "protein bar", "ok"),
+    Item("candy", "사탕·캔디", ("사탕", "캔디", "목캔디", "젤리빈"), "hard candy", "ok", allow="butter|milk|honey"),
+    Item("cookie", "쿠키·비스킷", ("쿠키", "비스킷", "크래커", "웨하스"), "cookies", "ok",
+         must=r"cookie|biscuit|shortbread|cracker|wafer|biscotti|sabl[eé]", allow="butter|milk|egg|honey"),
+    Item("bar", "에너지바·프로틴바", ("에너지바", "프로틴바", "단백질바", "그래놀라바", "시리얼바"), "protein bar", "ok",
+         allow="butter|milk|honey"),
     Item("sweetener", "감미료", ("감미료", "스테비아", "알룰로스", "에리스리톨", "몽크푸르트", "나한과"), "stevia sweetener", "ok"),
     # ── caution: 조건 있음
     Item("coffee", "커피 원두", ("원두", "커피콩", "드립백"), "roasted coffee beans", "caution",
@@ -88,6 +93,37 @@ ITEMS: tuple[Item, ...] = (
     Item("seed", "씨앗·생곡물", ("씨앗", "종자", "묘목", "생땅콩", "생곡물"), "", "blocked",
          "씨앗·묘목·생곡물·생땅콩은 들여올 수 없거나 검역증명서가 필요해요."),
 )
+
+# 손님 검색어의 꾸밈말 → 영어 (Shopify 검색어 앞에 붙임). 아는 말만 쓴다 — 없는 말은 지어내지 않음 (2026-11-27 '버터 쿠키')
+MODIFIERS: tuple[tuple[str, str], ...] = (
+    ("버터", "butter"), ("초코칩", "chocolate chip"), ("초코", "chocolate"), ("초콜릿", "chocolate"), ("오트", "oat"),
+    ("귀리", "oat"), ("말차", "matcha"), ("녹차", "green tea"), ("아몬드", "almond"), ("땅콩", "peanut"), ("피넛", "peanut"),
+    ("생강", "ginger"), ("진저", "ginger"), ("쇼트브레드", "shortbread"), ("데니쉬", "danish"), ("덴마크", "danish"),
+    ("레몬", "lemon"), ("코코넛", "coconut"), ("시나몬", "cinnamon"), ("바닐라", "vanilla"), ("유기농", "organic"),
+    ("무설탕", "sugar free"), ("글루텐프리", "gluten free"), ("비건", "vegan"), ("마누카", "manuka"), ("다크", "dark"),
+    ("밀크", "milk"), ("트러플", "truffle"), ("훈제", "smoked"), ("스페인", "spanish"), ("이탈리아", "italian"),
+    ("그리스", "greek"), ("프랑스", "french"), ("일본", "japanese"),
+)
+
+
+def query_for(it: Item, term: str | None) -> str:
+    """품목 기본 검색어 + 손님 말의 꾸밈말 ('버터 쿠키' → 'butter cookies'). 기본 검색어에 이미 있는 말은 더하지 않음."""
+    t = (term or "")
+    mods = {ko for ko, _en in MODIFIERS}
+    for a in sorted((a.lstrip("=") for a in it.aliases), key=len, reverse=True):
+        if a not in mods:                             # '마누카'처럼 별칭이자 꾸밈말인 것은 남김
+            t = t.replace(a, " ")                     # 품목 이름 자체는 빼고 꾸밈말만
+    words: list[str] = []
+    for ko, en in MODIFIERS:
+        if ko in t and en not in it.query and en not in words and not any(en in w for w in words):
+            words.append(en)
+            t = t.replace(ko, " ")
+    return " ".join(words[:2] + [it.query]).strip()
+
+
+def relevant(it: Item, title: str | None) -> bool:
+    return not it.must or bool(re.search(it.must, title or "", re.I))
+
 
 _INTENT = re.compile(r"직구|해외|수입산|외국\s*(거|것|제품|상품)")
 

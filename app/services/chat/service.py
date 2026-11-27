@@ -1270,7 +1270,7 @@ class ChatService:
             nav = naver_search_block(label, text, picked["picks"])
             if nav:
                 blocks.append(nav)
-            dbk = direct_buy_block(label, text, picked["picks"] + picked["others"])   # 2026-11-27 품목표에 맞으면 해외 직구 칸 (순위·후보와 별개)
+            dbk = direct_buy_block(label, text, picked["picks"] + picked["others"], sid)   # 2026-11-27 품목표에 맞으면 해외 직구 칸 (순위·후보와 별개)
             if dbk:
                 blocks.append(dbk)
             if not budget:
@@ -1397,7 +1397,10 @@ class ChatService:
     def _followup_chips(self, cards, info, state, *, changed: bool) -> list[str]:
         from app.services.chat import followup as fu
 
-        return fu.chips_after(cards, more_left=self._searches_left(state) and bool(self._more_left(info)), changed=changed)
+        label = (info or {}).get("query") or ""
+        blk = direct_buy_block(label, label) if label else None
+        return fu.chips_after(cards, more_left=self._searches_left(state) and bool(self._more_left(info)), changed=changed,
+                              direct=bool(blk and blk["data"]["status"] != "blocked"))
 
     def _cond_view_blocks(self, sid, label, cards, conds, *, lead: str | None = None) -> list:
         """쌓인 보기 조건을 후보에 적용한 목록 (없으면 없다고)."""
@@ -1468,6 +1471,19 @@ class ChatService:
                                                 + [fu.describe(intent)], "previous": label})
         if kind == "reset":
             return self._reset_turn(sid, text, info, state, revision, persist)
+        if kind == "direct":                  # 2026-11-27 '해외직구' 칩 — 같은 품목을 해외 직구 칸으로 (추천 후보·순위와 별개)
+            cards = list(base.get("cards") or [])
+            blk = direct_buy_block(label, f"직구 {label}", fu.compared(cards), sid)
+            if blk and blk["data"]["status"] != "blocked":
+                blocks = [B.text(f"'{label}'을(를) 해외 판매처(Shopify)에서도 찾아봤어요. 추천 후보와 따로 보여 드리며, "
+                                 "주문·결제는 해외 판매처에서 해요."), blk]
+            elif blk:
+                blocks = [blk]
+            else:
+                blocks = [B.text(f"'{label}'은(는) 해외 직구 품목표에 없어 해외 상점에서 찾지 않았어요.")]
+            blocks.append(B.chips(["처음 조건으로"] + [c for c in self._followup_chips(cards, info, state, changed=False)
+                                                    if c != "해외직구"]))
+            return self._followup_done(sid, text, dict(state, followup=info), revision, persist, blocks)
         cards = fu.compared(list(base.get("cards") or []))
         info["conds"] = fu.merge_cond(info["conds"], intent)
         blocks = self._cond_view_blocks(sid, label, cards, info["conds"])
@@ -2082,7 +2098,8 @@ def _fresh_produce(label: str) -> bool:
     return any(w in produce for w in words)
 
 
-def direct_buy_block(label: str | None, text: str | None, picks: list[dict] | None = None) -> dict | None:
+def direct_buy_block(label: str | None, text: str | None, picks: list[dict] | None = None,
+                     sid: str | None = None) -> dict | None:
     """해외 직구 칸 (2026-11-27 사용자 요청: 식품을 검색하면 Shopify 에도 있으면 함께). 품목표(direct_buy/items.py)에 맞을 때만.
     추천 후보·순위와 섞지 않는 별도 칸이며, 상품은 화면이 그때 조회한다(저장 없음). DIRECT_IN_CHAT=0 이면 끔."""
     if (os.getenv("DIRECT_IN_CHAT") or "1").strip() == "0" or (os.getenv("SHOPIFY_CATALOG") or "1").strip() == "0":
@@ -2097,7 +2114,9 @@ def direct_buy_block(label: str | None, text: str | None, picks: list[dict] | No
     from app.services.direct_buy import savings
 
     ref = savings.domestic_ref(picks) if it.status != "blocked" else None
-    return B.direct_buy(it.key, it.label, it.status, it.note or None, ref)
+    rows = savings.domestic_rows([dict(c, go=f"/go/{sid}/k/{c.get('key')}") if sid and c.get("key") else c
+                                  for c in picks or []]) if it.status != "blocked" else None
+    return B.direct_buy(it.key, it.label, it.status, it.note or None, ref, rows, (label or "").strip()[:40] or None)
 
 
 def naver_search_links(label: str, text: str, picks: list[dict] | None = None) -> list[tuple[str, str]]:
