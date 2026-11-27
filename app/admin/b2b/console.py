@@ -31,6 +31,7 @@ class Workspace:
     bid_id: str | None = None
     req: BidRequirement | None = None
     evals: list[Evaluation] = field(default_factory=list)
+    transient: list = field(default_factory=list)   # 쿠팡 검색 후보 — DB 에 저장하지 않고 이 작업 공간에만 (2026-11-27)
     cost_inputs: dict = field(default_factory=dict)
     mall_build_total: int | None = None
     admin_rate: float | None = None          # 일반관리비 = 공급가액 × 비율 (2026-11-11)
@@ -230,12 +231,15 @@ class Console:
                     *self._help(w, p, today)[1:]]
         w.req = req
         w.bid_id = req.bid_id or w.bid_id
-        w.evals = evidence.evaluate_all(req, today=today)
+        w.transient = []
+        w.evals = self._evaluate(w, req, today)
         cov = sourcing.coverage(req, w.evals)
         discovered = 0
-        if any(c["gap"] for c in cov):
-            discovered = len(sourcing.discover(req, [c["category"] for c in cov if c["gap"]]))
-            w.evals = evidence.evaluate_all(req, today=today)
+        if any(c["gap"] for c in cov):           # 도매몰·근거 묶음에 맞는 후보가 모자라면 쿠팡·네이버 검색으로 (2026-11-27)
+            found = sourcing.discover(req, [c["category"] for c in cov if c["gap"]])
+            discovered = len(found)
+            w.transient = [c for c in found if sourcing.is_transient(c)]
+            w.evals = self._evaluate(w, req, today)
             cov = sourcing.coverage(req, w.evals)
         w.cost = self._calc_cost(w)
         # 2026-11-23 (지인 의견): 후보 판정 표 위에도 그 공고의 상태·예산·마감 (공고번호 없이 조건만 넣었으면 없음)
@@ -246,7 +250,8 @@ class Console:
                         "budget": bid.budget or (req.computed_total() if req else None)}
         blocks = pre + [
             {"type": "text", "md": f"**{req.title or req.bid_id or '입력 조건'}** 조건을 추출하고 후보 {len(w.evals)}개를 판정했어요."
-                                   + (f" 후보가 부족한 카테고리는 마켓 검색으로 {discovered}개를 더 찾았어요." if discovered else "")},
+                                   + (f" 도매몰·근거 묶음에 맞는 후보가 모자라 쿠팡·네이버 검색으로 {discovered}개를 더 찾았어요"
+                                      " (공개 판매가 관측 — 견적 아님, 쿠팡 결과는 저장하지 않음)." if discovered else "")},
             {"type": "requirement", "rows": [{"field": pv.field, "value": str(pv.value), "quote": pv.quote, "source": pv.source}
                                              for pv in req.provenance], "missing": req.missing(),
              "total": req.computed_total()},
@@ -354,10 +359,20 @@ class Console:
         blocks.append({"type": "actions", "items": nxt})
         return blocks
 
+    @staticmethod
+    def _evaluate(w, req, today):
+        """저장된 후보(근거 묶음·도매몰·네이버) + 이번 작업 공간의 쿠팡 후보(저장 안 함)."""
+        base = evidence.all_candidates()
+        ids = {c.candidate_id for c in base}
+        return evidence.evaluate_all(req, base + [c for c in w.transient if c.candidate_id not in ids], today=today)
+
     def _discover(self, w, p, today):
         cats = [c for c in ("식품", "건강기능식품", "생활용품") if c in p] or None
-        n = len(sourcing.discover(w.req, cats))
-        w.evals = evidence.evaluate_all(w.req, today=today)
+        found = sourcing.discover(w.req, cats)
+        n = len(found)
+        keep = {c.candidate_id: c for c in w.transient + [c for c in found if sourcing.is_transient(c)]}
+        w.transient = list(keep.values())
+        w.evals = self._evaluate(w, w.req, today)
         return [{"type": "text", "md": f"마켓 검색으로 후보 {n}개를 추가/갱신했어요. 모두 공개 판매가 관측이므로 보류(HOLD)에서 시작합니다."},
                 {"type": "coverage", "rows": sourcing.coverage(w.req, w.evals)}, self._cand_block(w.evals)]
 

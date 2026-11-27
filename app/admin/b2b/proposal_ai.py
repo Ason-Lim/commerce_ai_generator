@@ -87,6 +87,8 @@ def facts(req, evals, profile: dict, cost=None) -> dict:
     cands = []
     for e in relevant(req, evals):
         c = e.candidate
+        if c.source == "market_search_transient":     # 쿠팡 검색 후보는 외부 AI 에 보내지 않는다(전송 금지) — 표에는 코드가 직접 넣음
+            continue
         cands.append({"상품": c.name, "카테고리": c.category, "관측 가격": c.observed_price, "가격 종류": c.price_kind,
                       "관측일": c.observed_date.isoformat() if c.observed_date else None, "판정": e.decision,
                       "미확인": [x.label for x in e.unknown][:4]})

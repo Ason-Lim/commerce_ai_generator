@@ -225,6 +225,8 @@ class _Pptx:
         logo = T.asset(t, "logo")
         y0 = 190
         if logo and logo.suffix.lower() in (".png", ".jpg", ".jpeg"):
+            if on_bold:                                 # 진한 표지 위 — 로고 뒤에 흰 바탕 (어두운 마크·글자가 묻히지 않게)
+                self.box(s, 70, 112, 236, 56, "#FFFFFF", radius=0.2)
             s.shapes.add_picture(str(logo), self.X(80), self.Y(120), height=self.Y(40))
         self.text(s, 80, y0, 700, 20, "PROPOSAL · " + p.subtitle, 11, True,
                   pal.on_primary if on_bold else pal.muted)

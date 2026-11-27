@@ -1080,6 +1080,7 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--p)}
 .cover{position:absolute;inset:0;display:flex;align-items:center;padding:0 80px;overflow:hidden}
 .ctext{position:relative;z-index:2;max-width:720px}
 .clogo{height:34px;margin-bottom:26px;display:block}
+.c-bold .clogo{background:#fff;padding:8px 12px;border-radius:12px;box-sizing:content-box}
 .cover .kick{margin-bottom:18px}
 .cover h1{font-size:58px;line-height:1.18;letter-spacing:-.035em;font-weight:800;text-wrap:balance}
 .chips{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0 30px}
